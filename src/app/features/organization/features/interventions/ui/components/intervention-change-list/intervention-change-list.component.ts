@@ -11,6 +11,7 @@ import {
 import type { InterventionChangeOutput } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
 import type { InterventionChangeRowViewModel } from './models';
@@ -48,7 +49,7 @@ import { formatInterventionChangePatch } from './utils';
  */
 @Component({
   selector: 'app-intervention-change-list',
-  imports: [InterventionTag, HlmButton, ...HlmCardImports, ...HlmSpinnerImports],
+  imports: [InterventionTag, HlmButton, ...HlmCardImports, ...HlmItemImports, ...HlmSpinnerImports],
   templateUrl: './intervention-change-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,47 +1,49 @@
-<div class="flex flex-col gap-3" data-testid="intervention-change-list">
-  <div class="flex flex-col gap-0.5">
-    <h2 class="text-base font-semibold" i18n="@@intervention.changes.title">Proposed changes</h2>
-    <p class="text-xs text-muted-foreground" i18n="@@intervention.changes.caption">
+<section hlmCard data-testid="intervention-change-list">
+  <div hlmCardHeader>
+    <h2 hlmCardTitle i18n="@@intervention.changes.title">Proposed changes</h2>
+    <p hlmCardDescription i18n="@@intervention.changes.caption">
       Applied automatically when this intervention is published.
     </p>
   </div>
 
-  <ul class="flex flex-col gap-2">
-    @for (row of proposedRows(); track row.change.id) {
-      <li hlmCard size="sm" data-testid="intervention-change-row">
-        <div hlmCardContent class="flex flex-col gap-2 py-3">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm font-medium text-foreground">{{ row.resourceKind }}</span>
-            <app-intervention-tag kind="changeStatus" [value]="row.change.status" asOption />
-            @if (canReject()) {
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="ms-auto text-destructive hover:text-destructive"
-                data-testid="intervention-change-reject"
-                [disabled]="row.pending"
-                (click)="rejected.emit(row.change.id)"
-              >
-                @if (row.pending) {
-                  <hlm-spinner size="xs" aria-hidden="true" />
-                }
-                <span i18n="@@intervention.changes.reject">Reject</span>
-              </button>
-            }
-          </div>
+  <div hlmCardContent>
+    <ul hlmItemGroup>
+      @for (row of proposedRows(); track row.change.id) {
+        <li hlmItem variant="outline" size="sm" data-testid="intervention-change-row">
+          <div hlmItemContent class="gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm font-medium text-foreground">{{ row.resourceKind }}</span>
+              <app-intervention-tag kind="changeStatus" [value]="row.change.status" asOption />
+              @if (canReject()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="ms-auto text-destructive hover:text-destructive"
+                  data-testid="intervention-change-reject"
+                  [disabled]="row.pending"
+                  (click)="rejected.emit(row.change.id)"
+                >
+                  @if (row.pending) {
+                    <hlm-spinner size="xs" aria-hidden="true" />
+                  }
+                  <span i18n="@@intervention.changes.reject">Reject</span>
+                </button>
+              }
+            </div>
 
-          <dl class="flex flex-col gap-1 text-sm">
-            @for (line of row.patchLines; track line.field) {
-              <div class="flex flex-wrap items-baseline gap-x-2">
-                <dt class="text-muted-foreground">{{ line.field }}</dt>
-                <dd class="font-medium text-foreground">{{ line.value }}</dd>
-              </div>
-            }
-          </dl>
-        </div>
-      </li>
-    }
-  </ul>
-</div>
+            <dl class="flex flex-col gap-1 text-sm">
+              @for (line of row.patchLines; track line.field) {
+                <div class="flex flex-wrap items-baseline gap-x-2">
+                  <dt class="text-muted-foreground">{{ line.field }}</dt>
+                  <dd class="font-medium text-foreground">{{ line.value }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

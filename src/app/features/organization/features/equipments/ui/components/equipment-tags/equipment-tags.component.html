@@ -1,96 +1,98 @@
-<div class="flex flex-col gap-3" data-testid="equipment-tags">
-  <div class="flex flex-col gap-0.5">
-    <h2 class="text-base font-semibold" i18n="@@equipment.tags.title">Tags</h2>
-    <p class="text-xs text-muted-foreground" i18n="@@equipment.tags.caption">
+<section hlmCard data-testid="equipment-tags">
+  <div hlmCardHeader>
+    <h2 hlmCardTitle i18n="@@equipment.tags.title">Tags</h2>
+    <p hlmCardDescription i18n="@@equipment.tags.caption">
       Labels used to search and group this equipment.
     </p>
   </div>
 
-  @if (tags().length === 0) {
-    <app-empty-state
-      icon="lucideTag"
-      title="No tags yet"
-      i18n-title="@@equipment.tags.emptyTitle"
-      description="Add a tag to help find and group this equipment."
-      i18n-description="@@equipment.tags.emptyDesc"
-      data-testid="equipment-tags-empty"
-    />
-  } @else {
-    <ul class="flex flex-wrap gap-2" data-testid="equipment-tags-list">
-      @for (tag of tags(); track tag.id) {
-        <li>
-          <span hlmBadge variant="outline" class="gap-1 pr-1" data-testid="equipment-tag-chip">
-            {{ tag.name }}
-            @if (editable()) {
+  <div hlmCardContent class="flex flex-col gap-3">
+    @if (tags().length === 0) {
+      <app-empty-state
+        icon="lucideTag"
+        title="No tags yet"
+        i18n-title="@@equipment.tags.emptyTitle"
+        description="Add a tag to help find and group this equipment."
+        i18n-description="@@equipment.tags.emptyDesc"
+        data-testid="equipment-tags-empty"
+      />
+    } @else {
+      <ul class="flex flex-wrap gap-2" data-testid="equipment-tags-list">
+        @for (tag of tags(); track tag.id) {
+          <li>
+            <span hlmBadge variant="outline" class="gap-1 pr-1" data-testid="equipment-tag-chip">
+              {{ tag.name }}
+              @if (editable()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="size-4 max-sm:size-11"
+                  [attr.aria-label]="removeAriaLabelOf(tag)"
+                  [disabled]="isRemoving(tag)"
+                  [attr.aria-busy]="isRemoving(tag) ? 'true' : null"
+                  data-testid="equipment-tag-remove"
+                  (click)="tagRemoveRequested.emit(tag)"
+                >
+                  @if (isRemoving(tag)) {
+                    <hlm-spinner size="xs" aria-hidden="true" />
+                  } @else {
+                    <ng-icon name="lucideX" aria-hidden="true" />
+                  }
+                </button>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (editable()) {
+      <hlm-combobox
+        [value]="pickedValue()"
+        [search]="searchText()"
+        [disabled]="addPending()"
+        [itemToString]="tagLabelOf"
+        (valueChange)="onPicked($any($event))"
+        (searchChange)="searchText.set($event)"
+      >
+        <hlm-combobox-input
+          inputId="equipment-tags-add"
+          placeholder="Search or add a tag"
+          i18n-placeholder="@@equipment.tags.addPlaceholder"
+          data-testid="equipment-tags-add-input"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty>
+            @if (canCreateFromSearch()) {
               <button
                 hlmBtn
                 type="button"
                 variant="ghost"
-                size="icon-sm"
-                class="size-4 max-sm:size-11"
-                [attr.aria-label]="removeAriaLabelOf(tag)"
-                [disabled]="isRemoving(tag)"
-                [attr.aria-busy]="isRemoving(tag) ? 'true' : null"
-                data-testid="equipment-tag-remove"
-                (click)="tagRemoveRequested.emit(tag)"
+                size="sm"
+                class="w-full justify-start"
+                data-testid="equipment-tags-create"
+                (click)="createFromSearch()"
               >
-                @if (isRemoving(tag)) {
-                  <hlm-spinner size="xs" aria-hidden="true" />
-                } @else {
-                  <ng-icon name="lucideX" aria-hidden="true" />
-                }
+                {{ createLabel() }}
               </button>
+            } @else {
+              <span i18n="@@equipment.tags.noMatch">No tag matches.</span>
             }
-          </span>
-        </li>
-      }
-    </ul>
-  }
-
-  @if (editable()) {
-    <hlm-combobox
-      [value]="pickedValue()"
-      [search]="searchText()"
-      [disabled]="addPending()"
-      [itemToString]="tagLabelOf"
-      (valueChange)="onPicked($any($event))"
-      (searchChange)="searchText.set($event)"
-    >
-      <hlm-combobox-input
-        inputId="equipment-tags-add"
-        placeholder="Search or add a tag"
-        i18n-placeholder="@@equipment.tags.addPlaceholder"
-        data-testid="equipment-tags-add-input"
-      />
-      <hlm-combobox-content *hlmComboboxPortal>
-        <hlm-combobox-empty>
-          @if (canCreateFromSearch()) {
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="w-full justify-start"
-              data-testid="equipment-tags-create"
-              (click)="createFromSearch()"
-            >
-              {{ createLabel() }}
-            </button>
-          } @else {
-            <span i18n="@@equipment.tags.noMatch">No tag matches.</span>
-          }
-        </hlm-combobox-empty>
-        <div hlmComboboxList>
-          @for (tag of availableCatalog(); track tag.id) {
-            <hlm-combobox-item
-              [value]="tag.id"
-              [attr.data-testid]="'equipment-tags-option-' + tag.id"
-            >
-              {{ tag.name }}
-            </hlm-combobox-item>
-          }
-        </div>
-      </hlm-combobox-content>
-    </hlm-combobox>
-  }
-</div>
+          </hlm-combobox-empty>
+          <div hlmComboboxList>
+            @for (tag of availableCatalog(); track tag.id) {
+              <hlm-combobox-item
+                [value]="tag.id"
+                [attr.data-testid]="'equipment-tags-option-' + tag.id"
+              >
+                {{ tag.name }}
+              </hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    }
+  </div>
+</section>

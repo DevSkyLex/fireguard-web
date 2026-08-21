@@ -1,155 +1,163 @@
-<div class="flex flex-col gap-3" data-testid="intervention-activity-thread">
-  <div class="flex flex-col gap-0.5">
-    <h2 class="text-base font-semibold" i18n="@@intervention.activity.title">Activity</h2>
-    <p class="text-xs text-muted-foreground" i18n="@@intervention.activity.caption">
+<section hlmCard data-testid="intervention-activity-thread">
+  <div hlmCardHeader>
+    <h2 hlmCardTitle i18n="@@intervention.activity.title">Activity</h2>
+    <p hlmCardDescription i18n="@@intervention.activity.caption">
       System events and comments on this intervention, oldest first.
     </p>
   </div>
 
-  @if (loading() && activities().length === 0) {
-    <ul class="flex flex-col gap-3" aria-hidden="true">
-      @for (row of skeletonRows; track row) {
-        <li class="flex items-center gap-3">
-          <hlm-skeleton class="size-8 shrink-0 rounded-full" />
-          <hlm-skeleton class="h-10 w-full" />
-        </li>
-      }
-    </ul>
-  } @else if (error(); as message) {
-    <div
-      hlmAlert
-      variant="destructive"
-      class="border-destructive/30 bg-destructive/5"
-      role="alert"
-      data-testid="intervention-activity-error"
-    >
-      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-      <p hlmAlertTitle>{{ message }}</p>
-      <button
-        hlmAlertAction
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:min-h-11"
-        data-testid="intervention-activity-retry"
-        (click)="retryRequested.emit()"
-        i18n="@@common.tryAgain"
+  <div hlmCardContent class="flex flex-col gap-3">
+    @if (loading() && activities().length === 0) {
+      <ul class="flex flex-col gap-3" aria-hidden="true">
+        @for (row of skeletonRows; track row) {
+          <li class="flex items-center gap-3">
+            <hlm-skeleton class="size-8 shrink-0 rounded-full" />
+            <hlm-skeleton class="h-10 w-full" />
+          </li>
+        }
+      </ul>
+    } @else if (error(); as message) {
+      <div
+        hlmAlert
+        variant="destructive"
+        class="border-destructive/30 bg-destructive/5"
+        role="alert"
+        data-testid="intervention-activity-error"
       >
-        Try again
-      </button>
-    </div>
-  } @else if (isEmpty()) {
-    <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.empty">
-      No activity recorded yet.
-    </p>
-  } @else {
-    @if (hasOlder()) {
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="self-start max-sm:min-h-11"
-        data-testid="intervention-activity-load-older"
-        [disabled]="loading()"
-        (click)="olderRequested.emit()"
-        i18n="@@intervention.activity.loadOlder"
-      >
-        Show earlier activity
-      </button>
-    }
-
-    <ol class="flex flex-col">
-      @for (row of rows(); track row.activity.id; let last = $last) {
-        <li
-          [class]="
-            last ? 'relative' : row.activity.kind === 'system' ? 'relative pb-1.5' : 'relative pb-6'
-          "
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle>{{ message }}</p>
+        <button
+          hlmAlertAction
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="intervention-activity-retry"
+          (click)="retryRequested.emit()"
+          i18n="@@common.tryAgain"
         >
-          @if (row.activity.kind === 'system') {
-            <div hlmMarker class="min-h-11 items-stretch gap-3 text-xs">
-              <span class="flex w-6 shrink-0 items-start justify-center">
-                <span hlmMarkerIcon>
-                  <ng-icon [name]="row.icon" [class]="row.iconClass" aria-hidden="true" />
-                </span>
-              </span>
-              <span hlmMarkerContent class="flex flex-wrap items-start gap-2">
-                @if (row.statusChange; as change) {
-                  <span class="font-medium text-foreground">{{ row.actorName }}</span>
-                  <span i18n="@@intervention.activity.statusChangedLine">changed status</span>
-                  <app-intervention-tag kind="status" [value]="change.from" />
-                  <ng-icon name="lucideArrowRight" aria-hidden="true" />
-                  <app-intervention-tag kind="status" [value]="change.to" />
-                } @else if (row.rescheduleLabel; as windowLabel) {
-                  <span class="font-medium text-foreground">{{ row.actorName }}</span>
-                  <span i18n="@@intervention.activity.rescheduledLine"
-                    >moved the planned window to</span
-                  >
-                  <span class="font-medium text-foreground">{{ windowLabel }}</span>
-                } @else if (row.activity.event === 'created') {
-                  @if (row.activity.actor !== null) {
-                    <span class="font-medium text-foreground">{{ row.actorName }}</span>
-                    <span i18n="@@intervention.activity.createdByLine"
-                      >created this intervention</span
-                    >
-                  } @else {
-                    <span i18n="@@intervention.activity.createdNoActor">Intervention created</span>
-                  }
-                } @else {
-                  <span i18n="@@intervention.activity.generic">Activity recorded</span>
-                }
-                <span aria-hidden="true">·</span>
-                <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
-              </span>
-            </div>
-          } @else {
-            <div hlmMessage class="gap-3">
-              <span class="flex w-6 shrink-0 items-start justify-center">
-                <div hlmMessageAvatar class="min-w-0 self-start">
-                  <hlm-avatar size="sm" class="shrink-0">
-                    @if (row.actorAvatar; as avatarUrl) {
-                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                    }
-                    <span hlmAvatarFallback class="text-[10px]">{{ row.actorInitials }}</span>
-                  </hlm-avatar>
-                </div>
-              </span>
+          Try again
+        </button>
+      </div>
+    } @else if (isEmpty()) {
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.empty">
+        No activity recorded yet.
+      </p>
+    } @else {
+      @if (hasOlder()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="self-start max-sm:min-h-11"
+          data-testid="intervention-activity-load-older"
+          [disabled]="loading()"
+          (click)="olderRequested.emit()"
+          i18n="@@intervention.activity.loadOlder"
+        >
+          Show earlier activity
+        </button>
+      }
 
-              <div hlmMessageContent class="gap-1.5">
-                <div hlmMessageHeader class="min-h-6 flex-nowrap gap-2 px-0">
-                  <span class="font-medium text-foreground">{{ row.actorName }}</span>
-                  <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
-                </div>
-                <div hlmBubble variant="muted">
-                  <p hlmBubbleContent class="whitespace-pre-line text-foreground">
-                    @for (segment of row.bodySegments; track $index) {
-                      @if (segment.kind === 'mention') {
-                        <span class="font-medium text-primary" [title]="segment.title"
-                          >{{ segment.text }}
-                          @if (segment.title) {
-                            <span class="sr-only"> ({{ segment.title }})</span>
-                          }
-                        </span>
-                      } @else {
-                        {{ segment.text }}
-                      }
+      <ol class="flex flex-col">
+        @for (row of rows(); track row.activity.id; let last = $last) {
+          <li
+            [class]="
+              last
+                ? 'relative'
+                : row.activity.kind === 'system'
+                  ? 'relative pb-1.5'
+                  : 'relative pb-6'
+            "
+          >
+            @if (row.activity.kind === 'system') {
+              <div hlmMarker class="min-h-11 items-stretch gap-3 text-xs">
+                <span class="flex w-6 shrink-0 items-start justify-center">
+                  <span hlmMarkerIcon>
+                    <ng-icon [name]="row.icon" [class]="row.iconClass" aria-hidden="true" />
+                  </span>
+                </span>
+                <span hlmMarkerContent class="flex flex-wrap items-start gap-2">
+                  @if (row.statusChange; as change) {
+                    <span class="font-medium text-foreground">{{ row.actorName }}</span>
+                    <span i18n="@@intervention.activity.statusChangedLine">changed status</span>
+                    <app-intervention-tag kind="status" [value]="change.from" />
+                    <ng-icon name="lucideArrowRight" aria-hidden="true" />
+                    <app-intervention-tag kind="status" [value]="change.to" />
+                  } @else if (row.rescheduleLabel; as windowLabel) {
+                    <span class="font-medium text-foreground">{{ row.actorName }}</span>
+                    <span i18n="@@intervention.activity.rescheduledLine"
+                      >moved the planned window to</span
+                    >
+                    <span class="font-medium text-foreground">{{ windowLabel }}</span>
+                  } @else if (row.activity.event === 'created') {
+                    @if (row.activity.actor !== null) {
+                      <span class="font-medium text-foreground">{{ row.actorName }}</span>
+                      <span i18n="@@intervention.activity.createdByLine"
+                        >created this intervention</span
+                      >
+                    } @else {
+                      <span i18n="@@intervention.activity.createdNoActor"
+                        >Intervention created</span
+                      >
                     }
-                  </p>
+                  } @else {
+                    <span i18n="@@intervention.activity.generic">Activity recorded</span>
+                  }
+                  <span aria-hidden="true">·</span>
+                  <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
+                </span>
+              </div>
+            } @else {
+              <div hlmMessage class="gap-3">
+                <span class="flex w-6 shrink-0 items-start justify-center">
+                  <div hlmMessageAvatar class="min-w-0 self-start">
+                    <hlm-avatar size="sm" class="shrink-0">
+                      @if (row.actorAvatar; as avatarUrl) {
+                        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">{{ row.actorInitials }}</span>
+                    </hlm-avatar>
+                  </div>
+                </span>
+
+                <div hlmMessageContent class="gap-1.5">
+                  <div hlmMessageHeader class="min-h-6 flex-nowrap gap-2 px-0">
+                    <span class="font-medium text-foreground">{{ row.actorName }}</span>
+                    <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
+                  </div>
+                  <div hlmBubble variant="muted">
+                    <p hlmBubbleContent class="whitespace-pre-line text-foreground">
+                      @for (segment of row.bodySegments; track $index) {
+                        @if (segment.kind === 'mention') {
+                          <span class="font-medium text-primary" [title]="segment.title"
+                            >{{ segment.text }}
+                            @if (segment.title) {
+                              <span class="sr-only"> ({{ segment.title }})</span>
+                            }
+                          </span>
+                        } @else {
+                          {{ segment.text }}
+                        }
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          }
-          @if (!last) {
-            <span
-              class="absolute bottom-2 left-3 w-px -translate-x-1/2 bg-muted-foreground/50"
-              [class.top-6]="row.activity.kind === 'system'"
-              [class.top-8]="row.activity.kind !== 'system'"
-              aria-hidden="true"
-            ></span>
-          }
-        </li>
-      }
-    </ol>
-  }
-</div>
+            }
+            @if (!last) {
+              <span
+                class="absolute bottom-2 left-3 w-px -translate-x-1/2 bg-muted-foreground/50"
+                [class.top-6]="row.activity.kind === 'system'"
+                [class.top-8]="row.activity.kind !== 'system'"
+                aria-hidden="true"
+              ></span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</section>

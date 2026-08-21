@@ -28,6 +28,7 @@ import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmMessageImports } from '@shared/ui/message';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -167,6 +168,7 @@ const SKELETON_ROW_COUNT: number = 3;
     ...HlmMessageImports,
     ...HlmBubbleImports,
     ...HlmAlertImports,
+    ...HlmCardImports,
     HlmButton,
   ],
   providers: [

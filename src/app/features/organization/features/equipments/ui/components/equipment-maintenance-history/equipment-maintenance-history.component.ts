@@ -16,6 +16,7 @@ import type {
   EquipmentMaintenanceLogSource,
 } from '@features/organization/features/equipments/models';
 import { EmptyState } from '@shared/empty-state';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -47,7 +48,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-equipment-maintenance-history',
-  imports: [RouterLink, NgIcon, EmptyState, HlmSkeleton],
+  imports: [RouterLink, NgIcon, EmptyState, ...HlmCardImports, HlmSkeleton],
   providers: [provideIcons({ lucideArrowRightLeft, lucideHistory, lucideWrench })],
   templateUrl: './equipment-maintenance-history.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -91,7 +91,16 @@
                 title="Couldn't load the compliance hierarchy."
                 i18n-title="@@org.assets.compliance.treeError"
                 data-testid="assets-compliance-tree-error"
-              />
+              >
+                <button
+                  hlmBtn
+                  variant="outline"
+                  class="max-sm:min-h-11"
+                  (click)="retryComplianceTree()"
+                >
+                  <span i18n="@@common.tryAgain">Try again</span>
+                </button>
+              </app-error-state>
             } @else {
               <app-tree
                 ariaLabel="Compliance hierarchy"
@@ -201,7 +210,11 @@
             title="Couldn't load equipment."
             i18n-title="@@org.assets.equipment.error"
             data-testid="assets-equipment-error"
-          />
+          >
+            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+              <span i18n="@@common.tryAgain">Try again</span>
+            </button>
+          </app-error-state>
         } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
           <app-empty-state
             icon="lucideWrench"
@@ -256,7 +269,11 @@
             title="Couldn't load inspections."
             i18n-title="@@org.assets.inspections.error"
             data-testid="assets-inspections-error"
-          />
+          >
+            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+              <span i18n="@@common.tryAgain">Try again</span>
+            </button>
+          </app-error-state>
         } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
           <app-empty-state
             icon="lucideClipboardList"
@@ -345,7 +362,11 @@
         title="Couldn't load the compliance summary."
         i18n-title="@@org.assets.compliance.summaryError"
         data-testid="assets-compliance-summary-error"
-      />
+      >
+        <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryComplianceSummary()">
+          <span i18n="@@common.tryAgain">Try again</span>
+        </button>
+      </app-error-state>
     } @else if (compliance.isLoadingSummary() && compliance.summary() === null) {
       <div
         class="flex flex-col gap-2"

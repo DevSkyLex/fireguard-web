@@ -357,6 +357,53 @@ export class OrganizationAssetsPage {
 
   //#region Methods
   /**
+   * Method retryPane
+   *
+   * @description
+   * Re-issues the right pane's equipment and inspections loads after a failed
+   * one, from the same scope its effect derives — the "site" axis narrows to
+   * the selected facility, every other axis loads organization-wide.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected retryPane(): void {
+    const organizationId: string = this.organizationId();
+    const facilityId: string | null = this.selectedFacilityId();
+    const scope = this.axis() === 'site' && facilityId !== null ? { facilityId } : {};
+
+    if (this.canReadEquipment()) this.pane.loadEquipment({ organizationId, ...scope });
+    if (this.canReadInspections()) this.pane.loadInspections({ organizationId, ...scope });
+  }
+
+  /**
+   * Method retryComplianceTree
+   * @description Re-requests the compliance hierarchy after a failed load.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected retryComplianceTree(): void {
+    this.compliance.loadTree(this.organizationId());
+  }
+
+  /**
+   * Method retryComplianceSummary
+   * @description Re-requests the selected facility's compliance summary after a failed load. A no-op while no facility is selected, since the summary pane does not render then.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected retryComplianceSummary(): void {
+    const facilityId: string | null = this.selectedComplianceFacilityId();
+
+    if (facilityId === null) return;
+
+    this.compliance.loadSummary({ organizationId: this.organizationId(), facilityId });
+  }
+
+  /**
    * Method onAxisActivated
    *
    * @description

@@ -1,16 +1,16 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
     <hlm-field>
-      <label hlmFieldLabel for="new-channel-name"
+      <label hlmFieldLabel for="channel-create-name"
         ><span i18n="@@channels.newDialog.name">Name</span
         ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
         ><span class="sr-only" i18n="@@common.required"> required</span></label
       >
       <input
         hlmInput
-        id="new-channel-name"
+        id="channel-create-name"
         type="text"
-        data-testid="new-channel-name"
+        data-testid="channel-create-name"
         placeholder="general"
         i18n-placeholder="@@channels.newDialog.namePlaceholder"
         [formField]="createForm.name"
@@ -70,7 +70,7 @@
         hlmBtn
         type="submit"
         class="max-sm:min-h-11"
-        data-testid="new-channel-submit"
+        data-testid="channel-create-submit"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"
       >

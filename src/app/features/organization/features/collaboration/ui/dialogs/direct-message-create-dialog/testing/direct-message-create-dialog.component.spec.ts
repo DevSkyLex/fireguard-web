@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { MemberDirectoryEntry } from '@features/organization/models';
-import { NewDirectMessageDialog } from '../new-direct-message-dialog.component';
+import { DirectMessageCreateDialog } from '../direct-message-create-dialog.component';
 
 function member(overrides: Partial<MemberDirectoryEntry> = {}): MemberDirectoryEntry {
   return {
@@ -15,11 +15,11 @@ function member(overrides: Partial<MemberDirectoryEntry> = {}): MemberDirectoryE
 
 /** The overlay renders into the document, not into the host element. */
 function overlay(): HTMLElement | null {
-  return document.querySelector('[data-testid="new-direct-message-dialog"]');
+  return document.querySelector('[data-testid="direct-message-create-dialog"]');
 }
 
-describe('NewDirectMessageDialog', () => {
-  let fixture: ComponentFixture<NewDirectMessageDialog>;
+describe('DirectMessageCreateDialog', () => {
+  let fixture: ComponentFixture<DirectMessageCreateDialog>;
 
   function candidates(): readonly HTMLButtonElement[] {
     return Array.from(
@@ -43,7 +43,7 @@ describe('NewDirectMessageDialog', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(NewDirectMessageDialog);
+    fixture = TestBed.createComponent(DirectMessageCreateDialog);
     fixture.componentRef.setInput('members', [
       member(),
       member({ memberId: 'member-8', displayName: 'Bruno Lefèvre' }),

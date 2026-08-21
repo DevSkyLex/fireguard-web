@@ -27,7 +27,7 @@ export class ChannelConversationPage {
   public readonly deleteAction: Locator = this.page.getByTestId(
     'channel-conversation-delete-action',
   );
-  public readonly editDialog: Locator = this.page.getByTestId('edit-channel-dialog');
+  public readonly editDialog: Locator = this.page.getByTestId('channel-edit-dialog');
   public readonly participantsSheet: Locator = this.page.getByTestId('channel-participants-sheet');
   public readonly deleteDialog: Locator = this.page.getByTestId('channel-delete-dialog');
   public readonly deleteConfirm: Locator = this.page.getByTestId('channel-delete-confirm');

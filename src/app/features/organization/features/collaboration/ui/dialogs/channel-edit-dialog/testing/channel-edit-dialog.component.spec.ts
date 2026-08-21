@@ -1,19 +1,19 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { EditChannelDraft } from '../../../forms/channel-edit-form';
-import { EditChannelDialog } from '../edit-channel-dialog.component';
+import type { ChannelEditDraft } from '../../../forms/channel-edit-form';
+import { ChannelEditDialog } from '../channel-edit-dialog.component';
 
 const panel = (): HTMLElement | null =>
-  document.querySelector('[data-testid="edit-channel-dialog"]');
+  document.querySelector('[data-testid="channel-edit-dialog"]');
 
 const nameInput = (): HTMLInputElement | null =>
   panel()?.querySelector('[data-testid="edit-channel-name"]') ?? null;
 
 const form = (): HTMLFormElement | null => panel()?.querySelector('form') ?? null;
 
-describe('EditChannelDialog', () => {
-  let fixture: ComponentFixture<EditChannelDialog>;
-  let submissions: EditChannelDraft[];
+describe('ChannelEditDialog', () => {
+  let fixture: ComponentFixture<ChannelEditDialog>;
+  let submissions: ChannelEditDraft[];
   let visibility: boolean[];
 
   const submit = async (): Promise<void> => {
@@ -24,7 +24,7 @@ describe('EditChannelDialog', () => {
   async function open(): Promise<void> {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(EditChannelDialog);
+    fixture = TestBed.createComponent(ChannelEditDialog);
     fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('name', 'general');
     await fixture.whenStable();
@@ -39,7 +39,7 @@ describe('EditChannelDialog', () => {
 
   it('should render nothing until the page opens it', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(EditChannelDialog);
+    fixture = TestBed.createComponent(ChannelEditDialog);
     await fixture.whenStable();
 
     expect(panel()).toBeNull();

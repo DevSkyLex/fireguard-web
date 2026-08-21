@@ -3,7 +3,11 @@
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
-  <hlm-dialog-content class="sm:max-w-md" data-testid="new-direct-message-dialog" *hlmDialogPortal>
+  <hlm-dialog-content
+    class="sm:max-w-md"
+    data-testid="direct-message-create-dialog"
+    *hlmDialogPortal
+  >
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@messages.picker.title">New message</h3>
     </hlm-dialog-header>

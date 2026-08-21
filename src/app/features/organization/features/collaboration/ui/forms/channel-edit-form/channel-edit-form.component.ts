@@ -21,7 +21,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
-import type { EditChannelDraft, EditChannelFormDraft } from './models';
+import type { ChannelEditDraft, EditChannelFormDraft } from './models';
 
 /** Matches `UpdateChannelInput`'s underlying `ChannelResource.name` bounds. */
 const CHANNEL_NAME_MIN_LENGTH = 2;
@@ -34,7 +34,7 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
  * @description
  * Renames a channel and, optionally, moves it under a different root
  * channel — or detaches it back to the top level. Extracted from
- * `EditChannelDialog` so the overlay stays a thin host, the way
+ * `ChannelEditDialog` so the overlay stays a thin host, the way
  * `OrganizationInviteForm` is extracted from `OrganizationInviteDialog`.
  *
  * Presentational: it seeds its draft from {@link name} and
@@ -157,9 +157,9 @@ export class ChannelEditForm {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<EditChannelDraft>}
+   * @type {OutputEmitterRef<ChannelEditDraft>}
    */
-  public readonly submitted: OutputEmitterRef<EditChannelDraft> = output<EditChannelDraft>();
+  public readonly submitted: OutputEmitterRef<ChannelEditDraft> = output<ChannelEditDraft>();
 
   /**
    * Property cancelled

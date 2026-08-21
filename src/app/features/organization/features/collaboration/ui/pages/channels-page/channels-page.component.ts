@@ -46,7 +46,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channel-dialog';
+import { ChannelCreateDialog, type ChannelCreateDraft } from '../../dialogs/channel-create-dialog';
 
 /**
  * Component ChannelsPage
@@ -93,7 +93,7 @@ import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channe
     HlmBadge,
     HlmButton,
     HlmSkeleton,
-    NewChannelDialog,
+    ChannelCreateDialog,
     ...HlmItemImports,
     ...HlmSeparatorImports,
   ],
@@ -510,11 +510,11 @@ export class ChannelsPage {
    * @access protected
    * @since 1.0.0
    *
-   * @param {NewChannelDraft} draft - The validated name and optional parent.
+   * @param {ChannelCreateDraft} draft - The validated name and optional parent.
    *
    * @returns {void}
    */
-  protected submitCreate(draft: NewChannelDraft): void {
+  protected submitCreate(draft: ChannelCreateDraft): void {
     const organizationId: string | null = this.organizationContext.selectedOrganizationId();
 
     if (organizationId === null) return;

@@ -1,4 +1,4 @@
 export { ChannelDeleteDialog } from './channel-delete-dialog';
-export { EditChannelDialog } from './edit-channel-dialog';
-export { NewChannelDialog } from './new-channel-dialog';
-export { NewDirectMessageDialog } from './new-direct-message-dialog';
+export { ChannelEditDialog } from './channel-edit-dialog';
+export { ChannelCreateDialog } from './channel-create-dialog';
+export { DirectMessageCreateDialog } from './direct-message-create-dialog';

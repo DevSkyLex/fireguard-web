@@ -12,55 +12,59 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import {
   HlmDialog,
   HlmDialogContent,
+  HlmDialogDescription,
   HlmDialogHeader,
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
-import { ChannelCreateForm, type NewChannelDraft } from '../../forms/channel-create-form';
+import { ChannelEditForm, type ChannelEditDraft } from '../../forms/channel-edit-form';
 
 /**
- * Component NewChannelDialog
- * @class NewChannelDialog
+ * Component ChannelEditDialog
+ * @class ChannelEditDialog
  *
  * @description
- * The spartan dialog hosting {@link ChannelCreateForm}, the same shape
+ * The spartan dialog hosting {@link ChannelEditForm}, the same shape
  * `OrganizationInviteDialog` wraps `OrganizationInviteForm` in.
  *
  * Purely presentational: it owns the overlay chrome, forwards
- * `visible`/`visibleChange` to the form and re-emits {@link submitted},
- * closing itself the moment the form validates — the page's own success
- * event is what actually navigates, and a failure is already surfaced by
- * the app-wide feedback listener (`core/feedback`), so there is nothing
- * this dialog needs to wait for. Dismissal is blocked while a request is in
+ * `visible`/`visibleChange` plus the seeding inputs to the form, and
+ * re-emits {@link submitted}, closing itself the moment the form validates —
+ * the entity updates in place through the shared `ChannelsStore`, so the
+ * header and the list both pick up the change reactively without this
+ * dialog waiting on the request. Dismissal is blocked while a request is in
  * flight (`ARCHITECTURE.md` §10.5).
  *
  * @version 2.0.0
  *
  * @example
  * ```html
- * <app-new-channel-dialog
- *   [visible]="createDialogVisible()"
+ * <app-channel-edit-dialog
+ *   [visible]="editDialogVisible()"
+ *   [name]="channel()?.name ?? ''"
+ *   [parentChannelId]="currentParentId()"
  *   [parentOptions]="rootChannelOptions()"
- *   (submitted)="create($event)"
+ *   (submitted)="submitEdit($event)"
  * />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-new-channel-dialog',
+  selector: 'app-channel-edit-dialog',
   imports: [
-    ChannelCreateForm,
+    ChannelEditForm,
     HlmDialog,
     HlmDialogContent,
+    HlmDialogDescription,
     HlmDialogHeader,
     HlmDialogPortal,
     HlmDialogTitle,
   ],
-  templateUrl: './new-channel-dialog.component.html',
+  templateUrl: './channel-edit-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NewChannelDialog {
+export class ChannelEditDialog {
   //#region Inputs
   /**
    * Property visible
@@ -77,11 +81,40 @@ export class NewChannelDialog {
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * The channel's current name, forwarded to the form to seed the draft.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly name: InputSignal<string> = input<string>('');
+
+  /**
+   * Property parentChannelId
+   * @readonly
+   *
+   * @description
+   * The channel's current parent, or `null` at the top level.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly parentChannelId: InputSignal<string | null> = input<string | null>(null);
+
+  /**
    * Property parentOptions
    * @readonly
    *
    * @description
-   * Root channels the new one may be nested under, forwarded to the form.
+   * Root channels other than this one, forwarded to the form as candidate
+   * parents.
    *
    * @access public
    * @since 1.0.0
@@ -97,11 +130,11 @@ export class NewChannelDialog {
    * @readonly
    *
    * @description
-   * Whether a previous submission is still in flight, forwarded to the form
-   * and blocking dismissal.
+   * Whether a write this dialog's submit triggered — a rename or a move — is
+   * still in flight, forwarded to the form and blocking dismissal.
    *
    * @access public
-   * @since 1.0.0
+   * @since 1.1.0
    *
    * @type {InputSignal<boolean>}
    */
@@ -128,14 +161,14 @@ export class NewChannelDialog {
    * @readonly
    *
    * @description
-   * The form's validated name and optional parent, forwarded untouched.
+   * The form's validated name and parent, forwarded untouched.
    *
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<NewChannelDraft>}
+   * @type {OutputEmitterRef<ChannelEditDraft>}
    */
-  public readonly submitted: OutputEmitterRef<NewChannelDraft> = output<NewChannelDraft>();
+  public readonly submitted: OutputEmitterRef<ChannelEditDraft> = output<ChannelEditDraft>();
   //#endregion
 
   //#region Properties
@@ -194,11 +227,11 @@ export class NewChannelDialog {
    * @access protected
    * @since 2.0.0
    *
-   * @param {NewChannelDraft} draft - The validated name and optional parent.
+   * @param {ChannelEditDraft} draft - The validated name and parent.
    *
    * @returns {void}
    */
-  protected onFormSubmitted(draft: NewChannelDraft): void {
+  protected onFormSubmitted(draft: ChannelEditDraft): void {
     this.submitted.emit(draft);
     this.visibleChange.emit(false);
   }

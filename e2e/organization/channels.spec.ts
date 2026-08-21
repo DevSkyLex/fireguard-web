@@ -59,7 +59,7 @@ test.describe('Channels list', () => {
     await channels.goto(E2E_ORGANIZATION_ID);
     await expect(channels.rows).toHaveCount(1);
 
-    await channels.openNewChannelDialog();
+    await channels.openChannelCreateDialog();
     await expect(channels.newDialog).toBeVisible();
     await expect(channels.newNameInput).toBeVisible();
   });

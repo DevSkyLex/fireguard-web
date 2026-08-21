@@ -1,19 +1,19 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ChannelCreateForm } from '../channel-create-form.component';
-import type { NewChannelDraft } from '../models';
+import type { ChannelCreateDraft } from '../models';
 
 describe('ChannelCreateForm', () => {
   let fixture: ComponentFixture<ChannelCreateForm>;
-  let submissions: NewChannelDraft[];
+  let submissions: ChannelCreateDraft[];
   let cancellations: number;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const nameInput = (): HTMLInputElement =>
-    root().querySelector('[data-testid="new-channel-name"]') as HTMLInputElement;
+    root().querySelector('[data-testid="channel-create-name"]') as HTMLInputElement;
   const form = (): HTMLFormElement => root().querySelector('form') as HTMLFormElement;
   const submitButton = (): HTMLButtonElement =>
-    root().querySelector('[data-testid="new-channel-submit"]') as HTMLButtonElement;
+    root().querySelector('[data-testid="channel-create-submit"]') as HTMLButtonElement;
 
   const typeName = async (value: string): Promise<void> => {
     nameInput().value = value;
@@ -98,7 +98,7 @@ describe('ChannelCreateForm', () => {
       (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'new-channel-cancel',
     );
     const submitIndex: number = buttons.findIndex(
-      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'new-channel-submit',
+      (button: HTMLButtonElement): boolean => button.dataset['testid'] === 'channel-create-submit',
     );
 
     expect(cancelIndex).toBeGreaterThanOrEqual(0);

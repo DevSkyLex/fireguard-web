@@ -1,19 +1,19 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { NewChannelDraft } from '../../../forms/channel-create-form';
-import { NewChannelDialog } from '../new-channel-dialog.component';
+import type { ChannelCreateDraft } from '../../../forms/channel-create-form';
+import { ChannelCreateDialog } from '../channel-create-dialog.component';
 
 const panel = (): HTMLElement | null =>
-  document.querySelector('[data-testid="new-channel-dialog"]');
+  document.querySelector('[data-testid="channel-create-dialog"]');
 
 const nameInput = (): HTMLInputElement | null =>
-  panel()?.querySelector('[data-testid="new-channel-name"]') ?? null;
+  panel()?.querySelector('[data-testid="channel-create-name"]') ?? null;
 
 const form = (): HTMLFormElement | null => panel()?.querySelector('form') ?? null;
 
-describe('NewChannelDialog', () => {
-  let fixture: ComponentFixture<NewChannelDialog>;
-  let submissions: NewChannelDraft[];
+describe('ChannelCreateDialog', () => {
+  let fixture: ComponentFixture<ChannelCreateDialog>;
+  let submissions: ChannelCreateDraft[];
   let visibility: boolean[];
 
   const typeName = async (value: string): Promise<void> => {
@@ -31,7 +31,7 @@ describe('NewChannelDialog', () => {
   async function open(): Promise<void> {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(NewChannelDialog);
+    fixture = TestBed.createComponent(ChannelCreateDialog);
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
@@ -45,7 +45,7 @@ describe('NewChannelDialog', () => {
 
   it('should render nothing until the page opens it', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(NewChannelDialog);
+    fixture = TestBed.createComponent(ChannelCreateDialog);
     await fixture.whenStable();
 
     expect(panel()).toBeNull();
@@ -66,7 +66,7 @@ describe('NewChannelDialog', () => {
     await fixture.whenStable();
 
     const submitButton = panel()?.querySelector(
-      '[data-testid="new-channel-submit"]',
+      '[data-testid="channel-create-submit"]',
     ) as HTMLButtonElement | null;
 
     expect(submitButton?.disabled).toBe(true);

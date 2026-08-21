@@ -21,7 +21,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
-import type { NewChannelDraft, NewChannelFormDraft } from './models';
+import type { ChannelCreateDraft, NewChannelFormDraft } from './models';
 
 /** Matches `CreateChannelInput.name`'s server-side bounds. */
 const CHANNEL_NAME_MIN_LENGTH = 2;
@@ -36,7 +36,7 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
  *
  * @description
  * Names a new channel and, optionally, nests it under an existing root
- * channel. Extracted from `NewChannelDialog` so the overlay stays a thin
+ * channel. Extracted from `ChannelCreateDialog` so the overlay stays a thin
  * host, the way `OrganizationInviteForm` is extracted from
  * `OrganizationInviteDialog`.
  *
@@ -136,9 +136,9 @@ export class ChannelCreateForm {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<NewChannelDraft>}
+   * @type {OutputEmitterRef<ChannelCreateDraft>}
    */
-  public readonly submitted: OutputEmitterRef<NewChannelDraft> = output<NewChannelDraft>();
+  public readonly submitted: OutputEmitterRef<ChannelCreateDraft> = output<ChannelCreateDraft>();
 
   /**
    * Property cancelled

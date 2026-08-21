@@ -26,8 +26,8 @@ import {
 import { HlmInput } from '@shared/ui/input';
 
 /**
- * Component NewDirectMessageDialog
- * @class NewDirectMessageDialog
+ * Component DirectMessageCreateDialog
+ * @class DirectMessageCreateDialog
  *
  * @description
  * Picks the member to open a direct conversation with.
@@ -41,13 +41,13 @@ import { HlmInput } from '@shared/ui/input';
  *
  * @example
  * ```html
- * <app-new-direct-message-dialog [visible]="pickerVisible()" [members]="candidates()" />
+ * <app-direct-message-create-dialog [visible]="pickerVisible()" [members]="candidates()" />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-new-direct-message-dialog',
+  selector: 'app-direct-message-create-dialog',
   imports: [
     NgIcon,
     EmptyState,
@@ -62,10 +62,10 @@ import { HlmInput } from '@shared/ui/input';
     HlmInput,
   ],
   providers: [provideIcons({ lucideSearch, lucideUsers })],
-  templateUrl: './new-direct-message-dialog.component.html',
+  templateUrl: './direct-message-create-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NewDirectMessageDialog {
+export class DirectMessageCreateDialog {
   //#region Inputs
   /**
    * Property visible

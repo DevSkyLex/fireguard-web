@@ -185,7 +185,7 @@
   <router-outlet (activate)="hasOpenChannel.set(true)" (deactivate)="hasOpenChannel.set(false)" />
 </div>
 
-<app-new-channel-dialog
+<app-channel-create-dialog
   [visible]="createDialogVisible()"
   [parentOptions]="rootChannelOptions()"
   [pending]="channels.isMutating()"

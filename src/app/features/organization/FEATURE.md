@@ -427,13 +427,21 @@ own controllers/scales/plugins are registered once, app-wide, in `app.config.ts`
 only the subset `LineChart` uses (`LineController`, `LineElement`, `PointElement`, `LinearScale`,
 `CategoryScale`, `Filler`, `Legend`, `Tooltip`), not `withDefaultRegisterables()`'s full bundle.
 
-**Every card-shaped surface on the Dashboard is `hlmCard`** — "Your work queues", "Also worth a
-look" and "Recently updated", previously a bare `app-page-section` with no surface chrome, share the
-same `hlmCard`/`hlmCardHeader`/`hlmCardContent` primitives as the Trends section's severity breakdown
-and chart cards, and as `app-stat-tile` (`ui/components/stat-tile`) — the KPI card interventions' own
-`app-intervention-kpi-strip` already builds on. One card family across the whole page, matching the
-one the interventions list uses for its KPI row, rather than two different card idioms depending on
-scroll position.
+**Every section is `hlmCard`, application-wide** — not only on the Dashboard, where this decision
+started. "Your work queues", "Also worth a look" and "Recently updated" were the first to move off a
+bare `app-page-section`; the equipment and intervention detail panels (attachments, tags, maintenance
+history, activity, proposed changes, work items) followed, each having hand-rebuilt a card header in
+slightly different Tailwind. They share the `hlmCard`/`hlmCardHeader`/`hlmCardContent` primitives with
+the Trends charts and with `app-stat-tile` (`ui/components/stat-tile`), which
+`app-intervention-kpi-strip` already builds on. `shared/page-section` is deleted rather than kept as an
+unused second answer, and `DESIGN.md` §The Working Surface Rule is amended to match — it previously
+said the opposite.
+
+`app-stat-tile` renders its figure at one size — `text-2xl font-semibold` — whatever inputs it is
+given. It used to switch to `text-3xl font-bold` when a caption was passed, which put the same kind of
+metric at two sizes depending on the page and broke `DESIGN.md`'s 24px ceiling. Its badge sits beside
+the label in a wrapping flex row rather than in `hlmCardAction`, because that slot's
+`grid-cols-[1fr_auto]` starved the label at a KPI strip's narrow column.
 
 List pages (roster, facilities, equipments, inspections, interventions) share one pagination
 recipe, `app-collection-pagination` (`@shared/collection-pagination`), one toolbar shell,

@@ -247,8 +247,10 @@ character alignment matters more than reading rhythm.
 - **Headline** (600, 1.5rem/2rem, `-0.025em`): the page title, and the only
   element at this size. Always paired with `tracking-tight`; at 24px the default
   tracking reads loose.
-- **Title** (600, 1rem/1.5rem): section and card headings. The step down from
-  headline is deliberately large — there is no 20px rung in normal use.
+- **Title** (500, 1rem/1.5rem): section and card headings. The step down from
+  headline is deliberately large — there is no 20px rung in normal use. The
+  weight is `hlmCardTitle`'s own, and section titles are `hlmCardTitle`, so the
+  one place this is defined is the primitive rather than a call site.
 - **Body** (400–500, 0.875rem/1.25rem): the working size. Table cells, form
   values, descriptions, and nearly everything the operator reads.
 - **Label** (500, 0.75rem/1rem): metadata, timestamps, status badge text,
@@ -458,17 +460,37 @@ Every page root carries a stable `id` — e2e selectors rely on it.
 - The only subtitle form is the lead paragraph:
   `<p class="shrink-0 text-sm text-muted-foreground">`, directly under the
   header.
-- Sections have exactly one `<h2>` style — `text-base font-semibold` — carried
-  by the shared `app-page-section` primitive (`<section aria-labelledby>` +
-  heading + description/action slots). The muted variant
+- Sections have exactly one `<h2>` style — `hlmCardTitle`, which is
+  `text-base font-medium` — inside an `hlmCardHeader`, with the caption as
+  `hlmCardDescription` and any action in `hlmCardAction`. The muted variant
   `text-sm font-medium text-muted-foreground` is reserved for sub-groups
-  inside a section.
+  inside a section. `text-lg` is not in the scale and appears nowhere.
+- **Heading rank follows nesting, not size.** A section that opens a content
+  column is `<h2>`; a card nested inside a section that already has its `<h2>`
+  is `<h3>`. Both render identically — the rank is for the document outline,
+  which is why skipping one is a defect even when nothing looks wrong.
 
 ### The Working Surface Rule (when a card is right)
 
-A card wraps a **self-contained working surface** — a form, the calendar's day
-panel, a stat tile. It never wraps an ordinary page section: sections are
-borderless or divider-separated, per "hierarchy from rhythm".
+**The card is the section.** An ordinary page section and a self-contained
+working surface — a form, the calendar's day panel, a stat tile — are the same
+chrome: `hlmCard`. One card family across the application, rather than a
+borderless idiom and a carded one whose boundary nobody could state twice the
+same way.
+
+This reverses the earlier rule, which held that a card never wraps an ordinary
+section and that sections separate by rhythm alone. That rule lost on the
+evidence: the primitive it named (`app-page-section`) had drifted to **zero**
+consumers while sixteen files had already moved to `hlmCard`, and the seven
+panels still hand-rolling a header had each rebuilt the card's own anatomy in
+slightly different Tailwind. `organization/FEATURE.md` had already recorded the
+reversal for the Dashboard; it is now the whole application, and
+`shared/page-section` is deleted rather than left as a second, unused answer.
+
+What survives from the old rule: **do not let every surface become an identical
+box.** Hierarchy still comes from rhythm — a card's own header, spacing and
+divider lists do that work inside the card, and a page still separates its
+regions with space rather than nesting cards in cards.
 
 ### Back-links
 
@@ -605,9 +627,9 @@ Cross-cutting rules:
 - **Don't** set uppercase with widened tracking as a section eyebrow.
 - **Don't** add a shadow to an in-page surface. Shadow means "floating and
   dismissable".
-- **Don't** wrap every section in an identical bordered card. Vary surface
-  levels — borderless headers, carded work surfaces, divider lists — so
-  hierarchy comes from rhythm rather than from boxes.
+- **Don't** nest a card inside a card, or reach for a second card family. One
+  section is one `hlmCard`; inside it, hierarchy comes from the header, the
+  spacing and divider lists — from rhythm rather than from more boxes.
 - **Don't** add page-level motion. Transitions belong to the primitives; a
   feature template's motion vocabulary is `transition-colors` and the button's
   1px press.

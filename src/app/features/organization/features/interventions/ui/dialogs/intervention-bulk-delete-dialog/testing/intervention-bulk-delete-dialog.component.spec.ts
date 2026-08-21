@@ -65,8 +65,8 @@ describe('InterventionBulkDeleteDialog', () => {
     fixture.componentRef.setInput('busy', true);
     await setVisible(true);
 
-    expect(confirmButton().getAttribute('aria-disabled')).toBe('true');
-    expect(cancelButton().getAttribute('aria-disabled')).toBe('true');
+    expect((confirmButton() as HTMLButtonElement).disabled).toBe(true);
+    expect((cancelButton() as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('should emit dismissed on Cancel without emitting confirmed', async () => {

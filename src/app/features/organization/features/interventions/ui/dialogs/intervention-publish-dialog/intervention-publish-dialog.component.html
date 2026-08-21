@@ -71,11 +71,8 @@
             size="sm"
             class="self-start max-sm:min-h-11"
             data-testid="intervention-detail-publish-recheck"
-            [attr.aria-disabled]="publishing() ? 'true' : null"
-            [attr.aria-busy]="publishing() ? 'true' : null"
-            [class.opacity-50]="publishing()"
-            [class.pointer-events-none]="publishing()"
-            (click)="publishing() || recheckRequested.emit()"
+            [disabled]="publishing()"
+            (click)="recheckRequested.emit()"
           >
             <span i18n="@@intervention.publish.recheck">Check again</span>
           </button>
@@ -85,15 +82,9 @@
 
     <hlm-alert-dialog-footer>
       <button
-        hlmBtn
-        type="button"
-        variant="outline"
+        hlmAlertDialogCancel
         class="max-sm:min-h-11"
-        [attr.aria-disabled]="publishing() ? 'true' : null"
-        [attr.aria-busy]="publishing() ? 'true' : null"
-        [class.opacity-50]="publishing()"
-        [class.pointer-events-none]="publishing()"
-        (click)="publishing() || dismissed.emit()"
+        [disabled]="publishing()"
         i18n="@@common.cancel"
       >
         Cancel
@@ -103,11 +94,8 @@
           hlmAlertDialogAction
           class="max-sm:min-h-11"
           data-testid="intervention-detail-publish-confirm"
-          [attr.aria-disabled]="publishing() ? 'true' : null"
-          [attr.aria-busy]="publishing() ? 'true' : null"
-          [class.opacity-50]="publishing()"
-          [class.pointer-events-none]="publishing()"
-          (click)="publishing() || confirmed.emit()"
+          [disabled]="publishing()"
+          (click)="confirmed.emit()"
         >
           @if (publishing()) {
             <span i18n="@@intervention.publish.pending">Publishing…</span>

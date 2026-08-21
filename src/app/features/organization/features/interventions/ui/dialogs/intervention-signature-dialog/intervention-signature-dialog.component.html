@@ -39,10 +39,8 @@
         size="sm"
         class="self-end max-sm:min-h-11"
         data-testid="intervention-signature-clear"
-        [attr.aria-disabled]="!hasStrokes() ? 'true' : null"
-        [class.opacity-50]="!hasStrokes()"
-        [class.pointer-events-none]="!hasStrokes()"
-        (click)="!hasStrokes() || clear()"
+        [disabled]="!hasStrokes()"
+        (click)="clear()"
       >
         <span i18n="@@intervention.signature.clear">Clear</span>
       </button>

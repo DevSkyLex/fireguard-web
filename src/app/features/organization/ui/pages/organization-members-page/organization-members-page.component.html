@@ -47,7 +47,7 @@
 
     <section class="flex shrink-0 flex-col gap-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-lg font-medium">{{ rosterHeading() }}</h2>
+        <h2 class="text-base font-medium">{{ rosterHeading() }}</h2>
 
         @if (canManageMembers() && selectedIds().size > 0) {
           <button
@@ -204,7 +204,7 @@
 
     @if (canManageMembers()) {
       <section class="flex flex-col gap-3">
-        <h2 class="text-lg font-medium">{{ pendingInvitationsHeading() }}</h2>
+        <h2 class="text-base font-medium">{{ pendingInvitationsHeading() }}</h2>
 
         @if (store.loadCallState().status === 'error') {
           <app-error-state

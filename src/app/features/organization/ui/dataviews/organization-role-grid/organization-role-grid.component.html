@@ -21,7 +21,7 @@
     />
   } @else {
     <section class="flex flex-col gap-3">
-      <h2 class="text-lg font-medium">{{ systemRolesHeading() }}</h2>
+      <h2 class="text-base font-medium">{{ systemRolesHeading() }}</h2>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @for (item of systemItems(); track item.id) {
           <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
@@ -32,7 +32,7 @@
     <hlm-separator />
 
     <section class="flex flex-col gap-3">
-      <h2 class="text-lg font-medium">{{ customRolesHeading() }}</h2>
+      <h2 class="text-base font-medium">{{ customRolesHeading() }}</h2>
       @if (customItems().length === 0) {
         @if (canManage()) {
           <app-empty-state

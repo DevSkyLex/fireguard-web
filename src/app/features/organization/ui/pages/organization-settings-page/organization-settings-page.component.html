@@ -127,12 +127,12 @@
             />
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h3
+              <h2
                 class="text-sm font-semibold tracking-tight text-foreground"
                 i18n="@@org.settings.legal.sectionTitle"
               >
                 Legal information
-              </h3>
+              </h2>
               <app-organization-legal-form
                 [legal]="legalFormValues()"
                 [legalTypeOptions]="legalTypeOptions()"
@@ -149,7 +149,7 @@
           <div class="flex flex-col gap-8">
             <div hlmCard>
               <div hlmCardHeader>
-                <h3 hlmCardTitle i18n="@@org.settings.subscription.currentTitle">Current plan</h3>
+                <h2 hlmCardTitle i18n="@@org.settings.subscription.currentTitle">Current plan</h2>
                 <p hlmCardDescription>
                   {{ organization()?.planName ?? '—' }}
                 </p>
@@ -259,12 +259,12 @@
             </div>
 
             <section class="flex flex-col gap-3">
-              <h3
+              <h2
                 class="text-sm font-semibold tracking-tight text-foreground"
                 i18n="@@org.settings.subscription.plansTitle"
               >
                 Plans
-              </h3>
+              </h2>
               <app-organization-plan-selector
                 [organizationId]="organizationId() ?? ''"
                 [currentPlanId]="organization()?.planId ?? null"
@@ -274,12 +274,12 @@
             </section>
 
             <section class="flex flex-col gap-3">
-              <h3
+              <h2
                 class="text-sm font-semibold tracking-tight text-foreground"
                 i18n="@@org.settings.subscription.invoicesTitle"
               >
                 Invoices
-              </h3>
+              </h2>
 
               @if (billingStore.isLoadingInvoices()) {
                 <div
@@ -396,12 +396,12 @@
             />
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h3
+              <h2
                 class="text-sm font-semibold tracking-tight text-foreground"
                 i18n="@@org.settings.compliance.automationTitle"
               >
                 Automation
-              </h3>
+              </h2>
               <app-organization-automation-form
                 [automation]="automationSeed()"
                 [pending]="settingsStore.isSaving()"
@@ -410,12 +410,12 @@
             </section>
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h3
+              <h2
                 class="text-sm font-semibold tracking-tight text-foreground"
                 i18n="@@org.settings.approval.sectionTitle"
               >
                 Four-eyes approval policy
-              </h3>
+              </h2>
               <app-organization-approval-form
                 [approval]="approvalSeed()"
                 [actionTypes]="approvalActionTypes()"
@@ -444,14 +444,14 @@
               @if (canSuspend() || canRestore()) {
                 <div hlmCard>
                   <div hlmCardHeader>
-                    <h3 hlmCardTitle class="flex items-center gap-2">
+                    <h2 hlmCardTitle class="flex items-center gap-2">
                       <ng-icon
                         name="lucideBan"
                         class="shrink-0 text-destructive"
                         aria-hidden="true"
                       />
                       <span i18n="@@org.settings.danger.statusTitle">Suspend or restore</span>
-                    </h3>
+                    </h2>
                     <p hlmCardDescription i18n="@@org.settings.danger.statusDescription">
                       Suspending blocks every member's access immediately without deleting any data.
                       Restoring brings a suspended or archived organization back to active.
@@ -518,14 +518,14 @@
               @if (canTransferOwnership()) {
                 <div hlmCard>
                   <div hlmCardHeader>
-                    <h3 hlmCardTitle class="flex items-center gap-2">
+                    <h2 hlmCardTitle class="flex items-center gap-2">
                       <ng-icon
                         name="lucideArrowRightLeft"
                         class="shrink-0 text-destructive"
                         aria-hidden="true"
                       />
                       <span i18n="@@org.settings.danger.transferTitle">Transfer ownership</span>
-                    </h3>
+                    </h2>
                     <p hlmCardDescription i18n="@@org.settings.danger.transferDescription">
                       Hand full control of this organization to another active member. You keep your
                       own membership and roles, but no longer own it.
@@ -560,14 +560,14 @@
               @if (canLeave()) {
                 <div hlmCard>
                   <div hlmCardHeader>
-                    <h3 hlmCardTitle class="flex items-center gap-2">
+                    <h2 hlmCardTitle class="flex items-center gap-2">
                       <ng-icon
                         name="lucideLogOut"
                         class="shrink-0 text-destructive"
                         aria-hidden="true"
                       />
                       <span i18n="@@org.settings.danger.leaveTitle">Leave this organization</span>
-                    </h3>
+                    </h2>
                     <p hlmCardDescription i18n="@@org.settings.danger.leaveDescription">
                       Removes your own membership. Another member will need to invite you back.
                     </p>
@@ -599,14 +599,14 @@
 
               <div hlmCard>
                 <div hlmCardHeader>
-                  <h3 hlmCardTitle class="flex items-center gap-2">
+                  <h2 hlmCardTitle class="flex items-center gap-2">
                     <ng-icon
                       name="lucideTriangleAlert"
                       class="shrink-0 text-destructive"
                       aria-hidden="true"
                     />
                     <span i18n="@@org.settings.danger.title">Delete this organization</span>
-                  </h3>
+                  </h2>
                   <p hlmCardDescription i18n="@@org.settings.danger.description">
                     Permanently deletes every facility, piece of equipment, inspection, intervention
                     and member record. This cannot be undone.

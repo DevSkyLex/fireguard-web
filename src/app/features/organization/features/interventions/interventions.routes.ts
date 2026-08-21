@@ -5,6 +5,7 @@ import { interventionTitleResolver } from './http/resolvers';
 import type { InterventionFilterFieldKey } from './models';
 import { InterventionStore } from './state';
 import { InterventionPlanningOptionsStore } from './state/intervention-planning-options';
+import { InterventionStatisticsStore } from './state/intervention-statistics';
 
 /**
  * Constant INTERVENTION_ROUTES
@@ -90,7 +91,7 @@ export const INTERVENTION_ROUTES: Routes = [
     children: [
       {
         path: '',
-        providers: [InterventionPlanningOptionsStore],
+        providers: [InterventionPlanningOptionsStore, InterventionStatisticsStore],
         loadComponent: () =>
           import('./ui/pages/interventions-shell-page/interventions-shell-page.component').then(
             (m) => m.InterventionsShellPage,

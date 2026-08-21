@@ -4,6 +4,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import type { InterventionFilterFieldKey } from '@features/organization/features/interventions/models';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
+import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
 import { InterventionsShellPage } from '../interventions-shell-page.component';
 
 /** Route data one of the three leaves would declare, mirroring `interventions.routes.ts`. */
@@ -73,6 +74,14 @@ describe('InterventionsShellPage', () => {
             members: signal([]),
             labels: signal([]),
             loadCreationOptions: vi.fn(),
+          },
+        },
+        {
+          provide: InterventionStatisticsStore,
+          useValue: {
+            queryData: signal(null),
+            isQueryLoading: signal(false),
+            load: vi.fn(),
           },
         },
       ],

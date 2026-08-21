@@ -59,9 +59,7 @@ import {
   InterventionListPreferencesService,
 } from '@features/organization/features/interventions/services';
 import {
-  InterventionStatisticsStore,
   InterventionStore,
-  type InterventionStatisticsStoreType,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
@@ -96,8 +94,6 @@ import {
   InterventionRecurrenceStore,
   type InterventionRecurrenceStoreType,
 } from '../../../state/intervention-recurrence';
-import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
@@ -203,8 +199,6 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
     InterventionBulkDeleteDialog,
     InterventionCreateSheet,
     InterventionRecurrencesSheet,
-    InterventionKpiStrip,
-    InterventionStatisticsAnalysis,
     InterventionTable,
     CollectionPagination,
     CollectionToolbar,
@@ -215,7 +209,6 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
     ...HlmSeparatorImports,
   ],
   providers: [
-    InterventionStatisticsStore,
     InterventionRecurrenceStore,
     provideIcons({
       lucideArrowDown,
@@ -350,25 +343,6 @@ export class InterventionsPage {
   /** Site and member choices for the filters and the creation form. */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
-
-  /**
-   * Property statisticsStore
-   * @readonly
-   *
-   * @description
-   * The KPI strip's organization-wide snapshot. Component-scoped and
-   * reloaded only on an organization switch — the snapshot is
-   * `INTERVENTIONS_READ`-gated the same as the list, but org-wide, so it
-   * must not refetch on every filter, search or page change the list
-   * itself reacts to (`FEATURE.md`).
-   *
-   * @access protected
-   * @since 5.3.0
-   *
-   * @type {InterventionStatisticsStoreType}
-   */
-  protected readonly statisticsStore: InterventionStatisticsStoreType =
-    inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
   /**
    * Property recurrenceStore
@@ -1133,13 +1107,6 @@ export class InterventionsPage {
             itemsPerPage: pageSize,
           },
         });
-      });
-    });
-
-    effect((): void => {
-      const organizationId: string = this.organizationId();
-      untracked((): void => {
-        this.statisticsStore.load(organizationId);
       });
     });
 

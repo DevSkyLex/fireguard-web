@@ -1,17 +1,4 @@
-<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <app-intervention-kpi-strip
-    class="shrink-0"
-    [statistics]="statisticsStore.queryData()"
-    [loading]="statisticsStore.isQueryLoading()"
-    [baseRoute]="detailRouteBase()"
-  />
-
-  <app-intervention-statistics-analysis
-    class="shrink-0"
-    [statistics]="statisticsStore.queryData()"
-    [organizationId]="organizationId()"
-  />
-
+<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <app-collection-toolbar>
     <div toolbarStart class="flex items-center gap-2">
       <button

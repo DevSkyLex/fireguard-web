@@ -69,6 +69,12 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmTooltip } from '@shared/ui/tooltip';
 import { InterventionPlanningOptionsStore } from '../../../state/intervention-planning-options';
 import type { InterventionPlanningOptionsStoreType } from '../../../state/intervention-planning-options';
+import {
+  InterventionStatisticsStore,
+  type InterventionStatisticsStoreType,
+} from '../../../state/intervention-statistics';
+import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
+import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 
 /** How long typing settles before the search reaches the wire — mirrors the pre-shell `InterventionsPage`. */
@@ -163,6 +169,8 @@ const ALL_FILTER_FIELD_KEYS: readonly InterventionFilterFieldKey[] = INTERVENTIO
     HlmButton,
     HlmTooltip,
     InterventionTag,
+    InterventionKpiStrip,
+    InterventionStatisticsAnalysis,
     CollectionFilterBar,
     CollectionFilterToggle,
     CollectionSearchBox,
@@ -243,6 +251,38 @@ export class InterventionsShellPage {
   /** Site, member and label choices for the filter bar's three IRI-valued chips. */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
+
+  /**
+   * Property statisticsStore
+   * @readonly
+   *
+   * @description
+   * The KPI strip's organization-wide snapshot. It lives on the shell rather
+   * than on the list because the figures describe the collection, not one
+   * rendering of it — so they sit above the view switcher and hold while the
+   * reader moves between the table, the board and the calendar. Reloaded only
+   * on an organization switch: the snapshot is org-wide, and must not refetch
+   * on the filter, search or page changes the leaves react to (`FEATURE.md`).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {InterventionStatisticsStoreType}
+   */
+  protected readonly statisticsStore: InterventionStatisticsStoreType =
+    inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
+
+  /**
+   * Property detailRouteBase
+   * @readonly
+   * @description The route prefix each KPI tile links into.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['/organizations', this.organizationId(), 'interventions'],
+  );
 
   /** Round-trips `?q=` and every filter param this shell writes. */
   private readonly router: Router = inject(Router);
@@ -671,6 +711,14 @@ export class InterventionsShellPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      untracked((): void => {
+        this.statisticsStore.load(organizationId);
+      });
+    });
 
     effect((): void => {
       const term: string = this.searchTerm();

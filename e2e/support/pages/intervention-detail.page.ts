@@ -12,9 +12,10 @@ import type { Locator, Page } from '@playwright/test';
  * unsaved-changes guard (`@shared/unsaved-changes`) when a draft is pending.
  *
  * Two copies of `app-intervention-issues-checklist` render in the DOM at
- * once (a `lg:hidden` mobile instance and a `max-lg:hidden` desktop one, each
- * carrying the same `data-testid`) — every locator here scopes to the
- * `:visible` one, matching the desktop viewport this suite runs at.
+ * once — a mobile instance hidden by the `@4xl/detail:hidden` container query
+ * and a desktop one hidden by `@max-4xl/detail:hidden`, each carrying the same
+ * `data-testid`. Every locator here scopes to the `:visible` one, matching the
+ * desktop viewport this suite runs at.
  */
 export class InterventionDetailPage {
   public constructor(private readonly page: Page) {}

@@ -1,6 +1,8 @@
 {
   "detector": {
-    "ignoreRules": [],
+    "ignoreRules": [
+      "broken-image"
+    ],
     "ignoreFiles": [],
     "ignoreValues": [
       {

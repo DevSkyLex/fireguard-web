@@ -96,8 +96,13 @@ describe('ApprovalsPage', () => {
     expect(loadActionTypes).toHaveBeenCalled();
   });
 
-  it('should give the action-type filter a persistent, associated label', async () => {
+  it('should give the action-type filter a persistent, associated label once its chip is picked', async () => {
     fixture = await createPage();
+
+    (fixture.componentInstance as unknown as { onFieldPicked(key: string): void }).onFieldPicked(
+      'actionType',
+    );
+    await fixture.whenStable();
 
     const label = fixture.nativeElement.querySelector(
       'label[for="approvals-filter-action-type"]',

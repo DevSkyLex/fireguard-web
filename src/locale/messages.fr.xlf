@@ -7388,10 +7388,6 @@
         <source>Maintenance</source>
         <target>Maintenance</target>
       </trans-unit>
-      <trans-unit id="maintenance.filter.dueStatusAriaLabel" datatype="html">
-        <source>Filter by due status</source>
-        <target>Filtrer par statut d&apos;échéance</target>
-      </trans-unit>
       <trans-unit id="maintenance.table.equipmentLinkAriaLabel" datatype="html">
         <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
         <target><x id="type" equiv-text="type"/> à <x id="facility" equiv-text="facilityName"/></target>
@@ -8943,6 +8939,62 @@
       <trans-unit id="account.devices.revokeAllConfirmAction" datatype="html">
         <source> Revoke all </source>
         <target> Tout révoquer </target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKind" datatype="html">
+        <source>Kind</source>
+        <target>Type d&apos;import</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKindPlaceholder" datatype="html">
+        <source>Any kind</source>
+        <target>Tous les types</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="audit.list.searchPlaceholder" datatype="html">
+        <source>Search actions, actors and subjects...</source>
+        <target>Rechercher actions, acteurs et objets...</target>
+      </trans-unit>
+      <trans-unit id="audit.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueStatus" datatype="html">
+        <source>Due status</source>
+        <target>Statut d&apos;échéance</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.anyDueStatus" datatype="html">
+        <source>Any status</source>
+        <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
+        <source>before</source>
+        <target>avant</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforePlaceholder" datatype="html">
+        <source>Pick a date</source>
+        <target>Choisir une date</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.status" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
       </trans-unit>
 </body>
   </file>

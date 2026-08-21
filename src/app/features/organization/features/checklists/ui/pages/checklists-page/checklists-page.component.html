@@ -11,8 +11,32 @@
       (queryChanged)="applySearch($event)"
     />
 
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@checklists.list.filtersButton"
+      testIdPrefix="checklists"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="checklists"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved()"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #statusChip>
     <hlm-toggle-group
-      toolbarStart
       type="single"
       variant="outline"
       size="sm"
@@ -29,24 +53,11 @@
           [value]="value"
           [attr.data-testid]="'checklists-filter-status-' + value"
         >
-          {{ value }}
+          <app-checklist-status-tag [value]="value" asOption />
         </button>
       }
     </hlm-toggle-group>
-
-    @if (canWrite()) {
-      <button
-        hlmBtn
-        toolbarEnd
-        type="button"
-        class="max-sm:min-h-11"
-        data-testid="checklists-new"
-        (click)="openCreateDialog()"
-      >
-        <span i18n="@@checklists.list.new">New checklist</span>
-      </button>
-    }
-  </app-collection-toolbar>
+  </ng-template>
 
   @if (store.listCallState().status === 'error') {
     <app-error-state
@@ -118,3 +129,20 @@
   (visibleChange)="onArchiveDialogVisibleChanged($event)"
   (confirmed)="confirmArchive()"
 />
+
+<ng-template #pageActions>
+  @if (canWrite()) {
+    <button
+      hlmBtn
+      type="button"
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="checklists-new"
+      i18n-aria-label="@@checklists.list.new"
+      aria-label="New checklist"
+      (click)="openCreateDialog()"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@checklists.list.new">New checklist</span>
+    </button>
+  }
+</ng-template>

@@ -1,6 +1,6 @@
 <div id="imports" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   @if (canUpload()) {
-    <section hlmCard data-testid="imports-upload-card">
+    <section hlmCard class="max-w-xl" data-testid="imports-upload-card">
       <div hlmCardHeader>
         <h2 hlmCardTitle i18n="@@imports.upload.title">Import from CSV</h2>
         <p hlmCardDescription i18n="@@imports.upload.description">
@@ -18,6 +18,60 @@
     </section>
   }
 
+  <app-collection-toolbar>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@imports.list.filtersButton"
+      testIdPrefix="imports"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="imports"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved()"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #kindChip>
+    <hlm-select
+      [value]="kindFilter()"
+      [itemToString]="kindLabelOf"
+      [state]="fieldPopoverState()"
+      (valueChange)="applyKindFilter($event ?? null)"
+      (stateChanged)="onFieldPopoverStateChanged($event)"
+    >
+      <label for="imports-filter-kind" class="sr-only" i18n="@@imports.list.filterKind">Kind</label>
+      <hlm-select-trigger
+        buttonId="imports-filter-kind"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="imports-filter-kind"
+      >
+        <hlm-select-value
+          placeholder="Any kind"
+          i18n-placeholder="@@imports.list.filterKindPlaceholder"
+        />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (option of kindFilterOptions; track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
+
   @if (store.hasListError()) {
     <app-error-state
       icon="lucideCircleAlert"
@@ -32,12 +86,18 @@
     </app-error-state>
   } @else if (!store.isLoading() && items().length === 0) {
     <app-empty-state
-      icon="lucideUpload"
+      [icon]="hasFilters() ? 'lucideSearch' : 'lucideUpload'"
       title="No import jobs yet"
       i18n-title="@@imports.list.emptyTitle"
       description="Upload a CSV file above to bulk-create equipment or facilities."
       i18n-description="@@imports.list.emptyDesc"
-    />
+    >
+      @if (hasFilters()) {
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      }
+    </app-empty-state>
   } @else {
     <app-import-job-table
       [items]="items()"

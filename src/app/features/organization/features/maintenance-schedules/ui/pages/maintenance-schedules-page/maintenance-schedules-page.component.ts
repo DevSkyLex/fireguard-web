@@ -16,7 +16,16 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucidePackage, lucideSparkles } from '@ng-icons/lucide';
+import {
+  lucideCalendar,
+  lucideCircleAlert,
+  lucideClock,
+  lucideMapPin,
+  lucidePackage,
+  lucideSparkles,
+  lucideTag,
+} from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -33,14 +42,19 @@ import {
 } from '@features/organization/features/maintenance-schedules/state';
 import { iriId } from '@features/organization/features/maintenance-schedules/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmInput } from '@shared/ui/input';
+import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
-import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-dialog';
 import { MaintenanceOverrideDialog } from '../../dialogs/maintenance-override-dialog';
@@ -60,18 +74,23 @@ const DUE_STATUS_VALUES: readonly MaintenanceDueStatus[] = [
 /** How many facilities the scoping select fetches — organizations rarely exceed this. */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
+/** The filter bar's field keys — this page's whole narrowing surface. */
+type MaintenanceScheduleFilterKey = 'dueStatus' | 'facility' | 'equipmentType' | 'dueBefore';
+
 /**
  * Interface MaintenanceScheduleFilters
  *
  * @description
- * The page's own narrowing state — questions asked now, so never persisted,
- * matching `EquipmentsPage`'s `filters` signal shape.
+ * The page's own narrowing state — questions asked now, so never persisted.
+ * {@link dueBefore} is a `Date`, matching what `hlm-date-picker` emits; it is
+ * converted to an ISO-8601 string only where the store's `load` input
+ * requires one.
  */
 interface MaintenanceScheduleFilters {
   readonly dueStatus: MaintenanceDueStatus | null;
   readonly facility: string | null;
   readonly equipmentType: string | null;
-  readonly dueBefore: string | null;
+  readonly dueBefore: Date | null;
 }
 
 /**
@@ -80,14 +99,16 @@ interface MaintenanceScheduleFilters {
  *
  * @description
  * Route entry page for the organization's maintenance schedules: a
- * dueStatus `hlm-toggle-group` row, facility/equipment-type selects and a
- * due-before date above the grid, an interval-override dialog gated
+ * `app-collection-filter-toggle` above an editable `app-collection-filter-bar`
+ * carrying all four narrowings this endpoint accepts — due status, facility,
+ * equipment type, due-before — as chips (`@shared/collection-filters`),
+ * above the grid. There is no search box: `MaintenanceScheduleResource`'s
+ * collection has no `SearchExtractor`, so offering one would fake a
+ * narrowing the API cannot serve. An interval-override dialog is gated
  * `organization.maintenance.manage`, and a "Generate inspection campaign"
- * header action gated on that permission **and**
+ * header action is gated on that permission **and**
  * `organization.interventions.plan` together — a single 403 otherwise, so
- * the button only ever offers what the backend will actually accept. The
- * toggle group is `nullable`, mirroring `InterventionWorkItemTable`'s
- * filter row, so re-activating the current chip clears the narrowing.
+ * the button only ever offers what the backend will actually accept.
  *
  * Owns the query the table renders (filters, paging), the two dialogs'
  * visibility, and the campaign success reaction: the store already toasts
@@ -97,7 +118,7 @@ interface MaintenanceScheduleFilters {
  * own {@link facilityOptions}, so the grid can disambiguate rows sharing an
  * equipment type across facilities.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -111,14 +132,25 @@ interface MaintenanceScheduleFilters {
     MaintenanceScheduleTable,
     MaintenanceOverrideDialog,
     MaintenanceCampaignDialog,
+    CollectionFilterBar,
+    CollectionFilterToggle,
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
-    HlmInput,
+    ...HlmDatePickerImports,
     ...HlmSelectImports,
-    ...HlmToggleGroupImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucidePackage, lucideSparkles })],
+  providers: [
+    provideIcons({
+      lucideCalendar,
+      lucideCircleAlert,
+      lucideClock,
+      lucideMapPin,
+      lucidePackage,
+      lucideSparkles,
+      lucideTag,
+    }),
+  ],
   templateUrl: './maintenance-schedules-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -205,17 +237,107 @@ export class MaintenanceSchedulesPage {
     Math.max(1, Math.ceil(this.store.totalSchedules() / this.pageSize())),
   );
 
-  /** Whether the current view is narrowed at all, deciding what the empty state offers. */
-  protected readonly hasFilters: Signal<boolean> = computed<boolean>(() => {
-    const current = this.filters();
+  /** The filter bar's field catalog: due status, facility, equipment type, then due-before. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'dueStatus',
+      fieldLabel: $localize`:@@maintenance.filter.dueStatus:Due status`,
+      icon: 'lucideClock',
+      operators: ['equals'],
+    },
+    {
+      key: 'facility',
+      fieldLabel: $localize`:@@maintenance.filter.facility:Facility`,
+      icon: 'lucideMapPin',
+      operators: ['equals'],
+    },
+    {
+      key: 'equipmentType',
+      fieldLabel: $localize`:@@maintenance.filter.equipmentType:Equipment type`,
+      icon: 'lucideTag',
+      operators: ['equals'],
+    },
+    {
+      key: 'dueBefore',
+      fieldLabel: $localize`:@@maintenance.filter.dueBefore:Due before`,
+      icon: 'lucideCalendar',
+      operators: ['lessThan'],
+      operatorLabels: {
+        lessThan: $localize`:@@maintenance.filter.dueBeforeOperator:before`,
+      },
+    },
+  ];
 
-    return (
-      current.dueStatus !== null ||
-      current.facility !== null ||
-      current.equipmentType !== null ||
-      current.dueBefore !== null
-    );
-  });
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input and {@link hasFilters} both read this.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const current: MaintenanceScheduleFilters = this.filters();
+
+      return [
+        ...(current.dueStatus !== null ? ['dueStatus'] : []),
+        ...(current.facility !== null ? ['facility'] : []),
+        ...(current.equipmentType !== null ? ['equipmentType'] : []),
+        ...(current.dueBefore !== null ? ['dueBefore'] : []),
+      ];
+    },
+  );
+
+  /** Whether the current view is narrowed at all, deciding what the empty state offers. */
+  protected readonly hasFilters: Signal<boolean> = computed<boolean>(
+    () => this.activeFilterKeys().length > 0,
+  );
+
+  /** Which field's value selector currently renders forced open — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<MaintenanceScheduleFilterKey | null> =
+    signal<MaintenanceScheduleFilterKey | null>(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.2.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    this.hasFilters,
+  );
+
+  /** The "Due status" chip's value control, projected into the filter bar. */
+  private readonly dueStatusChipTemplate = viewChild<TemplateRef<unknown>>('dueStatusChip');
+
+  /** The "Facility" chip's value control, projected into the filter bar. */
+  private readonly facilityChipTemplate = viewChild<TemplateRef<unknown>>('facilityChip');
+
+  /** The "Equipment type" chip's value control, projected into the filter bar. */
+  private readonly equipmentTypeChipTemplate = viewChild<TemplateRef<unknown>>('equipmentTypeChip');
+
+  /** The "Due before" chip's value control, projected into the filter bar. */
+  private readonly dueBeforeChipTemplate = viewChild<TemplateRef<unknown>>('dueBeforeChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({
+    dueStatus: this.dueStatusChipTemplate(),
+    facility: this.facilityChipTemplate(),
+    equipmentType: this.equipmentTypeChipTemplate(),
+    dueBefore: this.dueBeforeChipTemplate(),
+  }));
 
   /** Whether the active member may open the interval-override dialog. */
   protected readonly canManage: Signal<boolean> = computed<boolean>(() =>
@@ -291,7 +413,7 @@ export class MaintenanceSchedulesPage {
           facility: current.facility ?? undefined,
           equipmentType: current.equipmentType ?? undefined,
           dueStatus: current.dueStatus ?? undefined,
-          dueBefore: current.dueBefore ?? undefined,
+          dueBefore: current.dueBefore?.toISOString(),
           page,
           itemsPerPage: pageSize,
         });
@@ -388,31 +510,85 @@ export class MaintenanceSchedulesPage {
   }
 
   /**
-   * Method onDueStatusChanged
-   *
-   * @description
-   * Narrows `hlm-toggle-group`'s single-select payload down to a known
-   * due-status, or `null` — the group is `nullable`, so re-clicking the
-   * active chip clears the narrowing rather than requiring a separate
-   * "Clear" action, mirroring `InterventionWorkItemTable.onFilterChanged`.
-   *
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control open.
    * @access protected
-   * @since 1.1.0
-   *
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
-   *
+   * @since 1.2.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
    * @returns {void}
    */
-  protected onDueStatusChanged(value: string | readonly string[] | null | undefined): void {
-    const dueStatus: MaintenanceDueStatus | null =
-      value === 'unscheduled' ||
-      value === 'up_to_date' ||
-      value === 'due_soon' ||
-      value === 'overdue'
-        ? value
-        : null;
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as MaintenanceScheduleFilterKey);
+  }
 
-    this.applyFilter({ dueStatus });
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @access protected
+   * @since 1.2.0
+   * @param {string} key - The field key a chip's remove button cleared.
+   * @returns {void}
+   */
+  protected onFieldRemoved(key: string): void {
+    switch (key as MaintenanceScheduleFilterKey) {
+      case 'dueStatus':
+        this.applyFilter({ dueStatus: null });
+        return;
+      case 'facility':
+        this.applyFilter({ facility: null });
+        return;
+      case 'equipmentType':
+        this.applyFilter({ equipmentType: null });
+        return;
+      case 'dueBefore':
+        this.applyFilter({ dueBefore: null });
+        return;
+    }
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.2.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @description Whether a select-backed field's value control should currently render open — true only for {@link openFilterKey}. `dueBefore`'s date picker manages its own popover state, so this is never called for it.
+   * @access protected
+   * @since 1.2.0
+   * @param {'dueStatus' | 'facility' | 'equipmentType'} key - The field to read.
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(key: 'dueStatus' | 'facility' | 'equipmentType'): BrnOverlayState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with a select-backed field's own value control.
+   * @access protected
+   * @since 1.2.0
+   * @param {'dueStatus' | 'facility' | 'equipmentType'} key - The field whose selector changed.
+   * @param {BrnOverlayState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(
+    key: 'dueStatus' | 'facility' | 'equipmentType',
+    state: BrnOverlayState,
+  ): void {
+    if (state === 'open') {
+      this.openFilterKey.set(key);
+      return;
+    }
+
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
   /**
@@ -467,7 +643,7 @@ export class MaintenanceSchedulesPage {
       facility: current.facility ?? undefined,
       equipmentType: current.equipmentType ?? undefined,
       dueStatus: current.dueStatus ?? undefined,
-      dueBefore: current.dueBefore ?? undefined,
+      dueBefore: current.dueBefore?.toISOString(),
       page: this.page(),
       itemsPerPage: this.pageSize(),
     });

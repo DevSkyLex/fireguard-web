@@ -39,6 +39,7 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import {
   InterventionPlanningOptionsStore,
@@ -109,6 +110,7 @@ const BOARD_PAGE_SIZE: number = 200;
     CollectionToolbar,
     CollectionSearchBox,
     HlmBadge,
+    HlmButton,
     ...HlmButtonGroupImports,
   ],
   providers: [InterventionPlanningOptionsStore],

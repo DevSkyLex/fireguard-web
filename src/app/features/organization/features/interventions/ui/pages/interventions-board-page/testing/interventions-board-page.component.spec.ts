@@ -242,6 +242,15 @@ describe('InterventionsBoardPage', () => {
     expect(transition).not.toHaveBeenCalled();
   });
 
+  it('should render the view-switcher toggle with the button directive actually applied', async () => {
+    fixture = await createPage();
+    const element = fixture.nativeElement as HTMLElement;
+
+    const listToggle = element.querySelector('[data-testid="intervention-view-toggle-list"]');
+
+    expect(listToggle?.getAttribute('data-slot')).toBe('button');
+  });
+
   it('should preserve every filter param except status when linking to the list view', async () => {
     fixture = await createPage();
     fixture.componentRef.setInput('priority', 'high');

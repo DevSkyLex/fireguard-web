@@ -8,6 +8,11 @@
         "value": "rgb(0, 0, 0)",
         "createdAt": "2026-08-16T20:32:22.795Z",
         "reason": "known false positive flagged on every touched template with no literal color present (see MEMORY.md impeccable-hook-color-false-positive)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "createdAt": "2026-08-21T15:30:59.153Z"
       }
     ]
   }

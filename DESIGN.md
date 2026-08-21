@@ -256,6 +256,13 @@ character alignment matters more than reading rhythm.
 - **Label** (500, 0.75rem/1rem): metadata, timestamps, status badge text,
   helper copy, and column headers. Sentence case, never uppercase.
 
+**The one step below Label** is `text-[10px]`, and it is not running text: it
+is a mark fitted to a container it must not overflow — the initials inside a
+small `hlm-avatar` fallback, and the count overlay on an icon. Nothing else
+goes under 12px, and nothing goes under 10px. This is written down because the
+feature tree already used it in a dozen places while the scale denied it
+existed; a rule no code follows is not a rule.
+
 ### Named Rules
 
 **The 24px Ceiling.** Nothing in the application renders larger than 1.5rem.

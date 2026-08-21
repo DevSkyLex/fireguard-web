@@ -20,13 +20,7 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideHash,
-  lucideMessageSquare,
-  lucidePlus,
-  lucideSearch,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideHash, lucideMessageSquare, lucidePlus, lucideTriangleAlert } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import {
@@ -44,11 +38,11 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { CollectionSearchBox } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -93,13 +87,13 @@ import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channe
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    CollectionSearchBox,
     EmptyState,
     ErrorState,
     HlmBadge,
     HlmButton,
     HlmSkeleton,
     NewChannelDialog,
-    ...HlmInputGroupImports,
     ...HlmItemImports,
     ...HlmSeparatorImports,
   ],
@@ -109,7 +103,6 @@ import { NewChannelDialog, type NewChannelDraft } from '../../dialogs/new-channe
       lucideHash,
       lucideMessageSquare,
       lucidePlus,
-      lucideSearch,
       lucideTriangleAlert,
     }),
   ],
@@ -469,8 +462,8 @@ export class ChannelsPage {
   }
 
   /**
-   * Method onSearchInput
-   * @method onSearchInput
+   * Method onSearchQueryChanged
+   * @method onSearchQueryChanged
    *
    * @description
    * Records a keystroke into the client-side list filter.
@@ -478,12 +471,12 @@ export class ChannelsPage {
    * @access protected
    * @since 1.1.0
    *
-   * @param {Event} event - The input event.
+   * @param {string} term - The search box's current value.
    *
    * @returns {void}
    */
-  protected onSearchInput(event: Event): void {
-    this.searchQuery.set((event.target as HTMLInputElement).value);
+  protected onSearchQueryChanged(term: string): void {
+    this.searchQuery.set(term);
   }
 
   /**

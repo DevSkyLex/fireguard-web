@@ -11,6 +11,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDotDashed, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -46,6 +47,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
     NgIcon,
     RouterLink,
     EmptyState,
+    ErrorState,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

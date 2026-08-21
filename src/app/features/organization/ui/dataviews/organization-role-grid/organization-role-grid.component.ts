@@ -23,7 +23,6 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
@@ -164,7 +163,6 @@ function permissionGroupLabelOf(group: string): string {
     HlmSkeleton,
     ...HlmCardImports,
     ...HlmDropdownMenuImports,
-    ...HlmEmptyImports,
     ...HlmSeparatorImports,
   ],
   providers: [

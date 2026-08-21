@@ -113,6 +113,7 @@ import {
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -220,6 +221,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     NgIcon,
     NgTemplateOutlet,
     EmptyState,
+    ErrorState,
     HlmButton,
     HlmSeparator,
     HlmSkeleton,

@@ -423,10 +423,9 @@
       </div>
     }
   } @else if (store.loadFailed()) {
-    <app-empty-state
+    <app-error-state
       icon="lucideCircleAlert"
-      class="rounded-md border border-dashed border-destructive/40 p-10"
-      role="alert"
+      class="p-10"
       title="This intervention could not be opened"
       i18n-title="@@intervention.detail.loadFailedTitle"
       [description]="store.error()"
@@ -451,7 +450,7 @@
       >
         <span i18n="@@intervention.detail.backToList">Back to interventions</span>
       </button>
-    </app-empty-state>
+    </app-error-state>
   } @else {
     <app-empty-state
       icon="lucideCompass"

@@ -28,10 +28,8 @@
     </div>
   </div>
 } @else if (error(); as message) {
-  <app-empty-state
+  <app-error-state
     icon="lucideCircleAlert"
-    class="rounded-md border border-dashed border-destructive/30 bg-destructive/5 p-6"
-    role="alert"
     title="Linked facilities could not be loaded"
     i18n-title="@@intervention.linked.facilities.errorTitle"
     [description]="message"
@@ -115,7 +113,6 @@
 } @else {
   <app-empty-state
     icon="lucideMapPin"
-    class="rounded-md border border-dashed border-border p-6"
     title="No linked facilities"
     i18n-title="@@intervention.linked.facilities.emptyTitle"
     description="No facility is linked to this intervention yet."

@@ -344,7 +344,6 @@
     } @else {
       <app-empty-state
         icon="lucideFilterX"
-        class="rounded-md border border-dashed border-border p-6"
         title="No work items match this filter"
         i18n-title="@@intervention.wit.filteredEmptyTitle"
         description="Try another chip, or clear the filter to see the whole scope."
@@ -355,7 +354,6 @@
   } @else {
     <app-empty-state
       icon="lucideListChecks"
-      class="rounded-md border border-dashed border-border p-6"
       title="No work items yet"
       i18n-title="@@intervention.wit.emptyTitle"
       [description]="emptyDescription()"

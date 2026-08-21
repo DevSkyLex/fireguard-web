@@ -14,11 +14,11 @@
       }
     </div>
   } @else if (items().length === 0) {
-    <hlm-empty>
-      <hlm-empty-header>
-        <div hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</div>
-      </hlm-empty-header>
-    </hlm-empty>
+    <app-empty-state
+      icon="lucideShieldPlus"
+      title="No roles found."
+      i18n-title="@@org.team.noResults"
+    />
   } @else {
     <section class="flex flex-col gap-3">
       <h2 class="text-lg font-medium">{{ systemRolesHeading() }}</h2>
@@ -37,7 +37,6 @@
         @if (canManage()) {
           <app-empty-state
             icon="lucideShieldPlus"
-            class="rounded-md border border-dashed border-border p-6"
             title="No custom roles yet"
             i18n-title="@@org.team.noCustomRolesTitle"
             description="Create a role to grant a tailored set of permissions beyond the built-in roles."

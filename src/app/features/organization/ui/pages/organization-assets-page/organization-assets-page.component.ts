@@ -58,10 +58,13 @@ import {
 } from '@features/organization/state/organization-assets-pane';
 import { resolveComplianceBucket } from '@features/organization/utils';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
 
@@ -113,10 +116,13 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     RouterLink,
     NgIcon,
     EmptyState,
+    ErrorState,
     Tree,
     FacilityMoveDialog,
     HlmBadge,
     HlmButton,
+    HlmSkeleton,
+    ...HlmAlertImports,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
     ...HlmTabsImports,

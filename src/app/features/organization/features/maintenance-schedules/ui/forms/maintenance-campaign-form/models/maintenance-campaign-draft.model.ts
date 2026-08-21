@@ -2,11 +2,11 @@
  * Interface MaintenanceCampaignDraft
  *
  * @description
- * The campaign dialog's own field shape: `dueBefore` as the plain
+ * The campaign form's own field shape: `dueBefore` as the plain
  * `yyyy-MM-dd` value a native date input produces, `facility` and
  * `equipmentType` as the sentinel `''` when left unscoped. Converted to
  * `GenerateMaintenanceCampaignInput` on submit, once the organization IRI —
- * which the dialog does not own — is folded in by the page.
+ * which the form does not own — is folded in by the page.
  *
  * @since 1.0.0
  */

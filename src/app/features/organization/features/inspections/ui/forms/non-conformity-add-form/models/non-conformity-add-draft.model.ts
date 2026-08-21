@@ -5,7 +5,7 @@ import type { NonConformitySeverity } from '@features/organization/features/insp
  * @interface NonConformityAddDraft
  *
  * @description
- * The Signal Forms model this dialog edits. `description` and `severity`
+ * The Signal Forms model this form edits. `description` and `severity`
  * start blank so the required rules have something to reject; `dueAt` and
  * `notes` stay optional, mirroring `AddNonConformityInput`.
  *

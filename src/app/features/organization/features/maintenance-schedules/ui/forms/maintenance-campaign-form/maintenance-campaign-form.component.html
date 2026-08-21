@@ -1,0 +1,146 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessage(); as message) {
+      <div role="alert" data-testid="maintenance-campaign-error" class="text-sm text-destructive">
+        <p>{{ message }}</p>
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="maintenance-campaign-name"
+        ><span i18n="@@maintenance.campaignDialog.name">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="maintenance-campaign-name"
+        type="text"
+        data-testid="maintenance-campaign-name"
+        placeholder="Q1 fire extinguisher round"
+        i18n-placeholder="@@maintenance.campaignDialog.namePlaceholder"
+        [formField]="campaignForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="campaignForm.name().touched() && campaignForm.name().invalid()"
+      />
+      @if (campaignForm.name().touched() && campaignForm.name().invalid()) {
+        <hlm-field-error>{{ campaignForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="maintenance-campaign-due-before"
+        ><span i18n="@@maintenance.campaignDialog.dueBefore">Due before</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="maintenance-campaign-due-before"
+        type="date"
+        data-testid="maintenance-campaign-due-before"
+        [formField]="campaignForm.dueBefore"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="
+          campaignForm.dueBefore().touched() && campaignForm.dueBefore().invalid()
+        "
+      />
+      @if (campaignForm.dueBefore().touched() && campaignForm.dueBefore().invalid()) {
+        <hlm-field-error>{{ campaignForm.dueBefore().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="maintenance-campaign-facility"
+        i18n="@@maintenance.campaignDialog.facility"
+        >Facility</label
+      >
+      <hlm-select [formField]="campaignForm.facility" [itemToString]="facilityLabelOf">
+        <hlm-select-trigger
+          buttonId="maintenance-campaign-facility"
+          class="w-full max-sm:min-h-11"
+          data-testid="maintenance-campaign-facility"
+        >
+          <hlm-select-value
+            placeholder="Every facility"
+            i18n-placeholder="@@maintenance.campaignDialog.everyFacility"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            <hlm-select-item
+              [value]="noScopeValue"
+              i18n="@@maintenance.campaignDialog.everyFacility"
+              >Every facility</hlm-select-item
+            >
+            @for (option of facilityOptions(); track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="maintenance-campaign-equipment-type"
+        i18n="@@maintenance.campaignDialog.equipmentType"
+        >Equipment type</label
+      >
+      <hlm-select [formField]="campaignForm.equipmentType" [itemToString]="equipmentTypeLabelOf">
+        <hlm-select-trigger
+          buttonId="maintenance-campaign-equipment-type"
+          class="w-full max-sm:min-h-11"
+          data-testid="maintenance-campaign-equipment-type"
+        >
+          <hlm-select-value
+            placeholder="Every type"
+            i18n-placeholder="@@maintenance.campaignDialog.everyType"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            <hlm-select-item [value]="noScopeValue" i18n="@@maintenance.campaignDialog.everyType"
+              >Every type</hlm-select-item
+            >
+            @for (option of equipmentTypeOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="maintenance-campaign-cancel"
+        [disabled]="pending()"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="maintenance-campaign-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@maintenance.campaignDialog.submitting">Generating…</span>
+        } @else {
+          <span i18n="@@maintenance.campaignDialog.submit">Generate campaign</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

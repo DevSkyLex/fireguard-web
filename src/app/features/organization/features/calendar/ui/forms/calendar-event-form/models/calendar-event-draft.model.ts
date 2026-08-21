@@ -2,7 +2,7 @@
  * Interface CalendarEventDraft
  *
  * @description
- * The dialog's own field shape: `startsAt`/`endsAt` as the plain
+ * The form's own field shape: `startsAt`/`endsAt` as the plain
  * `yyyy-MM-ddTHH:mm` value a native `datetime-local` input produces,
  * `description` and `facilityId` as the sentinel `''` when left blank.
  * Converted to {@link CalendarEventFormValues} on submit, once the picked
@@ -23,13 +23,13 @@ export interface CalendarEventDraft {
  * Interface CalendarEventFormValues
  *
  * @description
- * The dialog's validated submit payload: `startsAt` and — when set —
+ * The form's validated submit payload: `startsAt` and — when set —
  * `endsAt` as ISO 8601 with an explicit timezone offset, and `description`/
  * `facilityId` as `null` when the reader left them blank. The page maps this
  * directly onto `CreateCalendarEventInput` for a new event, or diffs it
  * against the record being edited to build a merge-patch
  * `UpdateCalendarEventInput` (`Calendar\MODULE.md`'s omitted-vs-`null`
- * semantics — a dialog output can only say "here is the full value", never
+ * semantics — a form output can only say "here is the full value", never
  * "leave this field alone", so only the page can tell the two apart).
  *
  * @since 1.0.0

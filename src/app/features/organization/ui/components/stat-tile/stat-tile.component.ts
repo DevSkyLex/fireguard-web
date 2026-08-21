@@ -37,11 +37,14 @@ import type { StatTileBadge, StatTileDelta, StatTileLink, StatTileTone } from '.
  * simply in a bad state rather than trending one way or another (an overdue
  * count, say): it colours the icon alone.
  *
- * {@link icon}, {@link badge} and {@link delta} share the header's single
- * `hlmCardAction` slot — `hlmCardHeader` is a CSS grid that only gains a
- * second column for a `data-slot=card-action` child, so content placed any
- * other way drops to its own grid row and makes that one tile taller than
- * its siblings in a KPI strip. Only one renders per tile, in that priority:
+ * {@link icon}, {@link badge} and {@link delta} sit beside the label in a
+ * wrapping flex row, deliberately **not** in `hlmCardAction`. That slot makes
+ * `hlmCardHeader` a `grid-cols-[1fr_auto]`, and at a KPI strip's narrow
+ * column the `auto` track claims what the pill needs while the label keeps
+ * the remainder: at 164px a tile gave the label 37px for a word needing 54,
+ * clipping it and pushing the pill 13px past the card's own border. Sharing
+ * one flex row lets the pill drop under the label instead of squeezing it.
+ * Only one renders per tile, in that priority:
  * {@link badge} first — an outline pill for a qualifier {@link icon} alone
  * cannot carry (a share of a total, a status word already crossed a
  * threshold) — then {@link delta}, then {@link icon} as the plain decorative
@@ -54,9 +57,11 @@ import type { StatTileBadge, StatTileDelta, StatTileLink, StatTileTone } from '.
  * differentiated surface with a top border, matching the KPI-strip visual
  * language) holding a semibold headline plus {@link description} as its
  * muted second line, instead of {@link description}'s plain `hlmCardContent`
- * placement — and bumps the value to the tile's most prominent size. Both
- * are additive: a caller that never sets them keeps today's rendering
- * unchanged.
+ * placement. It no longer changes the value's size: the figure is
+ * `text-2xl font-semibold` in every tile, since `DESIGN.md`'s 24px ceiling
+ * and its 400-600 weight range leave no room for the `text-3xl font-bold`
+ * this used to switch to — a captioned tile on one page and an uncaptioned
+ * one on another were rendering the same metric at two sizes.
  *
  * The card fills its host's height (`h-full`) and the footer is pushed to
  * the bottom (`mt-auto`) so a grid of tiles with uneven caption/description
@@ -64,7 +69,7 @@ import type { StatTileBadge, StatTileDelta, StatTileLink, StatTileTone } from '.
  * outside a height-stretched container, since a percentage height with no
  * definite parent height collapses to content height regardless.
  *
- * @version 1.8.0
+ * @version 2.0.0
  *
  * @example
  * ```html

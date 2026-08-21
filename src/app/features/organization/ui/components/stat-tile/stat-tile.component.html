@@ -1,23 +1,10 @@
 <ng-template #tileContent>
   <div hlmCardHeader>
-    <p hlmCardDescription class="line-clamp-2 min-w-0">{{ label() }}</p>
-    @if (loading()) {
-      <hlm-skeleton [class]="caption() ? 'h-9 w-20' : 'h-7 w-16'" />
-    } @else {
-      <p
-        hlmCardTitle
-        [class]="
-          caption()
-            ? 'text-3xl leading-none font-bold tracking-tight tabular-nums'
-            : 'text-2xl leading-none font-semibold tabular-nums'
-        "
-      >
-        {{ value() }}
-      </p>
-    }
-    @if (badge(); as b) {
-      <div hlmCardAction>
-        <span hlmBadge variant="outline">
+    <div class="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+      <p hlmCardDescription class="min-w-0 flex-1 basis-24 text-pretty">{{ label() }}</p>
+
+      @if (badge(); as b) {
+        <span hlmBadge variant="outline" class="shrink-0">
           @if (b.icon) {
             <ng-icon
               [name]="b.icon"
@@ -30,10 +17,8 @@
           }
           {{ b.label }}
         </span>
-      </div>
-    } @else if (delta(); as d) {
-      <div hlmCardAction>
-        <span hlmBadge variant="outline">
+      } @else if (delta(); as d) {
+        <span hlmBadge variant="outline" class="shrink-0">
           <ng-icon
             [name]="deltaIcon()"
             data-icon="inline-start"
@@ -57,18 +42,22 @@
           </span>
           {{ deltaText() }}
         </span>
-      </div>
-    } @else if (icon(); as iconName) {
-      <div hlmCardAction>
+      } @else if (icon(); as iconName) {
         <ng-icon
           [name]="iconName"
-          class="text-lg"
+          class="shrink-0 text-base"
           [class.text-destructive]="tone() === 'destructive'"
           [class.text-success]="tone() === 'success'"
           [class.text-muted-foreground]="tone() !== 'destructive' && tone() !== 'success'"
           aria-hidden="true"
         />
-      </div>
+      }
+    </div>
+
+    @if (loading()) {
+      <hlm-skeleton class="h-7 w-16" />
+    } @else {
+      <p hlmCardTitle class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</p>
     }
   </div>
 
@@ -105,7 +94,7 @@
     hlmCard
     [routerLink]="destination"
     [queryParams]="queryParams()"
-    class="h-full transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+    class="h-full transition-colors hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
   >
     <ng-container [ngTemplateOutlet]="tileContent" />
   </a>

@@ -165,26 +165,4 @@ describe('InterventionsCalendarPage', () => {
 
     expect(load).toHaveBeenCalledTimes(1);
   });
-
-  it('marks the Calendar toggle as the current page and links List/Board with the round-tripped query params', async () => {
-    await render({ status: 'planned' });
-
-    expect(
-      root()
-        .querySelector('[data-testid="intervention-view-toggle-calendar"]')
-        ?.getAttribute('aria-current'),
-    ).toBe('page');
-
-    const listLink = root().querySelector<HTMLAnchorElement>(
-      '[data-testid="intervention-view-toggle-list"]',
-    );
-    expect(listLink?.getAttribute('href')).toBe(
-      '/organizations/org-1/interventions?status=planned',
-    );
-
-    const boardLink = root().querySelector<HTMLAnchorElement>(
-      '[data-testid="intervention-view-toggle-board"]',
-    );
-    expect(boardLink?.getAttribute('href')).toBe('/organizations/org-1/interventions/board');
-  });
 });

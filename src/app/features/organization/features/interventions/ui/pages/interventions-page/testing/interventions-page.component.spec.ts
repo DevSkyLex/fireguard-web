@@ -1,19 +1,9 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  input,
-  provideZonelessChangeDetection,
-  signal,
-  type InputSignal,
-  type TemplateRef,
-  type WritableSignal,
-} from '@angular/core';
+import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -28,10 +18,7 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAllowedActionsOutput,
-  InterventionLabelOutput,
   InterventionOutput,
-  MemberSelectOption,
-  SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
@@ -102,34 +89,6 @@ const createPage = async (
   await created.whenStable();
 
   return created;
-};
-
-/**
- * Stands in for the shell's `DashboardPageActions`: every migrated page
- * registers its header actions as a `TemplateRef` on the real
- * `PageActionsService` (never mocked, so the constructor effect and the
- * teardown clear behave exactly as in production) rather than rendering them
- * in its own template. A spec that needs to click one of those buttons
- * renders the currently registered template through this outlet, the same
- * way the shell does — this is the approach every migrated page's spec
- * reuses.
- */
-@Component({
-  selector: 'app-page-actions-host',
-  imports: [NgTemplateOutlet],
-  template: '<ng-container *ngTemplateOutlet="template()" />',
-})
-class PageActionsHost {
-  public readonly template: InputSignal<TemplateRef<unknown> | null> =
-    input<TemplateRef<unknown> | null>(null);
-}
-
-const renderPageActions = (): HTMLElement => {
-  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
-  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
-  hostFixture.detectChanges();
-
-  return hostFixture.nativeElement as HTMLElement;
 };
 
 describe('InterventionsPage', () => {
@@ -209,6 +168,17 @@ describe('InterventionsPage', () => {
           },
         },
         {
+          provide: InterventionPlanningOptionsStore,
+          useValue: {
+            sites: signal([]),
+            members: signal([]),
+            labels: signal([]),
+            templates: signal([]),
+            hasTemplates: signal(false),
+            loadCreationOptions: vi.fn(),
+          },
+        },
+        {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
         },
@@ -232,40 +202,6 @@ describe('InterventionsPage', () => {
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
-
-    TestBed.overrideComponent(InterventionsPage, {
-      remove: { providers: [InterventionPlanningOptionsStore] },
-      add: {
-        providers: [
-          {
-            provide: InterventionPlanningOptionsStore,
-            useValue: {
-              sites: signal([]),
-              members: signal([]),
-              labels: signal([]),
-              templates: signal([]),
-              hasTemplates: signal(false),
-              loadCreationOptions: vi.fn(),
-            },
-          },
-        ],
-      },
-    });
-  });
-
-  it('should render the "New intervention" button through the shell header actions', async () => {
-    fixture = await createPage();
-
-    const header: HTMLElement = renderPageActions();
-    const button: HTMLButtonElement | null = header.querySelector(
-      '[data-testid="interventions-new"]',
-    );
-
-    expect(button).not.toBeNull();
-    button?.click();
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should load the list for the workspace on arrival', async () => {
@@ -288,21 +224,6 @@ describe('InterventionsPage', () => {
     await fixture.whenStable();
 
     expect(load.mock.calls.at(-1)?.[0].options.name).toBeUndefined();
-  });
-
-  it('should write a picked filter into the URL, the single source of truth', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyFilter']({ status: 'planned' });
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: 'planned' }),
-        queryParamsHandling: 'merge',
-      }),
-    );
   });
 
   it('should narrow the query from the filter params the URL carries', async () => {
@@ -329,48 +250,16 @@ describe('InterventionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.status).toBeUndefined();
   });
 
-  it('should read the "isAnyOf" operator and send a repeated status when the URL carries a comma-separated value', async () => {
+  it('should send a repeated status when the URL carries a comma-separated "isAnyOf" value', async () => {
     fixture = await createPage({ status: 'planned,in_progress' });
 
-    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
     expect(load.mock.calls.at(-1)?.[0].options.status).toEqual(['planned', 'in_progress']);
   });
 
-  it('should read the "equals" operator from a scalar-valued filter', async () => {
+  it('should send a scalar status from a single-valued "equals" filter', async () => {
     fixture = await createPage({ status: 'planned' });
 
-    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
     expect(load.mock.calls.at(-1)?.[0].options.status).toBe('planned');
-  });
-
-  it('should write a multi selection into the URL as a comma-joined param', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyEnumSelection']('status', ['planned', 'in_progress']);
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: 'planned,in_progress' }),
-        queryParamsHandling: 'merge',
-      }),
-    );
-  });
-
-  it('should clear an emptied multi selection back to unfiltered rather than send an empty isAnyOf', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyEnumSelection']('status', []);
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: null }),
-        queryParamsHandling: 'merge',
-      }),
-    );
   });
 
   it('should reverse the ordering when the active column is picked again', async () => {
@@ -386,7 +275,21 @@ describe('InterventionsPage', () => {
     fixture = await createPage();
 
     fixture.componentInstance['goToPage'](1);
-    fixture.componentInstance['applyFilter']({ status: 'draft' });
+    fixture.componentRef.setInput('status', 'draft');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['page']()).toBe(1);
+  });
+
+  it('should reset the page even when the shell — not this page — wrote the URL', async () => {
+    totalInterventions.set(500);
+    fixture = await createPage();
+
+    fixture.componentInstance['goToPage'](2);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(2);
+
+    fixture.componentRef.setInput('q', 'sweep');
     await fixture.whenStable();
 
     expect(fixture.componentInstance['page']()).toBe(1);
@@ -692,20 +595,6 @@ describe('InterventionsPage', () => {
       expect(navigate).toHaveBeenCalledWith(
         [],
         expect.objectContaining({ queryParams: expect.objectContaining({ mine: null }) }),
-      );
-    });
-  });
-
-  describe('label filter', () => {
-    it('should send the label filter as an intervention-label IRI', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['applyFilter']({ label: '/api/intervention-labels/l-1' });
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ label: 'l-1' }) }),
       );
     });
   });
@@ -1020,224 +909,6 @@ describe('InterventionsPage', () => {
       const options = load.mock.calls[0][0].options;
       expect(options.status).toBeUndefined();
       expect(options.dueAtBefore).toBeUndefined();
-    });
-  });
-
-  describe('filters visibility', () => {
-    function toggleButton(): HTMLButtonElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="interventions-filters-toggle"]',
-      );
-    }
-
-    function filterBar(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('#interventions-filter-bar');
-    }
-
-    it('should render collapsed with no badge when no filter is active on arrival', async () => {
-      fixture = await createPage();
-
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
-      expect(filterBar()).toBeNull();
-      expect(toggleButton()?.querySelector('hlm-badge')).toBeNull();
-    });
-
-    it('should mount the filter bar already expanded, with a badge count, when the URL carries an active filter', async () => {
-      fixture = await createPage({ status: 'planned', priority: 'high' });
-
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
-      expect(filterBar()).not.toBeNull();
-      expect(toggleButton()?.querySelector('hlm-badge')?.textContent?.trim()).toBe('2');
-    });
-
-    it('should mount and unmount the bar as the toggle button is activated', async () => {
-      fixture = await createPage();
-      expect(filterBar()).toBeNull();
-
-      toggleButton()?.click();
-      await fixture.whenStable();
-      expect(filterBar()).not.toBeNull();
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
-
-      toggleButton()?.click();
-      await fixture.whenStable();
-      expect(filterBar()).toBeNull();
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
-    });
-
-    it('should stay expanded once auto-opened by a URL filter, even after that filter is cleared', async () => {
-      fixture = await createPage({ status: 'planned' });
-      expect(filterBar()).not.toBeNull();
-
-      fixture.componentInstance['applyFilter']({ status: null });
-      fixture.componentRef.setInput('status', undefined);
-      await fixture.whenStable();
-
-      expect(filterBar()).not.toBeNull();
-    });
-  });
-
-  describe('filter chips', () => {
-    it('should list every active field as an activeKey, in the catalog’s own keys', async () => {
-      TestBed.overrideComponent(InterventionsPage, {
-        remove: { providers: [InterventionPlanningOptionsStore] },
-        add: {
-          providers: [
-            {
-              provide: InterventionPlanningOptionsStore,
-              useValue: {
-                sites: signal<readonly SelectOption[]>([
-                  { value: '/api/facilities/site-9', label: 'Warehouse 9' },
-                ]),
-                members: signal<readonly MemberSelectOption[]>([
-                  {
-                    value: '/api/organizations/org-1/members/member-9',
-                    label: 'Jordan Lee',
-                    displayName: 'Jordan Lee',
-                    roleLabel: 'Technician',
-                    avatarUrl: null,
-                    initials: 'JL',
-                  },
-                ]),
-                labels: signal<readonly InterventionLabelOutput[]>([
-                  {
-                    '@id': '/api/intervention-labels/label-9',
-                    '@type': 'InterventionLabel',
-                    id: 'label-9',
-                    organization: '/api/organizations/org-1',
-                    name: 'Compliance',
-                    color: '#ff0000',
-                    createdAt: '2026-01-01T00:00:00+00:00',
-                    updatedAt: '2026-01-01T00:00:00+00:00',
-                  },
-                ]),
-                templates: signal([]),
-                hasTemplates: signal(false),
-                loadCreationOptions: vi.fn(),
-              },
-            },
-          ],
-        },
-      });
-
-      fixture = await createPage({
-        status: 'changes_requested',
-        type: 'inventory',
-        priority: 'high',
-        site: 'site-9',
-        responsible: 'member-9',
-        label: 'label-9',
-        dueAfter: '2026-08-01',
-        plannedStartAfter: '2026-08-01',
-      });
-
-      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
-        'status',
-        'type',
-        'priority',
-        'site',
-        'responsible',
-        'label',
-        'dueRange',
-        'plannedStartRange',
-      ]);
-
-      const triggers = [
-        'status',
-        'type',
-        'priority',
-        'site',
-        'responsible',
-        'dueRange',
-        'plannedStartRange',
-      ].map((suffix: string) => {
-        const testId =
-          suffix === 'dueRange' ? 'due' : suffix === 'plannedStartRange' ? 'planned-start' : suffix;
-        return (fixture.nativeElement as HTMLElement).querySelector(
-          `[data-testid="interventions-filter-${testId}"]`,
-        );
-      });
-      expect(triggers.every((trigger) => trigger !== null)).toBe(true);
-    });
-
-    it('should still render an IRI-valued field’s chip while its option list is loading and its label cannot resolve yet', async () => {
-      fixture = await createPage({ site: 'site-42', responsible: 'member-77', label: 'label-88' });
-
-      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
-        'site',
-        'responsible',
-        'label',
-      ]);
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector(
-          '[data-testid="interventions-filter-site"]',
-        ),
-      ).not.toBeNull();
-    });
-
-    it('should apply the chip’s own patch when its remove button is clicked', async () => {
-      fixture = await createPage({ status: 'planned' });
-
-      const removeButton: HTMLButtonElement | null = (
-        fixture.nativeElement as HTMLElement
-      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
-      removeButton?.click();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: expect.objectContaining({ status: null }),
-          queryParamsHandling: 'merge',
-        }),
-      );
-    });
-
-    it('should name a chip’s remove button by its field label', async () => {
-      fixture = await createPage({ status: 'planned' });
-
-      const removeButton: HTMLButtonElement | null = (
-        fixture.nativeElement as HTMLElement
-      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
-
-      expect(removeButton?.getAttribute('aria-label')).toBe('Remove filter: Status');
-    });
-
-    it('should name a chip’s value segment by its field label, distinctly from the remove button', async () => {
-      fixture = await createPage();
-
-      expect(fixture.componentInstance['changeFilterLabel']('Status')).toBe(
-        'Change filter: Status',
-      );
-    });
-
-    it('should force a field’s selector open when the bar reports it picked', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
-    });
-
-    it('should clear the forced-open field once its selector reports closed', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      fixture.componentInstance['onFieldPopoverStateChanged']('site', 'closed');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('closed');
-    });
-
-    it('should not clear the forced-open field when a different field’s selector closes', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      fixture.componentInstance['onFieldPopoverStateChanged']('responsible', 'closed');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
     });
   });
 });

@@ -16,9 +16,6 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   type InterventionListFilters,
@@ -37,10 +34,7 @@ import {
   parseInterventionListFilters,
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { HlmBadge } from '@shared/ui/badge';
-import { HlmButton } from '@shared/ui/button';
-import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -48,9 +42,6 @@ import {
 import { InterventionBoardCard } from '../../components/intervention-board-card';
 import { INTERVENTION_BOARD_COLUMNS } from './constants';
 import type { InterventionBoardCardViewModel } from './models';
-
-/** How long typing settles before the search reaches the wire — mirrors `InterventionsPage`. */
-const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** The one server page the board loads — the store's own single-page-replace mechanism (see class doc). */
 const BOARD_PAGE_SIZE: number = 200;
@@ -80,13 +71,15 @@ const BOARD_PAGE_SIZE: number = 200;
  * **Filters.** The URL's narrowing (every field `InterventionsPage` reads,
  * `status` excluded — it has no meaning here) is parsed and applied the same
  * way the list page's own `filters()` is, so navigating from a filtered list
- * to the board keeps the same subset in view. Unlike the list page, this
- * first cut does not render the full editable Linear-style filter bar
- * (`app-collection-filter-bar`) — replicating its eight chip templates here
- * is populated-UI-scale work, deliberately left as a follow-up
- * (`fg-spartan-ui`/`fg-component-builder`); only the search box is repeated
- * for parity. The board still fully **applies** whatever filters the
- * incoming URL already carries.
+ * to the board keeps the same subset in view. The shared toolbar, the
+ * search box and the eight-chip filter bar — `InterventionsShellPage`, the
+ * pathless route this page now nests under alongside the list and the
+ * calendar — renders a `status` chip left active from the list as visibly
+ * inert rather than silently applied: this page's own route `data`
+ * (`interventions.routes.ts`) declares `status` as the one field it does not
+ * honour, and the shell reads that declaration to grey the chip and explain
+ * why. This page still fully **applies** whatever other filters the incoming
+ * URL carries.
  *
  * **Drag-drop legality.** `isInterventionBoardMoveAllowed` — the card's
  * server `allowedTransitions` plus the `canWithdraw` gate for
@@ -103,17 +96,7 @@ const BOARD_PAGE_SIZE: number = 200;
  */
 @Component({
   selector: 'app-interventions-board-page',
-  imports: [
-    RouterLink,
-    CdkDropListDirective,
-    InterventionBoardCard,
-    CollectionToolbar,
-    CollectionSearchBox,
-    HlmBadge,
-    HlmButton,
-    ...HlmButtonGroupImports,
-  ],
-  providers: [InterventionPlanningOptionsStore],
+  imports: [CdkDropListDirective, InterventionBoardCard, HlmBadge],
   templateUrl: './interventions-board-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -180,17 +163,11 @@ export class InterventionsBoardPage {
     OrganizationPermissionService,
   );
 
-  /** Round-trips `?q=` and reads the current query params for the "List" toggle link. */
-  private readonly router: Router = inject(Router);
-
   /** Hosts the DOM lookup {@link requestMove} needs to restore focus after a cross-column move. */
   private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
 
   /** Anchors the {@link requestMove} post-render focus restoration outside the injection context. */
   private readonly injector: Injector = inject(Injector);
-
-  /** Anchors the relative query-param navigation. */
-  private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
   /** The narrowing the URL carries, `status` excluded — it has no meaning on the board. */
   protected readonly filters: Signal<InterventionListFilters> = computed<InterventionListFilters>(
@@ -213,37 +190,13 @@ export class InterventionsBoardPage {
       ),
   );
 
-  /** What the search box holds, before the debounce settles. */
-  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
-
-  /** The search as everything downstream reads it: trimmed, never `undefined`. */
+  /** The search as everything downstream reads it: trimmed, never `undefined` — the search box itself lives on `InterventionsShellPage` now. */
   protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
 
   /** Where a card's title link points. */
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
-
-  /**
-   * Every query param the List **and** Calendar views should keep when the
-   * operator switches to either — the board never carries `status`, so
-   * nothing to strip either way, which is why both toggle links reuse this
-   * one signal instead of two identical computeds.
-   */
-  protected readonly listQueryParams: Signal<Record<string, string | null>> = computed(() => ({
-    q: this.q() ?? null,
-    type: this.type() ?? null,
-    priority: this.priority() ?? null,
-    site: this.site() ?? null,
-    responsible: this.responsible() ?? null,
-    label: this.label() ?? null,
-    mine: this.mine() ?? null,
-    due: this.due() ?? null,
-    dueAfter: this.dueAfter() ?? null,
-    dueBefore: this.dueBefore() ?? null,
-    plannedStartAfter: this.plannedStartAfter() ?? null,
-    plannedStartBefore: this.plannedStartBefore() ?? null,
-  }));
 
   /** The board's fixed column order. */
   protected readonly columns: readonly InterventionStatus[] = INTERVENTION_BOARD_COLUMNS;
@@ -305,26 +258,16 @@ export class InterventionsBoardPage {
   //#endregion
 
   /**
-   * Wires the search round-trip, the board's own load effect and the
-   * planning options fetch — mirrors `InterventionsPage`'s constructor.
+   * Wires the board's own load effect. The search box, its debounce and its
+   * `?q=` round-trip, and the planning options fetch, all moved to
+   * `InterventionsShellPage` — this page only reads {@link filters} and
+   * {@link searchTerm} back out of the same URL and the shared
+   * `InterventionPlanningOptionsStore` instance the shell loads once.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
-    effect((): void => {
-      const term: string = this.searchTerm();
-      untracked((): void => {
-        if (term !== this.draftSearch()) this.draftSearch.set(term);
-      });
-    });
-
-    toObservable(this.draftSearch)
-      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((term: string): void => {
-        if (term !== this.searchTerm()) this.navigateQuery({ q: term === '' ? null : term });
-      });
-
     effect((): void => {
       const organizationId: string = this.organizationId();
       const filters: InterventionListFilters = this.filters();
@@ -347,31 +290,9 @@ export class InterventionsBoardPage {
         });
       });
     });
-
-    effect((): void => {
-      const organizationId: string = this.organizationId();
-      untracked((): void => {
-        this.planningOptions.loadCreationOptions(organizationId);
-      });
-    });
   }
 
   //#region Methods
-  /** Merges query params into the URL without touching the path. */
-  private navigateQuery(queryParams: Record<string, string | null>): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-
-  /** The search box's value changed. */
-  protected onSearchQueryChanged(term: string): void {
-    this.draftSearch.set(term);
-  }
-
   /** The `cdkDropList` id for a status column. */
   protected dropListId(status: InterventionStatus): string {
     return `intervention-board-column-${status}`;

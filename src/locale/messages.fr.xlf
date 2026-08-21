@@ -8972,6 +8972,18 @@
         <source>Filters</source>
         <target>Filtres</target>
       </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredStatus" datatype="html">
+        <source>Ignored here — the board&apos;s columns already narrow by status.</source>
+        <target>Sans effet ici — les colonnes du tableau filtrent déjà par statut.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredDateRange" datatype="html">
+        <source>Ignored here — the visible month is already the date filter.</source>
+        <target>Sans effet ici — le mois affiché est déjà le filtre de date.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
+        <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
+        <target>Sans effet ici — cette vue ne filtre que par statut, type, site et responsable.</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

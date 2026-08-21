@@ -30,10 +30,8 @@ import {
   parseInterventionListFilters,
 } from '@features/organization/features/interventions/utils';
 import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import {
@@ -112,9 +110,14 @@ type InterventionCalendarPageAgendaGroup = {
  * `mine` is **not** sent to the server: the store resolves the signed-in
  * member's IRI once and this page filters the loaded window to it
  * client-side (`visibleInterventions`), exactly the split
- * `InterventionCalendarState`'s own doc describes. This first cut offers no
- * in-page filter control of its own — only the search box, mirroring the
- * Board's own stated trade-off — the URL is the only way to narrow it.
+ * `InterventionCalendarState`'s own doc describes. This page renders no
+ * filter UI of its own any more — the search box, the eight-chip filter bar
+ * and the List/Board/Calendar switcher all live on `InterventionsShellPage`,
+ * the pathless route this page now nests under; this page's own route `data`
+ * (`interventions.routes.ts`) declares which four fields it actually reads
+ * (`status`, `type`, `site`, `responsible`), so the shell renders `priority`,
+ * `label` and both date-range chips as visibly inert — greyed, with a
+ * tooltip — whenever one is left active from another view.
  *
  * **Overflow.** The grid's own per-day chip cap ({@link GRID_CHIP_CAP})
  * never hides an entry from the reader: selecting the day always lists every
@@ -140,12 +143,9 @@ type InterventionCalendarPageAgendaGroup = {
     Calendar,
     InterventionCalendarEntryList,
     NgIcon,
-    CollectionToolbar,
-    CollectionSearchBox,
     ErrorState,
     HlmButton,
     HlmSkeleton,
-    ...HlmButtonGroupImports,
     ...HlmCardImports,
   ],
   providers: [
@@ -224,9 +224,6 @@ export class InterventionsCalendarPage {
     toIsoDay(new Date()),
   );
 
-  /** What the search box holds, before it reaches the URL. */
-  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
-
   /** The narrowing the URL carries, parsed the same way the List and Board pages parse it. */
   protected readonly filters: Signal<InterventionListFilters> = computed<InterventionListFilters>(
     () =>
@@ -252,43 +249,6 @@ export class InterventionsCalendarPage {
   /** Where a row's link points. */
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
-  );
-
-  /** Every query param the List view should keep when the operator switches to it — `status` travels, unlike the Board's own exclusion. */
-  protected readonly listQueryParams: Signal<Readonly<Record<string, string | null>>> = computed(
-    (): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      status: this.status() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }),
-  );
-
-  /** Every query param the Board view should keep when the operator switches to it — `status` excluded, the same rule the List page applies. */
-  protected readonly boardQueryParams: Signal<Readonly<Record<string, string | null>>> = computed(
-    (): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }),
   );
 
   /** The loaded window, scoped to "Mine" client-side when the URL asks for it — see class doc. */
@@ -473,11 +433,6 @@ export class InterventionsCalendarPage {
   protected stepMonth(offset: number): void {
     const current: Date = this.month();
     this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
-  }
-
-  /** The search box's value changed — held locally; this first cut has no server-side name search on the calendar (see class doc). */
-  protected onSearchQueryChanged(term: string): void {
-    this.draftSearch.set(term);
   }
 
   /** The query params of the List view filtered to a single day, via the existing `dueAfter`/`dueBefore` contract. */

@@ -19,17 +19,44 @@ This subfeature is responsible for:
 
 ## Routes
 
+**`InterventionsShellPage`** (`ui/pages/interventions-shell-page/`) is the
+`loadComponent:` of a second, inner pathless route nesting the list, the board
+and the calendar under `interventions.routes.ts`'s own outer pathless parent —
+the detail page (`:interventionId`) stays the outer parent's other child,
+outside the shell, since it renders its own tabbed workspace rather than the
+collection chrome. The shell owns, once instead of three times: the search box
+(`?q=`, debounced), the "+ Filter"/eight-chip Linear-style filter bar and its
+toggle, and the List/Board/Calendar switcher. It **writes** the URL's
+narrowing; every leaf still independently **reads** the same URL through its
+own route-bound inputs and `parseInterventionListFilters` — no input channel
+or shared service connects the shell to a leaf beyond that URL. It also owns
+the shared `InterventionPlanningOptionsStore` instance (site/member/label
+options for the filter bar, provided on the inner pathless route, loaded once
+on arrival) and the "New intervention" header action, which now navigates to
+the index route with `?create=1` (the list's own established contract, see
+below) rather than opening a locally-owned sheet — this lets the button work
+from the board or the calendar too, with no second creation sheet to keep in
+sync.
+
+**Each leaf declares which of the filter bar's eight fields it actually
+applies**, as `data.honouredFilterKeys` on its own route entry
+(`interventions.routes.ts`) — a `readonly InterventionFilterFieldKey[]` the
+shell reads from the router's own `NavigationEnd` stream (`ActivatedRoute`
+`firstChild.data`, since the three leaves are the shell's sibling routes, not
+its own inputs). A chip whose field the active leaf does not honour still
+renders when active — the "+ Filter" menu never hides it — but disabled and
+visibly greyed (`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the
+reason: never silently dropped, never silently misapplied. The list honours
+all eight; the board honours every field except `status` (its columns are the
+narrowing); the calendar honours only `status`, `type`, `site` and
+`responsible` (`InterventionCalendarFilters`'s own `Pick`).
+
 - `/organizations/:organizationId/interventions` — the index page: a spartan
-  `hlmTable` of the organization's interventions, grouped and paginated, with a
-  debounced search box synced to `?q=` (a server-side `name` filter, `contains`
-  server-side — "Case-insensitive partial match"), a Linear-style filter bar of
-  segmented chips (status, type, priority, site, responsible, label, deadline,
-  planned start), a "my interventions" toggle chip
-  (`?mine=1`, the API's `member`
-  responsible-OR-participant filter), a column menu, row selection, and
-  permission-gated bulk actions. `?create=1` opens the creation sheet on
-  arrival and is consumed once, so the parent feature's landing page can offer
-  "New intervention" as a primary action that actually starts the work.
+  `hlmTable` of the organization's interventions, grouped and paginated, row
+  selection, and permission-gated bulk actions. `?create=1` opens the creation
+  sheet on arrival and is consumed once, so the parent feature's landing page,
+  and now the shared shell header, can offer "New intervention" as a primary
+  action that actually starts the work.
   **Export is a server-side CSV** (API #99): `InterventionService.exportCsv`
   reads `GET /api/interventions/export` as a `Blob`, forwarding the accepted
   subset of the current question — `name`, `status`, `type`, `priority`,
@@ -64,6 +91,15 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   the four rather than a misleading nearest one. Picking a view calls the
   same `applyFilter` path a chip's own select uses, so a view is a shortcut
   into the one filter contract, not a second state to keep in sync with it.
+
+  **10.1 relocated the toolbar, the search box, the filter bar (6.5–8.3
+  below) and the switcher to `InterventionsShellPage`.** Every mechanic this
+  history describes — the chip shell, the operator vocabulary, the "+ Filter"
+  menu, `dueRange`/`plannedStartRange` — is unchanged by the move; only which
+  component renders it changed. Read "this page" in 6.3 through 8.3 below as
+  the shell; `InterventionsPage` itself now owns only the table, its own
+  Display popover (sort/columns), row/bulk actions, and the sheets/dialogs
+  they open.
 
   **The filter bar (6.5) replaced the earlier popover-plus-read-only-chips
   pair with editable, Linear-style segmented chips** — the popover is gone.
@@ -317,23 +353,21 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   one `InterventionStore` instead of a second copy of the dataset. Same
   permission gate as the list (inherited from the parent).
 
-  **View switch.** All three of the list, board and calendar toolbars carry a
-  compact List/Board/Calendar segmented toggle (`hlmButtonGroup`, `hlmBtn`-styled
-  links plus one `aria-current="page"` button for the page currently shown —
-  not the filter bar's chip shell, which `hlm-button-group` was ruled out for
-  because its join CSS cannot reach a value segment nested inside `hlm-select`;
-  a plain link pair has no such nesting, so the primitive fits here). The
-  toggle preserves every filter query param when it navigates to the List or
-  the Calendar, **except `status`** when it navigates to the Board: the
-  board's columns are the statuses, so a `status` narrowing travelling into it
-  would either duplicate or contradict the column split — `status` is the one
-  field the three destinations disagree on. The board never carries `status`
-  itself, so its own two outgoing links (to the List and to the Calendar)
-  reuse the same `InterventionsBoardPage.listQueryParams` signal — nothing to
-  strip either way. `InterventionsPage.boardQueryParams` /
-  `InterventionsPage.calendarQueryParams` and
-  `InterventionsCalendarPage.boardQueryParams` are the three places that build
-  a param set with `status` excluded.
+  **View switch (10.1: moved to `InterventionsShellPage`).** A single compact
+  List/Board/Calendar segmented toggle (`hlmButtonGroup`, `hlmBtn`-styled links
+  plus one `aria-current="page"` button for the view currently shown — not the
+  filter bar's chip shell, which `hlm-button-group` was ruled out for because
+  its join CSS cannot reach a value segment nested inside `hlm-select`; a plain
+  link pair has no such nesting, so the primitive fits here) now renders once,
+  in the shell, instead of once per leaf. The shell reads which leaf is active
+  from the router's own snapshot (`InterventionsShellPage.activeView`) rather
+  than three copies of the same `aria-current` logic. The toggle preserves
+  every filter query param when it links to the List or the Calendar, **except
+  `status`** when it links to the Board: the board's columns are the statuses,
+  so a `status` narrowing travelling into it would either duplicate or
+  contradict the column split — `status` is the one field the three
+  destinations disagree on. `InterventionsShellPage.queryParamsWithStatus` /
+  `.queryParamsWithoutStatus` are the two param sets every link builds from.
 
   **Columns and data.** One column per `InterventionStatus`, in workflow order
   (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
@@ -347,11 +381,12 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   every column; an organization past that count sees only its first 200 (by
   `dueAt`), a stated trade-off over adding a second, per-column pagination
   surface to a Kanban board. The board applies whatever filters (`status`
-  excluded) the incoming URL already carries, but this first cut does **not**
-  render the list's full editable Linear-style filter bar
-  (`app-collection-filter-bar`) — replicating its eight chip templates is
-  populated-UI-scale work, left as a follow-up; only the search box is
-  repeated for parity.
+  excluded) the incoming URL already carries. **10.1:** the board now shares
+  the shell's full eight-chip filter bar with the list and the calendar — its
+  own route `data.honouredFilterKeys` (`interventions.routes.ts`) omits only
+  `status`, so a `status` chip left active from the list renders disabled and
+  greyed with a tooltip explaining the columns already narrow by status,
+  rather than the earlier "only the search box, no filter bar" trade-off.
 
   **Drag-drop legality — one function, two call sites.**
   `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is a
@@ -433,9 +468,12 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   signed-in member's IRI once (`currentMemberIri`) and
   `InterventionsCalendarPage.visibleInterventions` filters the loaded window
   to it client-side — exactly the split `InterventionCalendarState`'s own doc
-  already described before this page existed. This first cut offers no
-  in-page filter control beyond the search box, mirroring the Board's own
-  stated trade-off; the URL is the only way to narrow it further.
+  already described before this page existed. **10.1:** this page's own route
+  `data.honouredFilterKeys` declares exactly the four fields above; the shell
+  renders `priority`, `label` and both date-range chips as visibly inert —
+  disabled, greyed, with a tooltip — whenever one is left active from another
+  view, rather than omitting the filter bar here entirely as the first cut
+  did.
 
   **Overflow.** The grid's own per-day chip cap never hides an entry from the
   reader: selecting a day always lists every one of its entries in the panel
@@ -1554,6 +1592,29 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
+- **A filter chip the active leaf does not honour is never silently applied
+  and never silently absent.** `InterventionsShellPage` reads each leaf's own
+  route `data.honouredFilterKeys` (`interventions.routes.ts`) and renders an
+  active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
+  why — the "+ Filter" menu keeps offering it regardless. Adding a ninth
+  filter field, or changing which fields a leaf honours, means updating that
+  leaf's own `honouredFilterKeys` entry in the same change, or the new field
+  silently reads as honoured everywhere.
+- **The shell writes the URL; a leaf only ever reads it.** No input channel,
+  service or store connects `InterventionsShellPage` to
+  `InterventionsPage`/`InterventionsBoardPage`/`InterventionsCalendarPage`
+  beyond the query params all four independently parse with
+  `parseInterventionListFilters`. Do not introduce one — it is what lets the
+  three leaves keep evolving their own bodies without touching the shell.
+- **The detail page is never nested under `InterventionsShellPage`.** It sits
+  as the outer pathless parent's other child, specifically so it never
+  inherits the collection chrome (search box, filter bar, switcher) that has
+  no meaning on a single intervention's workspace.
+- **The KPI strip and the "Analysis" disclosure stay list-only** — promoting
+  either to the shell would make the Board and the Calendar also load
+  `InterventionStatisticsStore`, a behaviour and performance change out of
+  scope for the 10.1 shell extraction. Revisit only as its own deliberate
+  change.
 - **The Calendar view places an intervention by `plannedStartAt ?? dueAt`,
   never by `dueAt` alone.** `listCalendarWindow`, `InterventionCalendarStore`
   and `InterventionsCalendarPage` must agree on this one anchor — placing it

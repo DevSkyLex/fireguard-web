@@ -100,27 +100,19 @@ describe('InterventionsBoardPage', () => {
           },
         },
         {
+          provide: InterventionPlanningOptionsStore,
+          useValue: {
+            members: signal([]),
+            loadCreationOptions: vi.fn(),
+          },
+        },
+        {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
         },
         { provide: Router, useValue: { navigate, events: EMPTY } },
         { provide: ActivatedRoute, useValue: {} },
       ],
-    });
-
-    TestBed.overrideComponent(InterventionsBoardPage, {
-      remove: { providers: [InterventionPlanningOptionsStore] },
-      add: {
-        providers: [
-          {
-            provide: InterventionPlanningOptionsStore,
-            useValue: {
-              members: signal([]),
-              loadCreationOptions: vi.fn(),
-            },
-          },
-        ],
-      },
     });
   });
 
@@ -242,24 +234,15 @@ describe('InterventionsBoardPage', () => {
     expect(transition).not.toHaveBeenCalled();
   });
 
-  it('should render the view-switcher toggle with the button directive actually applied', async () => {
-    fixture = await createPage();
-    const element = fixture.nativeElement as HTMLElement;
-
-    const listToggle = element.querySelector('[data-testid="intervention-view-toggle-list"]');
-
-    expect(listToggle?.getAttribute('data-slot')).toBe('button');
-  });
-
-  it('should preserve every filter param except status when linking to the list view', async () => {
+  it('should never send status as part of the board query — the columns are the status narrowing', async () => {
     fixture = await createPage();
     fixture.componentRef.setInput('priority', 'high');
     fixture.componentRef.setInput('mine', '1');
     await fixture.whenStable();
 
-    const params = fixture.componentInstance['listQueryParams']();
+    const options = load.mock.calls.at(-1)?.[0].options as { status?: unknown; priority?: unknown };
 
-    expect(params).toMatchObject({ priority: 'high', mine: '1' });
-    expect(params).not.toHaveProperty('status');
+    expect(options.status).toBeUndefined();
+    expect(options.priority).toBe('high');
   });
 });

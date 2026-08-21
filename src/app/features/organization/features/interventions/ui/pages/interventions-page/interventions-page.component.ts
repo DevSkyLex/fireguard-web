@@ -10,42 +10,31 @@ import {
   linkedSignal,
   signal,
   untracked,
-  viewChild,
   type InputSignal,
   type Signal,
-  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
   lucideArrowUp,
   lucideCalendarClock,
-  lucideCalendarDays,
   lucideCheck,
   lucideCircleAlert,
-  lucideCircleDot,
   lucideClipboardList,
   lucideDownload,
-  lucideFlag,
-  lucideMapPin,
   lucidePlus,
   lucideSearch,
   lucideSlidersHorizontal,
-  lucideTag,
   lucideTrash2,
-  lucideUser,
   lucideUserCog,
-  lucideWrench,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
-import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
@@ -53,30 +42,18 @@ import {
   resolveInterventionTag,
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
-  type InterventionDueRangeFilter,
   type InterventionDuplicatePrefill,
-  type InterventionFilterFieldKey,
-  type InterventionFilterFieldOption,
   type InterventionListFilters,
   type InterventionListSort,
   type InterventionOutput,
-  type InterventionPlannedStartRangeFilter,
-  type InterventionPriority,
   type InterventionSortField,
   type InterventionStatus,
   type InterventionTemplateInstantiateRequest,
-  type InterventionType,
   type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
-import {
-  INTERVENTION_FILTER_FIELDS,
-  INTERVENTION_PRIORITY_FILTER_OPTIONS,
-  INTERVENTION_SORT_OPTIONS,
-  INTERVENTION_STATUS_FILTER_OPTIONS,
-  INTERVENTION_TYPE_FILTER_OPTIONS,
-} from '@features/organization/features/interventions/options';
+import { INTERVENTION_SORT_OPTIONS } from '@features/organization/features/interventions/options';
 import {
   BrowserDownloadService,
   InterventionListPreferencesService,
@@ -92,29 +69,19 @@ import {
   buildInterventionExportOptions,
   buildInterventionListOptions,
   parseInterventionListFilters,
-  serializeInterventionListFilters,
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
-import {
-  CollectionFilterBar,
-  CollectionFilterToggle,
-  initialCollectionFilterBarVisibility,
-  type CollectionFilterOperator,
-  type CollectionFilterOperatorChangedEvent,
-} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
-import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -131,7 +98,6 @@ import {
 } from '../../../state/intervention-recurrence';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
 import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
-import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
@@ -151,77 +117,28 @@ import type { InterventionListItemViewModel } from './models';
 /** How close a deadline must be to count as "due soon". */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
 
-/** How long typing settles before the search reaches the wire. */
-const SEARCH_DEBOUNCE_MS: number = 300;
-
 /** The page sizes offered under the table — the server default first, its clamp last. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
-
-/** The narrowing a freshly opened list applies: none. */
-const NO_FILTERS: InterventionListFilters = {
-  status: null,
-  type: null,
-  priority: null,
-  site: null,
-  responsible: null,
-  label: null,
-  mine: false,
-  dueWindow: null,
-  dueRange: null,
-  plannedStartRange: null,
-};
-
-/**
- * Type InterventionDueRangeOperator
- *
- * @description
- * The three operators the "Deadline" chip's own `dueRange` field declares —
- * the discriminant of {@link InterventionDueRangeFilter}, named locally so
- * {@link InterventionsPage.dueRangeOperator} and its value-control methods
- * stay narrowly typed instead of the wider `CollectionFilterOperator`.
- *
- * @since 8.1.0
- */
-type InterventionDueRangeOperator = 'greaterThan' | 'lessThan' | 'between';
-
-/**
- * Type InterventionPlannedStartRangeOperator
- *
- * @description
- * The three operators the "Planned start" chip's own `plannedStartRange`
- * field declares — the discriminant of
- * {@link InterventionPlannedStartRangeFilter}, named locally for the same
- * reason as {@link InterventionDueRangeOperator}, not shared with it (rule
- * of three, `FEATURE.md`).
- *
- * @since 8.2.0
- */
-type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'between';
-
-/**
- * Type InterventionEnumFilterKey
- *
- * @description
- * The six {@link InterventionFilterFieldKey} entries whose
- * `InterventionListFilters` value discriminates its own operator by shape —
- * a scalar under `equals`, a readonly array under `isAnyOf` — rather than
- * carrying a separate operator field the way {@link InterventionDueRangeFilter}
- * does. Named locally so {@link InterventionsPage.enumFieldOperator} and its
- * value-control methods stay narrower than {@link InterventionFilterFieldKey}.
- *
- * @since 8.3.0
- */
-type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'responsible' | 'label';
 
 /**
  * Component InterventionsPage
  * @class InterventionsPage
  *
  * @description
- * Route entry page for the organization's interventions, laid out like
- * spartan's dashboard table: a filter bar and a Linear-style Display popover
- * above, the grid in its bordered shell, and a footer carrying the row count,
- * the page size and the pager.
+ * Route entry page for the organization's interventions: the grid in its
+ * bordered shell, a footer carrying the row count, the page size and the
+ * pager, and the row-level and bulk actions the table itself must not own
+ * (transition, assign, duplicate, delete).
+ *
+ * The search box, the "My interventions"-adjacent filter toggle, the
+ * eight-chip filter bar and the List/Board/Calendar switcher moved to
+ * `InterventionsShellPage` (`ui/pages/interventions-shell-page/`), the
+ * `component:` of the pathless route both this page and the board and
+ * calendar leaves now nest under — one physical copy of that chrome instead
+ * of three (`FEATURE.md`). This page still **reads** the URL's narrowing
+ * through {@link filters}, exactly as it did before the shell existed: no
+ * input channel or shared service connects it to the shell, only the same
+ * URL both write to and read from independently.
  *
  * It owns what the table must not — the query it sends, the `?q=`/`?create=`
  * params it round-trips, the ordering, the column visibility and the page
@@ -229,14 +146,19 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
  *
  * Paging, filtering and sorting are server-side end to end: the loaded
  * entities ARE the current page, the footer derives its page count from the
- * server's `totalItems`, and any narrowing change restarts from page one —
- * reset synchronously in the mutators so the load effect fires exactly once
- * per change. The selection clears on every load: it only ever refers to rows
- * of the page on screen, so the bulk-delete dialog can never promise rows the
- * operator no longer sees.
+ * server's `totalItems`, and any narrowing or search change restarts from
+ * page one — {@link page} is a `linkedSignal` over {@link filters} and
+ * {@link searchTerm}, resetting to `1` whenever either changes regardless of
+ * which component (this page's own mutators, or the shell's) wrote the URL,
+ * so the load effect fires exactly once per change. The selection clears on
+ * every load: it only ever refers to rows of the page on screen, so the
+ * bulk-delete dialog can never promise rows the operator no longer sees.
  *
- * `InterventionStore` is **not** provided here — it comes from the pathless
- * parent route, which keeps `orderedIds()` alive across list ↔ detail.
+ * `InterventionStore` is **not** provided here — it comes from the outer
+ * pathless parent route, which keeps `orderedIds()` alive across list ↔
+ * detail. `InterventionPlanningOptionsStore` is likewise not provided here
+ * any more: the shell provides and loads the one shared instance this page,
+ * the board and the shell's own filter bar all read.
  *
  * Deletion is confirm-gated: a row's Delete entry and the toolbar's "Delete
  * selected" both set a `pending*` target signal instead of calling the store
@@ -252,47 +174,18 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
  *
- * The removable filter chips below the toolbar are a read-only projection of
- * {@link filters}, never a second copy of it: removing a chip calls the same
- * {@link applyFilter} path the popover's own selects use, so the URL stays
- * the single source of truth (`FEATURE.md`). The KPI strip's own overdue and
- * awaiting-review tiles link into that same `?due=`/`?status=` contract —
- * the only way left to reach those two narrowings from the UI, now that the
- * toolbar's segmented-views toggle group is gone.
- *
  * Its title lives in the shell breadcrumb, not in-page — the route's
- * `data.breadcrumb` supplies it. "New intervention" registers on the shell
- * header through `PageActionsService` instead of rendering its own title
- * band.
+ * `data.breadcrumb` supplies it. "New intervention" now registers on the
+ * shell header from `InterventionsShellPage` itself, shared across all three
+ * views instead of this page's own copy.
  *
- * The filter bar (6.5) is Linear-style segmented chips, not a popover:
- * `app-collection-filter-bar` (`@shared/collection-filters`, since the
- * phase-2 `collection-*` migration) renders one `app-filter-chip` per active
- * narrowing, each projecting one of this page's seven `ng-template` value
- * controls — the same `hlm-select` the old popover used, just restyled flush
- * into the chip. The bar's own "+ Filter" menu lists the fields still
- * unset; picking one fires `fieldPicked`, and {@link onFieldPicked} sets
- * {@link openFilterKey} so the picked field's own template forces its select
- * open. Both still resolve through {@link applyFilter} alone — there is no
- * second copy of the narrowing, only of which selector is currently
- * expanded. It reads as a second line of the toolbar rather than a band of
- * its own, so the bar's own root carries `-mt-2`, pulling itself half of the
- * page's `gap-4` back up instead of sitting a full gap below the search row.
+ * The "Display" toolbar button (6.7) is a `hlm-popover` trigger opening a
+ * panel that groups every presentation preference this list owns — ordering
+ * and column visibility — the way Linear's own Display control does. Both
+ * sections read and write the same {@link sortOrder} and {@link hiddenColumns}
+ * signals the table and the cookie already used.
  *
- * `hlm-button-group` and `hlm-combobox` were both evaluated for this bar and
- * both ruled out; `FEATURE.md` records why, so neither is reopened without
- * new evidence.
- *
- * The "Display" toolbar button (6.7) replaces what used to be a bare
- * "Columns" menu: a single `hlm-popover` trigger opening a panel that groups
- * every presentation preference this list owns — ordering and column
- * visibility — the way Linear's own Display control does. Both sections read
- * and write the same {@link sortOrder} and {@link hiddenColumns} signals the
- * table and the cookie already used; the popover adds no state of its own,
- * only a single surface for what was previously reachable only through a
- * column header click.
- *
- * @version 6.9.0
+ * @version 10.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -300,7 +193,6 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
-    RouterLink,
     EmptyState,
     ErrorState,
     HlmBadge,
@@ -314,44 +206,30 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
     InterventionKpiStrip,
     InterventionStatisticsAnalysis,
     InterventionTable,
-    InterventionTag,
-    CollectionFilterBar,
-    CollectionFilterToggle,
     CollectionPagination,
-    CollectionSearchBox,
     CollectionToolbar,
-    ...HlmButtonGroupImports,
     ...HlmCheckboxImports,
-    ...HlmDatePickerImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmSeparatorImports,
   ],
   providers: [
-    InterventionPlanningOptionsStore,
     InterventionStatisticsStore,
     InterventionRecurrenceStore,
     provideIcons({
       lucideArrowDown,
       lucideArrowUp,
       lucideCalendarClock,
-      lucideCalendarDays,
       lucideCheck,
       lucideCircleAlert,
-      lucideCircleDot,
       lucideClipboardList,
       lucideDownload,
-      lucideFlag,
-      lucideMapPin,
       lucidePlus,
       lucideSearch,
       lucideSlidersHorizontal,
-      lucideTag,
       lucideTrash2,
-      lucideUser,
       lucideUserCog,
-      lucideWrench,
     }),
   ],
   templateUrl: './interventions-page.component.html',
@@ -571,26 +449,6 @@ export class InterventionsPage {
   /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Registers {@link pageActions} on the shell header. */
-  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
-
-  /**
-   * Property pageActions
-   * @readonly
-   *
-   * @description
-   * The "New intervention" button, registered on the shell header instead of
-   * rendering in-page — the shell header carries every routed page's title
-   * and actions now (`ARCHITECTURE.md` §9.3).
-   *
-   * @access private
-   * @since 6.4.0
-   *
-   * @type {Signal<TemplateRef<unknown> | undefined>}
-   */
-  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
-    viewChild<TemplateRef<unknown>>('pageActions');
-
   /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
@@ -652,6 +510,22 @@ export class InterventionsPage {
       ),
   );
 
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * The search as everything downstream reads it: trimmed, never `undefined`.
+   * Declared ahead of {@link page}, which reads it synchronously while
+   * establishing its own initial value.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
+
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
     this.preferences.readSort(),
@@ -662,14 +536,31 @@ export class InterventionsPage {
     ReadonlySet<InterventionTableColumn>
   >(this.restoreHiddenColumns());
 
-  /** What the search box holds, before the debounce settles. */
-  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
-
   /** Whether an export request is currently in flight. */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The page window, one-based. */
-  protected readonly page: WritableSignal<number> = signal<number>(1);
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * The page window, one-based — a `linkedSignal` over {@link filters} and
+   * {@link searchTerm} rather than a plain signal, so it resets to `1`
+   * whenever either changes regardless of which component wrote the URL: the
+   * shell's chip picks and search box, or this page's own {@link toggleMine}
+   * and "Clear search". {@link goToPage} and {@link setPageSize} still `.set`
+   * it directly between those resets, exactly as before.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  protected readonly page: WritableSignal<number> = linkedSignal<number>((): number => {
+    this.filters();
+    this.searchTerm();
+    return 1;
+  });
 
   /** How many rows a page holds, restored from the preferences cookie. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(this.restorePageSize());
@@ -723,18 +614,6 @@ export class InterventionsPage {
   protected readonly pendingBulkAssignIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
-  /** Status choices offered in the filter bar. */
-  protected readonly statusOptions: SelectOption<InterventionStatus>[] =
-    INTERVENTION_STATUS_FILTER_OPTIONS;
-
-  /** Type choices offered in the filter bar. */
-  protected readonly typeOptions: SelectOption<InterventionType>[] =
-    INTERVENTION_TYPE_FILTER_OPTIONS;
-
-  /** Priority choices offered in the filter bar. */
-  protected readonly priorityOptions: SelectOption<InterventionPriority>[] =
-    INTERVENTION_PRIORITY_FILTER_OPTIONS;
-
   /** Every hideable column, for the Display popover's column list. */
   protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
     INTERVENTION_TABLE_COLUMNS;
@@ -763,20 +642,6 @@ export class InterventionsPage {
   );
 
   /**
-   * Property searchTerm
-   * @readonly
-   *
-   * @description
-   * The search as everything downstream reads it: trimmed, never `undefined`.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
-
-  /**
    * Property detailRouteBase
    * @readonly
    *
@@ -791,70 +656,6 @@ export class InterventionsPage {
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
-
-  /**
-   * Property boardQueryParams
-   * @readonly
-   *
-   * @description
-   * Every query param the Board view should keep when the operator switches
-   * to it, `status` excluded — the board's columns ARE the status narrowing,
-   * so a status filter carried across would either duplicate that narrowing
-   * or contradict it.
-   *
-   * @access protected
-   * @since 9.0.0
-   *
-   * @type {Signal<Readonly<Record<string, string | null>>>}
-   */
-  protected readonly boardQueryParams: Signal<Readonly<Record<string, string | null>>> = computed(
-    (): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }),
-  );
-
-  /**
-   * Property calendarQueryParams
-   * @readonly
-   *
-   * @description
-   * Every query param the Calendar view should keep when the operator
-   * switches to it — unlike {@link boardQueryParams}, `status` travels
-   * across: the calendar has no columns to conflict with, so narrowing it to
-   * one or a few statuses is a legitimate way to read the month.
-   *
-   * @access protected
-   * @since 10.0.0
-   *
-   * @type {Signal<Readonly<Record<string, string | null>>>}
-   */
-  protected readonly calendarQueryParams: Signal<Readonly<Record<string, string | null>>> =
-    computed((): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      status: this.status() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }));
 
   /**
    * Property canTransition
@@ -981,40 +782,6 @@ export class InterventionsPage {
             member.value,
             member,
           ]),
-      ),
-  );
-
-  /**
-   * Property labelOptions
-   * @readonly
-   *
-   * @description
-   * The organization's intervention labels, as the filter select's options —
-   * `InterventionLabelOutput` mapped to the IRI-valued {@link SelectOption}
-   * the filter's `label` narrowing carries.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<readonly SelectOption[]>}
-   */
-  protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
-    readonly SelectOption[]
-  >(() =>
-    this.planningOptions.labels().map((label): SelectOption => ({
-      value: `/api/intervention-labels/${label.id}`,
-      label: label.name,
-    })),
-  );
-
-  /** Labels keyed by IRI. */
-  private readonly labelDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
-    (): ReadonlyMap<string, string> =>
-      new Map(
-        this.labelOptions().map((option: SelectOption): [string, string] => [
-          option.value,
-          option.label,
-        ]),
       ),
   );
 
@@ -1262,320 +1029,6 @@ export class InterventionsPage {
   });
 
   /**
-   * Property filterFields
-   * @readonly
-   * @description The filter bar's field catalog, forwarded to `app-collection-filter-bar` as-is — `InterventionFilterFieldOption` is structurally a `CollectionFilterField`.
-   * @access protected
-   * @since 7.0.0
-   * @type {readonly InterventionFilterFieldOption[]}
-   */
-  protected readonly filterFields: readonly InterventionFilterFieldOption[] =
-    INTERVENTION_FILTER_FIELDS;
-
-  /**
-   * Property activeFilterKeys
-   * @readonly
-   * @description Which of {@link filterFields} currently carry a value, `mine` excluded (it keeps its own toggle chip) — the bar's `activeKeys` input and this page's "Clear filters" empty-state condition both read this.
-   * @access protected
-   * @since 7.0.0
-   * @type {Signal<readonly InterventionFilterFieldKey[]>}
-   */
-  protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
-    readonly InterventionFilterFieldKey[]
-  >(() => {
-    const filters: InterventionListFilters = this.filters();
-
-    return INTERVENTION_FILTER_FIELDS.filter(
-      (field: InterventionFilterFieldOption): boolean => filters[field.key] !== null,
-    ).map((field: InterventionFilterFieldOption): InterventionFilterFieldKey => field.key);
-  });
-
-  /**
-   * Property openFilterKey
-   * @readonly
-   *
-   * @description
-   * Which field's value selector currently renders forced open — `null` when
-   * none is. Set by the bar's {@link onFieldPicked} when a not-yet-active
-   * field is picked from its "+ Filter" menu, and kept in sync with a chip's
-   * own value control through {@link onFieldPopoverStateChanged} so clicking
-   * its value segment (or dismissing it) behaves the same way. This is
-   * UI-only: it decides which selector is expanded, never a narrowing's
-   * value — the URL stays the only place that lives. Also drives the bar's
-   * `pendingKey` input, which is what still renders an empty chip for a field
-   * mid-pick before it carries a value.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @type {WritableSignal<InterventionFilterFieldKey | null>}
-   */
-  protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
-    signal<InterventionFilterFieldKey | null>(null);
-
-  /**
-   * Property enumFilterOperatorOverrides
-   * @readonly
-   *
-   * @description
-   * The operator the "+ Filter" menu's picker last chose for one of the six
-   * `equals`/`isAnyOf` fields, remembered only for the moment that field
-   * carries no value yet — once a value is applied, {@link enumFieldOperator}
-   * reads the value's own shape (scalar vs. array) instead, exactly as
-   * {@link dueRangeOperator} falls back to its own `linkedSignal` `previous`
-   * once `dueRange` clears. Never read directly by a template.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @type {WritableSignal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>}
-   */
-  private readonly enumFilterOperatorOverrides: WritableSignal<
-    Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
-  > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
-
-  /**
-   * Property filtersVisible
-   * @readonly
-   *
-   * @description
-   * Whether `app-collection-filter-bar` is currently mounted below the
-   * toolbar — presentation-only, never serialized to the URL. Seeded by
-   * `initialCollectionFilterBarVisibility` (`@shared/collection-filters`) so
-   * a `?status=…` link never lands on a bar that hides what is narrowing the
-   * list, then purely driven by `app-collection-filter-toggle`.
-   *
-   * @access protected
-   * @since 7.1.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
-    computed<boolean>(() => this.activeFilterKeys().length > 0),
-  );
-
-  /** The "Status" chip's value control, projected into the filter bar. */
-  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
-
-  /** The "Type" chip's value control, projected into the filter bar. */
-  private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
-
-  /** The "Priority" chip's value control, projected into the filter bar. */
-  private readonly priorityChipTemplate = viewChild<TemplateRef<unknown>>('priorityChip');
-
-  /** The "Site" chip's value control, projected into the filter bar. */
-  private readonly siteChipTemplate = viewChild<TemplateRef<unknown>>('siteChip');
-
-  /** The "Responsible" chip's value control, projected into the filter bar. */
-  private readonly responsibleChipTemplate = viewChild<TemplateRef<unknown>>('responsibleChip');
-
-  /** The "Label" chip's value control, projected into the filter bar. */
-  private readonly labelChipTemplate = viewChild<TemplateRef<unknown>>('labelChip');
-
-  /** The "Deadline" chip's value control, projected into the filter bar. */
-  private readonly dueRangeChipTemplate = viewChild<TemplateRef<unknown>>('dueRangeChip');
-
-  /** The "Planned start" chip's value control, projected into the filter bar. */
-  private readonly plannedStartRangeChipTemplate =
-    viewChild<TemplateRef<unknown>>('plannedStartRangeChip');
-
-  /**
-   * Property chipTemplates
-   * @readonly
-   * @description Every filter field's value-control `TemplateRef`, keyed by {@link InterventionFilterFieldKey}, for `app-collection-filter-bar`'s `templates` input.
-   * @access protected
-   * @since 7.0.0
-   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
-   */
-  protected readonly chipTemplates: Signal<
-    Readonly<Record<string, TemplateRef<unknown> | undefined>>
-  > = computed(() => ({
-    status: this.statusChipTemplate(),
-    type: this.typeChipTemplate(),
-    priority: this.priorityChipTemplate(),
-    site: this.siteChipTemplate(),
-    responsible: this.responsibleChipTemplate(),
-    label: this.labelChipTemplate(),
-    dueRange: this.dueRangeChipTemplate(),
-    plannedStartRange: this.plannedStartRangeChipTemplate(),
-  }));
-
-  /**
-   * Property dueRangeOperator
-   * @readonly
-   *
-   * @description
-   * The "Deadline" chip's own currently-selected operator — a
-   * `linkedSignal` over {@link filters}' own `dueRange`, so a shared or
-   * reloaded `?dueAfter=…`/`?dueBefore=…` URL shows the right operator
-   * immediately, while picking a different operator from the chip's own
-   * select (before a new date is chosen) still updates this signal directly
-   * without waiting for a URL round-trip. Defaults to `greaterThan` — the
-   * field's first declared operator — the moment "Deadline" is picked from
-   * the "+ Filter" menu and carries no value yet.
-   *
-   * @access protected
-   * @since 8.1.0
-   *
-   * @type {WritableSignal<InterventionDueRangeOperator>}
-   */
-  protected readonly dueRangeOperator: WritableSignal<InterventionDueRangeOperator> = linkedSignal<
-    InterventionDueRangeFilter | null,
-    InterventionDueRangeOperator
-  >({
-    source: () => this.filters().dueRange,
-    computation: (
-      dueRange: InterventionDueRangeFilter | null,
-      previous,
-    ): InterventionDueRangeOperator => dueRange?.operator ?? previous?.value ?? 'greaterThan',
-  });
-
-  /**
-   * Property dueRangeAfter
-   * @readonly
-   * @description The applied `dueRange`'s lower bound, when its operator carries one — read by the "after"/"between" value controls.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly dueRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && (dueRange.operator === 'greaterThan' || dueRange.operator === 'between')
-      ? dueRange.after
-      : null;
-  });
-
-  /**
-   * Property dueRangeBefore
-   * @readonly
-   * @description The applied `dueRange`'s upper bound, when its operator carries one — read by the "before"/"between" value controls.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly dueRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && (dueRange.operator === 'lessThan' || dueRange.operator === 'between')
-      ? dueRange.before
-      : null;
-  });
-
-  /**
-   * Property dueRangeBetween
-   * @readonly
-   * @description The applied `dueRange`'s bound pair, only while its operator is `between` — read by `hlm-date-range-picker`, which needs both ends or neither.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<[Date, Date] | undefined>}
-   */
-  protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
-    [Date, Date] | undefined
-  >(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && dueRange.operator === 'between'
-      ? [dueRange.after, dueRange.before]
-      : undefined;
-  });
-
-  /**
-   * Property plannedStartRangeOperator
-   * @readonly
-   * @description The "Planned start" chip's own currently-selected operator — the same `linkedSignal` pattern as {@link dueRangeOperator}, over `filters()`' own `plannedStartRange`.
-   * @access protected
-   * @since 8.2.0
-   * @type {WritableSignal<InterventionPlannedStartRangeOperator>}
-   */
-  protected readonly plannedStartRangeOperator: WritableSignal<InterventionPlannedStartRangeOperator> =
-    linkedSignal<InterventionPlannedStartRangeFilter | null, InterventionPlannedStartRangeOperator>(
-      {
-        source: () => this.filters().plannedStartRange,
-        computation: (
-          plannedStartRange: InterventionPlannedStartRangeFilter | null,
-          previous,
-        ): InterventionPlannedStartRangeOperator =>
-          plannedStartRange?.operator ?? previous?.value ?? 'greaterThan',
-      },
-    );
-
-  /**
-   * Property plannedStartRangeAfter
-   * @readonly
-   * @description The applied `plannedStartRange`'s lower bound, when its operator carries one. See {@link dueRangeAfter}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly plannedStartRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange &&
-      (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
-      ? plannedStartRange.after
-      : null;
-  });
-
-  /**
-   * Property plannedStartRangeBefore
-   * @readonly
-   * @description The applied `plannedStartRange`'s upper bound, when its operator carries one. See {@link dueRangeBefore}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly plannedStartRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange &&
-      (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
-      ? plannedStartRange.before
-      : null;
-  });
-
-  /**
-   * Property plannedStartRangeBetween
-   * @readonly
-   * @description The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<[Date, Date] | undefined>}
-   */
-  protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
-    [Date, Date] | undefined
-  >(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange && plannedStartRange.operator === 'between'
-      ? [plannedStartRange.after, plannedStartRange.before]
-      : undefined;
-  });
-
-  /**
-   * Property filterOperators
-   * @readonly
-   * @description The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input — "Deadline" and "Planned start" from their own `linkedSignal`, the six `equals`/`isAnyOf` fields from {@link enumFieldOperator}.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Readonly<Record<string, CollectionFilterOperator>>>}
-   */
-  protected readonly filterOperators: Signal<Readonly<Record<string, CollectionFilterOperator>>> =
-    computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
-      dueRange: this.dueRangeOperator(),
-      plannedStartRange: this.plannedStartRangeOperator(),
-      status: this.enumFieldOperator('status'),
-      type: this.enumFieldOperator('type'),
-      priority: this.enumFieldOperator('priority'),
-      site: this.enumFieldOperator('site'),
-      responsible: this.enumFieldOperator('responsible'),
-      label: this.enumFieldOperator('label'),
-    }));
-
-  /**
    * Property hasSearch
    * @readonly
    *
@@ -1608,95 +1061,10 @@ export class InterventionsPage {
     () => this.store.listError() !== null,
   );
 
-  /** Names a status on a closed select trigger and in the column menu. */
+  /** Names a status on a closed select trigger, in the column menu, and in the bulk "Move to" menu. */
   protected readonly statusLabelOf: (value: InterventionStatus) => string = (
     value: InterventionStatus,
   ): string => resolveInterventionTag('status', value).label;
-
-  /** Names a type on a closed select trigger. */
-  protected readonly typeLabelOf: (value: InterventionType) => string = (
-    value: InterventionType,
-  ): string => resolveInterventionTag('type', value).label;
-
-  /** Names a priority on a closed select trigger. */
-  protected readonly priorityLabelOf: (value: InterventionPriority) => string = (
-    value: InterventionPriority,
-  ): string => resolveInterventionTag('priority', value).label;
-
-  /** Names a site IRI on a closed select trigger. */
-  protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
-    this.siteDisplayMap().get(value) ?? '';
-
-  /** Names a member IRI on a closed select trigger. */
-  protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
-    this.memberDisplayMap().get(value)?.label ?? '';
-
-  /** Names a label IRI on a closed select trigger. */
-  protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
-    this.labelDisplayMap().get(value) ?? '';
-
-  /**
-   * Method multiLabel
-   *
-   * @description
-   * Wraps one of the six `…LabelOf` single-item labellers for
-   * `hlm-select-multiple`'s `itemToString`: `stringifyAsLabel`
-   * (`@spartan-ng/brain/core`) calls it once per `hlm-select-item` with that
-   * item's own scalar value, but calls it a second time with the select's
-   * **whole current value** to render the trigger's own summary text — an
-   * array once `isAnyOf` has more than one pick. This dispatches on that
-   * shape: a scalar routes straight to `labelOf`, an array maps every member
-   * through it and joins with a comma, so both call sites resolve correctly
-   * through the one function `[itemToString]` takes.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {(value: T) => string} labelOf - The field's own single-item labeller.
-   * @param {T | readonly T[]} value - Either one item's value or the select's whole current selection.
-   *
-   * @returns {string} The label for one item, or the comma-joined labels for a selection.
-   */
-  private multiLabel<T>(labelOf: (value: T) => string, value: T | readonly T[]): string {
-    return Array.isArray(value) ? value.map(labelOf).join(', ') : labelOf(value as T);
-  }
-
-  /** The "Status" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly statusMultiLabelOf: (
-    value: InterventionStatus | readonly InterventionStatus[],
-  ) => string = (value): string => this.multiLabel(this.statusLabelOf, value);
-
-  /** The "Type" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly typeMultiLabelOf: (
-    value: InterventionType | readonly InterventionType[],
-  ) => string = (value): string => this.multiLabel(this.typeLabelOf, value);
-
-  /** The "Priority" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly priorityMultiLabelOf: (
-    value: InterventionPriority | readonly InterventionPriority[],
-  ) => string = (value): string => this.multiLabel(this.priorityLabelOf, value);
-
-  /** The "Site" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly siteMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.siteLabelOf, value);
-
-  /** The "Responsible" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly responsibleMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.responsibleLabelOf, value);
-
-  /** The "Label" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly labelMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.labelLabelOf, value);
-
-  /** Names a filter chip's value segment, so each is distinguishable by screen reader. */
-  protected readonly changeFilterLabel: (fieldLabel: string) => string = (
-    fieldLabel: string,
-  ): string => $localize`:@@intervention.list.changeFilter:Change filter: ${fieldLabel}:field:`;
 
   /** Names an ordering field on the Display popover's closed select trigger. */
   protected readonly sortFieldLabelOf: (value: InterventionSortField) => string = (
@@ -1734,32 +1102,18 @@ export class InterventionsPage {
    * @constructor
    *
    * @description
-   * Wires the search round-trip and the load effect. A settled (debounced)
-   * search resets the page synchronously with the query navigation so the
-   * load effect fires once, already on the first page of the new result set.
+   * Wires the load effect — the search debounce and its own URL round-trip
+   * moved to `InterventionsShellPage` along with the rest of the toolbar; this
+   * page only reads {@link searchTerm} back out of the same URL.
+   * {@link page} resets to `1` itself, as a `linkedSignal`, whenever
+   * {@link filters} or {@link searchTerm} changes, so the load effect fires
+   * once, already on the first page of the new result set, regardless of
+   * which component wrote the query params.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
-
-    effect((): void => {
-      const term: string = this.searchTerm();
-      untracked((): void => {
-        if (term !== this.draftSearch()) this.draftSearch.set(term);
-      });
-    });
-
-    toObservable(this.draftSearch)
-      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((term: string): void => {
-        if (term !== this.searchTerm()) {
-          this.page.set(1);
-          this.navigateQuery({ q: term === '' ? null : term });
-        }
-      });
-
     effect((): void => {
       const organizationId: string = this.organizationId();
       const filters: InterventionListFilters = this.filters();
@@ -1779,13 +1133,6 @@ export class InterventionsPage {
             itemsPerPage: pageSize,
           },
         });
-      });
-    });
-
-    effect((): void => {
-      const organizationId: string = this.organizationId();
-      untracked((): void => {
-        this.planningOptions.loadCreationOptions(organizationId);
       });
     });
 
@@ -1844,23 +1191,6 @@ export class InterventionsPage {
 
   //#region Methods
   /**
-   * Method onSearchQueryChanged
-   *
-   * @description
-   * Records a keystroke into the draft term the debounce watches.
-   *
-   * @access protected
-   * @since 3.1.0
-   *
-   * @param {string} term - The search box's current value.
-   *
-   * @returns {void}
-   */
-  protected onSearchQueryChanged(term: string): void {
-    this.draftSearch.set(term);
-  }
-
-  /**
    * Method clearSearch
    * @method clearSearch
    *
@@ -1873,532 +1203,8 @@ export class InterventionsPage {
    * @returns {void}
    */
   protected clearSearch(): void {
-    this.draftSearch.set('');
     this.page.set(1);
     this.navigateQuery({ q: null });
-  }
-
-  /**
-   * Method applyFilter
-   * @method applyFilter
-   *
-   * @description
-   * Replaces one narrowing, which reloads the list from the first page.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {Partial<InterventionListFilters>} patch - The field to change.
-   *
-   * @returns {void}
-   */
-  protected applyFilter(patch: Partial<InterventionListFilters>): void {
-    this.page.set(1);
-    this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
-  }
-
-  /**
-   * Method filterFieldOption
-   *
-   * @description
-   * The catalog entry for one field, for the template to read a chip's
-   * label and icon by key without repeating {@link INTERVENTION_FILTER_FIELDS}
-   * lookups inline. Falls back to an empty label rather than throwing: every
-   * call site passes a literal key from the same catalog, so the fallback
-   * is unreachable in practice.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to resolve.
-   *
-   * @returns {InterventionFilterFieldOption} Its catalog entry.
-   */
-  protected filterFieldOption(key: InterventionFilterFieldKey): InterventionFilterFieldOption {
-    return (
-      INTERVENTION_FILTER_FIELDS.find(
-        (field: InterventionFilterFieldOption): boolean => field.key === key,
-      ) ?? { key, fieldLabel: '', icon: 'lucideCircleDot', operators: ['equals'] }
-    );
-  }
-
-  /**
-   * Method onFieldPicked
-   *
-   * @description
-   * Reacts to the filter bar's `fieldPicked` output: forces the picked
-   * field's value control open so the operator lands directly on the value
-   * picker instead of an empty chip. The bar itself already moved the field
-   * to the end of its own display-order memory before emitting.
-   *
-   * @access protected
-   * @since 7.0.0
-   *
-   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
-   *
-   * @returns {void}
-   */
-  protected onFieldPicked(key: string): void {
-    this.openFilterKey.set(key as InterventionFilterFieldKey);
-  }
-
-  /**
-   * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
-   * @access protected
-   * @since 7.0.0
-   * @param {string} key - The field key a chip's remove button cleared.
-   * @returns {void}
-   */
-  protected onFieldRemoved(key: string): void {
-    this.applyFilter(this.filterClearPatchOf(key as InterventionFilterFieldKey));
-  }
-
-  /**
-   * Method onFilterOperatorChanged
-   * @description Reacts to the filter bar's `operatorChanged` output. Only "Deadline" (`dueRange`) and "Planned start" (`plannedStartRange`) currently declare more than one operator, so this only ever routes to one of {@link onDueRangeOperatorPicked} / {@link onPlannedStartRangeOperatorPicked}.
-   * @access protected
-   * @since 8.1.0
-   * @param {CollectionFilterOperatorChangedEvent} event - The field key whose operator segment changed and the operator it now reads.
-   * @returns {void}
-   */
-  protected onFilterOperatorChanged(event: CollectionFilterOperatorChangedEvent): void {
-    if (event.key === 'dueRange') this.onDueRangeOperatorPicked(event.operator);
-    if (event.key === 'plannedStartRange') this.onPlannedStartRangeOperatorPicked(event.operator);
-    if (this.isEnumFilterKey(event.key)) this.onEnumFilterOperatorPicked(event.key, event.operator);
-  }
-
-  /**
-   * Method isEnumFilterKey
-   * @description Narrows a filter bar field key to {@link InterventionEnumFilterKey} — the six fields sharing the `equals`/`isAnyOf` value-shape discriminant.
-   * @access private
-   * @since 8.3.0
-   * @param {string} key - The field key to narrow.
-   * @returns {key is InterventionEnumFilterKey} Whether the key is one of the six.
-   */
-  private isEnumFilterKey(key: string): key is InterventionEnumFilterKey {
-    return (
-      key === 'status' ||
-      key === 'type' ||
-      key === 'priority' ||
-      key === 'site' ||
-      key === 'responsible' ||
-      key === 'label'
-    );
-  }
-
-  /**
-   * Method enumFieldOperator
-   *
-   * @description
-   * The operator one of the six `equals`/`isAnyOf` fields currently reads:
-   * `isAnyOf` when its own {@link filters} value is a readonly array,
-   * `equals` when it is a set scalar, and — while unset — whatever the
-   * operator picker last chose in {@link enumFilterOperatorOverrides},
-   * defaulting to `equals`.
-   *
-   * @access protected
-   * @since 8.3.0
-   *
-   * @param {InterventionEnumFilterKey} key - The field to read.
-   *
-   * @returns {'equals' | 'isAnyOf'} The operator its chip's segment renders.
-   */
-  protected enumFieldOperator(key: InterventionEnumFilterKey): 'equals' | 'isAnyOf' {
-    const value: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
-
-    if (Array.isArray(value)) return 'isAnyOf';
-    if (value !== null) return 'equals';
-    return this.enumFilterOperatorOverrides()[key] ?? 'equals';
-  }
-
-  /**
-   * Method onEnumFilterOperatorPicked
-   *
-   * @description
-   * Switches one of the six `equals`/`isAnyOf` fields' value control to the
-   * picked operator's own shape (a single select for `equals`, a multi
-   * select for `isAnyOf`) and drops any already-applied narrowing on that
-   * field — its value was chosen under the previous operator's shape and no
-   * longer means the same thing, mirroring {@link onDueRangeOperatorPicked}.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @param {InterventionEnumFilterKey} key - The field whose operator segment changed.
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
-   *
-   * @returns {void}
-   */
-  private onEnumFilterOperatorPicked(
-    key: InterventionEnumFilterKey,
-    operator: CollectionFilterOperator,
-  ): void {
-    if (operator !== 'equals' && operator !== 'isAnyOf') return;
-
-    this.enumFilterOperatorOverrides.update(
-      (
-        overrides: Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>,
-      ): Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>> => ({
-        ...overrides,
-        [key]: operator,
-      }),
-    );
-    if (this.filters()[key] !== null) this.applyFilter(this.filterClearPatchOf(key));
-  }
-
-  /**
-   * Method toEnumValues
-   *
-   * @description
-   * Normalizes one of the six `equals`/`isAnyOf` fields' current value to a
-   * readonly array, for `hlm-select-multiple`'s own `value` input — `null`
-   * narrows to an empty selection, a scalar narrows to a one-element array,
-   * an array passes through as-is. Generic and typed per call site (see
-   * {@link statusValues} and its siblings) rather than keyed by
-   * {@link InterventionEnumFilterKey}, so `[itemToString]`/`[value]`
-   * inference on the template's `hlm-select-multiple` stays on the field's
-   * own literal type instead of widening to `string`.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {T | readonly T[] | null} value - The field's current value.
-   *
-   * @returns {T[]} The field's currently selected values, mutable — the shape `hlm-select-multiple`'s `value` model itself takes.
-   */
-  private toEnumValues<T>(value: T | readonly T[] | null): T[] {
-    if (value === null) return [];
-    return Array.isArray(value) ? [...(value as readonly T[])] : [value as T];
-  }
-
-  /**
-   * Method toScalarValue
-   *
-   * @description
-   * The `equals`-mode counterpart of {@link toEnumValues}: the field's own
-   * scalar value, `null` for "unset" and — unreachable in practice, since
-   * the single select only ever renders while {@link enumFieldOperator}
-   * reads `equals` — also `null` for an array, so the template's single
-   * select stays typed on the field's own literal type rather than widening
-   * to include a readonly array it will never actually receive.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {T | readonly T[] | null} value - The field's current value.
-   *
-   * @returns {T | null} The field's current scalar value.
-   */
-  private toScalarValue<T>(value: T | readonly T[] | null): T | null {
-    return Array.isArray(value) ? null : (value as T | null);
-  }
-
-  /** The "Status" chip's currently checked values, for its multi select. */
-  protected statusValues(): InterventionStatus[] {
-    return this.toEnumValues(this.filters().status);
-  }
-
-  /** The "Status" chip's own scalar value, for its single select. */
-  protected statusScalar(): InterventionStatus | null {
-    return this.toScalarValue(this.filters().status);
-  }
-
-  /** The "Type" chip's currently checked values, for its multi select. */
-  protected typeValues(): InterventionType[] {
-    return this.toEnumValues(this.filters().type);
-  }
-
-  /** The "Type" chip's own scalar value, for its single select. */
-  protected typeScalar(): InterventionType | null {
-    return this.toScalarValue(this.filters().type);
-  }
-
-  /** The "Priority" chip's currently checked values, for its multi select. */
-  protected priorityValues(): InterventionPriority[] {
-    return this.toEnumValues(this.filters().priority);
-  }
-
-  /** The "Priority" chip's own scalar value, for its single select. */
-  protected priorityScalar(): InterventionPriority | null {
-    return this.toScalarValue(this.filters().priority);
-  }
-
-  /** The "Site" chip's currently checked values, for its multi select. */
-  protected siteValues(): string[] {
-    return this.toEnumValues(this.filters().site);
-  }
-
-  /** The "Site" chip's own scalar value, for its single select. */
-  protected siteScalar(): string | null {
-    return this.toScalarValue(this.filters().site);
-  }
-
-  /** The "Responsible" chip's currently checked values, for its multi select. */
-  protected responsibleValues(): string[] {
-    return this.toEnumValues(this.filters().responsible);
-  }
-
-  /** The "Responsible" chip's own scalar value, for its single select. */
-  protected responsibleScalar(): string | null {
-    return this.toScalarValue(this.filters().responsible);
-  }
-
-  /** The "Label" chip's currently checked values, for its multi select. */
-  protected labelValues(): string[] {
-    return this.toEnumValues(this.filters().label);
-  }
-
-  /** The "Label" chip's own scalar value, for its single select. */
-  protected labelScalar(): string | null {
-    return this.toScalarValue(this.filters().label);
-  }
-
-  /**
-   * Method applyEnumSelection
-   *
-   * @description
-   * Applies one of the six `equals`/`isAnyOf` fields' multi select
-   * `valueChange` — every currently checked item. An empty selection clears
-   * the field back to `null` rather than sending an empty `isAnyOf`, which
-   * the API would read as a value, not as "any" (mirroring
-   * {@link buildInterventionListOptions}'s own omit-when-unset rule). A
-   * single remaining item still applies as a one-element array, not a
-   * collapsed scalar, so the chip's operator segment stays on `isAnyOf`
-   * instead of silently reading back as `equals`.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {InterventionEnumFilterKey} key - The field the multi select belongs to.
-   * @param {readonly T[] | null | undefined} values - The multi select's current selection.
-   *
-   * @returns {void}
-   */
-  private applyEnumSelection<T>(
-    key: InterventionEnumFilterKey,
-    values: readonly T[] | null | undefined,
-  ): void {
-    const patch = {
-      [key]: values && values.length > 0 ? values : null,
-    } as Partial<InterventionListFilters>;
-
-    this.applyFilter(patch);
-  }
-
-  /** Applies the "Status" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applyStatusFilter(values: readonly InterventionStatus[] | null | undefined): void {
-    this.applyEnumSelection('status', values);
-  }
-
-  /** Applies the "Type" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applyTypeFilter(values: readonly InterventionType[] | null | undefined): void {
-    this.applyEnumSelection('type', values);
-  }
-
-  /** Applies the "Priority" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applyPriorityFilter(values: readonly InterventionPriority[] | null | undefined): void {
-    this.applyEnumSelection('priority', values);
-  }
-
-  /** Applies the "Site" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applySiteFilter(values: readonly string[] | null | undefined): void {
-    this.applyEnumSelection('site', values);
-  }
-
-  /** Applies the "Responsible" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applyResponsibleFilter(values: readonly string[] | null | undefined): void {
-    this.applyEnumSelection('responsible', values);
-  }
-
-  /** Applies the "Label" chip's multi select selection. See {@link applyEnumSelection}. */
-  protected applyLabelFilter(values: readonly string[] | null | undefined): void {
-    this.applyEnumSelection('label', values);
-  }
-
-  /**
-   * Method onDueRangeOperatorPicked
-   *
-   * @description
-   * Switches the "Deadline" chip's value control to the picked operator's
-   * own shape (one date for `greaterThan`/`lessThan`, two for `between`) and
-   * drops any already-applied `dueRange` narrowing — its bound(s) were
-   * chosen under the previous operator and no longer mean the same thing,
-   * so the URL stays honest rather than keeping a stale filter active under
-   * a value control that no longer shows it.
-   *
-   * @access private
-   * @since 8.1.0
-   *
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
-   *
-   * @returns {void}
-   */
-  private onDueRangeOperatorPicked(operator: CollectionFilterOperator): void {
-    if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
-
-    this.dueRangeOperator.set(operator);
-    if (this.filters().dueRange !== null) this.applyFilter({ dueRange: null });
-  }
-
-  /**
-   * Method pickDueAfter
-   * @description Applies the "Deadline" chip's `greaterThan` narrowing.
-   * @access protected
-   * @since 8.1.0
-   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
-  protected pickDueAfter(date: Date | null | undefined): void {
-    if (!date) return;
-    this.applyFilter({ dueRange: { operator: 'greaterThan', after: date } });
-  }
-
-  /**
-   * Method pickDueBefore
-   * @description Applies the "Deadline" chip's `lessThan` narrowing.
-   * @access protected
-   * @since 8.1.0
-   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
-  protected pickDueBefore(date: Date | null | undefined): void {
-    if (!date) return;
-    this.applyFilter({ dueRange: { operator: 'lessThan', before: date } });
-  }
-
-  /**
-   * Method pickDueBetween
-   * @description Applies the "Deadline" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
-   * @access protected
-   * @since 8.1.0
-   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
-   * @returns {void}
-   */
-  protected pickDueBetween(range: [Date, Date] | null | undefined): void {
-    if (!range) return;
-    const [after, before] = range;
-    this.applyFilter({ dueRange: { operator: 'between', after, before } });
-  }
-
-  /**
-   * Method onPlannedStartRangeOperatorPicked
-   * @description Switches the "Planned start" chip's value control and drops any already-applied `plannedStartRange` narrowing. See {@link onDueRangeOperatorPicked}.
-   * @access private
-   * @since 8.2.0
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
-   * @returns {void}
-   */
-  private onPlannedStartRangeOperatorPicked(operator: CollectionFilterOperator): void {
-    if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
-
-    this.plannedStartRangeOperator.set(operator);
-    if (this.filters().plannedStartRange !== null) this.applyFilter({ plannedStartRange: null });
-  }
-
-  /**
-   * Method pickPlannedStartAfter
-   * @description Applies the "Planned start" chip's `greaterThan` narrowing.
-   * @access protected
-   * @since 8.2.0
-   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
-  protected pickPlannedStartAfter(date: Date | null | undefined): void {
-    if (!date) return;
-    this.applyFilter({ plannedStartRange: { operator: 'greaterThan', after: date } });
-  }
-
-  /**
-   * Method pickPlannedStartBefore
-   * @description Applies the "Planned start" chip's `lessThan` narrowing.
-   * @access protected
-   * @since 8.2.0
-   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
-  protected pickPlannedStartBefore(date: Date | null | undefined): void {
-    if (!date) return;
-    this.applyFilter({ plannedStartRange: { operator: 'lessThan', before: date } });
-  }
-
-  /**
-   * Method pickPlannedStartBetween
-   * @description Applies the "Planned start" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
-   * @access protected
-   * @since 8.2.0
-   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
-   * @returns {void}
-   */
-  protected pickPlannedStartBetween(range: [Date, Date] | null | undefined): void {
-    if (!range) return;
-    const [after, before] = range;
-    this.applyFilter({ plannedStartRange: { operator: 'between', after, before } });
-  }
-
-  /**
-   * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
-   * @access protected
-   * @since 7.1.0
-   * @param {boolean} visible - The toggle button's intended next state.
-   * @returns {void}
-   */
-  protected toggleFiltersVisible(visible: boolean): void {
-    this.filtersVisible.set(visible);
-  }
-
-  /**
-   * Method fieldPopoverState
-   *
-   * @description
-   * Whether a field's value control should currently render open — true only
-   * for the one field {@link openFilterKey} names.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to read.
-   *
-   * @returns {BrnOverlayState} `'open'` or `'closed'`.
-   */
-  protected fieldPopoverState(key: InterventionFilterFieldKey): BrnOverlayState {
-    return this.openFilterKey() === key ? 'open' : 'closed';
-  }
-
-  /**
-   * Method onFieldPopoverStateChanged
-   *
-   * @description
-   * Keeps {@link openFilterKey} in sync with a field's own value control:
-   * opening it (by its trigger, or by {@link onFieldPicked}) records which
-   * field is expanded; closing it — picking a value, Escape, or an outside
-   * click — clears the record, unless another field has since taken over.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field whose selector changed.
-   * @param {BrnOverlayState} state - Its next state.
-   *
-   * @returns {void}
-   */
-  protected onFieldPopoverStateChanged(
-    key: InterventionFilterFieldKey,
-    state: BrnOverlayState,
-  ): void {
-    if (state === 'open') {
-      this.openFilterKey.set(key);
-      return;
-    }
-
-    if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
   /**
@@ -2417,23 +1223,6 @@ export class InterventionsPage {
   protected toggleMine(): void {
     this.page.set(1);
     this.navigateQuery({ mine: this.filters().mine ? null : '1' });
-  }
-
-  /**
-   * Method clearFilters
-   * @method clearFilters
-   *
-   * @description
-   * Drops every narrowing at once.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @returns {void}
-   */
-  protected clearFilters(): void {
-    this.page.set(1);
-    this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 
   /**
@@ -2611,44 +1400,6 @@ export class InterventionsPage {
     this.pageSize.set(size);
     this.page.set(1);
     this.persistListPreferences();
-  }
-
-  /**
-   * Method filterClearPatchOf
-   *
-   * @description
-   * The `applyFilter` patch that clears one field back to `null` — what
-   * {@link onFieldRemoved} keys off, typed exhaustively rather than an
-   * indexed `{ [key]: null }` so a new field added to
-   * {@link InterventionFilterFieldKey} fails to compile here until it is
-   * handled.
-   *
-   * @access private
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to clear.
-   *
-   * @returns {Partial<InterventionListFilters>} The clearing patch.
-   */
-  private filterClearPatchOf(key: InterventionFilterFieldKey): Partial<InterventionListFilters> {
-    switch (key) {
-      case 'status':
-        return { status: null };
-      case 'type':
-        return { type: null };
-      case 'priority':
-        return { priority: null };
-      case 'site':
-        return { site: null };
-      case 'responsible':
-        return { responsible: null };
-      case 'label':
-        return { label: null };
-      case 'dueRange':
-        return { dueRange: null };
-      case 'plannedStartRange':
-        return { plannedStartRange: null };
-    }
   }
 
   /**

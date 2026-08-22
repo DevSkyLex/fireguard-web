@@ -25,8 +25,9 @@ and the calendar under `interventions.routes.ts`'s own outer pathless parent —
 the detail page (`:interventionId`) stays the outer parent's other child,
 outside the shell, since it renders its own tabbed workspace rather than the
 collection chrome. The shell owns, once instead of three times: the search box
-(`?q=`, debounced), the "+ Filter"/eight-chip Linear-style filter bar and its
-toggle, and the List/Board/Calendar switcher. It **writes** the URL's
+(`?q=`, debounced), the `?mine=1` toggle, the "+ Filter"/eight-chip
+Linear-style filter bar and its toggle, and the List/Board/Calendar switcher —
+all on **one** toolbar row. It **writes** the URL's
 narrowing; every leaf still independently **reads** the same URL through its
 own route-bound inputs and `parseInterventionListFilters` — no input channel
 or shared service connects the shell to a leaf beyond that URL. It also owns
@@ -100,6 +101,17 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   the shell; `InterventionsPage` itself now owns only the table, its own
   Display popover (sort/columns), row/bulk actions, and the sheets/dialogs
   they open.
+
+  **A leaf contributes its own controls to that single row through
+  `InterventionToolbarActions`** (`services/intervention-toolbar-actions/`),
+  provided on the inner pathless route. The leaf registers an `ng-template`;
+  the shell renders it at the head of `toolbarEnd`. This is the same
+  `TemplateRef`-slot shape as `PageActionsService` (`@core/page-actions`), and
+  it exists for the same reason: the list's Display, Recurrences, Export and
+  bulk controls read the list's sort order, column set, recurrence store and
+  row selection, so hoisting them into the shell would drag that state up with
+  them and break the boundary the shell was extracted to draw. The board and
+  the calendar register nothing, so the row is shorter there.
 
   **The filter bar (6.5) replaced the earlier popover-plus-read-only-chips
   pair with editable, Linear-style segmented chips** — the popover is gone.

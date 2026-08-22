@@ -10,8 +10,10 @@ import {
   linkedSignal,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,7 +23,6 @@ import {
   lucideArrowDown,
   lucideArrowUp,
   lucideCalendarClock,
-  lucideCheck,
   lucideCircleAlert,
   lucideClipboardList,
   lucideDownload,
@@ -74,7 +75,6 @@ import {
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
@@ -85,7 +85,7 @@ import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
-import { HlmToggle } from '@shared/ui/toggle';
+import { InterventionToolbarActions } from '../../../services';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -194,14 +194,12 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
     HlmBadge,
     HlmButton,
     HlmSpinner,
-    HlmToggle,
     InterventionAssignDialog,
     InterventionBulkDeleteDialog,
     InterventionCreateSheet,
     InterventionRecurrencesSheet,
     InterventionTable,
     CollectionPagination,
-    CollectionToolbar,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
@@ -214,7 +212,6 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
       lucideArrowDown,
       lucideArrowUp,
       lucideCalendarClock,
-      lucideCheck,
       lucideCircleAlert,
       lucideClipboardList,
       lucideDownload,
@@ -422,6 +419,14 @@ export class InterventionsPage {
 
   /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** The shell's toolbar slot this view contributes its Display, Recurrences, Export and bulk controls to. */
+  private readonly toolbarActionsSlot: InterventionToolbarActions = inject(
+    InterventionToolbarActions,
+  );
+
+  /** Those controls, handed to {@link toolbarActionsSlot} so they render on the shell's single toolbar row. */
+  private readonly toolbarActions = viewChild<TemplateRef<unknown>>('toolbarActions');
 
   /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
@@ -1088,6 +1093,14 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect((): void => {
+      const template: TemplateRef<unknown> | undefined = this.toolbarActions();
+
+      if (template) this.toolbarActionsSlot.register(template);
+    });
+
+    this.destroyRef.onDestroy((): void => this.toolbarActionsSlot.clear(this.toolbarActions()));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const filters: InterventionListFilters = this.filters();

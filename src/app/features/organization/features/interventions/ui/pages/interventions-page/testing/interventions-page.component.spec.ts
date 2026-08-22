@@ -1,5 +1,14 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, of, throwError } from 'rxjs';
@@ -20,6 +29,7 @@ import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
+import { InterventionToolbarActions } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
@@ -89,6 +99,34 @@ const createPage = async (
   await created.whenStable();
 
   return created;
+};
+
+/**
+ * Renders whatever the page registered into the shell's toolbar slot. The
+ * page's Display, Recurrences, Export and bulk controls live in an
+ * `ng-template` the shell instantiates, so they are absent from this
+ * fixture's own DOM.
+ */
+@Component({
+  selector: 'app-toolbar-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class ToolbarActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderToolbarActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<ToolbarActionsHost> =
+    TestBed.createComponent(ToolbarActionsHost);
+  hostFixture.componentRef.setInput(
+    'template',
+    TestBed.inject(InterventionToolbarActions).actions(),
+  );
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
 };
 
 describe('InterventionsPage', () => {
@@ -831,29 +869,34 @@ describe('InterventionsPage', () => {
 
       fixture.componentInstance['exportCsv']();
       await fixture.whenStable();
-      await Promise.resolve();
-      await Promise.resolve();
 
-      expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.');
+      await vi.waitFor(() =>
+        expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.'),
+      );
     });
 
     it('should mark the export button busy and announce it while the export is in flight', async () => {
       totalInterventions.set(5);
       fixture = await createPage();
 
-      const button = (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="interventions-export"]',
-      );
-      expect(button?.getAttribute('aria-busy')).toBeNull();
+      expect(
+        renderToolbarActions()
+          .querySelector('[data-testid="interventions-export"]')
+          ?.getAttribute('aria-busy'),
+      ).toBeNull();
 
       fixture.componentInstance['exportBusy'].set(true);
       await fixture.whenStable();
 
-      expect(button?.getAttribute('aria-busy')).toBe('true');
+      const busyToolbar: HTMLElement = renderToolbarActions();
+
       expect(
-        (fixture.nativeElement as HTMLElement).querySelector(
-          '[data-testid="interventions-export-status"]',
-        ),
+        busyToolbar
+          .querySelector('[data-testid="interventions-export"]')
+          ?.getAttribute('aria-busy'),
+      ).toBe('true');
+      expect(
+        busyToolbar.querySelector('[data-testid="interventions-export-status"]'),
       ).not.toBeNull();
     });
   });

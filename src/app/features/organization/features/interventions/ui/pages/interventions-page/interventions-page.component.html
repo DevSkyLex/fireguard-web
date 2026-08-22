@@ -1,199 +1,197 @@
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4">
-  <app-collection-toolbar>
-    <div toolbarEnd class="flex flex-wrap items-center gap-2">
-      @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:grow"
-          data-testid="interventions-bulk-actions"
-          [hlmDropdownMenuTrigger]="bulkMenu"
-          align="start"
-        >
-          <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
-          <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
-        </button>
-      }
+  <ng-template #toolbarActions>
+    @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:grow"
+        data-testid="interventions-bulk-actions"
+        [hlmDropdownMenuTrigger]="bulkMenu"
+        align="start"
+      >
+        <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
+        <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
+      </button>
+    }
 
-      <ng-template #bulkMenu>
-        <hlm-dropdown-menu class="w-56">
-          @if (canTransition() && bulkTransitionTargets().length > 0) {
-            <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
-              >Move to</hlm-dropdown-menu-label
-            >
-            @for (target of bulkTransitionTargets(); track target) {
-              @if (transitionableSelectedIds(target).length > 0) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="interventions-bulk-transition"
-                  (click)="confirmBulkTransition(target)"
-                >
-                  {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
-                </button>
-              }
-            }
-            <hlm-dropdown-menu-separator />
-          }
-
-          @if (canAssign() && assignableSelectedIds().length > 0) {
-            <button
-              hlmDropdownMenuItem
-              data-testid="interventions-bulk-assign"
-              (click)="requestBulkAssign()"
-            >
-              <ng-icon name="lucideUserCog" aria-hidden="true" />
-              {{ bulkAssignLabel() }}
-            </button>
-            <hlm-dropdown-menu-separator />
-          }
-
-          @if (canDelete()) {
-            <button
-              hlmDropdownMenuItem
-              variant="destructive"
-              data-testid="interventions-bulk-delete"
-              [disabled]="deletableSelectedIds().length === 0"
-              (click)="requestBulkDelete()"
-            >
-              <ng-icon name="lucideTrash2" aria-hidden="true" />
-              {{ bulkDeleteLabel() }}
-            </button>
-          }
-        </hlm-dropdown-menu>
-      </ng-template>
-
-      <hlm-popover sideOffset="5" align="end">
-        <button
-          hlmPopoverTrigger
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11 max-sm:grow"
-          data-testid="interventions-display"
-        >
-          <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
-          <span i18n="@@intervention.list.displayButton">Display</span>
-        </button>
-
-        <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
-          <div class="flex flex-col gap-1.5">
-            <p
-              class="text-xs font-medium text-muted-foreground"
-              i18n="@@intervention.list.displaySortLabel"
-            >
-              Sort by
-            </p>
-            <div class="flex items-center gap-2">
-              <hlm-select
-                class="flex-1"
-                [value]="sortOrder().field"
-                [itemToString]="sortFieldLabelOf"
-                (valueChange)="onSortFieldPicked($event)"
-              >
-                <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-group>
-                    @for (option of sortOptions; track option.value) {
-                      <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-                    }
-                  </hlm-select-group>
-                </hlm-select-content>
-              </hlm-select>
-
+    <ng-template #bulkMenu>
+      <hlm-dropdown-menu class="w-56">
+        @if (canTransition() && bulkTransitionTargets().length > 0) {
+          <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
+            >Move to</hlm-dropdown-menu-label
+          >
+          @for (target of bulkTransitionTargets(); track target) {
+            @if (transitionableSelectedIds(target).length > 0) {
               <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                data-testid="interventions-sort-direction"
-                [attr.aria-label]="sortDirectionLabel()"
-                (click)="toggleSortDirection()"
+                hlmDropdownMenuItem
+                data-testid="interventions-bulk-transition"
+                (click)="confirmBulkTransition(target)"
               >
-                <ng-icon
-                  [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
-                  aria-hidden="true"
-                />
+                {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
               </button>
-            </div>
-          </div>
+            }
+          }
+          <hlm-dropdown-menu-separator />
+        }
 
-          <hlm-separator />
+        @if (canAssign() && assignableSelectedIds().length > 0) {
+          <button
+            hlmDropdownMenuItem
+            data-testid="interventions-bulk-assign"
+            (click)="requestBulkAssign()"
+          >
+            <ng-icon name="lucideUserCog" aria-hidden="true" />
+            {{ bulkAssignLabel() }}
+          </button>
+          <hlm-dropdown-menu-separator />
+        }
 
-          <div class="flex flex-col gap-1.5">
-            <p
-              class="text-xs font-medium text-muted-foreground"
-              i18n="@@intervention.list.displayColumnsLabel"
+        @if (canDelete()) {
+          <button
+            hlmDropdownMenuItem
+            variant="destructive"
+            data-testid="interventions-bulk-delete"
+            [disabled]="deletableSelectedIds().length === 0"
+            (click)="requestBulkDelete()"
+          >
+            <ng-icon name="lucideTrash2" aria-hidden="true" />
+            {{ bulkDeleteLabel() }}
+          </button>
+        }
+      </hlm-dropdown-menu>
+    </ng-template>
+
+    <hlm-popover sideOffset="5" align="end">
+      <button
+        hlmPopoverTrigger
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11 max-sm:grow"
+        data-testid="interventions-display"
+      >
+        <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
+        <span i18n="@@intervention.list.displayButton">Display</span>
+      </button>
+
+      <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
+        <div class="flex flex-col gap-1.5">
+          <p
+            class="text-xs font-medium text-muted-foreground"
+            i18n="@@intervention.list.displaySortLabel"
+          >
+            Sort by
+          </p>
+          <div class="flex items-center gap-2">
+            <hlm-select
+              class="flex-1"
+              [value]="sortOrder().field"
+              [itemToString]="sortFieldLabelOf"
+              (valueChange)="onSortFieldPicked($event)"
             >
-              Columns
-            </p>
-            <div class="flex flex-col gap-0.5">
-              @for (id of allColumns; track id) {
-                <label
-                  class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
-                >
-                  <hlm-checkbox
-                    data-testid="interventions-column-toggle"
-                    [checked]="isColumnVisible(id)"
-                    (checkedChange)="toggleColumn(id)"
-                  />
-                  {{ columnLabelOf(id) }}
-                </label>
-              }
-            </div>
+              <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
+                <hlm-select-value />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  @for (option of sortOptions; track option.value) {
+                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              data-testid="interventions-sort-direction"
+              [attr.aria-label]="sortDirectionLabel()"
+              (click)="toggleSortDirection()"
+            >
+              <ng-icon
+                [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                aria-hidden="true"
+              />
+            </button>
           </div>
-        </hlm-popover-content>
-      </hlm-popover>
+        </div>
 
-      @if (canReadRecurrences()) {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11 max-sm:grow"
-          data-testid="interventions-recurrences"
-          (click)="openRecurrences()"
-        >
-          <ng-icon name="lucideCalendarClock" aria-hidden="true" />
-          <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
-        </button>
-      }
+        <hlm-separator />
 
+        <div class="flex flex-col gap-1.5">
+          <p
+            class="text-xs font-medium text-muted-foreground"
+            i18n="@@intervention.list.displayColumnsLabel"
+          >
+            Columns
+          </p>
+          <div class="flex flex-col gap-0.5">
+            @for (id of allColumns; track id) {
+              <label
+                class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
+              >
+                <hlm-checkbox
+                  data-testid="interventions-column-toggle"
+                  [checked]="isColumnVisible(id)"
+                  (checkedChange)="toggleColumn(id)"
+                />
+                {{ columnLabelOf(id) }}
+              </label>
+            }
+          </div>
+        </div>
+      </hlm-popover-content>
+    </hlm-popover>
+
+    @if (canReadRecurrences()) {
       <button
         hlmBtn
         type="button"
         variant="outline"
         size="sm"
         class="max-sm:min-h-11 max-sm:grow"
-        data-testid="interventions-export"
-        [disabled]="exportDisabled()"
-        [attr.aria-busy]="exportBusy() ? 'true' : null"
-        (click)="exportCsv()"
+        data-testid="interventions-recurrences"
+        (click)="openRecurrences()"
       >
-        @if (exportBusy()) {
-          <hlm-spinner class="size-4" aria-hidden="true" />
-        } @else {
-          <ng-icon name="lucideDownload" aria-hidden="true" />
-        }
-        <span i18n="@@intervention.list.exportButton">Export</span>
+        <ng-icon name="lucideCalendarClock" aria-hidden="true" />
+        <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
       </button>
+    }
+
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11 max-sm:grow"
+      data-testid="interventions-export"
+      [disabled]="exportDisabled()"
+      [attr.aria-busy]="exportBusy() ? 'true' : null"
+      (click)="exportCsv()"
+    >
       @if (exportBusy()) {
-        <span
-          class="sr-only"
-          aria-live="polite"
-          data-testid="interventions-export-status"
-          i18n="@@intervention.list.exportingStatus"
-        >
-          Preparing the export…
-        </span>
+        <hlm-spinner class="size-4" aria-hidden="true" />
+      } @else {
+        <ng-icon name="lucideDownload" aria-hidden="true" />
       }
-    </div>
-  </app-collection-toolbar>
+      <span i18n="@@intervention.list.exportButton">Export</span>
+    </button>
+    @if (exportBusy()) {
+      <span
+        class="sr-only"
+        aria-live="polite"
+        data-testid="interventions-export-status"
+        i18n="@@intervention.list.exportingStatus"
+      >
+        Preparing the export…
+      </span>
+    }
+  </ng-template>
 
   @if (hasError()) {
     <app-error-state

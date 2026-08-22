@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -69,6 +70,7 @@ import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmToggle } from '@shared/ui/toggle';
 import { HlmTooltip } from '@shared/ui/tooltip';
+import { InterventionToolbarActions } from '../../../services';
 import { InterventionPlanningOptionsStore } from '../../../state/intervention-planning-options';
 import type { InterventionPlanningOptionsStoreType } from '../../../state/intervention-planning-options';
 import {
@@ -165,6 +167,7 @@ const ALL_FILTER_FIELD_KEYS: readonly InterventionFilterFieldKey[] = INTERVENTIO
   selector: 'app-interventions-shell-page',
   imports: [
     NgIcon,
+    NgTemplateOutlet,
     RouterLink,
     RouterOutlet,
     HlmButton,
@@ -226,7 +229,7 @@ export class InterventionsShellPage {
   /** The label filter the URL carries, as a raw label id. */
   public readonly label: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** `?mine=1` narrows to the signed-in member — read here only so {@link filters} stays complete; the toggle chip itself stays on the List page's own remaining toolbar row (`FEATURE.md`). */
+  /** `?mine=1` narrows to the signed-in member — read here for {@link filters} and for the shell's own toolbar toggle (`FEATURE.md`). */
   public readonly mine: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /** The named due-date window the URL carries — the segmented views' and the Today page's own legacy preset. */
@@ -251,6 +254,11 @@ export class InterventionsShellPage {
 
   //#region Properties
   /** Site, member and label choices for the filter bar's three IRI-valued chips. */
+  /** The active view's own toolbar controls, rendered inside this shell's single toolbar row. */
+  protected readonly toolbarActions: InterventionToolbarActions = inject(
+    InterventionToolbarActions,
+  );
+
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 

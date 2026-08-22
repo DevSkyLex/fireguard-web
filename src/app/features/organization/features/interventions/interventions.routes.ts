@@ -3,6 +3,7 @@ import { organizationPermissionGuard } from '@features/organization/http/guards'
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { interventionTitleResolver } from './http/resolvers';
 import type { InterventionFilterFieldKey } from './models';
+import { InterventionToolbarActions } from './services';
 import { InterventionStore } from './state';
 import { InterventionPlanningOptionsStore } from './state/intervention-planning-options';
 import { InterventionStatisticsStore } from './state/intervention-statistics';
@@ -91,7 +92,11 @@ export const INTERVENTION_ROUTES: Routes = [
     children: [
       {
         path: '',
-        providers: [InterventionPlanningOptionsStore, InterventionStatisticsStore],
+        providers: [
+          InterventionPlanningOptionsStore,
+          InterventionStatisticsStore,
+          InterventionToolbarActions,
+        ],
         loadComponent: () =>
           import('./ui/pages/interventions-shell-page/interventions-shell-page.component').then(
             (m) => m.InterventionsShellPage,

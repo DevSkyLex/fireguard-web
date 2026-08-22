@@ -36,6 +36,10 @@
     </div>
 
     <div toolbarEnd class="flex flex-wrap items-center gap-2">
+      @if (toolbarActions.actions(); as viewActions) {
+        <ng-container *ngTemplateOutlet="viewActions" />
+      }
+
       <div
         hlmButtonGroup
         data-testid="intervention-view-toggle"

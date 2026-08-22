@@ -7000,6 +7000,10 @@
         <source>Pick start and end dates</source>
         <target>Elegir las fechas de inicio y fin</target>
       </trans-unit>
+      <trans-unit id="intervention.list.filterDueWindow" datatype="html">
+        <source>Due window</source>
+        <target>Ventana de vencimiento</target>
+      </trans-unit>
       <trans-unit id="intervention.list.filterPlannedStart" datatype="html">
         <source>Planned start</source>
         <target>Inicio planificado</target>

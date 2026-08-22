@@ -41,6 +41,7 @@ import {
   lucideUser,
   lucideUserCog,
   lucideWrench,
+  lucideTimer,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
@@ -51,6 +52,7 @@ import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import {
+  type InterventionDueWindow,
   resolveInterventionTag,
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
@@ -74,6 +76,7 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
+  INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
   INTERVENTION_SORT_OPTIONS,
@@ -246,8 +249,18 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     'label',
     'dueRange',
     'plannedStartRange',
+    'dueWindow',
   ],
-  board: ['type', 'priority', 'site', 'responsible', 'label', 'dueRange', 'plannedStartRange'],
+  board: [
+    'type',
+    'priority',
+    'site',
+    'responsible',
+    'label',
+    'dueRange',
+    'plannedStartRange',
+    'dueWindow',
+  ],
   calendar: ['status', 'type', 'site', 'responsible'],
 };
 
@@ -391,6 +404,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
       lucideUser,
       lucideUserCog,
       lucideWrench,
+      lucideTimer,
     }),
   ],
   templateUrl: './interventions-page.component.html',
@@ -659,6 +673,22 @@ export class InterventionsPage {
 
   /** Orderings the Display popover's field select offers. */
   protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
+
+  /** Named deadline windows the `?due=` chip offers — the same catalog the URL parser reads. */
+  protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
+    INTERVENTION_DUE_WINDOW_OPTIONS;
+
+  /** The active named deadline window, or `null` — the `?due=` chip's value. */
+  protected readonly dueWindowValue: Signal<InterventionDueWindow | null> =
+    computed<InterventionDueWindow | null>(() => this.filters().dueWindow);
+
+  /** Renders a named deadline window in the `?due=` chip's trigger. */
+  protected readonly dueWindowLabelOf: (value: InterventionDueWindow | null) => string = (
+    value: InterventionDueWindow | null,
+  ): string =>
+    INTERVENTION_DUE_WINDOW_OPTIONS.find(
+      (option: SelectOption<InterventionDueWindow>): boolean => option.value === value,
+    )?.label ?? '';
 
   /** Status choices offered in the filter bar. */
   protected readonly statusOptions: SelectOption<InterventionStatus>[] =
@@ -1055,6 +1085,9 @@ export class InterventionsPage {
   /** The "Priority" chip's value control, projected into the filter bar. */
   private readonly priorityChipTemplate = viewChild<TemplateRef<unknown>>('priorityChip');
 
+  /** The `?due=` chip's value control. */
+  private readonly dueWindowChipTemplate = viewChild<TemplateRef<unknown>>('dueWindowChip');
+
   /** The "Site" chip's value control, projected into the filter bar. */
   private readonly siteChipTemplate = viewChild<TemplateRef<unknown>>('siteChip');
 
@@ -1083,6 +1116,7 @@ export class InterventionsPage {
     label: this.labelChipTemplate(),
     dueRange: this.dueRangeChipTemplate(),
     plannedStartRange: this.plannedStartRangeChipTemplate(),
+    dueWindow: this.dueWindowChipTemplate(),
   }));
 
   /** The "Deadline" chip's own currently-selected operator. */
@@ -2113,6 +2147,8 @@ export class InterventionsPage {
         return { dueRange: null };
       case 'plannedStartRange':
         return { plannedStartRange: null };
+      case 'dueWindow':
+        return { dueWindow: null };
     }
   }
 

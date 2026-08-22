@@ -937,6 +937,7 @@ describe('InterventionsPage', () => {
         'label',
         'dueRange',
         'plannedStartRange',
+        'dueWindow',
       ]);
     });
 
@@ -956,6 +957,20 @@ describe('InterventionsPage', () => {
           (field: { key: string }): string => field.key,
         ),
       ).toEqual(['status', 'type', 'site', 'responsible']);
+    });
+
+    it('should count and clear the named due window, which had no chip at all', async () => {
+      fixture = await createPage({ due: 'overdue' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toContain('dueWindow');
+
+      fixture.componentInstance['onFieldRemoved']('dueWindow');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ due: null }) }),
+      );
     });
 
     it('should keep an unhonoured field in the catalog while it is set, so its chip keeps a label', async () => {

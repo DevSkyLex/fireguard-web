@@ -875,6 +875,40 @@
       }
     </ng-template>
 
+    <ng-template #dueWindowChip>
+      <hlm-select
+        [value]="dueWindowValue()"
+        [itemToString]="dueWindowLabelOf"
+        [state]="fieldPopoverState('dueWindow')"
+        [disabled]="isFieldIgnored('dueWindow')"
+        [class.opacity-60]="isFieldIgnored('dueWindow')"
+        [hlmTooltip]="isFieldIgnored('dueWindow') ? ignoredReason('dueWindow') : ''"
+        (valueChange)="applyFilter({ dueWindow: $event ?? null })"
+        (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
+      >
+        <label for="interventions-filter-due-window" class="sr-only">{{
+          chipAccessibleName('dueWindow')
+        }}</label>
+        <hlm-select-trigger
+          buttonId="interventions-filter-due-window"
+          class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+          data-testid="interventions-filter-due-window"
+        >
+          <hlm-select-value
+            placeholder="Due window"
+            i18n-placeholder="@@intervention.list.filterDueWindow"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal class="w-fit">
+          <hlm-select-group>
+            @for (option of dueWindowOptions; track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </ng-template>
+
     <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4">
       @if (hasError()) {
         <app-error-state

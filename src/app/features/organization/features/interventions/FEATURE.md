@@ -59,7 +59,7 @@ component exists — behind `hlmTabsContentLazy`, on the Calendar tab's first
 activation — so opening the page on List or Board never fetches the
 calendar's window.
 
-**Which of the filter bar's eight fields each tab actually applies** is no
+**Which of the filter bar's nine fields each tab actually applies** is no
 longer route `data` — with one page and no child routes to declare it on, it
 is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
 local to `InterventionsPage` (rule of three: two consumers, both on the
@@ -80,6 +80,16 @@ never silently misapplied. The List honours all eight; the
 Board honours every field except `status` (its columns are the narrowing);
 the Calendar honours only `status`, `type`, `site` and `responsible`
 (`InterventionCalendarFilters`'s own `Pick`).
+
+`dueWindow` is the ninth field, and it exists as a chip for a correctness
+reason rather than a cosmetic one: the KPI strip's tiles and the Today page
+deep-link to `?due=overdue`, and while that key had no catalog entry it
+counted for nothing — no chip, no badge, no "Clear filters" — so a URL
+carrying it narrowed the list with nothing on screen to say so and no way
+back except editing the address bar. It overlaps `dueRange` in intent (three
+of its four windows are expressible as an upper bound); the two stay separate
+fields because they are separate keys in `InterventionListFilters` and the
+server treats `due=overdue` as a preset, not a bound.
 
 - `/organizations/:organizationId/interventions` — the index page: a spartan
   `hlmTable` of the organization's interventions, grouped and paginated, row

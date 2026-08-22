@@ -1062,6 +1062,30 @@ export class InterventionsPage {
     ).map((field: InterventionFilterFieldOption): InterventionFilterFieldKey => field.key);
   });
 
+  /**
+   * Property honouredActiveFilterKeys
+   * @readonly
+   *
+   * @description
+   * The badge count on the "Filters" toggle: active keys the current tab
+   * actually applies. An unhonoured one is deliberately excluded — it narrows
+   * nothing here, so counting it would advertise a narrowing that is not in
+   * force. It stays discoverable all the same: the bar opens on any active
+   * key, {@link activeFilterKeys} included, and renders the inert chip.
+   *
+   * @access protected
+   * @since 11.1.0
+   * @type {Signal<readonly InterventionFilterFieldKey[]>}
+   */
+  protected readonly honouredActiveFilterKeys: Signal<readonly InterventionFilterFieldKey[]> =
+    computed<readonly InterventionFilterFieldKey[]>(() => {
+      const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
+
+      return this.activeFilterKeys().filter((key: InterventionFilterFieldKey): boolean =>
+        honoured.has(key),
+      );
+    });
+
   /** Whether `app-collection-filter-bar` is currently mounted below the toolbar. */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),

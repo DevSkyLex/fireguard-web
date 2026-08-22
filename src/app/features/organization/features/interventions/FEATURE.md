@@ -1647,8 +1647,11 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
   why and that same reason inside its accessible name — the "+ Filter" menu
   no longer lists it — `offeredFilterFields` narrows the catalog to the tab's
-  honoured keys — while `switchView` merges the narrowing forward instead of
-  deleting it. Adding a ninth
+  honoured keys — the "Filters" badge does not count it
+  (`honouredActiveFilterKeys`), since it narrows nothing here, and
+  `switchView` merges it forward instead of deleting it. The bar still opens
+  on any active key, so the inert chip is what carries its visibility, not the
+  badge. Adding a tenth
   filter field, or changing which fields a tab honours, means updating that
   `Record`'s entry in the same change, or the new field silently reads as
   honoured everywhere.

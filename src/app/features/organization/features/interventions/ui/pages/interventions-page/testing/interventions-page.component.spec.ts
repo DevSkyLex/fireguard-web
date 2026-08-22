@@ -959,6 +959,20 @@ describe('InterventionsPage', () => {
       ).toEqual(['status', 'type', 'site', 'responsible']);
     });
 
+    it('should leave an unhonoured narrowing out of the Filters badge while still charting it', async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toContain('status');
+      expect(fixture.componentInstance['honouredActiveFilterKeys']()).toEqual([]);
+    });
+
+    it('should count only what the active tab applies when both kinds are set', async () => {
+      fixture = await createPage({ status: 'planned', type: 'inventory', view: 'board' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toHaveLength(2);
+      expect(fixture.componentInstance['honouredActiveFilterKeys']()).toEqual(['type']);
+    });
+
     it('should count and clear the named due window, which had no chip at all', async () => {
       fixture = await createPage({ due: 'overdue' });
 

@@ -1,18 +1,21 @@
 <span
-  class="inline-flex h-7 items-center overflow-visible rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20"
+  class="inline-flex h-7 max-w-full items-center overflow-visible rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20"
   [attr.data-testid]="chipTestId()"
 >
-  <span class="inline-flex items-center gap-1 px-2 whitespace-nowrap text-muted-foreground">
+  <span
+    class="inline-flex shrink-0 items-center gap-1 px-2 whitespace-nowrap text-muted-foreground"
+  >
     <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
     {{ fieldLabel() }}
   </span>
 
-  <span class="flex h-3.5 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 
   @if (hasOperatorChoice()) {
     <hlm-select
+      class="shrink-0"
       [value]="operator()"
       [itemToString]="operatorLabelOf"
       (valueChange)="onOperatorPicked($event)"
@@ -37,22 +40,22 @@
     </hlm-select>
   } @else {
     <span
-      class="px-2 whitespace-nowrap text-muted-foreground"
+      class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
       [attr.data-testid]="operatorTestId()"
     >
       {{ operatorLabelOf(operator()) }}
     </span>
   }
 
-  <span class="flex h-3.5 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 
-  <span class="inline-flex items-center">
+  <span class="inline-flex min-w-0 items-center overflow-hidden">
     <ng-content />
   </span>
 
-  <span class="flex h-3.5 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 

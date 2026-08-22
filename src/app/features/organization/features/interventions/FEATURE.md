@@ -1648,6 +1648,15 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   chip the instant its value went. `equals` and `isAnyOf` carry their value
   across in both directions; only a multi-value `isAnyOf` narrowing to
   `equals` genuinely cannot be represented, and only that clears.
+- **One failing option list never blanks the others.**
+  `InterventionPlanningOptionsStore` joins four requests for the creation
+  options and five for the workspace. `forkJoin` errors as a whole the moment
+  any input does, which was disproportionate: a failing template list left the
+  Site, Responsible and Label chips with nothing to offer, so three filters
+  were unusable because of a fourth, unrelated endpoint. Each source is now
+  wrapped so it can fail alone. The failure is reported, not swallowed —
+  `loadFailed` is dispatched whenever any source fails — and `loadCallState`
+  turns to error only when every one of them does.
 - **A picked operator outranks the value's own shape.** The URL writes
   `['planned']` and `'planned'` identically, so `enumFieldOperator` reading
   the shape alone snapped "is any of" back to "is" on a single selection. The

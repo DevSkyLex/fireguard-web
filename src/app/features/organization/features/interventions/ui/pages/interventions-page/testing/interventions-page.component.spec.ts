@@ -953,24 +953,44 @@ describe('InterventionsPage', () => {
         'plannedStartRange',
         'dueWindow',
       ]);
+      expect(
+        fixture.componentInstance['offeredFilterFields']().every(
+          (field: { unavailableReason?: string }): boolean => field.unavailableReason === undefined,
+        ),
+      ).toBe(true);
     });
 
-    it('should withhold status from the Board and everything the Calendar cannot apply', async () => {
+    it('should mark status unavailable on the Board rather than withholding it', async () => {
       fixture = await createPage({ view: 'board' });
 
-      expect(
-        fixture.componentInstance['offeredFilterFields']().map(
-          (field: { key: string }): string => field.key,
-        ),
-      ).not.toContain('status');
+      const offered: readonly { key: string; unavailableReason?: string }[] =
+        fixture.componentInstance['offeredFilterFields']();
 
+      expect(offered.map((field): string => field.key)).toContain('status');
+      expect(offered.find((field): boolean => field.key === 'status')?.unavailableReason).toContain(
+        "board's columns",
+      );
+      expect(
+        offered.find((field): boolean => field.key === 'type')?.unavailableReason,
+      ).toBeUndefined();
+    });
+
+    it('should mark everything the Calendar cannot apply, and only that', async () => {
       fixture = await createPage({ view: 'calendar' });
 
-      expect(
-        fixture.componentInstance['offeredFilterFields']().map(
-          (field: { key: string }): string => field.key,
-        ),
-      ).toEqual(['status', 'type', 'site', 'responsible']);
+      const unavailable: readonly string[] = fixture.componentInstance['offeredFilterFields']()
+        .filter(
+          (field: { unavailableReason?: string }): boolean => field.unavailableReason !== undefined,
+        )
+        .map((field: { key: string }): string => field.key);
+
+      expect(unavailable).toEqual([
+        'priority',
+        'label',
+        'dueRange',
+        'plannedStartRange',
+        'dueWindow',
+      ]);
     });
 
     it('should leave an unhonoured narrowing out of the Filters badge while still charting it', async () => {

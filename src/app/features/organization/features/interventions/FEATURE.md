@@ -64,12 +64,12 @@ longer route `data` — with one page and no child routes to declare it on, it
 is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
 local to `InterventionsPage` (rule of three: two consumers, both on the
 page). **The "+ Filter" menu offers only the active tab's honoured fields**
-(`offeredFilterFields`) — the three tabs do not share one filter set, and a
-field that would do nothing is never offered. A field that is nonetheless
-already set stays in the catalog the bar receives, or the bar would resolve
-its chip's label and icon to blank; the menu still never lists it, since the
-bar drops every active key from its own `unsetFields`. Such a chip renders
-disabled and visibly greyed
+(`offeredFilterFields`) — the three tabs do not share one filter set. A field
+the active tab cannot apply is **listed disabled, with the reason beside it**
+(`CollectionFilterField.unavailableReason`) rather than hidden: dropping it
+left a reader on the Board hunting for a Status filter with nothing saying
+why it had gone, while an active unhonoured chip already explains itself.
+Such a chip renders disabled and visibly greyed
 (`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason and the
 same reason appended to the chip's `sr-only` name
 (`InterventionsPage.chipAccessibleName`), since a tooltip is a hover and a
@@ -1668,8 +1668,8 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an
   active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
   why and that same reason inside its accessible name — the "+ Filter" menu
-  no longer lists it — `offeredFilterFields` narrows the catalog to the tab's
-  honoured keys — the "Filters" badge does not count it
+  lists it disabled with its reason — `offeredFilterFields` annotates rather
+  than narrows — the "Filters" badge does not count it
   (`honouredActiveFilterKeys`), since it narrows nothing here, and
   `switchView` merges it forward instead of deleting it. The bar still opens
   on any active key, so the inert chip is what carries its visibility, not the

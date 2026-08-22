@@ -19,6 +19,13 @@ import type { CollectionFilterOperator } from './collection-filter-operator.type
  * actually maps to a real query param; the full vocabulary
  * (`CollectionFilterOperator`) may be wider than what any one field lists.
  *
+ * {@link unavailableReason}, when present, marks the field as one this
+ * surface cannot apply right now — a view whose backing query has no such
+ * parameter, say. It stays listed in the "+ Filter" menu, disabled, with the
+ * reason beside it: hiding it instead would leave a user hunting for a field
+ * that simply is not offered here, and the bar already refuses to hide an
+ * *active* narrowing it cannot apply.
+ *
  * {@link operatorLabels}, when present, overrides `collectionFilterOperatorLabel`'s
  * generic wording for specific operators of this field alone — a date field
  * reading "greater than" is not natural, "after" is. Every operator the
@@ -45,5 +52,8 @@ export interface CollectionFilterField {
 
   /** Field-specific operator labels, overriding the generic registry for this field only. Optional. */
   readonly operatorLabels?: Readonly<Partial<Record<CollectionFilterOperator, string>>>;
+
+  /** Why this surface cannot apply the field, when it cannot. Set means disabled in the "+ Filter" menu. Optional. */
+  readonly unavailableReason?: string;
   //#endregion
 }

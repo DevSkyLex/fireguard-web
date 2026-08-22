@@ -104,6 +104,7 @@ import {
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
 import {
+  type CollectionFilterField,
   CollectionFilterBar,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
@@ -1026,30 +1027,28 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * The bar's `fields` input: what the "+ Filter" menu may offer here. The
-   * three tabs do not share one filter set — the menu lists only the fields
-   * {@link honouredFilterKeys} says the active tab applies, so a field that
-   * would do nothing is never offered in the first place.
-   *
-   * An unhonoured field that is nonetheless *already* set stays in the list,
-   * because the bar resolves a chip's label and icon out of `fields` and would
-   * otherwise render it blank. The menu still never shows it: the bar removes
-   * every active key from its own `unsetFields`.
+   * The bar's `fields` input. The three tabs do not share one filter set, and
+   * a field the active tab cannot apply is listed all the same — disabled,
+   * with {@link ignoredReason} beside it — rather than dropped. Hiding it left
+   * a reader on the Board hunting for a Status filter with nothing saying why
+   * it was gone, while an *active* unhonoured chip already explains itself.
+   * The two halves of the rule now agree.
    *
    * @access protected
-   * @since 11.0.0
-   * @type {Signal<readonly InterventionFilterFieldOption[]>}
+   * @since 12.0.0
+   * @type {Signal<readonly CollectionFilterField[]>}
    */
-  protected readonly offeredFilterFields: Signal<readonly InterventionFilterFieldOption[]> =
-    computed<readonly InterventionFilterFieldOption[]>(() => {
-      const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
-      const active: ReadonlySet<InterventionFilterFieldKey> = new Set(this.activeFilterKeys());
+  protected readonly offeredFilterFields: Signal<readonly CollectionFilterField[]> = computed<
+    readonly CollectionFilterField[]
+  >(() => {
+    const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
 
-      return INTERVENTION_FILTER_FIELDS.filter(
-        (field: InterventionFilterFieldOption): boolean =>
-          honoured.has(field.key) || active.has(field.key),
-      );
-    });
+    return INTERVENTION_FILTER_FIELDS.map((field: InterventionFilterFieldOption) =>
+      honoured.has(field.key)
+        ? field
+        : { ...field, unavailableReason: this.ignoredReason(field.key) },
+    );
+  });
 
   /** Which of `INTERVENTION_FILTER_FIELDS` currently carry a value — the bar's `activeKeys` input and the filter-toggle's badge count. Counted over the whole catalog, not {@link offeredFilterFields}, so a narrowing the active tab ignores still shows in the badge. */
   protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<

@@ -112,14 +112,21 @@ describe('CollectionFilterBar', () => {
     return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
   }
 
+  /** Ensures the "+ Filter" list is open — it may already be, since the bar opens it on arrival when nothing is set. */
+  async function openAddList(): Promise<void> {
+    if (document.querySelector('[data-testid="widgets-filters-add-option"]') === null) {
+      byTestId('widgets-filters-add')?.click();
+      await fixture.whenStable();
+    }
+  }
+
   it('renders one chip per active key, projecting the matching template', () => {
     expect(byTestId('status-value')).not.toBeNull();
     expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
   });
 
-  it('offers only the unset fields in the "+ Filter" menu', async () => {
-    byTestId('widgets-filters-add')?.click();
-    await fixture.whenStable();
+  it('offers only the unset fields in the "+ Filter" list', async () => {
+    await openAddList();
 
     const options = document.querySelectorAll('[data-testid="widgets-filters-add-option"]');
     expect(options.length).toBe(2);
@@ -189,12 +196,11 @@ describe('CollectionFilterBar', () => {
 
   describe('display order', () => {
     async function pickFieldByLabel(label: string): Promise<void> {
-      byTestId('widgets-filters-add')?.click();
-      await fixture.whenStable();
+      await openAddList();
       Array.from(
-        document.querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]'),
+        document.querySelectorAll<HTMLElement>('[data-testid="widgets-filters-add-option"]'),
       )
-        .find((button) => button.textContent?.trim() === label)
+        .find((option) => option.textContent?.trim() === label)
         ?.click();
       await fixture.whenStable();
     }

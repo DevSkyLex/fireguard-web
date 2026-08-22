@@ -1321,7 +1321,14 @@ export class InterventionsPage {
   //#region Methods
   /**
    * Method switchView
-   * @description The tab list's `tabActivated` handler — writes the new `?view=` and merges it with every other query param, dropping `status` when switching to the Board (its columns already narrow by status, so a value inherited from the List would either duplicate or contradict the column split).
+   * @description
+   * The tab list's `tabActivated` handler — writes the new `?view=` and merges
+   * it with every other query param, **including** the ones the destination
+   * does not honour. Dropping them here would delete a narrowing the user set,
+   * silently and irrecoverably; leaving them lets {@link isFieldIgnored} render
+   * the chip inert with a tooltip naming the reason, and restores the narrowing
+   * intact on the way back.
+   *
    * @access protected
    * @since 11.0.0
    * @param {string} tab - The activated tab id (`list`/`board`/`calendar`).
@@ -1329,10 +1336,8 @@ export class InterventionsPage {
    */
   protected switchView(tab: string): void {
     const view: InterventionView = tab === 'board' || tab === 'calendar' ? tab : 'list';
-    const patch: Record<string, string | null> = { view: view === 'list' ? null : view };
-    if (view === 'board') patch['status'] = null;
 
-    this.navigateQuery(patch);
+    this.navigateQuery({ view: view === 'list' ? null : view });
   }
 
   /** Drops the search from the URL. */
@@ -2095,6 +2100,28 @@ export class InterventionsPage {
    */
   protected isFieldIgnored(key: InterventionFilterFieldKey): boolean {
     return !this.honouredFilterKeys().has(key);
+  }
+
+  /**
+   * Method chipAccessibleName
+   *
+   * @description
+   * The chip's screen-reader name. When the active tab does not honour the
+   * field, {@link ignoredReason} is appended: the reason is otherwise carried
+   * only by an `hlmTooltip`, which a hover reveals and a screen reader does
+   * not, leaving a disabled chip announced as unavailable with no cause.
+   *
+   * @access protected
+   * @since 11.0.0
+   *
+   * @param {InterventionFilterFieldKey} key - The chip's field.
+   *
+   * @returns {string} The localized accessible name.
+   */
+  protected chipAccessibleName(key: InterventionFilterFieldKey): string {
+    const name: string = this.changeFilterLabel(this.filterFieldOption(key).fieldLabel);
+
+    return this.isFieldIgnored(key) ? `${name}. ${this.ignoredReason(key)}` : name;
   }
 
   /**

@@ -890,16 +890,35 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['activeView']()).toBe('list');
     });
 
-    it('should write ?view=board and drop status when switching to the Board tab', async () => {
-      fixture = await createPage();
+    it('should write ?view=board while keeping a status the Board does not honour', async () => {
+      fixture = await createPage({ status: 'planned' });
 
       fixture.componentInstance['switchView']('board');
       await fixture.whenStable();
 
       expect(navigate).toHaveBeenCalledWith(
         [],
-        expect.objectContaining({ queryParams: { view: 'board', status: null } }),
+        expect.objectContaining({ queryParams: { view: 'board' } }),
       );
+      expect(navigate).not.toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: null }) }),
+      );
+    });
+
+    it("should name the ignored reason in the chip's accessible name on the Board", async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      const name: string = fixture.componentInstance['chipAccessibleName']('status');
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+      expect(name).toContain("the board's columns already narrow by status");
+    });
+
+    it('should leave the accessible name reason-free on a tab that honours the field', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      expect(fixture.componentInstance['chipAccessibleName']('status')).not.toContain('Ignored');
     });
 
     it('should write ?view=null (dropped) when switching back to List', async () => {

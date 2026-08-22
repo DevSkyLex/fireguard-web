@@ -65,8 +65,13 @@ is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
 local to `InterventionsPage` (rule of three: one consumer). A chip whose
 field the active tab does not honour still renders when active — the
 "+ Filter" menu never hides it — but disabled and visibly greyed
-(`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason: never
-silently dropped, never silently misapplied. The List honours all eight; the
+(`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason and the
+same reason appended to the chip's `sr-only` name
+(`InterventionsPage.chipAccessibleName`), since a tooltip is a hover and a
+screen reader does not hover. **Switching tabs never drops an unhonoured
+narrowing from the URL** — the inert chip is what tells the user it does not
+apply here, and the value is intact on the way back. Never silently dropped,
+never silently misapplied. The List honours all eight; the
 Board honours every field except `status` (its columns are the narrowing);
 the Calendar honours only `status`, `type`, `site` and `responsible`
 (`InterventionCalendarFilters`'s own `Pick`).
@@ -1625,7 +1630,9 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   and never silently absent.** `InterventionsPage.isFieldIgnored` reads
   `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an
   active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
-  why — the "+ Filter" menu keeps offering it regardless. Adding a ninth
+  why and that same reason inside its accessible name — the "+ Filter" menu
+  keeps offering it regardless, and `switchView` merges the narrowing forward
+  instead of deleting it. Adding a ninth
   filter field, or changing which fields a tab honours, means updating that
   `Record`'s entry in the same change, or the new field silently reads as
   honoured everywhere.

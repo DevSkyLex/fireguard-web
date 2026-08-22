@@ -1911,11 +1911,31 @@ export class InterventionsPage {
     this.applyFilter(this.filterClearPatchOf(key as InterventionFilterFieldKey));
   }
 
-  /** Reacts to the filter bar's `operatorChanged` output. */
+  /**
+   * Method onFilterOperatorChanged
+   *
+   * @description
+   * Reacts to the filter bar's `operatorChanged` output. Each handler drops
+   * the current value, since it no longer fits the new operator's shape — a
+   * scalar cannot serve `isAnyOf`, a single date cannot serve `between`. That
+   * alone would unrender the chip, because the bar draws one per *active* key
+   * and the key just stopped being active. Marking it pending keeps it on
+   * screen with its new value control open, which is the whole point of the
+   * interaction.
+   *
+   * @access protected
+   * @since 11.1.0
+   *
+   * @param {CollectionFilterOperatorChangedEvent} event - The chip's key and its newly picked operator.
+   *
+   * @returns {void}
+   */
   protected onFilterOperatorChanged(event: CollectionFilterOperatorChangedEvent): void {
     if (event.key === 'dueRange') this.onDueRangeOperatorPicked(event.operator);
     if (event.key === 'plannedStartRange') this.onPlannedStartRangeOperatorPicked(event.operator);
     if (this.isEnumFilterKey(event.key)) this.onEnumFilterOperatorPicked(event.key, event.operator);
+
+    this.openFilterKey.set(event.key as InterventionFilterFieldKey);
   }
 
   /** Narrows a filter bar field key to {@link InterventionEnumFilterKey}. */
@@ -1930,16 +1950,50 @@ export class InterventionsPage {
     );
   }
 
-  /** The operator one of the six `equals`/`isAnyOf` fields currently reads. */
+  /**
+   * Method enumFieldOperator
+   *
+   * @description
+   * Which operator one of the six `equals`/`isAnyOf` chips reads. An explicit
+   * pick wins over the value's own shape, because the URL cannot tell the two
+   * apart at one value: `['planned']` and `'planned'` both serialize to
+   * `status=planned`, so deriving from the shape alone made "is any of"
+   * silently snap back to "is" the moment a single value was selected. The
+   * shape only decides for a field the user has not touched this session —
+   * a multi-value URL arrives as `isAnyOf`, everything else as `equals`.
+   *
+   * @access protected
+   * @since 11.1.0
+   *
+   * @param {InterventionEnumFilterKey} key - The chip's field.
+   *
+   * @returns {'equals' | 'isAnyOf'} The operator its value control renders for.
+   */
   protected enumFieldOperator(key: InterventionEnumFilterKey): 'equals' | 'isAnyOf' {
-    const value: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
+    const picked: 'equals' | 'isAnyOf' | undefined = this.enumFilterOperatorOverrides()[key];
+    if (picked !== undefined) return picked;
 
-    if (Array.isArray(value)) return 'isAnyOf';
-    if (value !== null) return 'equals';
-    return this.enumFilterOperatorOverrides()[key] ?? 'equals';
+    return Array.isArray(this.filters()[key]) ? 'isAnyOf' : 'equals';
   }
 
-  /** Switches one of the six `equals`/`isAnyOf` fields' value control to the picked operator's own shape. */
+  /**
+   * Method onEnumFilterOperatorPicked
+   *
+   * @description
+   * Switches one of the six `equals`/`isAnyOf` fields to the picked operator's
+   * value shape, carrying the current narrowing across whenever the two shapes
+   * can hold it: `equals` becomes a one-element `isAnyOf`, and an `isAnyOf` of
+   * exactly one becomes that scalar. Only a multi-value `isAnyOf` collapsing
+   * to `equals` genuinely cannot be represented, and only that case clears.
+   *
+   * @access private
+   * @since 11.1.0
+   *
+   * @param {InterventionEnumFilterKey} key - The chip's field.
+   * @param {CollectionFilterOperator} operator - The newly picked operator.
+   *
+   * @returns {void}
+   */
   private onEnumFilterOperatorPicked(
     key: InterventionEnumFilterKey,
     operator: CollectionFilterOperator,
@@ -1954,7 +2008,15 @@ export class InterventionsPage {
         [key]: operator,
       }),
     );
-    if (this.filters()[key] !== null) this.applyFilter(this.filterClearPatchOf(key));
+
+    const current: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
+    if (current === null) return;
+
+    const values: unknown[] = Array.isArray(current) ? [...current] : [current];
+    const carried: unknown =
+      operator === 'isAnyOf' ? values : values[1] ? null : (values[0] ?? null);
+
+    this.applyFilter({ [key]: carried } as Partial<InterventionListFilters>);
   }
 
   /** Normalizes one of the six `equals`/`isAnyOf` fields' current value to a readonly array. */

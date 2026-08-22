@@ -1641,6 +1641,19 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
+- **Changing a chip's operator never costs the chip, and never costs a value
+  the new operator can hold.** `onFilterOperatorChanged` marks the field
+  pending, so the chip survives the value drop that a shape change forces —
+  without it the bar, which renders one chip per _active_ key, unrendered the
+  chip the instant its value went. `equals` and `isAnyOf` carry their value
+  across in both directions; only a multi-value `isAnyOf` narrowing to
+  `equals` genuinely cannot be represented, and only that clears.
+- **A picked operator outranks the value's own shape.** The URL writes
+  `['planned']` and `'planned'` identically, so `enumFieldOperator` reading
+  the shape alone snapped "is any of" back to "is" on a single selection. The
+  explicit pick wins; the shape decides only for a field untouched this
+  session.
+
 - **A filter chip the active tab does not honour is never silently applied
   and never silently absent.** `InterventionsPage.isFieldIgnored` reads
   `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an

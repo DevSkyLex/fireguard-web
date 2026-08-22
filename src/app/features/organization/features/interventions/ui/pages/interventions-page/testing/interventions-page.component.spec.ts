@@ -116,6 +116,20 @@ describe('InterventionsPage', () => {
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
 
+  /**
+   * jsdom implements neither, and the chips' spartan selects reach for both:
+   * the popover observes its anchor, and the multiple select scrolls its
+   * active option into view the moment "is any of" renders one.
+   */
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      public observe(): void {}
+      public unobserve(): void {}
+      public disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
+
   beforeEach(() => {
     load = vi.fn();
     create = vi.fn();
@@ -971,6 +985,61 @@ describe('InterventionsPage', () => {
 
       expect(fixture.componentInstance['activeFilterKeys']()).toHaveLength(2);
       expect(fixture.componentInstance['honouredActiveFilterKeys']()).toEqual(['type']);
+    });
+
+    it('should keep the chip on screen after an operator switch drops its value', async () => {
+      fixture = await createPage({ dueAfter: '2026-08-01' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'dueRange',
+        operator: 'between',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['openFilterKey']()).toBe('dueRange');
+    });
+
+    it('should carry a single value from "is" to "is any of"', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'status',
+        operator: 'isAnyOf',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: 'planned' }) }),
+      );
+    });
+
+    it('should drop a multi-value narrowing that "is" cannot represent', async () => {
+      fixture = await createPage({ status: 'planned,submitted' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({ key: 'status', operator: 'equals' });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: null }) }),
+      );
+    });
+
+    it('should let a picked operator outrank the value shape the URL round-trips to', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'status',
+        operator: 'isAnyOf',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
     });
 
     it('should count and clear the named due window, which had no chip at all', async () => {

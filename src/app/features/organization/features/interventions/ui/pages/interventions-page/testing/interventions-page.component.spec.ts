@@ -921,6 +921,54 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['chipAccessibleName']('status')).not.toContain('Ignored');
     });
 
+    it('should offer every field in the "+ Filter" menu on the List', async () => {
+      fixture = await createPage();
+
+      const offered: readonly string[] = fixture.componentInstance['offeredFilterFields']().map(
+        (field: { key: string }): string => field.key,
+      );
+
+      expect(offered).toEqual([
+        'status',
+        'type',
+        'priority',
+        'site',
+        'responsible',
+        'label',
+        'dueRange',
+        'plannedStartRange',
+      ]);
+    });
+
+    it('should withhold status from the Board and everything the Calendar cannot apply', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      expect(
+        fixture.componentInstance['offeredFilterFields']().map(
+          (field: { key: string }): string => field.key,
+        ),
+      ).not.toContain('status');
+
+      fixture = await createPage({ view: 'calendar' });
+
+      expect(
+        fixture.componentInstance['offeredFilterFields']().map(
+          (field: { key: string }): string => field.key,
+        ),
+      ).toEqual(['status', 'type', 'site', 'responsible']);
+    });
+
+    it('should keep an unhonoured field in the catalog while it is set, so its chip keeps a label', async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      expect(
+        fixture.componentInstance['offeredFilterFields']().map(
+          (field: { key: string }): string => field.key,
+        ),
+      ).toContain('status');
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+    });
+
     it('should write ?view=null (dropped) when switching back to List', async () => {
       fixture = await createPage({ view: 'board' });
 

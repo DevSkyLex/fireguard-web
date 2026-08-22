@@ -660,10 +660,6 @@ export class InterventionsPage {
   /** Orderings the Display popover's field select offers. */
   protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
 
-  /** The filter bar's field catalog, forwarded to `app-collection-filter-bar` as-is. */
-  protected readonly filterFields: readonly InterventionFilterFieldOption[] =
-    INTERVENTION_FILTER_FIELDS;
-
   /** Status choices offered in the filter bar. */
   protected readonly statusOptions: SelectOption<InterventionStatus>[] =
     INTERVENTION_STATUS_FILTER_OPTIONS;
@@ -995,7 +991,37 @@ export class InterventionsPage {
     ReadonlySet<InterventionFilterFieldKey>
   >(() => new Set(INTERVENTION_VIEW_HONOURED_FILTER_KEYS[this.activeView()]));
 
-  /** Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input and the filter-toggle's badge count. */
+  /**
+   * Property offeredFilterFields
+   * @readonly
+   *
+   * @description
+   * The bar's `fields` input: what the "+ Filter" menu may offer here. The
+   * three tabs do not share one filter set — the menu lists only the fields
+   * {@link honouredFilterKeys} says the active tab applies, so a field that
+   * would do nothing is never offered in the first place.
+   *
+   * An unhonoured field that is nonetheless *already* set stays in the list,
+   * because the bar resolves a chip's label and icon out of `fields` and would
+   * otherwise render it blank. The menu still never shows it: the bar removes
+   * every active key from its own `unsetFields`.
+   *
+   * @access protected
+   * @since 11.0.0
+   * @type {Signal<readonly InterventionFilterFieldOption[]>}
+   */
+  protected readonly offeredFilterFields: Signal<readonly InterventionFilterFieldOption[]> =
+    computed<readonly InterventionFilterFieldOption[]>(() => {
+      const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
+      const active: ReadonlySet<InterventionFilterFieldKey> = new Set(this.activeFilterKeys());
+
+      return INTERVENTION_FILTER_FIELDS.filter(
+        (field: InterventionFilterFieldOption): boolean =>
+          honoured.has(field.key) || active.has(field.key),
+      );
+    });
+
+  /** Which of `INTERVENTION_FILTER_FIELDS` currently carry a value — the bar's `activeKeys` input and the filter-toggle's badge count. Counted over the whole catalog, not {@link offeredFilterFields}, so a narrowing the active tab ignores still shows in the badge. */
   protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
     readonly InterventionFilterFieldKey[]
   >(() => {

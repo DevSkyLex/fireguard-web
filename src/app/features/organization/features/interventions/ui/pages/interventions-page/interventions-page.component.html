@@ -278,7 +278,7 @@
 
     @if (filtersVisible()) {
       <app-collection-filter-bar
-        [fields]="filterFields"
+        [fields]="offeredFilterFields()"
         [activeKeys]="activeFilterKeys()"
         [pendingKey]="openFilterKey()"
         [templates]="chipTemplates()"

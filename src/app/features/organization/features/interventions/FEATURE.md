@@ -62,9 +62,14 @@ calendar's window.
 **Which of the filter bar's eight fields each tab actually applies** is no
 longer route `data` — with one page and no child routes to declare it on, it
 is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
-local to `InterventionsPage` (rule of three: one consumer). A chip whose
-field the active tab does not honour still renders when active — the
-"+ Filter" menu never hides it — but disabled and visibly greyed
+local to `InterventionsPage` (rule of three: two consumers, both on the
+page). **The "+ Filter" menu offers only the active tab's honoured fields**
+(`offeredFilterFields`) — the three tabs do not share one filter set, and a
+field that would do nothing is never offered. A field that is nonetheless
+already set stays in the catalog the bar receives, or the bar would resolve
+its chip's label and icon to blank; the menu still never lists it, since the
+bar drops every active key from its own `unsetFields`. Such a chip renders
+disabled and visibly greyed
 (`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason and the
 same reason appended to the chip's `sr-only` name
 (`InterventionsPage.chipAccessibleName`), since a tooltip is a hover and a
@@ -1631,8 +1636,9 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an
   active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
   why and that same reason inside its accessible name — the "+ Filter" menu
-  keeps offering it regardless, and `switchView` merges the narrowing forward
-  instead of deleting it. Adding a ninth
+  no longer lists it — `offeredFilterFields` narrows the catalog to the tab's
+  honoured keys — while `switchView` merges the narrowing forward instead of
+  deleting it. Adding a ninth
   filter field, or changing which fields a tab honours, means updating that
   `Record`'s entry in the same change, or the new field silently reads as
   honoured everywhere.

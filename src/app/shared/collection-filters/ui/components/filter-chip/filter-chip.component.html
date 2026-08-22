@@ -1,5 +1,5 @@
 <span
-  class="inline-flex h-7 max-w-full items-center overflow-visible rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20"
+  class="inline-flex h-7 max-w-full items-center overflow-hidden rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20"
   [attr.data-testid]="chipTestId()"
 >
   <span
@@ -22,6 +22,7 @@
     >
       <label [attr.for]="operatorTriggerId" class="sr-only">{{ changeOperatorLabel() }}</label>
       <hlm-select-trigger
+        size="sm"
         [buttonId]="operatorTriggerId"
         class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
         [attr.data-testid]="operatorTestId()"

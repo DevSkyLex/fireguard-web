@@ -44,7 +44,7 @@
       <label for="audit-filter-action" class="sr-only" i18n="@@audit.filter.action">Action</label>
       <hlm-combobox-input
         inputId="audit-filter-action"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
         placeholder="Search an action"
         i18n-placeholder="@@audit.filter.searchPlaceholder"
         showClear
@@ -78,7 +78,7 @@
     <hlm-date-range-picker [date]="dateRange()" (dateChange)="applyDateRange($event)">
       <hlm-date-picker-trigger
         buttonId="audit-filter-date-range"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
         data-testid="audit-filter-date-range"
       >
         <span i18n="@@audit.filter.dateRangePlaceholder">Pick a date range</span>

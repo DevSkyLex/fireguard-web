@@ -1,9 +1,11 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import type {
   InterventionRecurrenceOutput,
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
+import { InterventionRecurrenceTable } from '../../../tables/intervention-recurrence-table';
 import {
   InterventionRecurrencesSheet,
   type InterventionRecurrenceFormSubmittedEvent,
@@ -177,15 +179,42 @@ describe('InterventionRecurrencesSheet', () => {
     expect(removed).toEqual(['recurrence-1']);
   });
 
-  it('should emit activeToggled when the row switch is flipped', async () => {
+  it('should relay activeToggled from the recurrence table', async () => {
     fixture.componentRef.setInput('open', true);
     fixture.componentRef.setInput('recurrences', [recurrence]);
     fixture.componentRef.setInput('canWrite', true);
     await fixture.whenStable();
 
-    fixture.componentInstance['toggleActive']('recurrence-1', false);
+    const table = fixture.debugElement.query(By.directive(InterventionRecurrenceTable))
+      .componentInstance as InterventionRecurrenceTable;
+    table.activeToggled.emit({ recurrenceId: 'recurrence-1', isActive: false });
 
     expect(toggled).toEqual([{ recurrenceId: 'recurrence-1', isActive: false }]);
+  });
+
+  it('should pass formOpen to the recurrence table while the embedded form is showing', async () => {
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    const table = (): InterventionRecurrenceTable =>
+      fixture.debugElement.query(By.directive(InterventionRecurrenceTable))
+        .componentInstance as InterventionRecurrenceTable;
+
+    expect(table().formOpen()).toBe(false);
+
+    (inSheet('[data-testid="intervention-recurrences-new"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(table().formOpen()).toBe(true);
+  });
+
+  it('should relay a list fetch error to the recurrence table', async () => {
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('error', 'Recurrences could not be loaded.');
+    await fixture.whenStable();
+
+    expect(content().textContent).toContain('Recurrences could not be loaded.');
   });
 
   it('should emit closed on dismissal', async () => {

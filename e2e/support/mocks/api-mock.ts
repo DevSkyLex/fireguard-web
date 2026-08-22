@@ -53,6 +53,8 @@ import type {
   InterventionIssueOutputFixture,
   InterventionLabelOutputFixture,
   InterventionOutputFixture,
+  InterventionRecurrenceOutputFixture,
+  InterventionTemplateOutputFixture,
   InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
 import type {
@@ -1585,6 +1587,55 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(new RegExp('/api/intervention-labels(\\?.*)?$'), async (route) => {
       await fulfillJson(route, 200, hydraCollection(labels));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/intervention-templates` — the organization's template
+   * catalog, feeding the create sheet's template picker and the recurrences
+   * sheet's own template select and table name resolver.
+   */
+  public async mockInterventionTemplates(
+    organizationId: string,
+    templates: ReadonlyArray<InterventionTemplateOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-templates(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(templates));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/intervention-recurrences` — the organization's recurring
+   * schedule catalog, backing the "Recurrences" sheet's table.
+   */
+  public async mockInterventionRecurrenceList(
+    organizationId: string,
+    recurrences: ReadonlyArray<InterventionRecurrenceOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-recurrences(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(recurrences));
+    });
+  }
+
+  /**
+   * Mocks a failing `GET /api/intervention-recurrences` — the "Recurrences"
+   * sheet's own list fetch error state.
+   */
+  public async mockInterventionRecurrenceListError(
+    error: Partial<ApiErrorFixture> = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/intervention-recurrences(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, error.status ?? 500, {
+        '@id': '/errors/intervention-recurrences-failed',
+        '@type': 'Error',
+        status: 500,
+        type: 'about:blank',
+        title: 'Could not load the recurrences.',
+        ...error,
+      });
     });
   }
 

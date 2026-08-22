@@ -7944,6 +7944,14 @@
         <source>Cadence</source>
         <target>Cadence</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.caption" datatype="html">
+        <source>The organization's recurring intervention schedules.</source>
+        <target>Les récurrences programmées de l'organisation.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
         <target>Supprimer &#171;&#160;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&#160;&#187; ?</target>
@@ -7952,6 +7960,10 @@
         <source>No recurrences yet.</source>
         <target>Aucune récurrence pour l'instant.</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.emptyDesc" datatype="html">
+        <source>Recurring schedules periodically draft a new intervention from a template.</source>
+        <target>Les récurrences créent périodiquement une nouvelle intervention à partir d'un modèle.</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.endLabel" datatype="html">
         <source>End date</source>
         <target>Date de fin</target>
@@ -7959,6 +7971,30 @@
       <trans-unit id="intervention.recurrences.endPlaceholder" datatype="html">
         <source>No end</source>
         <target>Pas de fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.errorTitle" datatype="html">
+        <source>Recurrences could not be loaded</source>
+        <target>Impossible de charger les récurrences</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.annual" datatype="html">
+        <source>Yearly</source>
+        <target>Annuelle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.monthly" datatype="html">
+        <source>Monthly</source>
+        <target>Mensuelle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.quarterly" datatype="html">
+        <source>Quarterly</source>
+        <target>Trimestrielle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.semiannual" datatype="html">
+        <source>Every 6 months</source>
+        <target>Tous les 6 mois</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.weekly" datatype="html">
+        <source>Weekly</source>
+        <target>Hebdomadaire</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
         <source>Frequency</source>

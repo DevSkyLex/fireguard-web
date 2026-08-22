@@ -128,6 +128,98 @@ export function interventionLabelOutput(
   };
 }
 
+export interface InterventionTemplateOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly organization: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly type: string;
+  readonly priority: string;
+  readonly defaultSite: string | null;
+  readonly defaultResponsible: string | null;
+  readonly duration: string | null;
+  readonly labelIds: readonly string[];
+  readonly items: readonly unknown[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/** An organization-scoped intervention template — the recurrences sheet's template picker and table name resolver. */
+export function interventionTemplateOutput(
+  overrides: Partial<InterventionTemplateOutputFixture> = {},
+): InterventionTemplateOutputFixture {
+  return {
+    '@id': '/api/intervention-templates/e2e-template-1',
+    '@type': 'InterventionTemplate',
+    id: 'e2e-template-1',
+    organization: `/api/organizations/${E2E_ORGANIZATION_ID}`,
+    name: 'Annual inspection round',
+    description: null,
+    type: 'inspection',
+    priority: 'medium',
+    defaultSite: null,
+    defaultResponsible: null,
+    duration: null,
+    labelIds: [],
+    items: [],
+    createdAt: '2026-01-01T00:00:00+00:00',
+    updatedAt: '2026-01-01T00:00:00+00:00',
+    ...overrides,
+  };
+}
+
+export interface InterventionRecurrenceOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly organization: string;
+  readonly template: string;
+  readonly name: string;
+  readonly site: string | null;
+  readonly responsible: string | null;
+  readonly frequency: string;
+  readonly interval: number;
+  readonly anchorDate: string;
+  readonly timezone: string;
+  readonly leadTimeDays: number;
+  readonly nextOccurrenceAt: string;
+  readonly lastMaterializedAt: string | null;
+  readonly isActive: boolean;
+  readonly endAt: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/** A recurring intervention schedule — the "Recurrences" sheet's table row. */
+export function interventionRecurrenceOutput(
+  overrides: Partial<InterventionRecurrenceOutputFixture> = {},
+): InterventionRecurrenceOutputFixture {
+  return {
+    '@id': '/api/intervention-recurrences/e2e-recurrence-1',
+    '@type': 'InterventionRecurrence',
+    id: 'e2e-recurrence-1',
+    organization: `/api/organizations/${E2E_ORGANIZATION_ID}`,
+    template: '/api/intervention-templates/e2e-template-1',
+    name: 'Monthly extinguisher check',
+    site: null,
+    responsible: null,
+    frequency: 'monthly',
+    interval: 1,
+    anchorDate: '2026-01-15T00:00:00+00:00',
+    timezone: 'Europe/Paris',
+    leadTimeDays: 7,
+    nextOccurrenceAt: '2026-02-15T00:00:00+00:00',
+    lastMaterializedAt: null,
+    isActive: true,
+    endAt: null,
+    createdAt: '2026-01-01T00:00:00+00:00',
+    updatedAt: '2026-01-01T00:00:00+00:00',
+    ...overrides,
+  };
+}
+
 export interface InterventionWorkItemOutputFixture {
   readonly '@id': string;
   readonly '@type': string;

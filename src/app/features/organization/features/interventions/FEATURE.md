@@ -723,11 +723,15 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
 - `InterventionRecurrenceStore` — component-scoped (provided in
   `InterventionsPage`); CRUD over the organization's recurring intervention
   schedules (`InterventionRecurrenceService`) via `withEntities`, backing
-  `ui/sheets/intervention-recurrences-sheet` from the list toolbar.
-  `create`/`update`/`remove` patch the entity collection from the response
-  rather than reloading the list, so the server-authoritative
-  `nextOccurrenceAt` lands without a second round trip. A materialized
-  intervention carries no back-reference to the recurrence that produced it.
+  `ui/sheets/intervention-recurrences-sheet` from the list toolbar. The sheet
+  still owns the embedded create/edit form and every write decision; the list
+  itself renders through `InterventionRecurrenceTable` (`ui/tables/`), which
+  owns only its row-level delete confirmation and reports edit/delete/toggle
+  intents back to the sheet. `create`/`update`/`remove` patch the entity
+  collection from the response rather than reloading the list, so the
+  server-authoritative `nextOccurrenceAt` lands without a second round trip. A
+  materialized intervention carries no back-reference to the recurrence that
+  produced it.
   `InterventionWorkspaceStore.assignTeam` (own `assignTeamCallState`) snapshot-expands
   one organization team's active members into the intervention's participants —
   union, deduped, never a replace — via `InterventionService.assignTeam`. Online-only,
@@ -1561,7 +1565,13 @@ follows.
   and `channel-participants-sheet` follow it too) — `sm:w-[480px]` (default:
   work-item, request-changes, role-permissions, participants), `sm:w-[540px]`
   (create, to fit the template picker) and `sm:w-[560px]` (discussion, to fit
-  the message thread). Every width utility on `hlm-sheet-content` needs the
+  the message thread). **The recurrences sheet is the one documented exception**,
+  `sm:w-[880px]` — it is the only sheet in the app pairing a full six-column
+  `hlmTable` (`InterventionRecurrenceTable`, `ui/tables/`) with a full embedded
+  form, and the 640px it shipped at first still compressed the table's Name and
+  Template columns to the point of unreadable truncation; 880px is the width
+  above which every column reads without further squeezing, measured against
+  the longest realistic recurrence/template names. Every width utility on `hlm-sheet-content` needs the
   `!` important marker (`w-full! sm:w-[…px]! sm:max-w-none!`) — `HlmSheetContent`'s
   own base classes carry `data-[side=right]:sm:max-w-sm` and `data-[side=right]:w-3/4`,
   which beat a plain same-specificity utility. The three form-sheets (create,

@@ -6,7 +6,7 @@ import type {
   InterventionOutput,
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
-import type { InterventionBoardCardViewModel } from '../../../pages/interventions-board-page/models';
+import type { InterventionBoardCardViewModel } from '../../intervention-board/models';
 import { InterventionBoardCard } from '../intervention-board-card.component';
 
 const allowedActions = (

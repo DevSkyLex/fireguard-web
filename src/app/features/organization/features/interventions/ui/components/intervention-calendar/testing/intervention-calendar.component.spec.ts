@@ -1,10 +1,9 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
-import { InterventionCalendarStore } from '../../../../state/intervention-calendar';
-import { InterventionsCalendarPage } from '../interventions-calendar-page.component';
+import { InterventionCalendar } from '../intervention-calendar.component';
 
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
@@ -39,83 +38,55 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     ...overrides,
   }) as InterventionOutput;
 
-describe('InterventionsCalendarPage', () => {
-  let fixture: ComponentFixture<InterventionsCalendarPage>;
-  let interventions: WritableSignal<readonly InterventionOutput[]>;
-  let currentMemberIri: WritableSignal<string | null>;
-  let loading: WritableSignal<boolean>;
-  let loadError: WritableSignal<StoreError | null>;
-  let load: ReturnType<typeof vi.fn>;
+describe('InterventionCalendar', () => {
+  let fixture: ComponentFixture<InterventionCalendar>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   async function render(
     options: {
-      status?: string;
-      priority?: string;
-      mine?: string;
+      mine?: boolean;
+      currentMemberIri?: string | null;
       interventions?: readonly InterventionOutput[];
       loadError?: StoreError | null;
     } = {},
   ): Promise<void> {
-    interventions = signal<readonly InterventionOutput[]>(options.interventions ?? []);
-    currentMemberIri = signal<string | null>(null);
-    loading = signal<boolean>(false);
-    loadError = signal<StoreError | null>(options.loadError ?? null);
-    load = vi.fn();
-
-    const storeMock = { interventions, currentMemberIri, loading, loadError, load };
-
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideRouter([])],
     });
 
-    TestBed.overrideComponent(InterventionsCalendarPage, {
-      remove: { providers: [InterventionCalendarStore] },
-      add: { providers: [{ provide: InterventionCalendarStore, useValue: storeMock }] },
-    });
-
-    fixture = TestBed.createComponent(InterventionsCalendarPage);
+    fixture = TestBed.createComponent(InterventionCalendar);
     fixture.componentRef.setInput('organizationId', 'org-1');
-    if (options.status) fixture.componentRef.setInput('status', options.status);
-    if (options.priority) fixture.componentRef.setInput('priority', options.priority);
-    if (options.mine) fixture.componentRef.setInput('mine', options.mine);
+    fixture.componentRef.setInput('interventions', options.interventions ?? []);
+    fixture.componentRef.setInput('mine', options.mine ?? false);
+    fixture.componentRef.setInput('currentMemberIri', options.currentMemberIri ?? null);
+    fixture.componentRef.setInput('loadError', options.loadError ?? null);
     await fixture.whenStable();
   }
 
-  it('loads a window spanning the displayed month, one month either side, on arrival', async () => {
-    await render();
+  it('reports the displayed anchor once on creation', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
+    fixture = TestBed.createComponent(InterventionCalendar);
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    const months: Date[] = [];
+    fixture.componentInstance.monthChanged.subscribe((month) => months.push(month));
 
-    expect(load).toHaveBeenCalledTimes(1);
-    const command = load.mock.calls[0]?.[0] as {
-      organizationId: string;
-      window: { after: Date; before: Date };
-    };
-    expect(command.organizationId).toBe('org-1');
+    await fixture.whenStable();
 
-    const now: Date = new Date();
-    const expectedAfter: Date = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    expect(command.window.after.toDateString()).toBe(expectedAfter.toDateString());
+    expect(months).toHaveLength(1);
   });
 
-  it('forwards status to the store but drops priority, out of the narrow InterventionCalendarFilters shape', async () => {
-    await render({ status: 'planned', priority: 'high' });
-
-    const command = load.mock.calls[0]?.[0] as {
-      filters: { status?: unknown; priority?: unknown };
-    };
-    expect(command.filters.status).toBe('planned');
-    expect(command.filters).not.toHaveProperty('priority');
-  });
-
-  it('reloads the same month when the operator steps to the next month', async () => {
+  it('emits monthChanged when the operator steps to the next month', async () => {
     await render();
-    load.mockClear();
+    const months: Date[] = [];
+    fixture.componentInstance.monthChanged.subscribe((month) => months.push(month));
 
     fixture.componentInstance['stepMonth'](1);
     await fixture.whenStable();
 
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(months).toHaveLength(1);
   });
 
   it("lists the selected day's interventions in the day panel, placed by plannedStartAt falling back to dueAt", async () => {
@@ -136,17 +107,16 @@ describe('InterventionsCalendarPage', () => {
     expect(panel?.textContent).toContain('Extinguisher swap');
   });
 
-  it('scopes the visible interventions to the signed-in member when ?mine=1 and the member IRI resolved', async () => {
+  it('scopes the visible interventions to the signed-in member when mine is set and the member IRI resolved', async () => {
     const memberIri = '/api/organizations/org-1/members/m1';
     await render({
-      mine: '1',
+      mine: true,
+      currentMemberIri: memberIri,
       interventions: [
         intervention({ id: 'mine', responsible: memberIri }),
         intervention({ id: 'not-mine', responsible: '/api/organizations/org-1/members/m2' }),
       ],
     });
-    currentMemberIri.set(memberIri);
-    await fixture.whenStable();
 
     expect(
       fixture.componentInstance['visibleInterventions']().map(
@@ -155,14 +125,14 @@ describe('InterventionsCalendarPage', () => {
     ).toEqual(['mine']);
   });
 
-  it('renders the error state and retries the current window on demand', async () => {
+  it('renders the error state and emits reloadRequested on demand', async () => {
     await render({ loadError: { message: 'boom' } as StoreError });
-
     expect(root().querySelector('[data-testid="intervention-calendar-retry"]')).not.toBeNull();
 
-    load.mockClear();
+    const reloads: void[] = [];
+    fixture.componentInstance.reloadRequested.subscribe(() => reloads.push(undefined));
     root().querySelector<HTMLButtonElement>('[data-testid="intervention-calendar-retry"]')?.click();
 
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(reloads).toHaveLength(1);
   });
 });

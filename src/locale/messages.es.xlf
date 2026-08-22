@@ -4328,14 +4328,6 @@
         <source><x id="count" equiv-text="count"/> interventions in <x id="status" equiv-text="statusLabel"/></source>
         <target><x id="count" equiv-text="count"/> intervenciones en <x id="status" equiv-text="statusLabel"/></target>
       </trans-unit>
-      <trans-unit id="route.interventionsBoard" datatype="html">
-        <source>Board</source>
-        <target>Tablero</target>
-      </trans-unit>
-      <trans-unit id="route.interventionsCalendar" datatype="html">
-        <source>Calendar</source>
-        <target>Calendario</target>
-      </trans-unit>
       <trans-unit id="intervention.board.viewCalendar" datatype="html">
         <source>Calendar</source>
         <target>Calendario</target>

@@ -1,14 +1,5 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  input,
-  provideZonelessChangeDetection,
-  signal,
-  type InputSignal,
-  type TemplateRef,
-  type WritableSignal,
-} from '@angular/core';
+import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, of, throwError } from 'rxjs';
@@ -21,6 +12,7 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionRecurrenceService,
   InterventionService,
@@ -29,10 +21,10 @@ import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
-import { InterventionToolbarActions } from '@features/organization/features/interventions/services';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
+import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
 import { InterventionsPage } from '../interventions-page.component';
 
 /**
@@ -99,34 +91,6 @@ const createPage = async (
   await created.whenStable();
 
   return created;
-};
-
-/**
- * Renders whatever the page registered into the shell's toolbar slot. The
- * page's Display, Recurrences, Export and bulk controls live in an
- * `ng-template` the shell instantiates, so they are absent from this
- * fixture's own DOM.
- */
-@Component({
-  selector: 'app-toolbar-actions-host',
-  imports: [NgTemplateOutlet],
-  template: '<ng-container *ngTemplateOutlet="template()" />',
-})
-class ToolbarActionsHost {
-  public readonly template: InputSignal<TemplateRef<unknown> | null> =
-    input<TemplateRef<unknown> | null>(null);
-}
-
-const renderToolbarActions = (): HTMLElement => {
-  const hostFixture: ComponentFixture<ToolbarActionsHost> =
-    TestBed.createComponent(ToolbarActionsHost);
-  hostFixture.componentRef.setInput(
-    'template',
-    TestBed.inject(InterventionToolbarActions).actions(),
-  );
-  hostFixture.detectChanges();
-
-  return hostFixture.nativeElement as HTMLElement;
 };
 
 describe('InterventionsPage', () => {
@@ -225,12 +189,24 @@ describe('InterventionsPage', () => {
           useValue: { profile: signal({ id: 'member-1' }) },
         },
         {
+          provide: InterventionStatisticsStore,
+          useValue: { load: vi.fn(), queryData: signal(null), isQueryLoading: signal(false) },
+        },
+        {
           provide: InterventionService,
-          useValue: { exportCsv, statistics: vi.fn().mockReturnValue(of(null)) },
+          useValue: {
+            exportCsv,
+            statistics: vi.fn().mockReturnValue(of(null)),
+            listCalendarWindow: vi.fn().mockReturnValue(of([])),
+          },
         },
         {
           provide: InterventionRecurrenceService,
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+        },
+        {
+          provide: OrganizationMemberService,
+          useValue: { getCurrentProfile: vi.fn().mockReturnValue(of({ id: 'member-1' })) },
         },
         {
           provide: FeedbackService,
@@ -878,26 +854,155 @@ describe('InterventionsPage', () => {
     it('should mark the export button busy and announce it while the export is in flight', async () => {
       totalInterventions.set(5);
       fixture = await createPage();
+      const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
       expect(
-        renderToolbarActions()
-          .querySelector('[data-testid="interventions-export"]')
-          ?.getAttribute('aria-busy'),
+        root().querySelector('[data-testid="interventions-export"]')?.getAttribute('aria-busy'),
       ).toBeNull();
 
       fixture.componentInstance['exportBusy'].set(true);
       await fixture.whenStable();
 
-      const busyToolbar: HTMLElement = renderToolbarActions();
-
       expect(
-        busyToolbar
-          .querySelector('[data-testid="interventions-export"]')
-          ?.getAttribute('aria-busy'),
+        root().querySelector('[data-testid="interventions-export"]')?.getAttribute('aria-busy'),
       ).toBe('true');
-      expect(
-        busyToolbar.querySelector('[data-testid="interventions-export-status"]'),
-      ).not.toBeNull();
+      expect(root().querySelector('[data-testid="interventions-export-status"]')).not.toBeNull();
+    });
+  });
+
+  describe('tabs', () => {
+    it('should default to the List tab when no ?view= is present', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+      expect((fixture.nativeElement as HTMLElement).querySelector('#interventions')).not.toBeNull();
+    });
+
+    it('should read the Board tab from ?view=board', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('board');
+    });
+
+    it('should fall back to List for an unrecognised ?view= value', async () => {
+      fixture = await createPage({ view: 'bogus' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+    });
+
+    it('should write ?view=board and drop status when switching to the Board tab', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['switchView']('board');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: 'board', status: null } }),
+      );
+    });
+
+    it('should write ?view=null (dropped) when switching back to List', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      fixture.componentInstance['switchView']('list');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: null } }),
+      );
+    });
+
+    it('should honour every filter field on the List tab', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
+      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(false);
+    });
+
+    it('should render an ignored chip as inert on the Board tab, naming the reason', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+      expect(fixture.componentInstance['ignoredReason']('status')).toContain(
+        'columns already narrow by status',
+      );
+    });
+
+    it('should ignore priority, label and both date ranges on the Calendar tab', async () => {
+      fixture = await createPage({ view: 'calendar' });
+
+      expect(fixture.componentInstance['isFieldIgnored']('priority')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('label')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
+    });
+
+    it('should not render Display, Recurrences, Export or the bulk-actions menu outside the List tab', async () => {
+      fixture = await createPage({ view: 'board' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-display"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-recurrences"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-export"]')).toBeNull();
+    });
+  });
+
+  describe('board', () => {
+    it('should load one large page, status excluded, while the Board tab is active', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
+      expect(boardCall).toBeDefined();
+      expect(boardCall?.[0].options.status).toBeUndefined();
+      expect(boardCall?.[0].options.page).toBe(1);
+    });
+
+    it('should never send a status narrowing to the Board even when the URL still carries one', async () => {
+      fixture = await createPage({ view: 'board', status: 'planned' });
+
+      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
+      expect(boardCall?.[0].options.status).toBeUndefined();
+    });
+
+    it('should send a legal move from the Board straight to the store, trusting the board already validated it', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      fixture.componentInstance['applyTransition']({
+        intervention: intervention({ id: 'i-9', revision: 7 }),
+        status: 'planned',
+      });
+
+      expect(transition).toHaveBeenCalledWith({ id: 'i-9', status: 'planned', revision: 7 });
+    });
+  });
+
+  describe('calendar', () => {
+    it('should not fetch the calendar window before the Calendar tab first activates', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      const calendarService = TestBed.inject(InterventionService);
+      expect(calendarService.listCalendarWindow).not.toHaveBeenCalled();
+    });
+
+    it('should fetch the calendar window once InterventionCalendar mounts and reports its first anchor', async () => {
+      fixture = await createPage({ view: 'calendar' });
+
+      const calendarService = TestBed.inject(InterventionService);
+      expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['calendarMonth']()).not.toBeNull();
+    });
+
+    it('should re-fetch the calendar window on calendarReload', async () => {
+      fixture = await createPage({ view: 'calendar' });
+      const calendarService = TestBed.inject(InterventionService);
+      (calendarService.listCalendarWindow as ReturnType<typeof vi.fn>).mockClear();
+
+      fixture.componentInstance['calendarReload']();
+      await fixture.whenStable();
+
+      expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
     });
   });
 

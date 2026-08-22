@@ -15,5 +15,4 @@ export { InterventionPwaUpdateService } from './intervention-pwa-update';
 export { InterventionPrefetchService } from './intervention-prefetch';
 export { InterventionQrScannerService } from './intervention-qr-scanner';
 export { InterventionSyncService } from './intervention-sync';
-export { InterventionToolbarActions } from './intervention-toolbar-actions';
 export { InterventionSyncCoordinatorService } from './intervention-sync-coordinator';

@@ -1,15 +1,13 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY } from 'rxjs';
-import { OrganizationPermissionService } from '@features/organization/access';
+import { provideRouter } from '@angular/router';
 import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
-import { InterventionStore } from '@features/organization/features/interventions/state';
-import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
-import { InterventionsBoardPage } from '../interventions-board-page.component';
+import type { InterventionTransitionRequest } from '../../../tables/intervention-table';
+import { InterventionBoard } from '../intervention-board.component';
+import type { InterventionBoardCardViewModel } from '../models';
 
 const allowedActions = (
   overrides: Partial<InterventionAllowedActionsOutput> = {},
@@ -63,73 +61,32 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     ...overrides,
   }) as InterventionOutput;
 
-const createPage = async (): Promise<ComponentFixture<InterventionsBoardPage>> => {
-  const created: ComponentFixture<InterventionsBoardPage> =
-    TestBed.createComponent(InterventionsBoardPage);
-  created.componentRef.setInput('organizationId', 'org-1');
+const cardItem = (overrides: Partial<InterventionOutput> = {}): InterventionBoardCardViewModel => ({
+  intervention: intervention(overrides),
+  isOverdue: false,
+  responsible: null,
+});
+
+const createBoard = async (): Promise<ComponentFixture<InterventionBoard>> => {
+  const created: ComponentFixture<InterventionBoard> = TestBed.createComponent(InterventionBoard);
+  created.componentRef.setInput('items', []);
+  created.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'interventions']);
   await created.whenStable();
 
   return created;
 };
 
-describe('InterventionsBoardPage', () => {
-  let fixture: ComponentFixture<InterventionsBoardPage>;
-  let load: ReturnType<typeof vi.fn>;
-  let transition: ReturnType<typeof vi.fn>;
-  let navigate: ReturnType<typeof vi.fn>;
-  let interventionList: WritableSignal<readonly InterventionOutput[]>;
-  let transitioningInterventionIds: WritableSignal<readonly string[]>;
+describe('InterventionBoard', () => {
+  let fixture: ComponentFixture<InterventionBoard>;
 
   beforeEach(() => {
-    load = vi.fn();
-    transition = vi.fn();
-    navigate = vi.fn().mockResolvedValue(true);
-    interventionList = signal<readonly InterventionOutput[]>([]);
-    transitioningInterventionIds = signal<readonly string[]>([]);
-
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        {
-          provide: InterventionStore,
-          useValue: {
-            load,
-            transition,
-            interventionList,
-            transitioningInterventionIds,
-          },
-        },
-        {
-          provide: InterventionPlanningOptionsStore,
-          useValue: {
-            members: signal([]),
-            loadCreationOptions: vi.fn(),
-          },
-        },
-        {
-          provide: OrganizationPermissionService,
-          useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
-        },
-        { provide: Router, useValue: { navigate, events: EMPTY } },
-        { provide: ActivatedRoute, useValue: {} },
-      ],
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
     });
   });
 
-  it('should load the shared dataset for the workspace on arrival, with no status narrowing', async () => {
-    fixture = await createPage();
-
-    expect(load).toHaveBeenCalledTimes(1);
-    const command = load.mock.calls[0][0] as {
-      organizationId: string;
-      options: { status?: unknown };
-    };
-    expect(command.organizationId).toBe('org-1');
-    expect(command.options.status).toBeUndefined();
-  });
-
   it('should render one column per InterventionStatus, in workflow order', async () => {
-    fixture = await createPage();
+    fixture = await createBoard();
     const element = fixture.nativeElement as HTMLElement;
 
     const statuses = [...element.querySelectorAll('[data-testid="intervention-board-column"]')].map(
@@ -148,8 +105,9 @@ describe('InterventionsBoardPage', () => {
   });
 
   it('should place a loaded card in the column matching its own status', async () => {
-    interventionList.set([intervention({ id: 'a1', status: 'planned' })]);
-    fixture = await createPage();
+    fixture = await createBoard();
+    fixture.componentRef.setInput('items', [cardItem({ id: 'a1', status: 'planned' })]);
+    await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
 
     const plannedColumn = element.querySelector(
@@ -162,11 +120,12 @@ describe('InterventionsBoardPage', () => {
   });
 
   it('should show the column count matching the number of cards it holds', async () => {
-    interventionList.set([
-      intervention({ id: 'a1', status: 'planned' }),
-      intervention({ id: 'a2', status: 'planned' }),
+    fixture = await createBoard();
+    fixture.componentRef.setInput('items', [
+      cardItem({ id: 'a1', status: 'planned' }),
+      cardItem({ id: 'a2', status: 'planned' }),
     ]);
-    fixture = await createPage();
+    await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
 
     const plannedColumn = element.querySelector(
@@ -180,23 +139,28 @@ describe('InterventionsBoardPage', () => {
     ).toBe('2');
   });
 
-  it('should dispatch a transition on a legal move and announce it', async () => {
-    fixture = await createPage();
+  it('should emit moveRequested on a legal move and announce it', async () => {
+    fixture = await createBoard();
+    const requests: InterventionTransitionRequest[] = [];
+    fixture.componentInstance.moveRequested.subscribe((request) => requests.push(request));
 
     fixture.componentInstance['requestMove'](intervention({ status: 'in_progress' }), 'submitted');
 
-    expect(transition).toHaveBeenCalledWith({ id: 'a1b2', status: 'submitted', revision: 3 });
+    expect(requests).toEqual([
+      { intervention: intervention({ status: 'in_progress' }), status: 'submitted' },
+    ]);
     expect(fixture.componentInstance['liveMessage']()).toContain('Quarterly extinguisher sweep');
   });
 
   it('should restore keyboard focus onto the moved card, whose DOM node a cross-column move recreates', async () => {
-    interventionList.set([intervention({ id: 'a1b2', status: 'in_progress' })]);
-    fixture = await createPage();
+    fixture = await createBoard();
+    fixture.componentRef.setInput('items', [cardItem({ id: 'a1b2', status: 'in_progress' })]);
+    await fixture.whenStable();
     const title = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
       '[data-intervention-id="a1b2"] a[data-testid="intervention-board-card-title"]',
     );
     expect(title).not.toBeNull();
-    // The harness's mocked Router renders no href, so jsdom refuses real focus — assert the call.
+    // The harness renders no href, so jsdom refuses real focus — assert the call.
     const focusSpy = vi.spyOn(title as HTMLAnchorElement, 'focus');
 
     fixture.componentInstance['requestMove'](
@@ -208,19 +172,23 @@ describe('InterventionsBoardPage', () => {
     expect(focusSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should not dispatch a transition for a server-illegal move', async () => {
-    fixture = await createPage();
+  it('should not emit moveRequested for a server-illegal move', async () => {
+    fixture = await createBoard();
+    const requests: InterventionTransitionRequest[] = [];
+    fixture.componentInstance.moveRequested.subscribe((request) => requests.push(request));
 
     fixture.componentInstance['requestMove'](
       intervention({ status: 'draft', allowedTransitions: ['planned'] }),
       'abandoned',
     );
 
-    expect(transition).not.toHaveBeenCalled();
+    expect(requests).toEqual([]);
   });
 
-  it('should not dispatch withdraw (submitted → in_progress) when canWithdraw is false', async () => {
-    fixture = await createPage();
+  it('should not emit moveRequested for withdraw (submitted → in_progress) when canWithdraw is false', async () => {
+    fixture = await createBoard();
+    const requests: InterventionTransitionRequest[] = [];
+    fixture.componentInstance.moveRequested.subscribe((request) => requests.push(request));
 
     fixture.componentInstance['requestMove'](
       intervention({
@@ -231,18 +199,6 @@ describe('InterventionsBoardPage', () => {
       'in_progress',
     );
 
-    expect(transition).not.toHaveBeenCalled();
-  });
-
-  it('should never send status as part of the board query — the columns are the status narrowing', async () => {
-    fixture = await createPage();
-    fixture.componentRef.setInput('priority', 'high');
-    fixture.componentRef.setInput('mine', '1');
-    await fixture.whenStable();
-
-    const options = load.mock.calls.at(-1)?.[0].options as { status?: unknown; priority?: unknown };
-
-    expect(options.status).toBeUndefined();
-    expect(options.priority).toBe('high');
+    expect(requests).toEqual([]);
   });
 });

@@ -1,270 +1,982 @@
-<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4">
-  <ng-template #toolbarActions>
-    @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:grow"
-        data-testid="interventions-bulk-actions"
-        [hlmDropdownMenuTrigger]="bulkMenu"
-        align="start"
-      >
-        <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
-        <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
-      </button>
-    }
+<div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+  <app-intervention-kpi-strip
+    class="shrink-0"
+    [statistics]="statisticsStore.queryData()"
+    [loading]="statisticsStore.isQueryLoading()"
+    [baseRoute]="detailRouteBase()"
+  />
 
-    <ng-template #bulkMenu>
-      <hlm-dropdown-menu class="w-56">
-        @if (canTransition() && bulkTransitionTargets().length > 0) {
-          <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
-            >Move to</hlm-dropdown-menu-label
-          >
-          @for (target of bulkTransitionTargets(); track target) {
-            @if (transitionableSelectedIds(target).length > 0) {
-              <button
-                hlmDropdownMenuItem
-                data-testid="interventions-bulk-transition"
-                (click)="confirmBulkTransition(target)"
-              >
-                {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
-              </button>
-            }
+  <hlm-tabs
+    [tab]="activeView()"
+    class="flex min-h-0 flex-1 flex-col gap-4"
+    (tabActivated)="switchView($event)"
+  >
+    <app-collection-toolbar>
+      <div toolbarStart class="flex items-center gap-2">
+        <app-collection-search-box
+          testIdPrefix="interventions"
+          placeholder="Search interventions..."
+          i18n-placeholder="@@intervention.list.searchPlaceholder"
+          ariaLabel="Search interventions..."
+          i18n-ariaLabel="@@intervention.list.searchPlaceholder"
+          [value]="draftSearch()"
+          (queryChanged)="onSearchQueryChanged($event)"
+        />
+
+        <button
+          hlmToggle
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="interventions-mine-toggle"
+          [state]="filters().mine ? 'on' : 'off'"
+          (stateChange)="toggleMine()"
+        >
+          @if (filters().mine) {
+            <ng-icon name="lucideCheck" aria-hidden="true" />
           }
-          <hlm-dropdown-menu-separator />
-        }
+          <span i18n="@@intervention.list.mine">My interventions</span>
+        </button>
+      </div>
 
-        @if (canAssign() && assignableSelectedIds().length > 0) {
-          <button
-            hlmDropdownMenuItem
-            data-testid="interventions-bulk-assign"
-            (click)="requestBulkAssign()"
-          >
-            <ng-icon name="lucideUserCog" aria-hidden="true" />
-            {{ bulkAssignLabel() }}
-          </button>
-          <hlm-dropdown-menu-separator />
-        }
-
-        @if (canDelete()) {
-          <button
-            hlmDropdownMenuItem
-            variant="destructive"
-            data-testid="interventions-bulk-delete"
-            [disabled]="deletableSelectedIds().length === 0"
-            (click)="requestBulkDelete()"
-          >
-            <ng-icon name="lucideTrash2" aria-hidden="true" />
-            {{ bulkDeleteLabel() }}
-          </button>
-        }
-      </hlm-dropdown-menu>
-    </ng-template>
-
-    <hlm-popover sideOffset="5" align="end">
-      <button
-        hlmPopoverTrigger
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:min-h-11 max-sm:grow"
-        data-testid="interventions-display"
-      >
-        <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
-        <span i18n="@@intervention.list.displayButton">Display</span>
-      </button>
-
-      <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
-        <div class="flex flex-col gap-1.5">
-          <p
-            class="text-xs font-medium text-muted-foreground"
-            i18n="@@intervention.list.displaySortLabel"
-          >
-            Sort by
-          </p>
-          <div class="flex items-center gap-2">
-            <hlm-select
-              class="flex-1"
-              [value]="sortOrder().field"
-              [itemToString]="sortFieldLabelOf"
-              (valueChange)="onSortFieldPicked($event)"
-            >
-              <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
-                <hlm-select-value />
-              </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal>
-                <hlm-select-group>
-                  @for (option of sortOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-                  }
-                </hlm-select-group>
-              </hlm-select-content>
-            </hlm-select>
-
+      <div toolbarEnd class="flex flex-wrap items-center gap-2">
+        @if (activeView() === 'list') {
+          @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
             <button
               hlmBtn
               type="button"
               variant="outline"
-              size="icon-sm"
-              data-testid="interventions-sort-direction"
-              [attr.aria-label]="sortDirectionLabel()"
-              (click)="toggleSortDirection()"
+              size="sm"
+              class="max-sm:grow"
+              data-testid="interventions-bulk-actions"
+              [hlmDropdownMenuTrigger]="bulkMenu"
+              align="start"
             >
-              <ng-icon
-                [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
-                aria-hidden="true"
-              />
+              <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
+              <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
             </button>
-          </div>
-        </div>
+          }
 
-        <hlm-separator />
+          <ng-template #bulkMenu>
+            <hlm-dropdown-menu class="w-56">
+              @if (canTransition() && bulkTransitionTargets().length > 0) {
+                <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
+                  >Move to</hlm-dropdown-menu-label
+                >
+                @for (target of bulkTransitionTargets(); track target) {
+                  @if (transitionableSelectedIds(target).length > 0) {
+                    <button
+                      hlmDropdownMenuItem
+                      data-testid="interventions-bulk-transition"
+                      (click)="confirmBulkTransition(target)"
+                    >
+                      {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
+                    </button>
+                  }
+                }
+                <hlm-dropdown-menu-separator />
+              }
 
-        <div class="flex flex-col gap-1.5">
-          <p
-            class="text-xs font-medium text-muted-foreground"
-            i18n="@@intervention.list.displayColumnsLabel"
+              @if (canAssign() && assignableSelectedIds().length > 0) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="interventions-bulk-assign"
+                  (click)="requestBulkAssign()"
+                >
+                  <ng-icon name="lucideUserCog" aria-hidden="true" />
+                  {{ bulkAssignLabel() }}
+                </button>
+                <hlm-dropdown-menu-separator />
+              }
+
+              @if (canDelete()) {
+                <button
+                  hlmDropdownMenuItem
+                  variant="destructive"
+                  data-testid="interventions-bulk-delete"
+                  [disabled]="deletableSelectedIds().length === 0"
+                  (click)="requestBulkDelete()"
+                >
+                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                  {{ bulkDeleteLabel() }}
+                </button>
+              }
+            </hlm-dropdown-menu>
+          </ng-template>
+
+          <hlm-popover sideOffset="5" align="end">
+            <button
+              hlmPopoverTrigger
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11 max-sm:grow"
+              data-testid="interventions-display"
+            >
+              <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
+              <span i18n="@@intervention.list.displayButton">Display</span>
+            </button>
+
+            <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
+              <div class="flex flex-col gap-1.5">
+                <p
+                  class="text-xs font-medium text-muted-foreground"
+                  i18n="@@intervention.list.displaySortLabel"
+                >
+                  Sort by
+                </p>
+                <div class="flex items-center gap-2">
+                  <hlm-select
+                    class="flex-1"
+                    [value]="sortOrder().field"
+                    [itemToString]="sortFieldLabelOf"
+                    (valueChange)="onSortFieldPicked($event)"
+                  >
+                    <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
+                      <hlm-select-value />
+                    </hlm-select-trigger>
+                    <hlm-select-content *hlmSelectPortal>
+                      <hlm-select-group>
+                        @for (option of sortOptions; track option.value) {
+                          <hlm-select-item [value]="option.value">{{
+                            option.label
+                          }}</hlm-select-item>
+                        }
+                      </hlm-select-group>
+                    </hlm-select-content>
+                  </hlm-select>
+
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    data-testid="interventions-sort-direction"
+                    [attr.aria-label]="sortDirectionLabel()"
+                    (click)="toggleSortDirection()"
+                  >
+                    <ng-icon
+                      [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <hlm-separator />
+
+              <div class="flex flex-col gap-1.5">
+                <p
+                  class="text-xs font-medium text-muted-foreground"
+                  i18n="@@intervention.list.displayColumnsLabel"
+                >
+                  Columns
+                </p>
+                <div class="flex flex-col gap-0.5">
+                  @for (id of allColumns; track id) {
+                    <label
+                      class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
+                    >
+                      <hlm-checkbox
+                        data-testid="interventions-column-toggle"
+                        [checked]="isColumnVisible(id)"
+                        (checkedChange)="toggleColumn(id)"
+                      />
+                      {{ columnLabelOf(id) }}
+                    </label>
+                  }
+                </div>
+              </div>
+            </hlm-popover-content>
+          </hlm-popover>
+
+          @if (canReadRecurrences()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11 max-sm:grow"
+              data-testid="interventions-recurrences"
+              (click)="openRecurrences()"
+            >
+              <ng-icon name="lucideCalendarClock" aria-hidden="true" />
+              <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
+            </button>
+          }
+
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11 max-sm:grow"
+            data-testid="interventions-export"
+            [disabled]="exportDisabled()"
+            [attr.aria-busy]="exportBusy() ? 'true' : null"
+            (click)="exportCsv()"
           >
-            Columns
-          </p>
-          <div class="flex flex-col gap-0.5">
-            @for (id of allColumns; track id) {
-              <label
-                class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
-              >
-                <hlm-checkbox
-                  data-testid="interventions-column-toggle"
-                  [checked]="isColumnVisible(id)"
-                  (checkedChange)="toggleColumn(id)"
-                />
-                {{ columnLabelOf(id) }}
-              </label>
+            @if (exportBusy()) {
+              <hlm-spinner class="size-4" aria-hidden="true" />
+            } @else {
+              <ng-icon name="lucideDownload" aria-hidden="true" />
             }
-          </div>
-        </div>
-      </hlm-popover-content>
-    </hlm-popover>
+            <span i18n="@@intervention.list.exportButton">Export</span>
+          </button>
+          @if (exportBusy()) {
+            <span
+              class="sr-only"
+              aria-live="polite"
+              data-testid="interventions-export-status"
+              i18n="@@intervention.list.exportingStatus"
+            >
+              Preparing the export…
+            </span>
+          }
+        }
 
-    @if (canReadRecurrences()) {
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:min-h-11 max-sm:grow"
-        data-testid="interventions-recurrences"
-        (click)="openRecurrences()"
-      >
-        <ng-icon name="lucideCalendarClock" aria-hidden="true" />
-        <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
-      </button>
+        <hlm-tabs-list
+          data-testid="intervention-view-toggle"
+          aria-label="Change view"
+          i18n-aria-label="@@intervention.list.viewToggleLabel"
+        >
+          <button
+            hlmTabsTrigger="list"
+            class="max-sm:min-h-11"
+            data-testid="intervention-view-toggle-list"
+          >
+            <span i18n="@@intervention.board.viewList">List</span>
+          </button>
+          <button
+            hlmTabsTrigger="board"
+            class="max-sm:min-h-11"
+            data-testid="intervention-view-toggle-board"
+          >
+            <span i18n="@@intervention.board.viewBoard">Board</span>
+          </button>
+          <button
+            hlmTabsTrigger="calendar"
+            class="max-sm:min-h-11"
+            data-testid="intervention-view-toggle-calendar"
+          >
+            <span i18n="@@intervention.board.viewCalendar">Calendar</span>
+          </button>
+        </hlm-tabs-list>
+
+        <app-collection-filter-toggle
+          [visible]="filtersVisible()"
+          [activeCount]="activeFilterKeys().length"
+          label="Filters"
+          i18n-label="@@intervention.list.filtersButton"
+          testIdPrefix="interventions"
+          (visibleChange)="toggleFiltersVisible($event)"
+        />
+      </div>
+    </app-collection-toolbar>
+
+    @if (filtersVisible()) {
+      <app-collection-filter-bar
+        [fields]="filterFields"
+        [activeKeys]="activeFilterKeys()"
+        [pendingKey]="openFilterKey()"
+        [templates]="chipTemplates()"
+        [activeOperators]="filterOperators()"
+        testIdPrefix="interventions"
+        (fieldPicked)="onFieldPicked($event)"
+        (fieldRemoved)="onFieldRemoved($event)"
+        (filtersCleared)="clearFilters()"
+        (operatorChanged)="onFilterOperatorChanged($event)"
+      />
     }
 
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      size="sm"
-      class="max-sm:min-h-11 max-sm:grow"
-      data-testid="interventions-export"
-      [disabled]="exportDisabled()"
-      [attr.aria-busy]="exportBusy() ? 'true' : null"
-      (click)="exportCsv()"
-    >
-      @if (exportBusy()) {
-        <hlm-spinner class="size-4" aria-hidden="true" />
+    <ng-template #statusChip>
+      @if (enumFieldOperator('status') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="statusValues()"
+          [itemToString]="statusMultiLabelOf"
+          [state]="fieldPopoverState('status')"
+          [disabled]="isFieldIgnored('status')"
+          [class.opacity-60]="isFieldIgnored('status')"
+          [hlmTooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          (valueChange)="applyStatusFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+        >
+          <label for="interventions-filter-status" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('status').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-status"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-status"
+          >
+            <hlm-select-value
+              placeholder="Status"
+              i18n-placeholder="@@intervention.list.filterStatus"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of statusOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="status" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
       } @else {
-        <ng-icon name="lucideDownload" aria-hidden="true" />
+        <hlm-select
+          [value]="statusScalar()"
+          [itemToString]="statusLabelOf"
+          [state]="fieldPopoverState('status')"
+          [disabled]="isFieldIgnored('status')"
+          [class.opacity-60]="isFieldIgnored('status')"
+          [hlmTooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          (valueChange)="applyFilter({ status: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+        >
+          <label for="interventions-filter-status" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('status').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-status"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-status"
+          >
+            @if (statusScalar(); as status) {
+              <app-intervention-tag kind="status" [value]="status" asOption />
+            } @else {
+              <hlm-select-value
+                placeholder="Status"
+                i18n-placeholder="@@intervention.list.filterStatus"
+              />
+            }
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of statusOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="status" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
       }
-      <span i18n="@@intervention.list.exportButton">Export</span>
-    </button>
-    @if (exportBusy()) {
-      <span
-        class="sr-only"
-        aria-live="polite"
-        data-testid="interventions-export-status"
-        i18n="@@intervention.list.exportingStatus"
-      >
-        Preparing the export…
-      </span>
-    }
-  </ng-template>
+    </ng-template>
 
-  @if (hasError()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load the interventions"
-      i18n-title="@@intervention.list.errorTitle"
-      description="The interventions could not be loaded. Check your connection and try again."
-      i18n-description="@@intervention.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
-        <span i18n="@@intervention.list.retry">Try again</span>
-      </button>
-    </app-error-state>
-  } @else if (!store.isLoadingInterventions() && items().length === 0) {
-    @if (hasSearch()) {
-      <app-empty-state
-        icon="lucideSearch"
-        title="No matching intervention"
-        i18n-title="@@intervention.list.searchEmptyHeading"
-        description="Try a different search term, or clear the search to see every intervention."
-        i18n-description="@@intervention.list.searchEmptyDescription"
-      >
-        <button hlmBtn variant="outline" (click)="clearSearch()">
-          <span i18n="@@intervention.list.clearSearch">Clear search</span>
-        </button>
-      </app-empty-state>
-    } @else {
-      <app-empty-state
-        icon="lucideClipboardList"
-        title="No interventions yet"
-        i18n-title="@@intervention.list.emptyTitle"
-        description="Create your first intervention to start planning field work."
-        i18n-description="@@intervention.list.emptyDescription"
-      >
-        <button hlmBtn (click)="openCreate()">
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@intervention.list.newButtonShort">New</span>
-        </button>
-      </app-empty-state>
-    }
-  } @else {
-    <app-intervention-table
-      [items]="items()"
-      [loading]="store.isLoadingInterventions() && items().length === 0"
-      [sortOrder]="sortOrder()"
-      [hiddenColumns]="hiddenColumns()"
-      [canTransition]="canTransition()"
-      [transitioningIds]="store.transitioningInterventionIds()"
-      [canAssign]="canAssign()"
-      [canDuplicate]="canDuplicate()"
-      [currentMemberIri]="memberIri()"
-      [selectedIds]="selectedIds()"
-      [detailRouteBase]="detailRouteBase()"
-      (sortChanged)="applySortField($event)"
-      (transitionRequested)="applyTransition($event)"
-      (referenceCopied)="copyReference($event)"
-      (deleteRequested)="requestDelete($event)"
-      (assignRequested)="requestAssign($event)"
-      (duplicateRequested)="requestDuplicate($event)"
-      (selectionChanged)="onSelectionChanged($event)"
-    />
+    <ng-template #typeChip>
+      @if (enumFieldOperator('type') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="typeValues()"
+          [itemToString]="typeMultiLabelOf"
+          [state]="fieldPopoverState('type')"
+          [disabled]="isFieldIgnored('type')"
+          [class.opacity-60]="isFieldIgnored('type')"
+          [hlmTooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          (valueChange)="applyTypeFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('type', $event)"
+        >
+          <label for="interventions-filter-type" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('type').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-type"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-type"
+          >
+            <hlm-select-value
+              placeholder="Type"
+              i18n-placeholder="@@intervention.list.filterType"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of typeOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="type" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
+      } @else {
+        <hlm-select
+          [value]="typeScalar()"
+          [itemToString]="typeLabelOf"
+          [state]="fieldPopoverState('type')"
+          [disabled]="isFieldIgnored('type')"
+          [class.opacity-60]="isFieldIgnored('type')"
+          [hlmTooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          (valueChange)="applyFilter({ type: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('type', $event)"
+        >
+          <label for="interventions-filter-type" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('type').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-type"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-type"
+          >
+            @if (typeScalar(); as type) {
+              <app-intervention-tag kind="type" [value]="type" asOption />
+            } @else {
+              <hlm-select-value
+                placeholder="Type"
+                i18n-placeholder="@@intervention.list.filterType"
+              />
+            }
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of typeOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="type" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
+    </ng-template>
 
-    <app-collection-pagination
-      [page]="page()"
-      [pageCount]="pageCount()"
-      [pageSize]="pageSize()"
-      [total]="store.totalInterventions()"
-      [shown]="items().length"
-      testIdPrefix="interventions"
-      (pageChanged)="goToPage($event)"
-      (pageSizeChanged)="setPageSize($event)"
-    />
-  }
+    <ng-template #priorityChip>
+      @if (enumFieldOperator('priority') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="priorityValues()"
+          [itemToString]="priorityMultiLabelOf"
+          [state]="fieldPopoverState('priority')"
+          [disabled]="isFieldIgnored('priority')"
+          [class.opacity-60]="isFieldIgnored('priority')"
+          [hlmTooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          (valueChange)="applyPriorityFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('priority', $event)"
+        >
+          <label for="interventions-filter-priority" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('priority').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-priority"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-priority"
+          >
+            <hlm-select-value
+              placeholder="Priority"
+              i18n-placeholder="@@intervention.list.filterPriority"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of priorityOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="priority" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
+      } @else {
+        <hlm-select
+          [value]="priorityScalar()"
+          [itemToString]="priorityLabelOf"
+          [state]="fieldPopoverState('priority')"
+          [disabled]="isFieldIgnored('priority')"
+          [class.opacity-60]="isFieldIgnored('priority')"
+          [hlmTooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          (valueChange)="applyFilter({ priority: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('priority', $event)"
+        >
+          <label for="interventions-filter-priority" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('priority').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-priority"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-priority"
+          >
+            @if (priorityScalar(); as priority) {
+              <app-intervention-tag kind="priority" [value]="priority" asOption />
+            } @else {
+              <hlm-select-value
+                placeholder="Priority"
+                i18n-placeholder="@@intervention.list.filterPriority"
+              />
+            }
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of priorityOptions; track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <app-intervention-tag kind="priority" [value]="option.value" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
+    </ng-template>
+
+    <ng-template #siteChip>
+      @if (enumFieldOperator('site') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="siteValues()"
+          [itemToString]="siteMultiLabelOf"
+          [state]="fieldPopoverState('site')"
+          [disabled]="isFieldIgnored('site')"
+          [class.opacity-60]="isFieldIgnored('site')"
+          [hlmTooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          (valueChange)="applySiteFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('site', $event)"
+        >
+          <label for="interventions-filter-site" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('site').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-site"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-site"
+          >
+            <hlm-select-value
+              placeholder="Site"
+              i18n-placeholder="@@intervention.list.filterSite"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of planningOptions.sites(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
+      } @else {
+        <hlm-select
+          [value]="siteScalar()"
+          [itemToString]="siteLabelOf"
+          [state]="fieldPopoverState('site')"
+          [disabled]="isFieldIgnored('site')"
+          [class.opacity-60]="isFieldIgnored('site')"
+          [hlmTooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          (valueChange)="applyFilter({ site: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('site', $event)"
+        >
+          <label for="interventions-filter-site" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('site').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-site"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-site"
+          >
+            <hlm-select-value
+              placeholder="Site"
+              i18n-placeholder="@@intervention.list.filterSite"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of planningOptions.sites(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
+    </ng-template>
+
+    <ng-template #responsibleChip>
+      @if (enumFieldOperator('responsible') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="responsibleValues()"
+          [itemToString]="responsibleMultiLabelOf"
+          [state]="fieldPopoverState('responsible')"
+          [disabled]="isFieldIgnored('responsible')"
+          [class.opacity-60]="isFieldIgnored('responsible')"
+          [hlmTooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          (valueChange)="applyResponsibleFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
+        >
+          <label for="interventions-filter-responsible" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('responsible').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-responsible"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-responsible"
+          >
+            <hlm-select-value
+              placeholder="Responsible"
+              i18n-placeholder="@@intervention.list.filterResponsible"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of planningOptions.members(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
+      } @else {
+        <hlm-select
+          [value]="responsibleScalar()"
+          [itemToString]="responsibleLabelOf"
+          [state]="fieldPopoverState('responsible')"
+          [disabled]="isFieldIgnored('responsible')"
+          [class.opacity-60]="isFieldIgnored('responsible')"
+          [hlmTooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          (valueChange)="applyFilter({ responsible: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
+        >
+          <label for="interventions-filter-responsible" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('responsible').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-responsible"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-responsible"
+          >
+            <hlm-select-value
+              placeholder="Responsible"
+              i18n-placeholder="@@intervention.list.filterResponsible"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of planningOptions.members(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
+    </ng-template>
+
+    <ng-template #labelChip>
+      @if (enumFieldOperator('label') === 'isAnyOf') {
+        <hlm-select-multiple
+          [value]="labelValues()"
+          [itemToString]="labelMultiLabelOf"
+          [state]="fieldPopoverState('label')"
+          [disabled]="isFieldIgnored('label')"
+          [class.opacity-60]="isFieldIgnored('label')"
+          [hlmTooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          (valueChange)="applyLabelFilter($event)"
+          (stateChanged)="onFieldPopoverStateChanged('label', $event)"
+        >
+          <label for="interventions-filter-label" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('label').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-label"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-label"
+          >
+            <hlm-select-value
+              placeholder="Label"
+              i18n-placeholder="@@intervention.list.filterLabel"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of labelOptions(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select-multiple>
+      } @else {
+        <hlm-select
+          [value]="labelScalar()"
+          [itemToString]="labelLabelOf"
+          [state]="fieldPopoverState('label')"
+          [disabled]="isFieldIgnored('label')"
+          [class.opacity-60]="isFieldIgnored('label')"
+          [hlmTooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          (valueChange)="applyFilter({ label: $event ?? null })"
+          (stateChanged)="onFieldPopoverStateChanged('label', $event)"
+        >
+          <label for="interventions-filter-label" class="sr-only">{{
+            changeFilterLabel(filterFieldOption('label').fieldLabel)
+          }}</label>
+          <hlm-select-trigger
+            buttonId="interventions-filter-label"
+            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+            data-testid="interventions-filter-label"
+          >
+            <hlm-select-value
+              placeholder="Label"
+              i18n-placeholder="@@intervention.list.filterLabel"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (option of labelOptions(); track option.value) {
+                <hlm-select-item [value]="option.value">
+                  <span class="whitespace-nowrap">{{ option.label }}</span>
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
+    </ng-template>
+
+    <ng-template #dueRangeChip>
+      @switch (dueRangeOperator()) {
+        @case ('greaterThan') {
+          <hlm-date-picker
+            [date]="dueRangeAfter() ?? undefined"
+            [disabled]="isFieldIgnored('dueRange')"
+            [class.opacity-60]="isFieldIgnored('dueRange')"
+            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            (dateChange)="pickDueAfter($event)"
+          >
+            <label for="interventions-filter-due" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-due"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-due"
+            >
+              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        }
+        @case ('lessThan') {
+          <hlm-date-picker
+            [date]="dueRangeBefore() ?? undefined"
+            [disabled]="isFieldIgnored('dueRange')"
+            [class.opacity-60]="isFieldIgnored('dueRange')"
+            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            (dateChange)="pickDueBefore($event)"
+          >
+            <label for="interventions-filter-due" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-due"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-due"
+            >
+              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        }
+        @case ('between') {
+          <hlm-date-range-picker
+            [date]="dueRangeBetween()"
+            [disabled]="isFieldIgnored('dueRange')"
+            [class.opacity-60]="isFieldIgnored('dueRange')"
+            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            (dateChange)="pickDueBetween($event)"
+          >
+            <label for="interventions-filter-due" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('dueRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-due"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-due"
+            >
+              <span i18n="@@intervention.list.filterDateRangePlaceholder"
+                >Pick start and end dates</span
+              >
+            </hlm-date-picker-trigger>
+          </hlm-date-range-picker>
+        }
+      }
+    </ng-template>
+
+    <ng-template #plannedStartRangeChip>
+      @switch (plannedStartRangeOperator()) {
+        @case ('greaterThan') {
+          <hlm-date-picker
+            [date]="plannedStartRangeAfter() ?? undefined"
+            [disabled]="isFieldIgnored('plannedStartRange')"
+            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
+            [hlmTooltip]="
+              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
+            "
+            (dateChange)="pickPlannedStartAfter($event)"
+          >
+            <label for="interventions-filter-planned-start" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-planned-start"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-planned-start"
+            >
+              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        }
+        @case ('lessThan') {
+          <hlm-date-picker
+            [date]="plannedStartRangeBefore() ?? undefined"
+            [disabled]="isFieldIgnored('plannedStartRange')"
+            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
+            [hlmTooltip]="
+              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
+            "
+            (dateChange)="pickPlannedStartBefore($event)"
+          >
+            <label for="interventions-filter-planned-start" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-planned-start"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-planned-start"
+            >
+              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        }
+        @case ('between') {
+          <hlm-date-range-picker
+            [date]="plannedStartRangeBetween()"
+            [disabled]="isFieldIgnored('plannedStartRange')"
+            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
+            [hlmTooltip]="
+              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
+            "
+            (dateChange)="pickPlannedStartBetween($event)"
+          >
+            <label for="interventions-filter-planned-start" class="sr-only">{{
+              changeFilterLabel(filterFieldOption('plannedStartRange').fieldLabel)
+            }}</label>
+            <hlm-date-picker-trigger
+              buttonId="interventions-filter-planned-start"
+              class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+              data-testid="interventions-filter-planned-start"
+            >
+              <span i18n="@@intervention.list.filterDateRangePlaceholder"
+                >Pick start and end dates</span
+              >
+            </hlm-date-picker-trigger>
+          </hlm-date-range-picker>
+        }
+      }
+    </ng-template>
+
+    <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4">
+      @if (hasError()) {
+        <app-error-state
+          icon="lucideCircleAlert"
+          title="Couldn't load the interventions"
+          i18n-title="@@intervention.list.errorTitle"
+          description="The interventions could not be loaded. Check your connection and try again."
+          i18n-description="@@intervention.list.errorText"
+        >
+          <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
+            <span i18n="@@intervention.list.retry">Try again</span>
+          </button>
+        </app-error-state>
+      } @else if (!store.isLoadingInterventions() && items().length === 0) {
+        @if (hasSearch()) {
+          <app-empty-state
+            icon="lucideSearch"
+            title="No matching intervention"
+            i18n-title="@@intervention.list.searchEmptyHeading"
+            description="Try a different search term, or clear the search to see every intervention."
+            i18n-description="@@intervention.list.searchEmptyDescription"
+          >
+            <button hlmBtn variant="outline" (click)="clearSearch()">
+              <span i18n="@@intervention.list.clearSearch">Clear search</span>
+            </button>
+          </app-empty-state>
+        } @else {
+          <app-empty-state
+            icon="lucideClipboardList"
+            title="No interventions yet"
+            i18n-title="@@intervention.list.emptyTitle"
+            description="Create your first intervention to start planning field work."
+            i18n-description="@@intervention.list.emptyDescription"
+          >
+            <button hlmBtn (click)="openCreate()">
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              <span i18n="@@intervention.list.newButtonShort">New</span>
+            </button>
+          </app-empty-state>
+        }
+      } @else {
+        <app-intervention-table
+          [items]="items()"
+          [loading]="store.isLoadingInterventions() && items().length === 0"
+          [sortOrder]="sortOrder()"
+          [hiddenColumns]="hiddenColumns()"
+          [canTransition]="canTransition()"
+          [transitioningIds]="store.transitioningInterventionIds()"
+          [canAssign]="canAssign()"
+          [canDuplicate]="canDuplicate()"
+          [currentMemberIri]="memberIri()"
+          [selectedIds]="selectedIds()"
+          [detailRouteBase]="detailRouteBase()"
+          (sortChanged)="applySortField($event)"
+          (transitionRequested)="applyTransition($event)"
+          (referenceCopied)="copyReference($event)"
+          (deleteRequested)="requestDelete($event)"
+          (assignRequested)="requestAssign($event)"
+          (duplicateRequested)="requestDuplicate($event)"
+          (selectionChanged)="onSelectionChanged($event)"
+        />
+
+        <app-collection-pagination
+          [page]="page()"
+          [pageCount]="pageCount()"
+          [pageSize]="pageSize()"
+          [total]="store.totalInterventions()"
+          [shown]="items().length"
+          testIdPrefix="interventions"
+          (pageChanged)="goToPage($event)"
+          (pageSizeChanged)="setPageSize($event)"
+        />
+      }
+    </div>
+
+    <div hlmTabsContent="board" class="min-h-0 flex-1">
+      <ng-template hlmTabsContentLazy>
+        <app-intervention-board
+          [items]="boardItems()"
+          [canTransition]="canTransition()"
+          [transitioningIds]="store.transitioningInterventionIds()"
+          [detailRouteBase]="detailRouteBase()"
+          (moveRequested)="applyTransition($event)"
+        />
+      </ng-template>
+    </div>
+
+    <div hlmTabsContent="calendar" class="min-h-0 flex-1">
+      <ng-template hlmTabsContentLazy>
+        <app-intervention-calendar
+          [interventions]="calendarStore.interventions()"
+          [loading]="calendarStore.loading()"
+          [loadError]="calendarStore.loadError()"
+          [mine]="!!filters().mine"
+          [currentMemberIri]="calendarStore.currentMemberIri()"
+          [organizationId]="organizationId()"
+          (monthChanged)="onCalendarMonthChanged($event)"
+          (reloadRequested)="calendarReload()"
+        />
+      </ng-template>
+    </div>
+  </hlm-tabs>
 </div>
 
 <app-intervention-create-sheet
@@ -322,3 +1034,19 @@
   (submitted)="submitAssign($event)"
   (dismissed)="dismissAssign()"
 />
+
+<ng-template #pageActions>
+  <button
+    hlmBtn
+    class="min-w-0 shrink max-sm:min-h-11"
+    data-testid="interventions-new"
+    i18n-aria-label="@@intervention.list.newButton"
+    aria-label="New intervention"
+    (click)="openCreate()"
+  >
+    <ng-icon name="lucidePlus" aria-hidden="true" />
+    <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+      >New intervention</span
+    >
+  </button>
+</ng-template>

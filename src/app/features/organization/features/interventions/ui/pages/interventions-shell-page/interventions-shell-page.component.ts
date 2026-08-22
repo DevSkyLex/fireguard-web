@@ -74,7 +74,6 @@ import {
   type InterventionStatisticsStoreType,
 } from '../../../state/intervention-statistics';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 
 /** How long typing settles before the search reaches the wire — mirrors the pre-shell `InterventionsPage`. */
@@ -170,7 +169,6 @@ const ALL_FILTER_FIELD_KEYS: readonly InterventionFilterFieldKey[] = INTERVENTIO
     HlmTooltip,
     InterventionTag,
     InterventionKpiStrip,
-    InterventionStatisticsAnalysis,
     CollectionFilterBar,
     CollectionFilterToggle,
     CollectionSearchBox,

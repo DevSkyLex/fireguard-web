@@ -6,12 +6,6 @@
     [baseRoute]="detailRouteBase()"
   />
 
-  <app-intervention-statistics-analysis
-    class="shrink-0"
-    [statistics]="statisticsStore.queryData()"
-    [organizationId]="organizationId()"
-  />
-
   <app-collection-toolbar>
     <div toolbarStart class="flex items-center gap-2">
       <app-collection-search-box

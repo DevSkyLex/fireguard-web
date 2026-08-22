@@ -71,7 +71,7 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { MessageThread } from '../../components/message-thread';
 import { ChannelDeleteDialog } from '../../dialogs/channel-delete-dialog';
-import { EditChannelDialog, type EditChannelDraft } from '../../dialogs/edit-channel-dialog';
+import { ChannelEditDialog, type ChannelEditDraft } from '../../dialogs/channel-edit-dialog';
 import { MessageComposer } from '../../forms/message-composer';
 import {
   ChannelParticipantsSheet,
@@ -122,7 +122,7 @@ import {
     RouterLink,
     ChannelDeleteDialog,
     ChannelParticipantsSheet,
-    EditChannelDialog,
+    ChannelEditDialog,
     HlmButton,
     HlmDropdownMenu,
     HlmDropdownMenuGroup,
@@ -844,11 +844,11 @@ export class ChannelConversationPage {
    * @access protected
    * @since 1.0.0
    *
-   * @param {EditChannelDraft} draft - The validated name and parent.
+   * @param {ChannelEditDraft} draft - The validated name and parent.
    *
    * @returns {void}
    */
-  protected submitEdit(draft: EditChannelDraft): void {
+  protected submitEdit(draft: ChannelEditDraft): void {
     const channel: ChannelOutput | null = this.channel();
 
     if (channel === null) return;

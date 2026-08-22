@@ -36,6 +36,7 @@ import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -87,6 +88,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     InterventionTag,
     ...HlmAvatarImports,
     ...HlmButtonImports,
+    ...HlmCardImports,
     ...HlmDropdownMenuImports,
     ...HlmProgressImports,
     ...HlmSpinnerImports,

@@ -7,7 +7,7 @@ import type {
  * Function isInterventionBoardMoveAllowed
  *
  * @description
- * Whether the Board (`ui/pages/interventions-board-page/`) may drop a card
+ * Whether the Board (`ui/components/intervention-board/`) may drop a card
  * onto a given status column: the target must be one of the card's own
  * server-advertised `allowedTransitions` (`published` never appears there —
  * it is reached only through the publication flow, so its column is a

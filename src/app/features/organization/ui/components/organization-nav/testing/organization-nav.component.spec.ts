@@ -1,8 +1,13 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { NgIconsToken } from '@ng-icons/core';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  ORGANIZATION_NAVIGATION_ITEMS,
+  type OrganizationNavigationItem,
+} from '@features/organization/navigation';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationNavigationCountersStore } from '@features/organization/state';
 import { OrganizationNav } from '../organization-nav.component';
@@ -171,5 +176,42 @@ describe('OrganizationNav', () => {
 
     expect(badges.length).toBe(1);
     expect(badges[0].closest('a')?.textContent).toContain('Interventions');
+  });
+
+  /**
+   * The lucide names `provideIcons` actually bound on this component,
+   * merged the same way `@ng-icons/core` itself merges its multi providers.
+   */
+  function registeredIconNames(): ReadonlySet<string> {
+    const dictionaries: readonly Record<string, string>[] =
+      fixture.debugElement.injector.get(NgIconsToken);
+
+    return new Set<string>(
+      dictionaries.flatMap((dictionary: Record<string, string>): string[] =>
+        Object.keys(dictionary),
+      ),
+    );
+  }
+
+  it('should register every icon the navigation config declares', () => {
+    const declared = new Set<string>(
+      ORGANIZATION_NAVIGATION_ITEMS.map((item: OrganizationNavigationItem): string => item.icon),
+    );
+    const missing = [...declared].filter(
+      (icon: string): boolean => !registeredIconNames().has(icon),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  it('should carry no icon the navigation config never declares', () => {
+    const declared = new Set<string>(
+      ORGANIZATION_NAVIGATION_ITEMS.map((item: OrganizationNavigationItem): string => item.icon),
+    );
+    const orphaned = [...registeredIconNames()].filter(
+      (icon: string): boolean => !declared.has(icon),
+    );
+
+    expect(orphaned).toEqual([]);
   });
 });

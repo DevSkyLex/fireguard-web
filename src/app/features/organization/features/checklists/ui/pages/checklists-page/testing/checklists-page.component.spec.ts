@@ -1,15 +1,44 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
+  Component,
   computed,
+  input,
   provideZonelessChangeDetection,
   signal,
+  type InputSignal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { ChecklistsPage } from '../checklists-page.component';
+
+/**
+ * Stands in for the shell's `DashboardPageActions` — see `FacilitiesPage`'s
+ * spec for the approach every migrated page's spec reuses.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
 
 const checklist = (overrides: Partial<ChecklistOutput> = {}): ChecklistOutput =>
   ({
@@ -40,8 +69,6 @@ describe('ChecklistsPage', () => {
   let archiveCallState: WritableSignal<CallState<ChecklistOutput | null>>;
   let hasPermission: ReturnType<typeof vi.fn>;
 
-  const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
-
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(ChecklistsPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
@@ -64,6 +91,7 @@ describe('ChecklistsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
       ],
     });
@@ -125,16 +153,45 @@ describe('ChecklistsPage', () => {
     hasPermission.mockReturnValue(false);
     await createPage();
 
-    expect(root().querySelector('[data-testid="checklists-new"]')).toBeNull();
+    expect(renderPageActions().querySelector('[data-testid="checklists-new"]')).toBeNull();
   });
 
   it('should open the create dialog from the header action', async () => {
     await createPage();
 
-    root().querySelector<HTMLButtonElement>('[data-testid="checklists-new"]')?.click();
+    renderPageActions().querySelector<HTMLButtonElement>('[data-testid="checklists-new"]')?.click();
     await fixture.whenStable();
 
     expect(document.querySelector('[data-testid="checklist-create-dialog"]')).not.toBeNull();
+  });
+
+  it('should narrow the list to one status and return to page 1', async () => {
+    await createPage();
+
+    fixture.componentInstance['applyStatus']('archived');
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options.status).toBe('archived');
+    expect(load.mock.calls.at(-1)?.[0].options.page).toBe(1);
+    expect(fixture.componentInstance['activeFilterKeys']()).toEqual(['status']);
+  });
+
+  it('should drop every narrowing at once when filters are cleared', async () => {
+    await createPage();
+
+    fixture.componentInstance['applyStatus']('archived');
+    fixture.componentInstance['applySearch']('fire');
+    await fixture.whenStable();
+
+    fixture.componentInstance['clearFilters']();
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({
+      status: undefined,
+      search: undefined,
+      page: 1,
+    });
+    expect(fixture.componentInstance['activeFilterKeys']()).toEqual([]);
   });
 
   it('should call ChecklistStore.create with the organization id and the payload', async () => {

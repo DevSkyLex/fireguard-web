@@ -1,5 +1,5 @@
 /**
- * Interface EditChannelDraft
+ * Interface ChannelEditDraft
  *
  * @description
  * What {@link ChannelEditForm} emits once the form is valid: the channel's
@@ -8,7 +8,7 @@
  *
  * @since 1.0.0
  */
-export interface EditChannelDraft {
+export interface ChannelEditDraft {
   readonly name: string;
   /** Bare parent channel UUID, or `null` for a root channel. */
   readonly parentChannelId: string | null;

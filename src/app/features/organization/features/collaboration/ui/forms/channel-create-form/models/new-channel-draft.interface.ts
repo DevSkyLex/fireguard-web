@@ -1,5 +1,5 @@
 /**
- * Interface NewChannelDraft
+ * Interface ChannelCreateDraft
  *
  * @description
  * What {@link ChannelCreateForm} emits once the form is valid: a name and an
@@ -7,7 +7,7 @@
  *
  * @since 1.0.0
  */
-export interface NewChannelDraft {
+export interface ChannelCreateDraft {
   readonly name: string;
   /** Bare parent channel UUID, or `null` for a root channel. */
   readonly parentChannelId: string | null;

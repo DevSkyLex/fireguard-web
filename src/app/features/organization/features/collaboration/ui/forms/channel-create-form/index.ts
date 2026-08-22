@@ -1,2 +1,2 @@
 export { ChannelCreateForm } from './channel-create-form.component';
-export type { NewChannelDraft } from './models';
+export type { ChannelCreateDraft } from './models';

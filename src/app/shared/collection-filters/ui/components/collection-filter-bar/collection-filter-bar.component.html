@@ -1,5 +1,5 @@
 <div
-  class="-mt-2 flex shrink-0 flex-wrap items-center gap-2"
+  class="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border p-2"
   [attr.id]="testId('filter-bar')"
   [attr.data-testid]="testId('filter-chips')"
 >
@@ -37,17 +37,23 @@
   }
 
   <ng-template #addFilterMenu>
-    <hlm-dropdown-menu class="w-48">
+    <hlm-dropdown-menu class="w-56">
       <hlm-dropdown-menu-label>{{ addFilterMenuLabel }}</hlm-dropdown-menu-label>
       <hlm-dropdown-menu-separator />
       @for (field of unsetFields(); track field.key) {
         <button
           hlmDropdownMenuItem
+          [disabled]="field.unavailableReason !== undefined"
           [attr.data-testid]="testId('filters-add-option')"
           (click)="pickField(field.key)"
         >
           <ng-icon [name]="field.icon" aria-hidden="true" />
-          {{ field.fieldLabel }}
+          <span class="flex min-w-0 flex-col items-start">
+            <span class="truncate">{{ field.fieldLabel }}</span>
+            @if (field.unavailableReason; as reason) {
+              <span class="text-xs whitespace-normal text-muted-foreground">{{ reason }}</span>
+            }
+          </span>
         </button>
       }
     </hlm-dropdown-menu>
@@ -59,6 +65,7 @@
       type="button"
       variant="ghost"
       size="sm"
+      class="max-sm:min-h-11"
       [attr.data-testid]="testId('clear-filters')"
       (click)="clearAll()"
     >

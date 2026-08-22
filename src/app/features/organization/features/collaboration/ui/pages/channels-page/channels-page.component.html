@@ -61,22 +61,15 @@
 
   @if (channels.channelEntities().length > 0) {
     <div class="border-b px-2 py-2">
-      <hlm-input-group>
-        <hlm-input-group-addon>
-          <ng-icon name="lucideSearch" />
-        </hlm-input-group-addon>
-        <input
-          hlmInputGroupInput
-          type="search"
-          data-testid="channels-search"
-          placeholder="Search channels..."
-          i18n-placeholder="@@channels.page.searchPlaceholder"
-          aria-label="Search channels..."
-          i18n-aria-label="@@channels.page.searchPlaceholder"
-          [value]="searchQuery()"
-          (input)="onSearchInput($event)"
-        />
-      </hlm-input-group>
+      <app-collection-search-box
+        testIdPrefix="channels"
+        placeholder="Search channels..."
+        i18n-placeholder="@@channels.page.searchPlaceholder"
+        ariaLabel="Search channels..."
+        i18n-ariaLabel="@@channels.page.searchPlaceholder"
+        [value]="searchQuery()"
+        (queryChanged)="onSearchQueryChanged($event)"
+      />
     </div>
   }
 
@@ -192,7 +185,7 @@
   <router-outlet (activate)="hasOpenChannel.set(true)" (deactivate)="hasOpenChannel.set(false)" />
 </div>
 
-<app-new-channel-dialog
+<app-channel-create-dialog
   [visible]="createDialogVisible()"
   [parentOptions]="rootChannelOptions()"
   [pending]="channels.isMutating()"

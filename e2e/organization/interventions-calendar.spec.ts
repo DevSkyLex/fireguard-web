@@ -53,25 +53,25 @@ test.describe('Interventions calendar — month view over the shared dataset', (
 
     await expect(calendar.root).toBeVisible();
     await expect(page.getByTestId('intervention-view-toggle-calendar').first()).toHaveAttribute(
-      'aria-current',
-      'page',
+      'aria-selected',
+      'true',
     );
 
     await page.getByTestId('intervention-view-toggle-board').first().click();
     await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions/board(\\?.*)?$`),
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?.*view=board`),
     );
     await expect(page.locator('#interventions-board')).toBeVisible();
 
     await page.getByTestId('intervention-view-toggle-calendar').first().click();
     await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions/calendar(\\?.*)?$`),
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions\\?.*view=calendar`),
     );
     await expect(calendar.root).toBeVisible();
 
     await page.getByTestId('intervention-view-toggle-list').first().click();
     await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions(\\?.*)?$`),
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/interventions(\\?(?!.*view=).*)?$`),
     );
     await expect(page.locator('#interventions')).toBeVisible();
   });

@@ -32,10 +32,8 @@
     </div>
   </div>
 } @else if (error(); as message) {
-  <app-empty-state
+  <app-error-state
     icon="lucideCircleAlert"
-    class="rounded-md border border-dashed border-destructive/30 bg-destructive/5 p-6"
-    role="alert"
     title="Linked inspections could not be loaded"
     i18n-title="@@intervention.linked.inspections.errorTitle"
     [description]="message"
@@ -137,7 +135,6 @@
 } @else {
   <app-empty-state
     icon="lucideClipboardCheck"
-    class="rounded-md border border-dashed border-border p-6"
     title="No linked inspections"
     i18n-title="@@intervention.linked.inspections.emptyTitle"
     description="No inspection is linked to this intervention yet."

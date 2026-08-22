@@ -1,0 +1,169 @@
+<div id="interventions-calendar" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  <div
+    class="flex shrink-0 flex-wrap items-center gap-3"
+    data-testid="intervention-calendar-toolbar"
+  >
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11 max-sm:min-w-11"
+      data-testid="intervention-calendar-toolbar-today"
+      (click)="goToday()"
+    >
+      <span i18n="@@calendar.today">Today</span>
+    </button>
+
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        class="max-sm:size-11"
+        data-testid="intervention-calendar-toolbar-prev"
+        i18n-aria-label="@@calendar.previousMonth"
+        aria-label="Previous month"
+        (click)="stepMonth(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        class="max-sm:size-11"
+        data-testid="intervention-calendar-toolbar-next"
+        i18n-aria-label="@@calendar.nextMonth"
+        aria-label="Next month"
+        (click)="stepMonth(1)"
+      >
+        <ng-icon name="lucideChevronRight" aria-hidden="true" />
+      </button>
+    </div>
+
+    <span
+      class="truncate text-base font-semibold text-foreground capitalize"
+      data-testid="intervention-calendar-toolbar-period"
+      aria-live="polite"
+    >
+      {{ periodLabel() }}
+    </span>
+  </div>
+
+  @if (loadError()) {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load the calendar"
+      i18n-title="@@intervention.calendar.errorTitle"
+      description="The calendar could not be loaded. Check your connection and try again."
+      i18n-description="@@intervention.calendar.errorText"
+    >
+      <button hlmBtn variant="outline" data-testid="intervention-calendar-retry" (click)="reload()">
+        <span i18n="@@common.tryAgain">Try again</span>
+      </button>
+    </app-error-state>
+  } @else {
+    <div
+      class="hidden min-h-0 flex-1 flex-col gap-4 md:flex lg:grid lg:grid-cols-[2fr_1fr] lg:grid-rows-[minmax(0,1fr)]"
+    >
+      @if (loading() && events().length === 0) {
+        <hlm-skeleton class="h-96 w-full" />
+      } @else {
+        <app-calendar
+          class="min-h-0"
+          [showToolbar]="false"
+          [(month)]="month"
+          [(selectedDay)]="selectedDay"
+          [events]="events()"
+        />
+      }
+
+      <div
+        hlmCard
+        class="self-start lg:sticky lg:top-4"
+        data-testid="intervention-calendar-day-panel"
+      >
+        <div hlmCardHeader>
+          <h2 hlmCardTitle data-testid="intervention-calendar-day-heading">
+            {{ selectedDayLabel() }}
+          </h2>
+        </div>
+        <div hlmCardContent class="flex flex-col gap-2" aria-live="polite" aria-atomic="true">
+          @if (dayItems().length === 0) {
+            <p class="text-sm text-muted-foreground" i18n="@@intervention.calendar.dayEmpty">
+              Nothing scheduled this day.
+            </p>
+          } @else {
+            <app-intervention-calendar-entry-list
+              [items]="dayItems()"
+              [organizationId]="organizationId()"
+            />
+
+            @if (selectedDayOverflow() > 0 && selectedDay(); as day) {
+              <a
+                hlmBtn
+                variant="link"
+                size="sm"
+                class="self-start px-0"
+                data-testid="intervention-calendar-see-all"
+                [routerLink]="detailRouteBase()"
+                [queryParams]="dayListQueryParams(day)"
+              >
+                <span i18n="@@intervention.calendar.seeAllInList"
+                  >See all {{ dayItems().length }} in list</span
+                >
+              </a>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="interventions-calendar-agenda"
+      data-testid="intervention-calendar-agenda"
+      aria-live="polite"
+      class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto md:hidden"
+    >
+      @if (loading() && events().length === 0) {
+        <hlm-skeleton class="h-48 w-full" />
+      } @else if (agendaGroups().length === 0) {
+        <p class="py-3 text-sm text-muted-foreground" i18n="@@intervention.calendar.empty">
+          Nothing scheduled in this period.
+        </p>
+      } @else {
+        @for (group of agendaGroups(); track group.day) {
+          <div
+            class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
+            data-testid="intervention-calendar-agenda-group"
+          >
+            <h2 class="text-sm font-semibold text-foreground">{{ group.label }}</h2>
+            <app-intervention-calendar-entry-list
+              [items]="group.items"
+              [organizationId]="organizationId()"
+            />
+
+            @if (group.overflow > 0) {
+              <a
+                hlmBtn
+                variant="link"
+                size="sm"
+                class="self-start px-0"
+                data-testid="intervention-calendar-see-all"
+                [routerLink]="detailRouteBase()"
+                [queryParams]="dayListQueryParams(group.day)"
+              >
+                <span i18n="@@intervention.calendar.seeAllInList"
+                  >See all {{ group.items.length }} in list</span
+                >
+              </a>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

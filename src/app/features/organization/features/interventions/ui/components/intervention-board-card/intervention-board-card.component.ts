@@ -24,7 +24,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
-import type { InterventionBoardCardViewModel } from '../../pages/interventions-board-page/models';
+import type { InterventionBoardCardViewModel } from '../intervention-board/models';
 import { InterventionTag } from '../intervention-tag';
 
 /**
@@ -32,7 +32,7 @@ import { InterventionTag } from '../intervention-tag';
  * @class InterventionBoardCard
  *
  * @description
- * One card in `InterventionsBoardPage`'s Kanban board: the `FG-{number}`
+ * One card in `InterventionBoard`'s Kanban board: the `FG-{number}`
  * reference, a link to the detail page, the priority tag, the due date
  * (overdue-styled, icon + colour, never colour alone), the responsible
  * member's avatar and name when resolved, and any labels the intervention
@@ -41,14 +41,16 @@ import { InterventionTag } from '../intervention-tag';
  * The card is the pointer-drag surface (`cdkDrag`, host template), but drag
  * is an enhancement, never the only path: the "Move to…" menu offers the
  * same status moves by click or keyboard, gated by the same
- * {@link isInterventionBoardMoveAllowed} the page's `cdkDropListEnterPredicate`
- * calls, so the two paths can never disagree about what is legal — mirroring
+ * {@link isInterventionBoardMoveAllowed} `InterventionBoard`'s own
+ * `cdkDropListEnterPredicate` calls, so the two paths can never disagree
+ * about what is legal — mirroring
  * `InterventionTable`'s row menu, including its disabled-with-title pattern
  * for the one identity-restricted move (withdrawing a submission).
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls no
- * service; {@link moveRequested} is the only write path out, and the page
- * decides whether to call `InterventionStore.transition`.
+ * service; {@link moveRequested} is the only write path out, bubbled through
+ * `InterventionBoard` to `InterventionsPage`, which decides whether to call
+ * `InterventionStore.transition`.
  *
  * @version 1.0.0
  *

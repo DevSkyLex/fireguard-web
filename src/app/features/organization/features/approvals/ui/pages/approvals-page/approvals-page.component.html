@@ -1,9 +1,33 @@
 <div id="approvals" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@approvals.list.filtersButton"
+      testIdPrefix="approvals"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="approvals"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #statusChip>
     <hlm-toggle-group
-      toolbarStart
       type="single"
-      variant="outline"
+      [nullable]="true"
       size="sm"
       [value]="status()"
       data-testid="approvals-filter-status"
@@ -22,39 +46,37 @@
         </button>
       }
     </hlm-toggle-group>
+  </ng-template>
 
-    <div class="flex flex-col gap-1" toolbarEnd>
-      <label
-        for="approvals-filter-action-type"
-        class="text-xs font-medium text-muted-foreground"
-        i18n="@@approvals.filter.actionType"
+  <ng-template #actionTypeChip>
+    <hlm-select
+      [value]="actionType()"
+      [itemToString]="actionTypeLabelOf"
+      (valueChange)="applyActionType($event)"
+    >
+      <label for="approvals-filter-action-type" class="sr-only" i18n="@@approvals.filter.actionType"
         >Action type</label
       >
-      <hlm-select
-        [value]="actionType()"
-        [itemToString]="actionTypeLabelOf"
-        (valueChange)="applyActionType($event)"
+      <hlm-select-trigger
+        size="sm"
+        buttonId="approvals-filter-action-type"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="approvals-filter-action-type"
       >
-        <hlm-select-trigger
-          buttonId="approvals-filter-action-type"
-          class="w-52 max-sm:min-h-11"
-          data-testid="approvals-filter-action-type"
-        >
-          <hlm-select-value
-            placeholder="Any action"
-            i18n-placeholder="@@approvals.filter.anyAction"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of actionTypeOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
-  </app-collection-toolbar>
+        <hlm-select-value
+          placeholder="Any action"
+          i18n-placeholder="@@approvals.filter.anyAction"
+        />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-group>
+          @for (option of actionTypeOptions(); track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
 
   @if (store.hasListError()) {
     <app-error-state

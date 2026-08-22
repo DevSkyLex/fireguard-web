@@ -1,0 +1,19 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content class="sm:max-w-md" data-testid="channel-create-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@channels.newDialog.title">New channel</h3>
+    </hlm-dialog-header>
+
+    <app-channel-create-form
+      [visible]="visible()"
+      [parentOptions]="parentOptions()"
+      [pending]="pending()"
+      (submitted)="onFormSubmitted($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

@@ -49,16 +49,21 @@
       >
         <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
       </button>
-      <button
-        hlmToggleGroupItem
-        value="map"
-        data-testid="facilities-layout-map"
-        i18n-aria-label="@@facility.map.layoutMap"
-        aria-label="Map view"
-      >
-        <ng-icon name="lucideMap" aria-hidden="true" />
-      </button>
     </hlm-toggle-group>
+
+    <a
+      toolbarEnd
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11"
+      data-testid="facilities-layout-map"
+      i18n-aria-label="@@facility.map.layoutMap"
+      aria-label="Map view"
+      [routerLink]="[...listRouteBase(), 'map']"
+    >
+      <ng-icon name="lucideMap" aria-hidden="true" />
+    </a>
   </app-collection-toolbar>
 
   @if (filtersVisible()) {

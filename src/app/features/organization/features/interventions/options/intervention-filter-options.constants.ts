@@ -167,4 +167,10 @@ export const INTERVENTION_FILTER_FIELDS: readonly InterventionFilterFieldOption[
       lessThan: $localize`:@@intervention.list.filterDateRangeBefore:before`,
     },
   },
+  {
+    key: 'dueWindow',
+    fieldLabel: $localize`:@@intervention.list.filterDueWindow:Due window`,
+    icon: 'lucideTimer',
+    operators: ['equals'],
+  },
 ];

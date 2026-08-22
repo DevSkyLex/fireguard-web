@@ -423,10 +423,8 @@
       </div>
     }
   } @else if (store.loadFailed()) {
-    <app-empty-state
+    <app-error-state
       icon="lucideCircleAlert"
-      class="rounded-md border border-dashed border-destructive/40 p-10"
-      role="alert"
       title="This intervention could not be opened"
       i18n-title="@@intervention.detail.loadFailedTitle"
       [description]="store.error()"
@@ -451,11 +449,10 @@
       >
         <span i18n="@@intervention.detail.backToList">Back to interventions</span>
       </button>
-    </app-empty-state>
+    </app-error-state>
   } @else {
     <app-empty-state
       icon="lucideCompass"
-      class="rounded-md border border-dashed border-border p-10"
       title="Intervention not found"
       i18n-title="@@intervention.detail.notFoundTitle"
       description="This intervention does not exist, or you no longer have access to it."

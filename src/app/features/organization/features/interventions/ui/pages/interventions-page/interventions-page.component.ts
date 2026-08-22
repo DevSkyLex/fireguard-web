@@ -1,8 +1,10 @@
+import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  PLATFORM_ID,
   computed,
   effect,
   inject,
@@ -17,7 +19,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
@@ -39,9 +41,9 @@ import {
   lucideUser,
   lucideUserCog,
   lucideWrench,
+  lucideTimer,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
@@ -50,14 +52,17 @@ import { isCallPending, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { InterventionService } from '@features/organization/features/interventions/data-access';
 import {
+  type InterventionDueWindow,
   resolveInterventionTag,
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
+  type InterventionCalendarFilters,
   type InterventionDueRangeFilter,
   type InterventionDuplicatePrefill,
   type InterventionFilterFieldKey,
   type InterventionFilterFieldOption,
   type InterventionListFilters,
+  type InterventionListOptions,
   type InterventionListSort,
   type InterventionOutput,
   type InterventionPlannedStartRangeFilter,
@@ -71,6 +76,7 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import {
+  INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
   INTERVENTION_PRIORITY_FILTER_OPTIONS,
   INTERVENTION_SORT_OPTIONS,
@@ -82,9 +88,7 @@ import {
   InterventionListPreferencesService,
 } from '@features/organization/features/interventions/services';
 import {
-  InterventionStatisticsStore,
   InterventionStore,
-  type InterventionStatisticsStoreType,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
@@ -100,6 +104,7 @@ import {
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
 import {
+  type CollectionFilterField,
   CollectionFilterBar,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
@@ -112,7 +117,6 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -120,7 +124,13 @@ import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
+import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggle } from '@shared/ui/toggle';
+import { HlmTooltip } from '@shared/ui/tooltip';
+import {
+  InterventionCalendarStore,
+  type InterventionCalendarStoreType,
+} from '../../../state/intervention-calendar';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -129,8 +139,14 @@ import {
   InterventionRecurrenceStore,
   type InterventionRecurrenceStoreType,
 } from '../../../state/intervention-recurrence';
+import {
+  InterventionStatisticsStore,
+  type InterventionStatisticsStoreType,
+} from '../../../state/intervention-statistics';
+import { InterventionBoard } from '../../components/intervention-board';
+import type { InterventionBoardCardViewModel } from '../../components/intervention-board/models';
+import { InterventionCalendar } from '../../components/intervention-calendar';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
@@ -151,13 +167,16 @@ import type { InterventionListItemViewModel } from './models';
 /** How close a deadline must be to count as "due soon". */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
 
-/** How long typing settles before the search reaches the wire. */
-const SEARCH_DEBOUNCE_MS: number = 300;
-
 /** The page sizes offered under the table — the server default first, its clamp last. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** The narrowing a freshly opened list applies: none. */
+/** How long typing settles before the search reaches the wire. */
+const SEARCH_DEBOUNCE_MS: number = 300;
+
+/** The one large page the Board asks for — see {@link InterventionsPage}'s class doc, "Board". */
+const BOARD_PAGE_SIZE: number = 200;
+
+/** The narrowing "Clear filters" restores — none. */
 const NO_FILTERS: InterventionListFilters = {
   status: null,
   type: null,
@@ -172,71 +191,138 @@ const NO_FILTERS: InterventionListFilters = {
 };
 
 /**
+ * Type InterventionView
+ * @description Which of the three collection surfaces this page currently shows — driven by the `?view=` query param (`board`/`calendar`; absent or any other value ⇒ `list`) and written back on a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch.
+ * @since 11.0.0
+ */
+type InterventionView = 'list' | 'board' | 'calendar';
+
+/**
  * Type InterventionDueRangeOperator
- *
- * @description
- * The three operators the "Deadline" chip's own `dueRange` field declares —
- * the discriminant of {@link InterventionDueRangeFilter}, named locally so
- * {@link InterventionsPage.dueRangeOperator} and its value-control methods
- * stay narrowly typed instead of the wider `CollectionFilterOperator`.
- *
- * @since 8.1.0
+ * @description The three operators the "Deadline" chip's own `dueRange` field declares.
+ * @since 1.0.0
  */
 type InterventionDueRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
  * Type InterventionPlannedStartRangeOperator
- *
- * @description
- * The three operators the "Planned start" chip's own `plannedStartRange`
- * field declares — the discriminant of
- * {@link InterventionPlannedStartRangeFilter}, named locally for the same
- * reason as {@link InterventionDueRangeOperator}, not shared with it (rule
- * of three, `FEATURE.md`).
- *
- * @since 8.2.0
+ * @description The three operators the "Planned start" chip's own `plannedStartRange` field declares.
+ * @since 1.0.0
  */
 type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
  * Type InterventionEnumFilterKey
- *
- * @description
- * The six {@link InterventionFilterFieldKey} entries whose
- * `InterventionListFilters` value discriminates its own operator by shape —
- * a scalar under `equals`, a readonly array under `isAnyOf` — rather than
- * carrying a separate operator field the way {@link InterventionDueRangeFilter}
- * does. Named locally so {@link InterventionsPage.enumFieldOperator} and its
- * value-control methods stay narrower than {@link InterventionFilterFieldKey}.
- *
- * @since 8.3.0
+ * @description The six {@link InterventionFilterFieldKey} entries whose value discriminates its own operator by shape (a scalar under `equals`, a readonly array under `isAnyOf`).
+ * @since 1.0.0
  */
 type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'responsible' | 'label';
+
+/**
+ * Constant INTERVENTION_VIEW_HONOURED_FILTER_KEYS
+ * @const INTERVENTION_VIEW_HONOURED_FILTER_KEYS
+ *
+ * @description
+ * Which of the filter bar's eight fields each {@link InterventionView}
+ * actually applies — the sole consumer is this page's own
+ * {@link InterventionsPage.isFieldIgnored}, so it lives beside the page
+ * rather than in a shared `constants/` or `options/` unit (rule of three).
+ * The list honours all eight; the board omits `status` (its columns already
+ * narrow by status); the calendar honours only `status`, `type`, `site` and
+ * `responsible` (`InterventionCalendarFilters`'s own `Pick`). A chip whose
+ * field the active view does not honour still renders when active, but
+ * disabled and greyed, with an `hlmTooltip` naming the reason — never
+ * silently dropped, never silently misapplied.
+ *
+ * @since 11.0.0
+ *
+ * @type {Readonly<Record<InterventionView, readonly InterventionFilterFieldKey[]>>}
+ */
+const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
+  Record<InterventionView, readonly InterventionFilterFieldKey[]>
+> = {
+  list: [
+    'status',
+    'type',
+    'priority',
+    'site',
+    'responsible',
+    'label',
+    'dueRange',
+    'plannedStartRange',
+    'dueWindow',
+  ],
+  board: [
+    'type',
+    'priority',
+    'site',
+    'responsible',
+    'label',
+    'dueRange',
+    'plannedStartRange',
+    'dueWindow',
+  ],
+  calendar: ['status', 'type', 'site', 'responsible'],
+};
 
 /**
  * Component InterventionsPage
  * @class InterventionsPage
  *
  * @description
- * Route entry page for the organization's interventions, laid out like
- * spartan's dashboard table: a filter bar and a Linear-style Display popover
- * above, the grid in its bordered shell, and a footer carrying the row count,
- * the page size and the pager.
+ * Route entry page for the organization's interventions
+ * (`/organizations/:organizationId/interventions`): the KPI strip, the
+ * toolbar (search box, "My interventions", the filter bar and its eight
+ * chips, the List/Board/Calendar tabs), and each tab's own surface — the
+ * table with its Display popover and row/bulk actions on List, the Kanban
+ * board on Board, the month grid on Calendar — plus the sheets and dialogs
+ * any of the three can open.
  *
- * It owns what the table must not — the query it sends, the `?q=`/`?create=`
- * params it round-trips, the ordering, the column visibility and the page
- * window (`ARCHITECTURE.md` §2.5).
+ * **One page, three tabs, replacing three routes.** `InterventionsShellPage`,
+ * `InterventionsBoardPage` and `InterventionsCalendarPage` are retired: the
+ * List/Board/Calendar switcher is now `hlm-tabs` (`@shared/ui/tabs`) instead
+ * of a routed `<router-outlet />`, and `InterventionBoard`/
+ * `InterventionCalendar` (`ui/components/`) are presentational components
+ * this page feeds, not pages of their own — a table, a board or a calendar
+ * never injects a store (`ARCHITECTURE.md` §10.3), and one physical page
+ * means the toolbar, the KPI strip and the filter bar are built once instead
+ * of coordinated across three components through a `TemplateRef` slot. The
+ * active tab is **not** local component state: it is the `view` route-bound
+ * input (`?view=board|calendar`, absent ⇒ `list`), read into
+ * {@link activeView} and written back by {@link switchView} with
+ * `queryParamsHandling: 'merge'` so every other filter param survives the
+ * switch — `/interventions/board` and `/interventions/calendar` still exist
+ * as addressable URLs, as functional `redirectTo` entries onto this one
+ * (`interventions.routes.ts`).
  *
- * Paging, filtering and sorting are server-side end to end: the loaded
- * entities ARE the current page, the footer derives its page count from the
- * server's `totalItems`, and any narrowing change restarts from page one —
- * reset synchronously in the mutators so the load effect fires exactly once
- * per change. The selection clears on every load: it only ever refers to rows
- * of the page on screen, so the bulk-delete dialog can never promise rows the
- * operator no longer sees.
+ * **Board and Calendar share this page's own stores rather than injecting
+ * their own.** The Board renders the same `InterventionStore` the table
+ * does — {@link boardFilters} forces `status` to `null` (its columns are the
+ * narrowing) and the Board's own load effect asks for one large page
+ * (`BOARD_PAGE_SIZE`, 200) instead of the table's paginated window, gated on
+ * {@link activeView} so switching tabs does not fight over the same cached
+ * page. The Calendar reads a bounded date window instead, an incompatible
+ * shape for the same entity cache, so it gets its own component-scoped
+ * `InterventionCalendarStore` — provided here, on this page, since only a
+ * page may inject a store — fed to `InterventionCalendar` through inputs and
+ * driven back by its `monthChanged`/`reloadRequested` outputs.
+ * {@link calendarMonth} starts `null` and the load effect no-ops until
+ * `InterventionCalendar` reports its first anchor, which only happens once
+ * it exists — behind `hlmTabsContentLazy`, on the Calendar tab's first
+ * activation — so visiting List or Board first never fetches the calendar's
+ * window.
  *
- * `InterventionStore` is **not** provided here — it comes from the pathless
- * parent route, which keeps `orderedIds()` alive across list ↔ detail.
+ * It owns what a table, a board or a calendar must not — the query each
+ * sends, the `?q=`/`?create=`/filter params it round-trips, the ordering,
+ * the column visibility and the page window (`ARCHITECTURE.md` §2.5).
+ *
+ * Paging, filtering and sorting are server-side end to end for the List
+ * tab: the loaded entities ARE the current page, the footer derives its page
+ * count from the server's `totalItems`, and any narrowing or search change
+ * restarts from page one — {@link page} is a `linkedSignal` over
+ * {@link filters} and {@link searchTerm}. The selection clears on every List
+ * load: it only ever refers to rows of the page on screen, so the
+ * bulk-delete dialog can never promise rows the operator no longer sees.
  *
  * Deletion is confirm-gated: a row's Delete entry and the toolbar's "Delete
  * selected" both set a `pending*` target signal instead of calling the store
@@ -248,51 +334,18 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
  *
  * "Duplicate" reuses the same creation sheet, prefilled — from a row's own
  * menu, or from a cross-route handoff `InterventionStore.pendingDuplicatePrefill`
- * carries when a detail page navigates here with `?create=1`. Never a
+ * carries when the detail page navigates here with `?create=1`. Never a
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
  *
- * The removable filter chips below the toolbar are a read-only projection of
- * {@link filters}, never a second copy of it: removing a chip calls the same
- * {@link applyFilter} path the popover's own selects use, so the URL stays
- * the single source of truth (`FEATURE.md`). The KPI strip's own overdue and
- * awaiting-review tiles link into that same `?due=`/`?status=` contract —
- * the only way left to reach those two narrowings from the UI, now that the
- * toolbar's segmented-views toggle group is gone.
+ * The "Display" toolbar button is a `hlm-popover` trigger opening a panel
+ * that groups every presentation preference the List tab owns — ordering and
+ * column visibility — the way Linear's own Display control does. Display,
+ * Recurrences, Export and the bulk-actions menu render only while
+ * {@link activeView} is `list`: the Board and the Calendar have no use for
+ * any of them.
  *
- * Its title lives in the shell breadcrumb, not in-page — the route's
- * `data.breadcrumb` supplies it. "New intervention" registers on the shell
- * header through `PageActionsService` instead of rendering its own title
- * band.
- *
- * The filter bar (6.5) is Linear-style segmented chips, not a popover:
- * `app-collection-filter-bar` (`@shared/collection-filters`, since the
- * phase-2 `collection-*` migration) renders one `app-filter-chip` per active
- * narrowing, each projecting one of this page's seven `ng-template` value
- * controls — the same `hlm-select` the old popover used, just restyled flush
- * into the chip. The bar's own "+ Filter" menu lists the fields still
- * unset; picking one fires `fieldPicked`, and {@link onFieldPicked} sets
- * {@link openFilterKey} so the picked field's own template forces its select
- * open. Both still resolve through {@link applyFilter} alone — there is no
- * second copy of the narrowing, only of which selector is currently
- * expanded. It reads as a second line of the toolbar rather than a band of
- * its own, so the bar's own root carries `-mt-2`, pulling itself half of the
- * page's `gap-4` back up instead of sitting a full gap below the search row.
- *
- * `hlm-button-group` and `hlm-combobox` were both evaluated for this bar and
- * both ruled out; `FEATURE.md` records why, so neither is reopened without
- * new evidence.
- *
- * The "Display" toolbar button (6.7) replaces what used to be a bare
- * "Columns" menu: a single `hlm-popover` trigger opening a panel that groups
- * every presentation preference this list owns — ordering and column
- * visibility — the way Linear's own Display control does. Both sections read
- * and write the same {@link sortOrder} and {@link hiddenColumns} signals the
- * table and the cookie already used; the popover adds no state of its own,
- * only a single surface for what was previously reachable only through a
- * column header click.
- *
- * @version 6.9.0
+ * @version 11.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -300,19 +353,20 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
   selector: 'app-interventions-page',
   imports: [
     NgIcon,
-    RouterLink,
     EmptyState,
     ErrorState,
     HlmBadge,
     HlmButton,
     HlmSpinner,
     HlmToggle,
+    HlmTooltip,
     InterventionAssignDialog,
+    InterventionBoard,
     InterventionBulkDeleteDialog,
+    InterventionCalendar,
     InterventionCreateSheet,
-    InterventionRecurrencesSheet,
     InterventionKpiStrip,
-    InterventionStatisticsAnalysis,
+    InterventionRecurrencesSheet,
     InterventionTable,
     InterventionTag,
     CollectionFilterBar,
@@ -320,17 +374,16 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
-    ...HlmButtonGroupImports,
     ...HlmCheckboxImports,
     ...HlmDatePickerImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmSeparatorImports,
+    ...HlmTabsImports,
   ],
   providers: [
-    InterventionPlanningOptionsStore,
-    InterventionStatisticsStore,
+    InterventionCalendarStore,
     InterventionRecurrenceStore,
     provideIcons({
       lucideArrowDown,
@@ -352,6 +405,7 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
       lucideUser,
       lucideUserCog,
       lucideWrench,
+      lucideTimer,
     }),
   ],
   templateUrl: './interventions-page.component.html',
@@ -360,205 +414,104 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
 })
 export class InterventionsPage {
   //#region Inputs
-  /**
-   * Property organizationId
-   * @readonly
-   *
-   * @description
-   * The workspace whose interventions are listed, bound from the route.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string>}
-   */
+  /** The workspace whose interventions are shown, bound from the route. */
   public readonly organizationId: InputSignal<string> = input.required<string>();
 
-  /**
-   * Property q
-   * @readonly
-   *
-   * @description
-   * The search term the URL carries, so a filtered list survives a reload.
-   *
-   * Optional because a query param that is absent — or that the page itself
-   * just removed — binds as `undefined` rather than falling back to the input
-   * default. Read {@link searchTerm} instead.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | undefined>}
-   */
+  /** The search term the URL carries. See {@link searchTerm}. */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /**
-   * Property create
-   * @readonly
-   *
-   * @description
-   * `?create=1` opens the creation sheet on arrival — the contract the parent
-   * feature's landing page uses to start an intervention.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignal<string | undefined>}
-   */
+  /** `?create=1` opens the creation sheet on arrival — the contract the parent feature's landing page uses to start an intervention. */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /**
-   * Property status / type / priority / site / responsible / label / mine / due
-   * @readonly
-   *
-   * @description
-   * The narrowing the URL carries — one query param per filter, raw ids for
-   * the IRI-valued ones — so a filtered list is shareable, bookmarkable and
-   * survives a reload. Unknown values are ignored at parse time rather than
-   * sent to the API.
-   *
-   * @access public
-   * @since 5.2.0
-   *
-   * @type {InputSignal<string | undefined>}
-   */
+  /** Which tab is shown — `board`/`calendar`, absent (or any other value) meaning `list`. See {@link activeView}. */
+  public readonly view: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The status filter the URL carries. */
   public readonly status: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The type filter the URL carries. See {@link status}. */
+  /** The type filter the URL carries. */
   public readonly type: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The priority filter the URL carries. See {@link status}. */
+  /** The priority filter the URL carries. */
   public readonly priority: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The site filter the URL carries, as a raw facility id. See {@link status}. */
+  /** The site filter the URL carries, as a raw facility id. */
   public readonly site: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The responsible filter the URL carries, as a raw member id. See {@link status}. */
+  /** The responsible filter the URL carries, as a raw member id. */
   public readonly responsible: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
 
-  /** The label filter the URL carries, as a raw label id. See {@link status}. */
+  /** The label filter the URL carries, as a raw label id. */
   public readonly label: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /** `?mine=1` narrows to the signed-in member (responsible OR participant). */
   public readonly mine: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The named due-date window the URL carries — the segmented views' and the Today page's own legacy preset. See {@link status}. */
+  /** The named due-date window the URL carries — the segmented views' and the Today page's own legacy preset. */
   public readonly due: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Deadline" chip lower bound, `YYYY-MM-DD`. See {@link status}. */
+  /** The filter bar's "Deadline" chip lower bound, `YYYY-MM-DD`. */
   public readonly dueAfter: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Deadline" chip upper bound, `YYYY-MM-DD`. See {@link status}. */
+  /** The filter bar's "Deadline" chip upper bound, `YYYY-MM-DD`. */
   public readonly dueBefore: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Planned start" chip lower bound, `YYYY-MM-DD`. See {@link status}. */
+  /** The filter bar's "Planned start" chip lower bound, `YYYY-MM-DD`. */
   public readonly plannedStartAfter: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
 
-  /** The filter bar's "Planned start" chip upper bound, `YYYY-MM-DD`. See {@link status}. */
+  /** The filter bar's "Planned start" chip upper bound, `YYYY-MM-DD`. */
   public readonly plannedStartBefore: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
   //#endregion
 
   //#region Properties
-  /** The list dataset, provided by the pathless parent route. */
+  /** The List/Board tabs' shared dataset. */
   protected readonly store: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
 
-  /** Site and member choices for the filters and the creation form. */
+  /** Site, member and label choices for the filter bar and the creation form. */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
-  /**
-   * Property statisticsStore
-   * @readonly
-   *
-   * @description
-   * The KPI strip's organization-wide snapshot. Component-scoped and
-   * reloaded only on an organization switch — the snapshot is
-   * `INTERVENTIONS_READ`-gated the same as the list, but org-wide, so it
-   * must not refetch on every filter, search or page change the list
-   * itself reacts to (`FEATURE.md`).
-   *
-   * @access protected
-   * @since 5.3.0
-   *
-   * @type {InterventionStatisticsStoreType}
-   */
+  /** The KPI strip's organization-wide snapshot. Reloaded only on an organization switch — the figures describe the collection, not one tab's rendering of it. */
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
-  /**
-   * Property recurrenceStore
-   * @readonly
-   * @description The organization's recurring intervention schedules, backing the "Recurrences" sheet.
-   * @access protected
-   * @since 1.0.0
-   * @type {InterventionRecurrenceStoreType}
-   */
+  /** The organization's recurring intervention schedules, backing the "Recurrences" sheet. */
   protected readonly recurrenceStore: InterventionRecurrenceStoreType =
     inject<InterventionRecurrenceStoreType>(InterventionRecurrenceStore);
 
-  /**
-   * Property permissions
-   * @readonly
-   *
-   * @description
-   * Organization permission checks gating the write actions (create, delete)
-   * this page offers.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {OrganizationPermissionService}
-   */
+  /** The Calendar tab's own bounded-window dataset — component-scoped here since only a page may inject a store; see class doc. */
+  protected readonly calendarStore: InterventionCalendarStoreType =
+    inject<InterventionCalendarStoreType>(InterventionCalendarStore);
+
+  /** Organization permission checks gating every tab's write actions. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /**
-   * Property router
-   * @readonly
-   *
-   * @description
-   * Router used to open a created intervention's detail page and to
-   * round-trip the `?q=`/`?create=` query params.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Router}
-   */
+  /** Whether the app runs in the browser — gates the Calendar's fetch, a dated authenticated read that would immediately refetch after hydration. */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /** Router used to open a created intervention's detail page and to round-trip every `?q=`/filter/`?view=` query param. */
   private readonly router: Router = inject(Router);
 
-  /**
-   * Property route
-   * @readonly
-   *
-   * @description
-   * Current route, anchoring the relative query-param navigations.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActivatedRoute}
-   */
+  /** Current route, anchoring the relative query-param navigations. */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** The cookie-backed memory of how this list was left (sort, columns, page size). */
+  /** The cookie-backed memory of how the List tab was left (sort, columns, page size). */
   private readonly preferences: InterventionListPreferencesService =
     inject<InterventionListPreferencesService>(InterventionListPreferencesService);
 
   /**
    * Read directly rather than through {@link InterventionStore}: the export
    * is a one-shot, page-local drain of every matching row, and the store's
-   * public surface only ever loads and caches one server page at a time
-   * (mirroring `ChannelConversationPage`'s direct `ConversationService` call
-   * for the one action its owning store has no method for).
+   * public surface only ever loads and caches one server page at a time.
    */
   private readonly interventionService: InterventionService = inject(InterventionService);
 
@@ -571,41 +524,37 @@ export class InterventionsPage {
   /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /** Registers {@link pageActions} on the layout header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /**
-   * Property pageActions
-   * @readonly
-   *
-   * @description
-   * The "New intervention" button, registered on the shell header instead of
-   * rendering in-page — the shell header carries every routed page's title
-   * and actions now (`ARCHITECTURE.md` §9.3).
-   *
-   * @access private
-   * @since 6.4.0
-   *
-   * @type {Signal<TemplateRef<unknown> | undefined>}
-   */
+  /** The signed-in member, resolving the "my interventions" chip and the List tab's identity gates. */
+  private readonly memberAccess: OrganizationMemberAccessStoreType =
+    inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
+
+  /** The "New intervention" header action, shared across all three tabs. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
-  /** The signed-in member, resolving the "my interventions" chip and the identity gates. */
-  private readonly memberAccess: OrganizationMemberAccessStoreType =
-    inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
+  /**
+   * Property activeView
+   * @readonly
+   * @description Which tab is currently shown. See {@link InterventionView} and the `view` input.
+   * @access protected
+   * @since 11.0.0
+   * @type {Signal<InterventionView>}
+   */
+  protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(() => {
+    const requested: string | undefined = this.view();
+
+    return requested === 'board' || requested === 'calendar' ? requested : 'list';
+  });
 
   /**
    * Property memberIri
    * @readonly
-   *
-   * @description
-   * The signed-in member's IRI in this organization, null until the profile
-   * resolves — the same identity the detail page's submit gate reads.
-   *
+   * @description The signed-in member's IRI in this organization, null until the profile resolves — the same identity the detail page's submit gate reads.
    * @access protected
    * @since 5.2.0
-   *
    * @type {Signal<string | null>}
    */
   protected readonly memberIri: Signal<string | null> = computed<string | null>(() => {
@@ -619,16 +568,9 @@ export class InterventionsPage {
   /**
    * Property filters
    * @readonly
-   *
-   * @description
-   * The active narrowing, parsed from the URL's query params — the URL is the
-   * single source of truth, so a filtered list is shareable and the back
-   * button restores it. Presentation preferences (sort, columns, page size)
-   * stay in the cookie; filters never do.
-   *
+   * @description The active narrowing, parsed from the URL's query params — the URL is the single source of truth, so a filtered collection is shareable and the back button restores it.
    * @access protected
    * @since 5.2.0
-   *
    * @type {Signal<InterventionListFilters>}
    */
   protected readonly filters: Signal<InterventionListFilters> = computed<InterventionListFilters>(
@@ -652,6 +594,16 @@ export class InterventionsPage {
       ),
   );
 
+  /** {@link filters}, `status` forced to `null` — the Board's columns are the status narrowing, so a `status` value left in the URL by another tab must never reach its query. */
+  protected readonly boardFilters: Signal<InterventionListFilters> =
+    computed<InterventionListFilters>(() => ({ ...this.filters(), status: null }));
+
+  /** The search as everything downstream reads it: trimmed, never `undefined`. */
+  protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
+
+  /** What the search box holds, before the debounce settles. */
+  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
   /** The active ordering, restored from the preferences cookie. */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
     this.preferences.readSort(),
@@ -662,14 +614,22 @@ export class InterventionsPage {
     ReadonlySet<InterventionTableColumn>
   >(this.restoreHiddenColumns());
 
-  /** What the search box holds, before the debounce settles. */
-  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
-
   /** Whether an export request is currently in flight. */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The page window, one-based. */
-  protected readonly page: WritableSignal<number> = signal<number>(1);
+  /**
+   * Property page
+   * @readonly
+   * @description The List tab's page window, one-based — a `linkedSignal` over {@link filters} and {@link searchTerm} so it resets to `1` whenever either changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<number>}
+   */
+  protected readonly page: WritableSignal<number> = linkedSignal<number>((): number => {
+    this.filters();
+    this.searchTerm();
+    return 1;
+  });
 
   /** How many rows a page holds, restored from the preferences cookie. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(this.restorePageSize());
@@ -680,25 +640,11 @@ export class InterventionsPage {
   /** Whether the "Recurrences" sheet is open. */
   protected readonly recurrencesVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /**
-   * Property duplicatePrefill
-   * @readonly
-   *
-   * @description
-   * What the creation sheet is currently prefilled with, from a "Duplicate"
-   * request — a row's own menu, or the cross-route handoff a detail page
-   * left on the store. `null` for a plain "New intervention". Cleared
-   * whenever the sheet closes, so a later plain creation never reuses it.
-   *
-   * @access protected
-   * @since 6.1.0
-   *
-   * @type {WritableSignal<InterventionDuplicatePrefill | null>}
-   */
+  /** What the creation sheet is currently prefilled with, from a "Duplicate" request. `null` for a plain "New intervention". */
   protected readonly duplicatePrefill: WritableSignal<InterventionDuplicatePrefill | null> =
     signal<InterventionDuplicatePrefill | null>(null);
 
-  /** Currently selected row ids, scoped to the loaded page — cleared on every load. */
+  /** Currently selected row ids, scoped to the loaded List page — cleared on every List load. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
   );
@@ -711,17 +657,39 @@ export class InterventionsPage {
   protected readonly pendingBulkDeleteIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
-  /**
-   * What `InterventionAssignDialog` is currently asking to assign, or `null`
-   * to keep it closed. Opened either from a single row's menu or from the
-   * bulk toolbar — {@link pendingBulkAssignIds} tells `submitAssign` which.
-   */
+  /** What `InterventionAssignDialog` is currently asking to assign, or `null` to keep it closed. */
   protected readonly assignRequest: WritableSignal<InterventionAssignRequest | null> =
     signal<InterventionAssignRequest | null>(null);
 
   /** The selected, assignable ids the toolbar asked to bulk-assign, pending the dialog. */
   protected readonly pendingBulkAssignIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
+
+  /** The Calendar tab's displayed anchor — `null` until `InterventionCalendar` reports its first one, which gates the load effect until the tab actually activates. */
+  protected readonly calendarMonth: WritableSignal<Date | null> = signal<Date | null>(null);
+
+  /** Every hideable column, for the Display popover's column list. */
+  protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
+    INTERVENTION_TABLE_COLUMNS;
+
+  /** Orderings the Display popover's field select offers. */
+  protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
+
+  /** Named deadline windows the `?due=` chip offers — the same catalog the URL parser reads. */
+  protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
+    INTERVENTION_DUE_WINDOW_OPTIONS;
+
+  /** The active named deadline window, or `null` — the `?due=` chip's value. */
+  protected readonly dueWindowValue: Signal<InterventionDueWindow | null> =
+    computed<InterventionDueWindow | null>(() => this.filters().dueWindow);
+
+  /** Renders a named deadline window in the `?due=` chip's trigger. */
+  protected readonly dueWindowLabelOf: (value: InterventionDueWindow | null) => string = (
+    value: InterventionDueWindow | null,
+  ): string =>
+    INTERVENTION_DUE_WINDOW_OPTIONS.find(
+      (option: SelectOption<InterventionDueWindow>): boolean => option.value === value,
+    )?.label ?? '';
 
   /** Status choices offered in the filter bar. */
   protected readonly statusOptions: SelectOption<InterventionStatus>[] =
@@ -735,26 +703,7 @@ export class InterventionsPage {
   protected readonly priorityOptions: SelectOption<InterventionPriority>[] =
     INTERVENTION_PRIORITY_FILTER_OPTIONS;
 
-  /** Every hideable column, for the Display popover's column list. */
-  protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
-    INTERVENTION_TABLE_COLUMNS;
-
-  /** Orderings the Display popover's field select offers — the collection's own sort whitelist. */
-  protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
-
-  /**
-   * Property exportDisabled
-   * @readonly
-   *
-   * @description
-   * Whether the "Export" button should be inert: nothing loaded yet, nothing
-   * matches the current query, or an export request is already in flight.
-   *
-   * @access protected
-   * @since 6.2.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the export button should be inert: nothing loaded yet, nothing matches the current query, or an export is already in flight. */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean =>
       this.store.isLoadingInterventions() ||
@@ -762,113 +711,12 @@ export class InterventionsPage {
       this.store.totalInterventions() === 0,
   );
 
-  /**
-   * Property searchTerm
-   * @readonly
-   *
-   * @description
-   * The search as everything downstream reads it: trimmed, never `undefined`.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
-
-  /**
-   * Property detailRouteBase
-   * @readonly
-   *
-   * @description
-   * Where a row's link points.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<readonly string[]>}
-   */
+  /** Where a row's link points, on every tab. */
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
 
-  /**
-   * Property boardQueryParams
-   * @readonly
-   *
-   * @description
-   * Every query param the Board view should keep when the operator switches
-   * to it, `status` excluded — the board's columns ARE the status narrowing,
-   * so a status filter carried across would either duplicate that narrowing
-   * or contradict it.
-   *
-   * @access protected
-   * @since 9.0.0
-   *
-   * @type {Signal<Readonly<Record<string, string | null>>>}
-   */
-  protected readonly boardQueryParams: Signal<Readonly<Record<string, string | null>>> = computed(
-    (): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }),
-  );
-
-  /**
-   * Property calendarQueryParams
-   * @readonly
-   *
-   * @description
-   * Every query param the Calendar view should keep when the operator
-   * switches to it — unlike {@link boardQueryParams}, `status` travels
-   * across: the calendar has no columns to conflict with, so narrowing it to
-   * one or a few statuses is a legitimate way to read the month.
-   *
-   * @access protected
-   * @since 10.0.0
-   *
-   * @type {Signal<Readonly<Record<string, string | null>>>}
-   */
-  protected readonly calendarQueryParams: Signal<Readonly<Record<string, string | null>>> =
-    computed((): Readonly<Record<string, string | null>> => ({
-      q: this.q() ?? null,
-      status: this.status() ?? null,
-      type: this.type() ?? null,
-      priority: this.priority() ?? null,
-      site: this.site() ?? null,
-      responsible: this.responsible() ?? null,
-      label: this.label() ?? null,
-      mine: this.mine() ?? null,
-      due: this.due() ?? null,
-      dueAfter: this.dueAfter() ?? null,
-      dueBefore: this.dueBefore() ?? null,
-      plannedStartAfter: this.plannedStartAfter() ?? null,
-      plannedStartBefore: this.plannedStartBefore() ?? null,
-    }));
-
-  /**
-   * Property canTransition
-   * @readonly
-   *
-   * @description
-   * Whether the member may move an intervention along, which decides if the
-   * row menu offers status changes at all.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the member may move an intervention along — the List row menu's and the Board card's own gate. */
   protected readonly canTransition: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasAnyPermission([
       ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
@@ -877,22 +725,7 @@ export class InterventionsPage {
     ]),
   );
 
-  /**
-   * Property canDelete
-   * @readonly
-   *
-   * @description
-   * Whether the member may delete an intervention, which decides if the row
-   * menu and the bulk toolbar offer Delete at all. The backend routes DELETE
-   * through the workflow handler's phase-derived gate — `plan` while draft,
-   * `execute` otherwise — so the pair mirrors the detail page's delete gate;
-   * `interventions.write` gates only the label catalog and never deletion.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the member may delete an intervention. */
   protected readonly canDelete: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasAnyPermission([
       ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
@@ -900,63 +733,22 @@ export class InterventionsPage {
     ]),
   );
 
-  /**
-   * Property canAssign
-   * @readonly
-   *
-   * @description
-   * Whether the member may assign a responsible, which decides if the row
-   * menu and the bulk toolbar offer "Assign responsible…" at all. Assignment
-   * is a planning action, gated on the same permission as scheduling.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the member may assign a responsible. */
   protected readonly canAssign: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /**
-   * Property canReadRecurrences
-   * @readonly
-   * @description Whether the "Recurrences" toolbar entry renders at all.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<boolean>}
-   */
+  /** Whether the "Recurrences" toolbar entry renders at all. */
   protected readonly canReadRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
   );
 
-  /**
-   * Property canWriteRecurrences
-   * @readonly
-   * @description Whether the "Recurrences" sheet offers create/edit/delete/toggle, or renders read-only.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<boolean>}
-   */
+  /** Whether the "Recurrences" sheet offers create/edit/delete/toggle, or renders read-only. */
   protected readonly canWriteRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /**
-   * Property canDuplicate
-   * @readonly
-   *
-   * @description
-   * Whether the member may duplicate an intervention, which decides if the
-   * row menu offers "Duplicate" at all. Unlike delete and assign, no status
-   * narrows it further — duplicating an abandoned intervention is
-   * legitimate — so this is the only gate.
-   *
-   * @access protected
-   * @since 6.1.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the member may duplicate an intervention. */
   protected readonly canDuplicate: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
@@ -984,91 +776,26 @@ export class InterventionsPage {
       ),
   );
 
-  /**
-   * Property labelOptions
-   * @readonly
-   *
-   * @description
-   * The organization's intervention labels, as the filter select's options —
-   * `InterventionLabelOutput` mapped to the IRI-valued {@link SelectOption}
-   * the filter's `label` narrowing carries.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<readonly SelectOption[]>}
-   */
-  protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
-    readonly SelectOption[]
-  >(() =>
-    this.planningOptions.labels().map((label): SelectOption => ({
-      value: `/api/intervention-labels/${label.id}`,
-      label: label.name,
-    })),
-  );
-
-  /** Labels keyed by IRI. */
-  private readonly labelDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
-    (): ReadonlyMap<string, string> =>
-      new Map(
-        this.labelOptions().map((option: SelectOption): [string, string] => [
-          option.value,
-          option.label,
-        ]),
-      ),
-  );
-
-  /**
-   * Property items
-   * @readonly
-   *
-   * @description
-   * Every loaded intervention as a row view model.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {Signal<readonly InterventionListItemViewModel[]>}
-   */
+  /** Every loaded intervention as a List row view model. */
   protected readonly items: Signal<readonly InterventionListItemViewModel[]> = computed(() =>
     this.store
       .interventionList()
       .map((intervention: InterventionOutput) => this.toItemViewModel(intervention)),
   );
 
-  /**
-   * Property pageCount
-   * @readonly
-   *
-   * @description
-   * How many pages the whole server-side collection fills — derived from the
-   * server's `totalItems`, not from the loaded rows, which ARE one page. At
-   * least one, so the footer never reads "Page 1 of 0".
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @type {Signal<number>}
-   */
+  /** Every loaded intervention as a Board card view model — see {@link boardFilters}, which shapes what {@link InterventionStore.interventionList} holds while the Board tab is active. */
+  protected readonly boardItems: Signal<readonly InterventionBoardCardViewModel[]> = computed(() =>
+    this.store
+      .interventionList()
+      .map((intervention: InterventionOutput) => this.toBoardCardViewModel(intervention)),
+  );
+
+  /** How many pages the whole server-side List collection fills — at least one, so the footer never reads "Page 1 of 0". */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalInterventions() / this.pageSize())),
   );
 
-  /**
-   * Property deletableSelectedIds
-   * @readonly
-   *
-   * @description
-   * Ids of the current selection that are actually deletable — the rows whose
-   * server-computed `allowedActions.canDelete` is true, the same flag the
-   * table's row menu gates on. What the bulk-delete action operates on and
-   * shows a count for, never the raw selection size.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<ReadonlyArray<string>>}
-   */
+  /** Ids of the current selection that are actually deletable — the rows whose server-computed `allowedActions.canDelete` is true. */
   protected readonly deletableSelectedIds: Signal<ReadonlyArray<string>> = computed(() => {
     const selected: ReadonlySet<string> = this.selectedIds();
 
@@ -1081,38 +808,13 @@ export class InterventionsPage {
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   });
 
-  /**
-   * Property bulkDeleteLabel
-   * @readonly
-   *
-   * @description
-   * The bulk-delete button's label, counting only the deletable subset of
-   * the selection.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<string>}
-   */
+  /** The bulk-delete button's label, counting only the deletable subset of the selection. */
   protected readonly bulkDeleteLabel: Signal<string> = computed<string>(
     () =>
       $localize`:@@intervention.list.bulkDeleteButton:Delete (${this.deletableSelectedIds().length}:count:)`,
   );
 
-  /**
-   * Property assignableSelectedIds
-   * @readonly
-   *
-   * @description
-   * Ids of the current selection that are actually assignable — status
-   * `draft` or `planned`, the same narrowing {@link InterventionTable} applies
-   * per row. What the bulk-assign action operates on and shows a count for.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<ReadonlyArray<string>>}
-   */
+  /** Ids of the current selection that are actually assignable — status `draft` or `planned`. */
   protected readonly assignableSelectedIds: Signal<ReadonlyArray<string>> = computed(() => {
     const selected: ReadonlySet<string> = this.selectedIds();
 
@@ -1125,40 +827,13 @@ export class InterventionsPage {
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   });
 
-  /**
-   * Property bulkAssignLabel
-   * @readonly
-   *
-   * @description
-   * The bulk-assign menu entry's label, counting only the assignable subset
-   * of the selection.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<string>}
-   */
+  /** The bulk-assign menu entry's label, counting only the assignable subset of the selection. */
   protected readonly bulkAssignLabel: Signal<string> = computed<string>(
     () =>
       $localize`:@@intervention.list.bulkAssignButton:Assign responsible… (${this.assignableSelectedIds().length}:count:)`,
   );
 
-  /**
-   * Property bulkTransitionTargets
-   * @readonly
-   *
-   * @description
-   * Every status the current selection could move to, as the union of each
-   * selected row's own `allowedTransitions` — the bulk "Move to" menu's own
-   * entries, each further narrowed by {@link transitionableSelectedIds}. A
-   * row whose own transition is still in flight is skipped: its cached
-   * `allowedTransitions` describe the pre-transition state.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<readonly InterventionStatus[]>}
-   */
+  /** Every status the current selection could move to — the bulk "Move to" menu's own entries. */
   protected readonly bulkTransitionTargets: Signal<readonly InterventionStatus[]> = computed(
     (): readonly InterventionStatus[] => {
       const selected: ReadonlySet<string> = this.selectedIds();
@@ -1175,53 +850,17 @@ export class InterventionsPage {
     },
   );
 
-  /**
-   * Property assignDialogBusy
-   * @readonly
-   *
-   * @description
-   * Whether the store's assignment write is in flight, disabling the
-   * dialog's submit while it runs.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the store's assignment write is in flight, disabling the dialog's submit while it runs. */
   protected readonly assignDialogBusy: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.assignCallState()),
   );
 
-  /**
-   * Property deleteDialogState
-   * @readonly
-   *
-   * @description
-   * The confirm dialog's open/closed state, derived from whichever `pending*`
-   * target signal is set. A single `hlm-alert-dialog` serves both the
-   * row-level and the bulk-delete flow.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<BrnDialogState>}
-   */
+  /** The confirm dialog's open/closed state, derived from whichever `pending*` target signal is set. */
   protected readonly deleteDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingDelete() !== null || this.pendingBulkDeleteIds() !== null ? 'open' : 'closed',
   );
 
-  /**
-   * Property deleteDialogTitle
-   * @readonly
-   *
-   * @description
-   * The confirm dialog's title, naming the count for a bulk deletion.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<string>}
-   */
+  /** The confirm dialog's title, naming the count for a bulk deletion. */
   protected readonly deleteDialogTitle: Signal<string> = computed<string>(() => {
     const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
 
@@ -1232,19 +871,7 @@ export class InterventionsPage {
     return $localize`:@@intervention.list.deleteConfirmTitleOne:Delete intervention?`;
   });
 
-  /**
-   * Property deleteDialogDescription
-   * @readonly
-   *
-   * @description
-   * The confirm dialog's body: names the intervention for a single row,
-   * counts them for a bulk selection.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @type {Signal<string>}
-   */
+  /** The confirm dialog's body: names the intervention for a single row, counts them for a bulk selection. */
   protected readonly deleteDialogDescription: Signal<string> = computed<string>(() => {
     const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
 
@@ -1261,354 +888,17 @@ export class InterventionsPage {
       : '';
   });
 
-  /**
-   * Property filterFields
-   * @readonly
-   * @description The filter bar's field catalog, forwarded to `app-collection-filter-bar` as-is — `InterventionFilterFieldOption` is structurally a `CollectionFilterField`.
-   * @access protected
-   * @since 7.0.0
-   * @type {readonly InterventionFilterFieldOption[]}
-   */
-  protected readonly filterFields: readonly InterventionFilterFieldOption[] =
-    INTERVENTION_FILTER_FIELDS;
-
-  /**
-   * Property activeFilterKeys
-   * @readonly
-   * @description Which of {@link filterFields} currently carry a value, `mine` excluded (it keeps its own toggle chip) — the bar's `activeKeys` input and this page's "Clear filters" empty-state condition both read this.
-   * @access protected
-   * @since 7.0.0
-   * @type {Signal<readonly InterventionFilterFieldKey[]>}
-   */
-  protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
-    readonly InterventionFilterFieldKey[]
-  >(() => {
-    const filters: InterventionListFilters = this.filters();
-
-    return INTERVENTION_FILTER_FIELDS.filter(
-      (field: InterventionFilterFieldOption): boolean => filters[field.key] !== null,
-    ).map((field: InterventionFilterFieldOption): InterventionFilterFieldKey => field.key);
-  });
-
-  /**
-   * Property openFilterKey
-   * @readonly
-   *
-   * @description
-   * Which field's value selector currently renders forced open — `null` when
-   * none is. Set by the bar's {@link onFieldPicked} when a not-yet-active
-   * field is picked from its "+ Filter" menu, and kept in sync with a chip's
-   * own value control through {@link onFieldPopoverStateChanged} so clicking
-   * its value segment (or dismissing it) behaves the same way. This is
-   * UI-only: it decides which selector is expanded, never a narrowing's
-   * value — the URL stays the only place that lives. Also drives the bar's
-   * `pendingKey` input, which is what still renders an empty chip for a field
-   * mid-pick before it carries a value.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @type {WritableSignal<InterventionFilterFieldKey | null>}
-   */
-  protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
-    signal<InterventionFilterFieldKey | null>(null);
-
-  /**
-   * Property enumFilterOperatorOverrides
-   * @readonly
-   *
-   * @description
-   * The operator the "+ Filter" menu's picker last chose for one of the six
-   * `equals`/`isAnyOf` fields, remembered only for the moment that field
-   * carries no value yet — once a value is applied, {@link enumFieldOperator}
-   * reads the value's own shape (scalar vs. array) instead, exactly as
-   * {@link dueRangeOperator} falls back to its own `linkedSignal` `previous`
-   * once `dueRange` clears. Never read directly by a template.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @type {WritableSignal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>}
-   */
-  private readonly enumFilterOperatorOverrides: WritableSignal<
-    Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
-  > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
-
-  /**
-   * Property filtersVisible
-   * @readonly
-   *
-   * @description
-   * Whether `app-collection-filter-bar` is currently mounted below the
-   * toolbar — presentation-only, never serialized to the URL. Seeded by
-   * `initialCollectionFilterBarVisibility` (`@shared/collection-filters`) so
-   * a `?status=…` link never lands on a bar that hides what is narrowing the
-   * list, then purely driven by `app-collection-filter-toggle`.
-   *
-   * @access protected
-   * @since 7.1.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
-    computed<boolean>(() => this.activeFilterKeys().length > 0),
-  );
-
-  /** The "Status" chip's value control, projected into the filter bar. */
-  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
-
-  /** The "Type" chip's value control, projected into the filter bar. */
-  private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
-
-  /** The "Priority" chip's value control, projected into the filter bar. */
-  private readonly priorityChipTemplate = viewChild<TemplateRef<unknown>>('priorityChip');
-
-  /** The "Site" chip's value control, projected into the filter bar. */
-  private readonly siteChipTemplate = viewChild<TemplateRef<unknown>>('siteChip');
-
-  /** The "Responsible" chip's value control, projected into the filter bar. */
-  private readonly responsibleChipTemplate = viewChild<TemplateRef<unknown>>('responsibleChip');
-
-  /** The "Label" chip's value control, projected into the filter bar. */
-  private readonly labelChipTemplate = viewChild<TemplateRef<unknown>>('labelChip');
-
-  /** The "Deadline" chip's value control, projected into the filter bar. */
-  private readonly dueRangeChipTemplate = viewChild<TemplateRef<unknown>>('dueRangeChip');
-
-  /** The "Planned start" chip's value control, projected into the filter bar. */
-  private readonly plannedStartRangeChipTemplate =
-    viewChild<TemplateRef<unknown>>('plannedStartRangeChip');
-
-  /**
-   * Property chipTemplates
-   * @readonly
-   * @description Every filter field's value-control `TemplateRef`, keyed by {@link InterventionFilterFieldKey}, for `app-collection-filter-bar`'s `templates` input.
-   * @access protected
-   * @since 7.0.0
-   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
-   */
-  protected readonly chipTemplates: Signal<
-    Readonly<Record<string, TemplateRef<unknown> | undefined>>
-  > = computed(() => ({
-    status: this.statusChipTemplate(),
-    type: this.typeChipTemplate(),
-    priority: this.priorityChipTemplate(),
-    site: this.siteChipTemplate(),
-    responsible: this.responsibleChipTemplate(),
-    label: this.labelChipTemplate(),
-    dueRange: this.dueRangeChipTemplate(),
-    plannedStartRange: this.plannedStartRangeChipTemplate(),
-  }));
-
-  /**
-   * Property dueRangeOperator
-   * @readonly
-   *
-   * @description
-   * The "Deadline" chip's own currently-selected operator — a
-   * `linkedSignal` over {@link filters}' own `dueRange`, so a shared or
-   * reloaded `?dueAfter=…`/`?dueBefore=…` URL shows the right operator
-   * immediately, while picking a different operator from the chip's own
-   * select (before a new date is chosen) still updates this signal directly
-   * without waiting for a URL round-trip. Defaults to `greaterThan` — the
-   * field's first declared operator — the moment "Deadline" is picked from
-   * the "+ Filter" menu and carries no value yet.
-   *
-   * @access protected
-   * @since 8.1.0
-   *
-   * @type {WritableSignal<InterventionDueRangeOperator>}
-   */
-  protected readonly dueRangeOperator: WritableSignal<InterventionDueRangeOperator> = linkedSignal<
-    InterventionDueRangeFilter | null,
-    InterventionDueRangeOperator
-  >({
-    source: () => this.filters().dueRange,
-    computation: (
-      dueRange: InterventionDueRangeFilter | null,
-      previous,
-    ): InterventionDueRangeOperator => dueRange?.operator ?? previous?.value ?? 'greaterThan',
-  });
-
-  /**
-   * Property dueRangeAfter
-   * @readonly
-   * @description The applied `dueRange`'s lower bound, when its operator carries one — read by the "after"/"between" value controls.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly dueRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && (dueRange.operator === 'greaterThan' || dueRange.operator === 'between')
-      ? dueRange.after
-      : null;
-  });
-
-  /**
-   * Property dueRangeBefore
-   * @readonly
-   * @description The applied `dueRange`'s upper bound, when its operator carries one — read by the "before"/"between" value controls.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly dueRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && (dueRange.operator === 'lessThan' || dueRange.operator === 'between')
-      ? dueRange.before
-      : null;
-  });
-
-  /**
-   * Property dueRangeBetween
-   * @readonly
-   * @description The applied `dueRange`'s bound pair, only while its operator is `between` — read by `hlm-date-range-picker`, which needs both ends or neither.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<[Date, Date] | undefined>}
-   */
-  protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
-    [Date, Date] | undefined
-  >(() => {
-    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
-
-    return dueRange && dueRange.operator === 'between'
-      ? [dueRange.after, dueRange.before]
-      : undefined;
-  });
-
-  /**
-   * Property plannedStartRangeOperator
-   * @readonly
-   * @description The "Planned start" chip's own currently-selected operator — the same `linkedSignal` pattern as {@link dueRangeOperator}, over `filters()`' own `plannedStartRange`.
-   * @access protected
-   * @since 8.2.0
-   * @type {WritableSignal<InterventionPlannedStartRangeOperator>}
-   */
-  protected readonly plannedStartRangeOperator: WritableSignal<InterventionPlannedStartRangeOperator> =
-    linkedSignal<InterventionPlannedStartRangeFilter | null, InterventionPlannedStartRangeOperator>(
-      {
-        source: () => this.filters().plannedStartRange,
-        computation: (
-          plannedStartRange: InterventionPlannedStartRangeFilter | null,
-          previous,
-        ): InterventionPlannedStartRangeOperator =>
-          plannedStartRange?.operator ?? previous?.value ?? 'greaterThan',
-      },
-    );
-
-  /**
-   * Property plannedStartRangeAfter
-   * @readonly
-   * @description The applied `plannedStartRange`'s lower bound, when its operator carries one. See {@link dueRangeAfter}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly plannedStartRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange &&
-      (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
-      ? plannedStartRange.after
-      : null;
-  });
-
-  /**
-   * Property plannedStartRangeBefore
-   * @readonly
-   * @description The applied `plannedStartRange`'s upper bound, when its operator carries one. See {@link dueRangeBefore}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<Date | null>}
-   */
-  protected readonly plannedStartRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange &&
-      (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
-      ? plannedStartRange.before
-      : null;
-  });
-
-  /**
-   * Property plannedStartRangeBetween
-   * @readonly
-   * @description The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}.
-   * @access protected
-   * @since 8.2.0
-   * @type {Signal<[Date, Date] | undefined>}
-   */
-  protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
-    [Date, Date] | undefined
-  >(() => {
-    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
-      this.filters().plannedStartRange;
-
-    return plannedStartRange && plannedStartRange.operator === 'between'
-      ? [plannedStartRange.after, plannedStartRange.before]
-      : undefined;
-  });
-
-  /**
-   * Property filterOperators
-   * @readonly
-   * @description The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input — "Deadline" and "Planned start" from their own `linkedSignal`, the six `equals`/`isAnyOf` fields from {@link enumFieldOperator}.
-   * @access protected
-   * @since 8.1.0
-   * @type {Signal<Readonly<Record<string, CollectionFilterOperator>>>}
-   */
-  protected readonly filterOperators: Signal<Readonly<Record<string, CollectionFilterOperator>>> =
-    computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
-      dueRange: this.dueRangeOperator(),
-      plannedStartRange: this.plannedStartRangeOperator(),
-      status: this.enumFieldOperator('status'),
-      type: this.enumFieldOperator('type'),
-      priority: this.enumFieldOperator('priority'),
-      site: this.enumFieldOperator('site'),
-      responsible: this.enumFieldOperator('responsible'),
-      label: this.enumFieldOperator('label'),
-    }));
-
-  /**
-   * Property hasSearch
-   * @readonly
-   *
-   * @description
-   * Whether a search is active, which decides between the no-results and the
-   * first-run empty state.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether a search is active, which decides between the no-results and the first-run empty state. */
   protected readonly hasSearch: Signal<boolean> = computed<boolean>(
     () => this.searchTerm().length > 0,
   );
 
-  /**
-   * Property hasError
-   * @readonly
-   *
-   * @description
-   * Whether the last load failed.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {Signal<boolean>}
-   */
+  /** Whether the List tab's last load failed. */
   protected readonly hasError: Signal<boolean> = computed<boolean>(
     () => this.store.listError() !== null,
   );
 
-  /** Names a status on a closed select trigger and in the column menu. */
+  /** Names a status on a closed select trigger, in the column menu, and in the bulk "Move to" menu. */
   protected readonly statusLabelOf: (value: InterventionStatus) => string = (
     value: InterventionStatus,
   ): string => resolveInterventionTag('status', value).label;
@@ -1631,32 +921,54 @@ export class InterventionsPage {
   protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
     this.memberDisplayMap().get(value)?.label ?? '';
 
+  /** The organization's intervention labels, as the filter select's options. */
+  protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
+    readonly SelectOption[]
+  >(() =>
+    this.planningOptions.labels().map((label): SelectOption => ({
+      value: `/api/intervention-labels/${label.id}`,
+      label: label.name,
+    })),
+  );
+
+  /** Labels keyed by IRI. */
+  private readonly labelDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
+    (): ReadonlyMap<string, string> =>
+      new Map(
+        this.labelOptions().map((option: SelectOption): [string, string] => [
+          option.value,
+          option.label,
+        ]),
+      ),
+  );
+
   /** Names a label IRI on a closed select trigger. */
   protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
     this.labelDisplayMap().get(value) ?? '';
 
+  /** Names an ordering field on the Display popover's closed select trigger. */
+  protected readonly sortFieldLabelOf: (value: InterventionSortField) => string = (
+    value: InterventionSortField,
+  ): string =>
+    this.sortOptions.find(
+      (option: SelectOption<InterventionSortField>): boolean => option.value === value,
+    )?.label ?? '';
+
+  /** The Display popover's direction toggle button label, naming the active ordering rather than the action a click performs. */
+  protected readonly sortDirectionLabel: Signal<string> = computed<string>(() =>
+    this.sortOrder().direction === 'asc'
+      ? $localize`:@@intervention.list.sortAscending:Ascending`
+      : $localize`:@@intervention.list.sortDescending:Descending`,
+  );
+
   /**
    * Method multiLabel
-   *
-   * @description
-   * Wraps one of the six `…LabelOf` single-item labellers for
-   * `hlm-select-multiple`'s `itemToString`: `stringifyAsLabel`
-   * (`@spartan-ng/brain/core`) calls it once per `hlm-select-item` with that
-   * item's own scalar value, but calls it a second time with the select's
-   * **whole current value** to render the trigger's own summary text — an
-   * array once `isAnyOf` has more than one pick. This dispatches on that
-   * shape: a scalar routes straight to `labelOf`, an array maps every member
-   * through it and joins with a comma, so both call sites resolve correctly
-   * through the one function `[itemToString]` takes.
-   *
+   * @description Wraps one of the six `…LabelOf` single-item labellers for `hlm-select-multiple`'s `itemToString`.
    * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
+   * @since 1.0.0
+   * @template T
    * @param {(value: T) => string} labelOf - The field's own single-item labeller.
    * @param {T | readonly T[]} value - Either one item's value or the select's whole current selection.
-   *
    * @returns {string} The label for one item, or the comma-joined labels for a selection.
    */
   private multiLabel<T>(labelOf: (value: T) => string, value: T | readonly T[]): string {
@@ -1698,51 +1010,270 @@ export class InterventionsPage {
     fieldLabel: string,
   ): string => $localize`:@@intervention.list.changeFilter:Change filter: ${fieldLabel}:field:`;
 
-  /** Names an ordering field on the Display popover's closed select trigger. */
-  protected readonly sortFieldLabelOf: (value: InterventionSortField) => string = (
-    value: InterventionSortField,
-  ): string =>
-    this.sortOptions.find(
-      (option: SelectOption<InterventionSortField>): boolean => option.value === value,
-    )?.label ?? '';
+  /**
+   * Property honouredFilterKeys
+   * @readonly
+   * @description The active tab's declared entry in {@link INTERVENTION_VIEW_HONOURED_FILTER_KEYS}.
+   * @access protected
+   * @since 11.0.0
+   * @type {Signal<ReadonlySet<InterventionFilterFieldKey>>}
+   */
+  protected readonly honouredFilterKeys: Signal<ReadonlySet<InterventionFilterFieldKey>> = computed<
+    ReadonlySet<InterventionFilterFieldKey>
+  >(() => new Set(INTERVENTION_VIEW_HONOURED_FILTER_KEYS[this.activeView()]));
 
   /**
-   * Property sortDirectionLabel
+   * Property offeredFilterFields
    * @readonly
    *
    * @description
-   * The Display popover's direction toggle button label, naming the active
-   * ordering rather than the action a click performs — screen readers get
-   * the current state, sighted operators get the arrow glyph.
+   * The bar's `fields` input. The three tabs do not share one filter set, and
+   * a field the active tab cannot apply is listed all the same — disabled,
+   * with {@link ignoredReason} beside it — rather than dropped. Hiding it left
+   * a reader on the Board hunting for a Status filter with nothing saying why
+   * it was gone, while an *active* unhonoured chip already explains itself.
+   * The two halves of the rule now agree.
    *
    * @access protected
-   * @since 6.7.0
-   *
-   * @type {Signal<string>}
+   * @since 12.0.0
+   * @type {Signal<readonly CollectionFilterField[]>}
    */
-  protected readonly sortDirectionLabel: Signal<string> = computed<string>(() =>
-    this.sortOrder().direction === 'asc'
-      ? $localize`:@@intervention.list.sortAscending:Ascending`
-      : $localize`:@@intervention.list.sortDescending:Descending`,
+  protected readonly offeredFilterFields: Signal<readonly CollectionFilterField[]> = computed<
+    readonly CollectionFilterField[]
+  >(() => {
+    const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
+
+    return INTERVENTION_FILTER_FIELDS.map((field: InterventionFilterFieldOption) =>
+      honoured.has(field.key)
+        ? field
+        : { ...field, unavailableReason: this.ignoredReason(field.key) },
+    );
+  });
+
+  /** Which of `INTERVENTION_FILTER_FIELDS` currently carry a value — the bar's `activeKeys` input and the filter-toggle's badge count. Counted over the whole catalog, not {@link offeredFilterFields}, so a narrowing the active tab ignores still shows in the badge. */
+  protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
+    readonly InterventionFilterFieldKey[]
+  >(() => {
+    const filters: InterventionListFilters = this.filters();
+
+    return INTERVENTION_FILTER_FIELDS.filter(
+      (field: InterventionFilterFieldOption): boolean => filters[field.key] !== null,
+    ).map((field: InterventionFilterFieldOption): InterventionFilterFieldKey => field.key);
+  });
+
+  /**
+   * Property honouredActiveFilterKeys
+   * @readonly
+   *
+   * @description
+   * The badge count on the "Filters" toggle: active keys the current tab
+   * actually applies. An unhonoured one is deliberately excluded — it narrows
+   * nothing here, so counting it would advertise a narrowing that is not in
+   * force. It stays discoverable all the same: the bar opens on any active
+   * key, {@link activeFilterKeys} included, and renders the inert chip.
+   *
+   * @access protected
+   * @since 11.1.0
+   * @type {Signal<readonly InterventionFilterFieldKey[]>}
+   */
+  protected readonly honouredActiveFilterKeys: Signal<readonly InterventionFilterFieldKey[]> =
+    computed<readonly InterventionFilterFieldKey[]>(() => {
+      const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
+
+      return this.activeFilterKeys().filter((key: InterventionFilterFieldKey): boolean =>
+        honoured.has(key),
+      );
+    });
+
+  /** Whether `app-collection-filter-bar` is currently mounted below the toolbar. */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
+  /** Which field's value selector currently renders forced open — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
+    signal<InterventionFilterFieldKey | null>(null);
+
+  /** The operator the "+ Filter" menu's picker last chose for one of the six `equals`/`isAnyOf` fields, remembered only while that field carries no value yet. */
+  private readonly enumFilterOperatorOverrides: WritableSignal<
+    Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
+  > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
+
+  /** The "Status" chip's value control, projected into the filter bar. */
+  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /** The "Type" chip's value control, projected into the filter bar. */
+  private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
+
+  /** The "Priority" chip's value control, projected into the filter bar. */
+  private readonly priorityChipTemplate = viewChild<TemplateRef<unknown>>('priorityChip');
+
+  /** The `?due=` chip's value control. */
+  private readonly dueWindowChipTemplate = viewChild<TemplateRef<unknown>>('dueWindowChip');
+
+  /** The "Site" chip's value control, projected into the filter bar. */
+  private readonly siteChipTemplate = viewChild<TemplateRef<unknown>>('siteChip');
+
+  /** The "Responsible" chip's value control, projected into the filter bar. */
+  private readonly responsibleChipTemplate = viewChild<TemplateRef<unknown>>('responsibleChip');
+
+  /** The "Label" chip's value control, projected into the filter bar. */
+  private readonly labelChipTemplate = viewChild<TemplateRef<unknown>>('labelChip');
+
+  /** The "Deadline" chip's value control, projected into the filter bar. */
+  private readonly dueRangeChipTemplate = viewChild<TemplateRef<unknown>>('dueRangeChip');
+
+  /** The "Planned start" chip's value control, projected into the filter bar. */
+  private readonly plannedStartRangeChipTemplate =
+    viewChild<TemplateRef<unknown>>('plannedStartRangeChip');
+
+  /** Every filter field's value-control `TemplateRef`, keyed by {@link InterventionFilterFieldKey}, for `app-collection-filter-bar`'s `templates` input. */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({
+    status: this.statusChipTemplate(),
+    type: this.typeChipTemplate(),
+    priority: this.priorityChipTemplate(),
+    site: this.siteChipTemplate(),
+    responsible: this.responsibleChipTemplate(),
+    label: this.labelChipTemplate(),
+    dueRange: this.dueRangeChipTemplate(),
+    plannedStartRange: this.plannedStartRangeChipTemplate(),
+    dueWindow: this.dueWindowChipTemplate(),
+  }));
+
+  /** The "Deadline" chip's own currently-selected operator. */
+  protected readonly dueRangeOperator: WritableSignal<InterventionDueRangeOperator> = linkedSignal<
+    InterventionDueRangeFilter | null,
+    InterventionDueRangeOperator
+  >({
+    source: () => this.filters().dueRange,
+    computation: (
+      dueRange: InterventionDueRangeFilter | null,
+      previous,
+    ): InterventionDueRangeOperator => dueRange?.operator ?? previous?.value ?? 'greaterThan',
+  });
+
+  /** The applied `dueRange`'s lower bound, when its operator carries one. */
+  protected readonly dueRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && (dueRange.operator === 'greaterThan' || dueRange.operator === 'between')
+      ? dueRange.after
+      : null;
+  });
+
+  /** The applied `dueRange`'s upper bound, when its operator carries one. */
+  protected readonly dueRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && (dueRange.operator === 'lessThan' || dueRange.operator === 'between')
+      ? dueRange.before
+      : null;
+  });
+
+  /** The applied `dueRange`'s bound pair, only while its operator is `between`. */
+  protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
+    [Date, Date] | undefined
+  >(() => {
+    const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
+
+    return dueRange && dueRange.operator === 'between'
+      ? [dueRange.after, dueRange.before]
+      : undefined;
+  });
+
+  /** The "Planned start" chip's own currently-selected operator. See {@link dueRangeOperator}. */
+  protected readonly plannedStartRangeOperator: WritableSignal<InterventionPlannedStartRangeOperator> =
+    linkedSignal<InterventionPlannedStartRangeFilter | null, InterventionPlannedStartRangeOperator>(
+      {
+        source: () => this.filters().plannedStartRange,
+        computation: (
+          plannedStartRange: InterventionPlannedStartRangeFilter | null,
+          previous,
+        ): InterventionPlannedStartRangeOperator =>
+          plannedStartRange?.operator ?? previous?.value ?? 'greaterThan',
+      },
+    );
+
+  /** The applied `plannedStartRange`'s lower bound, when its operator carries one. See {@link dueRangeAfter}. */
+  protected readonly plannedStartRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange &&
+      (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
+      ? plannedStartRange.after
+      : null;
+  });
+
+  /** The applied `plannedStartRange`'s upper bound, when its operator carries one. See {@link dueRangeBefore}. */
+  protected readonly plannedStartRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange &&
+      (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
+      ? plannedStartRange.before
+      : null;
+  });
+
+  /** The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}. */
+  protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
+    [Date, Date] | undefined
+  >(() => {
+    const plannedStartRange: InterventionPlannedStartRangeFilter | null =
+      this.filters().plannedStartRange;
+
+    return plannedStartRange && plannedStartRange.operator === 'between'
+      ? [plannedStartRange.after, plannedStartRange.before]
+      : undefined;
+  });
+
+  /** The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input. */
+  protected readonly filterOperators: Signal<Readonly<Record<string, CollectionFilterOperator>>> =
+    computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
+      dueRange: this.dueRangeOperator(),
+      plannedStartRange: this.plannedStartRangeOperator(),
+      status: this.enumFieldOperator('status'),
+      type: this.enumFieldOperator('type'),
+      priority: this.enumFieldOperator('priority'),
+      site: this.enumFieldOperator('site'),
+      responsible: this.enumFieldOperator('responsible'),
+      label: this.enumFieldOperator('label'),
+    }));
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
-   * @constructor
    *
    * @description
-   * Wires the search round-trip and the load effect. A settled (debounced)
-   * search resets the page synchronously with the query navigation so the
-   * load effect fires once, already on the first page of the new result set.
+   * Registers the "New intervention" page action, wires the search debounce,
+   * and loads each of the three tabs' own dataset — the List and the Board
+   * gated on {@link activeView}, the Calendar gated on {@link calendarMonth}
+   * reporting its first anchor.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      untracked((): void => {
+        this.statisticsStore.load(organizationId);
+      });
+    });
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+      untracked((): void => {
+        this.planningOptions.loadCreationOptions(organizationId);
+      });
+    });
 
     effect((): void => {
       const term: string = this.searchTerm();
@@ -1754,13 +1285,11 @@ export class InterventionsPage {
     toObservable(this.draftSearch)
       .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe((term: string): void => {
-        if (term !== this.searchTerm()) {
-          this.page.set(1);
-          this.navigateQuery({ q: term === '' ? null : term });
-        }
+        if (term !== this.searchTerm()) this.navigateQuery({ q: term === '' ? null : term });
       });
 
     effect((): void => {
+      const view: InterventionView = this.activeView();
       const organizationId: string = this.organizationId();
       const filters: InterventionListFilters = this.filters();
       const sort: InterventionListSort = this.sortOrder();
@@ -1770,6 +1299,8 @@ export class InterventionsPage {
       const memberIri: string | null = filters.mine ? this.memberIri() : null;
 
       untracked((): void => {
+        if (view !== 'list') return;
+
         this.selectedIds.set(new Set<string>());
         this.store.load({
           organizationId,
@@ -1783,16 +1314,44 @@ export class InterventionsPage {
     });
 
     effect((): void => {
+      const view: InterventionView = this.activeView();
       const organizationId: string = this.organizationId();
+      const filters: InterventionListFilters = this.boardFilters();
+      const search: string = this.searchTerm();
+
       untracked((): void => {
-        this.planningOptions.loadCreationOptions(organizationId);
+        if (view !== 'board') return;
+
+        this.store.load({
+          organizationId,
+          options: {
+            ...buildInterventionListOptions(
+              filters,
+              { field: 'dueAt', direction: 'asc' },
+              search,
+              new Date(),
+              null,
+            ),
+            page: 1,
+            itemsPerPage: BOARD_PAGE_SIZE,
+          },
+        });
       });
     });
 
     effect((): void => {
       const organizationId: string = this.organizationId();
+      const month: Date | null = this.calendarMonth();
+      const filters: InterventionListFilters = this.filters();
+
       untracked((): void => {
-        this.statisticsStore.load(organizationId);
+        if (month === null || !isPlatformBrowser(this.platformId)) return;
+
+        this.calendarStore.load({
+          organizationId,
+          window: this.calendarWindowOf(month),
+          filters: this.toCalendarFilters(filters),
+        });
       });
     });
 
@@ -1844,76 +1403,495 @@ export class InterventionsPage {
 
   //#region Methods
   /**
-   * Method onSearchQueryChanged
-   *
+   * Method switchView
    * @description
-   * Records a keystroke into the draft term the debounce watches.
+   * The tab list's `tabActivated` handler — writes the new `?view=` and merges
+   * it with every other query param, **including** the ones the destination
+   * does not honour. Dropping them here would delete a narrowing the user set,
+   * silently and irrecoverably; leaving them lets {@link isFieldIgnored} render
+   * the chip inert with a tooltip naming the reason, and restores the narrowing
+   * intact on the way back.
    *
    * @access protected
-   * @since 3.1.0
-   *
-   * @param {string} term - The search box's current value.
-   *
+   * @since 11.0.0
+   * @param {string} tab - The activated tab id (`list`/`board`/`calendar`).
    * @returns {void}
    */
-  protected onSearchQueryChanged(term: string): void {
-    this.draftSearch.set(term);
+  protected switchView(tab: string): void {
+    const view: InterventionView = tab === 'board' || tab === 'calendar' ? tab : 'list';
+
+    this.navigateQuery({ view: view === 'list' ? null : view });
   }
 
-  /**
-   * Method clearSearch
-   * @method clearSearch
-   *
-   * @description
-   * Drops the search from the URL.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
+  /** Drops the search from the URL. */
   protected clearSearch(): void {
-    this.draftSearch.set('');
     this.page.set(1);
     this.navigateQuery({ q: null });
   }
 
-  /**
-   * Method applyFilter
-   * @method applyFilter
-   *
-   * @description
-   * Replaces one narrowing, which reloads the list from the first page.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {Partial<InterventionListFilters>} patch - The field to change.
-   *
-   * @returns {void}
-   */
-  protected applyFilter(patch: Partial<InterventionListFilters>): void {
+  /** Orders by a column head. Re-picking the active field reverses it. */
+  protected applySortField(field: InterventionSortField): void {
     this.page.set(1);
+    this.sortOrder.update((current: InterventionListSort) =>
+      current.field === field
+        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+        : { field, direction: current.direction },
+    );
+    this.persistListPreferences();
+  }
+
+  /** The Display popover's field select emits `null`/`undefined` only while clearing, which this select never does. */
+  protected onSortFieldPicked(field: InterventionSortField | null | undefined): void {
+    if (field) this.applySortField(field);
+  }
+
+  /** Flips the active ordering's direction without changing its field. */
+  protected toggleSortDirection(): void {
+    this.page.set(1);
+    this.sortOrder.update((current: InterventionListSort) => ({
+      field: current.field,
+      direction: current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    this.persistListPreferences();
+  }
+
+  /** Shows or hides an optional column. */
+  protected toggleColumn(id: InterventionTableColumn): void {
+    const next: Set<InterventionTableColumn> = new Set(this.hiddenColumns());
+
+    if (!next.delete(id)) next.add(id);
+
+    this.hiddenColumns.set(next);
+    this.persistListPreferences();
+  }
+
+  /** Whether a column currently renders, for the menu's checked state. */
+  protected isColumnVisible(id: InterventionTableColumn): boolean {
+    return !this.hiddenColumns().has(id);
+  }
+
+  /** Names a column in the visibility menu. */
+  protected columnLabelOf(id: InterventionTableColumn): string {
+    switch (id) {
+      case 'status':
+        return $localize`:@@intervention.list.columnStatus:Status`;
+      case 'priority':
+        return $localize`:@@intervention.list.columnPriority:Priority`;
+      case 'type':
+        return $localize`:@@intervention.list.columnType:Type`;
+      case 'site':
+        return $localize`:@@intervention.list.columnSite:Site`;
+      default:
+        return $localize`:@@intervention.list.columnDue:Due`;
+    }
+  }
+
+  /** Moves the List page window, clamped to the available range. */
+  protected goToPage(target: number): void {
+    this.page.set(Math.min(Math.max(1, target), this.pageCount()));
+  }
+
+  /** Changes how many rows a page holds and returns to the first one. */
+  protected setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.persistListPreferences();
+  }
+
+  /** Narrows the cookie's raw hidden-column ids to the columns this build offers. */
+  private restoreHiddenColumns(): ReadonlySet<InterventionTableColumn> {
+    const stored: ReadonlySet<string> = this.preferences.readHiddenColumns();
+
+    return new Set<InterventionTableColumn>(
+      INTERVENTION_TABLE_COLUMNS.filter((column) => stored.has(column)),
+    );
+  }
+
+  /** The remembered rows-per-page when it is one of the sizes this build offers, or the default otherwise. */
+  private restorePageSize(): number {
+    const stored: number | null = this.preferences.readPageSize();
+
+    return stored !== null && PAGE_SIZES.includes(stored) ? stored : PAGE_SIZES[0];
+  }
+
+  /** Writes the List tab's current shape — sort, hidden columns, page size — to the preferences cookie in one pass. */
+  private persistListPreferences(): void {
+    this.preferences.write(this.sortOrder(), this.hiddenColumns(), this.pageSize());
+  }
+
+  /** Opens the creation sheet blank — drops any prefill a previous "Duplicate" left behind. */
+  protected openCreate(): void {
+    this.duplicatePrefill.set(null);
+    this.createSheetVisible.set(true);
+  }
+
+  /** Opens the creation sheet prefilled from a row's own "Duplicate" entry. */
+  protected requestDuplicate(intervention: InterventionOutput): void {
+    this.duplicatePrefill.set(buildInterventionDuplicatePrefill(intervention));
+    this.createSheetVisible.set(true);
+  }
+
+  /** Relays the sheet's open/closed state and, on close, drops any duplicate prefill. */
+  protected onCreateSheetVisibleChange(visible: boolean): void {
+    this.createSheetVisible.set(visible);
+
+    if (!visible) this.duplicatePrefill.set(null);
+  }
+
+  /** Hands the form's values to the store. The sheet closes and the page navigates once the store reports the new record. */
+  protected createIntervention(values: InterventionCreateFormValues): void {
+    this.store.create({
+      organizationId: this.organizationId(),
+      name: values.name,
+      type: values.type,
+      priority: values.priority,
+      site: values.site || undefined,
+      responsible: values.responsible || undefined,
+      plannedStartAt: values.plannedStartAt ?? undefined,
+      dueAt: values.dueAt ?? undefined,
+    });
+  }
+
+  /** Hands the chosen template, plus whichever overrides the sheet drafted, to the store. */
+  protected instantiateFromTemplate(request: InterventionTemplateInstantiateRequest): void {
+    this.store.instantiateFromTemplate(request);
+  }
+
+  /** Moves an intervention to the status a List row's menu or a Board card's move requested. The store owns the optimistic patch, the `If-Match` revision and the rollback. */
+  protected applyTransition(request: InterventionTransitionRequest): void {
+    this.store.transition({
+      id: request.intervention.id,
+      status: request.status,
+      revision: request.intervention.revision,
+    });
+  }
+
+  /** Puts an intervention's `FG-…` reference on the clipboard. */
+  protected copyReference(intervention: InterventionOutput): void {
+    void navigator.clipboard?.writeText(`FG-${intervention.number}`);
+  }
+
+  /** Records the List table's next row selection. */
+  protected onSelectionChanged(ids: ReadonlySet<string>): void {
+    this.selectedIds.set(ids);
+  }
+
+  /** Opens the confirm dialog for a single row's Delete entry. */
+  protected requestDelete(intervention: InterventionOutput): void {
+    this.store.resetDeleteState();
+    this.pendingDelete.set(intervention);
+  }
+
+  /** Opens the confirm dialog for the selection's deletable subset. A no-op when nothing selected can actually be deleted. */
+  protected requestBulkDelete(): void {
+    const ids: ReadonlyArray<string> = this.deletableSelectedIds();
+
+    if (ids.length === 0) return;
+
+    this.store.resetDeleteState();
+    this.pendingBulkDeleteIds.set(ids);
+  }
+
+  /** Sends the pending target(s) to the store. */
+  protected confirmDelete(): void {
+    const single: InterventionOutput | null = this.pendingDelete();
+    if (single) {
+      this.store.delete({ interventionId: single.id, revision: single.revision });
+    }
+
+    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
+    if (bulkIds) {
+      const byId: ReadonlyMap<string, InterventionOutput> = new Map(
+        this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
+          item.intervention.id,
+          item.intervention,
+        ]),
+      );
+
+      for (const id of bulkIds) {
+        const intervention: InterventionOutput | undefined = byId.get(id);
+        if (intervention) {
+          this.store.delete({ interventionId: intervention.id, revision: intervention.revision });
+        }
+      }
+
+      this.selectedIds.set(new Set<string>());
+    }
+
+    this.pendingBulkDeleteIds.set(null);
+  }
+
+  /** Clears both pending-delete signals on any dismissal — Cancel, the backdrop or Escape. */
+  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
+    if (state === 'open') return;
+
+    this.pendingDelete.set(null);
+    this.pendingBulkDeleteIds.set(null);
+  }
+
+  /** Ids of the current selection that may actually move to `target`. */
+  protected transitionableSelectedIds(target: InterventionStatus): ReadonlyArray<string> {
+    const selected: ReadonlySet<string> = this.selectedIds();
+    const transitioning: readonly string[] = this.store.transitioningInterventionIds();
+    const currentMemberIri: string | null = this.memberIri();
+
+    return this.items()
+      .filter((item: InterventionListItemViewModel): boolean => selected.has(item.intervention.id))
+      .filter(
+        (item: InterventionListItemViewModel): boolean =>
+          !transitioning.includes(item.intervention.id),
+      )
+      .filter((item: InterventionListItemViewModel): boolean =>
+        item.intervention.allowedTransitions.includes(target),
+      )
+      .filter((item: InterventionListItemViewModel): boolean => {
+        const requiresIdentity: boolean =
+          target === 'submitted' ||
+          (item.intervention.status === 'submitted' && target === 'in_progress');
+
+        return !requiresIdentity || currentMemberIri === item.intervention.responsible;
+      })
+      .map((item: InterventionListItemViewModel): string => item.intervention.id);
+  }
+
+  /** Sends the selection's eligible subset for `target` to the store, and clears the selection. */
+  protected confirmBulkTransition(target: InterventionStatus): void {
+    const ids: ReadonlyArray<string> = this.transitionableSelectedIds(target);
+    if (ids.length === 0) return;
+
+    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
+      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
+        item.intervention.id,
+        item.intervention,
+      ]),
+    );
+
+    for (const id of ids) {
+      const intervention: InterventionOutput | undefined = byId.get(id);
+      if (intervention) {
+        this.store.transition({
+          id: intervention.id,
+          status: target,
+          revision: intervention.revision,
+        });
+      }
+    }
+
+    this.selectedIds.set(new Set<string>());
+  }
+
+  /** Opens the assign dialog for a single row's "Assign responsible…" entry. */
+  protected requestAssign(intervention: InterventionOutput): void {
+    this.pendingBulkAssignIds.set(null);
+    this.assignRequest.set({
+      interventionId: intervention.id,
+      interventionName: intervention.name,
+      currentResponsible: intervention.responsible,
+    });
+  }
+
+  /** Opens the assign dialog for the selection's assignable subset. A no-op when nothing selected can actually be assigned. */
+  protected requestBulkAssign(): void {
+    const ids: ReadonlyArray<string> = this.assignableSelectedIds();
+    if (ids.length === 0) return;
+
+    this.pendingBulkAssignIds.set(ids);
+    this.assignRequest.set({
+      interventionId: '',
+      interventionName:
+        ids.length === 1
+          ? $localize`:@@intervention.list.bulkAssignNameOne:1 intervention`
+          : $localize`:@@intervention.list.bulkAssignNameMany:${ids.length}:count: interventions`,
+      currentResponsible: null,
+    });
+  }
+
+  /** Sends the picked responsible to the store. */
+  protected submitAssign(event: InterventionAssignSubmittedEvent): void {
+    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
+      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
+        item.intervention.id,
+        item.intervention,
+      ]),
+    );
+
+    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkAssignIds();
+    if (bulkIds) {
+      for (const id of bulkIds) {
+        const intervention: InterventionOutput | undefined = byId.get(id);
+        if (intervention) {
+          this.store.assignResponsible({
+            interventionId: intervention.id,
+            responsible: event.responsible,
+            revision: intervention.revision,
+          });
+        }
+      }
+      this.selectedIds.set(new Set<string>());
+    } else {
+      const intervention: InterventionOutput | undefined = byId.get(event.interventionId);
+      if (intervention) {
+        this.store.assignResponsible({
+          interventionId: intervention.id,
+          responsible: event.responsible,
+          revision: intervention.revision,
+        });
+      }
+    }
+
+    this.assignRequest.set(null);
+    this.pendingBulkAssignIds.set(null);
+  }
+
+  /** Closes the assign dialog without submitting — Escape, the backdrop or Cancel. */
+  protected dismissAssign(): void {
+    this.assignRequest.set(null);
+    this.pendingBulkAssignIds.set(null);
+  }
+
+  /** Opens the "Recurrences" sheet, fetching the organization's rules once on first open. */
+  protected openRecurrences(): void {
+    this.recurrencesVisible.set(true);
+    if (this.recurrenceStore.listCallState().status !== 'idle') return;
+
+    this.recurrenceStore.load({ organizationIri: `/api/organizations/${this.organizationId()}` });
+  }
+
+  /** Closes the "Recurrences" sheet. */
+  protected closeRecurrences(): void {
+    this.recurrencesVisible.set(false);
+  }
+
+  /** Creates or updates a recurrence, depending on whether the sheet's draft carries an existing row's id. */
+  protected submitRecurrenceForm(event: InterventionRecurrenceFormSubmittedEvent): void {
+    if (event.recurrenceId === null) {
+      this.recurrenceStore.create({
+        organization: `/api/organizations/${this.organizationId()}`,
+        template: `/api/intervention-templates/${event.templateId}`,
+        name: event.name,
+        site: event.site ?? undefined,
+        responsible: event.responsible ?? undefined,
+        frequency: event.frequency,
+        interval: event.interval,
+        anchorDate: event.anchorDate,
+        timezone: event.timezone,
+        leadTimeDays: event.leadTimeDays,
+        endAt: event.endAt ?? undefined,
+      });
+      return;
+    }
+
+    this.recurrenceStore.update({
+      recurrenceId: event.recurrenceId,
+      input: {
+        name: event.name,
+        site: event.site,
+        responsible: event.responsible,
+        frequency: event.frequency,
+        interval: event.interval,
+        anchorDate: event.anchorDate,
+        timezone: event.timezone,
+        leadTimeDays: event.leadTimeDays,
+        endAt: event.endAt,
+      },
+    });
+  }
+
+  /** Deletes a recurrence the sheet's inline confirmation approved. */
+  protected removeRecurrence(recurrenceId: string): void {
+    this.recurrenceStore.remove(recurrenceId);
+  }
+
+  /** Pauses or resumes a recurrence from the sheet's table toggle. */
+  protected toggleRecurrenceActive(event: {
+    readonly recurrenceId: string;
+    readonly isActive: boolean;
+  }): void {
+    this.recurrenceStore.update({
+      recurrenceId: event.recurrenceId,
+      input: { isActive: event.isActive },
+    });
+  }
+
+  /** Re-runs the List tab's current query after a failure. */
+  protected reload(): void {
+    this.store.load({
+      organizationId: this.organizationId(),
+      options: {
+        ...buildInterventionListOptions(
+          this.filters(),
+          this.sortOrder(),
+          this.searchTerm(),
+          new Date(),
+          this.filters().mine ? this.memberIri() : null,
+        ),
+        page: this.page(),
+        itemsPerPage: this.pageSize(),
+      },
+    });
+  }
+
+  /** Downloads the current question as CSV, serialized server-side (`InterventionService.exportCsv`). */
+  protected exportCsv(): void {
+    if (this.store.totalInterventions() === 0) return;
+
+    const { options, droppedFilterCount } = buildInterventionExportOptions(
+      this.filters(),
+      this.sortOrder(),
+      this.searchTerm(),
+      new Date(),
+      this.filters().mine ? this.memberIri() : null,
+    );
+
+    if (droppedFilterCount > 0) {
+      this.feedback.warn(
+        $localize`:@@intervention.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
+      );
+    }
+
+    this.exportBusy.set(true);
+
+    this.interventionService
+      .exportCsv(this.organizationId(), options)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(blob, this.exportFilename());
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void this.resolveExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@intervention.list.exportFailed:Couldn't export interventions.`,
+            );
+          });
+        },
+      });
+  }
+
+  /** Replaces one narrowing. */
+  protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
   }
 
   /**
-   * Method filterFieldOption
+   * Method toggleMine
    *
    * @description
-   * The catalog entry for one field, for the template to read a chip's
-   * label and icon by key without repeating {@link INTERVENTION_FILTER_FIELDS}
-   * lookups inline. Falls back to an empty label rather than throwing: every
-   * call site passes a literal key from the same catalog, so the fallback
-   * is unreachable in practice.
+   * Flips the `?mine=1` narrowing. It stays a toolbar toggle rather than
+   * becoming a ninth chip: the filter bar is collapsed by default, so a chip
+   * would put the collection's most-used narrowing three clicks away.
    *
    * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to resolve.
-   *
-   * @returns {InterventionFilterFieldOption} Its catalog entry.
+   * @since 1.2.0
+   * @returns {void}
    */
+  protected toggleMine(): void {
+    this.applyFilter({ mine: !this.filters().mine });
+  }
+
+  /** The catalog entry for one field. */
   protected filterFieldOption(key: InterventionFilterFieldKey): InterventionFilterFieldOption {
     return (
       INTERVENTION_FILTER_FIELDS.find(
@@ -1922,60 +1900,44 @@ export class InterventionsPage {
     );
   }
 
-  /**
-   * Method onFieldPicked
-   *
-   * @description
-   * Reacts to the filter bar's `fieldPicked` output: forces the picked
-   * field's value control open so the operator lands directly on the value
-   * picker instead of an empty chip. The bar itself already moved the field
-   * to the end of its own display-order memory before emitting.
-   *
-   * @access protected
-   * @since 7.0.0
-   *
-   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
-   *
-   * @returns {void}
-   */
+  /** Reacts to the filter bar's `fieldPicked` output. */
   protected onFieldPicked(key: string): void {
     this.openFilterKey.set(key as InterventionFilterFieldKey);
   }
 
-  /**
-   * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
-   * @access protected
-   * @since 7.0.0
-   * @param {string} key - The field key a chip's remove button cleared.
-   * @returns {void}
-   */
+  /** Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing. */
   protected onFieldRemoved(key: string): void {
     this.applyFilter(this.filterClearPatchOf(key as InterventionFilterFieldKey));
   }
 
   /**
    * Method onFilterOperatorChanged
-   * @description Reacts to the filter bar's `operatorChanged` output. Only "Deadline" (`dueRange`) and "Planned start" (`plannedStartRange`) currently declare more than one operator, so this only ever routes to one of {@link onDueRangeOperatorPicked} / {@link onPlannedStartRangeOperatorPicked}.
+   *
+   * @description
+   * Reacts to the filter bar's `operatorChanged` output. Each handler drops
+   * the current value, since it no longer fits the new operator's shape — a
+   * scalar cannot serve `isAnyOf`, a single date cannot serve `between`. That
+   * alone would unrender the chip, because the bar draws one per *active* key
+   * and the key just stopped being active. Marking it pending keeps it on
+   * screen with its new value control open, which is the whole point of the
+   * interaction.
+   *
    * @access protected
-   * @since 8.1.0
-   * @param {CollectionFilterOperatorChangedEvent} event - The field key whose operator segment changed and the operator it now reads.
+   * @since 11.1.0
+   *
+   * @param {CollectionFilterOperatorChangedEvent} event - The chip's key and its newly picked operator.
+   *
    * @returns {void}
    */
   protected onFilterOperatorChanged(event: CollectionFilterOperatorChangedEvent): void {
     if (event.key === 'dueRange') this.onDueRangeOperatorPicked(event.operator);
     if (event.key === 'plannedStartRange') this.onPlannedStartRangeOperatorPicked(event.operator);
     if (this.isEnumFilterKey(event.key)) this.onEnumFilterOperatorPicked(event.key, event.operator);
+
+    this.openFilterKey.set(event.key as InterventionFilterFieldKey);
   }
 
-  /**
-   * Method isEnumFilterKey
-   * @description Narrows a filter bar field key to {@link InterventionEnumFilterKey} — the six fields sharing the `equals`/`isAnyOf` value-shape discriminant.
-   * @access private
-   * @since 8.3.0
-   * @param {string} key - The field key to narrow.
-   * @returns {key is InterventionEnumFilterKey} Whether the key is one of the six.
-   */
+  /** Narrows a filter bar field key to {@link InterventionEnumFilterKey}. */
   private isEnumFilterKey(key: string): key is InterventionEnumFilterKey {
     return (
       key === 'status' ||
@@ -1991,42 +1953,43 @@ export class InterventionsPage {
    * Method enumFieldOperator
    *
    * @description
-   * The operator one of the six `equals`/`isAnyOf` fields currently reads:
-   * `isAnyOf` when its own {@link filters} value is a readonly array,
-   * `equals` when it is a set scalar, and — while unset — whatever the
-   * operator picker last chose in {@link enumFilterOperatorOverrides},
-   * defaulting to `equals`.
+   * Which operator one of the six `equals`/`isAnyOf` chips reads. An explicit
+   * pick wins over the value's own shape, because the URL cannot tell the two
+   * apart at one value: `['planned']` and `'planned'` both serialize to
+   * `status=planned`, so deriving from the shape alone made "is any of"
+   * silently snap back to "is" the moment a single value was selected. The
+   * shape only decides for a field the user has not touched this session —
+   * a multi-value URL arrives as `isAnyOf`, everything else as `equals`.
    *
    * @access protected
-   * @since 8.3.0
+   * @since 11.1.0
    *
-   * @param {InterventionEnumFilterKey} key - The field to read.
+   * @param {InterventionEnumFilterKey} key - The chip's field.
    *
-   * @returns {'equals' | 'isAnyOf'} The operator its chip's segment renders.
+   * @returns {'equals' | 'isAnyOf'} The operator its value control renders for.
    */
   protected enumFieldOperator(key: InterventionEnumFilterKey): 'equals' | 'isAnyOf' {
-    const value: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
+    const picked: 'equals' | 'isAnyOf' | undefined = this.enumFilterOperatorOverrides()[key];
+    if (picked !== undefined) return picked;
 
-    if (Array.isArray(value)) return 'isAnyOf';
-    if (value !== null) return 'equals';
-    return this.enumFilterOperatorOverrides()[key] ?? 'equals';
+    return Array.isArray(this.filters()[key]) ? 'isAnyOf' : 'equals';
   }
 
   /**
    * Method onEnumFilterOperatorPicked
    *
    * @description
-   * Switches one of the six `equals`/`isAnyOf` fields' value control to the
-   * picked operator's own shape (a single select for `equals`, a multi
-   * select for `isAnyOf`) and drops any already-applied narrowing on that
-   * field — its value was chosen under the previous operator's shape and no
-   * longer means the same thing, mirroring {@link onDueRangeOperatorPicked}.
+   * Switches one of the six `equals`/`isAnyOf` fields to the picked operator's
+   * value shape, carrying the current narrowing across whenever the two shapes
+   * can hold it: `equals` becomes a one-element `isAnyOf`, and an `isAnyOf` of
+   * exactly one becomes that scalar. Only a multi-value `isAnyOf` collapsing
+   * to `equals` genuinely cannot be represented, and only that case clears.
    *
    * @access private
-   * @since 8.3.0
+   * @since 11.1.0
    *
-   * @param {InterventionEnumFilterKey} key - The field whose operator segment changed.
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
+   * @param {InterventionEnumFilterKey} key - The chip's field.
+   * @param {CollectionFilterOperator} operator - The newly picked operator.
    *
    * @returns {void}
    */
@@ -2044,56 +2007,24 @@ export class InterventionsPage {
         [key]: operator,
       }),
     );
-    if (this.filters()[key] !== null) this.applyFilter(this.filterClearPatchOf(key));
+
+    const current: InterventionListFilters[InterventionEnumFilterKey] = this.filters()[key];
+    if (current === null) return;
+
+    const values: unknown[] = Array.isArray(current) ? [...current] : [current];
+    const carried: unknown =
+      operator === 'isAnyOf' ? values : values[1] ? null : (values[0] ?? null);
+
+    this.applyFilter({ [key]: carried } as Partial<InterventionListFilters>);
   }
 
-  /**
-   * Method toEnumValues
-   *
-   * @description
-   * Normalizes one of the six `equals`/`isAnyOf` fields' current value to a
-   * readonly array, for `hlm-select-multiple`'s own `value` input — `null`
-   * narrows to an empty selection, a scalar narrows to a one-element array,
-   * an array passes through as-is. Generic and typed per call site (see
-   * {@link statusValues} and its siblings) rather than keyed by
-   * {@link InterventionEnumFilterKey}, so `[itemToString]`/`[value]`
-   * inference on the template's `hlm-select-multiple` stays on the field's
-   * own literal type instead of widening to `string`.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {T | readonly T[] | null} value - The field's current value.
-   *
-   * @returns {T[]} The field's currently selected values, mutable — the shape `hlm-select-multiple`'s `value` model itself takes.
-   */
+  /** Normalizes one of the six `equals`/`isAnyOf` fields' current value to a readonly array. */
   private toEnumValues<T>(value: T | readonly T[] | null): T[] {
     if (value === null) return [];
     return Array.isArray(value) ? [...(value as readonly T[])] : [value as T];
   }
 
-  /**
-   * Method toScalarValue
-   *
-   * @description
-   * The `equals`-mode counterpart of {@link toEnumValues}: the field's own
-   * scalar value, `null` for "unset" and — unreachable in practice, since
-   * the single select only ever renders while {@link enumFieldOperator}
-   * reads `equals` — also `null` for an array, so the template's single
-   * select stays typed on the field's own literal type rather than widening
-   * to include a readonly array it will never actually receive.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {T | readonly T[] | null} value - The field's current value.
-   *
-   * @returns {T | null} The field's current scalar value.
-   */
+  /** The `equals`-mode counterpart of {@link toEnumValues}. */
   private toScalarValue<T>(value: T | readonly T[] | null): T | null {
     return Array.isArray(value) ? null : (value as T | null);
   }
@@ -2158,29 +2089,7 @@ export class InterventionsPage {
     return this.toScalarValue(this.filters().label);
   }
 
-  /**
-   * Method applyEnumSelection
-   *
-   * @description
-   * Applies one of the six `equals`/`isAnyOf` fields' multi select
-   * `valueChange` — every currently checked item. An empty selection clears
-   * the field back to `null` rather than sending an empty `isAnyOf`, which
-   * the API would read as a value, not as "any" (mirroring
-   * {@link buildInterventionListOptions}'s own omit-when-unset rule). A
-   * single remaining item still applies as a one-element array, not a
-   * collapsed scalar, so the chip's operator segment stays on `isAnyOf`
-   * instead of silently reading back as `equals`.
-   *
-   * @access private
-   * @since 8.3.0
-   *
-   * @template T - The field's own value type.
-   *
-   * @param {InterventionEnumFilterKey} key - The field the multi select belongs to.
-   * @param {readonly T[] | null | undefined} values - The multi select's current selection.
-   *
-   * @returns {void}
-   */
+  /** Applies one of the six `equals`/`isAnyOf` fields' multi select `valueChange`. */
   private applyEnumSelection<T>(
     key: InterventionEnumFilterKey,
     values: readonly T[] | null | undefined,
@@ -2222,24 +2131,7 @@ export class InterventionsPage {
     this.applyEnumSelection('label', values);
   }
 
-  /**
-   * Method onDueRangeOperatorPicked
-   *
-   * @description
-   * Switches the "Deadline" chip's value control to the picked operator's
-   * own shape (one date for `greaterThan`/`lessThan`, two for `between`) and
-   * drops any already-applied `dueRange` narrowing — its bound(s) were
-   * chosen under the previous operator and no longer mean the same thing,
-   * so the URL stays honest rather than keeping a stale filter active under
-   * a value control that no longer shows it.
-   *
-   * @access private
-   * @since 8.1.0
-   *
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
-   *
-   * @returns {void}
-   */
+  /** Switches the "Deadline" chip's value control to the picked operator's own shape and drops any already-applied narrowing. */
   private onDueRangeOperatorPicked(operator: CollectionFilterOperator): void {
     if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
 
@@ -2247,54 +2139,26 @@ export class InterventionsPage {
     if (this.filters().dueRange !== null) this.applyFilter({ dueRange: null });
   }
 
-  /**
-   * Method pickDueAfter
-   * @description Applies the "Deadline" chip's `greaterThan` narrowing.
-   * @access protected
-   * @since 8.1.0
-   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
+  /** Applies the "Deadline" chip's `greaterThan` narrowing. */
   protected pickDueAfter(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ dueRange: { operator: 'greaterThan', after: date } });
   }
 
-  /**
-   * Method pickDueBefore
-   * @description Applies the "Deadline" chip's `lessThan` narrowing.
-   * @access protected
-   * @since 8.1.0
-   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
+  /** Applies the "Deadline" chip's `lessThan` narrowing. */
   protected pickDueBefore(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ dueRange: { operator: 'lessThan', before: date } });
   }
 
-  /**
-   * Method pickDueBetween
-   * @description Applies the "Deadline" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
-   * @access protected
-   * @since 8.1.0
-   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
-   * @returns {void}
-   */
+  /** Applies the "Deadline" chip's `between` narrowing. */
   protected pickDueBetween(range: [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
     this.applyFilter({ dueRange: { operator: 'between', after, before } });
   }
 
-  /**
-   * Method onPlannedStartRangeOperatorPicked
-   * @description Switches the "Planned start" chip's value control and drops any already-applied `plannedStartRange` narrowing. See {@link onDueRangeOperatorPicked}.
-   * @access private
-   * @since 8.2.0
-   * @param {CollectionFilterOperator} operator - The operator the chip's select just picked.
-   * @returns {void}
-   */
+  /** Switches the "Planned start" chip's value control and drops any already-applied narrowing. See {@link onDueRangeOperatorPicked}. */
   private onPlannedStartRangeOperatorPicked(operator: CollectionFilterOperator): void {
     if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
 
@@ -2302,96 +2166,39 @@ export class InterventionsPage {
     if (this.filters().plannedStartRange !== null) this.applyFilter({ plannedStartRange: null });
   }
 
-  /**
-   * Method pickPlannedStartAfter
-   * @description Applies the "Planned start" chip's `greaterThan` narrowing.
-   * @access protected
-   * @since 8.2.0
-   * @param {Date | null | undefined} date - The picked lower bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
+  /** Applies the "Planned start" chip's `greaterThan` narrowing. */
   protected pickPlannedStartAfter(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ plannedStartRange: { operator: 'greaterThan', after: date } });
   }
 
-  /**
-   * Method pickPlannedStartBefore
-   * @description Applies the "Planned start" chip's `lessThan` narrowing.
-   * @access protected
-   * @since 8.2.0
-   * @param {Date | null | undefined} date - The picked upper bound, `null`/`undefined` while the picker is cleared.
-   * @returns {void}
-   */
+  /** Applies the "Planned start" chip's `lessThan` narrowing. */
   protected pickPlannedStartBefore(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ plannedStartRange: { operator: 'lessThan', before: date } });
   }
 
-  /**
-   * Method pickPlannedStartBetween
-   * @description Applies the "Planned start" chip's `between` narrowing — the range picker emits once both ends are chosen, never one end at a time.
-   * @access protected
-   * @since 8.2.0
-   * @param {[Date, Date] | null | undefined} range - The picked [after, before] pair, `null`/`undefined` while incomplete or cleared.
-   * @returns {void}
-   */
+  /** Applies the "Planned start" chip's `between` narrowing. */
   protected pickPlannedStartBetween(range: [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
     this.applyFilter({ plannedStartRange: { operator: 'between', after, before } });
   }
 
-  /**
-   * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
-   * @access protected
-   * @since 7.1.0
-   * @param {boolean} visible - The toggle button's intended next state.
-   * @returns {void}
-   */
+  /** Reacts to `app-collection-filter-toggle`'s `visibleChange`. */
   protected toggleFiltersVisible(visible: boolean): void {
     this.filtersVisible.set(visible);
   }
 
-  /**
-   * Method fieldPopoverState
-   *
-   * @description
-   * Whether a field's value control should currently render open — true only
-   * for the one field {@link openFilterKey} names.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to read.
-   *
-   * @returns {BrnOverlayState} `'open'` or `'closed'`.
-   */
-  protected fieldPopoverState(key: InterventionFilterFieldKey): BrnOverlayState {
+  /** Whether a field's value control should currently render open. */
+  protected fieldPopoverState(key: InterventionFilterFieldKey): 'open' | 'closed' {
     return this.openFilterKey() === key ? 'open' : 'closed';
   }
 
-  /**
-   * Method onFieldPopoverStateChanged
-   *
-   * @description
-   * Keeps {@link openFilterKey} in sync with a field's own value control:
-   * opening it (by its trigger, or by {@link onFieldPicked}) records which
-   * field is expanded; closing it — picking a value, Escape, or an outside
-   * click — clears the record, unless another field has since taken over.
-   *
-   * @access protected
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field whose selector changed.
-   * @param {BrnOverlayState} state - Its next state.
-   *
-   * @returns {void}
-   */
+  /** Keeps {@link openFilterKey} in sync with a field's own value control. */
   protected onFieldPopoverStateChanged(
     key: InterventionFilterFieldKey,
-    state: BrnOverlayState,
+    state: 'open' | 'closed',
   ): void {
     if (state === 'open') {
       this.openFilterKey.set(key);
@@ -2401,235 +2208,12 @@ export class InterventionsPage {
     if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
-  /**
-   * Method toggleMine
-   * @method toggleMine
-   *
-   * @description
-   * Flips the "my interventions" narrowing — responsible OR participant,
-   * resolved server-side by the `member` filter.
-   *
-   * @access protected
-   * @since 5.2.0
-   *
-   * @returns {void}
-   */
-  protected toggleMine(): void {
-    this.page.set(1);
-    this.navigateQuery({ mine: this.filters().mine ? null : '1' });
-  }
-
-  /**
-   * Method clearFilters
-   * @method clearFilters
-   *
-   * @description
-   * Drops every narrowing at once.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @returns {void}
-   */
+  /** Drops every narrowing at once, mine and the legacy due window included. */
   protected clearFilters(): void {
-    this.page.set(1);
     this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 
-  /**
-   * Method applySortField
-   * @method applySortField
-   *
-   * @description
-   * Orders by a column head. Re-picking the active field reverses it, which is
-   * what a second click on a sorted column means everywhere else.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionSortField} field - The column's field.
-   *
-   * @returns {void}
-   */
-  protected applySortField(field: InterventionSortField): void {
-    this.page.set(1);
-    this.sortOrder.update((current: InterventionListSort) =>
-      current.field === field
-        ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
-        : { field, direction: current.direction },
-    );
-    this.persistListPreferences();
-  }
-
-  /**
-   * Method onSortFieldPicked
-   *
-   * @description
-   * The Display popover's field select emits `null`/`undefined` only while
-   * clearing, which this select never does — every option maps to a real
-   * field. The guard exists purely to satisfy `hlm-select`'s nullable output
-   * type.
-   *
-   * @access protected
-   * @since 6.7.0
-   *
-   * @param {InterventionSortField | null | undefined} field - The picked field.
-   *
-   * @returns {void}
-   */
-  protected onSortFieldPicked(field: InterventionSortField | null | undefined): void {
-    if (field) this.applySortField(field);
-  }
-
-  /**
-   * Method toggleSortDirection
-   * @method toggleSortDirection
-   *
-   * @description
-   * Flips the active ordering's direction without changing its field — the
-   * Display popover's direction button, independent of {@link applySortField}
-   * because a field pick there must never also reverse it.
-   *
-   * @access protected
-   * @since 6.7.0
-   *
-   * @returns {void}
-   */
-  protected toggleSortDirection(): void {
-    this.page.set(1);
-    this.sortOrder.update((current: InterventionListSort) => ({
-      field: current.field,
-      direction: current.direction === 'asc' ? 'desc' : 'asc',
-    }));
-    this.persistListPreferences();
-  }
-
-  /**
-   * Method toggleColumn
-   * @method toggleColumn
-   *
-   * @description
-   * Shows or hides an optional column.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionTableColumn} id - The column id.
-   *
-   * @returns {void}
-   */
-  protected toggleColumn(id: InterventionTableColumn): void {
-    const next: Set<InterventionTableColumn> = new Set(this.hiddenColumns());
-
-    if (!next.delete(id)) next.add(id);
-
-    this.hiddenColumns.set(next);
-    this.persistListPreferences();
-  }
-
-  /**
-   * Method isColumnVisible
-   * @method isColumnVisible
-   *
-   * @description
-   * Whether a column currently renders, for the menu's checked state.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionTableColumn} id - The column id.
-   *
-   * @returns {boolean} True when shown.
-   */
-  protected isColumnVisible(id: InterventionTableColumn): boolean {
-    return !this.hiddenColumns().has(id);
-  }
-
-  /**
-   * Method columnLabelOf
-   * @method columnLabelOf
-   *
-   * @description
-   * Names a column in the visibility menu.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionTableColumn} id - The column id.
-   *
-   * @returns {string} Its localized label.
-   */
-  protected columnLabelOf(id: InterventionTableColumn): string {
-    switch (id) {
-      case 'status':
-        return $localize`:@@intervention.list.columnStatus:Status`;
-      case 'priority':
-        return $localize`:@@intervention.list.columnPriority:Priority`;
-      case 'type':
-        return $localize`:@@intervention.list.columnType:Type`;
-      case 'site':
-        return $localize`:@@intervention.list.columnSite:Site`;
-      default:
-        return $localize`:@@intervention.list.columnDue:Due`;
-    }
-  }
-
-  /**
-   * Method goToPage
-   * @method goToPage
-   *
-   * @description
-   * Moves the page window, clamped to the available range.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {number} target - The one-based page to show.
-   *
-   * @returns {void}
-   */
-  protected goToPage(target: number): void {
-    this.page.set(Math.min(Math.max(1, target), this.pageCount()));
-  }
-
-  /**
-   * Method setPageSize
-   * @method setPageSize
-   *
-   * @description
-   * Changes how many rows a page holds and returns to the first one, so the
-   * window never lands past the end.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {number} size - Rows per page.
-   *
-   * @returns {void}
-   */
-  protected setPageSize(size: number): void {
-    this.pageSize.set(size);
-    this.page.set(1);
-    this.persistListPreferences();
-  }
-
-  /**
-   * Method filterClearPatchOf
-   *
-   * @description
-   * The `applyFilter` patch that clears one field back to `null` — what
-   * {@link onFieldRemoved} keys off, typed exhaustively rather than an
-   * indexed `{ [key]: null }` so a new field added to
-   * {@link InterventionFilterFieldKey} fails to compile here until it is
-   * handled.
-   *
-   * @access private
-   * @since 6.5.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field to clear.
-   *
-   * @returns {Partial<InterventionListFilters>} The clearing patch.
-   */
+  /** The `applyFilter` patch that clears one field back to `null`. */
   private filterClearPatchOf(key: InterventionFilterFieldKey): Partial<InterventionListFilters> {
     switch (key) {
       case 'status':
@@ -2648,721 +2232,84 @@ export class InterventionsPage {
         return { dueRange: null };
       case 'plannedStartRange':
         return { plannedStartRange: null };
+      case 'dueWindow':
+        return { dueWindow: null };
     }
   }
 
   /**
-   * Method restoreHiddenColumns
-   *
-   * @description
-   * Narrows the cookie's raw hidden-column ids to the columns this build
-   * offers, so a column retired since the cookie was written is ignored.
-   *
-   * @access private
-   * @since 4.6.0
-   *
-   * @returns {ReadonlySet<InterventionTableColumn>} The restored hidden set.
-   */
-  private restoreHiddenColumns(): ReadonlySet<InterventionTableColumn> {
-    const stored: ReadonlySet<string> = this.preferences.readHiddenColumns();
-
-    return new Set<InterventionTableColumn>(
-      INTERVENTION_TABLE_COLUMNS.filter((column) => stored.has(column)),
-    );
-  }
-
-  /**
-   * Method restorePageSize
-   *
-   * @description
-   * The remembered rows-per-page when it is one of the sizes this build
-   * offers, or the default otherwise.
-   *
-   * @access private
-   * @since 4.6.0
-   *
-   * @returns {number} The restored page size.
-   */
-  private restorePageSize(): number {
-    const stored: number | null = this.preferences.readPageSize();
-
-    return stored !== null && PAGE_SIZES.includes(stored) ? stored : PAGE_SIZES[0];
-  }
-
-  /**
-   * Method persistListPreferences
-   *
-   * @description
-   * Writes the list's current shape — sort, hidden columns, page size — to the
-   * preferences cookie in one pass. Filters are deliberately not included.
-   *
-   * @access private
-   * @since 4.6.0
-   *
-   * @returns {void}
-   */
-  private persistListPreferences(): void {
-    this.preferences.write(this.sortOrder(), this.hiddenColumns(), this.pageSize());
-  }
-
-  /**
-   * Method openCreate
-   * @method openCreate
-   *
-   * @description
-   * Opens the creation sheet blank — drops any prefill a previous
-   * "Duplicate" left behind.
-   *
+   * Method isFieldIgnored
+   * @description Whether the active tab does not honour a filter field — the chip still renders when active, but disabled and greyed rather than silently applied.
    * @access protected
    * @since 1.0.0
-   *
-   * @returns {void}
+   * @param {InterventionFilterFieldKey} key - The field to check.
+   * @returns {boolean} True when the active tab ignores it.
    */
-  protected openCreate(): void {
-    this.duplicatePrefill.set(null);
-    this.createSheetVisible.set(true);
+  protected isFieldIgnored(key: InterventionFilterFieldKey): boolean {
+    return !this.honouredFilterKeys().has(key);
   }
 
   /**
-   * Method requestDuplicate
-   * @method requestDuplicate
+   * Method chipAccessibleName
    *
    * @description
-   * Opens the creation sheet prefilled from a row's own "Duplicate" entry.
+   * The chip's screen-reader name. When the active tab does not honour the
+   * field, {@link ignoredReason} is appended: the reason is otherwise carried
+   * only by an `hlmTooltip`, which a hover reveals and a screen reader does
+   * not, leaving a disabled chip announced as unavailable with no cause.
    *
    * @access protected
-   * @since 6.1.0
+   * @since 11.0.0
    *
-   * @param {InterventionOutput} intervention - The row "Duplicate" was invoked on.
+   * @param {InterventionFilterFieldKey} key - The chip's field.
    *
-   * @returns {void}
+   * @returns {string} The localized accessible name.
    */
-  protected requestDuplicate(intervention: InterventionOutput): void {
-    this.duplicatePrefill.set(buildInterventionDuplicatePrefill(intervention));
-    this.createSheetVisible.set(true);
+  protected chipAccessibleName(key: InterventionFilterFieldKey): string {
+    const name: string = this.changeFilterLabel(this.filterFieldOption(key).fieldLabel);
+
+    return this.isFieldIgnored(key) ? `${name}. ${this.ignoredReason(key)}` : name;
   }
 
   /**
-   * Method onCreateSheetVisibleChange
-   * @method onCreateSheetVisibleChange
-   *
-   * @description
-   * Relays the sheet's open/closed state and, on close, drops any duplicate
-   * prefill — mirroring how the sheet clears its own template-picker
-   * selection on close, one level up since the prefill is this page's state.
-   *
-   * @access protected
-   * @since 6.1.0
-   *
-   * @param {boolean} visible - The sheet's next visibility.
-   *
-   * @returns {void}
-   */
-  protected onCreateSheetVisibleChange(visible: boolean): void {
-    this.createSheetVisible.set(visible);
-
-    if (!visible) this.duplicatePrefill.set(null);
-  }
-
-  /**
-   * Method createIntervention
-   * @method createIntervention
-   *
-   * @description
-   * Hands the form's values to the store. The sheet closes and the page
-   * navigates once the store reports the new record.
-   *
+   * Method ignoredReason
+   * @description The tooltip explaining why an ignored chip is inert here — read only while {@link isFieldIgnored} is true for that key.
    * @access protected
    * @since 1.0.0
-   *
-   * @param {InterventionCreateFormValues} values - The validated draft.
-   *
-   * @returns {void}
+   * @param {InterventionFilterFieldKey} key - The ignored field.
+   * @returns {string} The localized reason.
    */
-  protected createIntervention(values: InterventionCreateFormValues): void {
-    this.store.create({
-      organizationId: this.organizationId(),
-      name: values.name,
-      type: values.type,
-      priority: values.priority,
-      site: values.site || undefined,
-      responsible: values.responsible || undefined,
-      plannedStartAt: values.plannedStartAt ?? undefined,
-      dueAt: values.dueAt ?? undefined,
-    });
-  }
-
-  /**
-   * Method instantiateFromTemplate
-   * @method instantiateFromTemplate
-   *
-   * @description
-   * Hands the chosen template, plus whichever overrides the sheet drafted,
-   * to the store. The sheet closes and the page navigates once the store
-   * reports the new draft, the same as {@link createIntervention}.
-   *
-   * @access protected
-   * @since 4.3.0
-   *
-   * @param {InterventionTemplateInstantiateRequest} request - The chosen template and its overrides.
-   *
-   * @returns {void}
-   */
-  protected instantiateFromTemplate(request: InterventionTemplateInstantiateRequest): void {
-    this.store.instantiateFromTemplate(request);
-  }
-
-  /**
-   * Method applyTransition
-   * @method applyTransition
-   *
-   * @description
-   * Moves an intervention to the status its row menu offered. The store owns
-   * the optimistic patch, the `If-Match` revision and the rollback.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionTransitionRequest} request - The intervention and its target.
-   *
-   * @returns {void}
-   */
-  protected applyTransition(request: InterventionTransitionRequest): void {
-    this.store.transition({
-      id: request.intervention.id,
-      status: request.status,
-      revision: request.intervention.revision,
-    });
-  }
-
-  /**
-   * Method copyReference
-   * @method copyReference
-   *
-   * @description
-   * Puts an intervention's `FG-…` reference on the clipboard.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionOutput} intervention - The row's intervention.
-   *
-   * @returns {void}
-   */
-  protected copyReference(intervention: InterventionOutput): void {
-    void navigator.clipboard?.writeText(`FG-${intervention.number}`);
-  }
-
-  /**
-   * Method onSelectionChanged
-   * @method onSelectionChanged
-   *
-   * @description
-   * Records the table's next row selection.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @param {ReadonlySet<string>} ids - The full next selection.
-   *
-   * @returns {void}
-   */
-  protected onSelectionChanged(ids: ReadonlySet<string>): void {
-    this.selectedIds.set(ids);
-  }
-
-  /**
-   * Method requestDelete
-   * @method requestDelete
-   *
-   * @description
-   * Opens the confirm dialog for a single row's Delete entry.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @param {InterventionOutput} intervention - The row's intervention.
-   *
-   * @returns {void}
-   */
-  protected requestDelete(intervention: InterventionOutput): void {
-    this.store.resetDeleteState();
-    this.pendingDelete.set(intervention);
-  }
-
-  /**
-   * Method requestBulkDelete
-   * @method requestBulkDelete
-   *
-   * @description
-   * Opens the confirm dialog for the selection's deletable subset. A no-op
-   * when nothing selected can actually be deleted.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @returns {void}
-   */
-  protected requestBulkDelete(): void {
-    const ids: ReadonlyArray<string> = this.deletableSelectedIds();
-
-    if (ids.length === 0) return;
-
-    this.store.resetDeleteState();
-    this.pendingBulkDeleteIds.set(ids);
-  }
-
-  /**
-   * Method confirmDelete
-   * @method confirmDelete
-   *
-   * @description
-   * Sends the pending target(s) to the store. A single row's confirmation
-   * stays open, busy-disabled, until `deleteCallState` settles — the
-   * constructor effect closes it on success, and a failure surfaces inline
-   * rather than closing under the operator. A bulk selection is fired and
-   * forgotten instead: each id resolves back to its cached revision and
-   * calls `store.delete` once, concurrently via the store's `mergeMap`, each
-   * reporting its own success or failure as a toast — attributing one shared
-   * call state to several in-flight writes would not reliably tell the
-   * dialog when every one of them has settled.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @returns {void}
-   */
-  protected confirmDelete(): void {
-    const single: InterventionOutput | null = this.pendingDelete();
-    if (single) {
-      this.store.delete({ interventionId: single.id, revision: single.revision });
+  protected ignoredReason(key: InterventionFilterFieldKey): string {
+    if (key === 'status') {
+      return $localize`:@@intervention.shell.filterIgnoredStatus:Ignored here — the board's columns already narrow by status.`;
     }
 
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
-    if (bulkIds) {
-      const byId: ReadonlyMap<string, InterventionOutput> = new Map(
-        this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
-          item.intervention.id,
-          item.intervention,
-        ]),
-      );
-
-      for (const id of bulkIds) {
-        const intervention: InterventionOutput | undefined = byId.get(id);
-        if (intervention) {
-          this.store.delete({ interventionId: intervention.id, revision: intervention.revision });
-        }
-      }
-
-      this.selectedIds.set(new Set<string>());
+    if (key === 'dueRange' || key === 'plannedStartRange') {
+      return $localize`:@@intervention.shell.filterIgnoredDateRange:Ignored here — the visible month is already the date filter.`;
     }
 
-    this.pendingBulkDeleteIds.set(null);
+    return $localize`:@@intervention.shell.filterIgnoredField:Ignored here — this view narrows only by status, type, site and responsible.`;
   }
 
-  /**
-   * Method onDeleteDialogStateChanged
-   * @method onDeleteDialogStateChanged
-   *
-   * @description
-   * Clears both pending-delete signals on any dismissal — Cancel, the
-   * backdrop or Escape — so the dialog and its target signals never drift
-   * apart.
-   *
-   * @access protected
-   * @since 5.0.0
-   *
-   * @param {BrnDialogState} state - The overlay's new state.
-   *
-   * @returns {void}
-   */
-  protected onDeleteDialogStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
-
-    this.pendingDelete.set(null);
-    this.pendingBulkDeleteIds.set(null);
-  }
-
-  /**
-   * Method transitionableSelectedIds
-   * @method transitionableSelectedIds
-   *
-   * @description
-   * Ids of the current selection that may actually move to `target`: the
-   * row's own transition must not be in flight (its cached
-   * `allowedTransitions`/`revision` are stale until the server confirms),
-   * its `allowedTransitions` must include the target, and — mirroring
-   * `InterventionDetailPage`'s `canSubmit` identity gate — submitting or
-   * withdrawing a submission is reserved to the row's own responsible.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @param {InterventionStatus} target - The status the bulk action targets.
-   *
-   * @returns {ReadonlyArray<string>} The eligible ids.
-   */
-  protected transitionableSelectedIds(target: InterventionStatus): ReadonlyArray<string> {
-    const selected: ReadonlySet<string> = this.selectedIds();
-    const transitioning: readonly string[] = this.store.transitioningInterventionIds();
-    const currentMemberIri: string | null = this.memberIri();
-
-    return this.items()
-      .filter((item: InterventionListItemViewModel): boolean => selected.has(item.intervention.id))
-      .filter(
-        (item: InterventionListItemViewModel): boolean =>
-          !transitioning.includes(item.intervention.id),
-      )
-      .filter((item: InterventionListItemViewModel): boolean =>
-        item.intervention.allowedTransitions.includes(target),
-      )
-      .filter((item: InterventionListItemViewModel): boolean => {
-        const requiresIdentity: boolean =
-          target === 'submitted' ||
-          (item.intervention.status === 'submitted' && target === 'in_progress');
-
-        return !requiresIdentity || currentMemberIri === item.intervention.responsible;
-      })
-      .map((item: InterventionListItemViewModel): string => item.intervention.id);
-  }
-
-  /**
-   * Method confirmBulkTransition
-   * @method confirmBulkTransition
-   *
-   * @description
-   * Sends the selection's eligible subset for `target` to the store, one
-   * `transition` call per intervention with its own cached revision, and
-   * clears the selection — mirroring `confirmDelete`'s bulk branch.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @param {InterventionStatus} target - The status to move the eligible rows to.
-   *
-   * @returns {void}
-   */
-  protected confirmBulkTransition(target: InterventionStatus): void {
-    const ids: ReadonlyArray<string> = this.transitionableSelectedIds(target);
-    if (ids.length === 0) return;
-
-    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
-      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
-        item.intervention.id,
-        item.intervention,
-      ]),
-    );
-
-    for (const id of ids) {
-      const intervention: InterventionOutput | undefined = byId.get(id);
-      if (intervention) {
-        this.store.transition({
-          id: intervention.id,
-          status: target,
-          revision: intervention.revision,
-        });
-      }
-    }
-
-    this.selectedIds.set(new Set<string>());
-  }
-
-  /**
-   * Method requestAssign
-   * @method requestAssign
-   *
-   * @description
-   * Opens the assign dialog for a single row's "Assign responsible…" entry.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @param {InterventionOutput} intervention - The row's intervention.
-   *
-   * @returns {void}
-   */
-  protected requestAssign(intervention: InterventionOutput): void {
-    this.pendingBulkAssignIds.set(null);
-    this.assignRequest.set({
-      interventionId: intervention.id,
-      interventionName: intervention.name,
-      currentResponsible: intervention.responsible,
+  /** Merges query params into the URL without touching the path. */
+  private navigateQuery(queryParams: Record<string, string | null>): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
-  /**
-   * Method requestBulkAssign
-   * @method requestBulkAssign
-   *
-   * @description
-   * Opens the assign dialog for the selection's assignable subset. A no-op
-   * when nothing selected can actually be assigned.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @returns {void}
-   */
-  protected requestBulkAssign(): void {
-    const ids: ReadonlyArray<string> = this.assignableSelectedIds();
-    if (ids.length === 0) return;
-
-    this.pendingBulkAssignIds.set(ids);
-    this.assignRequest.set({
-      interventionId: '',
-      interventionName:
-        ids.length === 1
-          ? $localize`:@@intervention.list.bulkAssignNameOne:1 intervention`
-          : $localize`:@@intervention.list.bulkAssignNameMany:${ids.length}:count: interventions`,
-      currentResponsible: null,
-    });
-  }
-
-  /**
-   * Method submitAssign
-   * @method submitAssign
-   *
-   * @description
-   * Sends the picked responsible to the store: once for the single pending
-   * row, or once per eligible id when the dialog was opened from the bulk
-   * toolbar — each call carries that row's own cached revision, mirroring
-   * `confirmDelete`'s bulk branch.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @param {InterventionAssignSubmittedEvent} event - The picked member.
-   *
-   * @returns {void}
-   */
-  protected submitAssign(event: InterventionAssignSubmittedEvent): void {
-    const byId: ReadonlyMap<string, InterventionOutput> = new Map(
-      this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
-        item.intervention.id,
-        item.intervention,
-      ]),
-    );
-
-    const bulkIds: ReadonlyArray<string> | null = this.pendingBulkAssignIds();
-    if (bulkIds) {
-      for (const id of bulkIds) {
-        const intervention: InterventionOutput | undefined = byId.get(id);
-        if (intervention) {
-          this.store.assignResponsible({
-            interventionId: intervention.id,
-            responsible: event.responsible,
-            revision: intervention.revision,
-          });
-        }
-      }
-      this.selectedIds.set(new Set<string>());
-    } else {
-      const intervention: InterventionOutput | undefined = byId.get(event.interventionId);
-      if (intervention) {
-        this.store.assignResponsible({
-          interventionId: intervention.id,
-          responsible: event.responsible,
-          revision: intervention.revision,
-        });
-      }
-    }
-
-    this.assignRequest.set(null);
-    this.pendingBulkAssignIds.set(null);
-  }
-
-  /**
-   * Method dismissAssign
-   * @method dismissAssign
-   *
-   * @description
-   * Closes the assign dialog without submitting — Escape, the backdrop or Cancel.
-   *
-   * @access protected
-   * @since 6.0.0
-   *
-   * @returns {void}
-   */
-  protected dismissAssign(): void {
-    this.assignRequest.set(null);
-    this.pendingBulkAssignIds.set(null);
-  }
-
-  /**
-   * Method openRecurrences
-   *
-   * @description Opens the "Recurrences" sheet, fetching the organization's rules once on first open.
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected openRecurrences(): void {
-    this.recurrencesVisible.set(true);
-    if (this.recurrenceStore.listCallState().status !== 'idle') return;
-
-    this.recurrenceStore.load({ organizationIri: `/api/organizations/${this.organizationId()}` });
-  }
-
-  /** Closes the "Recurrences" sheet. */
-  protected closeRecurrences(): void {
-    this.recurrencesVisible.set(false);
-  }
-
-  /**
-   * Method submitRecurrenceForm
-   *
-   * @description
-   * Creates or updates a recurrence, depending on whether the sheet's draft
-   * carries an existing row's id.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InterventionRecurrenceFormSubmittedEvent} event - The submitted draft.
-   *
-   * @returns {void}
-   */
-  protected submitRecurrenceForm(event: InterventionRecurrenceFormSubmittedEvent): void {
-    if (event.recurrenceId === null) {
-      this.recurrenceStore.create({
-        organization: `/api/organizations/${this.organizationId()}`,
-        template: `/api/intervention-templates/${event.templateId}`,
-        name: event.name,
-        site: event.site ?? undefined,
-        responsible: event.responsible ?? undefined,
-        frequency: event.frequency,
-        interval: event.interval,
-        anchorDate: event.anchorDate,
-        timezone: event.timezone,
-        leadTimeDays: event.leadTimeDays,
-        endAt: event.endAt ?? undefined,
-      });
-      return;
-    }
-
-    this.recurrenceStore.update({
-      recurrenceId: event.recurrenceId,
-      input: {
-        name: event.name,
-        site: event.site,
-        responsible: event.responsible,
-        frequency: event.frequency,
-        interval: event.interval,
-        anchorDate: event.anchorDate,
-        timezone: event.timezone,
-        leadTimeDays: event.leadTimeDays,
-        endAt: event.endAt,
-      },
-    });
-  }
-
-  /** Deletes a recurrence the sheet's inline confirmation approved. */
-  protected removeRecurrence(recurrenceId: string): void {
-    this.recurrenceStore.remove(recurrenceId);
-  }
-
-  /** Pauses or resumes a recurrence from the sheet's table toggle. */
-  protected toggleRecurrenceActive(event: {
-    readonly recurrenceId: string;
-    readonly isActive: boolean;
-  }): void {
-    this.recurrenceStore.update({
-      recurrenceId: event.recurrenceId,
-      input: { isActive: event.isActive },
-    });
-  }
-
-  /**
-   * Method reload
-   * @method reload
-   *
-   * @description
-   * Re-runs the current query after a failure.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
-   */
-  protected reload(): void {
-    this.store.load({
-      organizationId: this.organizationId(),
-      options: {
-        ...buildInterventionListOptions(
-          this.filters(),
-          this.sortOrder(),
-          this.searchTerm(),
-          new Date(),
-          this.filters().mine ? this.memberIri() : null,
-        ),
-        page: this.page(),
-        itemsPerPage: this.pageSize(),
-      },
-    });
-  }
-
-  /**
-   * Method exportCsv
-   * @method exportCsv
-   *
-   * @description
-   * Downloads the current question as CSV, serialized server-side
-   * (`InterventionService.exportCsv`, `GET /api/interventions/export`) —
-   * the file is never wider than 50,000 rows, past which the endpoint
-   * answers `422` instead. Filters the endpoint does not accept (`mine`,
-   * `label`, a planned-start bound, …) are silently left out of the request
-   * by {@link buildInterventionExportOptions}; when that narrows the export
-   * below what the screen shows, a toast says so before the request fires.
-   *
-   * @access protected
-   * @since 6.2.0
-   *
-   * @returns {void}
-   */
-  protected exportCsv(): void {
-    if (this.store.totalInterventions() === 0) return;
-
-    const { options, droppedFilterCount } = buildInterventionExportOptions(
-      this.filters(),
-      this.sortOrder(),
-      this.searchTerm(),
-      new Date(),
-      this.filters().mine ? this.memberIri() : null,
-    );
-
-    if (droppedFilterCount > 0) {
-      this.feedback.warn(
-        $localize`:@@intervention.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
-      );
-    }
-
-    this.exportBusy.set(true);
-
-    this.interventionService
-      .exportCsv(this.organizationId(), options)
-      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (blob: Blob): void => {
-          this.exportBusy.set(false);
-          this.browserDownload.trigger(blob, this.exportFilename());
-        },
-        error: (error: HttpErrorResponse): void => {
-          this.exportBusy.set(false);
-          void this.resolveExportErrorDetail(error).then((detail: string | null): void => {
-            this.feedback.error(
-              detail ?? $localize`:@@intervention.list.exportFailed:Couldn't export interventions.`,
-            );
-          });
-        },
-      });
+  /** Records a keystroke into the draft term the debounce watches. */
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
   }
 
   /**
    * Resolves the RFC 7807 `detail` a `422` export response carries — the
    * response is fetched as a blob, so a JSON error body arrives as one too
    * and must be read back through `Blob.text()` before it can be parsed.
-   * `null` when the body isn't one (a network failure, a non-JSON body),
-   * letting the caller fall back to the generic message.
    */
   private async resolveExportErrorDetail(error: HttpErrorResponse): Promise<string | null> {
     if (!(error.error instanceof Blob)) return null;
@@ -3385,17 +2332,7 @@ export class InterventionsPage {
     return `interventions-${this.organizationId()}-${yyyy}${mm}${dd}.csv`;
   }
 
-  /** Merges query params into the URL without touching the path. */
-  private navigateQuery(queryParams: Record<string, string | null>): void {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-
-  /** Projects one intervention into the row view model. */
+  /** Projects one intervention into the List row view model. */
   private toItemViewModel(intervention: InterventionOutput): InterventionListItemViewModel {
     const isTerminal: boolean =
       intervention.status === 'published' || intervention.status === 'abandoned';
@@ -3420,6 +2357,23 @@ export class InterventionsPage {
     };
   }
 
+  /** Projects one intervention into the Board card view model. */
+  private toBoardCardViewModel(intervention: InterventionOutput): InterventionBoardCardViewModel {
+    const dueTime: number | null = intervention.dueAt
+      ? new Date(intervention.dueAt).getTime()
+      : null;
+    const isTerminal: boolean =
+      intervention.status === 'published' || intervention.status === 'abandoned';
+
+    return {
+      intervention,
+      isOverdue: dueTime !== null && !isTerminal && dueTime < Date.now(),
+      responsible: intervention.responsible
+        ? (this.memberDisplayMap().get(intervention.responsible) ?? null)
+        : null,
+    };
+  }
+
   /** Resolves a member IRI to an avatar, naming them rather than showing a hole. */
   private toPerson(memberIri: string): MemberAvatar {
     const member: MemberSelectOption | undefined = this.memberDisplayMap().get(memberIri);
@@ -3434,6 +2388,85 @@ export class InterventionsPage {
       tooltip: member.roleLabel
         ? `${member.displayName} · ${member.roleLabel}`
         : member.displayName,
+    };
+  }
+
+  /**
+   * Method onCalendarMonthChanged
+   * @description Records the Calendar tab's displayed anchor — the load effect reads it back and gates on it being non-`null`.
+   * @access protected
+   * @since 11.0.0
+   * @param {Date} month - The anchor `InterventionCalendar` reports.
+   * @returns {void}
+   */
+  protected onCalendarMonthChanged(month: Date): void {
+    this.calendarMonth.set(month);
+  }
+
+  /** Re-fetches the Calendar tab's current window after a failure. */
+  protected calendarReload(): void {
+    const month: Date | null = this.calendarMonth();
+    if (month === null) return;
+
+    this.calendarStore.load({
+      organizationId: this.organizationId(),
+      window: this.calendarWindowOf(month),
+      filters: this.toCalendarFilters(this.filters()),
+    });
+  }
+
+  /**
+   * Method calendarWindowOf
+   *
+   * @description
+   * The bounded date window the Calendar's store fetches — the displayed
+   * month, one month either side, so the grid's leading/trailing filler days
+   * from the neighboring months are covered too.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {Date} anchor - Any date inside the displayed month.
+   *
+   * @returns {{ after: Date; before: Date }} The window to fetch.
+   */
+  private calendarWindowOf(anchor: Date): { readonly after: Date; readonly before: Date } {
+    return {
+      after: new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1),
+      before: new Date(anchor.getFullYear(), anchor.getMonth() + 2, 0, 23, 59, 59),
+    };
+  }
+
+  /**
+   * Method toCalendarFilters
+   *
+   * @description
+   * Narrows the URL's full filter set down to the four fields
+   * `InterventionCalendarFilters` accepts, reusing
+   * {@link buildInterventionListOptions} rather than duplicating its
+   * `equals`/`isAnyOf` folding logic — the sort and search it also computes
+   * are discarded, since the Calendar's store neither sorts nor searches.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionListFilters} filters - The URL's active narrowing.
+   *
+   * @returns {InterventionCalendarFilters} The narrowing the store accepts.
+   */
+  private toCalendarFilters(filters: InterventionListFilters): InterventionCalendarFilters {
+    const options: InterventionListOptions = buildInterventionListOptions(
+      filters,
+      { field: 'dueAt', direction: 'asc' },
+      '',
+      new Date(),
+    );
+
+    return {
+      status: options.status,
+      type: options.type,
+      site: options.site,
+      responsible: options.responsible,
     };
   }
   //#endregion

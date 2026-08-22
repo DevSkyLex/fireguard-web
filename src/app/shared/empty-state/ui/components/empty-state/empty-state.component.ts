@@ -16,15 +16,24 @@ import { HlmEmptyImports } from '@shared/ui/empty';
  * The icon is a name, not a component: the caller registers it with
  * `provideIcons()` so this concept pulls in no icon set of its own.
  *
- * `host: { class: 'block' }` because every caller styles this tag directly
- * (`class="rounded-md border border-dashed ..."`) expecting a real box —
+ * The dashed box belongs to this component, not to its callers. `hlmEmpty`
+ * already sets `rounded-xl border-dashed p-6`, but a dashed style with no
+ * width paints nothing under Tailwind's preflight, so the missing
+ * `border border-border` is supplied here once — `DESIGN.md` "mark genuinely
+ * empty containers with a dashed border" then holds everywhere by
+ * construction. Callers pass layout only (`flex-1`, a height); a call site
+ * that restates the border is a duplicate, and one that paints it destructive
+ * is an error state wearing the wrong component — reach for
+ * `@shared/error-state` instead.
+ *
+ * `host: { class: 'block' }` because callers still size this tag directly —
  * without it the host falls back to the browser's default `display: inline`
  * for an unrecognized element, and its border/padding render around whatever
  * the inline layout algorithm decides rather than around the visible content,
  * which only becomes obvious once this sits inside a narrower flex ancestor
  * (a tab panel, in particular) instead of a full-width block column.
  *
- * @version 1.1.0
+ * @version 2.0.0
  *
  * @example
  * ```html

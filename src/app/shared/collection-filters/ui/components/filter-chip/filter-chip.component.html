@@ -1,26 +1,30 @@
 <span
-  class="inline-flex h-8 items-center overflow-visible rounded-md border border-border bg-secondary/40 text-sm text-foreground max-sm:h-11 dark:bg-secondary/20"
+  class="inline-flex h-7 max-w-full items-center overflow-hidden rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20 [&_button]:rounded-none!"
   [attr.data-testid]="chipTestId()"
 >
-  <span class="inline-flex items-center gap-1.5 px-2 whitespace-nowrap text-muted-foreground">
+  <span
+    class="inline-flex shrink-0 items-center gap-1 px-2 whitespace-nowrap text-muted-foreground"
+  >
     <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
     {{ fieldLabel() }}
   </span>
 
-  <span class="flex h-4 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 
   @if (hasOperatorChoice()) {
     <hlm-select
+      class="shrink-0"
       [value]="operator()"
       [itemToString]="operatorLabelOf"
       (valueChange)="onOperatorPicked($event)"
     >
       <label [attr.for]="operatorTriggerId" class="sr-only">{{ changeOperatorLabel() }}</label>
       <hlm-select-trigger
+        size="sm"
         [buttonId]="operatorTriggerId"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none max-sm:min-h-11 dark:bg-transparent"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
         [attr.data-testid]="operatorTestId()"
       >
         <span class="whitespace-nowrap text-muted-foreground">{{
@@ -37,28 +41,28 @@
     </hlm-select>
   } @else {
     <span
-      class="px-2 whitespace-nowrap text-muted-foreground"
+      class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
       [attr.data-testid]="operatorTestId()"
     >
       {{ operatorLabelOf(operator()) }}
     </span>
   }
 
-  <span class="flex h-4 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 
-  <span class="inline-flex items-center">
+  <span class="inline-flex min-w-0 items-center overflow-hidden">
     <ng-content />
   </span>
 
-  <span class="flex h-4 items-center">
+  <span class="flex h-3.5 shrink-0 items-center">
     <hlm-separator orientation="vertical" />
   </span>
 
   <button
     type="button"
-    class="inline-flex h-full shrink-0 items-center justify-center rounded-e-[calc(var(--radius-md)-1px)] px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-w-11"
+    class="inline-flex h-full shrink-0 items-center justify-center px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-w-11"
     [attr.data-testid]="removeTestId()"
     [attr.aria-label]="removeLabel()"
     (click)="removed.emit()"

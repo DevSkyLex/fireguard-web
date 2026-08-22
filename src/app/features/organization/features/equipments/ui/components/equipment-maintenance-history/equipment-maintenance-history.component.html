@@ -1,64 +1,63 @@
-<div class="flex flex-col gap-3" data-testid="equipment-maintenance-history">
-  <div class="flex flex-col gap-0.5">
-    <h2 class="text-base font-semibold" i18n="@@equipment.maintenance.title">
-      Maintenance history
-    </h2>
-    <p class="text-xs text-muted-foreground" i18n="@@equipment.maintenance.caption">
+<section hlmCard data-testid="equipment-maintenance-history">
+  <div hlmCardHeader>
+    <h2 hlmCardTitle i18n="@@equipment.maintenance.title">Maintenance history</h2>
+    <p hlmCardDescription i18n="@@equipment.maintenance.caption">
       Every status change and intervention recorded against this equipment.
     </p>
   </div>
 
-  @if (loading()) {
-    <div
-      class="flex flex-col gap-3"
-      role="status"
-      aria-label="Loading maintenance history"
-      i18n-aria-label="@@equipment.maintenance.loadingAria"
-      data-testid="equipment-maintenance-history-loading"
-    >
-      <hlm-skeleton class="h-12 w-full" />
-      <hlm-skeleton class="h-12 w-full" />
-    </div>
-  } @else if (orderedLogs().length === 0) {
-    <app-empty-state
-      icon="lucideHistory"
-      class="rounded-md border border-dashed border-border p-6"
-      title="No maintenance recorded yet"
-      i18n-title="@@equipment.maintenance.emptyTitle"
-      description="Status changes and interventions on this equipment will appear here."
-      i18n-description="@@equipment.maintenance.emptyDesc"
-      data-testid="equipment-maintenance-history-empty"
-    />
-  } @else {
-    <ul class="flex flex-col divide-y divide-border" data-testid="equipment-maintenance-log-list">
-      @for (log of orderedLogs(); track log.id) {
-        <li class="flex flex-col gap-1 py-3" data-testid="equipment-maintenance-log-row">
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <span class="inline-flex items-center gap-1 text-muted-foreground">
-              <ng-icon [name]="sourceDescriptorOf(log.source).icon" aria-hidden="true" />
-              <span>{{ sourceDescriptorOf(log.source).label }}</span>
-            </span>
-            <span class="text-foreground">{{ dateRangeOf(log).started }}</span>
-            @if (dateRangeOf(log).completed; as completed) {
-              <span class="text-muted-foreground" i18n="@@equipment.maintenance.completedAt"
-                >→ {{ completed }}</span
+  <div hlmCardContent class="flex flex-col gap-3">
+    @if (loading()) {
+      <div
+        class="flex flex-col gap-3"
+        role="status"
+        aria-label="Loading maintenance history"
+        i18n-aria-label="@@equipment.maintenance.loadingAria"
+        data-testid="equipment-maintenance-history-loading"
+      >
+        <hlm-skeleton class="h-12 w-full" />
+        <hlm-skeleton class="h-12 w-full" />
+      </div>
+    } @else if (orderedLogs().length === 0) {
+      <app-empty-state
+        icon="lucideHistory"
+        title="No maintenance recorded yet"
+        i18n-title="@@equipment.maintenance.emptyTitle"
+        description="Status changes and interventions on this equipment will appear here."
+        i18n-description="@@equipment.maintenance.emptyDesc"
+        data-testid="equipment-maintenance-history-empty"
+      />
+    } @else {
+      <ul class="flex flex-col divide-y divide-border" data-testid="equipment-maintenance-log-list">
+        @for (log of orderedLogs(); track log.id) {
+          <li class="flex flex-col gap-1 py-3" data-testid="equipment-maintenance-log-row">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+              <span class="inline-flex items-center gap-1 text-muted-foreground">
+                <ng-icon [name]="sourceDescriptorOf(log.source).icon" aria-hidden="true" />
+                <span>{{ sourceDescriptorOf(log.source).label }}</span>
+              </span>
+              <span class="text-foreground">{{ dateRangeOf(log).started }}</span>
+              @if (dateRangeOf(log).completed; as completed) {
+                <span class="text-muted-foreground" i18n="@@equipment.maintenance.completedAt"
+                  >→ {{ completed }}</span
+                >
+              }
+            </div>
+            @if (log.summary; as summary) {
+              <p class="text-sm text-muted-foreground">{{ summary }}</p>
+            }
+            @if (log.interventionId; as interventionId) {
+              <a
+                class="w-fit text-sm text-muted-foreground hover:text-foreground hover:underline"
+                data-testid="equipment-maintenance-log-intervention-link"
+                [attr.aria-label]="interventionLinkAriaLabelOf(log)"
+                [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"
+                >FG-{{ log.interventionNumber }}</a
               >
             }
-          </div>
-          @if (log.summary; as summary) {
-            <p class="text-sm text-muted-foreground">{{ summary }}</p>
-          }
-          @if (log.interventionId; as interventionId) {
-            <a
-              class="w-fit text-sm text-muted-foreground hover:text-foreground hover:underline"
-              data-testid="equipment-maintenance-log-intervention-link"
-              [attr.aria-label]="interventionLinkAriaLabelOf(log)"
-              [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"
-              >FG-{{ log.interventionNumber }}</a
-            >
-          }
-        </li>
-      }
-    </ul>
-  }
-</div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

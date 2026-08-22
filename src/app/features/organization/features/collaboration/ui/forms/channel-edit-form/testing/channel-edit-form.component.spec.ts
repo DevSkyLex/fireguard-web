@@ -1,11 +1,11 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ChannelEditForm } from '../channel-edit-form.component';
-import type { EditChannelDraft } from '../models';
+import type { ChannelEditDraft } from '../models';
 
 describe('ChannelEditForm', () => {
   let fixture: ComponentFixture<ChannelEditForm>;
-  let submissions: EditChannelDraft[];
+  let submissions: ChannelEditDraft[];
   let cancellations: number;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;

@@ -136,8 +136,37 @@ describe('InterventionPlanningOptionsStore', () => {
     expect(store.hasTemplates()).toBe(false);
   });
 
-  it('surfaces an error and clears options when a planning load fails', async () => {
+  it('keeps the option lists that answered when one source fails', async () => {
+    templates.list.mockReturnValue(throwError(() => new Error('boom')));
+
+    store.loadCreationOptions('org-1');
+
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.sites()).not.toEqual([]);
+    expect(store.members()).not.toEqual([]);
+    expect(store.labels()).not.toEqual([]);
+    expect(store.templates()).toEqual([]);
+    expect(dispatch).toHaveBeenCalled();
+  });
+
+  it('reports the degradation rather than swallowing it', async () => {
     facilities.list.mockReturnValue(throwError(() => new Error('boom')));
+
+    store.loadCreationOptions('org-1');
+
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.sites()).toEqual([]);
+    expect(store.members()).not.toEqual([]);
+    expect(dispatch).toHaveBeenCalled();
+  });
+
+  it('surfaces a real error only when every source fails', async () => {
+    facilities.list.mockReturnValue(throwError(() => new Error('boom')));
+    members.list.mockReturnValue(throwError(() => new Error('boom')));
+    labels.list.mockReturnValue(throwError(() => new Error('boom')));
+    templates.list.mockReturnValue(throwError(() => new Error('boom')));
 
     store.loadCreationOptions('org-1');
 

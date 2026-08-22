@@ -7,12 +7,14 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideShieldCheck } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ApprovalRequestOutput,
@@ -23,6 +25,12 @@ import {
   type ApprovalRequestsStoreType,
 } from '@features/organization/features/approvals/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
@@ -40,7 +48,7 @@ import { ApprovalRequestTable } from '../../tables/approval-request-table';
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** Every status chip offered in the filter row. */
+/** Every status chip offered in the status field's value control. */
 const STATUS_VALUES: readonly ApprovalStatus[] = [
   'pending',
   'approved',
@@ -49,16 +57,25 @@ const STATUS_VALUES: readonly ApprovalStatus[] = [
   'expired',
 ];
 
+/** The two keys {@link ApprovalsPage.filterFields} declares. */
+type ApprovalFilterKey = 'status' | 'actionType';
+
 /**
  * Component ApprovalsPage
  * @class ApprovalsPage
  *
  * @description
- * Route entry page for the organization's four-eyes approvals inbox: a
- * status `hlm-toggle-group` row (`pending` preselected — the default,
- * actionable view), an action-type select sourced from the catalog
- * endpoint, the request grid, and the shared decision dialog gated
- * `organization.approvals.decide`.
+ * Route entry page for the organization's four-eyes approvals inbox:
+ * `app-collection-filter-bar` (`@shared/collection-filters`) carries the
+ * status and action-type narrowings as editable chips above the request grid
+ * and the shared decision dialog gated `organization.approvals.decide`. The
+ * status chip keeps its `hlm-toggle-group` of `app-approval-status-tag`
+ * options as its value control — the same control the toolbar used to render
+ * directly — so the raw enum never leaks into the template; the action-type
+ * chip keeps the `hlm-select` sourced from the catalog endpoint. Both fields
+ * are genuinely optional at the wire (`ApprovalRequestListQuery`), so
+ * clearing either chip narrows to "any" rather than being disabled. The list
+ * endpoint reads no free-text search, so this page has no search box.
  *
  * Owns the query the table renders (filters, paging) and the decision
  * dialog's target. On a 409 decide failure the row may have moved out from
@@ -67,7 +84,7 @@ const STATUS_VALUES: readonly ApprovalStatus[] = [
  * `decideErrorText`, and silently re-reads the row (`store.refresh`) so the
  * table is correct the moment the dialog closes.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -79,13 +96,15 @@ const STATUS_VALUES: readonly ApprovalStatus[] = [
     ApprovalStatusTag,
     ApprovalRequestTable,
     ApprovalDecisionDialog,
+    CollectionFilterBar,
+    CollectionFilterToggle,
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
     ...HlmSelectImports,
     ...HlmToggleGroupImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideShieldCheck })],
+  providers: [provideIcons({ lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag })],
   templateUrl: './approvals-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,11 +132,20 @@ export class ApprovalsPage {
     OrganizationPermissionService,
   );
 
-  /** Every status chip offered. */
+  /** Every status chip offered by the status field's value control. */
   protected readonly statusValues: readonly ApprovalStatus[] = STATUS_VALUES;
 
-  /** The active status narrowing — `pending` is the default, actionable view. */
-  protected readonly status: WritableSignal<ApprovalStatus> = signal<ApprovalStatus>('pending');
+  /**
+   * Property status
+   * @readonly
+   * @description The active status narrowing, or `null` for every status. `pending` is the default, actionable view on arrival — the reader clears the chip to see every status.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<ApprovalStatus | null>}
+   */
+  protected readonly status: WritableSignal<ApprovalStatus | null> = signal<ApprovalStatus | null>(
+    'pending',
+  );
 
   /** The active action-type narrowing, or `null` for every type. */
   protected readonly actionType: WritableSignal<string | null> = signal<string | null>(null);
@@ -131,6 +159,74 @@ export class ApprovalsPage {
   /** The row and decision currently opened in the confirm dialog, or `null` when it is closed. */
   protected readonly decisionTarget: WritableSignal<ApprovalDecisionTarget | null> =
     signal<ApprovalDecisionTarget | null>(null);
+
+  /** The filter bar's field catalog: status, then action type. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'status',
+      fieldLabel: $localize`:@@approvals.filter.status:Status`,
+      icon: 'lucideCircleDot',
+      operators: ['equals'],
+    },
+    {
+      key: 'actionType',
+      fieldLabel: $localize`:@@approvals.filter.actionType:Action type`,
+      icon: 'lucideTag',
+      operators: ['equals'],
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => [
+      ...(this.status() !== null ? ['status'] : []),
+      ...(this.actionType() !== null ? ['actionType'] : []),
+    ],
+  );
+
+  /** Which field's value control currently renders forced open — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<ApprovalFilterKey | null> =
+    signal<ApprovalFilterKey | null>(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Status" chip's value control, projected into the filter bar. */
+  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /** The "Action type" chip's value control, projected into the filter bar. */
+  private readonly actionTypeChipTemplate = viewChild<TemplateRef<unknown>>('actionTypeChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({
+    status: this.statusChipTemplate(),
+    actionType: this.actionTypeChipTemplate(),
+  }));
 
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly ApprovalRequestOutput[]> = computed(() =>
@@ -184,7 +280,7 @@ export class ApprovalsPage {
 
     effect((): void => {
       const organizationId: string = this.organizationId();
-      const status: ApprovalStatus = this.status();
+      const status: ApprovalStatus | null = this.status();
       const actionType: string | null = this.actionType();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
@@ -193,7 +289,7 @@ export class ApprovalsPage {
         this.store.load({
           organizationId,
           options: { page, itemsPerPage: pageSize },
-          query: { status, actionType: actionType ?? undefined },
+          query: { status: status ?? undefined, actionType: actionType ?? undefined },
         });
       });
     });
@@ -225,17 +321,25 @@ export class ApprovalsPage {
   //#region Methods
   /**
    * Method applyStatus
-   * @description Narrows the list to one status, from the toggle group.
+   *
+   * @description
+   * Narrows the list to one status, from the status chip's toggle group, or
+   * clears it to `null` (every status) when the group deselects — either the
+   * active button clicked again (`nullable`) or the chip's own remove
+   * button, which routes here through {@link onFieldRemoved}.
+   *
    * @access protected
    * @since 1.0.0
    * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
    * @returns {void}
    */
   protected applyStatus(value: string | readonly string[] | null | undefined): void {
-    if (typeof value !== 'string' || !this.statusValues.includes(value as ApprovalStatus)) return;
+    if (Array.isArray(value) || value === undefined) return;
+    if (value !== null && !this.statusValues.includes(value as ApprovalStatus)) return;
 
     this.page.set(1);
-    this.status.set(value as ApprovalStatus);
+    this.status.set(value as ApprovalStatus | null);
+    if (this.openFilterKey() === 'status') this.openFilterKey.set(null);
   }
 
   /**
@@ -249,6 +353,7 @@ export class ApprovalsPage {
   protected applyActionType(value: string | null | undefined): void {
     this.page.set(1);
     this.actionType.set(value ?? null);
+    if (this.openFilterKey() === 'actionType') this.openFilterKey.set(null);
   }
 
   /**
@@ -261,6 +366,61 @@ export class ApprovalsPage {
    */
   protected actionTypeLabelOf = (value: string): string =>
     this.actionTypeOptions().find((option) => option.value === value)?.label ?? value;
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering the picked field's chip before it carries a value.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as ApprovalFilterKey);
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} key - The field key whose chip was removed.
+   * @returns {void}
+   */
+  protected onFieldRemoved(key: string): void {
+    if (key === 'status') {
+      this.applyStatus(null);
+      return;
+    }
+
+    this.applyActionType(null);
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.1.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method clearFilters
+   * @description Drops every narrowing at once, returning to the first page.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected clearFilters(): void {
+    this.page.set(1);
+    this.status.set(null);
+    this.actionType.set(null);
+    this.openFilterKey.set(null);
+  }
 
   /**
    * Method setPageSize
@@ -298,7 +458,7 @@ export class ApprovalsPage {
     this.store.load({
       organizationId: this.organizationId(),
       options: { page: this.page(), itemsPerPage: this.pageSize() },
-      query: { status: this.status(), actionType: this.actionType() ?? undefined },
+      query: { status: this.status() ?? undefined, actionType: this.actionType() ?? undefined },
     });
   }
 

@@ -7,12 +7,22 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideHistory, lucideLock } from '@ng-icons/lucide';
+import {
+  lucideActivity,
+  lucideCalendarDays,
+  lucideCircleAlert,
+  lucideHistory,
+  lucideLock,
+} from '@ng-icons/lucide';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type {
   AuditActionModule,
   AuditEventOutput,
@@ -25,8 +35,14 @@ import {
   AuditEventsStore,
   type AuditEventsStoreType,
 } from '@features/organization/features/audit/state';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
@@ -34,8 +50,14 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { AuditEventTable } from '../../tables/audit-event-table';
 
+/** How long typing settles before the search reaches the wire. */
+const SEARCH_DEBOUNCE_MS: number = 300;
+
 /** The page sizes offered under the table — the server default first, the verified ceiling last. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
+
+/** The two chips this journal's filter bar renders — the backend's real filter surface, minus the nine params no page exposes yet. */
+type AuditFilterKey = 'action' | 'dateRange';
 
 /** One filter combobox option: the raw action id and its resolved presentation. */
 interface AuditActionOption {
@@ -95,7 +117,17 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
  * rather than the generic error state, since the read permission
  * (`organization.audit.read`) is not in the default member role.
  *
- * @version 1.0.0
+ * The toolbar follows the shared collection pattern
+ * (`app-collection-toolbar` → `app-collection-filter-bar`,
+ * `@shared/collection-filters`/`@shared/collection-toolbar`): a search box
+ * reaching the backend's free-text `?search=` (action and subject are the
+ * text-richest columns this table has), and the action combobox and
+ * date-range picker relocated into the filter bar's two chips instead of
+ * sitting bare at opposite toolbar edges. Only these two params get a chip —
+ * the backend accepts nine more (`actorType`, `subjectId`, `tenantId`, …) that
+ * no page exposes yet, a separate decision.
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -105,13 +137,24 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
     EmptyState,
     ErrorState,
     AuditEventTable,
+    CollectionFilterBar,
+    CollectionFilterToggle,
     CollectionPagination,
+    CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
     ...HlmComboboxImports,
     ...HlmDatePickerImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideHistory, lucideLock })],
+  providers: [
+    provideIcons({
+      lucideActivity,
+      lucideCalendarDays,
+      lucideCircleAlert,
+      lucideHistory,
+      lucideLock,
+    }),
+  ],
   templateUrl: './audit-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -151,6 +194,12 @@ export class AuditPage {
   /** How many rows a page holds. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
+  /** What the search box holds, before the debounce settles. */
+  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
+  /** The settled search term the load effect reads, updated once {@link draftSearch} debounces. */
+  protected readonly search: WritableSignal<string> = signal<string>('');
+
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly AuditEventOutput[]> = computed(() =>
     this.store.events(),
@@ -167,6 +216,77 @@ export class AuditPage {
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalEvents() / this.pageSize())),
   );
+
+  /** The filter bar's field catalog: the action combobox and the date-range picker, each rendered through its own chip template. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'action',
+      fieldLabel: $localize`:@@audit.filter.action:Action`,
+      icon: 'lucideActivity',
+      operators: ['equals'],
+    },
+    {
+      key: 'dateRange',
+      fieldLabel: $localize`:@@audit.filter.dateRange:Date range`,
+      icon: 'lucideCalendarDays',
+      operators: ['between'],
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const keys: AuditFilterKey[] = [];
+      if (this.action() !== null) keys.push('action');
+      if (this.dateRange() !== undefined) keys.push('dateRange');
+
+      return keys;
+    },
+  );
+
+  /** Which field the filter bar currently renders mid-pick, before it carries a value — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<AuditFilterKey | null> =
+    signal<AuditFilterKey | null>(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only, seeded by `initialCollectionFilterBarVisibility` then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The action combobox, projected into the "action" chip. */
+  private readonly actionChipTemplate = viewChild<TemplateRef<unknown>>('actionChip');
+
+  /** The date-range picker, projected into the "dateRange" chip. */
+  private readonly dateRangeChipTemplate = viewChild<TemplateRef<unknown>>('dateRangeChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description Each field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({
+    action: this.actionChipTemplate(),
+    dateRange: this.dateRangeChipTemplate(),
+  }));
   //#endregion
 
   //#region Constructor
@@ -175,23 +295,32 @@ export class AuditPage {
    * @constructor
    *
    * @description
-   * Wires the load effect over the active organization, filters and paging.
+   * Wires the debounced search round-trip and the load effect over the active
+   * organization, filters, search and paging.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    toObservable(this.draftSearch)
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term: string): void => {
+        this.page.set(1);
+        this.search.set(term);
+      });
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const action: string | null = this.action();
       const range: [Date, Date] | undefined = this.dateRange();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
+      const search: string = this.search();
 
       untracked((): void => {
         this.store.load({
           organizationId,
-          options: { page, itemsPerPage: pageSize },
+          options: { page, itemsPerPage: pageSize, search: search === '' ? undefined : search },
           query: {
             action: action ?? undefined,
             from: range?.[0]?.toISOString(),
@@ -216,7 +345,7 @@ export class AuditPage {
 
   /**
    * Method applyAction
-   * @description Narrows the list to one action, or clears the narrowing.
+   * @description Narrows the list to one action, or clears the narrowing. Closes the "action" chip's pending pick once a real value lands.
    * @access protected
    * @since 1.0.0
    * @param {string | null | undefined} value - The combobox's emitted value.
@@ -225,11 +354,12 @@ export class AuditPage {
   protected applyAction(value: string | null | undefined): void {
     this.page.set(1);
     this.action.set(value ?? null);
+    if (value && this.openFilterKey() === 'action') this.openFilterKey.set(null);
   }
 
   /**
    * Method applyDateRange
-   * @description Narrows the list to an inclusive `[from, to]` window, or clears it.
+   * @description Narrows the list to an inclusive `[from, to]` window, or clears it. Closes the "dateRange" chip's pending pick once a real range lands.
    * @access protected
    * @since 1.0.0
    * @param {[Date, Date] | null | undefined} range - The picker's emitted range.
@@ -238,6 +368,71 @@ export class AuditPage {
   protected applyDateRange(range: [Date, Date] | null | undefined): void {
     this.page.set(1);
     this.dateRange.set(range ?? undefined);
+    if (range && this.openFilterKey() === 'dateRange') this.openFilterKey.set(null);
+  }
+
+  /**
+   * Method onSearchQueryChanged
+   * @description Records a keystroke into the draft term the debounce watches.
+   * @access protected
+   * @since 2.0.0
+   * @param {string} term - The search box's current value.
+   * @returns {void}
+   */
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering that field's chip before its own control carries a value.
+   * @access protected
+   * @since 2.0.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as AuditFilterKey);
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @access protected
+   * @since 2.0.0
+   * @param {string} key - The field key whose chip was removed.
+   * @returns {void}
+   */
+  protected onFieldRemoved(key: string): void {
+    if (key === 'action') this.applyAction(null);
+    else this.applyDateRange(null);
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 2.0.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method clearFilters
+   * @description Drops every narrowing at once, including the search term.
+   * @access protected
+   * @since 2.0.0
+   * @returns {void}
+   */
+  protected clearFilters(): void {
+    this.action.set(null);
+    this.dateRange.set(undefined);
+    this.draftSearch.set('');
+    this.search.set('');
+    this.page.set(1);
   }
 
   /**
@@ -274,10 +469,15 @@ export class AuditPage {
    */
   protected reload(): void {
     const range: [Date, Date] | undefined = this.dateRange();
+    const search: string = this.search();
 
     this.store.load({
       organizationId: this.organizationId(),
-      options: { page: this.page(), itemsPerPage: this.pageSize() },
+      options: {
+        page: this.page(),
+        itemsPerPage: this.pageSize(),
+        search: search === '' ? undefined : search,
+      },
       query: {
         action: this.action() ?? undefined,
         from: range?.[0]?.toISOString(),

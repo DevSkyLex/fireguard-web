@@ -1,0 +1,160 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessage(); as message) {
+      <div role="alert" data-testid="calendar-event-dialog-error" class="text-sm text-destructive">
+        <p>{{ message }}</p>
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="calendar-event-title"
+        ><span i18n="@@calendar.eventDialog.title">Title</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="calendar-event-title"
+        type="text"
+        data-testid="calendar-event-title"
+        placeholder="Fire drill"
+        i18n-placeholder="@@calendar.eventDialog.titlePlaceholder"
+        [formField]="eventForm.title"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="eventForm.title().touched() && eventForm.title().invalid()"
+      />
+      @if (eventForm.title().touched() && eventForm.title().invalid()) {
+        <hlm-field-error>{{ eventForm.title().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="calendar-event-description"
+        i18n="@@calendar.eventDialog.description"
+        >Description</label
+      >
+      <textarea
+        hlmTextarea
+        id="calendar-event-description"
+        rows="3"
+        data-testid="calendar-event-description"
+        [formField]="eventForm.description"
+        [attr.aria-invalid]="eventForm.description().touched() && eventForm.description().invalid()"
+      ></textarea>
+      @if (eventForm.description().touched() && eventForm.description().invalid()) {
+        <hlm-field-error>{{ eventForm.description().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="calendar-event-starts-at"
+          ><span i18n="@@calendar.eventDialog.startsAt">Starts</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="calendar-event-starts-at"
+          type="datetime-local"
+          data-testid="calendar-event-starts-at"
+          [formField]="eventForm.startsAt"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="eventForm.startsAt().touched() && eventForm.startsAt().invalid()"
+        />
+        @if (eventForm.startsAt().touched() && eventForm.startsAt().invalid()) {
+          <hlm-field-error>{{ eventForm.startsAt().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="calendar-event-ends-at" i18n="@@calendar.eventDialog.endsAt"
+          >Ends</label
+        >
+        <input
+          hlmInput
+          id="calendar-event-ends-at"
+          type="datetime-local"
+          data-testid="calendar-event-ends-at"
+          [formField]="eventForm.endsAt"
+          [attr.aria-invalid]="eventForm.endsAt().touched() && eventForm.endsAt().invalid()"
+        />
+        @if (eventForm.endsAt().touched() && eventForm.endsAt().invalid()) {
+          <hlm-field-error>{{ eventForm.endsAt().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label hlmFieldLabel for="calendar-event-all-day" i18n="@@calendar.eventDialog.allDay"
+        >All day</label
+      >
+      <hlm-switch
+        id="calendar-event-all-day"
+        data-testid="calendar-event-all-day"
+        [formField]="eventForm.allDay"
+      />
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="calendar-event-facility" i18n="@@calendar.eventDialog.facility"
+        >Facility</label
+      >
+      <hlm-select [formField]="eventForm.facilityId" [itemToString]="facilityLabelOf">
+        <hlm-select-trigger
+          buttonId="calendar-event-facility"
+          class="w-full max-sm:min-h-11"
+          data-testid="calendar-event-facility"
+        >
+          <hlm-select-value
+            placeholder="No facility"
+            i18n-placeholder="@@calendar.eventDialog.noFacility"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            <hlm-select-item [value]="noFacilityValue" i18n="@@calendar.eventDialog.noFacility"
+              >No facility</hlm-select-item
+            >
+            @for (option of facilityOptions(); track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="calendar-event-dialog-cancel"
+        [disabled]="pending()"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="calendar-event-dialog-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@calendar.eventDialog.submitting">Saving…</span>
+        } @else if (editing()) {
+          <span i18n="@@calendar.eventDialog.submitEdit">Save changes</span>
+        } @else {
+          <span i18n="@@calendar.eventDialog.submitCreate">Create event</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

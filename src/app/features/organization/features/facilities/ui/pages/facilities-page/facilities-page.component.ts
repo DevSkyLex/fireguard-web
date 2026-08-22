@@ -414,25 +414,22 @@ export class FacilitiesPage {
    * Method onLayoutChanged
    *
    * @description
-   * Narrows `hlm-toggle-group`'s single/multi-select payload. `list`/`grid`
-   * are page-local view state (`layout`); `map` is not a rendering mode of
-   * this page but a dedicated route (`FEATURE.md`), so it navigates there
-   * instead of writing {@link layout}.
+   * Narrows `hlm-toggle-group`'s single/multi-select payload onto
+   * {@link layout}. The group holds `list` and `grid` alone — the two
+   * renderings this page actually owns, a display preference in the sense
+   * `DESIGN.md` §Collections gives the word. Map is a dedicated route
+   * (`FEATURE.md`) and therefore a link beside the group, not a third value:
+   * a segment that navigates while its neighbours set state is a control
+   * lying about what it is.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 1.2.0
    *
    * @param {string | readonly string[] | null | undefined} value - The toggle group's new value.
    *
    * @returns {void}
    */
   protected onLayoutChanged(value: string | readonly string[] | null | undefined): void {
-    if (value === 'map') {
-      void this.router.navigate([...this.listRouteBase(), 'map']);
-
-      return;
-    }
-
     this.layout.set(value === 'grid' ? 'grid' : 'list');
   }
 

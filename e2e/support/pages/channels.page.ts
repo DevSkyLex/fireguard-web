@@ -17,9 +17,9 @@ export class ChannelsPage {
   public readonly rows: Locator = this.page.getByTestId('channels-row');
   public readonly newButton: Locator = this.page.getByTestId('channels-new');
   public readonly searchInput: Locator = this.page.getByTestId('channels-search');
-  public readonly newDialog: Locator = this.page.getByTestId('new-channel-dialog');
-  public readonly newNameInput: Locator = this.page.getByTestId('new-channel-name');
-  public readonly newSubmit: Locator = this.page.getByTestId('new-channel-submit');
+  public readonly newDialog: Locator = this.page.getByTestId('channel-create-dialog');
+  public readonly newNameInput: Locator = this.page.getByTestId('channel-create-name');
+  public readonly newSubmit: Locator = this.page.getByTestId('channel-create-submit');
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/channels`);
@@ -31,7 +31,7 @@ export class ChannelsPage {
   }
 
   /** Opens the new-channel dialog from the list header. */
-  public async openNewChannelDialog(): Promise<void> {
+  public async openChannelCreateDialog(): Promise<void> {
     await this.newButton.click();
   }
 }

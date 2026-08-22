@@ -86,12 +86,21 @@
             data-testid="assets-compliance-tree-panel"
           >
             @if (compliance.hasTreeError()) {
-              <p class="p-2 text-sm text-destructive" data-testid="assets-compliance-tree-error">
-                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-                <span i18n="@@org.assets.compliance.treeError">
-                  Couldn't load the compliance hierarchy.
-                </span>
-              </p>
+              <app-error-state
+                icon="lucideCircleAlert"
+                title="Couldn't load the compliance hierarchy."
+                i18n-title="@@org.assets.compliance.treeError"
+                data-testid="assets-compliance-tree-error"
+              >
+                <button
+                  hlmBtn
+                  variant="outline"
+                  class="max-sm:min-h-11"
+                  (click)="retryComplianceTree()"
+                >
+                  <span i18n="@@common.tryAgain">Try again</span>
+                </button>
+              </app-error-state>
             } @else {
               <app-tree
                 ariaLabel="Compliance hierarchy"
@@ -196,14 +205,22 @@
         </h2>
 
         @if (pane.hasEquipmentError()) {
-          <p class="text-sm text-destructive" data-testid="assets-equipment-error">
-            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-            <span i18n="@@org.assets.equipment.error">Couldn't load equipment.</span>
-          </p>
+          <app-error-state
+            icon="lucideCircleAlert"
+            title="Couldn't load equipment."
+            i18n-title="@@org.assets.equipment.error"
+            data-testid="assets-equipment-error"
+          >
+            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+              <span i18n="@@common.tryAgain">Try again</span>
+            </button>
+          </app-error-state>
         } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
-          <p class="text-sm text-muted-foreground" i18n="@@org.assets.equipment.empty">
-            No equipment in view.
-          </p>
+          <app-empty-state
+            icon="lucideWrench"
+            title="No equipment in view."
+            i18n-title="@@org.assets.equipment.empty"
+          />
         } @else {
           <div hlmTableContainer class="rounded-md border border-border">
             <table hlmTable data-testid="assets-equipment-table">
@@ -247,14 +264,22 @@
         </h2>
 
         @if (pane.hasInspectionsError()) {
-          <p class="text-sm text-destructive" data-testid="assets-inspections-error">
-            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-            <span i18n="@@org.assets.inspections.error">Couldn't load inspections.</span>
-          </p>
+          <app-error-state
+            icon="lucideCircleAlert"
+            title="Couldn't load inspections."
+            i18n-title="@@org.assets.inspections.error"
+            data-testid="assets-inspections-error"
+          >
+            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+              <span i18n="@@common.tryAgain">Try again</span>
+            </button>
+          </app-error-state>
         } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
-          <p class="text-sm text-muted-foreground" i18n="@@org.assets.inspections.empty">
-            No inspections in view.
-          </p>
+          <app-empty-state
+            icon="lucideClipboardList"
+            title="No inspections in view."
+            i18n-title="@@org.assets.inspections.empty"
+          />
         } @else {
           <div hlmTableContainer class="rounded-md border border-border">
             <table hlmTable data-testid="assets-inspections-table">
@@ -332,16 +357,28 @@
     </h2>
 
     @if (compliance.hasSummaryError()) {
-      <p class="text-sm text-destructive" data-testid="assets-compliance-summary-error">
-        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-        <span i18n="@@org.assets.compliance.summaryError">
-          Couldn't load the compliance summary.
-        </span>
-      </p>
+      <app-error-state
+        icon="lucideCircleAlert"
+        title="Couldn't load the compliance summary."
+        i18n-title="@@org.assets.compliance.summaryError"
+        data-testid="assets-compliance-summary-error"
+      >
+        <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryComplianceSummary()">
+          <span i18n="@@common.tryAgain">Try again</span>
+        </button>
+      </app-error-state>
     } @else if (compliance.isLoadingSummary() && compliance.summary() === null) {
-      <p class="text-sm text-muted-foreground" i18n="@@org.assets.compliance.summaryLoading">
-        Loading compliance summary…
-      </p>
+      <div
+        class="flex flex-col gap-2"
+        role="status"
+        aria-label="Loading compliance summary"
+        i18n-aria-label="@@org.assets.compliance.summaryLoading"
+      >
+        <hlm-skeleton class="h-6 w-32" />
+        @for (row of [0, 1, 2, 3, 4]; track row) {
+          <hlm-skeleton class="h-10 w-full" />
+        }
+      </div>
     } @else if (compliance.summary(); as summary) {
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span
@@ -400,16 +437,12 @@
       </div>
 
       @if (compliance.hasExportError()) {
-        <p
-          role="alert"
-          class="text-sm text-destructive"
-          data-testid="assets-compliance-export-error"
-        >
+        <div hlmAlert variant="destructive" data-testid="assets-compliance-export-error">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          <span i18n="@@org.assets.compliance.exportError">
+          <p hlmAlertTitle i18n="@@org.assets.compliance.exportError">
             Couldn't export the safety register.
-          </span>
-        </p>
+          </p>
+        </div>
       }
 
       <div hlmTableContainer class="rounded-md border border-border">

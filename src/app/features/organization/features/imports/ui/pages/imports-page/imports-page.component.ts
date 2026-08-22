@@ -7,12 +7,15 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideUpload } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideSearch, lucideTag, lucideUpload } from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ImportJobKind,
@@ -33,11 +36,19 @@ import {
   ORGANIZATION_PERMISSION,
   type OrganizationPermissionName,
 } from '@features/organization/models';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmSelectImports } from '@shared/ui/select';
 
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
@@ -57,20 +68,26 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
  *
  * @description
  * Route entry page for the organization's bulk CSV import surface: an
- * upload card ({@link ImportUploadForm}), the job list
+ * upload card ({@link ImportUploadForm}, `max-w-xl` per `DESIGN.md` "Action
+ * Surfaces"), a "Kind" filter chip (`app-collection-toolbar` →
+ * `app-collection-filter-bar`, `@shared/collection-filters`), the job list
  * ({@link ImportJobTable}), and a report panel
  * ({@link ImportJobDetailSheet}) opened from a row's "View report" action.
- * Owns the list query (paging), the upload submission and the detail
- * panel's target; `ImportJobsStore.create` starts the live poll itself, so
- * this page only reflects `store.jobs()` — a just-created row updates in
- * place on the same table without the page driving the poll. The upload
- * card renders only the kinds {@link availableKindOptions} the active
- * member holds the matching write permission for, and disappears entirely
- * once neither kind is writable — the route itself needs only one read
- * permission, so a reader may reach the page with no write permission at
- * all.
+ * Owns the list query (paging and the `kind` narrowing), the upload
+ * submission and the detail panel's target; `ImportJobsStore.create` starts
+ * the live poll itself, so this page only reflects `store.jobs()` — a
+ * just-created row updates in place on the same table without the page
+ * driving the poll. The upload card renders only the kinds
+ * {@link availableKindOptions} the active member holds the matching write
+ * permission for, and disappears entirely once neither kind is writable —
+ * the route itself needs only one read permission, so a reader may reach the
+ * page with no write permission at all. The "Kind" filter is unrelated to
+ * that gate: it narrows what a reader sees and offers every kind regardless
+ * of the active member's write permissions ({@link kindFilterOptions}).
+ * There is no search box: `ImportJobCollectionProvider` accepts only
+ * `organization` and `kind`, so this page has nothing else to send.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -82,11 +99,15 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
     ImportUploadForm,
     ImportJobTable,
     ImportJobDetailSheet,
+    CollectionFilterBar,
+    CollectionFilterToggle,
     CollectionPagination,
+    CollectionToolbar,
     HlmButton,
     ...HlmCardImports,
+    ...HlmSelectImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideUpload })],
+  providers: [provideIcons({ lucideCircleAlert, lucideSearch, lucideTag, lucideUpload })],
   templateUrl: './imports-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -122,6 +143,74 @@ export class ImportsPage {
   /** The job currently opened in the report panel, or `null` when it is closed. */
   protected readonly selectedJob: WritableSignal<ImportJobOutput | null> =
     signal<ImportJobOutput | null>(null);
+
+  /** The active "Kind" narrowing, or `null` when every kind is shown. Not URL-synced — this page persists no other query state either. */
+  protected readonly kindFilter: WritableSignal<ImportJobKind | null> =
+    signal<ImportJobKind | null>(null);
+
+  /** Every kind the filter offers, unlike {@link availableKindOptions} — narrowing what a reader sees needs no write permission. */
+  protected readonly kindFilterOptions: typeof IMPORT_JOB_KIND_OPTIONS = IMPORT_JOB_KIND_OPTIONS;
+
+  /** The filter bar's field catalog — a single "Kind" chip. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'kind',
+      fieldLabel: $localize`:@@imports.list.filterKind:Kind`,
+      icon: 'lucideTag',
+      operators: ['equals'],
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description The `kind` field, when {@link kindFilter} is set — the bar's `activeKeys` input.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => (this.kindFilter() !== null ? ['kind'] : []),
+  );
+
+  /** Which field the filter bar currently renders mid-pick, before a kind is chosen — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<'kind' | null> = signal<'kind' | null>(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Kind" chip's `hlm-select`, projected into the filter bar. */
+  private readonly kindChipTemplate = viewChild<TemplateRef<unknown>>('kindChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description The `kind` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ kind: this.kindChipTemplate() }));
+
+  /** Whether the current view is narrowed by kind — decides the empty state's icon and its "Clear filters" action. */
+  protected readonly hasFilters: Signal<boolean> = computed<boolean>(
+    () => this.kindFilter() !== null,
+  );
+
+  /** Names a kind on the filter chip's closed trigger. */
+  protected readonly kindLabelOf: (value: ImportJobKind) => string = (value) =>
+    this.kindFilterOptions.find((option) => option.value === value)?.label ?? value;
 
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly ImportJobOutput[]> = computed(() => this.store.jobs());
@@ -174,7 +263,7 @@ export class ImportsPage {
   /**
    * Constructor
    * @constructor
-   * @description Wires the load effect over the active organization and paging.
+   * @description Wires the load effect over the active organization, paging and the `kind` narrowing.
    * @access public
    * @since 1.0.0
    */
@@ -183,9 +272,14 @@ export class ImportsPage {
       const organizationId: string = this.organizationId();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
+      const kind: ImportJobKind | null = this.kindFilter();
 
       untracked((): void => {
-        this.store.load({ organizationId, options: { page, itemsPerPage: pageSize } });
+        this.store.load({
+          organizationId,
+          options: { page, itemsPerPage: pageSize },
+          query: kind ? { kind } : undefined,
+        });
       });
     });
 
@@ -238,10 +332,101 @@ export class ImportsPage {
    * @returns {void}
    */
   protected reload(): void {
+    const kind: ImportJobKind | null = this.kindFilter();
+
     this.store.load({
       organizationId: this.organizationId(),
       options: { page: this.page(), itemsPerPage: this.pageSize() },
+      query: kind ? { kind } : undefined,
     });
+  }
+
+  /**
+   * Method applyKindFilter
+   * @description Replaces the "Kind" narrowing, which reloads the list from the first page, and closes the field's mid-pick state once a value is chosen.
+   * @access protected
+   * @since 1.1.0
+   * @param {ImportJobKind | null} kind - The kind to narrow to, or `null` to show every kind.
+   * @returns {void}
+   */
+  protected applyKindFilter(kind: ImportJobKind | null): void {
+    this.page.set(1);
+    this.kindFilter.set(kind);
+    if (kind !== null && this.openFilterKey() === 'kind') this.openFilterKey.set(null);
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by opening the "Kind" chip's `hlm-select`.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as 'kind');
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by dropping the "Kind" narrowing.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected onFieldRemoved(): void {
+    this.applyKindFilter(null);
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 1.1.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method clearFilters
+   * @description Drops the "Kind" narrowing.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected clearFilters(): void {
+    this.applyKindFilter(null);
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @description Whether the "Kind" chip's `hlm-select` should currently render open.
+   * @access protected
+   * @since 1.1.0
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(): BrnOverlayState {
+    return this.openFilterKey() === 'kind' ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with the "Kind" chip's own `hlm-select`.
+   * @access protected
+   * @since 1.1.0
+   * @param {BrnOverlayState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(state: BrnOverlayState): void {
+    if (state === 'open') {
+      this.openFilterKey.set('kind');
+      return;
+    }
+
+    if (this.openFilterKey() === 'kind') this.openFilterKey.set(null);
   }
 
   /**

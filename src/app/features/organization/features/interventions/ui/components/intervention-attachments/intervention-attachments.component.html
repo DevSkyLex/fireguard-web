@@ -1,24 +1,22 @@
-<div class="flex flex-col gap-3" data-testid="intervention-attachments">
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <div class="flex flex-col gap-0.5">
-      <div class="flex items-center gap-2">
-        <h2 class="text-base font-semibold" i18n="@@intervention.attachments.title">Attachments</h2>
-        @if (showCounter()) {
-          <span
-            hlmBadge
-            [variant]="atCapacity() ? 'destructive' : 'secondary'"
-            data-testid="intervention-attachments-count"
-            >{{ countLabel() }}</span
-          >
-        }
-      </div>
-      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.caption">
-        Photos and documents kept with this intervention.
-      </p>
-    </div>
+<section hlmCard data-testid="intervention-attachments">
+  <div hlmCardHeader>
+    <h2 hlmCardTitle class="flex items-center gap-2">
+      <span i18n="@@intervention.attachments.title">Attachments</span>
+      @if (showCounter()) {
+        <span
+          hlmBadge
+          [variant]="atCapacity() ? 'destructive' : 'secondary'"
+          data-testid="intervention-attachments-count"
+          >{{ countLabel() }}</span
+        >
+      }
+    </h2>
+    <p hlmCardDescription i18n="@@intervention.attachments.caption">
+      Photos and documents kept with this intervention.
+    </p>
 
     @if (canManage()) {
-      <div class="flex flex-wrap items-center gap-2">
+      <div hlmCardAction class="flex flex-wrap items-center gap-2">
         <button
           hlmBtn
           type="button"
@@ -79,137 +77,138 @@
     }
   </div>
 
-  @if (!online() && canManage()) {
-    <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offline">
-      Connect to the network to add files — attachments do not queue offline.
-    </p>
-  }
+  <div hlmCardContent class="flex flex-col gap-3">
+    @if (!online() && canManage()) {
+      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offline">
+        Connect to the network to add files — attachments do not queue offline.
+      </p>
+    }
 
-  @if (atCapacity() && canManage()) {
-    <p
-      class="text-xs text-muted-foreground"
-      data-testid="intervention-attachments-capacity"
-      i18n="@@intervention.attachments.capacityHint"
-    >
-      This intervention holds the maximum number of files. Delete one to add another.
-    </p>
-  }
+    @if (atCapacity() && canManage()) {
+      <p
+        class="text-xs text-muted-foreground"
+        data-testid="intervention-attachments-capacity"
+        i18n="@@intervention.attachments.capacityHint"
+      >
+        This intervention holds the maximum number of files. Delete one to add another.
+      </p>
+    }
 
-  @if (pickError(); as message) {
-    <p class="text-xs text-destructive" role="alert" data-testid="intervention-attachments-error">
-      {{ message }}
-    </p>
-  }
+    @if (pickError(); as message) {
+      <p class="text-xs text-destructive" role="alert" data-testid="intervention-attachments-error">
+        {{ message }}
+      </p>
+    }
 
-  @if (attachments().length === 0) {
-    <app-empty-state
-      icon="lucidePaperclip"
-      class="rounded-md border border-dashed border-border p-6"
-      title="No files attached yet"
-      i18n-title="@@intervention.attachments.emptyTitle"
-      [description]="emptyDescription()"
-      data-testid="intervention-attachments-empty"
-    />
-  } @else {
-    <ul hlmItemGroup>
-      @for (attachment of attachments(); track attachment.id) {
-        <li
-          hlmItem
-          variant="outline"
-          size="sm"
-          class="rounded-md transition-colors hover:bg-muted/50"
-          data-testid="intervention-attachment-row"
-        >
-          <div
-            hlmItemMedia
-            variant="icon"
-            class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
+    @if (attachments().length === 0) {
+      <app-empty-state
+        icon="lucidePaperclip"
+        title="No files attached yet"
+        i18n-title="@@intervention.attachments.emptyTitle"
+        [description]="emptyDescription()"
+        data-testid="intervention-attachments-empty"
+      />
+    } @else {
+      <ul hlmItemGroup>
+        @for (attachment of attachments(); track attachment.id) {
+          <li
+            hlmItem
+            variant="outline"
+            size="sm"
+            class="rounded-md transition-colors hover:bg-muted/50"
+            data-testid="intervention-attachment-row"
           >
-            <ng-icon [name]="iconOf(attachment)" class="text-3xl" aria-hidden="true" />
-            @if (extensionOf(attachment); as extension) {
-              <span
-                hlmBadge
-                class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
-                aria-hidden="true"
-                >{{ extension }}</span
-              >
-            }
-          </div>
-          <div hlmItemContent>
-            <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>
-            <span hlmItemDescription>
-              {{ sizeLabelOf(attachment) }}
-              @if (attachment.label) {
-                · {{ attachment.label }}
-              }
-              @if (workItemLabelOf(attachment); as workItemLabel) {
-                ·
-                <span
-                  hlmBadge
-                  variant="outline"
-                  class="align-middle"
-                  data-testid="intervention-attachment-work-item-chip"
-                  i18n="@@intervention.attachments.forWorkItem"
-                  >For {{ workItemLabel }}</span
-                >
-              }
-              @if (attachment.kind === 'signature') {
-                ·
-                <span
-                  hlmBadge
-                  variant="secondary"
-                  class="align-middle"
-                  data-testid="intervention-attachment-signature-chip"
-                  i18n="@@intervention.attachments.signatureChip"
-                  >Signature</span
-                >
-              }
-            </span>
-          </div>
-          <div hlmItemActions>
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              class="text-muted-foreground max-sm:size-11"
-              data-testid="intervention-attachment-download"
-              i18n-aria-label="@@intervention.attachments.download"
-              aria-label="Download this file"
-              [disabled]="!online() || isRowDownloading(attachment)"
-              [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
-              (click)="downloadRequested.emit(attachment)"
+            <div
+              hlmItemMedia
+              variant="icon"
+              class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
             >
-              @if (isRowDownloading(attachment)) {
-                <hlm-spinner size="xs" aria-hidden="true" />
-              } @else {
-                <ng-icon name="lucideDownload" aria-hidden="true" />
+              <ng-icon [name]="iconOf(attachment)" class="text-3xl" aria-hidden="true" />
+              @if (extensionOf(attachment); as extension) {
+                <span
+                  hlmBadge
+                  class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
+                  aria-hidden="true"
+                  >{{ extension }}</span
+                >
               }
-            </button>
-            @if (canManage()) {
+            </div>
+            <div hlmItemContent>
+              <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>
+              <span hlmItemDescription>
+                {{ sizeLabelOf(attachment) }}
+                @if (attachment.label) {
+                  · {{ attachment.label }}
+                }
+                @if (workItemLabelOf(attachment); as workItemLabel) {
+                  ·
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="align-middle"
+                    data-testid="intervention-attachment-work-item-chip"
+                    i18n="@@intervention.attachments.forWorkItem"
+                    >For {{ workItemLabel }}</span
+                  >
+                }
+                @if (attachment.kind === 'signature') {
+                  ·
+                  <span
+                    hlmBadge
+                    variant="secondary"
+                    class="align-middle"
+                    data-testid="intervention-attachment-signature-chip"
+                    i18n="@@intervention.attachments.signatureChip"
+                    >Signature</span
+                  >
+                }
+              </span>
+            </div>
+            <div hlmItemActions>
               <button
                 hlmBtn
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                class="text-muted-foreground hover:text-destructive max-sm:size-11"
-                data-testid="intervention-attachment-delete"
-                i18n-aria-label="@@intervention.attachments.delete"
-                aria-label="Delete this file"
-                [disabled]="!online() || isRowPending(attachment)"
-                [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
-                (click)="deleteRequested.emit(attachment)"
+                class="text-muted-foreground max-sm:size-11"
+                data-testid="intervention-attachment-download"
+                i18n-aria-label="@@intervention.attachments.download"
+                aria-label="Download this file"
+                [disabled]="!online() || isRowDownloading(attachment)"
+                [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
+                (click)="downloadRequested.emit(attachment)"
               >
-                @if (isRowPending(attachment)) {
+                @if (isRowDownloading(attachment)) {
                   <hlm-spinner size="xs" aria-hidden="true" />
                 } @else {
-                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                  <ng-icon name="lucideDownload" aria-hidden="true" />
                 }
               </button>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</div>
+              @if (canManage()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                  data-testid="intervention-attachment-delete"
+                  i18n-aria-label="@@intervention.attachments.delete"
+                  aria-label="Delete this file"
+                  [disabled]="!online() || isRowPending(attachment)"
+                  [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
+                  (click)="deleteRequested.emit(attachment)"
+                >
+                  @if (isRowPending(attachment)) {
+                    <hlm-spinner size="xs" aria-hidden="true" />
+                  } @else {
+                    <ng-icon name="lucideTrash2" aria-hidden="true" />
+                  }
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

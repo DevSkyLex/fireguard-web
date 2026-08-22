@@ -14,6 +14,7 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -62,6 +63,7 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
     NgIcon,
     RouterLink,
     EmptyState,
+    ErrorState,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

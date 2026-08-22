@@ -15,6 +15,7 @@ import { lucideCircleAlert, lucideCircleDotDashed, lucideClipboardCheck } from '
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { resolveInterventionTag } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/empty-state';
+import { ErrorState } from '@shared/error-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -51,6 +52,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
     NgIcon,
     RouterLink,
     EmptyState,
+    ErrorState,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

@@ -17,16 +17,10 @@
 
     <hlm-alert-dialog-footer>
       <button
-        hlmBtn
-        type="button"
-        variant="outline"
+        hlmAlertDialogCancel
         class="max-sm:min-h-11"
-        [attr.aria-disabled]="busy() ? 'true' : null"
-        [attr.aria-busy]="busy() ? 'true' : null"
-        [class.opacity-50]="busy()"
-        [class.pointer-events-none]="busy()"
-        (click)="busy() || dismissed.emit()"
-        i18n="@@intervention.list.deleteConfirmCancel"
+        [disabled]="busy()"
+        i18n="@@common.cancel"
       >
         Cancel
       </button>
@@ -35,11 +29,8 @@
         variant="destructive"
         class="max-sm:min-h-11"
         data-testid="interventions-delete-confirm"
-        [attr.aria-disabled]="busy() ? 'true' : null"
-        [attr.aria-busy]="busy() ? 'true' : null"
-        [class.opacity-50]="busy()"
-        [class.pointer-events-none]="busy()"
-        (click)="busy() || confirmed.emit()"
+        [disabled]="busy()"
+        (click)="confirmed.emit()"
         i18n="@@intervention.list.deleteConfirmAction"
       >
         Delete

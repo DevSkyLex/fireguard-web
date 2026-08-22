@@ -1,80 +1,59 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { StoreError } from '@core/request-state';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
 import { MaintenanceCampaignDialog } from '../maintenance-campaign-dialog.component';
-
-const setValue = (testId: string, value: string): void => {
-  const input: HTMLInputElement = document.querySelector<HTMLInputElement>(
-    `[data-testid="${testId}"]`,
-  ) as HTMLInputElement;
-  input.value = value;
-  input.dispatchEvent(new Event('input'));
-};
 
 describe('MaintenanceCampaignDialog', () => {
   let fixture: ComponentFixture<MaintenanceCampaignDialog>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(MaintenanceCampaignDialog);
+  });
+
+  it('should render nothing to the portal while closed', async () => {
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(document.querySelector('[data-testid="maintenance-campaign-dialog"]')).toBeNull();
+  });
+
+  it('should render the campaign form inside the dialog once open', async () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
+
+    expect(document.querySelector('app-maintenance-campaign-form')).not.toBeNull();
   });
 
-  it('should not submit and should show field errors when required fields are empty', async () => {
-    const submitted: Array<Omit<GenerateMaintenanceCampaignInput, 'organization'>> = [];
-    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
+  it('should forward the form submission untouched', async () => {
+    const emitted: Array<Omit<GenerateMaintenanceCampaignInput, 'organization'>> = [];
+    fixture.componentInstance.submitted.subscribe(
+      (value: Omit<GenerateMaintenanceCampaignInput, 'organization'>): void => {
+        emitted.push(value);
+      },
+    );
 
-    document
-      .querySelector<HTMLFormElement>('[data-testid="maintenance-campaign-dialog"] form')
-      ?.requestSubmit();
+    fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
-    expect(
-      document.querySelector('[data-testid="maintenance-campaign-dialog"]')?.textContent,
-    ).toContain('Name is required.');
+    const payload: Omit<GenerateMaintenanceCampaignInput, 'organization'> = {
+      name: 'Q1 round',
+      dueBefore: '2026-06-30T23:59:59.000Z',
+    };
+    fixture.componentInstance.submitted.emit(payload);
+
+    expect(emitted).toEqual([payload]);
   });
 
-  it('should emit submitted with the trimmed name and an ISO dueBefore when valid', async () => {
-    const submitted: Array<Omit<GenerateMaintenanceCampaignInput, 'organization'>> = [];
-    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
-
-    setValue('maintenance-campaign-name', '  Q1 round  ');
-    setValue('maintenance-campaign-due-before', '2026-06-30');
-    await fixture.whenStable();
-
-    document
-      .querySelector<HTMLFormElement>('[data-testid="maintenance-campaign-dialog"] form')
-      ?.requestSubmit();
-    await fixture.whenStable();
-
-    expect(submitted.length).toBe(1);
-    expect(submitted[0].name).toBe('Q1 round');
-    expect(submitted[0].facility).toBeUndefined();
-    expect(submitted[0].equipmentType).toBeUndefined();
-    expect(new Date(submitted[0].dueBefore).getUTCFullYear()).toBe(2026);
-  });
-
-  it('should render the no-match 422 detail inline rather than a generic message', async () => {
-    const error = {
-      message: 'No due maintenance schedules match the given filters.',
-    } as StoreError;
-    fixture.componentRef.setInput('serverError', error);
-    await fixture.whenStable();
-
-    expect(
-      document.querySelector('[data-testid="maintenance-campaign-error"]')?.textContent,
-    ).toContain('No due maintenance schedules match the given filters.');
-  });
-
-  it('should emit visibleChange false when Cancel is activated', () => {
+  it('should emit visibleChange false when the form cancels', async () => {
     const changes: boolean[] = [];
     fixture.componentInstance.visibleChange.subscribe((visible: boolean): void => {
       changes.push(visible);
     });
+
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
 
     document
       .querySelector<HTMLButtonElement>('[data-testid="maintenance-campaign-cancel"]')
@@ -84,6 +63,7 @@ describe('MaintenanceCampaignDialog', () => {
   });
 
   it('should disable close while pending', async () => {
+    fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();
 

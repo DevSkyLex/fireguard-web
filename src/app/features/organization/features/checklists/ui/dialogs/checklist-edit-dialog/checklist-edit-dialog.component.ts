@@ -28,7 +28,7 @@ import { ChecklistEditForm } from '../../forms/checklist-edit-form';
  *
  * @description
  * The spartan dialog hosting {@link ChecklistEditForm}, the same shape
- * `EditChannelDialog` wraps `ChannelEditForm` in.
+ * `ChannelEditDialog` wraps `ChannelEditForm` in.
  *
  * Purely presentational: it owns the overlay chrome, forwards
  * `visible`/`checklist`/`pending` to the form, and re-emits

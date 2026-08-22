@@ -19,17 +19,84 @@ This subfeature is responsible for:
 
 ## Routes
 
+**`InterventionsPage`** (`ui/pages/interventions-page/`) is the single
+`loadComponent:` for the whole index route — List, Board and Calendar are
+`hlm-tabs` (`@shared/ui/tabs`) over one page, not three routed leaves behind a
+shell. **11.0 retired that routed shell** (`InterventionsShellPage`,
+`InterventionsBoardPage`, `InterventionsCalendarPage`, the pathless route that
+nested them, and the `InterventionToolbarActions` `TemplateRef` slot the List
+tab used to hand its own controls up to the shell's toolbar): one physical
+page builds the toolbar, the KPI strip and the eight-chip filter bar once, and
+the List tab's own Display/Recurrences/Export/bulk-actions controls render
+inline — `@if (activeView() === 'list')` — with no slot indirection, since
+they are no longer a different component from the toolbar that hosts them.
+The active tab is the `view` route-bound input (`?view=board|calendar`,
+absent ⇒ `list`), read into `activeView` and written back by `switchView`
+with `queryParamsHandling: 'merge'`, so every other filter param survives a
+tab switch. `/interventions/board` and `/interventions/calendar` still exist
+as addressable, bookmarkable URLs: each is a functional `redirectTo`
+(`interventions.routes.ts`) onto `/interventions?view=board|calendar`,
+preserving every other query param the incoming URL carried.
+
+`InterventionBoard` and `InterventionCalendar` (`ui/components/`) are
+presentational components `InterventionsPage` feeds through inputs and reads
+back through outputs — neither injects a store or calls a service
+(`ARCHITECTURE.md` §10.3); the page decides whether to call
+`InterventionStore.transition` on a Board move, and owns the
+`InterventionCalendarStore` load the Calendar tab drives. The Board shares
+`InterventionsPage`'s own `InterventionStore` (`boardFilters` forces `status`
+to `null` — its columns are the narrowing — and its own load effect asks for
+one large page instead of the table's paginated window, both gated on
+`activeView` so the List and the Board never fight over the same cached
+page). The Calendar reads a bounded date window instead, an incompatible
+shape for the same entity cache, so `InterventionsPage` provides its own
+component-scoped `InterventionCalendarStore` — the one store still
+component-scoped in this feature, since only a page may inject one, and this
+page now stands in for the three leaves that used to share that duty.
+`calendarMonth` starts `null` and the load effect no-ops until
+`InterventionCalendar` reports its first anchor, which only happens once the
+component exists — behind `hlmTabsContentLazy`, on the Calendar tab's first
+activation — so opening the page on List or Board never fetches the
+calendar's window.
+
+**Which of the filter bar's nine fields each tab actually applies** is no
+longer route `data` — with one page and no child routes to declare it on, it
+is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
+local to `InterventionsPage` (rule of three: two consumers, both on the
+page). **The "+ Filter" menu offers only the active tab's honoured fields**
+(`offeredFilterFields`) — the three tabs do not share one filter set. A field
+the active tab cannot apply is **listed disabled, with the reason beside it**
+(`CollectionFilterField.unavailableReason`) rather than hidden: dropping it
+left a reader on the Board hunting for a Status filter with nothing saying
+why it had gone, while an active unhonoured chip already explains itself.
+Such a chip renders disabled and visibly greyed
+(`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason and the
+same reason appended to the chip's `sr-only` name
+(`InterventionsPage.chipAccessibleName`), since a tooltip is a hover and a
+screen reader does not hover. **Switching tabs never drops an unhonoured
+narrowing from the URL** — the inert chip is what tells the user it does not
+apply here, and the value is intact on the way back. Never silently dropped,
+never silently misapplied. The List honours all eight; the
+Board honours every field except `status` (its columns are the narrowing);
+the Calendar honours only `status`, `type`, `site` and `responsible`
+(`InterventionCalendarFilters`'s own `Pick`).
+
+`dueWindow` is the ninth field, and it exists as a chip for a correctness
+reason rather than a cosmetic one: the KPI strip's tiles and the Today page
+deep-link to `?due=overdue`, and while that key had no catalog entry it
+counted for nothing — no chip, no badge, no "Clear filters" — so a URL
+carrying it narrowed the list with nothing on screen to say so and no way
+back except editing the address bar. It overlaps `dueRange` in intent (three
+of its four windows are expressible as an upper bound); the two stay separate
+fields because they are separate keys in `InterventionListFilters` and the
+server treats `due=overdue` as a preset, not a bound.
+
 - `/organizations/:organizationId/interventions` — the index page: a spartan
-  `hlmTable` of the organization's interventions, grouped and paginated, with a
-  debounced search box synced to `?q=` (a server-side `name` filter, `contains`
-  server-side — "Case-insensitive partial match"), a Linear-style filter bar of
-  segmented chips (status, type, priority, site, responsible, label, deadline,
-  planned start), a "my interventions" toggle chip
-  (`?mine=1`, the API's `member`
-  responsible-OR-participant filter), a column menu, row selection, and
-  permission-gated bulk actions. `?create=1` opens the creation sheet on
-  arrival and is consumed once, so the parent feature's landing page can offer
-  "New intervention" as a primary action that actually starts the work.
+  `hlmTable` of the organization's interventions, grouped and paginated, row
+  selection, and permission-gated bulk actions. `?create=1` opens the creation
+  sheet on arrival and is consumed once, so the parent feature's landing page,
+  and now the shared shell header, can offer "New intervention" as a primary
+  action that actually starts the work.
   **Export is a server-side CSV** (API #99): `InterventionService.exportCsv`
   reads `GET /api/interventions/export` as a `Blob`, forwarding the accepted
   subset of the current question — `name`, `status`, `type`, `priority`,
@@ -64,6 +131,17 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   the four rather than a misleading nearest one. Picking a view calls the
   same `applyFilter` path a chip's own select uses, so a view is a shortcut
   into the one filter contract, not a second state to keep in sync with it.
+
+  **The toolbar, the search box, the filter bar (6.5–8.3 below) and the tabs
+  all live on `InterventionsPage` itself (11.0).** Every mechanic this history
+  describes — the chip shell, the operator vocabulary, the "+ Filter" menu,
+  `dueRange`/`plannedStartRange` — is unchanged by the retirement of the
+  routed shell that once carried them; only which tab renders below them
+  changed. Read "this page" throughout 6.3 through 8.3 as `InterventionsPage`.
+  It additionally owns the table, its own Display popover (sort/columns),
+  row/bulk actions, and the sheets/dialogs they open — all rendered inline,
+  gated on `activeView() === 'list'`, with no `TemplateRef`-slot indirection
+  to a separate shell component to keep in sync any more.
 
   **The filter bar (6.5) replaced the earlier popover-plus-read-only-chips
   pair with editable, Linear-style segmented chips** — the popover is gone.
@@ -306,52 +384,48 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   wrong (non-scrolling) ancestor. Changing any of these three files without
   the others reintroduces page-level scrolling or an unstuck header.
 
-- `/organizations/:organizationId/interventions/board` — the Kanban view over
-  the exact same dataset the list renders, resolving PRODUCT.md's "List /
+- `/organizations/:organizationId/interventions/board` — the Kanban tab over
+  the exact same dataset the List tab renders, resolving PRODUCT.md's "List /
   Board / Calendar over one shared dataset" promise for interventions
-  (`InterventionsBoardPage`, `ui/pages/interventions-board-page/`). Registered
-  **before** `:interventionId` in `interventions.routes.ts` — a literal
-  segment must be matched ahead of the param route, or every board visit
-  would resolve as a detail page for an intervention id of `"board"`. Mounted
-  as a sibling of the list under the same pathless parent, so it shares the
-  one `InterventionStore` instead of a second copy of the dataset. Same
-  permission gate as the list (inherited from the parent).
+  (`InterventionBoard`, `ui/components/intervention-board/`, fed by
+  `InterventionsPage`). The URL is a functional `redirectTo` onto
+  `/interventions?view=board` (11.0) — registered **before** `:interventionId`
+  in `interventions.routes.ts`, a literal segment must be matched ahead of the
+  param route, or every visit would resolve as a detail page for an
+  intervention id of `"board"`. `InterventionBoard` shares
+  `InterventionsPage`'s own `InterventionStore` instead of a second copy of
+  the dataset. Same permission gate as the list (inherited from the outer
+  pathless parent).
 
-  **View switch.** All three of the list, board and calendar toolbars carry a
-  compact List/Board/Calendar segmented toggle (`hlmButtonGroup`, `hlmBtn`-styled
-  links plus one `aria-current="page"` button for the page currently shown —
-  not the filter bar's chip shell, which `hlm-button-group` was ruled out for
-  because its join CSS cannot reach a value segment nested inside `hlm-select`;
-  a plain link pair has no such nesting, so the primitive fits here). The
-  toggle preserves every filter query param when it navigates to the List or
-  the Calendar, **except `status`** when it navigates to the Board: the
-  board's columns are the statuses, so a `status` narrowing travelling into it
-  would either duplicate or contradict the column split — `status` is the one
-  field the three destinations disagree on. The board never carries `status`
-  itself, so its own two outgoing links (to the List and to the Calendar)
-  reuse the same `InterventionsBoardPage.listQueryParams` signal — nothing to
-  strip either way. `InterventionsPage.boardQueryParams` /
-  `InterventionsPage.calendarQueryParams` and
-  `InterventionsCalendarPage.boardQueryParams` are the three places that build
-  a param set with `status` excluded.
+  **Tab switch (11.0: `hlm-tabs`, not a routed shell).** A single
+  `hlm-tabs-list` with three `hlmTabsTrigger`s renders once, in
+  `InterventionsPage`'s own toolbar row. Switching tabs calls
+  `InterventionsPage.switchView`, which writes `?view=` with
+  `queryParamsHandling: 'merge'` — every other filter param survives
+  untouched, **except `status`**, dropped specifically when switching to the
+  Board: the board's columns are the statuses, so a `status` narrowing
+  travelling into it would either duplicate or contradict the column split —
+  `status` is the one field the three tabs disagree on.
 
   **Columns and data.** One column per `InterventionStatus`, in workflow order
   (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
   existing `models/intervention-tag/` registry — never a second status
   vocabulary. `published` renders as a column (an intervention does end up
   there) but is never a legal drop target, since `allowedTransitions` never
-  lists it (see Invariants). The board loads through the **same**
-  `InterventionStore.load` single-server-page mechanism the list uses — there
-  is no new endpoint. It asks for one large page (200 rows, `BOARD_PAGE_SIZE`)
-  so a typical organization's open work fits in one load, distributed across
-  every column; an organization past that count sees only its first 200 (by
-  `dueAt`), a stated trade-off over adding a second, per-column pagination
-  surface to a Kanban board. The board applies whatever filters (`status`
-  excluded) the incoming URL already carries, but this first cut does **not**
-  render the list's full editable Linear-style filter bar
-  (`app-collection-filter-bar`) — replicating its eight chip templates is
-  populated-UI-scale work, left as a follow-up; only the search box is
-  repeated for parity.
+  lists it (see Invariants). `InterventionsPage`'s own Board load effect
+  reuses the **same** `InterventionStore.load` single-server-page mechanism
+  the List effect uses — there is no new endpoint — asking for one large page
+  (200 rows, `BOARD_PAGE_SIZE`) so a typical organization's open work fits in
+  one load, distributed across every column; an organization past that count
+  sees only its first 200 (by `dueAt`), a stated trade-off over adding a
+  second, per-column pagination surface to a Kanban board. Both load effects
+  are gated on `activeView`, so the List and the Board never overwrite each
+  other's shape of the same cached page. The Board applies whatever filters
+  (`status` excluded, via `boardFilters`) the incoming URL already carries,
+  and shares the page's own eight-chip filter bar with the List and the
+  Calendar — its entry in `INTERVENTION_VIEW_HONOURED_FILTER_KEYS` omits only
+  `status`, so a `status` chip left active from the List renders disabled and
+  greyed with a tooltip explaining the columns already narrow by status.
 
   **Drag-drop legality — one function, two call sites.**
   `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is a
@@ -359,18 +433,21 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   card's own server `allowedTransitions`, and — mirroring the detail page's
   `transitionTargets()` gate — the one identity-restricted move, withdrawing a
   submission (`submitted` → `in_progress`), additionally requires
-  `allowedActions.canWithdraw === true`. Both `cdkDropListEnterPredicate` (the
-  pointer-drag path) and each card's own "Move to…" menu (the keyboard/AT
-  path) call the exact same function, so the two can never disagree about
-  what is legal. A card whose id is in `store.transitioningInterventionIds()`
-  is drag-disabled and its menu disabled entirely — its cached
-  `allowedTransitions`/`revision` are stale mid-flight
-  (`InterventionStore.transition`'s own doc already anticipates board
-  drag-drop firing several transitions in quick succession). A drop or a menu
-  pick calls `InterventionStore.transition({ id, status, revision })`
-  unchanged — the store's existing optimistic patch, `If-Match` revision and
-  rollback-plus-toast on failure serve the board exactly as they serve the
-  list and detail pages.
+  `allowedActions.canWithdraw === true`. Both `InterventionBoard.canDrop` (the
+  `cdkDropListEnterPredicate`) and each card's own "Move to…" menu (the
+  keyboard/AT path) call the exact same function, so the two can never
+  disagree about what is legal. A card whose id is in
+  `store.transitioningInterventionIds()` is drag-disabled and its menu
+  disabled entirely — its cached `allowedTransitions`/`revision` are stale
+  mid-flight (`InterventionStore.transition`'s own doc already anticipates
+  board drag-drop firing several transitions in quick succession). A drop or
+  a menu pick emits `InterventionBoard.moveRequested`; `InterventionsPage`'s
+  `applyTransition` — the same handler the List table's own row menu calls —
+  is the one place that actually calls
+  `InterventionStore.transition({ id, status, revision })`, trusting the
+  board already validated the move. The store's existing optimistic patch,
+  `If-Match` revision and rollback-plus-toast on failure serve the board
+  exactly as they serve the list and detail pages.
 
   **Accessibility.** Drag is an enhancement, never the only path: every card
   carries a "Move to…" menu — the same pattern `InterventionTable`'s row menu
@@ -381,18 +458,24 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   requested, reflecting the store's own optimistic patch.
 
 - `/organizations/:organizationId/interventions/calendar` — the month-grid
-  view over the same dataset, the third and last leg of PRODUCT.md's "List /
-  Board / Calendar" promise (`InterventionsCalendarPage`,
-  `ui/pages/interventions-calendar-page/`). Registered before
-  `:interventionId`, same reason the board is. **Wakes, rather than rebuilds,
-  a dormant pair**: `InterventionCalendarStore` (component-scoped, provided on
-  this page, not on the pathless parent) and
+  tab over the same dataset, the third and last leg of PRODUCT.md's "List /
+  Board / Calendar" promise (`InterventionCalendar`,
+  `ui/components/intervention-calendar/`, fed by `InterventionsPage`). The
+  URL is a functional `redirectTo` onto `/interventions?view=calendar` (11.0),
+  registered before `:interventionId`, same reason the Board's is. **Wakes,
+  rather than rebuilds, a dormant pair**: `InterventionCalendarStore`
+  (component-scoped, provided on `InterventionsPage`) and
   `InterventionService.listCalendarWindow` had shipped with no page driving
   them; both were already current-standard (named `loadCallState`,
   `toStoreError`, `tapResponse`, a dispatched failure event) and needed no
-  refit. Unlike the Board, this leaf does **not** share `InterventionStore`:
+  refit. Unlike the Board, this tab does **not** share `InterventionStore`:
   the List/Board pair reads one server page, the calendar reads a bounded
-  date window — an incompatible shape for the same entity cache.
+  date window — an incompatible shape for the same entity cache. The
+  component itself only mounts behind `hlmTabsContentLazy`, on the Calendar
+  tab's first activation, and reports its displayed anchor to the page
+  through `monthChanged` — `InterventionsPage`'s own load effect stays gated
+  on that anchor being non-`null`, so opening the page on List or Board never
+  fetches this window.
 
   **Placement anchor.** Each intervention is placed on the day of its
   schedule anchor — `plannedStartAt`, falling back to `dueAt` — the exact
@@ -406,8 +489,8 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `Calendar`, used read-only and unmodified — a genuinely domain-agnostic
   shared concept (`ARCHITECTURE.md` §2.7) already established by
   `organization/features/calendar`'s own `CalendarPage`, and reused here
-  exactly the same way (`showToolbar="false"`, this page supplies its own
-  Today/prev/next band). What is **not** reused across the feature boundary
+  exactly the same way (`showToolbar="false"`, `InterventionCalendar` supplies
+  its own Today/prev/next band). What is **not** reused across the feature boundary
   is the row shape: `shared/calendar` must never import an intervention
   model, so `InterventionCalendarEntryList`
   (`ui/components/intervention-calendar-entry-list/`) is a feature-local
@@ -420,22 +503,25 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   justify it, and the row shapes already differ (an intervention row has no
   Edit/Delete affordance, a feed row does).
 
-  **Filters.** Every narrowing the URL carries round-trips into this page —
-  unlike the Board, `status` travels too: the calendar has no columns for it
-  to conflict with, so narrowing the month to one or a few statuses is a
-  legitimate way to read it. `priority`, `label`, `due`, `dueAfter`/`dueBefore`
-  and `plannedStartAfter`/`plannedStartBefore` round-trip in the URL (so
-  switching away and back preserves them) but are **not** sent to the store:
-  `InterventionCalendarFilters` is a `Pick` of `status`/`type`/`site`/
-  `responsible` only, and the visible window already is the date filter, so a
-  second date narrowing would fight it rather than combine with it.
-  `mine` is **not** sent to the server either: the store resolves the
-  signed-in member's IRI once (`currentMemberIri`) and
-  `InterventionsCalendarPage.visibleInterventions` filters the loaded window
-  to it client-side — exactly the split `InterventionCalendarState`'s own doc
-  already described before this page existed. This first cut offers no
-  in-page filter control beyond the search box, mirroring the Board's own
-  stated trade-off; the URL is the only way to narrow it further.
+  **Filters.** Every narrowing the URL carries round-trips through
+  `InterventionsPage` — unlike the Board, `status` travels too: the calendar
+  has no columns for it to conflict with, so narrowing the month to one or a
+  few statuses is a legitimate way to read it. `priority`, `label`, `due`,
+  `dueAfter`/`dueBefore` and `plannedStartAfter`/`plannedStartBefore`
+  round-trip in the URL (so switching away and back preserves them) but are
+  **not** sent to the store: `InterventionCalendarFilters` is a `Pick` of
+  `status`/`type`/`site`/`responsible` only, and the visible window already
+  is the date filter, so a second date narrowing would fight it rather than
+  combine with it. `mine` is **not** sent to the server either: the store
+  resolves the signed-in member's IRI once (`currentMemberIri`, passed down as
+  an input) and `InterventionCalendar.visibleInterventions` filters the
+  loaded window to it client-side — exactly the split
+  `InterventionCalendarState`'s own doc already described before this
+  component existed. `InterventionsPage`'s own
+  `INTERVENTION_VIEW_HONOURED_FILTER_KEYS` entry for `calendar` declares
+  exactly the four fields above; the page renders `priority`, `label` and
+  both date-range chips as visibly inert — disabled, greyed, with a tooltip —
+  whenever one is left active from another tab.
 
   **Overflow.** The grid's own per-day chip cap never hides an entry from the
   reader: selecting a day always lists every one of its entries in the panel
@@ -601,32 +687,33 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   skeleton-free `reload`. Component-scoped so a stale failure never leaks into
   the next intervention's visit.
 - `InterventionCalendarStore` — component-scoped (provided in
-  `InterventionsCalendarPage`); the interventions inside a bounded date
-  window. One `load(request)` — `organizationId`, `window` (inclusive
-  `after`/`before`), an optional `InterventionCalendarFilters` narrowing —
-  driving one `loadCallState`, plus `currentMemberIri`, resolved once per
-  organization and reused across window refetches (`OrganizationMemberService
-.getCurrentProfile`, degrading gracefully to a disabled "Mine" scope on
-  failure rather than surfacing an error). Woken by 10.0's Calendar view
-  after shipping dormant: it needed no refit into current standards, since it
-  already used named `loadCallState`, `toStoreError` before `errorCallState`,
-  and a dispatched `loadFailed` event on a genuine fetch failure.
-- `InterventionStatisticsStore` (5.3) — component-scoped (provided in
-  `InterventionsPage`); one `withQueryState` slice over
-  `InterventionService.statistics`, backing the list page's KPI strip
-  (`app-intervention-kpi-strip`, `ui/components/`). The snapshot is
+  `InterventionsPage`, since only a page may inject a store — 11.0); the
+  interventions inside a bounded date window. One `load(request)` —
+  `organizationId`, `window` (inclusive `after`/`before`), an optional
+  `InterventionCalendarFilters` narrowing — driving one `loadCallState`, plus
+  `currentMemberIri`, resolved once per organization and reused across window
+  refetches (`OrganizationMemberService.getCurrentProfile`, degrading
+  gracefully to a disabled "Mine" scope on failure rather than surfacing an
+  error). Woken by 10.0's Calendar view after shipping dormant: it needed no
+  refit into current standards, since it already used named `loadCallState`,
+  `toStoreError` before `errorCallState`, and a dispatched `loadFailed` event
+  on a genuine fetch failure.
+- `InterventionStatisticsStore` (5.3) — route-scoped (provided on the outer
+  pathless parent alongside `InterventionStore`, 11.0 — not component-scoped
+  in `InterventionsPage` any more, so it survives a future page split the way
+  the shared dataset already does), injected by `InterventionsPage`; one
+  `withQueryState` slice over `InterventionService.statistics`, backing the
+  KPI strip (`app-intervention-kpi-strip`, `ui/components/`), which renders
+  above the tabs and stays visible on all three. The snapshot is
   **whole-organization, not filter-scoped** — the backend endpoint takes no
   narrowing beyond `organization` — so the page reloads it only on an
-  organization switch, never on the list's own search/filter/sort/page
-  changes that reload `InterventionStore`. There is no cross-store refresh on
-  create/delete/transition either: the strip is a coarse "state of the
-  organization" snapshot, not a precise live counter, and wiring it to every
-  list mutation would trade a simple, obviously-correct reload trigger for a
-  fragile one covering a case the KPI strip's own purpose does not need.
-  The list page's "Analysis" disclosure (`app-intervention-statistics-analysis`,
-  `ui/components/`) renders the rest of the same snapshot the strip does not —
-  `byPriority`, `bySite`/`byResponsible` and `averagePublicationDays` — reading
-  the same `InterventionStatisticsStore` query, no store of its own.
+  organization switch, never on the List tab's own search/filter/sort/page
+  changes that reload `InterventionStore`, and never on a tab switch either.
+  There is no cross-store refresh on create/delete/transition either: the
+  strip is a coarse "state of the organization" snapshot, not a precise live
+  counter, and wiring it to every mutation would trade a simple,
+  obviously-correct reload trigger for a fragile one covering a case the KPI
+  strip's own purpose does not need.
 - `InterventionLabelStore` — component-scoped (provided in
   `InterventionDetailPage`); CRUD over the organization's intervention label
   catalog (`InterventionLabelService`) via `withEntities`, backing
@@ -636,11 +723,15 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
 - `InterventionRecurrenceStore` — component-scoped (provided in
   `InterventionsPage`); CRUD over the organization's recurring intervention
   schedules (`InterventionRecurrenceService`) via `withEntities`, backing
-  `ui/sheets/intervention-recurrences-sheet` from the list toolbar.
-  `create`/`update`/`remove` patch the entity collection from the response
-  rather than reloading the list, so the server-authoritative
-  `nextOccurrenceAt` lands without a second round trip. A materialized
-  intervention carries no back-reference to the recurrence that produced it.
+  `ui/sheets/intervention-recurrences-sheet` from the list toolbar. The sheet
+  still owns the embedded create/edit form and every write decision; the list
+  itself renders through `InterventionRecurrenceTable` (`ui/tables/`), which
+  owns only its row-level delete confirmation and reports edit/delete/toggle
+  intents back to the sheet. `create`/`update`/`remove` patch the entity
+  collection from the response rather than reloading the list, so the
+  server-authoritative `nextOccurrenceAt` lands without a second round trip. A
+  materialized intervention carries no back-reference to the recurrence that
+  produced it.
   `InterventionWorkspaceStore.assignTeam` (own `assignTeamCallState`) snapshot-expands
   one organization team's active members into the intervention's participants —
   union, deduped, never a replace — via `InterventionService.assignTeam`. Online-only,
@@ -1474,7 +1565,13 @@ follows.
   and `channel-participants-sheet` follow it too) — `sm:w-[480px]` (default:
   work-item, request-changes, role-permissions, participants), `sm:w-[540px]`
   (create, to fit the template picker) and `sm:w-[560px]` (discussion, to fit
-  the message thread). Every width utility on `hlm-sheet-content` needs the
+  the message thread). **The recurrences sheet is the one documented exception**,
+  `sm:w-[880px]` — it is the only sheet in the app pairing a full six-column
+  `hlmTable` (`InterventionRecurrenceTable`, `ui/tables/`) with a full embedded
+  form, and the 640px it shipped at first still compressed the table's Name and
+  Template columns to the point of unreadable truncation; 880px is the width
+  above which every column reads without further squeezing, measured against
+  the longest realistic recurrence/template names. Every width utility on `hlm-sheet-content` needs the
   `!` important marker (`w-full! sm:w-[…px]! sm:max-w-none!`) — `HlmSheetContent`'s
   own base classes carry `data-[side=right]:sm:max-w-sm` and `data-[side=right]:w-3/4`,
   which beat a plain same-specificity utility. The three form-sheets (create,
@@ -1554,9 +1651,64 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
-- **The Calendar view places an intervention by `plannedStartAt ?? dueAt`,
+- **Changing a chip's operator never costs the chip, and never costs a value
+  the new operator can hold.** `onFilterOperatorChanged` marks the field
+  pending, so the chip survives the value drop that a shape change forces —
+  without it the bar, which renders one chip per _active_ key, unrendered the
+  chip the instant its value went. `equals` and `isAnyOf` carry their value
+  across in both directions; only a multi-value `isAnyOf` narrowing to
+  `equals` genuinely cannot be represented, and only that clears.
+- **One failing option list never blanks the others.**
+  `InterventionPlanningOptionsStore` joins four requests for the creation
+  options and five for the workspace. `forkJoin` errors as a whole the moment
+  any input does, which was disproportionate: a failing template list left the
+  Site, Responsible and Label chips with nothing to offer, so three filters
+  were unusable because of a fourth, unrelated endpoint. Each source is now
+  wrapped so it can fail alone. The failure is reported, not swallowed —
+  `loadFailed` is dispatched whenever any source fails — and `loadCallState`
+  turns to error only when every one of them does.
+- **A picked operator outranks the value's own shape.** The URL writes
+  `['planned']` and `'planned'` identically, so `enumFieldOperator` reading
+  the shape alone snapped "is any of" back to "is" on a single selection. The
+  explicit pick wins; the shape decides only for a field untouched this
+  session.
+
+- **A filter chip the active tab does not honour is never silently applied
+  and never silently absent.** `InterventionsPage.isFieldIgnored` reads
+  `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an
+  active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
+  why and that same reason inside its accessible name — the "+ Filter" menu
+  lists it disabled with its reason — `offeredFilterFields` annotates rather
+  than narrows — the "Filters" badge does not count it
+  (`honouredActiveFilterKeys`), since it narrows nothing here, and
+  `switchView` merges it forward instead of deleting it. The bar still opens
+  on any active key, so the inert chip is what carries its visibility, not the
+  badge. Adding a tenth
+  filter field, or changing which fields a tab honours, means updating that
+  `Record`'s entry in the same change, or the new field silently reads as
+  honoured everywhere.
+- **`InterventionBoard` and `InterventionCalendar` inject no store and call no
+  service (11.0, `ARCHITECTURE.md` §10.3).** Only `InterventionsPage` may —
+  a Board move is emitted as `moveRequested` and the page decides whether to
+  call `InterventionStore.transition`; the Calendar's own store is provided
+  and driven entirely by the page, the component only reporting its anchor
+  through `monthChanged`. Do not add an `inject()` to either component — it
+  is what keeps a table, a board and a calendar interchangeable dumb renderers
+  instead of three more places that can independently misread the URL.
+- **The detail page is never nested under `InterventionsPage`'s tabs.** It
+  sits as the outer pathless parent's other child, specifically so it never
+  inherits the collection chrome (search box, filter bar, tab list) that has
+  no meaning on a single intervention's workspace.
+- **The KPI strip spans all three tabs; it is not list-only.** It renders
+  above `hlm-tabs`, backed by the route-scoped `InterventionStatisticsStore`
+  (provided on the outer pathless parent, not component-scoped in
+  `InterventionsPage` — 11.0), reloaded only on an organization switch, never
+  on a tab switch or on any of the List tab's own search/filter/sort/page
+  changes. Do not gate its rendering on `activeView()` — the figures describe
+  the collection, not one tab's rendering of it.
+- **The Calendar tab places an intervention by `plannedStartAt ?? dueAt`,
   never by `dueAt` alone.** `listCalendarWindow`, `InterventionCalendarStore`
-  and `InterventionsCalendarPage` must agree on this one anchor — placing it
+  and `InterventionCalendar` must agree on this one anchor — placing it
   differently in any one of the three would put an intervention in a
   different cell than the window that fetched it expects.
 - **The Calendar's own `InterventionCalendarFilters` narrowing never grows
@@ -1682,7 +1834,7 @@ client action`).
 - Intervention route pages live under `ui/pages/`.
 - **The board's drag-drop legality has exactly one implementation.**
   `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is the
-  sole authority both `InterventionsBoardPage.canDrop` (the
+  sole authority both `InterventionBoard.canDrop` (the
   `cdkDropListEnterPredicate`) and `InterventionBoardCard`'s own "Move to…"
   menu call — a second, independently-computed legality check on either side
   is what would let the two silently disagree. The one rule it encodes:

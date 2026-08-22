@@ -135,11 +135,31 @@
 
               <td hlmTableCell>
                 @if (member.isActive) {
-                  <span hlmBadge variant="secondary" i18n="@@org.members.table.active">Active</span>
-                } @else {
-                  <span hlmBadge variant="outline" i18n="@@org.members.table.inactive"
-                    >Inactive</span
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="px-1.5 leading-none text-muted-foreground"
                   >
+                    <ng-icon
+                      name="lucideCircleCheck"
+                      class="shrink-0 text-success"
+                      aria-hidden="true"
+                    />
+                    <span i18n="@@org.members.table.active">Active</span>
+                  </span>
+                } @else {
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="px-1.5 leading-none text-muted-foreground"
+                  >
+                    <ng-icon
+                      name="lucideCircleDot"
+                      class="shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span i18n="@@org.members.table.inactive">Inactive</span>
+                  </span>
                 }
               </td>
 

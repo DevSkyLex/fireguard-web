@@ -95,7 +95,7 @@ describe('InterventionPublishDialog', () => {
     fixture.componentRef.setInput('publishing', true);
     await setVisible(true);
 
-    expect(confirmButton().getAttribute('aria-disabled')).toBe('true');
+    expect((confirmButton() as HTMLButtonElement).disabled).toBe(true);
 
     confirmButton().click();
 

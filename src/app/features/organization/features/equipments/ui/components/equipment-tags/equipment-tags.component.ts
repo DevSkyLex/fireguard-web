@@ -16,6 +16,7 @@ import type { EquipmentTagOutput } from '@features/organization/features/equipme
 import { EmptyState } from '@shared/empty-state';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -60,6 +61,7 @@ const NO_PICK_VALUE = '';
     HlmButton,
     EmptyState,
     ...HlmBadgeImports,
+    ...HlmCardImports,
     ...HlmComboboxImports,
     ...HlmSpinnerImports,
   ],

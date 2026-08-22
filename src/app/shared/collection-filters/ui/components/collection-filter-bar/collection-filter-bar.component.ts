@@ -60,6 +60,12 @@ import { FilterChip } from '../filter-chip';
  * itself is the owning page's concern, this component only ever renders or
  * does not exist.
  *
+ * It draws its own box — a hairline border and a small pad — so the chips read
+ * as one region rather than as controls loose under the toolbar. That is also
+ * why the root no longer pulls itself up with a negative margin: a bordered
+ * region sits in the page's normal rhythm instead of overlapping the row above
+ * it.
+ *
  * Each chip's operator segment reads its field's own
  * `CollectionFilterField.operators` catalog: {@link activeOperators} carries
  * which one is currently picked per key (defaulting to a field's first
@@ -67,7 +73,7 @@ import { FilterChip } from '../filter-chip';
  * {@link operatorChanged} for the page to resolve — this bar never
  * interprets an operator itself, only routes the pick.
  *
- * @version 8.0.0
+ * @version 9.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

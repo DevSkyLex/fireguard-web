@@ -366,10 +366,6 @@
         <source>Its messages, pins, files and links stay, but the channel itself is gone for everyone. This cannot be undone.</source>
         <target>Sus mensajes, fijados, archivos y enlaces permanecen, pero el canal en sí desaparece para todos. Esta acción no se puede deshacer.</target>
       </trans-unit>
-      <trans-unit id="channels.room.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Cancelar</target>
-      </trans-unit>
       <trans-unit id="channels.room.deleteConfirmAction" datatype="html">
         <source>Delete</source>
         <target>Eliminar</target>
@@ -1873,10 +1869,6 @@
       <trans-unit id="facility.detail.deleteConfirmDescription" datatype="html">
         <source>A published facility is archived and can be restored; a draft facility is permanently removed. This cannot be undone from here.</source>
         <target>Una instalación publicada se archiva y puede restaurarse; una instalación en borrador se elimina de forma permanente. Esta acción no se puede deshacer desde aquí.</target>
-      </trans-unit>
-      <trans-unit id="facility.detail.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Cancelar</target>
       </trans-unit>
       <trans-unit id="facility.detail.deleteConfirmAction" datatype="html">
         <source>Delete</source>
@@ -3414,10 +3406,6 @@
         <source>This will permanently delete <x id="count" equiv-text="bulkIds.length"/> interventions. This action cannot be undone.</source>
         <target>Esto eliminará permanentemente <x id="count" equiv-text="bulkIds.length"/> intervenciones. Esta acción no se puede deshacer.</target>
       </trans-unit>
-      <trans-unit id="intervention.list.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Cancelar</target>
-      </trans-unit>
       <trans-unit id="intervention.list.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <target> Eliminar </target>
@@ -3773,10 +3761,6 @@
       <trans-unit id="calendar.eventDeleteDialog.description" datatype="html">
         <source> This standalone event is permanently removed from the calendar. This cannot be undone. </source>
         <target>Este evento independiente se elimina definitivamente del calendario. Esta acción no se puede deshacer.</target>
-      </trans-unit>
-      <trans-unit id="calendar.eventDeleteDialog.cancel" datatype="html">
-        <source> Cancel </source>
-        <target>Cancelar</target>
       </trans-unit>
       <trans-unit id="calendar.eventDeleteDialog.deleting" datatype="html">
         <source>Deleting…</source>
@@ -4343,14 +4327,6 @@
       <trans-unit id="intervention.board.columnCount" datatype="html">
         <source><x id="count" equiv-text="count"/> interventions in <x id="status" equiv-text="statusLabel"/></source>
         <target><x id="count" equiv-text="count"/> intervenciones en <x id="status" equiv-text="statusLabel"/></target>
-      </trans-unit>
-      <trans-unit id="route.interventionsBoard" datatype="html">
-        <source>Board</source>
-        <target>Tablero</target>
-      </trans-unit>
-      <trans-unit id="route.interventionsCalendar" datatype="html">
-        <source>Calendar</source>
-        <target>Calendario</target>
       </trans-unit>
       <trans-unit id="intervention.board.viewCalendar" datatype="html">
         <source>Calendar</source>
@@ -5507,10 +5483,6 @@
       <trans-unit id="org.invitations.emptyText" datatype="html">
         <source>Invitations you send will appear here until they are accepted, revoked or expire.</source>
         <target>Las invitaciones que envíe aparecerán aquí hasta que se acepten, revoquen o caduquen.</target>
-      </trans-unit>
-      <trans-unit id="org.members.removeConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Cancelar</target>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmAction" datatype="html">
         <source>Remove</source>
@@ -7028,6 +7000,10 @@
         <source>Pick start and end dates</source>
         <target>Elegir las fechas de inicio y fin</target>
       </trans-unit>
+      <trans-unit id="intervention.list.filterDueWindow" datatype="html">
+        <source>Due window</source>
+        <target>Ventana de vencimiento</target>
+      </trans-unit>
       <trans-unit id="intervention.list.filterPlannedStart" datatype="html">
         <source>Planned start</source>
         <target>Inicio planificado</target>
@@ -7388,10 +7364,6 @@
         <source>Maintenance</source>
         <target>Mantenimiento</target>
       </trans-unit>
-      <trans-unit id="maintenance.filter.dueStatusAriaLabel" datatype="html">
-        <source>Filter by due status</source>
-        <target>Filtrar por estado de vencimiento</target>
-      </trans-unit>
       <trans-unit id="maintenance.table.equipmentLinkAriaLabel" datatype="html">
         <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
         <target><x id="type" equiv-text="type"/> en <x id="facility" equiv-text="facilityName"/></target>
@@ -7567,10 +7539,6 @@
       <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
         <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
         <target>Archivar «<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>» la mantiene legible pero la retira de las checklists que las nuevas inspecciones pueden usar. Esto no se puede deshacer desde aquí.</target>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
-        <source>Cancel</source>
-        <target>Cancelar</target>
       </trans-unit>
       <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
         <source>Archive</source>
@@ -7976,6 +7944,14 @@
         <source>Cadence</source>
         <target>Cadencia</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.caption" datatype="html">
+        <source>The organization's recurring intervention schedules.</source>
+        <target>Las intervenciones recurrentes de la organización.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
         <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</target>
@@ -7984,6 +7960,10 @@
         <source>No recurrences yet.</source>
         <target>Aún no hay recurrencias.</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.emptyDesc" datatype="html">
+        <source>Recurring schedules periodically draft a new intervention from a template.</source>
+        <target>Las recurrencias generan periódicamente una nueva intervención a partir de una plantilla.</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.endLabel" datatype="html">
         <source>End date</source>
         <target>Fecha de fin</target>
@@ -7991,6 +7971,30 @@
       <trans-unit id="intervention.recurrences.endPlaceholder" datatype="html">
         <source>No end</source>
         <target>Sin fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.errorTitle" datatype="html">
+        <source>Recurrences could not be loaded</source>
+        <target>No se pudieron cargar las recurrencias</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.annual" datatype="html">
+        <source>Yearly</source>
+        <target>Anual</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.monthly" datatype="html">
+        <source>Monthly</source>
+        <target>Mensual</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.quarterly" datatype="html">
+        <source>Quarterly</source>
+        <target>Trimestral</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.semiannual" datatype="html">
+        <source>Every 6 months</source>
+        <target>Cada 6 meses</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.weekly" datatype="html">
+        <source>Weekly</source>
+        <target>Semanal</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
         <source>Frequency</source>
@@ -8943,6 +8947,74 @@
       <trans-unit id="account.devices.revokeAllConfirmAction" datatype="html">
         <source> Revoke all </source>
         <target> Revocar todo </target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKind" datatype="html">
+        <source>Kind</source>
+        <target>Tipo de importación</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKindPlaceholder" datatype="html">
+        <source>Any kind</source>
+        <target>Cualquier tipo</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="audit.list.searchPlaceholder" datatype="html">
+        <source>Search actions, actors and subjects...</source>
+        <target>Buscar acciones, actores y sujetos...</target>
+      </trans-unit>
+      <trans-unit id="audit.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueStatus" datatype="html">
+        <source>Due status</source>
+        <target>Estado de vencimiento</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.anyDueStatus" datatype="html">
+        <source>Any status</source>
+        <target>Cualquier estado</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
+        <source>before</source>
+        <target>antes de</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforePlaceholder" datatype="html">
+        <source>Pick a date</source>
+        <target>Elija una fecha</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.status" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredStatus" datatype="html">
+        <source>Ignored here — the board&apos;s columns already narrow by status.</source>
+        <target>Sin efecto aquí: las columnas del tablero ya filtran por estado.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredDateRange" datatype="html">
+        <source>Ignored here — the visible month is already the date filter.</source>
+        <target>Sin efecto aquí: el mes visible ya es el filtro de fecha.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
+        <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
+        <target>Sin efecto aquí: esta vista solo filtra por estado, tipo, instalación y responsable.</target>
       </trans-unit>
 </body>
   </file>

@@ -29,6 +29,7 @@ import {
 import { EmptyState } from '@shared/empty-state';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -106,6 +107,7 @@ const MAX_ATTACHMENTS = 25;
     HlmButton,
     EmptyState,
     ...HlmBadgeImports,
+    ...HlmCardImports,
     ...HlmItemImports,
     ...HlmSpinnerImports,
   ],

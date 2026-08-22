@@ -3,7 +3,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { forkJoin, of, pipe, switchMap, tap } from 'rxjs';
+import { catchError, forkJoin, of, pipe, switchMap, tap, type Observable } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -116,6 +116,42 @@ function memberOption(
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
+/**
+ * Function optional
+ * @function optional
+ *
+ * @description
+ * Lets one option source fail without taking its siblings down. `forkJoin`
+ * errors as a whole the moment any input does, which had a
+ * disproportionate consequence here: a failing template list left the Site,
+ * Responsible and Label filter chips with no values to offer at all. A
+ * failure is recorded rather than swallowed — the caller still dispatches
+ * `loadFailed` — but the sources that did answer are kept.
+ *
+ * @since 11.1.0
+ *
+ * @template T
+ * @param {Observable<T>} source - One option list request.
+ * @param {unknown[]} failures - Collects the errors, for the caller to report.
+ *
+ * @returns {Observable<T | null>} The response, or `null` when it failed.
+ */
+/** How many option lists {@link InterventionPlanningOptionsStore.loadCreationOptions} joins — all of them failing is a real error, one is a degradation. */
+const CREATION_OPTION_SOURCES = 4;
+
+/** The same count for `loadWorkspaceOptions`, which adds the facility and equipment target lists. */
+const WORKSPACE_OPTION_SOURCES = 5;
+
+function optional<T>(source: Observable<T>, failures: unknown[]): Observable<T | null> {
+  return source.pipe(
+    catchError((error: unknown): Observable<null> => {
+      failures.push(error);
+
+      return of(null);
+    }),
+  );
+}
+
 export const InterventionPlanningOptionsStore = signalStore(
   withState<InterventionPlanningOptionsState>(INITIAL_STATE),
   withComputed((store) => ({
@@ -186,21 +222,33 @@ export const InterventionPlanningOptionsStore = signalStore(
           ),
           switchMap((organizationId) => {
             if (!organizationId) return of(null);
+            const failures: unknown[] = [];
+
             return forkJoin({
               organizationId: of(organizationId),
-              sites: facilities.list(organizationId, {
-                rootsOnly: true,
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              members: members.list(organizationId, {
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              labels: labelService.list(`/api/organizations/${organizationId}`),
-              templates: templateService.list(`/api/organizations/${organizationId}`, {
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
+              failures: of(failures),
+              sites: optional(
+                facilities.list(organizationId, {
+                  rootsOnly: true,
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              members: optional(
+                members.list(organizationId, {
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              labels: optional(labelService.list(`/api/organizations/${organizationId}`), failures),
+              templates: optional(
+                templateService.list(`/api/organizations/${organizationId}`, {
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
             });
           }),
           tapResponse({
@@ -209,19 +257,36 @@ export const InterventionPlanningOptionsStore = signalStore(
                 patchState(store, { loadCallState: successCallState(null) });
                 return;
               }
-              const sites: readonly SelectOption[] = result.sites.member.map((facility) => ({
-                label: facility.name,
-                value: `/api/facilities/${facility.id}`,
-              }));
+              const sites: readonly SelectOption[] = (result.sites?.member ?? []).map(
+                (facility) => ({
+                  label: facility.name,
+                  value: `/api/facilities/${facility.id}`,
+                }),
+              );
               patchState(store, {
                 sites,
-                members: result.members.member.map((member) =>
+                members: (result.members?.member ?? []).map((member) =>
                   memberOption(member, result.organizationId),
                 ),
-                labels: result.labels.member,
-                templates: result.templates.member,
-                loadCallState: successCallState(null),
+                labels: result.labels?.member ?? [],
+                templates: result.templates?.member ?? [],
+                loadCallState:
+                  result.failures.length === CREATION_OPTION_SOURCES
+                    ? errorCallState(toStoreError(result.failures[0]))
+                    : successCallState(null),
               });
+
+              const [firstFailure] = result.failures;
+              if (firstFailure === undefined) return;
+
+              dispatcher.dispatch(
+                interventionPlanningOptionsStoreEvents.loadFailed(
+                  toStoreFailureEventPayload(
+                    toStoreError(firstFailure),
+                    'Some planning options could not be loaded',
+                  ),
+                ),
+              );
             },
             error: (error: unknown) => {
               const storeError = toStoreError(error);
@@ -270,26 +335,41 @@ export const InterventionPlanningOptionsStore = signalStore(
           ),
           switchMap((organizationId) => {
             if (!organizationId) return of(null);
+            const failures: unknown[] = [];
+
             return forkJoin({
               organizationId: of(organizationId),
-              sites: facilities.list(organizationId, {
-                rootsOnly: true,
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              facilities: facilities.list(organizationId, {
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              equipment: equipment.list(organizationId, {
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              members: members.list(organizationId, {
-                page: 1,
-                itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-              }),
-              labels: labelService.list(`/api/organizations/${organizationId}`),
+              failures: of(failures),
+              sites: optional(
+                facilities.list(organizationId, {
+                  rootsOnly: true,
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              facilities: optional(
+                facilities.list(organizationId, {
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              equipment: optional(
+                equipment.list(organizationId, {
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              members: optional(
+                members.list(organizationId, {
+                  page: 1,
+                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
+                }),
+                failures,
+              ),
+              labels: optional(labelService.list(`/api/organizations/${organizationId}`), failures),
             });
           }),
           tapResponse({
@@ -299,26 +379,41 @@ export const InterventionPlanningOptionsStore = signalStore(
                 return;
               }
               patchState(store, {
-                sites: result.sites.member.map((facility) => ({
+                sites: (result.sites?.member ?? []).map((facility) => ({
                   label: facility.name,
                   value: `/api/facilities/${facility.id}`,
                 })),
                 targets: [
-                  ...result.facilities.member.map((facility) => ({
+                  ...(result.facilities?.member ?? []).map((facility) => ({
                     label: facility.name,
                     value: `/api/facilities/${facility.id}`,
                   })),
-                  ...result.equipment.member.map((item) => ({
+                  ...(result.equipment?.member ?? []).map((item) => ({
                     label: `${item.type} · ${item.serialNumber || item.id}`,
                     value: `/api/equipment/${item.id}`,
                   })),
                 ],
-                members: result.members.member.map((member) =>
+                members: (result.members?.member ?? []).map((member) =>
                   memberOption(member, result.organizationId),
                 ),
-                labels: result.labels.member,
-                loadCallState: successCallState(null),
+                labels: result.labels?.member ?? [],
+                loadCallState:
+                  result.failures.length === WORKSPACE_OPTION_SOURCES
+                    ? errorCallState(toStoreError(result.failures[0]))
+                    : successCallState(null),
               });
+
+              const [firstFailure] = result.failures;
+              if (firstFailure === undefined) return;
+
+              dispatcher.dispatch(
+                interventionPlanningOptionsStoreEvents.loadFailed(
+                  toStoreFailureEventPayload(
+                    toStoreError(firstFailure),
+                    'Some workspace options could not be loaded',
+                  ),
+                ),
+              );
             },
             error: (error: unknown) => {
               const storeError = toStoreError(error);

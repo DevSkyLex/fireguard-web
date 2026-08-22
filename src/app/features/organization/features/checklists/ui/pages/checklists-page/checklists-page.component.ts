@@ -1,18 +1,22 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideListChecks, lucidePlus } from '@ng-icons/lucide';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideCircleDot, lucideListChecks, lucidePlus } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -26,12 +30,19 @@ import {
   type ChecklistStoreType,
 } from '@features/organization/features/checklists/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  CollectionFilterBar,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+} from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { ChecklistStatusTag } from '../../components/checklist-status-tag';
 import { ChecklistArchiveDialog } from '../../dialogs/checklist-archive-dialog';
 import { ChecklistCreateDialog } from '../../dialogs/checklist-create-dialog';
 import { ChecklistEditDialog } from '../../dialogs/checklist-edit-dialog';
@@ -49,29 +60,41 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
  *
  * @description
  * Route entry page for the organization's checklist templates: a search box
- * and status `hlm-toggle-group` row above `ChecklistTable`, a "New
- * checklist" header action, and the create/edit/archive dialogs the row menu
- * and header button open. Owns the query the table renders (search, status
+ * and an editable "Status" filter chip (`app-collection-filter-bar`,
+ * `@shared/collection-filters`) above `ChecklistTable`, a "New checklist"
+ * header action, and the create/edit/archive dialogs the row menu and
+ * header button open. Owns the query the table renders (search, status
  * filter, paging) and every write the table and dialogs only ask for
  * (`ARCHITECTURE.md` §10.3/§10.5) — the table and the three dialogs inject
  * no store and call no service themselves.
+ *
+ * The status chip renders `app-checklist-status-tag` in place of the raw
+ * enum value — the same registry `ChecklistTable`'s Status column already
+ * resolves through (`ARCHITECTURE.md` §10.10), so the same status never
+ * reads two ways on one screen. "New checklist" registers on the shell
+ * header through `PageActionsService`, the idiom `FacilitiesPage` and
+ * `EquipmentsPage` use, rather than sitting inside the toolbar.
  *
  * Search has no debounce yet: every keystroke reissues the list request.
  * Acceptable at the checklist template library's expected scale; a future
  * pass can add the same debounced, URL-synced round-trip `FacilitiesPage`
  * uses if that changes.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-checklists-page',
   imports: [
+    NgIcon,
     ChecklistArchiveDialog,
     ChecklistCreateDialog,
     ChecklistEditDialog,
+    ChecklistStatusTag,
     ChecklistTable,
+    CollectionFilterBar,
+    CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
@@ -80,7 +103,10 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
     HlmButton,
     ...HlmToggleGroupImports,
   ],
-  providers: [ChecklistStore, provideIcons({ lucideCircleAlert, lucideListChecks, lucidePlus })],
+  providers: [
+    ChecklistStore,
+    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideListChecks, lucidePlus }),
+  ],
   templateUrl: './checklists-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -145,6 +171,58 @@ export class ChecklistsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE),
   );
 
+  /** The filter bar's field catalog — a single "Status" chip. */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'status',
+      fieldLabel: $localize`:@@checklists.list.filterStatus:Status`,
+      icon: 'lucideCircleDot',
+      operators: ['equals'],
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   * @description The `status` field, when {@link status} is set — the bar's `activeKeys` input.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => (this.status() !== null ? ['status'] : []),
+  );
+
+  /** Which field the filter bar currently renders mid-pick, before a status is chosen — `null` when none is. */
+  protected readonly openFilterKey: WritableSignal<'status' | null> = signal<'status' | null>(null);
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   * @access protected
+   * @since 2.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /** The "Status" chip's toggle group, projected into the filter bar. */
+  private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /**
+   * Property chipTemplates
+   * @readonly
+   * @description The `status` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
+   */
+  protected readonly chipTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ status: this.statusChipTemplate() }));
+
   /** Whether the create dialog is open. */
   protected readonly createDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
@@ -155,6 +233,13 @@ export class ChecklistsPage {
   /** The checklist currently open in the archive confirmation, or `null` when it is closed. */
   protected readonly archivingChecklist: WritableSignal<ChecklistOutput | null> =
     signal<ChecklistOutput | null>(null);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New checklist" button, registered on the shell header instead of the toolbar. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -164,12 +249,15 @@ export class ChecklistsPage {
    *
    * @description
    * Wires the load effect over the active search, status filter and paging,
-   * and closes each dialog once its own write settles successfully.
+   * closes each dialog once its own write settles successfully, and
+   * registers {@link pageActions}.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const status: ChecklistStatus | null = this.status();
@@ -228,7 +316,7 @@ export class ChecklistsPage {
   //#region Methods
   /**
    * Method applyStatus
-   * @description Narrows the list to one status, from the toggle group. Re-activating the current chip clears the narrowing.
+   * @description Narrows the list to one status, from the chip's toggle group. Re-activating the current chip clears the narrowing, and picking a status closes the field's pending-pick state.
    * @access protected
    * @since 1.0.0
    * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
@@ -240,6 +328,7 @@ export class ChecklistsPage {
 
     this.page.set(1);
     this.status.set(status);
+    if (status !== null && this.openFilterKey() === 'status') this.openFilterKey.set(null);
   }
 
   /**
@@ -297,6 +386,54 @@ export class ChecklistsPage {
         itemsPerPage: this.pageSize(),
       },
     });
+  }
+
+  /**
+   * Method onFieldPicked
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "Status" chip before a status is chosen.
+   * @access protected
+   * @since 2.1.0
+   * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   * @returns {void}
+   */
+  protected onFieldPicked(key: string): void {
+    this.openFilterKey.set(key as 'status');
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing the status narrowing.
+   * @access protected
+   * @since 2.1.0
+   * @returns {void}
+   */
+  protected onFieldRemoved(): void {
+    this.applyStatus(null);
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @access protected
+   * @since 2.1.0
+   * @param {boolean} visible - The toggle button's intended next state.
+   * @returns {void}
+   */
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method clearFilters
+   * @description Drops every narrowing at once, including the search term.
+   * @access protected
+   * @since 2.1.0
+   * @returns {void}
+   */
+  protected clearFilters(): void {
+    this.page.set(1);
+    this.status.set(null);
+    this.searchTerm.set('');
   }
 
   /**

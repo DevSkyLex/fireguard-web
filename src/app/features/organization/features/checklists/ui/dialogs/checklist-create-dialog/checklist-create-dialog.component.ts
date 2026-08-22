@@ -25,7 +25,7 @@ import { ChecklistCreateForm } from '../../forms/checklist-create-form';
  *
  * @description
  * The spartan dialog hosting {@link ChecklistCreateForm}, the same shape
- * `NewChannelDialog` wraps `ChannelCreateForm` in.
+ * `ChannelCreateDialog` wraps `ChannelCreateForm` in.
  *
  * Purely presentational: it owns the overlay chrome, forwards
  * `visible`/`visibleChange` and `pending` to the form, and re-emits

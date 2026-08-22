@@ -1,127 +1,156 @@
 <div id="maintenance-schedules" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
-    <hlm-toggle-group
-      toolbarStart
-      type="single"
-      [nullable]="true"
-      variant="outline"
-      size="sm"
-      [value]="filters().dueStatus"
-      data-testid="maintenance-filter-due-status"
-      aria-label="Filter by due status"
-      i18n-aria-label="@@maintenance.filter.dueStatusAriaLabel"
-      (valueChange)="onDueStatusChanged($event)"
-    >
-      @for (status of dueStatusValues; track status) {
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          [value]="status"
-          [attr.data-testid]="'maintenance-filter-due-status-' + status"
-        >
-          <app-maintenance-due-status-tag [value]="status" asOption />
-        </button>
-      }
-    </hlm-toggle-group>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@maintenance.filter.filtersButton"
+      testIdPrefix="maintenance"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
   </app-collection-toolbar>
 
-  <div class="flex flex-wrap items-end gap-3">
-    <div class="flex flex-col gap-1">
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="maintenance"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #dueStatusChip>
+    <hlm-select
+      [value]="filters().dueStatus"
+      [state]="fieldPopoverState('dueStatus')"
+      (valueChange)="applyFilter({ dueStatus: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('dueStatus', $event)"
+    >
       <label
-        for="maintenance-filter-facility"
-        class="text-xs font-medium text-muted-foreground"
-        i18n="@@maintenance.filter.facility"
+        for="maintenance-filter-due-status"
+        class="sr-only"
+        i18n="@@maintenance.filter.dueStatus"
+        >Due status</label
+      >
+      <hlm-select-trigger
+        size="sm"
+        buttonId="maintenance-filter-due-status"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="maintenance-filter-due-status"
+      >
+        @if (filters().dueStatus; as status) {
+          <app-maintenance-due-status-tag [value]="status" asOption />
+        } @else {
+          <hlm-select-value
+            placeholder="Any status"
+            i18n-placeholder="@@maintenance.filter.anyDueStatus"
+          />
+        }
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (status of dueStatusValues; track status) {
+            <hlm-select-item
+              [value]="status"
+              [attr.data-testid]="'maintenance-filter-due-status-' + status"
+            >
+              <app-maintenance-due-status-tag [value]="status" asOption />
+            </hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
+
+  <ng-template #facilityChip>
+    <hlm-select
+      [value]="filters().facility"
+      [itemToString]="facilityLabelOf"
+      [state]="fieldPopoverState('facility')"
+      (valueChange)="applyFilter({ facility: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('facility', $event)"
+    >
+      <label for="maintenance-filter-facility" class="sr-only" i18n="@@maintenance.filter.facility"
         >Facility</label
       >
-      <hlm-select
-        [value]="filters().facility"
-        [itemToString]="facilityLabelOf"
-        (valueChange)="applyFilter({ facility: $event ?? null })"
+      <hlm-select-trigger
+        size="sm"
+        buttonId="maintenance-filter-facility"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="maintenance-filter-facility"
       >
-        <hlm-select-trigger
-          buttonId="maintenance-filter-facility"
-          class="w-48 max-sm:min-h-11"
-          data-testid="maintenance-filter-facility"
-        >
-          <hlm-select-value
-            placeholder="Any facility"
-            i18n-placeholder="@@maintenance.filter.anyFacility"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
+        <hlm-select-value
+          placeholder="Any facility"
+          i18n-placeholder="@@maintenance.filter.anyFacility"
+        />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (option of facilityOptions(); track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
 
-    <div class="flex flex-col gap-1">
+  <ng-template #equipmentTypeChip>
+    <hlm-select
+      [value]="filters().equipmentType"
+      [itemToString]="equipmentTypeLabelOf"
+      [state]="fieldPopoverState('equipmentType')"
+      (valueChange)="applyFilter({ equipmentType: $event ?? null })"
+      (stateChanged)="onFieldPopoverStateChanged('equipmentType', $event)"
+    >
       <label
         for="maintenance-filter-equipment-type"
-        class="text-xs font-medium text-muted-foreground"
+        class="sr-only"
         i18n="@@maintenance.filter.equipmentType"
         >Equipment type</label
       >
-      <hlm-select
-        [value]="filters().equipmentType"
-        [itemToString]="equipmentTypeLabelOf"
-        (valueChange)="applyFilter({ equipmentType: $event ?? null })"
+      <hlm-select-trigger
+        size="sm"
+        buttonId="maintenance-filter-equipment-type"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="maintenance-filter-equipment-type"
       >
-        <hlm-select-trigger
-          buttonId="maintenance-filter-equipment-type"
-          class="w-48 max-sm:min-h-11"
-          data-testid="maintenance-filter-equipment-type"
-        >
-          <hlm-select-value
-            placeholder="Any type"
-            i18n-placeholder="@@maintenance.filter.anyType"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of equipmentTypeOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    </div>
+        <hlm-select-value placeholder="Any type" i18n-placeholder="@@maintenance.filter.anyType" />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal class="w-fit">
+        <hlm-select-group>
+          @for (option of equipmentTypeOptions; track option.value) {
+            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </ng-template>
 
-    <div class="flex flex-col gap-1">
+  <ng-template #dueBeforeChip>
+    <hlm-date-picker
+      [date]="filters().dueBefore ?? undefined"
+      (dateChange)="applyFilter({ dueBefore: $event ?? null })"
+    >
       <label
         for="maintenance-filter-due-before"
-        class="text-xs font-medium text-muted-foreground"
+        class="sr-only"
         i18n="@@maintenance.filter.dueBefore"
         >Due before</label
       >
-      <input
-        hlmInput
-        id="maintenance-filter-due-before"
-        type="date"
-        class="max-sm:min-h-11"
+      <hlm-date-picker-trigger
+        buttonId="maintenance-filter-due-before"
+        class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
         data-testid="maintenance-filter-due-before"
-        [value]="filters().dueBefore ?? ''"
-        (change)="applyFilter({ dueBefore: $any($event.target).value || null })"
-      />
-    </div>
-
-    @if (hasFilters()) {
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:min-h-11"
-        data-testid="maintenance-filter-clear"
-        (click)="clearFilters()"
       >
-        <span i18n="@@common.clearFilters">Clear filters</span>
-      </button>
-    }
-  </div>
+        <span i18n="@@maintenance.filter.dueBeforePlaceholder">Pick a date</span>
+      </hlm-date-picker-trigger>
+    </hlm-date-picker>
+  </ng-template>
 
   @if (store.hasListError()) {
     <app-error-state

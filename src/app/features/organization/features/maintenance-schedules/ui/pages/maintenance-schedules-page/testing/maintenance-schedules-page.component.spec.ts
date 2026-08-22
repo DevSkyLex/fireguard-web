@@ -186,39 +186,53 @@ describe('MaintenanceSchedulesPage', () => {
     expect(resetCampaignOperation).toHaveBeenCalled();
   });
 
-  it('should narrow the list to the picked due-status chip', async () => {
+  it('should narrow the list to the picked due-status filter', async () => {
     fixture = await createPage();
     load.mockClear();
 
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="maintenance-filter-due-status-due_soon"]',
-      ) as HTMLButtonElement
-    ).click();
+      fixture.componentInstance as unknown as {
+        applyFilter(patch: { dueStatus: string | null }): void;
+      }
+    ).applyFilter({ dueStatus: 'due_soon' });
     await fixture.whenStable();
 
     expect(load).toHaveBeenCalledWith(expect.objectContaining({ dueStatus: 'due_soon' }));
   });
 
-  it('should clear the due-status narrowing when the active chip is re-activated', async () => {
+  it('should clear the due-status narrowing when its chip is removed', async () => {
     fixture = await createPage();
 
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="maintenance-filter-due-status-due_soon"]',
-      ) as HTMLButtonElement
-    ).click();
+      fixture.componentInstance as unknown as {
+        applyFilter(patch: { dueStatus: string | null }): void;
+      }
+    ).applyFilter({ dueStatus: 'due_soon' });
     await fixture.whenStable();
     load.mockClear();
 
-    (
-      fixture.nativeElement.querySelector(
-        '[data-testid="maintenance-filter-due-status-due_soon"]',
-      ) as HTMLButtonElement
-    ).click();
+    (fixture.componentInstance as unknown as { onFieldRemoved(key: string): void }).onFieldRemoved(
+      'dueStatus',
+    );
     await fixture.whenStable();
 
     expect(load).toHaveBeenCalledWith(expect.objectContaining({ dueStatus: undefined }));
+  });
+
+  it('should convert the due-before filter to an ISO string on load', async () => {
+    fixture = await createPage();
+    load.mockClear();
+
+    (
+      fixture.componentInstance as unknown as {
+        applyFilter(patch: { dueBefore: Date | null }): void;
+      }
+    ).applyFilter({ dueBefore: new Date('2026-06-30T00:00:00.000Z') });
+    await fixture.whenStable();
+
+    expect(load).toHaveBeenCalledWith(
+      expect.objectContaining({ dueBefore: '2026-06-30T00:00:00.000Z' }),
+    );
   });
 
   it('should register the "Generate inspection campaign" action only when both permissions are held', async () => {

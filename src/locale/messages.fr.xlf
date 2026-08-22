@@ -366,10 +366,6 @@
         <source>Its messages, pins, files and links stay, but the channel itself is gone for everyone. This cannot be undone.</source>
         <target>Ses messages, épingles, fichiers et liens restent, mais le canal lui-même disparaît pour tout le monde. Cette action est irréversible.</target>
       </trans-unit>
-      <trans-unit id="channels.room.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
-      </trans-unit>
       <trans-unit id="channels.room.deleteConfirmAction" datatype="html">
         <source>Delete</source>
         <target>Supprimer</target>
@@ -1873,10 +1869,6 @@
       <trans-unit id="facility.detail.deleteConfirmDescription" datatype="html">
         <source>A published facility is archived and can be restored; a draft facility is permanently removed. This cannot be undone from here.</source>
         <target>Un établissement publié est archivé et peut être restauré ; un établissement brouillon est supprimé définitivement. Cette action est irréversible depuis cet écran.</target>
-      </trans-unit>
-      <trans-unit id="facility.detail.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="facility.detail.deleteConfirmAction" datatype="html">
         <source>Delete</source>
@@ -3414,10 +3406,6 @@
         <source>This will permanently delete <x id="count" equiv-text="bulkIds.length"/> interventions. This action cannot be undone.</source>
         <target>Cette action supprimera définitivement <x id="count" equiv-text="bulkIds.length"/> interventions. Elle est irréversible.</target>
       </trans-unit>
-      <trans-unit id="intervention.list.deleteConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
-      </trans-unit>
       <trans-unit id="intervention.list.deleteConfirmAction" datatype="html">
         <source> Delete </source>
         <target> Supprimer </target>
@@ -3773,10 +3761,6 @@
       <trans-unit id="calendar.eventDeleteDialog.description" datatype="html">
         <source> This standalone event is permanently removed from the calendar. This cannot be undone. </source>
         <target>Cet événement autonome est définitivement supprimé du calendrier. Cette action est irréversible.</target>
-      </trans-unit>
-      <trans-unit id="calendar.eventDeleteDialog.cancel" datatype="html">
-        <source> Cancel </source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="calendar.eventDeleteDialog.deleting" datatype="html">
         <source>Deleting…</source>
@@ -4343,14 +4327,6 @@
       <trans-unit id="intervention.board.columnCount" datatype="html">
         <source><x id="count" equiv-text="count"/> interventions in <x id="status" equiv-text="statusLabel"/></source>
         <target><x id="count" equiv-text="count"/> interventions dans <x id="status" equiv-text="statusLabel"/></target>
-      </trans-unit>
-      <trans-unit id="route.interventionsBoard" datatype="html">
-        <source>Board</source>
-        <target>Tableau</target>
-      </trans-unit>
-      <trans-unit id="route.interventionsCalendar" datatype="html">
-        <source>Calendar</source>
-        <target>Calendrier</target>
       </trans-unit>
       <trans-unit id="intervention.board.viewCalendar" datatype="html">
         <source>Calendar</source>
@@ -5507,10 +5483,6 @@
       <trans-unit id="org.invitations.emptyText" datatype="html">
         <source>Invitations you send will appear here until they are accepted, revoked or expire.</source>
         <target>Les invitations que vous envoyez apparaissent ici jusqu&apos;à ce qu&apos;elles soient acceptées, révoquées ou expirées.</target>
-      </trans-unit>
-      <trans-unit id="org.members.removeConfirmCancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmAction" datatype="html">
         <source>Remove</source>
@@ -7028,6 +7000,10 @@
         <source>Pick start and end dates</source>
         <target>Choisir les dates de début et de fin</target>
       </trans-unit>
+      <trans-unit id="intervention.list.filterDueWindow" datatype="html">
+        <source>Due window</source>
+        <target>Échéance nommée</target>
+      </trans-unit>
       <trans-unit id="intervention.list.filterPlannedStart" datatype="html">
         <source>Planned start</source>
         <target>Début planifié</target>
@@ -7388,10 +7364,6 @@
         <source>Maintenance</source>
         <target>Maintenance</target>
       </trans-unit>
-      <trans-unit id="maintenance.filter.dueStatusAriaLabel" datatype="html">
-        <source>Filter by due status</source>
-        <target>Filtrer par statut d&apos;échéance</target>
-      </trans-unit>
       <trans-unit id="maintenance.table.equipmentLinkAriaLabel" datatype="html">
         <source><x id="type" equiv-text="type"/> at <x id="facility" equiv-text="facilityName"/></source>
         <target><x id="type" equiv-text="type"/> à <x id="facility" equiv-text="facilityName"/></target>
@@ -7571,10 +7543,6 @@
       <trans-unit id="checklists.archiveDialog.descriptionBefore" datatype="html">
         <source>Archiving “<x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/>” keeps it readable but removes it from the checklists new inspections can use. This cannot be undone from here.</source>
         <target>Archiver « <x id="INTERPOLATION" equiv-text="{{ checklistName() }}"/> » la conserve lisible mais la retire des checklists utilisables par les nouvelles inspections. Cette action ne peut pas être annulée depuis ici.</target>
-      </trans-unit>
-      <trans-unit id="checklists.archiveDialog.cancel" datatype="html">
-        <source>Cancel</source>
-        <target>Annuler</target>
       </trans-unit>
       <trans-unit id="checklists.archiveDialog.confirm" datatype="html">
         <source>Archive</source>
@@ -7976,6 +7944,14 @@
         <source>Cadence</source>
         <target>Cadence</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.caption" datatype="html">
+        <source>The organization's recurring intervention schedules.</source>
+        <target>Les récurrences programmées de l'organisation.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.columnActions" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
         <target>Supprimer &#171;&#160;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&#160;&#187; ?</target>
@@ -7984,6 +7960,10 @@
         <source>No recurrences yet.</source>
         <target>Aucune récurrence pour l'instant.</target>
       </trans-unit>
+      <trans-unit id="intervention.recurrences.emptyDesc" datatype="html">
+        <source>Recurring schedules periodically draft a new intervention from a template.</source>
+        <target>Les récurrences créent périodiquement une nouvelle intervention à partir d'un modèle.</target>
+      </trans-unit>
       <trans-unit id="intervention.recurrences.endLabel" datatype="html">
         <source>End date</source>
         <target>Date de fin</target>
@@ -7991,6 +7971,30 @@
       <trans-unit id="intervention.recurrences.endPlaceholder" datatype="html">
         <source>No end</source>
         <target>Pas de fin</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.errorTitle" datatype="html">
+        <source>Recurrences could not be loaded</source>
+        <target>Impossible de charger les récurrences</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.annual" datatype="html">
+        <source>Yearly</source>
+        <target>Annuelle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.monthly" datatype="html">
+        <source>Monthly</source>
+        <target>Mensuelle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.quarterly" datatype="html">
+        <source>Quarterly</source>
+        <target>Trimestrielle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.semiannual" datatype="html">
+        <source>Every 6 months</source>
+        <target>Tous les 6 mois</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequency.weekly" datatype="html">
+        <source>Weekly</source>
+        <target>Hebdomadaire</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
         <source>Frequency</source>
@@ -8943,6 +8947,74 @@
       <trans-unit id="account.devices.revokeAllConfirmAction" datatype="html">
         <source> Revoke all </source>
         <target> Tout révoquer </target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKind" datatype="html">
+        <source>Kind</source>
+        <target>Type d&apos;import</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filterKindPlaceholder" datatype="html">
+        <source>Any kind</source>
+        <target>Tous les types</target>
+      </trans-unit>
+      <trans-unit id="imports.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="checklists.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="audit.list.searchPlaceholder" datatype="html">
+        <source>Search actions, actors and subjects...</source>
+        <target>Rechercher actions, acteurs et objets...</target>
+      </trans-unit>
+      <trans-unit id="audit.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueStatus" datatype="html">
+        <source>Due status</source>
+        <target>Statut d&apos;échéance</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.anyDueStatus" datatype="html">
+        <source>Any status</source>
+        <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
+        <source>before</source>
+        <target>avant</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.dueBeforePlaceholder" datatype="html">
+        <source>Pick a date</source>
+        <target>Choisir une date</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.status" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredStatus" datatype="html">
+        <source>Ignored here — the board&apos;s columns already narrow by status.</source>
+        <target>Sans effet ici — les colonnes du tableau filtrent déjà par statut.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredDateRange" datatype="html">
+        <source>Ignored here — the visible month is already the date filter.</source>
+        <target>Sans effet ici — le mois affiché est déjà le filtre de date.</target>
+      </trans-unit>
+      <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
+        <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
+        <target>Sans effet ici — cette vue ne filtre que par statut, type, site et responsable.</target>
       </trans-unit>
 </body>
   </file>

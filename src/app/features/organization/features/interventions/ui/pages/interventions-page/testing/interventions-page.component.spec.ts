@@ -1,19 +1,9 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  input,
-  provideZonelessChangeDetection,
-  signal,
-  type InputSignal,
-  type TemplateRef,
-  type WritableSignal,
-} from '@angular/core';
+import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -22,20 +12,19 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionRecurrenceService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionAllowedActionsOutput,
-  InterventionLabelOutput,
   InterventionOutput,
-  MemberSelectOption,
-  SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
+import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
 import { InterventionsPage } from '../interventions-page.component';
 
 /**
@@ -104,34 +93,6 @@ const createPage = async (
   return created;
 };
 
-/**
- * Stands in for the shell's `DashboardPageActions`: every migrated page
- * registers its header actions as a `TemplateRef` on the real
- * `PageActionsService` (never mocked, so the constructor effect and the
- * teardown clear behave exactly as in production) rather than rendering them
- * in its own template. A spec that needs to click one of those buttons
- * renders the currently registered template through this outlet, the same
- * way the shell does — this is the approach every migrated page's spec
- * reuses.
- */
-@Component({
-  selector: 'app-page-actions-host',
-  imports: [NgTemplateOutlet],
-  template: '<ng-container *ngTemplateOutlet="template()" />',
-})
-class PageActionsHost {
-  public readonly template: InputSignal<TemplateRef<unknown> | null> =
-    input<TemplateRef<unknown> | null>(null);
-}
-
-const renderPageActions = (): HTMLElement => {
-  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
-  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
-  hostFixture.detectChanges();
-
-  return hostFixture.nativeElement as HTMLElement;
-};
-
 describe('InterventionsPage', () => {
   let fixture: ComponentFixture<InterventionsPage>;
   let load: ReturnType<typeof vi.fn>;
@@ -154,6 +115,20 @@ describe('InterventionsPage', () => {
   let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+
+  /**
+   * jsdom implements neither, and the chips' spartan selects reach for both:
+   * the popover observes its anchor, and the multiple select scrolls its
+   * active option into view the moment "is any of" renders one.
+   */
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      public observe(): void {}
+      public unobserve(): void {}
+      public disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
 
   beforeEach(() => {
     load = vi.fn();
@@ -209,6 +184,17 @@ describe('InterventionsPage', () => {
           },
         },
         {
+          provide: InterventionPlanningOptionsStore,
+          useValue: {
+            sites: signal([]),
+            members: signal([]),
+            labels: signal([]),
+            templates: signal([]),
+            hasTemplates: signal(false),
+            loadCreationOptions: vi.fn(),
+          },
+        },
+        {
           provide: OrganizationPermissionService,
           useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => true },
         },
@@ -217,12 +203,24 @@ describe('InterventionsPage', () => {
           useValue: { profile: signal({ id: 'member-1' }) },
         },
         {
+          provide: InterventionStatisticsStore,
+          useValue: { load: vi.fn(), queryData: signal(null), isQueryLoading: signal(false) },
+        },
+        {
           provide: InterventionService,
-          useValue: { exportCsv, statistics: vi.fn().mockReturnValue(of(null)) },
+          useValue: {
+            exportCsv,
+            statistics: vi.fn().mockReturnValue(of(null)),
+            listCalendarWindow: vi.fn().mockReturnValue(of([])),
+          },
         },
         {
           provide: InterventionRecurrenceService,
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+        },
+        {
+          provide: OrganizationMemberService,
+          useValue: { getCurrentProfile: vi.fn().mockReturnValue(of({ id: 'member-1' })) },
         },
         {
           provide: FeedbackService,
@@ -232,40 +230,6 @@ describe('InterventionsPage', () => {
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
-
-    TestBed.overrideComponent(InterventionsPage, {
-      remove: { providers: [InterventionPlanningOptionsStore] },
-      add: {
-        providers: [
-          {
-            provide: InterventionPlanningOptionsStore,
-            useValue: {
-              sites: signal([]),
-              members: signal([]),
-              labels: signal([]),
-              templates: signal([]),
-              hasTemplates: signal(false),
-              loadCreationOptions: vi.fn(),
-            },
-          },
-        ],
-      },
-    });
-  });
-
-  it('should render the "New intervention" button through the shell header actions', async () => {
-    fixture = await createPage();
-
-    const header: HTMLElement = renderPageActions();
-    const button: HTMLButtonElement | null = header.querySelector(
-      '[data-testid="interventions-new"]',
-    );
-
-    expect(button).not.toBeNull();
-    button?.click();
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should load the list for the workspace on arrival', async () => {
@@ -288,21 +252,6 @@ describe('InterventionsPage', () => {
     await fixture.whenStable();
 
     expect(load.mock.calls.at(-1)?.[0].options.name).toBeUndefined();
-  });
-
-  it('should write a picked filter into the URL, the single source of truth', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyFilter']({ status: 'planned' });
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: 'planned' }),
-        queryParamsHandling: 'merge',
-      }),
-    );
   });
 
   it('should narrow the query from the filter params the URL carries', async () => {
@@ -329,48 +278,16 @@ describe('InterventionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.status).toBeUndefined();
   });
 
-  it('should read the "isAnyOf" operator and send a repeated status when the URL carries a comma-separated value', async () => {
+  it('should send a repeated status when the URL carries a comma-separated "isAnyOf" value', async () => {
     fixture = await createPage({ status: 'planned,in_progress' });
 
-    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
     expect(load.mock.calls.at(-1)?.[0].options.status).toEqual(['planned', 'in_progress']);
   });
 
-  it('should read the "equals" operator from a scalar-valued filter', async () => {
+  it('should send a scalar status from a single-valued "equals" filter', async () => {
     fixture = await createPage({ status: 'planned' });
 
-    expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
     expect(load.mock.calls.at(-1)?.[0].options.status).toBe('planned');
-  });
-
-  it('should write a multi selection into the URL as a comma-joined param', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyEnumSelection']('status', ['planned', 'in_progress']);
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: 'planned,in_progress' }),
-        queryParamsHandling: 'merge',
-      }),
-    );
-  });
-
-  it('should clear an emptied multi selection back to unfiltered rather than send an empty isAnyOf', async () => {
-    fixture = await createPage();
-
-    fixture.componentInstance['applyEnumSelection']('status', []);
-    await fixture.whenStable();
-
-    expect(navigate).toHaveBeenCalledWith(
-      [],
-      expect.objectContaining({
-        queryParams: expect.objectContaining({ status: null }),
-        queryParamsHandling: 'merge',
-      }),
-    );
   });
 
   it('should reverse the ordering when the active column is picked again', async () => {
@@ -386,7 +303,21 @@ describe('InterventionsPage', () => {
     fixture = await createPage();
 
     fixture.componentInstance['goToPage'](1);
-    fixture.componentInstance['applyFilter']({ status: 'draft' });
+    fixture.componentRef.setInput('status', 'draft');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['page']()).toBe(1);
+  });
+
+  it('should reset the page even when the shell — not this page — wrote the URL', async () => {
+    totalInterventions.set(500);
+    fixture = await createPage();
+
+    fixture.componentInstance['goToPage'](2);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(2);
+
+    fixture.componentRef.setInput('q', 'sweep');
     await fixture.whenStable();
 
     expect(fixture.componentInstance['page']()).toBe(1);
@@ -670,46 +601,6 @@ describe('InterventionsPage', () => {
     });
   });
 
-  describe('mine toggle', () => {
-    it('should navigate the mine param on', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['toggleMine']();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ mine: '1' }) }),
-      );
-    });
-
-    it('should navigate the mine param off when already on', async () => {
-      fixture = await createPage({ mine: '1' });
-
-      fixture.componentInstance['toggleMine']();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ mine: null }) }),
-      );
-    });
-  });
-
-  describe('label filter', () => {
-    it('should send the label filter as an intervention-label IRI', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['applyFilter']({ label: '/api/intervention-labels/l-1' });
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ label: 'l-1' }) }),
-      );
-    });
-  });
-
   describe('assign', () => {
     it('should open the assign dialog for a single row without calling the store yet', async () => {
       fixture = await createPage();
@@ -968,30 +859,335 @@ describe('InterventionsPage', () => {
 
       fixture.componentInstance['exportCsv']();
       await fixture.whenStable();
-      await Promise.resolve();
-      await Promise.resolve();
 
-      expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.');
+      await vi.waitFor(() =>
+        expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.'),
+      );
     });
 
     it('should mark the export button busy and announce it while the export is in flight', async () => {
       totalInterventions.set(5);
       fixture = await createPage();
+      const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-      const button = (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="interventions-export"]',
-      );
-      expect(button?.getAttribute('aria-busy')).toBeNull();
+      expect(
+        root().querySelector('[data-testid="interventions-export"]')?.getAttribute('aria-busy'),
+      ).toBeNull();
 
       fixture.componentInstance['exportBusy'].set(true);
       await fixture.whenStable();
 
-      expect(button?.getAttribute('aria-busy')).toBe('true');
       expect(
-        (fixture.nativeElement as HTMLElement).querySelector(
-          '[data-testid="interventions-export-status"]',
+        root().querySelector('[data-testid="interventions-export"]')?.getAttribute('aria-busy'),
+      ).toBe('true');
+      expect(root().querySelector('[data-testid="interventions-export-status"]')).not.toBeNull();
+    });
+  });
+
+  describe('tabs', () => {
+    it('should default to the List tab when no ?view= is present', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+      expect((fixture.nativeElement as HTMLElement).querySelector('#interventions')).not.toBeNull();
+    });
+
+    it('should read the Board tab from ?view=board', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('board');
+    });
+
+    it('should fall back to List for an unrecognised ?view= value', async () => {
+      fixture = await createPage({ view: 'bogus' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+    });
+
+    it('should write ?view=board while keeping a status the Board does not honour', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      fixture.componentInstance['switchView']('board');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: 'board' } }),
+      );
+      expect(navigate).not.toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: null }) }),
+      );
+    });
+
+    it("should name the ignored reason in the chip's accessible name on the Board", async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      const name: string = fixture.componentInstance['chipAccessibleName']('status');
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+      expect(name).toContain("the board's columns already narrow by status");
+    });
+
+    it('should leave the accessible name reason-free on a tab that honours the field', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      expect(fixture.componentInstance['chipAccessibleName']('status')).not.toContain('Ignored');
+    });
+
+    it('should offer every field in the "+ Filter" menu on the List', async () => {
+      fixture = await createPage();
+
+      const offered: readonly string[] = fixture.componentInstance['offeredFilterFields']().map(
+        (field: { key: string }): string => field.key,
+      );
+
+      expect(offered).toEqual([
+        'status',
+        'type',
+        'priority',
+        'site',
+        'responsible',
+        'label',
+        'dueRange',
+        'plannedStartRange',
+        'dueWindow',
+      ]);
+      expect(
+        fixture.componentInstance['offeredFilterFields']().every(
+          (field: { unavailableReason?: string }): boolean => field.unavailableReason === undefined,
         ),
-      ).not.toBeNull();
+      ).toBe(true);
+    });
+
+    it('should mark status unavailable on the Board rather than withholding it', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      const offered: readonly { key: string; unavailableReason?: string }[] =
+        fixture.componentInstance['offeredFilterFields']();
+
+      expect(offered.map((field): string => field.key)).toContain('status');
+      expect(offered.find((field): boolean => field.key === 'status')?.unavailableReason).toContain(
+        "board's columns",
+      );
+      expect(
+        offered.find((field): boolean => field.key === 'type')?.unavailableReason,
+      ).toBeUndefined();
+    });
+
+    it('should mark everything the Calendar cannot apply, and only that', async () => {
+      fixture = await createPage({ view: 'calendar' });
+
+      const unavailable: readonly string[] = fixture.componentInstance['offeredFilterFields']()
+        .filter(
+          (field: { unavailableReason?: string }): boolean => field.unavailableReason !== undefined,
+        )
+        .map((field: { key: string }): string => field.key);
+
+      expect(unavailable).toEqual([
+        'priority',
+        'label',
+        'dueRange',
+        'plannedStartRange',
+        'dueWindow',
+      ]);
+    });
+
+    it('should leave an unhonoured narrowing out of the Filters badge while still charting it', async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toContain('status');
+      expect(fixture.componentInstance['honouredActiveFilterKeys']()).toEqual([]);
+    });
+
+    it('should count only what the active tab applies when both kinds are set', async () => {
+      fixture = await createPage({ status: 'planned', type: 'inventory', view: 'board' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toHaveLength(2);
+      expect(fixture.componentInstance['honouredActiveFilterKeys']()).toEqual(['type']);
+    });
+
+    it('should keep the chip on screen after an operator switch drops its value', async () => {
+      fixture = await createPage({ dueAfter: '2026-08-01' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'dueRange',
+        operator: 'between',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['openFilterKey']()).toBe('dueRange');
+    });
+
+    it('should carry a single value from "is" to "is any of"', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'status',
+        operator: 'isAnyOf',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: 'planned' }) }),
+      );
+    });
+
+    it('should drop a multi-value narrowing that "is" cannot represent', async () => {
+      fixture = await createPage({ status: 'planned,submitted' });
+
+      fixture.componentInstance['onFilterOperatorChanged']({ key: 'status', operator: 'equals' });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ status: null }) }),
+      );
+    });
+
+    it('should let a picked operator outrank the value shape the URL round-trips to', async () => {
+      fixture = await createPage({ status: 'planned' });
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('equals');
+
+      fixture.componentInstance['onFilterOperatorChanged']({
+        key: 'status',
+        operator: 'isAnyOf',
+      });
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['enumFieldOperator']('status')).toBe('isAnyOf');
+    });
+
+    it('should count and clear the named due window, which had no chip at all', async () => {
+      fixture = await createPage({ due: 'overdue' });
+
+      expect(fixture.componentInstance['activeFilterKeys']()).toContain('dueWindow');
+
+      fixture.componentInstance['onFieldRemoved']('dueWindow');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ due: null }) }),
+      );
+    });
+
+    it('should keep an unhonoured field in the catalog while it is set, so its chip keeps a label', async () => {
+      fixture = await createPage({ status: 'planned', view: 'board' });
+
+      expect(
+        fixture.componentInstance['offeredFilterFields']().map(
+          (field: { key: string }): string => field.key,
+        ),
+      ).toContain('status');
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+    });
+
+    it('should write ?view=null (dropped) when switching back to List', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      fixture.componentInstance['switchView']('list');
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: null } }),
+      );
+    });
+
+    it('should honour every filter field on the List tab', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
+      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(false);
+    });
+
+    it('should render an ignored chip as inert on the Board tab, naming the reason', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+      expect(fixture.componentInstance['ignoredReason']('status')).toContain(
+        'columns already narrow by status',
+      );
+    });
+
+    it('should ignore priority, label and both date ranges on the Calendar tab', async () => {
+      fixture = await createPage({ view: 'calendar' });
+
+      expect(fixture.componentInstance['isFieldIgnored']('priority')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('label')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(true);
+      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
+    });
+
+    it('should not render Display, Recurrences, Export or the bulk-actions menu outside the List tab', async () => {
+      fixture = await createPage({ view: 'board' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-display"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-recurrences"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-export"]')).toBeNull();
+    });
+  });
+
+  describe('board', () => {
+    it('should load one large page, status excluded, while the Board tab is active', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
+      expect(boardCall).toBeDefined();
+      expect(boardCall?.[0].options.status).toBeUndefined();
+      expect(boardCall?.[0].options.page).toBe(1);
+    });
+
+    it('should never send a status narrowing to the Board even when the URL still carries one', async () => {
+      fixture = await createPage({ view: 'board', status: 'planned' });
+
+      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
+      expect(boardCall?.[0].options.status).toBeUndefined();
+    });
+
+    it('should send a legal move from the Board straight to the store, trusting the board already validated it', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      fixture.componentInstance['applyTransition']({
+        intervention: intervention({ id: 'i-9', revision: 7 }),
+        status: 'planned',
+      });
+
+      expect(transition).toHaveBeenCalledWith({ id: 'i-9', status: 'planned', revision: 7 });
+    });
+  });
+
+  describe('calendar', () => {
+    it('should not fetch the calendar window before the Calendar tab first activates', async () => {
+      fixture = await createPage({ view: 'board' });
+
+      const calendarService = TestBed.inject(InterventionService);
+      expect(calendarService.listCalendarWindow).not.toHaveBeenCalled();
+    });
+
+    it('should fetch the calendar window once InterventionCalendar mounts and reports its first anchor', async () => {
+      fixture = await createPage({ view: 'calendar' });
+
+      const calendarService = TestBed.inject(InterventionService);
+      expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['calendarMonth']()).not.toBeNull();
+    });
+
+    it('should re-fetch the calendar window on calendarReload', async () => {
+      fixture = await createPage({ view: 'calendar' });
+      const calendarService = TestBed.inject(InterventionService);
+      (calendarService.listCalendarWindow as ReturnType<typeof vi.fn>).mockClear();
+
+      fixture.componentInstance['calendarReload']();
+      await fixture.whenStable();
+
+      expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1020,224 +1216,6 @@ describe('InterventionsPage', () => {
       const options = load.mock.calls[0][0].options;
       expect(options.status).toBeUndefined();
       expect(options.dueAtBefore).toBeUndefined();
-    });
-  });
-
-  describe('filters visibility', () => {
-    function toggleButton(): HTMLButtonElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="interventions-filters-toggle"]',
-      );
-    }
-
-    function filterBar(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('#interventions-filter-bar');
-    }
-
-    it('should render collapsed with no badge when no filter is active on arrival', async () => {
-      fixture = await createPage();
-
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
-      expect(filterBar()).toBeNull();
-      expect(toggleButton()?.querySelector('hlm-badge')).toBeNull();
-    });
-
-    it('should mount the filter bar already expanded, with a badge count, when the URL carries an active filter', async () => {
-      fixture = await createPage({ status: 'planned', priority: 'high' });
-
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
-      expect(filterBar()).not.toBeNull();
-      expect(toggleButton()?.querySelector('hlm-badge')?.textContent?.trim()).toBe('2');
-    });
-
-    it('should mount and unmount the bar as the toggle button is activated', async () => {
-      fixture = await createPage();
-      expect(filterBar()).toBeNull();
-
-      toggleButton()?.click();
-      await fixture.whenStable();
-      expect(filterBar()).not.toBeNull();
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('true');
-
-      toggleButton()?.click();
-      await fixture.whenStable();
-      expect(filterBar()).toBeNull();
-      expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
-    });
-
-    it('should stay expanded once auto-opened by a URL filter, even after that filter is cleared', async () => {
-      fixture = await createPage({ status: 'planned' });
-      expect(filterBar()).not.toBeNull();
-
-      fixture.componentInstance['applyFilter']({ status: null });
-      fixture.componentRef.setInput('status', undefined);
-      await fixture.whenStable();
-
-      expect(filterBar()).not.toBeNull();
-    });
-  });
-
-  describe('filter chips', () => {
-    it('should list every active field as an activeKey, in the catalog’s own keys', async () => {
-      TestBed.overrideComponent(InterventionsPage, {
-        remove: { providers: [InterventionPlanningOptionsStore] },
-        add: {
-          providers: [
-            {
-              provide: InterventionPlanningOptionsStore,
-              useValue: {
-                sites: signal<readonly SelectOption[]>([
-                  { value: '/api/facilities/site-9', label: 'Warehouse 9' },
-                ]),
-                members: signal<readonly MemberSelectOption[]>([
-                  {
-                    value: '/api/organizations/org-1/members/member-9',
-                    label: 'Jordan Lee',
-                    displayName: 'Jordan Lee',
-                    roleLabel: 'Technician',
-                    avatarUrl: null,
-                    initials: 'JL',
-                  },
-                ]),
-                labels: signal<readonly InterventionLabelOutput[]>([
-                  {
-                    '@id': '/api/intervention-labels/label-9',
-                    '@type': 'InterventionLabel',
-                    id: 'label-9',
-                    organization: '/api/organizations/org-1',
-                    name: 'Compliance',
-                    color: '#ff0000',
-                    createdAt: '2026-01-01T00:00:00+00:00',
-                    updatedAt: '2026-01-01T00:00:00+00:00',
-                  },
-                ]),
-                templates: signal([]),
-                hasTemplates: signal(false),
-                loadCreationOptions: vi.fn(),
-              },
-            },
-          ],
-        },
-      });
-
-      fixture = await createPage({
-        status: 'changes_requested',
-        type: 'inventory',
-        priority: 'high',
-        site: 'site-9',
-        responsible: 'member-9',
-        label: 'label-9',
-        dueAfter: '2026-08-01',
-        plannedStartAfter: '2026-08-01',
-      });
-
-      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
-        'status',
-        'type',
-        'priority',
-        'site',
-        'responsible',
-        'label',
-        'dueRange',
-        'plannedStartRange',
-      ]);
-
-      const triggers = [
-        'status',
-        'type',
-        'priority',
-        'site',
-        'responsible',
-        'dueRange',
-        'plannedStartRange',
-      ].map((suffix: string) => {
-        const testId =
-          suffix === 'dueRange' ? 'due' : suffix === 'plannedStartRange' ? 'planned-start' : suffix;
-        return (fixture.nativeElement as HTMLElement).querySelector(
-          `[data-testid="interventions-filter-${testId}"]`,
-        );
-      });
-      expect(triggers.every((trigger) => trigger !== null)).toBe(true);
-    });
-
-    it('should still render an IRI-valued field’s chip while its option list is loading and its label cannot resolve yet', async () => {
-      fixture = await createPage({ site: 'site-42', responsible: 'member-77', label: 'label-88' });
-
-      expect(fixture.componentInstance['activeFilterKeys']()).toEqual([
-        'site',
-        'responsible',
-        'label',
-      ]);
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector(
-          '[data-testid="interventions-filter-site"]',
-        ),
-      ).not.toBeNull();
-    });
-
-    it('should apply the chip’s own patch when its remove button is clicked', async () => {
-      fixture = await createPage({ status: 'planned' });
-
-      const removeButton: HTMLButtonElement | null = (
-        fixture.nativeElement as HTMLElement
-      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
-      removeButton?.click();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({
-          queryParams: expect.objectContaining({ status: null }),
-          queryParamsHandling: 'merge',
-        }),
-      );
-    });
-
-    it('should name a chip’s remove button by its field label', async () => {
-      fixture = await createPage({ status: 'planned' });
-
-      const removeButton: HTMLButtonElement | null = (
-        fixture.nativeElement as HTMLElement
-      ).querySelector('[data-testid="interventions-filter-chip-remove"]');
-
-      expect(removeButton?.getAttribute('aria-label')).toBe('Remove filter: Status');
-    });
-
-    it('should name a chip’s value segment by its field label, distinctly from the remove button', async () => {
-      fixture = await createPage();
-
-      expect(fixture.componentInstance['changeFilterLabel']('Status')).toBe(
-        'Change filter: Status',
-      );
-    });
-
-    it('should force a field’s selector open when the bar reports it picked', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
-    });
-
-    it('should clear the forced-open field once its selector reports closed', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      fixture.componentInstance['onFieldPopoverStateChanged']('site', 'closed');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('closed');
-    });
-
-    it('should not clear the forced-open field when a different field’s selector closes', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['onFieldPicked']('site');
-      fixture.componentInstance['onFieldPopoverStateChanged']('responsible', 'closed');
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['fieldPopoverState']('site')).toBe('open');
     });
   });
 });

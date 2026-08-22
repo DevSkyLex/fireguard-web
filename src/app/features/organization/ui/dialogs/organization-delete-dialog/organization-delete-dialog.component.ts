@@ -27,7 +27,7 @@ import { HlmInput } from '@shared/ui/input';
  * The typed value is UI-only and never leaves this component as its own
  * payload — it exists purely to gate {@link confirmed}, so it is a plain
  * signal rather than a Signal Forms field tree, matching how
- * `NewDirectMessageDialog` treats its own transient search text.
+ * `DirectMessageCreateDialog` treats its own transient search text.
  *
  * Presentational: it emits {@link confirmed} and never calls the store itself
  * (`ARCHITECTURE.md` §10.3).

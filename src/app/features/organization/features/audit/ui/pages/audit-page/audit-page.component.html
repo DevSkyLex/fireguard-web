@@ -1,63 +1,90 @@
 <div id="audit-page" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
   <app-collection-toolbar>
-    <div class="flex flex-col gap-1" toolbarStart>
-      <label
-        for="audit-filter-action"
-        class="text-xs font-medium text-muted-foreground"
-        i18n="@@audit.filter.action"
-        >Action</label
-      >
-      <hlm-combobox
-        [value]="action()"
-        [itemToString]="actionLabelOf"
-        (valueChange)="applyAction($any($event))"
-      >
-        <hlm-combobox-input
-          inputId="audit-filter-action"
-          placeholder="Search an action"
-          i18n-placeholder="@@audit.filter.searchPlaceholder"
-          showClear
-          clearAriaLabel="Clear action filter"
-          i18n-clearAriaLabel="@@audit.filter.clearAriaLabel"
-          data-testid="audit-filter-action"
-        />
-        <hlm-combobox-content *hlmComboboxPortal>
-          <hlm-combobox-empty i18n="@@audit.filter.noAction">No action matches.</hlm-combobox-empty>
-          @for (group of actionGroups; track group.module) {
-            <div hlmComboboxGroup>
-              <span hlmComboboxLabel>{{ group.moduleLabel }}</span>
-              @for (option of group.options; track option.value) {
-                <hlm-combobox-item
-                  [value]="option.value"
-                  [attr.data-testid]="'audit-filter-action-' + option.value"
-                >
-                  {{ option.label }}
-                </hlm-combobox-item>
-              }
-            </div>
-          }
-        </hlm-combobox-content>
-      </hlm-combobox>
-    </div>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="audit"
+      placeholder="Search actions, actors and subjects..."
+      i18n-placeholder="@@audit.list.searchPlaceholder"
+      ariaLabel="Search actions, actors and subjects..."
+      i18n-ariaLabel="@@audit.list.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
 
-    <div class="flex flex-col gap-1" toolbarEnd>
-      <label
-        for="audit-filter-date-range"
-        class="text-xs font-medium text-muted-foreground"
-        i18n="@@audit.filter.dateRange"
-        >Date range</label
-      >
-      <hlm-date-range-picker [date]="dateRange()" (dateChange)="applyDateRange($event)">
-        <hlm-date-picker-trigger
-          buttonId="audit-filter-date-range"
-          class="max-sm:min-h-11"
-          data-testid="audit-filter-date-range"
-        >
-          <span i18n="@@audit.filter.dateRangePlaceholder">Pick a date range</span>
-        </hlm-date-picker-trigger>
-      </hlm-date-range-picker>
-    </div>
+    <app-collection-filter-toggle
+      toolbarEnd
+      [visible]="filtersVisible()"
+      [activeCount]="activeFilterKeys().length"
+      label="Filters"
+      i18n-label="@@audit.list.filtersButton"
+      testIdPrefix="audit"
+      (visibleChange)="toggleFiltersVisible($event)"
+    />
   </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="chipTemplates()"
+      testIdPrefix="audit"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #actionChip>
+    <hlm-combobox
+      [value]="action()"
+      [itemToString]="actionLabelOf"
+      (valueChange)="applyAction($any($event))"
+    >
+      <label for="audit-filter-action" class="sr-only" i18n="@@audit.filter.action">Action</label>
+      <hlm-combobox-input
+        inputId="audit-filter-action"
+        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        placeholder="Search an action"
+        i18n-placeholder="@@audit.filter.searchPlaceholder"
+        showClear
+        clearAriaLabel="Clear action filter"
+        i18n-clearAriaLabel="@@audit.filter.clearAriaLabel"
+        data-testid="audit-filter-action"
+      />
+      <hlm-combobox-content *hlmComboboxPortal>
+        <hlm-combobox-empty i18n="@@audit.filter.noAction">No action matches.</hlm-combobox-empty>
+        @for (group of actionGroups; track group.module) {
+          <div hlmComboboxGroup>
+            <span hlmComboboxLabel>{{ group.moduleLabel }}</span>
+            @for (option of group.options; track option.value) {
+              <hlm-combobox-item
+                [value]="option.value"
+                [attr.data-testid]="'audit-filter-action-' + option.value"
+              >
+                {{ option.label }}
+              </hlm-combobox-item>
+            }
+          </div>
+        }
+      </hlm-combobox-content>
+    </hlm-combobox>
+  </ng-template>
+
+  <ng-template #dateRangeChip>
+    <label for="audit-filter-date-range" class="sr-only" i18n="@@audit.filter.dateRange"
+      >Date range</label
+    >
+    <hlm-date-range-picker [date]="dateRange()" (dateChange)="applyDateRange($event)">
+      <hlm-date-picker-trigger
+        buttonId="audit-filter-date-range"
+        class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
+        data-testid="audit-filter-date-range"
+      >
+        <span i18n="@@audit.filter.dateRangePlaceholder">Pick a date range</span>
+      </hlm-date-picker-trigger>
+    </hlm-date-range-picker>
+  </ng-template>
 
   @if (store.isForbidden()) {
     <app-empty-state

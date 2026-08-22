@@ -48,7 +48,7 @@ import {
   HlmSidebarMenuItem,
   HlmSidebarMenuSkeleton,
 } from '@shared/ui/sidebar';
-import { NewDirectMessageDialog } from '../../dialogs/new-direct-message-dialog';
+import { DirectMessageCreateDialog } from '../../dialogs/direct-message-create-dialog';
 
 /**
  * Component DirectMessagesNav
@@ -100,7 +100,7 @@ import { NewDirectMessageDialog } from '../../dialogs/new-direct-message-dialog'
     HlmSidebarMenuButton,
     HlmSidebarMenuItem,
     HlmSidebarMenuSkeleton,
-    NewDirectMessageDialog,
+    DirectMessageCreateDialog,
   ],
   providers: [provideIcons({ lucidePenLine })],
   templateUrl: './direct-messages-nav.component.html',

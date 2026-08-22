@@ -28,6 +28,10 @@ export class InterventionsPage {
     'interventions-clear-filters',
   );
   public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
+  public readonly recurrencesTrigger: Locator = this.page.getByTestId('interventions-recurrences');
+  public readonly recurrencesSheet: Locator = this.page.getByTestId(
+    'intervention-recurrences-sheet',
+  );
 
   /** Navigates straight to the list with a raw query string, exercising a shared/bookmarked filtered URL. */
   public async gotoWithQuery(organizationId: string, query: string): Promise<void> {
@@ -104,5 +108,10 @@ export class InterventionsPage {
   /** Clicks a chip's value segment, reopening that field's selector without removing the chip. */
   public async openFilterChipValue(fieldTestId: string): Promise<void> {
     await this.page.getByTestId(fieldTestId).click();
+  }
+
+  /** Opens the toolbar's "Recurrences" sheet. */
+  public async openRecurrences(): Promise<void> {
+    await this.recurrencesTrigger.click();
   }
 }

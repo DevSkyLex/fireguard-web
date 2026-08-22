@@ -67,7 +67,7 @@ describe('InterventionSignatureDialog', () => {
     stubPointerCapture(canvasEl());
 
     expect(confirmButton().disabled).toBe(true);
-    expect(clearButton().getAttribute('aria-disabled')).toBe('true');
+    expect((clearButton() as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('should enable Confirm and Clear once a stroke is drawn', async () => {
@@ -79,7 +79,7 @@ describe('InterventionSignatureDialog', () => {
     await fixture.whenStable();
 
     expect(confirmButton().disabled).toBe(false);
-    expect(clearButton().getAttribute('aria-disabled')).toBeNull();
+    expect((clearButton() as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('should reset to disabled after Clear', async () => {
@@ -93,7 +93,7 @@ describe('InterventionSignatureDialog', () => {
     await fixture.whenStable();
 
     expect(confirmButton().disabled).toBe(true);
-    expect(clearButton().getAttribute('aria-disabled')).toBe('true');
+    expect((clearButton() as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('should emit signed with a PNG blob on confirm', async () => {

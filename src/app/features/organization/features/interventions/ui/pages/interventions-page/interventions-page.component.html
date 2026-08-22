@@ -1,23 +1,5 @@
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <app-collection-toolbar>
-    <div toolbarStart class="flex items-center gap-2">
-      <button
-        hlmToggle
-        type="button"
-        variant="outline"
-        size="sm"
-        class="max-sm:min-h-11"
-        data-testid="interventions-mine-toggle"
-        [state]="filters().mine ? 'on' : 'off'"
-        (stateChange)="toggleMine()"
-      >
-        @if (filters().mine) {
-          <ng-icon name="lucideCheck" aria-hidden="true" />
-        }
-        <span i18n="@@intervention.list.mine">My interventions</span>
-      </button>
-    </div>
-
     <div toolbarEnd class="flex flex-wrap items-center gap-2">
       @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
         <button

@@ -573,32 +573,6 @@ describe('InterventionsPage', () => {
     });
   });
 
-  describe('mine toggle', () => {
-    it('should navigate the mine param on', async () => {
-      fixture = await createPage();
-
-      fixture.componentInstance['toggleMine']();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ mine: '1' }) }),
-      );
-    });
-
-    it('should navigate the mine param off when already on', async () => {
-      fixture = await createPage({ mine: '1' });
-
-      fixture.componentInstance['toggleMine']();
-      await fixture.whenStable();
-
-      expect(navigate).toHaveBeenCalledWith(
-        [],
-        expect.objectContaining({ queryParams: expect.objectContaining({ mine: null }) }),
-      );
-    });
-  });
-
   describe('assign', () => {
     it('should open the assign dialog for a single row without calling the store yet', async () => {
       fixture = await createPage();

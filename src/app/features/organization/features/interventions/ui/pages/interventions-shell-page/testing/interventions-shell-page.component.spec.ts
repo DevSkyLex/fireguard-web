@@ -197,6 +197,30 @@ describe('InterventionsShellPage', () => {
     );
   });
 
+  it('turns the "my interventions" narrowing on from the toolbar toggle', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['toggleMine']();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: expect.objectContaining({ mine: '1' }) }),
+    );
+  });
+
+  it('turns the "my interventions" narrowing off when it is already on', async () => {
+    fixture = await createPage({ mine: '1' });
+
+    fixture.componentInstance['toggleMine']();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: expect.objectContaining({ mine: null }) }),
+    );
+  });
+
   it('debounces the search box before writing "?q="', async () => {
     fixture = await createPage();
 

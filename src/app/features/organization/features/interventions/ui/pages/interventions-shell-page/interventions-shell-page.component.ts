@@ -21,6 +21,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendarClock,
   lucideCalendarDays,
+  lucideCheck,
   lucideCircleDot,
   lucideFlag,
   lucideMapPin,
@@ -66,6 +67,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmToggle } from '@shared/ui/toggle';
 import { HlmTooltip } from '@shared/ui/tooltip';
 import { InterventionPlanningOptionsStore } from '../../../state/intervention-planning-options';
 import type { InterventionPlanningOptionsStoreType } from '../../../state/intervention-planning-options';
@@ -166,6 +168,7 @@ const ALL_FILTER_FIELD_KEYS: readonly InterventionFilterFieldKey[] = INTERVENTIO
     RouterLink,
     RouterOutlet,
     HlmButton,
+    HlmToggle,
     HlmTooltip,
     InterventionTag,
     InterventionKpiStrip,
@@ -181,6 +184,7 @@ const ALL_FILTER_FIELD_KEYS: readonly InterventionFilterFieldKey[] = INTERVENTIO
     provideIcons({
       lucideCalendarClock,
       lucideCalendarDays,
+      lucideCheck,
       lucideCircleDot,
       lucideFlag,
       lucideMapPin,
@@ -808,6 +812,25 @@ export class InterventionsShellPage {
   /** Replaces one narrowing. */
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
+  }
+
+  /**
+   * Method toggleMine
+   *
+   * @description
+   * Flips the `?mine=1` narrowing. It stays a toolbar toggle rather than
+   * becoming a ninth chip: the filter bar is collapsed by default, so a chip
+   * would put the list's most-used narrowing three clicks away. Living on the
+   * shell rather than on the list also gives the Board and the Calendar a way
+   * to set it — both already honour the parameter and previously had no
+   * control for it.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected toggleMine(): void {
+    this.applyFilter({ mine: !this.filters().mine });
   }
 
   /** The catalog entry for one field. See the pre-shell `InterventionsPage.filterFieldOption`. */

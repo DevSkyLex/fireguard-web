@@ -521,7 +521,7 @@ export class InterventionsPage {
    * The page window, one-based — a `linkedSignal` over {@link filters} and
    * {@link searchTerm} rather than a plain signal, so it resets to `1`
    * whenever either changes regardless of which component wrote the URL: the
-   * shell's chip picks and search box, or this page's own {@link toggleMine}
+   * shell's chip picks, search box and "My interventions" toggle
    * and "Clear search". {@link goToPage} and {@link setPageSize} still `.set`
    * it directly between those resets, exactly as before.
    *
@@ -1172,24 +1172,6 @@ export class InterventionsPage {
   protected clearSearch(): void {
     this.page.set(1);
     this.navigateQuery({ q: null });
-  }
-
-  /**
-   * Method toggleMine
-   * @method toggleMine
-   *
-   * @description
-   * Flips the "my interventions" narrowing — responsible OR participant,
-   * resolved server-side by the `member` filter.
-   *
-   * @access protected
-   * @since 5.2.0
-   *
-   * @returns {void}
-   */
-  protected toggleMine(): void {
-    this.page.set(1);
-    this.navigateQuery({ mine: this.filters().mine ? null : '1' });
   }
 
   /**

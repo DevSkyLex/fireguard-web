@@ -192,21 +192,6 @@
             </hlm-popover-content>
           </hlm-popover>
 
-          @if (canReadRecurrences()) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="max-sm:min-h-11 max-sm:grow"
-              data-testid="interventions-recurrences"
-              (click)="openRecurrences()"
-            >
-              <ng-icon name="lucideCalendarClock" aria-hidden="true" />
-              <span i18n="@@intervention.recurrences.toolbarButton">Recurrences</span>
-            </button>
-          }
-
           <button
             hlmBtn
             type="button"
@@ -263,6 +248,15 @@
           >
             <span i18n="@@intervention.board.viewCalendar">Calendar</span>
           </button>
+          @if (canReadRecurrences()) {
+            <button
+              hlmTabsTrigger="recurrences"
+              class="max-sm:min-h-11"
+              data-testid="interventions-tab-recurrences"
+            >
+              <span i18n="@@intervention.recurrences.tab">Recurrences</span>
+            </button>
+          }
         </hlm-tabs-list>
 
         <app-collection-filter-toggle
@@ -293,457 +287,283 @@
 
     <ng-template #statusChip>
       @if (enumFieldOperator('status') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="statusValues()"
-          [itemToString]="statusMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="statusOptions"
+          [values]="statusValues()"
+          placeholder="Status"
+          i18n-placeholder="@@intervention.list.filterStatus"
+          searchPlaceholder="Search a status"
+          i18n-searchPlaceholder="@@intervention.list.filterStatusPlaceholder"
+          emptyLabel="No status matches."
+          i18n-emptyLabel="@@intervention.list.filterNoStatus"
+          [accessibleName]="chipAccessibleName('status')"
+          triggerId="interventions-filter-status"
+          testId="interventions-filter-status"
           [state]="fieldPopoverState('status')"
           [disabled]="isFieldIgnored('status')"
-          [class.opacity-60]="isFieldIgnored('status')"
-          [hlmTooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
-          (valueChange)="applyStatusFilter($event)"
+          [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          [optionTemplate]="statusOptionRow"
+          [valueTemplate]="statusOptionRow"
+          (valuesChanged)="applyStatusFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('status', $event)"
-        >
-          <label for="interventions-filter-status" class="sr-only">{{
-            chipAccessibleName('status')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-status"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-status"
-          >
-            <hlm-select-value
-              placeholder="Status"
-              i18n-placeholder="@@intervention.list.filterStatus"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of statusOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="status" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
+        <ng-template #statusOptionRow let-option>
+          <app-intervention-tag kind="status" [value]="option.value" asOption />
+        </ng-template>
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="statusOptions"
           [value]="statusScalar()"
-          [itemToString]="statusLabelOf"
+          placeholder="Status"
+          i18n-placeholder="@@intervention.list.filterStatus"
+          searchPlaceholder="Search a status"
+          i18n-searchPlaceholder="@@intervention.list.filterStatusPlaceholder"
+          emptyLabel="No status matches."
+          i18n-emptyLabel="@@intervention.list.filterNoStatus"
+          [accessibleName]="chipAccessibleName('status')"
+          triggerId="interventions-filter-status"
+          testId="interventions-filter-status"
           [state]="fieldPopoverState('status')"
           [disabled]="isFieldIgnored('status')"
-          [class.opacity-60]="isFieldIgnored('status')"
-          [hlmTooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
-          (valueChange)="applyFilter({ status: $event ?? null })"
+          [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          [optionTemplate]="statusSingleOptionRow"
+          [valueTemplate]="statusSingleOptionRow"
+          (valueChanged)="applyFilter({ status: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('status', $event)"
-        >
-          <label for="interventions-filter-status" class="sr-only">{{
-            chipAccessibleName('status')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-status"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-status"
-          >
-            @if (statusScalar(); as status) {
-              <app-intervention-tag kind="status" [value]="status" asOption />
-            } @else {
-              <hlm-select-value
-                placeholder="Status"
-                i18n-placeholder="@@intervention.list.filterStatus"
-              />
-            }
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of statusOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="status" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
+        <ng-template #statusSingleOptionRow let-option>
+          <app-intervention-tag kind="status" [value]="option.value" asOption />
+        </ng-template>
       }
     </ng-template>
 
     <ng-template #typeChip>
       @if (enumFieldOperator('type') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="typeValues()"
-          [itemToString]="typeMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="typeOptions"
+          [values]="typeValues()"
+          placeholder="Type"
+          i18n-placeholder="@@intervention.list.filterType"
+          searchPlaceholder="Search a type"
+          i18n-searchPlaceholder="@@intervention.list.filterTypePlaceholder"
+          emptyLabel="No type matches."
+          i18n-emptyLabel="@@intervention.list.filterNoType"
+          [accessibleName]="chipAccessibleName('type')"
+          triggerId="interventions-filter-type"
+          testId="interventions-filter-type"
           [state]="fieldPopoverState('type')"
           [disabled]="isFieldIgnored('type')"
-          [class.opacity-60]="isFieldIgnored('type')"
-          [hlmTooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
-          (valueChange)="applyTypeFilter($event)"
+          [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          [optionTemplate]="typeOptionRow"
+          [valueTemplate]="typeOptionRow"
+          (valuesChanged)="applyTypeFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('type', $event)"
-        >
-          <label for="interventions-filter-type" class="sr-only">{{
-            chipAccessibleName('type')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-type"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-type"
-          >
-            <hlm-select-value
-              placeholder="Type"
-              i18n-placeholder="@@intervention.list.filterType"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of typeOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="type" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
+        <ng-template #typeOptionRow let-option>
+          <app-intervention-tag kind="type" [value]="option.value" asOption />
+        </ng-template>
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="typeOptions"
           [value]="typeScalar()"
-          [itemToString]="typeLabelOf"
+          placeholder="Type"
+          i18n-placeholder="@@intervention.list.filterType"
+          searchPlaceholder="Search a type"
+          i18n-searchPlaceholder="@@intervention.list.filterTypePlaceholder"
+          emptyLabel="No type matches."
+          i18n-emptyLabel="@@intervention.list.filterNoType"
+          [accessibleName]="chipAccessibleName('type')"
+          triggerId="interventions-filter-type"
+          testId="interventions-filter-type"
           [state]="fieldPopoverState('type')"
           [disabled]="isFieldIgnored('type')"
-          [class.opacity-60]="isFieldIgnored('type')"
-          [hlmTooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
-          (valueChange)="applyFilter({ type: $event ?? null })"
+          [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          [optionTemplate]="typeSingleOptionRow"
+          [valueTemplate]="typeSingleOptionRow"
+          (valueChanged)="applyFilter({ type: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('type', $event)"
-        >
-          <label for="interventions-filter-type" class="sr-only">{{
-            chipAccessibleName('type')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-type"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-type"
-          >
-            @if (typeScalar(); as type) {
-              <app-intervention-tag kind="type" [value]="type" asOption />
-            } @else {
-              <hlm-select-value
-                placeholder="Type"
-                i18n-placeholder="@@intervention.list.filterType"
-              />
-            }
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of typeOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="type" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
+        <ng-template #typeSingleOptionRow let-option>
+          <app-intervention-tag kind="type" [value]="option.value" asOption />
+        </ng-template>
       }
     </ng-template>
 
     <ng-template #priorityChip>
       @if (enumFieldOperator('priority') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="priorityValues()"
-          [itemToString]="priorityMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="priorityOptions"
+          [values]="priorityValues()"
+          placeholder="Priority"
+          i18n-placeholder="@@intervention.list.filterPriority"
+          searchPlaceholder="Search a priority"
+          i18n-searchPlaceholder="@@intervention.list.filterPriorityPlaceholder"
+          emptyLabel="No priority matches."
+          i18n-emptyLabel="@@intervention.list.filterNoPriority"
+          [accessibleName]="chipAccessibleName('priority')"
+          triggerId="interventions-filter-priority"
+          testId="interventions-filter-priority"
           [state]="fieldPopoverState('priority')"
           [disabled]="isFieldIgnored('priority')"
-          [class.opacity-60]="isFieldIgnored('priority')"
-          [hlmTooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
-          (valueChange)="applyPriorityFilter($event)"
+          [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          [optionTemplate]="priorityOptionRow"
+          [valueTemplate]="priorityOptionRow"
+          (valuesChanged)="applyPriorityFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('priority', $event)"
-        >
-          <label for="interventions-filter-priority" class="sr-only">{{
-            chipAccessibleName('priority')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-priority"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-priority"
-          >
-            <hlm-select-value
-              placeholder="Priority"
-              i18n-placeholder="@@intervention.list.filterPriority"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of priorityOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="priority" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
+        <ng-template #priorityOptionRow let-option>
+          <app-intervention-tag kind="priority" [value]="option.value" asOption />
+        </ng-template>
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="priorityOptions"
           [value]="priorityScalar()"
-          [itemToString]="priorityLabelOf"
+          placeholder="Priority"
+          i18n-placeholder="@@intervention.list.filterPriority"
+          searchPlaceholder="Search a priority"
+          i18n-searchPlaceholder="@@intervention.list.filterPriorityPlaceholder"
+          emptyLabel="No priority matches."
+          i18n-emptyLabel="@@intervention.list.filterNoPriority"
+          [accessibleName]="chipAccessibleName('priority')"
+          triggerId="interventions-filter-priority"
+          testId="interventions-filter-priority"
           [state]="fieldPopoverState('priority')"
           [disabled]="isFieldIgnored('priority')"
-          [class.opacity-60]="isFieldIgnored('priority')"
-          [hlmTooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
-          (valueChange)="applyFilter({ priority: $event ?? null })"
+          [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          [optionTemplate]="prioritySingleOptionRow"
+          [valueTemplate]="prioritySingleOptionRow"
+          (valueChanged)="applyFilter({ priority: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('priority', $event)"
-        >
-          <label for="interventions-filter-priority" class="sr-only">{{
-            chipAccessibleName('priority')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-priority"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-priority"
-          >
-            @if (priorityScalar(); as priority) {
-              <app-intervention-tag kind="priority" [value]="priority" asOption />
-            } @else {
-              <hlm-select-value
-                placeholder="Priority"
-                i18n-placeholder="@@intervention.list.filterPriority"
-              />
-            }
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of priorityOptions; track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <app-intervention-tag kind="priority" [value]="option.value" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
+        <ng-template #prioritySingleOptionRow let-option>
+          <app-intervention-tag kind="priority" [value]="option.value" asOption />
+        </ng-template>
       }
     </ng-template>
 
     <ng-template #siteChip>
       @if (enumFieldOperator('site') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="siteValues()"
-          [itemToString]="siteMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="planningOptions.sites()"
+          [values]="siteValues()"
+          placeholder="Site"
+          i18n-placeholder="@@intervention.list.filterSite"
+          searchPlaceholder="Search a site"
+          i18n-searchPlaceholder="@@intervention.cf.sitePlaceholder"
+          emptyLabel="No site matches."
+          i18n-emptyLabel="@@intervention.list.filterNoSite"
+          [accessibleName]="chipAccessibleName('site')"
+          triggerId="interventions-filter-site"
+          testId="interventions-filter-site"
           [state]="fieldPopoverState('site')"
           [disabled]="isFieldIgnored('site')"
-          [class.opacity-60]="isFieldIgnored('site')"
-          [hlmTooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
-          (valueChange)="applySiteFilter($event)"
+          [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          (valuesChanged)="applySiteFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
-        >
-          <label for="interventions-filter-site" class="sr-only">{{
-            chipAccessibleName('site')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-site"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-site"
-          >
-            <hlm-select-value
-              placeholder="Site"
-              i18n-placeholder="@@intervention.list.filterSite"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of planningOptions.sites(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="planningOptions.sites()"
           [value]="siteScalar()"
-          [itemToString]="siteLabelOf"
+          placeholder="Site"
+          i18n-placeholder="@@intervention.list.filterSite"
+          searchPlaceholder="Search a site"
+          i18n-searchPlaceholder="@@intervention.cf.sitePlaceholder"
+          emptyLabel="No site matches."
+          i18n-emptyLabel="@@intervention.list.filterNoSite"
+          [accessibleName]="chipAccessibleName('site')"
+          triggerId="interventions-filter-site"
+          testId="interventions-filter-site"
           [state]="fieldPopoverState('site')"
           [disabled]="isFieldIgnored('site')"
-          [class.opacity-60]="isFieldIgnored('site')"
-          [hlmTooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
-          (valueChange)="applyFilter({ site: $event ?? null })"
+          [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          (valueChanged)="applyFilter({ site: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
-        >
-          <label for="interventions-filter-site" class="sr-only">{{
-            chipAccessibleName('site')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-site"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-site"
-          >
-            <hlm-select-value
-              placeholder="Site"
-              i18n-placeholder="@@intervention.list.filterSite"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of planningOptions.sites(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
       }
     </ng-template>
 
     <ng-template #responsibleChip>
       @if (enumFieldOperator('responsible') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="responsibleValues()"
-          [itemToString]="responsibleMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="planningOptions.members()"
+          [values]="responsibleValues()"
+          placeholder="Responsible"
+          i18n-placeholder="@@intervention.list.filterResponsible"
+          searchPlaceholder="Search a member"
+          i18n-searchPlaceholder="@@intervention.cf.responsiblePlaceholder"
+          emptyLabel="No member matches."
+          i18n-emptyLabel="@@intervention.list.filterNoMember"
+          [accessibleName]="chipAccessibleName('responsible')"
+          triggerId="interventions-filter-responsible"
+          testId="interventions-filter-responsible"
           [state]="fieldPopoverState('responsible')"
           [disabled]="isFieldIgnored('responsible')"
-          [class.opacity-60]="isFieldIgnored('responsible')"
-          [hlmTooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
-          (valueChange)="applyResponsibleFilter($event)"
+          [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          (valuesChanged)="applyResponsibleFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
-        >
-          <label for="interventions-filter-responsible" class="sr-only">{{
-            chipAccessibleName('responsible')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-responsible"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-responsible"
-          >
-            <hlm-select-value
-              placeholder="Responsible"
-              i18n-placeholder="@@intervention.list.filterResponsible"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of planningOptions.members(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="planningOptions.members()"
           [value]="responsibleScalar()"
-          [itemToString]="responsibleLabelOf"
+          placeholder="Responsible"
+          i18n-placeholder="@@intervention.list.filterResponsible"
+          searchPlaceholder="Search a member"
+          i18n-searchPlaceholder="@@intervention.cf.responsiblePlaceholder"
+          emptyLabel="No member matches."
+          i18n-emptyLabel="@@intervention.list.filterNoMember"
+          [accessibleName]="chipAccessibleName('responsible')"
+          triggerId="interventions-filter-responsible"
+          testId="interventions-filter-responsible"
           [state]="fieldPopoverState('responsible')"
           [disabled]="isFieldIgnored('responsible')"
-          [class.opacity-60]="isFieldIgnored('responsible')"
-          [hlmTooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
-          (valueChange)="applyFilter({ responsible: $event ?? null })"
+          [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          (valueChanged)="applyFilter({ responsible: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
-        >
-          <label for="interventions-filter-responsible" class="sr-only">{{
-            chipAccessibleName('responsible')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-responsible"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-responsible"
-          >
-            <hlm-select-value
-              placeholder="Responsible"
-              i18n-placeholder="@@intervention.list.filterResponsible"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of planningOptions.members(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
       }
     </ng-template>
 
     <ng-template #labelChip>
       @if (enumFieldOperator('label') === 'isAnyOf') {
-        <hlm-select-multiple
-          [value]="labelValues()"
-          [itemToString]="labelMultiLabelOf"
+        <app-collection-filter-multi-select
+          [options]="labelOptions()"
+          [values]="labelValues()"
+          placeholder="Label"
+          i18n-placeholder="@@intervention.list.filterLabel"
+          searchPlaceholder="Search a label"
+          i18n-searchPlaceholder="@@intervention.list.filterLabelPlaceholder"
+          emptyLabel="No label matches."
+          i18n-emptyLabel="@@intervention.list.filterNoLabel"
+          [accessibleName]="chipAccessibleName('label')"
+          triggerId="interventions-filter-label"
+          testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
           [disabled]="isFieldIgnored('label')"
-          [class.opacity-60]="isFieldIgnored('label')"
-          [hlmTooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
-          (valueChange)="applyLabelFilter($event)"
+          [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          (valuesChanged)="applyLabelFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
-        >
-          <label for="interventions-filter-label" class="sr-only">{{
-            chipAccessibleName('label')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-label"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-label"
-          >
-            <hlm-select-value
-              placeholder="Label"
-              i18n-placeholder="@@intervention.list.filterLabel"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of labelOptions(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select-multiple>
+        />
       } @else {
-        <hlm-select
+        <app-collection-filter-select
+          [options]="labelOptions()"
           [value]="labelScalar()"
-          [itemToString]="labelLabelOf"
+          placeholder="Label"
+          i18n-placeholder="@@intervention.list.filterLabel"
+          searchPlaceholder="Search a label"
+          i18n-searchPlaceholder="@@intervention.list.filterLabelPlaceholder"
+          emptyLabel="No label matches."
+          i18n-emptyLabel="@@intervention.list.filterNoLabel"
+          [accessibleName]="chipAccessibleName('label')"
+          triggerId="interventions-filter-label"
+          testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
           [disabled]="isFieldIgnored('label')"
-          [class.opacity-60]="isFieldIgnored('label')"
-          [hlmTooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
-          (valueChange)="applyFilter({ label: $event ?? null })"
+          [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          (valueChanged)="applyFilter({ label: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
-        >
-          <label for="interventions-filter-label" class="sr-only">{{
-            chipAccessibleName('label')
-          }}</label>
-          <hlm-select-trigger
-            size="sm"
-            buttonId="interventions-filter-label"
-            class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-            data-testid="interventions-filter-label"
-          >
-            <hlm-select-value
-              placeholder="Label"
-              i18n-placeholder="@@intervention.list.filterLabel"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal class="w-fit">
-            <hlm-select-group>
-              @for (option of labelOptions(); track option.value) {
-                <hlm-select-item [value]="option.value">
-                  <span class="whitespace-nowrap">{{ option.label }}</span>
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        />
       }
     </ng-template>
 
@@ -888,38 +708,24 @@
     </ng-template>
 
     <ng-template #dueWindowChip>
-      <hlm-select
+      <app-collection-filter-select
+        [options]="dueWindowOptions"
         [value]="dueWindowValue()"
-        [itemToString]="dueWindowLabelOf"
+        placeholder="Due window"
+        i18n-placeholder="@@intervention.list.filterDueWindow"
+        searchPlaceholder="Search a window"
+        i18n-searchPlaceholder="@@intervention.list.filterDueWindowPlaceholder"
+        emptyLabel="No window matches."
+        i18n-emptyLabel="@@intervention.list.filterNoDueWindow"
+        [accessibleName]="chipAccessibleName('dueWindow')"
+        triggerId="interventions-filter-due-window"
+        testId="interventions-filter-due-window"
         [state]="fieldPopoverState('dueWindow')"
         [disabled]="isFieldIgnored('dueWindow')"
-        [class.opacity-60]="isFieldIgnored('dueWindow')"
-        [hlmTooltip]="isFieldIgnored('dueWindow') ? ignoredReason('dueWindow') : ''"
-        (valueChange)="applyFilter({ dueWindow: $event ?? null })"
+        [tooltip]="isFieldIgnored('dueWindow') ? ignoredReason('dueWindow') : ''"
+        (valueChanged)="applyFilter({ dueWindow: $any($event) })"
         (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
-      >
-        <label for="interventions-filter-due-window" class="sr-only">{{
-          chipAccessibleName('dueWindow')
-        }}</label>
-        <hlm-select-trigger
-          size="sm"
-          buttonId="interventions-filter-due-window"
-          class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-          data-testid="interventions-filter-due-window"
-        >
-          <hlm-select-value
-            placeholder="Due window"
-            i18n-placeholder="@@intervention.list.filterDueWindow"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal class="w-fit">
-          <hlm-select-group>
-            @for (option of dueWindowOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+      />
     </ng-template>
 
     <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4">
@@ -1023,6 +829,47 @@
         />
       </ng-template>
     </div>
+
+    @if (canReadRecurrences()) {
+      <div hlmTabsContent="recurrences" class="flex min-h-0 flex-1 flex-col gap-4">
+        <ng-template hlmTabsContentLazy>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <p
+              class="max-w-prose text-sm text-muted-foreground"
+              i18n="@@intervention.recurrences.intro"
+            >
+              Recurring schedules periodically draft a new intervention from a template. A
+              materialized intervention carries no link back to the rule that created it.
+            </p>
+            @if (canWriteRecurrences()) {
+              <button
+                hlmBtn
+                type="button"
+                class="shrink-0 max-sm:min-h-11"
+                data-testid="intervention-recurrences-new"
+                (click)="openRecurrenceCreate()"
+              >
+                <ng-icon name="lucidePlus" aria-hidden="true" />
+                <span i18n="@@intervention.recurrences.new">New recurrence</span>
+              </button>
+            }
+          </div>
+
+          <app-intervention-recurrence-table
+            [recurrences]="recurrenceStore.recurrenceEntities()"
+            [templates]="planningOptions.templates()"
+            [loading]="recurrenceStore.listCallState().status === 'pending'"
+            [error]="recurrenceStore.listCallState().error?.message ?? null"
+            [savingId]="recurrenceStore.savingId()"
+            [removingId]="recurrenceStore.removingId()"
+            [canWrite]="canWriteRecurrences()"
+            (editRequested)="editRecurrence($event)"
+            (removed)="requestRecurrenceDelete($event)"
+            (activeToggled)="toggleRecurrenceActive($event)"
+          />
+        </ng-template>
+      </div>
+    }
   </hlm-tabs>
 </div>
 
@@ -1041,27 +888,22 @@
 />
 
 @if (canReadRecurrences()) {
-  <app-intervention-recurrences-sheet
-    [open]="recurrencesVisible()"
-    [recurrences]="recurrenceStore.recurrenceEntities()"
+  <app-intervention-recurrence-sheet
+    [target]="recurrenceTarget()"
+    [pending]="recurrencePending()"
+    [serverError]="recurrenceServerError()"
     [templates]="planningOptions.templates()"
     [siteOptions]="planningOptions.sites()"
     [memberOptions]="planningOptions.members()"
-    [loading]="recurrenceStore.listCallState().status === 'pending'"
-    [error]="recurrenceStore.listCallState().error?.message ?? null"
-    [creating]="recurrenceStore.createCallState().status === 'pending'"
-    [savingId]="recurrenceStore.savingId()"
-    [removingId]="recurrenceStore.removingId()"
-    [formError]="
-      (recurrenceStore.createCallState().error?.message ??
-        recurrenceStore.updateCallState().error?.message) ||
-      null
-    "
-    [canWrite]="canWriteRecurrences()"
-    (closed)="closeRecurrences()"
-    (submitted)="submitRecurrenceForm($event)"
-    (removed)="removeRecurrence($event)"
-    (activeToggled)="toggleRecurrenceActive($event)"
+    (submitted)="submitRecurrence($event)"
+    (closed)="closeRecurrenceSheet()"
+  />
+
+  <app-intervention-recurrence-delete-dialog
+    [recurrence]="pendingRecurrenceDelete()"
+    [pending]="recurrenceStore.removeCallState().status === 'pending'"
+    (confirmed)="confirmRecurrenceDelete()"
+    (dismissed)="dismissRecurrenceDelete()"
   />
 }
 

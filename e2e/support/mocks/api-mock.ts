@@ -1640,6 +1640,24 @@ export class ApiMock {
   }
 
   /**
+   * Mocks a successful `DELETE /api/intervention-recurrences/{recurrenceId}`
+   * — the request the recurrences tab's delete-confirm dialog sends.
+   */
+  public async mockInterventionRecurrenceDelete(recurrenceId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/intervention-recurrences/${recurrenceId}`,
+      async (route) => {
+        if (route.request().method() !== 'DELETE') {
+          await route.fallback();
+          return;
+        }
+        await route.fulfill({ status: 204 });
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/checklists` — the
    * checklist template library `ChecklistsPage` reads. Defaults to an empty
    * collection so navigating the route in an otherwise-unrelated spec never

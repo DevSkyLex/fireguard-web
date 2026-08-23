@@ -50,9 +50,14 @@ import { FilterChip } from '../filter-chip';
  * dead keys are never pruned from the memory, only from what actually
  * renders, since a stale entry is harmless once nothing reads it.
  *
- * A field mid-pick and not yet valued — {@link pendingKey}, driven by the
- * page's own popover-open state — still renders its (empty) chip, appended
- * after the active ones if it is not among them yet.
+ * A field picked from the "+ Filter" menu keeps its (empty) chip for the rest
+ * of the visit, whether or not a value follows: closing a value control
+ * without choosing anything is not a decision to drop the filter, and a chip
+ * that vanished under the cursor forced the user back through the menu. Only
+ * the chip's own remove button or "Clear filters" drops it. {@link pendingKey}
+ * — the page's popover-open state — still renders a chip too, which is what
+ * keeps a field on screen while an operator change momentarily voids its
+ * value.
  *
  * The root carries id `<testIdPrefix>-filter-bar`, the `aria-controls`
  * target `app-collection-filter-toggle` (`@shared/collection-filters`) uses
@@ -73,7 +78,7 @@ import { FilterChip } from '../filter-chip';
  * {@link operatorChanged} for the page to resolve — this bar never
  * interprets an operator itself, only routes the pick.
  *
- * @version 9.0.0
+ * @version 10.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -207,6 +212,18 @@ export class CollectionFilterBar {
   private readonly order: WritableSignal<readonly string[]> = signal<readonly string[]>([]);
 
   /**
+   * Property pickedKeys
+   * @readonly
+   * @description The fields picked from the "+ Filter" menu this visit, kept rendered even once their value control closes with nothing chosen — closing a popover is not a decision to drop the filter. A key leaves this set only through its own chip's remove button or {@link clearAll}.
+   * @access private
+   * @since 2.0.0
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
+  private readonly pickedKeys: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
+    new Set<string>(),
+  );
+
+  /**
    * Property renderedKeys
    * @readonly
    * @description Which chips render, in display order: every active key sorted by {@link order}, then {@link pendingKey} appended if not already among them.
@@ -218,12 +235,19 @@ export class CollectionFilterBar {
     const active: readonly string[] = this.activeKeys();
     const order: readonly string[] = this.order();
     const pending: string | null = this.pendingKey();
+    const picked: ReadonlySet<string> = this.pickedKeys();
 
     const sorted: readonly string[] = active.toSorted(
       (left: string, right: string): number => order.indexOf(left) - order.indexOf(right),
     );
 
-    return pending === null || sorted.includes(pending) ? sorted : [...sorted, pending];
+    const valueless: readonly string[] = [...picked, ...(pending === null ? [] : [pending])]
+      .filter((key: string): boolean => !sorted.includes(key))
+      .toSorted(
+        (left: string, right: string): number => order.indexOf(left) - order.indexOf(right),
+      );
+
+    return [...sorted, ...new Set(valueless)];
   });
 
   /**
@@ -237,11 +261,10 @@ export class CollectionFilterBar {
   protected readonly unsetFields: Signal<readonly CollectionFilterField[]> = computed<
     readonly CollectionFilterField[]
   >(() => {
-    const active: ReadonlySet<string> = new Set(this.activeKeys());
-    const pending: string | null = this.pendingKey();
+    const rendered: ReadonlySet<string> = new Set(this.renderedKeys());
 
     return this.fields().filter(
-      (field: CollectionFilterField): boolean => !active.has(field.key) && field.key !== pending,
+      (field: CollectionFilterField): boolean => !rendered.has(field.key),
     );
   });
 
@@ -359,6 +382,7 @@ export class CollectionFilterBar {
       ...current.filter((entry: string): boolean => entry !== key),
       key,
     ]);
+    this.pickedKeys.update((current: ReadonlySet<string>) => new Set([...current, key]));
     this.fieldPicked.emit(key);
   }
 
@@ -371,7 +395,26 @@ export class CollectionFilterBar {
    */
   protected clearAll(): void {
     this.order.set([]);
+    this.pickedKeys.set(new Set<string>());
     this.filtersCleared.emit();
+  }
+
+  /**
+   * Method removeField
+   * @description Drops one chip: forgets it was picked this visit, then emits {@link fieldRemoved} for the page to clear its value.
+   * @access protected
+   * @since 2.0.0
+   * @param {string} key - The field whose chip was dismissed.
+   * @returns {void}
+   */
+  protected removeField(key: string): void {
+    this.pickedKeys.update((current: ReadonlySet<string>): ReadonlySet<string> => {
+      const next: Set<string> = new Set(current);
+      next.delete(key);
+
+      return next;
+    });
+    this.fieldRemoved.emit(key);
   }
   //#endregion
 }

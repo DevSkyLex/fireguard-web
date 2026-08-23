@@ -535,12 +535,13 @@ confirm.
    `max-w-xl` form, back-link in `#pageActions`, navigate on success.
 2. **Sheet (right drawer)** — creating or acting **without leaving a working
    context** (a filtered list, a workspace): intervention create, work item,
-   request-changes, role permissions, participants. **Four named widths, and
+   request-changes, role permissions, participants. **Three named widths, and
    the content picks one**: `sm:w-[480px]` for a short form or a list,
-   `sm:w-[540px]` for a longer form or a detail read-out, `sm:w-[560px]` for the
-   message thread, and `sm:w-[640px]` for a sheet holding a table — the
-   recurrences sheet's six columns are what earns the widest step, and nothing
-   reaches for it without a comparable reason. The form
+   `sm:w-[540px]` for a longer form or a detail read-out, and `sm:w-[560px]`
+   for the message thread. A sheet never holds a table: a collection of
+   entities that have no detail page (intervention recurrences) lives in a
+   tab of its parent shell, full-width, and its create/edit form takes a
+   sheet. The form
    owns its footer, Cancel then primary. Below `sm` a sheet presents as a
    **bottom drawer** (`side="bottom"`, driven by a breakpoint signal;
    `max-h-[85svh]` with internal scroll) so the footer lands in the thumb

@@ -1,5 +1,5 @@
 <span
-  class="inline-flex h-7 max-w-full items-center overflow-hidden rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20 [&_button]:rounded-none!"
+  class="inline-flex h-7 max-w-full items-stretch overflow-hidden rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20 [&_button]:rounded-none!"
   [attr.data-testid]="chipTestId()"
 >
   <span
@@ -9,7 +9,7 @@
     {{ fieldLabel() }}
   </span>
 
-  <span class="flex h-3.5 shrink-0 items-center">
+  <span class="flex h-3.5 shrink-0 items-center self-center">
     <hlm-separator orientation="vertical" />
   </span>
 
@@ -24,7 +24,7 @@
       <hlm-select-trigger
         size="sm"
         [buttonId]="operatorTriggerId"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        class="flex h-full self-stretch rounded-none border-0 bg-transparent px-2 py-1 shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 dark:bg-transparent [&:not(button)]:p-0"
         [attr.data-testid]="operatorTestId()"
       >
         <span class="whitespace-nowrap text-muted-foreground">{{
@@ -48,15 +48,15 @@
     </span>
   }
 
-  <span class="flex h-3.5 shrink-0 items-center">
+  <span class="flex h-3.5 shrink-0 items-center self-center">
     <hlm-separator orientation="vertical" />
   </span>
 
-  <span class="inline-flex min-w-0 items-center overflow-hidden">
+  <span class="inline-flex min-w-0 items-stretch overflow-hidden">
     <ng-content />
   </span>
 
-  <span class="flex h-3.5 shrink-0 items-center">
+  <span class="flex h-3.5 shrink-0 items-center self-center">
     <hlm-separator orientation="vertical" />
   </span>
 

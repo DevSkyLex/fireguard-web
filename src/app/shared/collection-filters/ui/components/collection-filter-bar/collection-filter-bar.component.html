@@ -13,7 +13,7 @@
       [operatorLabels]="fieldOf(key).operatorLabels ?? {}"
       [changeOperatorLabel]="changeOperatorLabelFor(fieldOf(key).fieldLabel)"
       [testIdPrefix]="testIdPrefix()"
-      (removed)="fieldRemoved.emit(key)"
+      (removed)="removeField(key)"
       (operatorChanged)="operatorChanged.emit({ key, operator: $event })"
     >
       <ng-container *ngTemplateOutlet="templates()[key] ?? null" />

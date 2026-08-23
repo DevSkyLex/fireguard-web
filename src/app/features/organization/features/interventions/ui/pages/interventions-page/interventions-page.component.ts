@@ -67,6 +67,9 @@ import {
   type InterventionOutput,
   type InterventionPlannedStartRangeFilter,
   type InterventionPriority,
+  type InterventionRecurrenceFormTarget,
+  type InterventionRecurrenceFormValues,
+  type InterventionRecurrenceOutput,
   type InterventionSortField,
   type InterventionStatus,
   type InterventionTemplateInstantiateRequest,
@@ -106,6 +109,8 @@ import {
 import {
   type CollectionFilterField,
   CollectionFilterBar,
+  CollectionFilterMultiSelect,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterOperator,
@@ -150,12 +155,11 @@ import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
+import { InterventionRecurrenceDeleteDialog } from '../../dialogs/intervention-recurrence-delete-dialog';
 import type { InterventionCreateFormValues } from '../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../../sheets/intervention-create-sheet';
-import {
-  InterventionRecurrencesSheet,
-  type InterventionRecurrenceFormSubmittedEvent,
-} from '../../sheets/intervention-recurrences-sheet';
+import { InterventionRecurrenceSheet } from '../../sheets/intervention-recurrence-sheet';
+import { InterventionRecurrenceTable } from '../../tables/intervention-recurrence-table';
 import {
   INTERVENTION_TABLE_COLUMNS,
   InterventionTable,
@@ -192,10 +196,10 @@ const NO_FILTERS: InterventionListFilters = {
 
 /**
  * Type InterventionView
- * @description Which of the three collection surfaces this page currently shows — driven by the `?view=` query param (`board`/`calendar`; absent or any other value ⇒ `list`) and written back on a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch.
+ * @description Which of the four collection surfaces this page currently shows — driven by the `?view=` query param (`board`/`calendar`/`recurrences`; absent or any other value ⇒ `list`) and written back on a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch. `recurrences` falls back to `list` for a viewer without `INTERVENTIONS_READ` — see {@link activeView}.
  * @since 11.0.0
  */
-type InterventionView = 'list' | 'board' | 'calendar';
+type InterventionView = 'list' | 'board' | 'calendar' | 'recurrences';
 
 /**
  * Type InterventionDueRangeOperator
@@ -263,6 +267,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     'dueWindow',
   ],
   calendar: ['status', 'type', 'site', 'responsible'],
+  recurrences: [],
 };
 
 /**
@@ -366,10 +371,14 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     InterventionCalendar,
     InterventionCreateSheet,
     InterventionKpiStrip,
-    InterventionRecurrencesSheet,
+    InterventionRecurrenceDeleteDialog,
+    InterventionRecurrenceSheet,
+    InterventionRecurrenceTable,
     InterventionTable,
     InterventionTag,
     CollectionFilterBar,
+    CollectionFilterMultiSelect,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
@@ -482,7 +491,7 @@ export class InterventionsPage {
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
-  /** The organization's recurring intervention schedules, backing the "Recurrences" sheet. */
+  /** The organization's recurring intervention schedules, backing the Recurrences tab. */
   protected readonly recurrenceStore: InterventionRecurrenceStoreType =
     inject<InterventionRecurrenceStoreType>(InterventionRecurrenceStore);
 
@@ -538,7 +547,7 @@ export class InterventionsPage {
   /**
    * Property activeView
    * @readonly
-   * @description Which tab is currently shown. See {@link InterventionView} and the `view` input.
+   * @description Which tab is currently shown. See {@link InterventionView} and the `view` input. `recurrences` falls back to `list` for a viewer without {@link canReadRecurrences}.
    * @access protected
    * @since 11.0.0
    * @type {Signal<InterventionView>}
@@ -546,7 +555,10 @@ export class InterventionsPage {
   protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(() => {
     const requested: string | undefined = this.view();
 
-    return requested === 'board' || requested === 'calendar' ? requested : 'list';
+    if (requested === 'board' || requested === 'calendar') return requested;
+    if (requested === 'recurrences' && this.canReadRecurrences()) return 'recurrences';
+
+    return 'list';
   });
 
   /**
@@ -637,8 +649,19 @@ export class InterventionsPage {
   /** Whether the creation sheet is open. */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the "Recurrences" sheet is open. */
-  protected readonly recurrencesVisible: WritableSignal<boolean> = signal<boolean>(false);
+  /** What the recurrence sheet is open on: `'create'`, an existing row for edit, `null` for closed. */
+  protected readonly recurrenceTarget: WritableSignal<InterventionRecurrenceFormTarget> =
+    signal<InterventionRecurrenceFormTarget>(null);
+
+  /** Whether a recurrence create/update was submitted from the sheet and its outcome is still awaited — closes the sheet on success. */
+  protected readonly awaitingRecurrenceWrite: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether a recurrence delete was confirmed and its outcome is still awaited — closes the dialog on success. */
+  protected readonly awaitingRecurrenceRemove: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The recurrence a row's Delete action asked to remove, pending the confirm dialog. */
+  protected readonly pendingRecurrenceDelete: WritableSignal<InterventionRecurrenceOutput | null> =
+    signal<InterventionRecurrenceOutput | null>(null);
 
   /** What the creation sheet is currently prefilled with, from a "Duplicate" request. `null` for a plain "New intervention". */
   protected readonly duplicatePrefill: WritableSignal<InterventionDuplicatePrefill | null> =
@@ -738,14 +761,29 @@ export class InterventionsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Whether the "Recurrences" toolbar entry renders at all. */
+  /** Whether the Recurrences tab renders at all. */
   protected readonly canReadRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
   );
 
-  /** Whether the "Recurrences" sheet offers create/edit/delete/toggle, or renders read-only. */
+  /** Whether the Recurrences tab offers create/edit/delete/toggle, or renders read-only. */
   protected readonly canWriteRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
+  /** Whether the recurrence sheet's create or update write is in flight. */
+  protected readonly recurrencePending: Signal<boolean> = computed<boolean>(
+    () =>
+      isCallPending(this.recurrenceStore.createCallState()) ||
+      isCallPending(this.recurrenceStore.updateCallState()),
+  );
+
+  /** The recurrence sheet's own create/update failure message, if any. */
+  protected readonly recurrenceServerError: Signal<string | null> = computed<string | null>(
+    () =>
+      this.recurrenceStore.createCallState().error?.message ??
+      this.recurrenceStore.updateCallState().error?.message ??
+      null,
   );
 
   /** Whether the member may duplicate an intervention. */
@@ -961,50 +999,6 @@ export class InterventionsPage {
       : $localize`:@@intervention.list.sortDescending:Descending`,
   );
 
-  /**
-   * Method multiLabel
-   * @description Wraps one of the six `…LabelOf` single-item labellers for `hlm-select-multiple`'s `itemToString`.
-   * @access private
-   * @since 1.0.0
-   * @template T
-   * @param {(value: T) => string} labelOf - The field's own single-item labeller.
-   * @param {T | readonly T[]} value - Either one item's value or the select's whole current selection.
-   * @returns {string} The label for one item, or the comma-joined labels for a selection.
-   */
-  private multiLabel<T>(labelOf: (value: T) => string, value: T | readonly T[]): string {
-    return Array.isArray(value) ? value.map(labelOf).join(', ') : labelOf(value as T);
-  }
-
-  /** The "Status" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly statusMultiLabelOf: (
-    value: InterventionStatus | readonly InterventionStatus[],
-  ) => string = (value): string => this.multiLabel(this.statusLabelOf, value);
-
-  /** The "Type" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly typeMultiLabelOf: (
-    value: InterventionType | readonly InterventionType[],
-  ) => string = (value): string => this.multiLabel(this.typeLabelOf, value);
-
-  /** The "Priority" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly priorityMultiLabelOf: (
-    value: InterventionPriority | readonly InterventionPriority[],
-  ) => string = (value): string => this.multiLabel(this.priorityLabelOf, value);
-
-  /** The "Site" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly siteMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.siteLabelOf, value);
-
-  /** The "Responsible" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly responsibleMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.responsibleLabelOf, value);
-
-  /** The "Label" chip's multi select `itemToString`. See {@link multiLabel}. */
-  protected readonly labelMultiLabelOf: (value: string | readonly string[]) => string = (
-    value,
-  ): string => this.multiLabel(this.labelLabelOf, value);
-
   /** Names a filter chip's value segment, so each is distinguishable by screen reader. */
   protected readonly changeFilterLabel: (fieldLabel: string) => string = (
     fieldLabel: string,
@@ -1094,7 +1088,7 @@ export class InterventionsPage {
   protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
     signal<InterventionFilterFieldKey | null>(null);
 
-  /** The operator the "+ Filter" menu's picker last chose for one of the six `equals`/`isAnyOf` fields, remembered only while that field carries no value yet. */
+  /** The operator pinned on one of the six `equals`/`isAnyOf` fields — set by an explicit pick or by any multi selection, dropped when the chip is removed or every filter is cleared. */
   private readonly enumFilterOperatorOverrides: WritableSignal<
     Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
   > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
@@ -1250,9 +1244,10 @@ export class InterventionsPage {
    *
    * @description
    * Registers the "New intervention" page action, wires the search debounce,
-   * and loads each of the three tabs' own dataset — the List and the Board
+   * and loads each of the four tabs' own dataset — the List and the Board
    * gated on {@link activeView}, the Calendar gated on {@link calendarMonth}
-   * reporting its first anchor.
+   * reporting its first anchor, the Recurrences tab gated on {@link activeView}
+   * and loaded once, the first time it activates.
    *
    * @access public
    * @since 1.0.0
@@ -1356,6 +1351,44 @@ export class InterventionsPage {
     });
 
     effect((): void => {
+      const view: InterventionView = this.activeView();
+      const organizationId: string = this.organizationId();
+
+      untracked((): void => {
+        if (view !== 'recurrences') return;
+        if (this.recurrenceStore.listCallState().status !== 'idle') return;
+
+        this.recurrenceStore.load({ organizationIri: `/api/organizations/${organizationId}` });
+      });
+    });
+
+    effect((): void => {
+      const createStatus: CallState['status'] = this.recurrenceStore.createCallState().status;
+      const updateStatus: CallState['status'] = this.recurrenceStore.updateCallState().status;
+
+      untracked((): void => {
+        if (!this.awaitingRecurrenceWrite()) return;
+        if (createStatus === 'pending' || updateStatus === 'pending') return;
+
+        this.awaitingRecurrenceWrite.set(false);
+        if (createStatus === 'success' || updateStatus === 'success') {
+          this.recurrenceTarget.set(null);
+        }
+      });
+    });
+
+    effect((): void => {
+      const status: CallState['status'] = this.recurrenceStore.removeCallState().status;
+
+      untracked((): void => {
+        if (!this.awaitingRecurrenceRemove() || status === 'pending') return;
+
+        this.awaitingRecurrenceRemove.set(false);
+        if (status === 'success') this.pendingRecurrenceDelete.set(null);
+      });
+    });
+
+    effect((): void => {
       const requested: boolean = this.create() === '1';
 
       untracked((): void => {
@@ -1414,11 +1447,12 @@ export class InterventionsPage {
    *
    * @access protected
    * @since 11.0.0
-   * @param {string} tab - The activated tab id (`list`/`board`/`calendar`).
+   * @param {string} tab - The activated tab id (`list`/`board`/`calendar`/`recurrences`).
    * @returns {void}
    */
   protected switchView(tab: string): void {
-    const view: InterventionView = tab === 'board' || tab === 'calendar' ? tab : 'list';
+    const view: InterventionView =
+      tab === 'board' || tab === 'calendar' || tab === 'recurrences' ? tab : 'list';
 
     this.navigateQuery({ view: view === 'list' ? null : view });
   }
@@ -1749,60 +1783,79 @@ export class InterventionsPage {
     this.pendingBulkAssignIds.set(null);
   }
 
-  /** Opens the "Recurrences" sheet, fetching the organization's rules once on first open. */
-  protected openRecurrences(): void {
-    this.recurrencesVisible.set(true);
-    if (this.recurrenceStore.listCallState().status !== 'idle') return;
-
-    this.recurrenceStore.load({ organizationIri: `/api/organizations/${this.organizationId()}` });
+  /** Opens the recurrence sheet on an empty draft. */
+  protected openRecurrenceCreate(): void {
+    this.recurrenceTarget.set('create');
   }
 
-  /** Closes the "Recurrences" sheet. */
-  protected closeRecurrences(): void {
-    this.recurrencesVisible.set(false);
+  /** Opens the recurrence sheet on an existing rule. */
+  protected editRecurrence(recurrence: InterventionRecurrenceOutput): void {
+    this.recurrenceTarget.set(recurrence);
   }
 
-  /** Creates or updates a recurrence, depending on whether the sheet's draft carries an existing row's id. */
-  protected submitRecurrenceForm(event: InterventionRecurrenceFormSubmittedEvent): void {
-    if (event.recurrenceId === null) {
+  /** Closes the recurrence sheet — the sheet already confirmed a dirty close. */
+  protected closeRecurrenceSheet(): void {
+    this.awaitingRecurrenceWrite.set(false);
+    this.recurrenceTarget.set(null);
+  }
+
+  /** Creates or updates a recurrence, depending on whether the form's values carry an existing row's id. */
+  protected submitRecurrence(values: InterventionRecurrenceFormValues): void {
+    this.awaitingRecurrenceWrite.set(true);
+    if (values.recurrenceId === null) {
       this.recurrenceStore.create({
         organization: `/api/organizations/${this.organizationId()}`,
-        template: `/api/intervention-templates/${event.templateId}`,
-        name: event.name,
-        site: event.site ?? undefined,
-        responsible: event.responsible ?? undefined,
-        frequency: event.frequency,
-        interval: event.interval,
-        anchorDate: event.anchorDate,
-        timezone: event.timezone,
-        leadTimeDays: event.leadTimeDays,
-        endAt: event.endAt ?? undefined,
+        template: `/api/intervention-templates/${values.templateId}`,
+        name: values.name,
+        site: values.site ?? undefined,
+        responsible: values.responsible ?? undefined,
+        frequency: values.frequency,
+        interval: values.interval,
+        anchorDate: values.anchorDate,
+        timezone: values.timezone,
+        leadTimeDays: values.leadTimeDays,
+        endAt: values.endAt ?? undefined,
       });
       return;
     }
 
     this.recurrenceStore.update({
-      recurrenceId: event.recurrenceId,
+      recurrenceId: values.recurrenceId,
       input: {
-        name: event.name,
-        site: event.site,
-        responsible: event.responsible,
-        frequency: event.frequency,
-        interval: event.interval,
-        anchorDate: event.anchorDate,
-        timezone: event.timezone,
-        leadTimeDays: event.leadTimeDays,
-        endAt: event.endAt,
+        name: values.name,
+        site: values.site,
+        responsible: values.responsible,
+        frequency: values.frequency,
+        interval: values.interval,
+        anchorDate: values.anchorDate,
+        timezone: values.timezone,
+        leadTimeDays: values.leadTimeDays,
+        endAt: values.endAt,
       },
     });
   }
 
-  /** Deletes a recurrence the sheet's inline confirmation approved. */
-  protected removeRecurrence(recurrenceId: string): void {
-    this.recurrenceStore.remove(recurrenceId);
+  /** Raises the delete confirmation for a row the table asked to remove. */
+  protected requestRecurrenceDelete(recurrence: InterventionRecurrenceOutput): void {
+    this.pendingRecurrenceDelete.set(recurrence);
   }
 
-  /** Pauses or resumes a recurrence from the sheet's table toggle. */
+  /** Deletes the recurrence the confirm dialog approved; the dialog closes on success. */
+  protected confirmRecurrenceDelete(): void {
+    const recurrence: InterventionRecurrenceOutput | null = this.pendingRecurrenceDelete();
+    if (recurrence === null) return;
+
+    this.awaitingRecurrenceRemove.set(true);
+    this.recurrenceStore.remove(recurrence.id);
+  }
+
+  /** Closes the delete confirmation without removing anything. */
+  protected dismissRecurrenceDelete(): void {
+    this.awaitingRecurrenceRemove.set(false);
+    this.pendingRecurrenceDelete.set(null);
+  }
+
+  /** Pauses or resumes a recurrence from the table's toggle. */
   protected toggleRecurrenceActive(event: {
     readonly recurrenceId: string;
     readonly isActive: boolean;
@@ -1905,8 +1958,28 @@ export class InterventionsPage {
     this.openFilterKey.set(key as InterventionFilterFieldKey);
   }
 
-  /** Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing. */
+  /**
+   * Method onFieldRemoved
+   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing, and forgets the operator pinned on it so re-adding the field opens on its declared default rather than on last visit's choice.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} key - The removed field's key.
+   * @returns {void}
+   */
   protected onFieldRemoved(key: string): void {
+    this.enumFilterOperatorOverrides.update(
+      (
+        overrides: Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>,
+      ): Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>> => {
+        const next: Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>> = {
+          ...overrides,
+        };
+        delete next[key as InterventionEnumFilterKey];
+
+        return next;
+      },
+    );
+
     this.applyFilter(this.filterClearPatchOf(key as InterventionFilterFieldKey));
   }
 
@@ -2089,11 +2162,37 @@ export class InterventionsPage {
     return this.toScalarValue(this.filters().label);
   }
 
-  /** Applies one of the six `equals`/`isAnyOf` fields' multi select `valueChange`. */
+  /**
+   * Method applyEnumSelection
+   *
+   * @description
+   * Applies one of the six `equals`/`isAnyOf` fields' multi select selection,
+   * and pins that field to `isAnyOf` for the rest of the session. The pin is
+   * what stops the chip from snapping back to "is" when a selection is
+   * narrowed down to one value: the URL serializes `['planned']` and
+   * `'planned'` identically, so the value's own shape cannot tell the two
+   * apart once a single value is left.
+   *
+   * @access private
+   * @since 11.2.0
+   * @template T
+   * @param {InterventionEnumFilterKey} key - The field the selection belongs to.
+   * @param {readonly T[] | null | undefined} values - Its next selection.
+   * @returns {void}
+   */
   private applyEnumSelection<T>(
     key: InterventionEnumFilterKey,
     values: readonly T[] | null | undefined,
   ): void {
+    this.enumFilterOperatorOverrides.update(
+      (
+        overrides: Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>,
+      ): Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>> => ({
+        ...overrides,
+        [key]: 'isAnyOf',
+      }),
+    );
+
     const patch = {
       [key]: values && values.length > 0 ? values : null,
     } as Partial<InterventionListFilters>;
@@ -2208,8 +2307,9 @@ export class InterventionsPage {
     if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
-  /** Drops every narrowing at once, mine and the legacy due window included. */
+  /** Drops every narrowing at once — mine and the legacy due window included — along with every pinned operator. */
   protected clearFilters(): void {
+    this.enumFilterOperatorOverrides.set({});
     this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 

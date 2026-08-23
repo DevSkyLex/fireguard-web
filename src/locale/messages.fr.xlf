@@ -4196,6 +4196,38 @@
         <source>No member matches.</source>
         <target>Aucun membre ne correspond.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.filterStatusPlaceholder" datatype="html">
+        <source>Search a status</source>
+        <target>Rechercher un statut</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Aucun statut ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterTypePlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Rechercher un type</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Aucun type ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterPriorityPlaceholder" datatype="html">
+        <source>Search a priority</source>
+        <target>Rechercher une priorité</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoPriority" datatype="html">
+        <source>No priority matches.</source>
+        <target>Aucune priorité ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDueWindowPlaceholder" datatype="html">
+        <source>Search a window</source>
+        <target>Rechercher une échéance</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoDueWindow" datatype="html">
+        <source>No window matches.</source>
+        <target>Aucune échéance ne correspond.</target>
+      </trans-unit>
       <trans-unit id="intervention.list.filterNoSite" datatype="html">
         <source>No site matches.</source>
         <target>Aucun site ne correspond.</target>
@@ -7864,14 +7896,6 @@
         <source>Delete <x id="name" equiv-text="name"/></source>
         <target>Supprimer <x id="name" equiv-text="name"/></target>
       </trans-unit>
-      <trans-unit id="intervention.recurrences.confirmRemoveAria" datatype="html">
-        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
-        <target>Confirmer la suppression de <x id="name" equiv-text="name"/></target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.keepAria" datatype="html">
-        <source>Keep <x id="name" equiv-text="name"/></source>
-        <target>Conserver <x id="name" equiv-text="name"/></target>
-      </trans-unit>
       <trans-unit id="intervention.labels.manage.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</source>
         <target>Supprimer &#171;&#160;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&#160;&#187; ?</target>
@@ -7952,10 +7976,6 @@
         <source>Actions</source>
         <target>Actions</target>
       </trans-unit>
-      <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
-        <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
-        <target>Supprimer &#171;&#160;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&#160;&#187; ?</target>
-      </trans-unit>
       <trans-unit id="intervention.recurrences.empty" datatype="html">
         <source>No recurrences yet.</source>
         <target>Aucune récurrence pour l'instant.</target>
@@ -7999,10 +8019,6 @@
       <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
         <source>Frequency</source>
         <target>Fréquence</target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.header" datatype="html">
-        <source>Recurrences</source>
-        <target>Récurrences</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.intervalLabel" datatype="html">
         <source>Every</source>
@@ -8051,10 +8067,6 @@
       <trans-unit id="intervention.recurrences.toast.updated" datatype="html">
         <source>Recurrence updated</source>
         <target>Récurrence mise à jour</target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.toolbarButton" datatype="html">
-        <source>Recurrences</source>
-        <target>Récurrences</target>
       </trans-unit>
       <trans-unit id="intervention.sidebar.manageLabels" datatype="html">
         <source>Manage labels…</source>
@@ -9015,6 +9027,78 @@
       <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
         <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
         <target>Sans effet ici — cette vue ne filtre que par statut, type, site et responsable.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.tab" datatype="html">
+        <source>Recurrences</source>
+        <target>Récurrences</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.createHeader" datatype="html">
+        <source>New recurrence</source>
+        <target>Nouvelle récurrence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.editHeader" datatype="html">
+        <source>Edit recurrence</source>
+        <target>Modifier la récurrence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitCreate" datatype="html">
+        <source>Create recurrence</source>
+        <target>Créer la récurrence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitCreating" datatype="html">
+        <source>Creating…</source>
+        <target>Création…</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitSave" datatype="html">
+        <source>Save recurrence</source>
+        <target>Enregistrer la récurrence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitSaving" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nameRequired" datatype="html">
+        <source>Give the recurrence a name</source>
+        <target>Donnez un nom à la récurrence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nameLength" datatype="html">
+        <source>Use at most 160 characters.</source>
+        <target>160 caractères maximum.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.templateRequired" datatype="html">
+        <source>Choose a template</source>
+        <target>Choisissez un modèle</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequencyRequired" datatype="html">
+        <source>Choose a cadence</source>
+        <target>Choisissez une cadence</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.intervalRange" datatype="html">
+        <source>Use a value between 1 and 12.</source>
+        <target>Saisissez une valeur entre 1 et 12.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.anchorRequired" datatype="html">
+        <source>Pick an anchor date</source>
+        <target>Choisissez une date d’ancrage</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.timezoneRequired" datatype="html">
+        <source>Enter a timezone</source>
+        <target>Saisissez un fuseau horaire</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.leadTimeRange" datatype="html">
+        <source>Use a value between 0 and 90.</source>
+        <target>Saisissez une valeur entre 0 et 90.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteTitle" datatype="html">
+        <source> Delete this recurrence? </source>
+        <target>Supprimer cette récurrence ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteDescription" datatype="html">
+        <source> “<x id="INTERPOLATION" equiv-text="{{ recurrence()?.name }}"/>” will be removed and no further interventions will be drafted from it. Existing interventions are kept. </source>
+        <target>« <x id="INTERPOLATION" equiv-text="{{ recurrence()?.name }}"/> » sera supprimée et aucune intervention ne sera plus générée à partir d’elle. Les interventions existantes sont conservées.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteConfirm" datatype="html">
+        <source> Delete recurrence </source>
+        <target>Supprimer la récurrence</target>
       </trans-unit>
 </body>
   </file>

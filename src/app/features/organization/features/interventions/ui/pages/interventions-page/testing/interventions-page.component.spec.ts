@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import {
   errorCallState,
@@ -20,11 +21,14 @@ import {
 import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
+  InterventionRecurrenceOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
+import { InterventionRecurrenceDeleteDialog } from '../../../dialogs/intervention-recurrence-delete-dialog';
+import { InterventionRecurrenceTable } from '../../../tables/intervention-recurrence-table';
 import { InterventionsPage } from '../interventions-page.component';
 
 /**
@@ -79,6 +83,30 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     updatedAt: '2026-08-02T09:00:00+00:00',
     ...overrides,
   }) as InterventionOutput;
+
+const recurrence = (
+  overrides: Partial<InterventionRecurrenceOutput> = {},
+): InterventionRecurrenceOutput =>
+  ({
+    id: 'rec-1',
+    organization: '/api/organizations/org-1',
+    template: '/api/intervention-templates/t-1',
+    name: 'Monthly extinguisher check',
+    site: null,
+    responsible: null,
+    frequency: 'monthly',
+    interval: 1,
+    anchorDate: '2026-08-01T09:00:00+00:00',
+    timezone: 'Europe/Paris',
+    leadTimeDays: 3,
+    nextOccurrenceAt: '2026-09-01T09:00:00+00:00',
+    lastMaterializedAt: null,
+    isActive: true,
+    endAt: null,
+    createdAt: '2026-08-01T09:00:00+00:00',
+    updatedAt: '2026-08-01T09:00:00+00:00',
+    ...overrides,
+  }) as InterventionRecurrenceOutput;
 
 const createPage = async (
   inputs: Readonly<Record<string, unknown>> = {},
@@ -216,7 +244,10 @@ describe('InterventionsPage', () => {
         },
         {
           provide: InterventionRecurrenceService,
-          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            remove: vi.fn().mockReturnValue(of(undefined)),
+          },
         },
         {
           provide: OrganizationMemberService,
@@ -1124,13 +1155,29 @@ describe('InterventionsPage', () => {
       expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
     });
 
-    it('should not render Display, Recurrences, Export or the bulk-actions menu outside the List tab', async () => {
+    it('should not render Display or Export outside the List tab', async () => {
       fixture = await createPage({ view: 'board' });
       const root = fixture.nativeElement as HTMLElement;
 
       expect(root.querySelector('[data-testid="interventions-display"]')).toBeNull();
-      expect(root.querySelector('[data-testid="interventions-recurrences"]')).toBeNull();
       expect(root.querySelector('[data-testid="interventions-export"]')).toBeNull();
+    });
+
+    it('should render the Recurrences tab trigger for a viewer with INTERVENTIONS_READ', async () => {
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-tab-recurrences"]')).not.toBeNull();
+    });
+
+    it('should hide the Recurrences tab trigger for a viewer without INTERVENTIONS_READ', async () => {
+      TestBed.overrideProvider(OrganizationPermissionService, {
+        useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => false },
+      });
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-tab-recurrences"]')).toBeNull();
     });
   });
 
@@ -1188,6 +1235,101 @@ describe('InterventionsPage', () => {
       await fixture.whenStable();
 
       expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('recurrences', () => {
+    it('should show the tab content and load the list once when the Recurrences tab activates', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const recurrenceService = TestBed.inject(InterventionRecurrenceService);
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="intervention-recurrences-new"]')).not.toBeNull();
+      expect(recurrenceService.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not refetch the list when switching away from and back to the Recurrences tab', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const recurrenceService = TestBed.inject(InterventionRecurrenceService);
+
+      fixture.componentRef.setInput('view', 'list');
+      await fixture.whenStable();
+      fixture.componentRef.setInput('view', 'recurrences');
+      await fixture.whenStable();
+
+      expect(recurrenceService.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fall back to the List tab for a viewer without INTERVENTIONS_READ', async () => {
+      TestBed.overrideProvider(OrganizationPermissionService, {
+        useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => false },
+      });
+      fixture = await createPage({ view: 'recurrences' });
+
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+    });
+
+    it('should open the recurrence sheet on a blank draft when "New recurrence" is clicked', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      const newButton: HTMLButtonElement | null = root.querySelector(
+        '[data-testid="intervention-recurrences-new"]',
+      );
+      newButton?.dispatchEvent(new Event('click', { bubbles: true }));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['recurrenceTarget']()).toBe('create');
+    });
+
+    it('should raise the delete confirmation with the row the table asked to remove', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const row: InterventionRecurrenceOutput = recurrence({ id: 'rec-2' });
+
+      fixture.debugElement
+        .query(By.directive(InterventionRecurrenceTable))
+        .componentInstance.removed.emit(row);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['pendingRecurrenceDelete']()).toEqual(row);
+      expect(
+        fixture.debugElement
+          .query(By.directive(InterventionRecurrenceDeleteDialog))
+          .componentInstance.recurrence(),
+      ).toEqual(row);
+    });
+
+    it('should send the confirmed recurrence to the store for deletion', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const recurrenceService = TestBed.inject(InterventionRecurrenceService);
+      const row: InterventionRecurrenceOutput = recurrence({ id: 'rec-3' });
+
+      fixture.componentInstance['requestRecurrenceDelete'](row);
+      await fixture.whenStable();
+      fixture.componentInstance['confirmRecurrenceDelete']();
+      await fixture.whenStable();
+
+      expect(recurrenceService.remove).toHaveBeenCalledWith('rec-3');
+    });
+
+    it('should close the delete dialog once the removal succeeds', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const recurrenceService = TestBed.inject(InterventionRecurrenceService);
+      const removeSubject = new Subject<void>();
+      (recurrenceService.remove as ReturnType<typeof vi.fn>).mockReturnValue(removeSubject);
+      const row: InterventionRecurrenceOutput = recurrence({ id: 'rec-4' });
+
+      fixture.componentInstance['requestRecurrenceDelete'](row);
+      await fixture.whenStable();
+      fixture.componentInstance['confirmRecurrenceDelete']();
+      await fixture.whenStable();
+      expect(fixture.componentInstance['pendingRecurrenceDelete']()).toEqual(row);
+
+      removeSubject.next();
+      removeSubject.complete();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['pendingRecurrenceDelete']()).toBeNull();
     });
   });
 

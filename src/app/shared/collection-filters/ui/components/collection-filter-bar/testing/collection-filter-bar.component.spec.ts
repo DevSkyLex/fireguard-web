@@ -140,6 +140,58 @@ describe('CollectionFilterBar', () => {
     expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
   });
 
+  it('keeps a picked field’s chip once its value control closes with nothing chosen', async () => {
+    await openAddList();
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]')[0]
+      ?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picked).toEqual(['type']);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+
+    fixture.componentInstance.pendingKey.set(null);
+    await fixture.whenStable();
+
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+  });
+
+  it('stops offering a picked field in the "+ Filter" list while its chip is on screen', async () => {
+    await openAddList();
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]')[0]
+      ?.click();
+    await fixture.whenStable();
+    fixture.componentInstance.pendingKey.set(null);
+    await fixture.whenStable();
+
+    await openAddList();
+
+    expect(
+      Array.from(document.querySelectorAll('[data-testid="widgets-filters-add-option"]')).map(
+        (el) => el.textContent?.trim(),
+      ),
+    ).toEqual(['Priority']);
+  });
+
+  it('offers a picked field again once its chip is removed', async () => {
+    await openAddList();
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]')[0]
+      ?.click();
+    await fixture.whenStable();
+    fixture.componentInstance.pendingKey.set(null);
+    await fixture.whenStable();
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filter-chip-remove"]')[1]
+      ?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.removed).toEqual(['type']);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
+  });
+
   it('emits fieldRemoved with the chip’s key when its remove button is activated', async () => {
     document
       .querySelector<HTMLButtonElement>('[data-testid="widgets-filter-chip-remove"]')
@@ -244,6 +296,9 @@ describe('CollectionFilterBar', () => {
       expect(renderedChipMarkers()).toEqual(['status-value', 'type-value']);
 
       // Removing and re-picking 'status' — despite leading the catalog — sends it to the end.
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filter-chip-remove"]')[0]
+        ?.click();
       fixture.componentInstance.activeKeys.set(['type']);
       await fixture.whenStable();
       await pickFieldByLabel('Status');

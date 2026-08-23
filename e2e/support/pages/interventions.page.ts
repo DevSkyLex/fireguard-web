@@ -9,7 +9,8 @@ import type { Locator, Page } from '@playwright/test';
  * query string (a shared/bookmarked filtered URL, including the KPI strip's
  * own `?due=overdue`/`?status=submitted` tile links), reading a row,
  * selecting rows, driving the bulk-actions dropdown, adding a filter from the
- * "+ Filter" menu, and reading/changing/removing a filter chip.
+ * "+ Filter" menu, reading/changing/removing a filter chip, and switching to
+ * the "Recurrences" tab to open its create/edit form sheet.
  */
 export class InterventionsPage {
   public constructor(private readonly page: Page) {}
@@ -28,10 +29,14 @@ export class InterventionsPage {
     'interventions-clear-filters',
   );
   public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
-  public readonly recurrencesTrigger: Locator = this.page.getByTestId('interventions-recurrences');
-  public readonly recurrencesSheet: Locator = this.page.getByTestId(
-    'intervention-recurrences-sheet',
+  public readonly recurrencesTrigger: Locator = this.page.getByTestId(
+    'interventions-tab-recurrences',
   );
+  public readonly recurrencesTable: Locator = this.page.getByTestId(
+    'intervention-recurrences-table',
+  );
+  public readonly recurrencesNew: Locator = this.page.getByTestId('intervention-recurrences-new');
+  public readonly recurrenceSheet: Locator = this.page.getByTestId('intervention-recurrence-sheet');
 
   /** Navigates straight to the list with a raw query string, exercising a shared/bookmarked filtered URL. */
   public async gotoWithQuery(organizationId: string, query: string): Promise<void> {
@@ -110,8 +115,14 @@ export class InterventionsPage {
     await this.page.getByTestId(fieldTestId).click();
   }
 
-  /** Opens the toolbar's "Recurrences" sheet. */
+  /** Switches to the "Recurrences" tab. */
   public async openRecurrences(): Promise<void> {
     await this.recurrencesTrigger.click();
+  }
+
+  /** Switches to the "Recurrences" tab and opens the create form sheet from its "New recurrence" button. */
+  public async openRecurrenceCreate(): Promise<void> {
+    await this.openRecurrences();
+    await this.recurrencesNew.click();
   }
 }

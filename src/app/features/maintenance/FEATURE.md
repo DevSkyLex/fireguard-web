@@ -21,7 +21,13 @@ always accessible — no auth or onboarding guards.
 | `/maintenance` | `MaintenancePage` | Under maintenance |
 
 Rendered inside `FocusedLayout` (see `app.routes.ts`). The page is standalone,
-lazy-loaded, `ChangeDetectionStrategy.OnPush`, and purely presentational.
+lazy-loaded and `ChangeDetectionStrategy.OnPush`.
+
+Its one action lowers the flag before returning to the workspace root: the store
+is the only thing holding the reader here, and nothing else lowers it once the
+API recovers. A still-unavailable API answers 503 again and the interceptor
+brings them straight back, so a premature retry costs a round trip rather than
+stranding anyone.
 
 ## State and Data Access
 

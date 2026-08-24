@@ -1390,6 +1390,14 @@
         <source>Any type</source>
         <target>Cualquier tipo</target>
       </trans-unit>
+      <trans-unit id="equipment.list.filterTypeSearchPlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Buscar un tipo</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Ningún tipo coincide.</target>
+      </trans-unit>
       <trans-unit id="equipment.newButton" datatype="html">
         <source>New equipment</source>
         <target>Nuevo equipo</target>
@@ -1653,6 +1661,10 @@
       <trans-unit id="equipment.table.filterStatusPlaceholder" datatype="html">
         <source>Any status</source>
         <target>Cualquier estado</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
       </trans-unit>
       <trans-unit id="route.facility.create" datatype="html">
         <source>Create Facility</source>
@@ -4196,6 +4208,38 @@
         <source>No member matches.</source>
         <target>Ningún miembro coincide.</target>
       </trans-unit>
+      <trans-unit id="intervention.list.filterStatusPlaceholder" datatype="html">
+        <source>Search a status</source>
+        <target>Buscar un estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterTypePlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Buscar un tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Ningún tipo coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterPriorityPlaceholder" datatype="html">
+        <source>Search a priority</source>
+        <target>Buscar una prioridad</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoPriority" datatype="html">
+        <source>No priority matches.</source>
+        <target>Ninguna prioridad coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterDueWindowPlaceholder" datatype="html">
+        <source>Search a window</source>
+        <target>Buscar un plazo</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.filterNoDueWindow" datatype="html">
+        <source>No window matches.</source>
+        <target>Ningún plazo coincide.</target>
+      </trans-unit>
       <trans-unit id="intervention.list.filterNoSite" datatype="html">
         <source>No site matches.</source>
         <target>Ningún sitio coincide.</target>
@@ -5140,9 +5184,17 @@
         <source>Any result</source>
         <target>Cualquier resultado</target>
       </trans-unit>
+      <trans-unit id="inspection.list.filterNoResult" datatype="html">
+        <source>No result matches.</source>
+        <target>Ningún resultado coincide.</target>
+      </trans-unit>
       <trans-unit id="inspection.table.filterStatusPlaceholder" datatype="html">
         <source>Any status</source>
         <target>Cualquier estado</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
       </trans-unit>
       <trans-unit id="inspection.table.filtersButton" datatype="html">
         <source>Filters</source>
@@ -6924,6 +6976,10 @@
         <source>Filter by</source>
         <target>Filtrar por</target>
       </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.regionLabel" datatype="html">
+        <source>Active filters</source>
+        <target>Filtros activos</target>
+      </trans-unit>
       <trans-unit id="shared.collectionFilterBar.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Quitar filtro: <x id="field" equiv-text="fieldLabel"/></target>
@@ -6931,6 +6987,10 @@
       <trans-unit id="shared.collectionFilterBar.changeOperator" datatype="html">
         <source>Change operator: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Cambiar operador: <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterMultiSelect.hiddenValues" datatype="html">
+        <source>Also selected: <x id="hidden" equiv-text="hidden"/></source>
+        <target>También seleccionados: <x id="hidden" equiv-text="hidden"/></target>
       </trans-unit>
       <trans-unit id="shared.collectionFilters.operatorEquals" datatype="html">
         <source>is</source>
@@ -7276,6 +7336,14 @@
         <source>Any facility</source>
         <target>Cualquier instalación</target>
       </trans-unit>
+      <trans-unit id="maintenance.filter.facilitySearchPlaceholder" datatype="html">
+        <source>Search a facility</source>
+        <target>Buscar una instalación</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.noFacility" datatype="html">
+        <source>No facility matches.</source>
+        <target>Ninguna instalación coincide.</target>
+      </trans-unit>
       <trans-unit id="maintenance.filter.equipmentType" datatype="html">
         <source>Equipment type</source>
         <target>Tipo de equipo</target>
@@ -7283,6 +7351,14 @@
       <trans-unit id="maintenance.filter.anyType" datatype="html">
         <source>Any type</source>
         <target>Cualquier tipo</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.equipmentTypeSearchPlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Buscar un tipo</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.noEquipmentType" datatype="html">
+        <source>No type matches.</source>
+        <target>Ningún tipo coincide.</target>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBefore" datatype="html">
         <source>Due before</source>
@@ -7644,6 +7720,10 @@
         <source>Any action</source>
         <target>Cualquier acción</target>
       </trans-unit>
+      <trans-unit id="approvals.filter.noActionType" datatype="html">
+        <source>No action type matches.</source>
+        <target>Ningún tipo de acción coincide.</target>
+      </trans-unit>
       <trans-unit id="approvals.list.errorTitle" datatype="html">
         <source>Couldn&apos;t load approval requests</source>
         <target>No se pudieron cargar las solicitudes de aprobación</target>
@@ -7864,14 +7944,6 @@
         <source>Delete <x id="name" equiv-text="name"/></source>
         <target>Eliminar <x id="name" equiv-text="name"/></target>
       </trans-unit>
-      <trans-unit id="intervention.recurrences.confirmRemoveAria" datatype="html">
-        <source>Confirm deleting <x id="name" equiv-text="name"/></source>
-        <target>Confirmar la eliminación de <x id="name" equiv-text="name"/></target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.keepAria" datatype="html">
-        <source>Keep <x id="name" equiv-text="name"/></source>
-        <target>Conservar <x id="name" equiv-text="name"/></target>
-      </trans-unit>
       <trans-unit id="intervention.labels.manage.confirmDelete" datatype="html">
         <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</source>
         <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ label.name }}"/>&quot;?</target>
@@ -7952,10 +8024,6 @@
         <source>Actions</source>
         <target>Acciones</target>
       </trans-unit>
-      <trans-unit id="intervention.recurrences.confirmDelete" datatype="html">
-        <source>Delete &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</source>
-        <target>&#191;Eliminar &quot;<x id="INTERPOLATION" equiv-text="{{ recurrence.name }}"/>&quot;?</target>
-      </trans-unit>
       <trans-unit id="intervention.recurrences.empty" datatype="html">
         <source>No recurrences yet.</source>
         <target>Aún no hay recurrencias.</target>
@@ -7999,10 +8067,6 @@
       <trans-unit id="intervention.recurrences.frequencyLabel" datatype="html">
         <source>Frequency</source>
         <target>Frecuencia</target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.header" datatype="html">
-        <source>Recurrences</source>
-        <target>Recurrencias</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.intervalLabel" datatype="html">
         <source>Every</source>
@@ -8051,10 +8115,6 @@
       <trans-unit id="intervention.recurrences.toast.updated" datatype="html">
         <source>Recurrence updated</source>
         <target>Recurrencia actualizada</target>
-      </trans-unit>
-      <trans-unit id="intervention.recurrences.toolbarButton" datatype="html">
-        <source>Recurrences</source>
-        <target>Recurrencias</target>
       </trans-unit>
       <trans-unit id="intervention.sidebar.manageLabels" datatype="html">
         <source>Manage labels…</source>
@@ -8956,6 +9016,10 @@
         <source>Any kind</source>
         <target>Cualquier tipo</target>
       </trans-unit>
+      <trans-unit id="imports.list.filterNoKind" datatype="html">
+        <source>No kind matches.</source>
+        <target>Ningún tipo de importación coincide.</target>
+      </trans-unit>
       <trans-unit id="imports.list.filtersButton" datatype="html">
         <source>Filters</source>
         <target>Filtros</target>
@@ -8988,6 +9052,10 @@
         <source>Any status</source>
         <target>Cualquier estado</target>
       </trans-unit>
+      <trans-unit id="maintenance.filter.noDueStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
+      </trans-unit>
       <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
         <source>before</source>
         <target>antes de</target>
@@ -9015,6 +9083,78 @@
       <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
         <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
         <target>Sin efecto aquí: esta vista solo filtra por estado, tipo, instalación y responsable.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.tab" datatype="html">
+        <source>Recurrences</source>
+        <target>Recurrencias</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.createHeader" datatype="html">
+        <source>New recurrence</source>
+        <target>Nueva recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.editHeader" datatype="html">
+        <source>Edit recurrence</source>
+        <target>Editar recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitCreate" datatype="html">
+        <source>Create recurrence</source>
+        <target>Crear recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitCreating" datatype="html">
+        <source>Creating…</source>
+        <target>Creando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitSave" datatype="html">
+        <source>Save recurrence</source>
+        <target>Guardar recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.submitSaving" datatype="html">
+        <source>Saving…</source>
+        <target>Guardando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nameRequired" datatype="html">
+        <source>Give the recurrence a name</source>
+        <target>Asigne un nombre a la recurrencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.nameLength" datatype="html">
+        <source>Use at most 160 characters.</source>
+        <target>Use como máximo 160 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.templateRequired" datatype="html">
+        <source>Choose a template</source>
+        <target>Elija una plantilla</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.frequencyRequired" datatype="html">
+        <source>Choose a cadence</source>
+        <target>Elija una cadencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.intervalRange" datatype="html">
+        <source>Use a value between 1 and 12.</source>
+        <target>Use un valor entre 1 y 12.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.anchorRequired" datatype="html">
+        <source>Pick an anchor date</source>
+        <target>Elija una fecha de anclaje</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.timezoneRequired" datatype="html">
+        <source>Enter a timezone</source>
+        <target>Introduzca una zona horaria</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.leadTimeRange" datatype="html">
+        <source>Use a value between 0 and 90.</source>
+        <target>Use un valor entre 0 y 90.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteTitle" datatype="html">
+        <source> Delete this recurrence? </source>
+        <target>¿Eliminar esta recurrencia?</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteDescription" datatype="html">
+        <source> “<x id="INTERPOLATION" equiv-text="{{ recurrence()?.name }}"/>” will be removed and no further interventions will be drafted from it. Existing interventions are kept. </source>
+        <target>“<x id="INTERPOLATION" equiv-text="{{ recurrence()?.name }}"/>” se eliminará y no se redactarán más intervenciones a partir de ella. Las intervenciones existentes se conservan.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.deleteConfirm" datatype="html">
+        <source> Delete recurrence </source>
+        <target>Eliminar recurrencia</target>
       </trans-unit>
 </body>
   </file>

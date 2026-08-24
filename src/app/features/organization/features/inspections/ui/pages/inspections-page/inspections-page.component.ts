@@ -38,6 +38,7 @@ import type {
   InspectionSortField,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
+import { resolveInspectionStatusTag } from '@features/organization/features/inspections/models';
 import { InspectionListPreferencesService } from '@features/organization/features/inspections/services';
 import {
   InspectionStore,
@@ -46,16 +47,17 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   CollectionFilterBar,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSelectImports } from '@shared/ui/select';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionTable } from '../../tables/inspection-table';
 
@@ -97,9 +99,12 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * first page.
  *
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
- * shell header through `PageActionsService`.
+ * shell header through `PageActionsService`. The status/result chips' own
+ * value controls are `app-collection-filter-select`
+ * (`@shared/collection-filters`), the generic single-value control the
+ * intervention list's own chips already draw.
  *
- * @version 1.6.0
+ * @version 1.7.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -113,12 +118,12 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     InspectionStatusTag,
     InspectionTable,
     CollectionFilterBar,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
@@ -204,11 +209,35 @@ export class InspectionsPage {
   /** How many rows a page holds. Not remembered — a per-visit preference. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
-  /** Status choices offered in the filter bar. */
-  protected readonly statusValues: readonly InspectionStatus[] = STATUS_VALUES;
+  /**
+   * Property statusOptions
+   * @readonly
+   * @description Status choices offered in the filter bar, labelled through the inspection status registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   * @access protected
+   * @since 1.7.0
+   * @type {readonly CollectionFilterOption[]}
+   */
+  protected readonly statusOptions: readonly CollectionFilterOption[] = STATUS_VALUES.map(
+    (status: InspectionStatus): CollectionFilterOption => ({
+      value: status,
+      label: resolveInspectionStatusTag('status', status).label,
+    }),
+  );
 
-  /** Result choices offered in the filter bar. */
-  protected readonly resultValues: readonly InspectionResult[] = RESULT_VALUES;
+  /**
+   * Property resultOptions
+   * @readonly
+   * @description Result choices offered in the filter bar, labelled through the same registry as {@link statusOptions}.
+   * @access protected
+   * @since 1.7.0
+   * @type {readonly CollectionFilterOption[]}
+   */
+  protected readonly resultOptions: readonly CollectionFilterOption[] = RESULT_VALUES.map(
+    (result: InspectionResult): CollectionFilterOption => ({
+      value: result,
+      label: resolveInspectionStatusTag('result', result).label,
+    }),
+  );
 
   /**
    * Property searchTerm

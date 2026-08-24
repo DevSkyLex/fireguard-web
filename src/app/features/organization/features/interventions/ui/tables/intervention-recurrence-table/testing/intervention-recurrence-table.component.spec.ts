@@ -129,8 +129,9 @@ describe('InterventionRecurrenceTable', () => {
     expect(requested.mock.calls[0]?.[0]?.id).toBe('recurrence-1');
   });
 
-  it('should emit removed only after the inline confirmation', async () => {
-    fixture.componentRef.setInput('recurrences', [recurrence()]);
+  it('should emit removed with the row when Delete is pressed', async () => {
+    const target = recurrence();
+    fixture.componentRef.setInput('recurrences', [target]);
     fixture.componentRef.setInput('canWrite', true);
     await fixture.whenStable();
 
@@ -140,29 +141,7 @@ describe('InterventionRecurrenceTable', () => {
     byTestId('intervention-recurrence-remove-recurrence-1')?.dispatchEvent(new Event('click'));
     await fixture.whenStable();
 
-    expect(removed).not.toHaveBeenCalled();
-    expect(byTestId('intervention-recurrence-remove-confirm-recurrence-1')).not.toBeNull();
-
-    byTestId('intervention-recurrence-remove-confirm-recurrence-1')?.dispatchEvent(
-      new Event('click'),
-    );
-
-    expect(removed).toHaveBeenCalledExactlyOnceWith('recurrence-1');
-  });
-
-  it('should collapse a pending delete confirmation once the embedded form opens', async () => {
-    fixture.componentRef.setInput('recurrences', [recurrence()]);
-    fixture.componentRef.setInput('canWrite', true);
-    await fixture.whenStable();
-
-    byTestId('intervention-recurrence-remove-recurrence-1')?.dispatchEvent(new Event('click'));
-    await fixture.whenStable();
-    expect(byTestId('intervention-recurrence-remove-confirm-recurrence-1')).not.toBeNull();
-
-    fixture.componentRef.setInput('formOpen', true);
-    await fixture.whenStable();
-
-    expect(byTestId('intervention-recurrence-remove-confirm-recurrence-1')).toBeNull();
+    expect(removed).toHaveBeenCalledExactlyOnceWith(target);
   });
 
   it('should emit activeToggled when a row switch is flipped', () => {

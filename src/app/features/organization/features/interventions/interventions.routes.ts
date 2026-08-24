@@ -22,11 +22,11 @@ import { InterventionStatisticsStore } from './state/intervention-statistics';
  *
  * @since 11.0.0
  *
- * @param {'board' | 'calendar'} view - Which tab the old route named.
+ * @param {'board' | 'calendar' | 'recurrences'} view - Which tab the route names.
  *
  * @returns {RedirectFunction} A redirect resolving to the merged `UrlTree`.
  */
-function redirectToInterventionView(view: 'board' | 'calendar'): RedirectFunction {
+function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'): RedirectFunction {
   return (redirectData) => {
     const router: Router = inject(Router);
     const organizationId: string | null = redirectData.paramMap.get('organizationId');
@@ -132,6 +132,10 @@ export const INTERVENTION_ROUTES: Routes = [
       {
         path: 'calendar',
         redirectTo: redirectToInterventionView('calendar'),
+      },
+      {
+        path: 'recurrences',
+        redirectTo: redirectToInterventionView('recurrences'),
       },
       {
         path: ':interventionId',

@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag } from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ApprovalRequestOutput,
@@ -27,6 +28,7 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   CollectionFilterBar,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
@@ -36,7 +38,6 @@ import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { ApprovalStatusTag } from '../../components/approval-status-tag';
 import {
@@ -71,11 +72,19 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * and the shared decision dialog gated `organization.approvals.decide`. The
  * status chip keeps its `hlm-toggle-group` of `app-approval-status-tag`
  * options as its value control — the same control the toolbar used to render
- * directly — so the raw enum never leaks into the template; the action-type
- * chip keeps the `hlm-select` sourced from the catalog endpoint. Both fields
- * are genuinely optional at the wire (`ApprovalRequestListQuery`), so
- * clearing either chip narrows to "any" rather than being disabled. The list
- * endpoint reads no free-text search, so this page has no search box.
+ * directly — so the raw enum never leaks into the template; there is no
+ * popover to drive open on a boolean-shaped toggle group, so it carries no
+ * `state`/`stateChanged` wiring. The action-type chip's value control is
+ * `app-collection-filter-select` (`@shared/collection-filters`), sourced
+ * from the catalog endpoint and, unlike the status chip, wired to
+ * {@link fieldPopoverState}/{@link onFieldPopoverStateChanged} so it opens
+ * itself the instant "Action type" is picked from the bar's "+ Filter" menu
+ * — the same contract every other chip on this page's sibling collection
+ * pages already honours; its two-entry catalog needs no popover search.
+ * Both fields are genuinely optional at the wire
+ * (`ApprovalRequestListQuery`), so clearing either chip narrows to "any"
+ * rather than being disabled. The list endpoint reads no free-text search,
+ * so this page has no search box.
  *
  * Owns the query the table renders (filters, paging) and the decision
  * dialog's target. On a 409 decide failure the row may have moved out from
@@ -84,7 +93,7 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * `decideErrorText`, and silently re-reads the row (`store.refresh`) so the
  * table is correct the moment the dialog closes.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -97,11 +106,11 @@ type ApprovalFilterKey = 'status' | 'actionType';
     ApprovalRequestTable,
     ApprovalDecisionDialog,
     CollectionFilterBar,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
-    ...HlmSelectImports,
     ...HlmToggleGroupImports,
   ],
   providers: [provideIcons({ lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag })],
@@ -353,6 +362,34 @@ export class ApprovalsPage {
   protected applyActionType(value: string | null | undefined): void {
     this.page.set(1);
     this.actionType.set(value ?? null);
+    if (this.openFilterKey() === 'actionType') this.openFilterKey.set(null);
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @description Whether the "Action type" chip's `app-collection-filter-select` should currently render open — true only while {@link openFilterKey} is `'actionType'`. The "Status" chip's `hlm-toggle-group` has no popover to drive, so this is never called for it.
+   * @access protected
+   * @since 1.2.0
+   * @returns {BrnOverlayState} `'open'` or `'closed'`.
+   */
+  protected fieldPopoverState(): BrnOverlayState {
+    return this.openFilterKey() === 'actionType' ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with the "Action type" chip's own value control.
+   * @access protected
+   * @since 1.2.0
+   * @param {BrnOverlayState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(state: BrnOverlayState): void {
+    if (state === 'open') {
+      this.openFilterKey.set('actionType');
+      return;
+    }
+
     if (this.openFilterKey() === 'actionType') this.openFilterKey.set(null);
   }
 

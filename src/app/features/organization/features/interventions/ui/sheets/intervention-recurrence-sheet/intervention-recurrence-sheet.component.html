@@ -1,0 +1,42 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[540px]! sm:max-w-none!"
+    data-testid="intervention-recurrence-sheet"
+  >
+    <hlm-sheet-header>
+      @if (isEdit()) {
+        <h3 hlmSheetTitle i18n="@@intervention.recurrences.editHeader">Edit recurrence</h3>
+      } @else {
+        <h3 hlmSheetTitle i18n="@@intervention.recurrences.createHeader">New recurrence</h3>
+      }
+      <p hlmSheetDescription i18n="@@intervention.recurrences.intro">
+        Recurring schedules periodically draft a new intervention from a template. A materialized
+        intervention carries no link back to the rule that created it.
+      </p>
+    </hlm-sheet-header>
+
+    <app-intervention-recurrence-form
+      [recurrence]="formRecurrence()"
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [templates]="templates()"
+      [siteOptions]="siteOptions()"
+      [memberOptions]="memberOptions()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

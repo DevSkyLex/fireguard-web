@@ -20,17 +20,17 @@ This subfeature is responsible for:
 ## Routes
 
 **`InterventionsPage`** (`ui/pages/interventions-page/`) is the single
-`loadComponent:` for the whole index route — List, Board and Calendar are
+`loadComponent:` for the whole index route — List, Board, Calendar and Recurrences are
 `hlm-tabs` (`@shared/ui/tabs`) over one page, not three routed leaves behind a
 shell. **11.0 retired that routed shell** (`InterventionsShellPage`,
 `InterventionsBoardPage`, `InterventionsCalendarPage`, the pathless route that
 nested them, and the `InterventionToolbarActions` `TemplateRef` slot the List
 tab used to hand its own controls up to the shell's toolbar): one physical
 page builds the toolbar, the KPI strip and the eight-chip filter bar once, and
-the List tab's own Display/Recurrences/Export/bulk-actions controls render
+the List tab's own Display/Export/bulk-actions controls render
 inline — `@if (activeView() === 'list')` — with no slot indirection, since
 they are no longer a different component from the toolbar that hosts them.
-The active tab is the `view` route-bound input (`?view=board|calendar`,
+The active tab is the `view` route-bound input (`?view=board|calendar|recurrences`,
 absent ⇒ `list`), read into `activeView` and written back by `switchView`
 with `queryParamsHandling: 'merge'`, so every other filter param survives a
 tab switch. `/interventions/board` and `/interventions/calendar` still exist
@@ -164,9 +164,11 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   this page's `onFieldPicked` reacts to by setting `openFilterKey` — still
   page-owned, since it also gates which of this page's eight `ng-template`
   value controls (`#statusChip`, `#typeChip`, …) currently forces its own
-  `hlm-select` open — `#dueRangeChip` and `#plannedStartRangeChip` are the
-  two exceptions, since `hlm-date-picker`/`hlm-date-range-picker` carry no
-  `[state]`/`(stateChanged)` pair to force open (8.1's documented gap).
+  selector open. `#dueRangeChip` and `#plannedStartRangeChip` were once the
+  two exceptions; since they moved to `app-collection-filter-date` /
+  `app-collection-filter-date-range`, which wrap the picker's own
+  `BrnPopover` behind the same `[state]`/`(stateChanged)` pair, every field
+  auto-opens alike (8.1's gap is closed).
   `openFilterKey` is UI-only — which selector is
   expanded, never a narrowing's value — kept in sync with each template's
   own `hlm-select` through `onFieldPopoverStateChanged`, so the URL via
@@ -248,19 +250,20 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   keeps a `dueRangeOperator` `linkedSignal` over `filters().dueRange`'s own
   operator (defaulting to `greaterThan`, the field's first declared entry,
   the moment "Deadline" is picked and carries no value yet) and a `@switch`
-  in `#dueRangeChip` renders one `hlm-date-picker` for `greaterThan`/`lessThan`
-  or one `hlm-date-range-picker` for `between` (`@shared/ui/date-picker`,
-  the same imperative `[date]`/`(dateChange)` idiom `intervention-properties-grid`
-  already uses — no vendored code touched, no hand-rolled calendar).
+  in `#dueRangeChip` renders one `app-collection-filter-date` for
+  `greaterThan`/`lessThan` or one `app-collection-filter-date-range` for
+  `between` (`@shared/collection-filters`, which own the picker plumbing —
+  no vendored code touched, no hand-rolled calendar).
   Picking a different operator before a value is chosen only swaps the
   control; picking one **after** a `dueRange` narrowing is already applied
   drops it (`InterventionsPage.onDueRangeOperatorPicked`) rather than
   keeping a stale bound active under a control that no longer shows it.
-  One known gap: unlike the six `hlm-select`-backed fields, `hlm-date-picker`
-  exposes no `[state]`/`(stateChanged)` pair, so picking "Deadline" from the
-  "+ Filter" menu does not auto-open its calendar popover the way the other
-  six auto-open their select — an accepted, documented UX gap rather than a
-  vendored-code change.
+  That gap is closed: `app-collection-filter-date(-range)` drives the
+  picker's public `popover` view child from `[state]`, deferred through
+  `afterNextRender` — without that defer the calendar opens but the CDK's
+  own Escape and outside-click listeners never attach, leaving it
+  unclosable. Picking "Deadline" now auto-opens its calendar exactly as the
+  other fields auto-open their selector.
 
   **`dueRange` is independent of the legacy `dueWindow` preset the KPI
   strip's overdue tile link and the Today page's deep link still drive**
@@ -301,8 +304,8 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `operators: ['greaterThan', 'lessThan', 'between']`, same `operatorLabels`
   override (reusing the same "after"/"before" ids, `intervention.list.filterDateRangeAfter`/`filterDateRangeBefore`,
   since the wording is field-agnostic — `between` needs no override either),
-  same `hlm-date-picker`/`hlm-date-range-picker` value control switched by a
-  `plannedStartRangeOperator` `linkedSignal`. It maps to the API's own
+  same `app-collection-filter-date`/`app-collection-filter-date-range` value
+  control switched by a `plannedStartRangeOperator` `linkedSignal`. It maps to the API's own
   already-existing `plannedStartAtAfter`/`plannedStartAtBefore` bounds
   (confirmed read by `InterventionProvider`, no backend change), serialized
   as `?plannedStartAfter=`/`?plannedStartBefore=` — distinct URL params from
@@ -722,12 +725,16 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   offers — the page reloads that store's options after a mutation succeeds.
 - `InterventionRecurrenceStore` — component-scoped (provided in
   `InterventionsPage`); CRUD over the organization's recurring intervention
-  schedules (`InterventionRecurrenceService`) via `withEntities`, backing
-  `ui/sheets/intervention-recurrences-sheet` from the list toolbar. The sheet
-  still owns the embedded create/edit form and every write decision; the list
-  itself renders through `InterventionRecurrenceTable` (`ui/tables/`), which
-  owns only its row-level delete confirmation and reports edit/delete/toggle
-  intents back to the sheet. `create`/`update`/`remove` patch the entity
+  schedules (`InterventionRecurrenceService`) via `withEntities`, backing the
+  **Recurrences tab** of `InterventionsPage` (`?view=recurrences`). The tab
+  renders `InterventionRecurrenceTable` (`ui/tables/`) full-width; the table
+  only reports edit/delete/toggle intents. Create and edit happen in
+  `ui/sheets/intervention-recurrence-sheet` (540px, bottom drawer below `sm`),
+  which hosts the Signal Forms `ui/forms/intervention-recurrence-form` and
+  confirms a dirty close through `@shared/unsaved-changes`; delete confirms in
+  `ui/dialogs/intervention-recurrence-delete-dialog`. Only the page talks to
+  the store. The list loads once, on the tab's first activation.
+  `create`/`update`/`remove` patch the entity
   collection from the response rather than reloading the list, so the
   server-authoritative `nextOccurrenceAt` lands without a second round trip. A
   materialized intervention carries no back-reference to the recurrence that
@@ -1564,18 +1571,12 @@ follows.
   convention (not only this feature's sheets — `organization-role-permissions-sheet`
   and `channel-participants-sheet` follow it too) — `sm:w-[480px]` (default:
   work-item, request-changes, role-permissions, participants), `sm:w-[540px]`
-  (create, to fit the template picker) and `sm:w-[560px]` (discussion, to fit
-  the message thread). **The recurrences sheet is the one documented exception**,
-  `sm:w-[880px]` — it is the only sheet in the app pairing a full six-column
-  `hlmTable` (`InterventionRecurrenceTable`, `ui/tables/`) with a full embedded
-  form, and the 640px it shipped at first still compressed the table's Name and
-  Template columns to the point of unreadable truncation; 880px is the width
-  above which every column reads without further squeezing, measured against
-  the longest realistic recurrence/template names. Every width utility on `hlm-sheet-content` needs the
+  (create and recurrence, to fit the template picker) and `sm:w-[560px]` (discussion, to fit
+  the message thread). Every width utility on `hlm-sheet-content` needs the
   `!` important marker (`w-full! sm:w-[…px]! sm:max-w-none!`) — `HlmSheetContent`'s
   own base classes carry `data-[side=right]:sm:max-w-sm` and `data-[side=right]:w-3/4`,
-  which beat a plain same-specificity utility. The three form-sheets (create,
-  request-changes, work-item) pin their embedded form's submit row in a sticky
+  which beat a plain same-specificity utility. The four form-sheets (create,
+  recurrence, request-changes, work-item) pin their embedded form's submit row in a sticky
   `hlm-sheet-footer`: the form's own host is `flex min-h-0 flex-1 flex-col`,
   its `hlm-field-group` scrolls independently (`min-h-0 flex-1
 overflow-y-auto`), and the footer sits outside that scroll region as the
@@ -1585,12 +1586,12 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   every breakpoint (WCAG 2.4.3), so Cancel-first-in-DOM already puts Submit
   last — nearest the thumb on a bottom-anchored mobile sheet — without a
   reversed row.
-- **All four sheets are bottom drawers below `sm`.** `[side]="side()"` on the
+- **All five sheets are bottom drawers below `sm`.** `[side]="side()"` on the
   `hlm-sheet` host, `side` bound to `@shared/sheet-side`'s `sheetSide()` — an
   SSR-safe `Signal<'right' | 'bottom'>` reading a `(max-width: 639px)`
   `matchMedia`, defaulting to `'right'` on the server and until the browser
   check resolves. `hlm-sheet-content` adds `max-sm:max-h-[85svh]` (plus
-  `max-sm:overflow-y-auto` for the three form-sheets, whose `hlm-field-group`
+  `max-sm:overflow-y-auto` for the four form-sheets, whose `hlm-field-group`
   already owns the scroll region described above) so the sticky footer — the
   form's own — stays inside the viewport and in the thumb zone. **The
   discussion sheet holds no scroll region of its own** — `MessageThread` is

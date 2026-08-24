@@ -36,6 +36,7 @@ import type {
   EquipmentStatus,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
+import { resolveEquipmentStatusTag } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { EquipmentListPreferencesService } from '@features/organization/features/equipments/services';
 import {
@@ -47,16 +48,17 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   CollectionFilterBar,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSelectImports } from '@shared/ui/select';
 import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
@@ -93,9 +95,12 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * no row menu and no bulk actions to orchestrate.
  *
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
- * shell header through `PageActionsService`.
+ * shell header through `PageActionsService`. The type/status chips' own
+ * value controls are `app-collection-filter-select`
+ * (`@shared/collection-filters`), the generic single-value control the
+ * intervention list's own chips already draw.
  *
- * @version 1.5.0
+ * @version 1.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -110,12 +115,12 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     EquipmentStatusTag,
     EquipmentTable,
     CollectionFilterBar,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
@@ -220,8 +225,20 @@ export class EquipmentsPage {
   /** Type choices offered in the filter bar. */
   protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
-  /** Status choices offered in the filter bar. */
-  protected readonly statusValues: readonly EquipmentStatus[] = STATUS_VALUES;
+  /**
+   * Property statusOptions
+   * @readonly
+   * @description Status choices offered in the filter bar, labelled through the equipment status registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   * @access protected
+   * @since 1.6.0
+   * @type {readonly CollectionFilterOption[]}
+   */
+  protected readonly statusOptions: readonly CollectionFilterOption[] = STATUS_VALUES.map(
+    (status: EquipmentStatus): CollectionFilterOption => ({
+      value: status,
+      label: resolveEquipmentStatusTag('status', status).label,
+    }),
+  );
 
   /**
    * Property searchTerm
@@ -352,10 +369,6 @@ export class EquipmentsPage {
     this.organizationId(),
     'equipments',
   ]);
-
-  /** Names an equipment type on a closed select trigger. */
-  protected readonly typeLabelOf: (value: EquipmentType) => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.label ?? value;
 
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);

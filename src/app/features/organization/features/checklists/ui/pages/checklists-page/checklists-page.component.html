@@ -48,6 +48,7 @@
       @for (value of statusValues; track value) {
         <button
           hlmToggleGroupItem
+          #statusToggleItem
           class="max-sm:min-h-11"
           [value]="value"
           [attr.data-testid]="'checklists-filter-status-' + value"

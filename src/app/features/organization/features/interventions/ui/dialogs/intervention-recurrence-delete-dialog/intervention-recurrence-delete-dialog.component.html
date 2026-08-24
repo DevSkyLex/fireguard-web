@@ -1,0 +1,35 @@
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="intervention-recurrence-delete-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.recurrences.deleteTitle">
+        Delete this recurrence?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.recurrences.deleteDescription">
+        “{{ recurrence()?.name }}” will be removed and no further interventions will be drafted from
+        it. Existing interventions are kept.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        data-testid="intervention-recurrence-delete-dialog-cancel"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        [disabled]="pending()"
+        data-testid="intervention-recurrence-delete-dialog-confirm"
+        (click)="confirm()"
+        i18n="@@intervention.recurrences.deleteConfirm"
+      >
+        Delete recurrence
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

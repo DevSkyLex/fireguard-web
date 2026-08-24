@@ -6,3 +6,4 @@ export {
   type InterventionTransitionRequest,
 } from './intervention-table';
 export { InterventionWorkItemTable } from './intervention-work-item-table';
+export { InterventionRecurrenceTable } from './intervention-recurrence-table';

@@ -473,8 +473,8 @@ absent toolbar the page rendered before the toggle existed.
 list page's toolbar now carries**, mounting or unmounting the sibling `app-collection-filter-bar`
 below it — a page's `filtersVisible` signal, seeded by `initialCollectionFilterBarVisibility`
 (same module) from that page's own `activeFilterKeys().length > 0` at construction, then purely
-toggle-driven. On `interventions-page` it sits beside "Columns" in `toolbarEnd`; on the other
-three it is `toolbarEnd`'s only control. The button carries an `hlm-badge` count of the active
+toggle-driven. On `interventions-page` it sits beside "Columns" in `toolbarEnd`; on the eight
+other pages that carry a filter bar it is `toolbarEnd`'s only control. The button carries an `hlm-badge` count of the active
 narrowing, and defaults open whenever the page mounts already filtered (only `interventions-page`
 persists filters in the URL, so it is the only one this is ever observable on) — a shared,
 filtered link must never render behind a collapsed bar. The toggle is deliberately not part of
@@ -496,13 +496,29 @@ stay in their owning feature. A field's value control need not be a select eithe
 lone `archived` field projects a plain `hlm-checkbox`, since "opening a selector" has no meaning
 for a boolean.
 
+**Not every chip's value control converts to a generic component, and the ones that stay
+hand-rolled still restore focus on pick.** Audit's `action` field keeps a hand-rolled
+`hlm-combobox` (`AuditPage`): its options are grouped by module through `hlmComboboxGroup`, a
+shape `CollectionFilterSelect` cannot render, and it is the sole consumer of that shape — below
+`CLAUDE.md` rule 8's third-consumer threshold. Checklists' `status` field keeps a hand-rolled
+`hlm-toggle-group` (`ChecklistsPage`) for the same reason, the same shape `ApprovalsPage`'s own
+`status` chip already uses — two consumers, not three. Both still open on a "+ Filter" pick and
+close themselves back out through the bar's `state`/`stateChanged` contract, since `HlmCombobox`
+hosts the very same `BrnPopover` `app-collection-filter-select` wraps — converted or not, every
+popover-backed chip in this bar behaves alike. Facilities' checkbox and checklists' toggle group
+open no popover at all, so `onFieldPicked` instead moves real DOM focus onto the freshly rendered
+control directly, deferred through `afterNextRender` the same way
+`CollectionFilterBar.focusAfterRemoval` defers its own post-removal focus move.
+
 **The chip's operator segment (8.0) is generic, never a hardcoded "is".** `CollectionFilterOperator`
 (`@shared/collection-filters/models`) is the full comparison vocabulary — `equals`, `notEquals`,
 `contains`, `notContains`, `startsWith`, `endsWith`, `greaterThan`, `lessThan`, `between`,
 `isEmpty`, `isNotEmpty`, `isAnyOf`, `isNoneOf` — and a field declares only the subset its own
 data-access layer actually maps to a real query param through `operators`; `FilterChip` renders
-that subset as a fixed label when it has exactly one entry (every field but two across all four
-migrated pages today) and as an `hlm-select` once a field declares more than one. **A feature owns
+that subset as a fixed label when it has exactly one entry (every field but two across the nine
+pages that carry a filter bar today — approvals, audit, checklists, equipments, facilities,
+imports, inspections, interventions, maintenance-schedules) and as an `hlm-select` once a field
+declares more than one. **A feature owns
 the operator→query-param mapping**, never `shared/` — `equals` maps to a field's exact-match param,
 and interventions' "Deadline" and "Planned start" fields (`dueRange`/`plannedStartRange`, 8.1/8.2)
 are the framework's first fields genuinely wired to more than one: `greaterThan`/`lessThan`/`between`

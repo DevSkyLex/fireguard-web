@@ -29,3 +29,4 @@ export {
   parseInterventionMentions,
   resolveInterventionMentionMember,
 } from './intervention-mentions/intervention-mentions.utils';
+export { interventionRecurrenceFrequencyLabel } from './intervention-recurrence-frequency-label/intervention-recurrence-frequency-label.utils';

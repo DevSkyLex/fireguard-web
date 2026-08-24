@@ -1,0 +1,27 @@
+<hlm-date-picker #picker [date]="value() ?? undefined" (dateChange)="onDatePicked($event)">
+  <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
+
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    [id]="triggerId()"
+    hlmPopoverTrigger
+    [hlmPopoverTriggerFor]="picker.popover()"
+    [class.opacity-60]="disabled()"
+    [attr.data-testid]="testId()"
+    [attr.aria-disabled]="disabled()"
+    [attr.aria-describedby]="describedBy() ?? null"
+    class="flex h-full min-h-7 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid max-sm:min-h-11 sm:max-w-52 dark:bg-transparent dark:hover:bg-foreground/10"
+  >
+    <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+      @if (value()) {
+        <span data-testid="collection-filter-value" [class]="valueClass">
+          <span class="truncate">{{ picker.formattedDate() }}</span>
+        </span>
+      } @else {
+        <span class="truncate">{{ placeholder() }}</span>
+      }
+    </span>
+  </button>
+</hlm-date-picker>

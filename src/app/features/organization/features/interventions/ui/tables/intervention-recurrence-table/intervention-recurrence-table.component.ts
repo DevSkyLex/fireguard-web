@@ -2,17 +2,10 @@ import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
   input,
   output,
-  signal,
-  untracked,
-  viewChild,
-  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
-  type Signal,
-  type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCalendarClock, lucideCircleAlert } from '@ng-icons/lucide';
@@ -21,6 +14,7 @@ import type {
   InterventionRecurrenceOutput,
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
+import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
@@ -36,24 +30,18 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * @class InterventionRecurrenceTable
  *
  * @description
- * The organization's recurring intervention schedules, as an `hlmTable` grid:
- * name, template, cadence, next occurrence, an active toggle, and a row's
- * edit/delete affordances. Extracted from `InterventionRecurrencesSheet`,
- * which still owns the embedded create/edit form and every write decision
- * (§10.3, §10.5) — this table only renders the list and reports row intents
- * through {@link editRequested}, {@link removed} and {@link activeToggled}.
- *
- * A row's delete is a two-step inline confirmation local to this table
- * ({@link confirmingRemoveId}), not a dialog — the same dialect the sheet
- * used before extraction. {@link formOpen} lets the sheet collapse a pending
- * confirmation the moment its embedded form opens, so the two write surfaces
- * never show conflicting state at once.
+ * The organization's recurring intervention schedules, as a full-width
+ * `hlmTable` grid: name, template, cadence, next occurrence, an active
+ * toggle, and a row's edit/delete affordances. This table only renders the
+ * list and reports row intents through {@link editRequested}, {@link removed}
+ * and {@link activeToggled} — the owning page decides what a row's Delete
+ * action means, including any confirmation.
  *
  * A failed fetch ({@link error}) renders `ErrorState` instead of the grid,
  * the same treatment `InterventionFacilitiesTable` and its "Linked" siblings
  * give their own list failure.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -146,23 +134,13 @@ export class InterventionRecurrenceTable {
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
-
-  /**
-   * Property formOpen
-   * @readonly
-   * @description Whether the sheet's embedded create/edit form is currently showing — collapses a pending delete confirmation on the rising edge, so the two write surfaces never disagree.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<boolean>}
-   */
-  public readonly formOpen: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
   /**
    * Property editRequested
    * @readonly
-   * @description A row's edit was asked for; the sheet opens its embedded form seeded from this recurrence.
+   * @description A row's edit was asked for; the owning page opens a form seeded from this recurrence.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<InterventionRecurrenceOutput>}
@@ -173,12 +151,13 @@ export class InterventionRecurrenceTable {
   /**
    * Property removed
    * @readonly
-   * @description A row's deletion was confirmed; the sheet calls the store.
+   * @description A row's Delete action was pressed; the owning page decides what happens next, including any confirmation.
    * @access public
-   * @since 1.0.0
-   * @type {OutputEmitterRef<string>}
+   * @since 1.2.0
+   * @type {OutputEmitterRef<InterventionRecurrenceOutput>}
    */
-  public readonly removed: OutputEmitterRef<string> = output<string>();
+  public readonly removed: OutputEmitterRef<InterventionRecurrenceOutput> =
+    output<InterventionRecurrenceOutput>();
 
   /**
    * Property activeToggled
@@ -197,41 +176,6 @@ export class InterventionRecurrenceTable {
   //#region Properties
   /** Placeholder rows for the loading render. */
   protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
-
-  /** The row pending a delete confirmation, or `null`. */
-  protected readonly confirmingRemoveId: WritableSignal<string | null> = signal<string | null>(
-    null,
-  );
-
-  /**
-   * The inline delete confirmation's destructive button, focused whenever
-   * {@link confirmingRemoveId} opens — the confirmation replaces the row
-   * holding the button the user activated.
-   */
-  protected readonly confirmDeleteButtonRef: Signal<ElementRef<HTMLButtonElement> | undefined> =
-    viewChild<ElementRef<HTMLButtonElement>>('confirmDeleteButton');
-  //#endregion
-
-  //#region Constructor
-  /** Focuses the confirm button on open, and collapses a pending confirmation once the sheet's form opens. */
-  public constructor() {
-    effect((): void => {
-      const confirming: string | null = this.confirmingRemoveId();
-      const button: ElementRef<HTMLButtonElement> | undefined = this.confirmDeleteButtonRef();
-
-      untracked((): void => {
-        if (confirming === null) return;
-
-        button?.nativeElement.focus();
-      });
-    });
-
-    effect((): void => {
-      if (!this.formOpen()) return;
-
-      untracked((): void => this.confirmingRemoveId.set(null));
-    });
-  }
   //#endregion
 
   //#region Methods
@@ -246,18 +190,7 @@ export class InterventionRecurrenceTable {
 
   /** Names a cadence unit for the table's cadence column. */
   protected frequencyLabelOf(frequency: InterventionRecurrenceFrequency): string {
-    switch (frequency) {
-      case 'weekly':
-        return $localize`:@@intervention.recurrences.frequency.weekly:Weekly`;
-      case 'monthly':
-        return $localize`:@@intervention.recurrences.frequency.monthly:Monthly`;
-      case 'quarterly':
-        return $localize`:@@intervention.recurrences.frequency.quarterly:Quarterly`;
-      case 'semiannual':
-        return $localize`:@@intervention.recurrences.frequency.semiannual:Every 6 months`;
-      case 'annual':
-        return $localize`:@@intervention.recurrences.frequency.annual:Yearly`;
-    }
+    return interventionRecurrenceFrequencyLabel(frequency);
   }
 
   /**
@@ -270,12 +203,12 @@ export class InterventionRecurrenceTable {
    *
    * @access protected
    * @since 1.0.0
-   * @param {'activate' | 'deactivate' | 'edit' | 'remove' | 'confirmRemove' | 'keep'} kind - The control named.
+   * @param {'activate' | 'deactivate' | 'edit' | 'remove'} kind - The control named.
    * @param {string} name - The recurrence's name.
    * @returns {string} The localized accessible name.
    */
   protected rowAriaLabelOf(
-    kind: 'activate' | 'deactivate' | 'edit' | 'remove' | 'confirmRemove' | 'keep',
+    kind: 'activate' | 'deactivate' | 'edit' | 'remove',
     name: string,
   ): string {
     switch (kind) {
@@ -287,22 +220,7 @@ export class InterventionRecurrenceTable {
         return $localize`:@@intervention.recurrences.editAria:Edit ${name}:name:`;
       case 'remove':
         return $localize`:@@intervention.recurrences.removeAria:Delete ${name}:name:`;
-      case 'confirmRemove':
-        return $localize`:@@intervention.recurrences.confirmRemoveAria:Confirm deleting ${name}:name:`;
-      case 'keep':
-        return $localize`:@@intervention.recurrences.keepAria:Keep ${name}:name:`;
     }
-  }
-
-  /** Opens a row's inline delete confirmation. */
-  protected requestRemove(recurrenceId: string): void {
-    this.confirmingRemoveId.set(recurrenceId);
-  }
-
-  /** Emits {@link removed} for the confirmed row. */
-  protected confirmRemove(recurrenceId: string): void {
-    this.confirmingRemoveId.set(null);
-    this.removed.emit(recurrenceId);
   }
 
   /** Emits {@link activeToggled} for the flipped row. */

@@ -1,72 +1,90 @@
 <span
-  class="inline-flex h-7 max-w-full items-center overflow-hidden rounded-md border border-border bg-secondary/40 text-[0.8rem] text-foreground max-sm:h-11 dark:bg-secondary/20 [&_button]:rounded-none!"
+  brnField
+  class="inline-flex max-w-full flex-col overflow-hidden rounded-md border border-border bg-secondary/40 text-xs text-foreground dark:bg-secondary/20 [&_button]:rounded-none!"
+  [class.opacity-60]="disabled()"
   [attr.data-testid]="chipTestId()"
 >
-  <span
-    class="inline-flex shrink-0 items-center gap-1 px-2 whitespace-nowrap text-muted-foreground"
-  >
-    <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
-    {{ fieldLabel() }}
-  </span>
-
-  <span class="flex h-3.5 shrink-0 items-center">
-    <hlm-separator orientation="vertical" />
-  </span>
-
-  @if (hasOperatorChoice()) {
-    <hlm-select
-      class="shrink-0"
-      [value]="operator()"
-      [itemToString]="operatorLabelOf"
-      (valueChange)="onOperatorPicked($event)"
+  <span class="flex h-7 items-stretch max-sm:h-11">
+    <span
+      class="inline-flex shrink-0 items-center gap-1 px-2 whitespace-nowrap text-muted-foreground"
     >
-      <label [attr.for]="operatorTriggerId" class="sr-only">{{ changeOperatorLabel() }}</label>
-      <hlm-select-trigger
-        size="sm"
-        [buttonId]="operatorTriggerId"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
+      <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
+      {{ fieldLabel() }}
+    </span>
+
+    <span class="flex h-3.5 shrink-0 items-center self-center">
+      <hlm-separator orientation="vertical" />
+    </span>
+
+    @if (hasOperatorChoice()) {
+      <hlm-select
+        class="shrink-0"
+        [value]="operator()"
+        [itemToString]="operatorLabelOf"
+        (valueChange)="onOperatorPicked($event)"
+      >
+        <label [attr.for]="operatorTriggerId()" class="sr-only">{{ changeOperatorLabel() }}</label>
+        <hlm-select-trigger
+          size="sm"
+          [buttonId]="operatorTriggerId()"
+          class="flex h-full self-stretch rounded-none border-0 bg-transparent px-2 py-1 shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid aria-disabled:cursor-not-allowed max-sm:min-h-11 dark:bg-transparent [&:not(button)]:p-0"
+          [attr.data-testid]="operatorTestId()"
+          [attr.aria-disabled]="disabled()"
+          [ariaDisabled]="disabled()"
+        >
+          <span class="whitespace-nowrap text-muted-foreground">{{
+            operatorLabelOf(operator())
+          }}</span>
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal class="w-fit">
+          <hlm-select-group>
+            @for (choice of operatorOptions(); track choice) {
+              <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    } @else {
+      <span
+        class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
         [attr.data-testid]="operatorTestId()"
       >
-        <span class="whitespace-nowrap text-muted-foreground">{{
-          operatorLabelOf(operator())
-        }}</span>
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (choice of operatorOptions(); track choice) {
-            <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
-  } @else {
-    <span
-      class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
-      [attr.data-testid]="operatorTestId()"
-    >
-      {{ operatorLabelOf(operator()) }}
+        {{ operatorLabelOf(operator()) }}
+      </span>
+    }
+
+    <span class="flex h-3.5 shrink-0 items-center self-center">
+      <hlm-separator orientation="vertical" />
     </span>
+
+    <span class="inline-flex min-w-0 items-stretch overflow-hidden">
+      <ng-content />
+    </span>
+
+    <span class="flex h-3.5 shrink-0 items-center self-center">
+      <hlm-separator orientation="vertical" />
+    </span>
+
+    <button
+      #removeButton
+      type="button"
+      brnFieldControlDescribedBy
+      class="inline-flex h-full shrink-0 items-center justify-center px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid max-sm:min-w-11"
+      [attr.data-testid]="removeTestId()"
+      [attr.aria-label]="removeLabel()"
+      (click)="onRemoveClicked()"
+    >
+      <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
+    </button>
+  </span>
+
+  @if (unavailableReason(); as reason) {
+    <span
+      hlmFieldDescription
+      [id]="reasonId()"
+      [attr.data-testid]="reasonTestId()"
+      class="min-w-0 border-t border-border px-2 py-1 whitespace-normal text-muted-foreground"
+      >{{ reason }}</span
+    >
   }
-
-  <span class="flex h-3.5 shrink-0 items-center">
-    <hlm-separator orientation="vertical" />
-  </span>
-
-  <span class="inline-flex min-w-0 items-center overflow-hidden">
-    <ng-content />
-  </span>
-
-  <span class="flex h-3.5 shrink-0 items-center">
-    <hlm-separator orientation="vertical" />
-  </span>
-
-  <button
-    type="button"
-    class="inline-flex h-full shrink-0 items-center justify-center px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:min-w-11"
-    [attr.data-testid]="removeTestId()"
-    [attr.aria-label]="removeLabel()"
-    (click)="removed.emit()"
-  >
-    <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
-  </button>
 </span>

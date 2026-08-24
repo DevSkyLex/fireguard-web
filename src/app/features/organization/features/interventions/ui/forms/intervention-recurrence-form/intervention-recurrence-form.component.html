@@ -1,0 +1,303 @@
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
+    @if (serverError(); as message) {
+      <div
+        role="alert"
+        data-testid="intervention-recurrence-error"
+        class="text-sm text-destructive"
+      >
+        <p>{{ message }}</p>
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-recurrence-name"
+        ><span i18n="@@intervention.recurrences.nameLabel">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="intervention-recurrence-name"
+        type="text"
+        data-testid="intervention-recurrence-name"
+        [formField]="recurrenceForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="recurrenceForm.name().touched() && recurrenceForm.name().invalid()"
+      />
+      @if (recurrenceForm.name().touched() && recurrenceForm.name().invalid()) {
+        <hlm-field-error>{{ recurrenceForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-recurrence-template"
+        ><span i18n="@@intervention.recurrences.templateLabel">Template</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <hlm-select
+        [itemToString]="templateLabelOf"
+        [formField]="recurrenceForm.templateId"
+        [attr.aria-required]="true"
+      >
+        <hlm-select-trigger
+          buttonId="intervention-recurrence-template"
+          class="w-full"
+          data-testid="intervention-recurrence-template"
+        >
+          <hlm-select-value
+            placeholder="Choose a template"
+            i18n-placeholder="@@intervention.cf.templatePlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (template of templates(); track template.id) {
+              <hlm-select-item [value]="template.id">{{ template.name }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+      @if (recurrenceForm.templateId().touched() && recurrenceForm.templateId().invalid()) {
+        <hlm-field-error>{{ recurrenceForm.templateId().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <div class="grid grid-cols-2 gap-3">
+      <hlm-field>
+        <label hlmFieldLabel for="intervention-recurrence-frequency"
+          ><span i18n="@@intervention.recurrences.frequencyLabel">Frequency</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <hlm-select
+          [itemToString]="frequencyLabelOf"
+          [formField]="recurrenceForm.frequency"
+          [attr.aria-required]="true"
+        >
+          <hlm-select-trigger
+            buttonId="intervention-recurrence-frequency"
+            class="w-full"
+            data-testid="intervention-recurrence-frequency"
+          >
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (frequency of frequencyValues; track frequency) {
+                <hlm-select-item [value]="frequency">{{
+                  frequencyLabelOf(frequency)
+                }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+        @if (recurrenceForm.frequency().touched() && recurrenceForm.frequency().invalid()) {
+          <hlm-field-error>{{ recurrenceForm.frequency().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="intervention-recurrence-interval"
+          i18n="@@intervention.recurrences.intervalLabel"
+          >Every</label
+        >
+        <input
+          hlmInput
+          id="intervention-recurrence-interval"
+          type="number"
+          data-testid="intervention-recurrence-interval"
+          [formField]="recurrenceForm.interval"
+          [attr.aria-invalid]="
+            recurrenceForm.interval().touched() && recurrenceForm.interval().invalid()
+          "
+        />
+        @if (recurrenceForm.interval().touched() && recurrenceForm.interval().invalid()) {
+          <hlm-field-error>{{ recurrenceForm.interval().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <hlm-field>
+        <label hlmFieldLabel for="intervention-recurrence-anchor"
+          ><span i18n="@@intervention.recurrences.anchorLabel">Anchor date</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <hlm-date-picker [formField]="recurrenceForm.anchorDate" [attr.aria-required]="true">
+          <hlm-date-picker-trigger
+            buttonId="intervention-recurrence-anchor"
+            class="w-full"
+            data-testid="intervention-recurrence-anchor"
+          >
+            <span i18n="@@intervention.recurrences.anchorPlaceholder">Pick a date</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+        @if (anchorDriftHintVisible()) {
+          <p hlmFieldDescription i18n="@@intervention.recurrences.anchorDriftHint">
+            Anchored past the 28th: occurrences drift after short months.
+          </p>
+        }
+        @if (recurrenceForm.anchorDate().touched() && recurrenceForm.anchorDate().invalid()) {
+          <hlm-field-error>{{ recurrenceForm.anchorDate().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="intervention-recurrence-timezone"
+          ><span i18n="@@intervention.recurrences.timezoneLabel">Timezone</span
+          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+          ><span class="sr-only" i18n="@@common.required"> required</span></label
+        >
+        <input
+          hlmInput
+          id="intervention-recurrence-timezone"
+          type="text"
+          data-testid="intervention-recurrence-timezone"
+          [formField]="recurrenceForm.timezone"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="
+            recurrenceForm.timezone().touched() && recurrenceForm.timezone().invalid()
+          "
+        />
+        @if (recurrenceForm.timezone().touched() && recurrenceForm.timezone().invalid()) {
+          <hlm-field-error>{{ recurrenceForm.timezone().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="intervention-recurrence-lead-time"
+          i18n="@@intervention.recurrences.leadTimeLabel"
+          >Lead time (days)</label
+        >
+        <input
+          hlmInput
+          id="intervention-recurrence-lead-time"
+          type="number"
+          data-testid="intervention-recurrence-lead-time"
+          [formField]="recurrenceForm.leadTimeDays"
+          [attr.aria-invalid]="
+            recurrenceForm.leadTimeDays().touched() && recurrenceForm.leadTimeDays().invalid()
+          "
+        />
+        @if (recurrenceForm.leadTimeDays().touched() && recurrenceForm.leadTimeDays().invalid()) {
+          <hlm-field-error>{{ recurrenceForm.leadTimeDays().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="intervention-recurrence-end"
+          i18n="@@intervention.recurrences.endLabel"
+          >End date</label
+        >
+        <hlm-date-picker [formField]="recurrenceForm.endAt">
+          <hlm-date-picker-trigger
+            buttonId="intervention-recurrence-end"
+            class="w-full"
+            data-testid="intervention-recurrence-end"
+          >
+            <span i18n="@@intervention.recurrences.endPlaceholder">No end</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-picker>
+      </hlm-field>
+    </div>
+
+    <hlm-field>
+      <label hlmFieldLabel for="intervention-recurrence-site" i18n="@@intervention.cf.site"
+        >Site</label
+      >
+      <hlm-select [itemToString]="siteLabelOf" [formField]="recurrenceForm.site">
+        <hlm-select-trigger
+          buttonId="intervention-recurrence-site"
+          class="w-full"
+          data-testid="intervention-recurrence-site"
+        >
+          <hlm-select-value
+            placeholder="Use template default"
+            i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of siteOptions(); track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="intervention-recurrence-responsible"
+        i18n="@@intervention.cf.responsible"
+        >Responsible</label
+      >
+      <hlm-combobox [formField]="recurrenceForm.responsible" [itemToString]="memberLabelOf">
+        <hlm-combobox-input
+          inputId="intervention-recurrence-responsible"
+          placeholder="Use template default"
+          i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
+          data-testid="intervention-recurrence-responsible"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
+            >No member matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of memberOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">{{ option.displayName }}</hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+  </hlm-field-group>
+
+  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="intervention-recurrence-cancel"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@common.cancel">Cancel</span>
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="max-sm:min-h-11"
+      data-testid="intervention-recurrence-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (recurrence() === null) {
+        @if (pending()) {
+          <span i18n="@@intervention.recurrences.submitCreating">Creating…</span>
+        } @else {
+          <span i18n="@@intervention.recurrences.submitCreate">Create recurrence</span>
+        }
+      } @else {
+        @if (pending()) {
+          <span i18n="@@intervention.recurrences.submitSaving">Saving…</span>
+        } @else {
+          <span i18n="@@intervention.recurrences.submitSave">Save recurrence</span>
+        }
+      }
+    </button>
+  </hlm-sheet-footer>
+</form>

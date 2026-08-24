@@ -44,33 +44,21 @@
   }
 
   <ng-template #kindChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="kindFilterOptions"
       [value]="kindFilter()"
-      [itemToString]="kindLabelOf"
+      placeholder="Any kind"
+      i18n-placeholder="@@imports.list.filterKindPlaceholder"
+      emptyLabel="No kind matches."
+      i18n-emptyLabel="@@imports.list.filterNoKind"
+      accessibleName="Kind"
+      i18n-accessibleName="@@imports.list.filterKind"
+      triggerId="imports-filter-kind"
+      testId="imports-filter-kind"
       [state]="fieldPopoverState()"
-      (valueChange)="applyKindFilter($event ?? null)"
+      (valueChanged)="applyKindFilter($any($event))"
       (stateChanged)="onFieldPopoverStateChanged($event)"
-    >
-      <label for="imports-filter-kind" class="sr-only" i18n="@@imports.list.filterKind">Kind</label>
-      <hlm-select-trigger
-        size="sm"
-        buttonId="imports-filter-kind"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="imports-filter-kind"
-      >
-        <hlm-select-value
-          placeholder="Any kind"
-          i18n-placeholder="@@imports.list.filterKindPlaceholder"
-        />
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (option of kindFilterOptions; track option.value) {
-            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+    />
   </ng-template>
 
   @if (store.hasListError()) {

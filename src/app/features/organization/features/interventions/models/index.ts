@@ -71,6 +71,8 @@ export type { InterventionRecurrenceOutput } from './intervention-recurrence/int
 export type { CreateInterventionRecurrenceInput } from './intervention-recurrence/create-intervention-recurrence-input.interface';
 export type { UpdateInterventionRecurrenceInput } from './intervention-recurrence/update-intervention-recurrence-input.interface';
 export type { InterventionRecurrenceListOptions } from './intervention-recurrence/intervention-recurrence-list-options.interface';
+export type { InterventionRecurrenceFormTarget } from './intervention-recurrence/intervention-recurrence-form-target.type';
+export type { InterventionRecurrenceFormValues } from './intervention-recurrence/intervention-recurrence-form-values.interface';
 export type { InterventionOutboxOperationFor } from './intervention-outbox/intervention-outbox-operation-for.interface';
 export type { InterventionOutboxOperation } from './intervention-outbox/intervention-outbox-operation.type';
 export type { InterventionOutboxPayloadMap } from './intervention-outbox/intervention-outbox-payload-map.interface';

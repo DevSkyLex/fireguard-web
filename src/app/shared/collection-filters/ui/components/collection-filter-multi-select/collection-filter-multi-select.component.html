@@ -2,9 +2,7 @@
   [value]="selection()"
   [itemToString]="labelOf"
   [state]="state()"
-  [disabled]="disabled()"
   [class.opacity-60]="disabled()"
-  [hlmTooltip]="tooltip()"
   (valueChange)="onValuesPicked($any($event))"
   (stateChanged)="stateChanged.emit($event)"
 >
@@ -14,18 +12,17 @@
     <hlm-combobox-trigger
       variant="ghost"
       [buttonId]="triggerId()"
-      class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 text-sm font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 sm:max-w-52 dark:bg-transparent [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
+      class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 sm:max-w-52 dark:bg-transparent [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
       [attr.data-testid]="testId()"
+      [attr.aria-disabled]="disabled()"
+      [ariaDisabled]="disabled()"
     >
       <span class="flex min-w-0 items-center gap-1 overflow-hidden">
         <hlm-combobox-placeholder>{{ placeholder() }}</hlm-combobox-placeholder>
         <ng-template hlmComboboxValues let-values>
           @for (value of values; track value; let index = $index) {
             @if (index < visibleCount()) {
-              <span
-                data-testid="collection-filter-value"
-                class="flex min-h-5 max-w-24 shrink items-center gap-1 overflow-hidden rounded-sm bg-muted px-1.5 py-0.5 text-xs leading-4 text-foreground sm:max-w-32"
-              >
+              <span data-testid="collection-filter-value" [class]="valueClass">
                 @if (valueTemplate(); as template) {
                   <ng-container
                     *ngTemplateOutlet="template; context: { $implicit: optionOf(value) }"
@@ -38,7 +35,8 @@
           }
           @if (values.length > visibleCount()) {
             <span class="shrink-0 text-xs whitespace-nowrap text-muted-foreground"
-              >+{{ values.length - visibleCount() }}</span
+              >+{{ values.length - visibleCount()
+              }}<span class="sr-only">{{ hiddenValuesLabel(values) }}</span></span
             >
           }
         </ng-template>
@@ -47,7 +45,9 @@
   </span>
 
   <hlm-combobox-content *hlmComboboxPortal class="w-max max-w-[calc(100vw---spacing(8))]">
-    <hlm-combobox-input showTrigger="false" [placeholder]="searchPlaceholder()" />
+    @if (searchPlaceholder(); as placeholder) {
+      <hlm-combobox-input showTrigger="false" [placeholder]="placeholder" />
+    }
     <hlm-combobox-empty>{{ emptyLabel() }}</hlm-combobox-empty>
     <div hlmComboboxList>
       @for (option of options(); track option.value) {

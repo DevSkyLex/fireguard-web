@@ -1,11 +1,19 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
+  afterNextRender,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
+  Injector,
   output,
   signal,
+  viewChild,
+  viewChildren,
+  type AfterRenderRef,
+  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -63,7 +71,9 @@ import { FilterChip } from '../filter-chip';
  * target `app-collection-filter-toggle` (`@shared/collection-filters`) uses
  * for the toolbar button that mounts or unmounts this bar entirely — visibility
  * itself is the owning page's concern, this component only ever renders or
- * does not exist.
+ * does not exist. It also carries `role="group"` and {@link regionLabel} as
+ * its `aria-label`, since the chip row has no visible heading of its own to
+ * lend it one.
  *
  * It draws its own box — a hairline border and a small pad — so the chips read
  * as one region rather than as controls loose under the toolbar. That is also
@@ -78,7 +88,52 @@ import { FilterChip } from '../filter-chip';
  * {@link operatorChanged} for the page to resolve — this bar never
  * interprets an operator itself, only routes the pick.
  *
- * @version 10.0.0
+ * An unavailable field's "+ Filter" entry (`CollectionFilterField.unavailableReason`
+ * set) carries `aria-disabled`, never the native `disabled` attribute:
+ * `hlmDropdownMenuItem` maps `disabled` onto `cdkMenuItemDisabled`, which the
+ * CDK's `FocusKeyManager` skips entirely — a keyboard user would never reach
+ * the reason already rendered beneath the label. `aria-disabled` keeps the
+ * entry in the roving-tabindex order and its pointer events live; its `id`
+ * (from {@link reasonIdFor}) is targeted by the entry's own
+ * `aria-describedby`. `CdkMenuItem` still emits `triggered` on an
+ * `aria-disabled` activation regardless, so {@link pickField} itself refuses
+ * an unavailable key — without that guard this would be an active control
+ * standing in for a disabled one, not a fix.
+ *
+ * That `aria-disabled` only reaches the DOM through {@link syncUnsetFieldAriaDisabled}.
+ * `hlmDropdownMenuItem` attaches `CdkMenuItem` as a host directive on the very
+ * same `<button>`, and `CdkMenuItem` binds its own `'[attr.aria-disabled]':
+ * 'disabled || null'` there; since this bar deliberately never sets
+ * `disabled` (the paragraph above is why), that binding always resolves to
+ * `null` and — being a directive host binding on the same node — wins the
+ * same change-detection pass over this template's own `[attr.aria-disabled]`,
+ * wiping the true value it just wrote. Angular only re-runs a host binding's
+ * DOM write when its own bound expression changes, and `disabled` never does
+ * here, so {@link syncUnsetFieldAriaDisabled} — a `write`-phase
+ * `afterRenderEffect`, running strictly after that change-detection pass —
+ * only has to re-assert the value once per field-list change for it to
+ * stick. The template's own `[attr.aria-disabled]` stays too, as the
+ * declared intent this effect enforces, not dead weight.
+ *
+ * Each rendered chip also carries its own field's
+ * `unavailableReason !== undefined` down to `app-filter-chip`'s `disabled`
+ * input, which dims it and neutralizes its operator segment — but not its
+ * remove button, which stays live so the narrowing remains dismissible from
+ * the chip itself rather than only through "Clear filters". An active
+ * narrowing on a field this surface can no longer apply still needs to say
+ * so and stay reachable. The reason text
+ * itself is forwarded too, verbatim, through `app-filter-chip`'s own
+ * `unavailableReason` input, alongside `reasonIdFor(key)` as its `reasonId` —
+ * the chip is what actually renders it, at the chip's own width rather than
+ * squeezed inside a value trigger; see its class doc.
+ *
+ * Removing a chip also moves keyboard focus, since nothing else can: the
+ * following chip's own remove button, else the preceding one, else the
+ * "+ Filter" trigger, else this bar's own root — see
+ * {@link focusAfterRemoval} — rather than letting it fall back to `body`
+ * once the removed chip leaves the DOM.
+ *
+ * @version 10.6.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -202,6 +257,79 @@ export class CollectionFilterBar {
 
   //#region Properties
   /**
+   * Property injector
+   * @readonly
+   * @description This component's own injector, passed to the `afterNextRender` call in {@link focusAfterRemoval} — required since that call happens from an event handler, outside a reactive/DI context.
+   * @access private
+   * @since 10.3.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
+  /**
+   * Property chips
+   * @readonly
+   * @description Every currently rendered `app-filter-chip` instance, in {@link renderedKeys} order — the `@for` in the template iterates both the same way, so the two stay positionally aligned.
+   * @access private
+   * @since 10.3.0
+   * @type {Signal<readonly FilterChip[]>}
+   */
+  private readonly chips: Signal<readonly FilterChip[]> = viewChildren(FilterChip);
+
+  /**
+   * Property addFilterTrigger
+   * @readonly
+   * @description The "+ Filter" button, when it renders — one of {@link focusAfterRemoval}'s fallback targets.
+   * @access private
+   * @since 10.3.0
+   * @type {Signal<ElementRef<HTMLButtonElement> | undefined>}
+   */
+  private readonly addFilterTrigger: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('addFilterButton');
+
+  /**
+   * Property unsetFieldItems
+   * @readonly
+   * @description Every currently rendered "+ Filter" menu entry `<button>`, in {@link unsetFields} order — the `@for` in the template iterates both the same way, so the two stay positionally aligned. Read by {@link syncUnsetFieldAriaDisabled}.
+   * @access private
+   * @since 10.5.0
+   * @type {Signal<readonly ElementRef<HTMLButtonElement>[]>}
+   */
+  private readonly unsetFieldItems: Signal<readonly ElementRef<HTMLButtonElement>[]> =
+    viewChildren<ElementRef<HTMLButtonElement>>('unsetFieldItem');
+
+  /**
+   * Property syncUnsetFieldAriaDisabled
+   * @readonly
+   * @description Re-asserts `aria-disabled` on every "+ Filter" menu entry after each render where {@link unsetFields} changed — see the class doc for why the template's own binding cannot make it stick on its own.
+   * @access private
+   * @since 10.5.0
+   * @type {AfterRenderRef}
+   */
+  private readonly syncUnsetFieldAriaDisabled: AfterRenderRef = afterRenderEffect({
+    write: (): void => {
+      const buttons: readonly ElementRef<HTMLButtonElement>[] = this.unsetFieldItems();
+      const fields: readonly CollectionFilterField[] = this.unsetFields();
+
+      buttons.forEach((button: ElementRef<HTMLButtonElement>, index: number): void => {
+        const isUnavailable: boolean = fields[index]?.unavailableReason !== undefined;
+        button.nativeElement.setAttribute('aria-disabled', isUnavailable ? 'true' : 'false');
+      });
+    },
+  });
+
+  /**
+   * Property root
+   * @readonly
+   * @description This bar's own root element — {@link focusAfterRemoval}'s last-resort focus target, once no chip and no "+ Filter" trigger are left to receive it.
+   * @access private
+   * @since 10.3.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly root: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('barRoot');
+
+  /**
    * Property order
    * @readonly
    * @description The pick-order memory {@link renderedKeys} sorts active keys by. Reset on {@link clearAll}.
@@ -288,6 +416,9 @@ export class CollectionFilterBar {
 
   /** The trailing "Clear filters" button's label — the same generic id every list's popover already carried. */
   protected readonly clearFiltersLabel: string = $localize`:@@common.clearFilters:Clear filters`;
+
+  /** The root's `aria-label` — this bar has no visible heading, so it is the only accessible name a screen reader gets for the chip region. */
+  protected readonly regionLabel: string = $localize`:@@shared.collectionFilterBar.regionLabel:Active filters`;
   //#endregion
 
   //#region Methods
@@ -301,6 +432,30 @@ export class CollectionFilterBar {
    */
   protected testId(suffix: string): string {
     return `${this.testIdPrefix()}-${suffix}`;
+  }
+
+  /**
+   * Method reasonIdFor
+   * @description The `id` a field's reason text renders under — the "+ Filter" menu's own entry while the field is unset, `app-filter-chip`'s own trailing row while it is active. Safe to share one id between the two: a field is never both active and unset at once, so only one of them ever actually renders that text. Derived from {@link testIdPrefix} and the field's own key — deterministic and stable across renders, not a per-render counter.
+   * @access protected
+   * @since 10.2.0
+   * @param {string} key - The field whose reason is being identified.
+   * @returns {string} The reason text's `id`.
+   */
+  protected reasonIdFor(key: string): string {
+    return `${this.testIdPrefix()}-filter-reason-${key}`;
+  }
+
+  /**
+   * Method operatorTriggerIdFor
+   * @description The `id` a field's operator select trigger renders under, targeted by its own `sr-only` label's `for`. Derived from {@link testIdPrefix} and the field's own key — deterministic and stable across renders, unlike a per-instance counter, so it renders identically on the server and after client hydration.
+   * @access protected
+   * @since 10.3.0
+   * @param {string} key - The field whose operator trigger is being identified.
+   * @returns {string} The trigger's `id`.
+   */
+  protected operatorTriggerIdFor(key: string): string {
+    return `${this.testIdPrefix()}-filter-chip-operator-${key}`;
   }
 
   /**
@@ -370,7 +525,11 @@ export class CollectionFilterBar {
    * @description
    * Picks a field from the "+ Filter" menu: moves it to the end of
    * {@link order} so its chip renders last, then emits {@link fieldPicked} so
-   * the page opens that field's own value control.
+   * the page opens that field's own value control. A no-op for a field
+   * carrying {@link CollectionFilterField.unavailableReason} — its menu entry
+   * stays keyboard-reachable (`aria-disabled`, not `disabled`, per the class
+   * doc), and `CdkMenuItem` still emits `triggered` on activation regardless,
+   * so this guard is what actually keeps it inert.
    *
    * @access protected
    * @since 1.0.0
@@ -378,6 +537,8 @@ export class CollectionFilterBar {
    * @returns {void}
    */
   protected pickField(key: string): void {
+    if (this.fieldOf(key).unavailableReason !== undefined) return;
+
     this.order.update((current: readonly string[]) => [
       ...current.filter((entry: string): boolean => entry !== key),
       key,
@@ -401,13 +562,25 @@ export class CollectionFilterBar {
 
   /**
    * Method removeField
-   * @description Drops one chip: forgets it was picked this visit, then emits {@link fieldRemoved} for the page to clear its value.
+   *
+   * @description
+   * Drops one chip: forgets it was picked this visit, emits
+   * {@link fieldRemoved} for the page to clear its value, then hands
+   * keyboard focus to whichever control should receive it next — see
+   * {@link focusAfterRemoval}.
+   *
    * @access protected
    * @since 2.0.0
    * @param {string} key - The field whose chip was dismissed.
    * @returns {void}
    */
   protected removeField(key: string): void {
+    const keysBeforeRemoval: readonly string[] = this.renderedKeys();
+    const removalIndex: number = keysBeforeRemoval.indexOf(key);
+    const nextKey: string | undefined = keysBeforeRemoval[removalIndex + 1];
+    const previousKey: string | undefined =
+      removalIndex > 0 ? keysBeforeRemoval[removalIndex - 1] : undefined;
+
     this.pickedKeys.update((current: ReadonlySet<string>): ReadonlySet<string> => {
       const next: Set<string> = new Set(current);
       next.delete(key);
@@ -415,6 +588,68 @@ export class CollectionFilterBar {
       return next;
     });
     this.fieldRemoved.emit(key);
+    this.focusAfterRemoval(nextKey, previousKey);
+  }
+
+  /**
+   * Method chipByKey
+   * @description Looks up the rendered `app-filter-chip` instance for one key, matching {@link chips} positionally against {@link renderedKeys} — both iterate the same `@for` in the same order.
+   * @access private
+   * @since 10.3.0
+   * @param {string} key - The field key to resolve.
+   * @returns {FilterChip | undefined} Its chip instance, when still rendered.
+   */
+  private chipByKey(key: string): FilterChip | undefined {
+    const index: number = this.renderedKeys().indexOf(key);
+
+    return index === -1 ? undefined : this.chips()[index];
+  }
+
+  /**
+   * Method focusAfterRemoval
+   *
+   * @description
+   * Moves real DOM focus once a chip's removal has actually rendered: the
+   * chip that was next, else the one that was previous, else the
+   * "+ Filter" trigger, else this bar's own root — the cascade a keyboard
+   * user expects instead of losing focus to `body`. Deferred through
+   * `afterNextRender` rather than a `setTimeout`, since the app is
+   * zoneless and the owning page may still be reacting to
+   * {@link fieldRemoved} when this runs.
+   *
+   * @access private
+   * @since 10.3.0
+   *
+   * @param {string | undefined} nextKey - The key rendered just after the removed one, read before removal.
+   * @param {string | undefined} previousKey - The key rendered just before the removed one, read before removal.
+   *
+   * @returns {void}
+   */
+  private focusAfterRemoval(nextKey: string | undefined, previousKey: string | undefined): void {
+    afterNextRender(
+      {
+        write: (): void => {
+          const target: FilterChip | undefined =
+            (nextKey === undefined ? undefined : this.chipByKey(nextKey)) ??
+            (previousKey === undefined ? undefined : this.chipByKey(previousKey));
+
+          if (target) {
+            target.focusRemove();
+            return;
+          }
+
+          const addFilterButton: ElementRef<HTMLButtonElement> | undefined =
+            this.addFilterTrigger();
+          if (addFilterButton) {
+            addFilterButton.nativeElement.focus();
+            return;
+          }
+
+          this.root()?.nativeElement.focus();
+        },
+      },
+      { injector: this.injector },
+    );
   }
   //#endregion
 }

@@ -1,7 +1,11 @@
 <div
-  class="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border p-2"
+  #barRoot
+  class="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border p-2 outline-none focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
   [attr.id]="testId('filter-bar')"
   [attr.data-testid]="testId('filter-chips')"
+  role="group"
+  tabindex="-1"
+  [attr.aria-label]="regionLabel"
 >
   @for (key of renderedKeys(); track key) {
     <app-filter-chip
@@ -12,7 +16,11 @@
       [operatorOptions]="fieldOf(key).operators"
       [operatorLabels]="fieldOf(key).operatorLabels ?? {}"
       [changeOperatorLabel]="changeOperatorLabelFor(fieldOf(key).fieldLabel)"
+      [operatorTriggerId]="operatorTriggerIdFor(key)"
       [testIdPrefix]="testIdPrefix()"
+      [disabled]="fieldOf(key).unavailableReason !== undefined"
+      [unavailableReason]="fieldOf(key).unavailableReason ?? ''"
+      [reasonId]="reasonIdFor(key)"
       (removed)="removeField(key)"
       (operatorChanged)="operatorChanged.emit({ key, operator: $event })"
     >
@@ -22,6 +30,7 @@
 
   @if (unsetFields().length > 0) {
     <button
+      #addFilterButton
       hlmBtn
       type="button"
       variant="outline"
@@ -42,8 +51,13 @@
       <hlm-dropdown-menu-separator />
       @for (field of unsetFields(); track field.key) {
         <button
+          #unsetFieldItem
           hlmDropdownMenuItem
-          [disabled]="field.unavailableReason !== undefined"
+          class="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          [attr.aria-disabled]="field.unavailableReason !== undefined"
+          [attr.aria-describedby]="
+            field.unavailableReason !== undefined ? reasonIdFor(field.key) : null
+          "
           [attr.data-testid]="testId('filters-add-option')"
           (click)="pickField(field.key)"
         >
@@ -51,7 +65,11 @@
           <span class="flex min-w-0 flex-col items-start">
             <span class="truncate">{{ field.fieldLabel }}</span>
             @if (field.unavailableReason; as reason) {
-              <span class="text-xs whitespace-normal text-muted-foreground">{{ reason }}</span>
+              <span
+                [id]="reasonIdFor(field.key)"
+                class="text-xs whitespace-normal text-muted-foreground"
+                >{{ reason }}</span
+              >
             }
           </span>
         </button>

@@ -18,6 +18,11 @@ import {
 } from '../fixtures/api-fixtures';
 import type { ApiErrorFixture } from '../fixtures/api-fixtures';
 import type {
+  ApprovalActionTypeOutputFixture,
+  ApprovalRequestOutputFixture,
+} from '../fixtures/approval-fixtures';
+import type { AuditEventOutputFixture } from '../fixtures/audit-fixtures';
+import type {
   InvoiceOutputFixture,
   OrganizationQuotaOutputFixture,
   OrganizationSubscriptionOutputFixture,
@@ -48,6 +53,7 @@ import type {
   FacilityOutputFixture,
   FacilityPlanOverlayOutputFixture,
 } from '../fixtures/facility-fixtures';
+import type { ImportJobOutputFixture } from '../fixtures/import-fixtures';
 import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
 import type {
   InterventionIssueOutputFixture,
@@ -61,6 +67,7 @@ import type {
   OrganizationInvitationPreviewOutputFixture,
   OrganizationMemberOutputFixture,
 } from '../fixtures/invitation-fixtures';
+import type { MaintenanceScheduleOutputFixture } from '../fixtures/maintenance-fixtures';
 import type { OrganizationInvitationOutputFixture } from '../fixtures/member-fixtures';
 import type {
   OrganizationPermissionOutputFixture,
@@ -1869,5 +1876,79 @@ export class ApiMock {
         await fulfillJson(route, 200, hydraCollection(attachments));
       },
     );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/approval-requests` — the
+   * four-eyes inbox `ApprovalsPage` reads.
+   */
+  public async mockApprovalRequestList(
+    organizationId: string,
+    requests: ReadonlyArray<ApprovalRequestOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/approval-requests(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(requests));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/approvals/action-types` — the canonical, non-organization
+   * -scoped regulated action-type catalog behind the inbox's "Action type"
+   * filter chip.
+   */
+  public async mockApprovalActionTypes(
+    actionTypes: ReadonlyArray<ApprovalActionTypeOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/approvals/action-types`, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(actionTypes));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/audit-events` — the
+   * journal `AuditPage` reads.
+   */
+  public async mockAuditEventList(
+    organizationId: string,
+    events: ReadonlyArray<AuditEventOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/audit-events(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, hydraCollection(events));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/imports` — the canonical, non-organization-scoped import
+   * job collection `ImportsPage` reads, `organization` always present as a
+   * required query parameter.
+   */
+  public async mockImportJobList(jobs: ReadonlyArray<ImportJobOutputFixture> = []): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp(`/api/imports(\\?.*)?$`), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(jobs));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/maintenance/schedules` — the canonical, non-organization
+   * -scoped schedules collection `MaintenanceSchedulesPage` reads,
+   * `organization` always present as a required query parameter.
+   */
+  public async mockMaintenanceScheduleList(
+    schedules: ReadonlyArray<MaintenanceScheduleOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp(`/api/maintenance/schedules(\\?.*)?$`), async (route) => {
+      await fulfillJson(route, 200, hydraCollection(schedules));
+    });
   }
 }

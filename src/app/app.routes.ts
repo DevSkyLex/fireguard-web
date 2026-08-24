@@ -104,6 +104,13 @@ export const APP_ROUTES: Routes = [
     loadChildren: () => import('@features/error/error.routes').then((m) => m.ERROR_ROUTES),
   },
   {
+    path: 'maintenance',
+    component: FocusedLayout,
+    providers: [provideFocusedLayoutSlots({ header: [withThemeSwitcher()] })],
+    loadChildren: () =>
+      import('@features/maintenance/maintenance.routes').then((m) => m.MAINTENANCE_ROUTES),
+  },
+  {
     path: 'organizations/invitations/accept',
     component: FocusedLayout,
     providers: [provideFocusedLayoutSlots({ header: [withThemeSwitcher()] })],

@@ -1,0 +1,28 @@
+<div id="maintenance-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
+  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <ng-icon name="lucideWrench" class="text-2xl" aria-hidden="true" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@maintenance.title">
+      FireGuard is under maintenance
+    </h1>
+    <p class="text-sm text-pretty text-muted-foreground" i18n="@@maintenance.description">
+      The workspace is temporarily unavailable while we finish some work. Your data is safe — try
+      again in a few minutes.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-center gap-3">
+    <button
+      hlmBtn
+      size="sm"
+      class="gap-2 max-sm:min-h-11"
+      data-testid="maintenance-retry"
+      (click)="retry()"
+    >
+      <ng-icon name="lucideRotateCcw" class="text-sm" aria-hidden="true" />
+      <span i18n="@@maintenance.retry">Try again</span>
+    </button>
+  </div>
+</div>

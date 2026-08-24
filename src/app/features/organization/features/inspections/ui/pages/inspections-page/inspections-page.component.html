@@ -36,77 +36,49 @@
   }
 
   <ng-template #statusChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="statusOptions"
       [value]="filters().status"
+      placeholder="Any status"
+      i18n-placeholder="@@inspection.table.filterStatusPlaceholder"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@inspection.list.filterNoStatus"
+      accessibleName="Status"
+      i18n-accessibleName="@@inspection.list.filterStatus"
+      triggerId="inspections-filter-status"
+      testId="inspections-filter-status"
       [state]="fieldPopoverState('status')"
-      (valueChange)="applyFilter({ status: $event ?? null })"
+      [optionTemplate]="statusOptionRow"
+      [valueTemplate]="statusOptionRow"
+      (valueChanged)="applyFilter({ status: $any($event) })"
       (stateChanged)="onFieldPopoverStateChanged('status', $event)"
-    >
-      <label for="inspections-filter-status" class="sr-only" i18n="@@inspection.list.filterStatus"
-        >Status</label
-      >
-      <hlm-select-trigger
-        size="sm"
-        buttonId="inspections-filter-status"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="inspections-filter-status"
-      >
-        @if (filters().status; as status) {
-          <app-inspection-status-tag kind="status" [value]="status" asOption />
-        } @else {
-          <hlm-select-value
-            placeholder="Any status"
-            i18n-placeholder="@@inspection.table.filterStatusPlaceholder"
-          />
-        }
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (status of statusValues; track status) {
-            <hlm-select-item [value]="status">
-              <app-inspection-status-tag kind="status" [value]="status" asOption />
-            </hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+    />
+    <ng-template #statusOptionRow let-option>
+      <app-inspection-status-tag kind="status" [value]="option.value" asOption />
+    </ng-template>
   </ng-template>
 
   <ng-template #resultChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="resultOptions"
       [value]="filters().result"
+      placeholder="Any result"
+      i18n-placeholder="@@inspection.table.filterResultPlaceholder"
+      emptyLabel="No result matches."
+      i18n-emptyLabel="@@inspection.list.filterNoResult"
+      accessibleName="Result"
+      i18n-accessibleName="@@inspection.list.filterResult"
+      triggerId="inspections-filter-result"
+      testId="inspections-filter-result"
       [state]="fieldPopoverState('result')"
-      (valueChange)="applyFilter({ result: $event ?? null })"
+      [optionTemplate]="resultOptionRow"
+      [valueTemplate]="resultOptionRow"
+      (valueChanged)="applyFilter({ result: $any($event) })"
       (stateChanged)="onFieldPopoverStateChanged('result', $event)"
-    >
-      <label for="inspections-filter-result" class="sr-only" i18n="@@inspection.list.filterResult"
-        >Result</label
-      >
-      <hlm-select-trigger
-        size="sm"
-        buttonId="inspections-filter-result"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="inspections-filter-result"
-      >
-        @if (filters().result; as result) {
-          <app-inspection-status-tag kind="result" [value]="result" asOption />
-        } @else {
-          <hlm-select-value
-            placeholder="Any result"
-            i18n-placeholder="@@inspection.table.filterResultPlaceholder"
-          />
-        }
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (result of resultValues; track result) {
-            <hlm-select-item [value]="result">
-              <app-inspection-status-tag kind="result" [value]="result" asOption />
-            </hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+    />
+    <ng-template #resultOptionRow let-option>
+      <app-inspection-status-tag kind="result" [value]="option.value" asOption />
+    </ng-template>
   </ng-template>
 
   @if (store.listCallState().status === 'error') {

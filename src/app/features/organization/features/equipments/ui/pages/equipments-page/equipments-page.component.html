@@ -42,72 +42,46 @@
   }
 
   <ng-template #typeChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="typeOptions"
       [value]="filters().type"
-      [itemToString]="typeLabelOf"
+      placeholder="Any type"
+      i18n-placeholder="@@equipment.table.filterTypePlaceholder"
+      searchPlaceholder="Search a type"
+      i18n-searchPlaceholder="@@equipment.list.filterTypeSearchPlaceholder"
+      emptyLabel="No type matches."
+      i18n-emptyLabel="@@equipment.list.filterNoType"
+      accessibleName="Type"
+      i18n-accessibleName="@@equipment.list.filterType"
+      triggerId="equipments-filter-type"
+      testId="equipments-filter-type"
       [state]="fieldPopoverState('type')"
-      (valueChange)="applyFilter({ type: $event ?? null })"
+      (valueChanged)="applyFilter({ type: $any($event) })"
       (stateChanged)="onFieldPopoverStateChanged('type', $event)"
-    >
-      <label for="equipments-filter-type" class="sr-only" i18n="@@equipment.list.filterType"
-        >Type</label
-      >
-      <hlm-select-trigger
-        size="sm"
-        buttonId="equipments-filter-type"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="equipments-filter-type"
-      >
-        <hlm-select-value
-          placeholder="Any type"
-          i18n-placeholder="@@equipment.table.filterTypePlaceholder"
-        />
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (option of typeOptions; track option.value) {
-            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+    />
   </ng-template>
 
   <ng-template #statusChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="statusOptions"
       [value]="filters().status"
+      placeholder="Any status"
+      i18n-placeholder="@@equipment.table.filterStatusPlaceholder"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@equipment.list.filterNoStatus"
+      accessibleName="Status"
+      i18n-accessibleName="@@equipment.list.filterStatus"
+      triggerId="equipments-filter-status"
+      testId="equipments-filter-status"
       [state]="fieldPopoverState('status')"
-      (valueChange)="applyFilter({ status: $event ?? null })"
+      [optionTemplate]="statusOptionRow"
+      [valueTemplate]="statusOptionRow"
+      (valueChanged)="applyFilter({ status: $any($event) })"
       (stateChanged)="onFieldPopoverStateChanged('status', $event)"
-    >
-      <label for="equipments-filter-status" class="sr-only" i18n="@@equipment.list.filterStatus"
-        >Status</label
-      >
-      <hlm-select-trigger
-        size="sm"
-        buttonId="equipments-filter-status"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="equipments-filter-status"
-      >
-        @if (filters().status; as status) {
-          <app-equipment-status-tag kind="status" [value]="status" asOption />
-        } @else {
-          <hlm-select-value
-            placeholder="Any status"
-            i18n-placeholder="@@equipment.table.filterStatusPlaceholder"
-          />
-        }
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal class="w-fit">
-        <hlm-select-group>
-          @for (status of statusValues; track status) {
-            <hlm-select-item [value]="status">
-              <app-equipment-status-tag kind="status" [value]="status" asOption />
-            </hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+    />
+    <ng-template #statusOptionRow let-option>
+      <app-equipment-status-tag kind="status" [value]="option.value" asOption />
+    </ng-template>
   </ng-template>
 
   @if (store.listCallState().status === 'error') {

@@ -39,7 +39,9 @@
     <hlm-combobox
       [value]="action()"
       [itemToString]="actionLabelOf"
+      [state]="fieldPopoverState('action')"
       (valueChange)="applyAction($any($event))"
+      (stateChanged)="onFieldPopoverStateChanged('action', $event)"
     >
       <label for="audit-filter-action" class="sr-only" i18n="@@audit.filter.action">Action</label>
       <hlm-combobox-input
@@ -72,18 +74,18 @@
   </ng-template>
 
   <ng-template #dateRangeChip>
-    <label for="audit-filter-date-range" class="sr-only" i18n="@@audit.filter.dateRange"
-      >Date range</label
-    >
-    <hlm-date-range-picker [date]="dateRange()" (dateChange)="applyDateRange($event)">
-      <hlm-date-picker-trigger
-        buttonId="audit-filter-date-range"
-        class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="audit-filter-date-range"
-      >
-        <span i18n="@@audit.filter.dateRangePlaceholder">Pick a date range</span>
-      </hlm-date-picker-trigger>
-    </hlm-date-range-picker>
+    <app-collection-filter-date-range
+      [value]="dateRange() ?? null"
+      placeholder="Pick a date range"
+      i18n-placeholder="@@audit.filter.dateRangePlaceholder"
+      accessibleName="Date range"
+      i18n-accessibleName="@@audit.filter.dateRange"
+      triggerId="audit-filter-date-range"
+      testId="audit-filter-date-range"
+      [state]="fieldPopoverState('dateRange')"
+      (valueChanged)="applyDateRange($event)"
+      (stateChanged)="onFieldPopoverStateChanged('dateRange', $event)"
+    />
   </ng-template>
 
   @if (store.isForbidden()) {

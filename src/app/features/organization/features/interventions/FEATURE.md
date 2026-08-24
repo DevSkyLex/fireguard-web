@@ -164,9 +164,11 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   this page's `onFieldPicked` reacts to by setting `openFilterKey` — still
   page-owned, since it also gates which of this page's eight `ng-template`
   value controls (`#statusChip`, `#typeChip`, …) currently forces its own
-  `hlm-select` open — `#dueRangeChip` and `#plannedStartRangeChip` are the
-  two exceptions, since `hlm-date-picker`/`hlm-date-range-picker` carry no
-  `[state]`/`(stateChanged)` pair to force open (8.1's documented gap).
+  selector open. `#dueRangeChip` and `#plannedStartRangeChip` were once the
+  two exceptions; since they moved to `app-collection-filter-date` /
+  `app-collection-filter-date-range`, which wrap the picker's own
+  `BrnPopover` behind the same `[state]`/`(stateChanged)` pair, every field
+  auto-opens alike (8.1's gap is closed).
   `openFilterKey` is UI-only — which selector is
   expanded, never a narrowing's value — kept in sync with each template's
   own `hlm-select` through `onFieldPopoverStateChanged`, so the URL via
@@ -248,19 +250,20 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   keeps a `dueRangeOperator` `linkedSignal` over `filters().dueRange`'s own
   operator (defaulting to `greaterThan`, the field's first declared entry,
   the moment "Deadline" is picked and carries no value yet) and a `@switch`
-  in `#dueRangeChip` renders one `hlm-date-picker` for `greaterThan`/`lessThan`
-  or one `hlm-date-range-picker` for `between` (`@shared/ui/date-picker`,
-  the same imperative `[date]`/`(dateChange)` idiom `intervention-properties-grid`
-  already uses — no vendored code touched, no hand-rolled calendar).
+  in `#dueRangeChip` renders one `app-collection-filter-date` for
+  `greaterThan`/`lessThan` or one `app-collection-filter-date-range` for
+  `between` (`@shared/collection-filters`, which own the picker plumbing —
+  no vendored code touched, no hand-rolled calendar).
   Picking a different operator before a value is chosen only swaps the
   control; picking one **after** a `dueRange` narrowing is already applied
   drops it (`InterventionsPage.onDueRangeOperatorPicked`) rather than
   keeping a stale bound active under a control that no longer shows it.
-  One known gap: unlike the six `hlm-select`-backed fields, `hlm-date-picker`
-  exposes no `[state]`/`(stateChanged)` pair, so picking "Deadline" from the
-  "+ Filter" menu does not auto-open its calendar popover the way the other
-  six auto-open their select — an accepted, documented UX gap rather than a
-  vendored-code change.
+  That gap is closed: `app-collection-filter-date(-range)` drives the
+  picker's public `popover` view child from `[state]`, deferred through
+  `afterNextRender` — without that defer the calendar opens but the CDK's
+  own Escape and outside-click listeners never attach, leaving it
+  unclosable. Picking "Deadline" now auto-opens its calendar exactly as the
+  other fields auto-open their selector.
 
   **`dueRange` is independent of the legacy `dueWindow` preset the KPI
   strip's overdue tile link and the Today page's deep link still drive**
@@ -301,8 +304,8 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `operators: ['greaterThan', 'lessThan', 'between']`, same `operatorLabels`
   override (reusing the same "after"/"before" ids, `intervention.list.filterDateRangeAfter`/`filterDateRangeBefore`,
   since the wording is field-agnostic — `between` needs no override either),
-  same `hlm-date-picker`/`hlm-date-range-picker` value control switched by a
-  `plannedStartRangeOperator` `linkedSignal`. It maps to the API's own
+  same `app-collection-filter-date`/`app-collection-filter-date-range` value
+  control switched by a `plannedStartRangeOperator` `linkedSignal`. It maps to the API's own
   already-existing `plannedStartAtAfter`/`plannedStartAtBefore` bounds
   (confirmed read by `InterventionProvider`, no backend change), serialized
   as `?plannedStartAfter=`/`?plannedStartBefore=` — distinct URL params from

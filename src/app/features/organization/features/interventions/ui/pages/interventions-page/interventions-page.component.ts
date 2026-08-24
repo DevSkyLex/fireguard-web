@@ -109,6 +109,8 @@ import {
 import {
   type CollectionFilterField,
   CollectionFilterBar,
+  CollectionFilterDate,
+  CollectionFilterDateRange,
   CollectionFilterMultiSelect,
   CollectionFilterSelect,
   CollectionFilterToggle,
@@ -123,7 +125,6 @@ import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
-import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -131,7 +132,6 @@ import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggle } from '@shared/ui/toggle';
-import { HlmTooltip } from '@shared/ui/tooltip';
 import {
   InterventionCalendarStore,
   type InterventionCalendarStoreType,
@@ -350,7 +350,21 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * {@link activeView} is `list`: the Board and the Calendar have no use for
  * any of them.
  *
- * @version 11.0.0
+ * The "Deadline" and "Planned start" chips' six operator-branched value
+ * controls (`greaterThan`/`lessThan` → `app-collection-filter-date`,
+ * `between` → `app-collection-filter-date-range`, both
+ * `@shared/collection-filters`) replaced their earlier hand-rolled
+ * `hlm-date-picker`/`hlm-date-range-picker` markup, which had drifted from
+ * the six other chips' shared trigger chrome — no width clamp, no hover
+ * surface, no double-padding fix. A side effect of adopting the shared
+ * `state`/`stateChanged` contract: switching a chip's operator now reopens
+ * its value control the same way an enum chip's already did, where the
+ * hand-rolled pickers previously left it closed. {@link describedByFor}
+ * carries a disabled field's reason row `id` down to whichever of the four
+ * generic value controls a chip currently renders, since none of them can
+ * discover it through Angular DI on its own — see that method's own doc.
+ *
+ * @version 12.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -364,7 +378,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     HlmButton,
     HlmSpinner,
     HlmToggle,
-    HlmTooltip,
     InterventionAssignDialog,
     InterventionBoard,
     InterventionBulkDeleteDialog,
@@ -377,6 +390,8 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     InterventionTable,
     InterventionTag,
     CollectionFilterBar,
+    CollectionFilterDate,
+    CollectionFilterDateRange,
     CollectionFilterMultiSelect,
     CollectionFilterSelect,
     CollectionFilterToggle,
@@ -384,7 +399,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     CollectionSearchBox,
     CollectionToolbar,
     ...HlmCheckboxImports,
-    ...HlmDatePickerImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
     ...HlmSelectImports,
@@ -2251,7 +2265,7 @@ export class InterventionsPage {
   }
 
   /** Applies the "Deadline" chip's `between` narrowing. */
-  protected pickDueBetween(range: [Date, Date] | null | undefined): void {
+  protected pickDueBetween(range: readonly [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
     this.applyFilter({ dueRange: { operator: 'between', after, before } });
@@ -2278,7 +2292,7 @@ export class InterventionsPage {
   }
 
   /** Applies the "Planned start" chip's `between` narrowing. */
-  protected pickPlannedStartBetween(range: [Date, Date] | null | undefined): void {
+  protected pickPlannedStartBetween(range: readonly [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
     this.applyFilter({ plannedStartRange: { operator: 'between', after, before } });
@@ -2389,6 +2403,37 @@ export class InterventionsPage {
     }
 
     return $localize`:@@intervention.shell.filterIgnoredField:Ignored here — this view narrows only by status, type, site and responsible.`;
+  }
+
+  /**
+   * Method describedByFor
+   *
+   * @description
+   * The `describedBy` a field's value control (`app-collection-filter-select`,
+   * `app-collection-filter-multi-select`, `app-collection-filter-date`,
+   * `app-collection-filter-date-range`) carries while {@link isFieldIgnored}
+   * — `undefined` otherwise, rendering no `aria-describedby` at all.
+   * Mirrors `CollectionFilterBar.reasonIdFor`'s own `<testIdPrefix>-filter-reason-<key>`
+   * pattern rather than reading it back: the value control cannot discover
+   * `app-filter-chip`'s reason row through Angular DI, since it is declared
+   * here, in this page's own `ng-template`, and only *rendered* inside the
+   * chip through `NgTemplateOutlet` — DI resolves against the declaration
+   * site, never the insertion site, so `app-filter-chip`'s `brnField`
+   * (`@spartan-ng/brain/field`) is invisible to it. This page is the one
+   * place that knows both `app-collection-filter-bar`'s `testIdPrefix`
+   * (`'interventions'`, literal at every call site already) and each field's
+   * own key, so it is also the one place that can hand the id down as an
+   * explicit value instead.
+   *
+   * @access protected
+   * @since 12.1.0
+   *
+   * @param {InterventionFilterFieldKey} key - The field whose value control is being described.
+   *
+   * @returns {string | undefined} The reason row's `id`, or `undefined` while the field applies normally.
+   */
+  protected describedByFor(key: InterventionFilterFieldKey): string | undefined {
+    return this.isFieldIgnored(key) ? `interventions-filter-reason-${key}` : undefined;
   }
 
   /** Merges query params into the URL without touching the path. */

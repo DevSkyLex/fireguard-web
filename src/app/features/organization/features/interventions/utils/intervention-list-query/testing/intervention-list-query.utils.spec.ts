@@ -436,36 +436,52 @@ describe('parseInterventionListFilters', () => {
     expect(parseInterventionListFilters({ site: 'f-1' }, 'org-1').site).toBe('/api/facilities/f-1');
   });
 
-  it('should resolve dueAfter/dueBefore into the matching dueRange operator', () => {
+  it('should resolve dueAfter/dueBefore into the matching dueRange operator, at local midnight', () => {
     expect(parseInterventionListFilters({ dueAfter: '2026-08-10' }, 'org-1').dueRange).toEqual({
       operator: 'greaterThan',
-      after: new Date('2026-08-10'),
+      after: new Date(2026, 7, 10),
     });
     expect(parseInterventionListFilters({ dueBefore: '2026-08-20' }, 'org-1').dueRange).toEqual({
       operator: 'lessThan',
-      before: new Date('2026-08-20'),
+      before: new Date(2026, 7, 20),
     });
     expect(
       parseInterventionListFilters({ dueAfter: '2026-08-10', dueBefore: '2026-08-20' }, 'org-1')
         .dueRange,
     ).toEqual({
       operator: 'between',
-      after: new Date('2026-08-10'),
-      before: new Date('2026-08-20'),
+      after: new Date(2026, 7, 10),
+      before: new Date(2026, 7, 20),
     });
+  });
+
+  it('should keep the calendar day a URL round trip picked, at any UTC offset', () => {
+    const picked: Date = new Date(2026, 7, 10);
+    const params: Record<string, string | null> = serializeInterventionListFilters({
+      ...NO_FILTERS,
+      dueRange: { operator: 'greaterThan', after: picked },
+    });
+
+    expect(params['dueAfter']).toBe('2026-08-10');
+    expect(
+      (
+        parseInterventionListFilters({ dueAfter: params['dueAfter'] ?? undefined }, 'org-1')
+          .dueRange as { after: Date } | undefined
+      )?.after.getDate(),
+    ).toBe(10);
   });
 
   it('should drop an unparseable dueAfter/dueBefore rather than send a bad date to the API', () => {
     expect(parseInterventionListFilters({ dueAfter: 'not-a-date' }, 'org-1').dueRange).toBeNull();
   });
 
-  it('should resolve plannedStartAfter/plannedStartBefore into the matching plannedStartRange operator', () => {
+  it('should resolve plannedStartAfter/plannedStartBefore into the matching plannedStartRange operator, at local midnight', () => {
     expect(
       parseInterventionListFilters({ plannedStartAfter: '2026-08-10' }, 'org-1').plannedStartRange,
-    ).toEqual({ operator: 'greaterThan', after: new Date('2026-08-10') });
+    ).toEqual({ operator: 'greaterThan', after: new Date(2026, 7, 10) });
     expect(
       parseInterventionListFilters({ plannedStartBefore: '2026-08-20' }, 'org-1').plannedStartRange,
-    ).toEqual({ operator: 'lessThan', before: new Date('2026-08-20') });
+    ).toEqual({ operator: 'lessThan', before: new Date(2026, 7, 20) });
     expect(
       parseInterventionListFilters(
         { plannedStartAfter: '2026-08-10', plannedStartBefore: '2026-08-20' },
@@ -473,8 +489,8 @@ describe('parseInterventionListFilters', () => {
       ).plannedStartRange,
     ).toEqual({
       operator: 'between',
-      after: new Date('2026-08-10'),
-      before: new Date('2026-08-20'),
+      after: new Date(2026, 7, 10),
+      before: new Date(2026, 7, 20),
     });
   });
 });

@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -9,6 +11,7 @@ import {
   signal,
   untracked,
   viewChild,
+  type ElementRef,
   type InputSignal,
   type Signal,
   type TemplateRef,
@@ -80,7 +83,12 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
  * pass can add the same debounced, URL-synced round-trip `FacilitiesPage`
  * uses if that changes.
  *
- * @version 2.1.0
+ * Picking "Status" from the "+ Filter" menu moves real focus onto its first
+ * toggle button once rendered ({@link focusStatusToggle}) — the fixed-choice
+ * chip's equivalent of the `state`/`stateChanged` open-on-pick contract the
+ * bar's other, popover-backed value controls use.
+ *
+ * @version 2.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -210,6 +218,27 @@ export class ChecklistsPage {
 
   /** The "Status" chip's toggle group, projected into the filter bar. */
   private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
+
+  /**
+   * Property statusToggleItem
+   * @readonly
+   * @description The "Status" chip's first toggle button, so {@link focusStatusToggle} can move real focus to it once the chip mounts. `undefined` until then.
+   * @access private
+   * @since 2.2.0
+   * @type {Signal<ElementRef<HTMLButtonElement> | undefined>}
+   */
+  private readonly statusToggleItem: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('statusToggleItem');
+
+  /**
+   * Property injector
+   * @readonly
+   * @description This page's own injector, passed to the `afterNextRender` call in {@link focusStatusToggle} — required since that call happens from an event handler, outside a reactive/DI context.
+   * @access private
+   * @since 2.2.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
 
   /**
    * Property chipTemplates
@@ -390,14 +419,46 @@ export class ChecklistsPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "Status" chip before a status is chosen.
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "Status" chip before a status is chosen, then moving focus onto its first toggle button — see {@link focusStatusToggle}.
    * @access protected
-   * @since 2.1.0
+   * @since 2.2.0
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
     this.openFilterKey.set(key as 'status');
+    this.focusStatusToggle();
+  }
+
+  /**
+   * Method focusStatusToggle
+   *
+   * @description
+   * Moves real DOM focus to the "Status" chip's first toggle button once the
+   * "+ Filter" pick has actually rendered it. A fixed-choice toggle group
+   * opens no popover to receive focus the way the bar's other value
+   * controls do (`organization/FEATURE.md` — "opening a selector" has no
+   * meaning for a boolean, and the same holds for a toggle group), so
+   * without this the chip appears with focus left behind in the menu that
+   * just closed. Deferred through `afterNextRender` rather than a
+   * `setTimeout`, since the app is zoneless — the same idiom
+   * `CollectionFilterBar.focusAfterRemoval` (`@shared/collection-filters`)
+   * uses for its own post-render focus move.
+   *
+   * @access private
+   * @since 2.2.0
+   *
+   * @returns {void}
+   */
+  private focusStatusToggle(): void {
+    afterNextRender(
+      {
+        write: (): void => {
+          this.statusToggleItem()?.nativeElement.focus();
+        },
+      },
+      { injector: this.injector },
+    );
   }
 
   /**

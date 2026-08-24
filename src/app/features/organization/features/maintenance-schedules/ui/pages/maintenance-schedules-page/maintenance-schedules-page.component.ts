@@ -36,6 +36,7 @@ import type {
   MaintenanceDueStatus,
   MaintenanceScheduleOutput,
 } from '@features/organization/features/maintenance-schedules/models';
+import { resolveMaintenanceTag } from '@features/organization/features/maintenance-schedules/models';
 import {
   MaintenanceSchedulesStore,
   type MaintenanceSchedulesStoreType,
@@ -44,17 +45,18 @@ import { iriId } from '@features/organization/features/maintenance-schedules/uti
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   CollectionFilterBar,
+  CollectionFilterDate,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
-import { HlmDatePickerImports } from '@shared/ui/date-picker';
-import { HlmSelectImports } from '@shared/ui/select';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-dialog';
 import { MaintenanceOverrideDialog } from '../../dialogs/maintenance-override-dialog';
@@ -82,9 +84,9 @@ type MaintenanceScheduleFilterKey = 'dueStatus' | 'facility' | 'equipmentType' |
  *
  * @description
  * The page's own narrowing state — questions asked now, so never persisted.
- * {@link dueBefore} is a `Date`, matching what `hlm-date-picker` emits; it is
- * converted to an ISO-8601 string only where the store's `load` input
- * requires one.
+ * {@link dueBefore} is a `Date`, matching what `app-collection-filter-date`
+ * emits; it is converted to an ISO-8601 string only where the store's
+ * `load` input requires one.
  */
 interface MaintenanceScheduleFilters {
   readonly dueStatus: MaintenanceDueStatus | null;
@@ -118,7 +120,19 @@ interface MaintenanceScheduleFilters {
  * own {@link facilityOptions}, so the grid can disambiguate rows sharing an
  * equipment type across facilities.
  *
- * @version 1.2.0
+ * Every chip's value control is now one of `@shared/collection-filters`'
+ * generic field components — `app-collection-filter-select` for "Due
+ * status", "Facility" and "Equipment type", `app-collection-filter-date`
+ * for "Due before" — replacing the page's earlier hand-rolled `hlm-select`
+ * and `hlm-date-picker` markup, which had drifted from the shared trigger
+ * chrome other converted collection pages already carry (no width clamp, no
+ * hover surface, no double-padding fix). "Facility" and "Equipment type"
+ * offer a popover search — the former's catalog is organization-sized and
+ * unbounded, the latter's twelve-entry `EQUIPMENT_TYPE_OPTIONS` is the same
+ * catalog the equipments feature's own type filter already searches; "Due
+ * status" stays unsearched at four fixed entries.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -133,12 +147,12 @@ interface MaintenanceScheduleFilters {
     MaintenanceOverrideDialog,
     MaintenanceCampaignDialog,
     CollectionFilterBar,
+    CollectionFilterDate,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
-    ...HlmDatePickerImports,
-    ...HlmSelectImports,
   ],
   providers: [
     provideIcons({
@@ -199,8 +213,20 @@ export class MaintenanceSchedulesPage {
   /** How many rows a page holds. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
-  /** Every due-status chip offered. */
-  protected readonly dueStatusValues: readonly MaintenanceDueStatus[] = DUE_STATUS_VALUES;
+  /**
+   * Property dueStatusOptions
+   * @readonly
+   * @description Due-status choices offered in the "Due status" chip, labelled through the maintenance tag registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   * @access protected
+   * @since 1.3.0
+   * @type {readonly CollectionFilterOption[]}
+   */
+  protected readonly dueStatusOptions: readonly CollectionFilterOption[] = DUE_STATUS_VALUES.map(
+    (status: MaintenanceDueStatus): CollectionFilterOption => ({
+      value: status,
+      label: resolveMaintenanceTag(status).label,
+    }),
+  );
 
   /** The equipment-type choices offered, reused from the equipments feature's public catalog. */
   protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
@@ -453,17 +479,6 @@ export class MaintenanceSchedulesPage {
 
   //#region Methods
   /**
-   * Method facilityLabelOf
-   * @description Names a facility value on the closed filter select trigger.
-   * @access protected
-   * @since 1.0.0
-   * @param {string} value - The select's current value.
-   * @returns {string} The matching facility's name, or the raw value if unknown.
-   */
-  protected facilityLabelOf = (value: string): string =>
-    this.facilityOptions().find((option) => option.value === value)?.label ?? value;
-
-  /**
    * Method tableFacilityLabelOf
    *
    * @description
@@ -483,18 +498,6 @@ export class MaintenanceSchedulesPage {
    */
   protected tableFacilityLabelOf = (facilityId: string): string | null =>
     this.facilityOptions().find((option) => iriId(option.value) === facilityId)?.label ?? null;
-
-  /**
-   * Method equipmentTypeLabelOf
-   * @description Names an equipment-type value on the closed filter select trigger.
-   * @access protected
-   * @since 1.0.0
-   * @param {string} value - The select's current value.
-   * @returns {string} The localized label, or the raw value humanized if unknown.
-   */
-  protected equipmentTypeLabelOf = (value: string): string =>
-    this.equipmentTypeOptions.find((option) => option.value === value)?.label ??
-    value.replace(/_/g, ' ');
 
   /**
    * Method applyFilter
@@ -560,27 +563,27 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether a select-backed field's value control should currently render open — true only for {@link openFilterKey}. `dueBefore`'s date picker manages its own popover state, so this is never called for it.
+   * @description Whether a field's value control should currently render open — true only for {@link openFilterKey}.
    * @access protected
-   * @since 1.2.0
-   * @param {'dueStatus' | 'facility' | 'equipmentType'} key - The field to read.
+   * @since 1.3.0
+   * @param {MaintenanceScheduleFilterKey} key - The field to read.
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
-  protected fieldPopoverState(key: 'dueStatus' | 'facility' | 'equipmentType'): BrnOverlayState {
+  protected fieldPopoverState(key: MaintenanceScheduleFilterKey): BrnOverlayState {
     return this.openFilterKey() === key ? 'open' : 'closed';
   }
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with a select-backed field's own value control.
+   * @description Keeps {@link openFilterKey} in sync with a field's own value control.
    * @access protected
-   * @since 1.2.0
-   * @param {'dueStatus' | 'facility' | 'equipmentType'} key - The field whose selector changed.
+   * @since 1.3.0
+   * @param {MaintenanceScheduleFilterKey} key - The field whose value control changed.
    * @param {BrnOverlayState} state - Its next state.
    * @returns {void}
    */
   protected onFieldPopoverStateChanged(
-    key: 'dueStatus' | 'facility' | 'equipmentType',
+    key: MaintenanceScheduleFilterKey,
     state: BrnOverlayState,
   ): void {
     if (state === 'open') {

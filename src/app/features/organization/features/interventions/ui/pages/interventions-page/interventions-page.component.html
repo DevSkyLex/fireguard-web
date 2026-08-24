@@ -302,6 +302,7 @@
           [state]="fieldPopoverState('status')"
           [disabled]="isFieldIgnored('status')"
           [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          [describedBy]="describedByFor('status')"
           [optionTemplate]="statusOptionRow"
           [valueTemplate]="statusOptionRow"
           (valuesChanged)="applyStatusFilter($any($event))"
@@ -326,6 +327,7 @@
           [state]="fieldPopoverState('status')"
           [disabled]="isFieldIgnored('status')"
           [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
+          [describedBy]="describedByFor('status')"
           [optionTemplate]="statusSingleOptionRow"
           [valueTemplate]="statusSingleOptionRow"
           (valueChanged)="applyFilter({ status: $any($event) })"
@@ -354,6 +356,7 @@
           [state]="fieldPopoverState('type')"
           [disabled]="isFieldIgnored('type')"
           [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          [describedBy]="describedByFor('type')"
           [optionTemplate]="typeOptionRow"
           [valueTemplate]="typeOptionRow"
           (valuesChanged)="applyTypeFilter($any($event))"
@@ -378,6 +381,7 @@
           [state]="fieldPopoverState('type')"
           [disabled]="isFieldIgnored('type')"
           [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
+          [describedBy]="describedByFor('type')"
           [optionTemplate]="typeSingleOptionRow"
           [valueTemplate]="typeSingleOptionRow"
           (valueChanged)="applyFilter({ type: $any($event) })"
@@ -406,6 +410,7 @@
           [state]="fieldPopoverState('priority')"
           [disabled]="isFieldIgnored('priority')"
           [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          [describedBy]="describedByFor('priority')"
           [optionTemplate]="priorityOptionRow"
           [valueTemplate]="priorityOptionRow"
           (valuesChanged)="applyPriorityFilter($any($event))"
@@ -430,6 +435,7 @@
           [state]="fieldPopoverState('priority')"
           [disabled]="isFieldIgnored('priority')"
           [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
+          [describedBy]="describedByFor('priority')"
           [optionTemplate]="prioritySingleOptionRow"
           [valueTemplate]="prioritySingleOptionRow"
           (valueChanged)="applyFilter({ priority: $any($event) })"
@@ -458,6 +464,7 @@
           [state]="fieldPopoverState('site')"
           [disabled]="isFieldIgnored('site')"
           [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          [describedBy]="describedByFor('site')"
           (valuesChanged)="applySiteFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
         />
@@ -477,6 +484,7 @@
           [state]="fieldPopoverState('site')"
           [disabled]="isFieldIgnored('site')"
           [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
+          [describedBy]="describedByFor('site')"
           (valueChanged)="applyFilter({ site: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
         />
@@ -500,6 +508,7 @@
           [state]="fieldPopoverState('responsible')"
           [disabled]="isFieldIgnored('responsible')"
           [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          [describedBy]="describedByFor('responsible')"
           (valuesChanged)="applyResponsibleFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
         />
@@ -519,6 +528,7 @@
           [state]="fieldPopoverState('responsible')"
           [disabled]="isFieldIgnored('responsible')"
           [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
+          [describedBy]="describedByFor('responsible')"
           (valueChanged)="applyFilter({ responsible: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
         />
@@ -542,6 +552,7 @@
           [state]="fieldPopoverState('label')"
           [disabled]="isFieldIgnored('label')"
           [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          [describedBy]="describedByFor('label')"
           (valuesChanged)="applyLabelFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -561,6 +572,7 @@
           [state]="fieldPopoverState('label')"
           [disabled]="isFieldIgnored('label')"
           [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
+          [describedBy]="describedByFor('label')"
           (valueChanged)="applyFilter({ label: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -570,66 +582,52 @@
     <ng-template #dueRangeChip>
       @switch (dueRangeOperator()) {
         @case ('greaterThan') {
-          <hlm-date-picker
-            [date]="dueRangeAfter() ?? undefined"
+          <app-collection-filter-date
+            [value]="dueRangeAfter()"
+            placeholder="Pick a date"
+            i18n-placeholder="@@intervention.list.filterDatePlaceholder"
+            [accessibleName]="chipAccessibleName('dueRange')"
+            triggerId="interventions-filter-due"
+            testId="interventions-filter-due"
+            [state]="fieldPopoverState('dueRange')"
             [disabled]="isFieldIgnored('dueRange')"
-            [class.opacity-60]="isFieldIgnored('dueRange')"
-            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            (dateChange)="pickDueAfter($event)"
-          >
-            <label for="interventions-filter-due" class="sr-only">{{
-              chipAccessibleName('dueRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-due"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-due"
-            >
-              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
-            </hlm-date-picker-trigger>
-          </hlm-date-picker>
+            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            [describedBy]="describedByFor('dueRange')"
+            (valueChanged)="pickDueAfter($event)"
+            (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
+          />
         }
         @case ('lessThan') {
-          <hlm-date-picker
-            [date]="dueRangeBefore() ?? undefined"
+          <app-collection-filter-date
+            [value]="dueRangeBefore()"
+            placeholder="Pick a date"
+            i18n-placeholder="@@intervention.list.filterDatePlaceholder"
+            [accessibleName]="chipAccessibleName('dueRange')"
+            triggerId="interventions-filter-due"
+            testId="interventions-filter-due"
+            [state]="fieldPopoverState('dueRange')"
             [disabled]="isFieldIgnored('dueRange')"
-            [class.opacity-60]="isFieldIgnored('dueRange')"
-            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            (dateChange)="pickDueBefore($event)"
-          >
-            <label for="interventions-filter-due" class="sr-only">{{
-              chipAccessibleName('dueRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-due"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-due"
-            >
-              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
-            </hlm-date-picker-trigger>
-          </hlm-date-picker>
+            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            [describedBy]="describedByFor('dueRange')"
+            (valueChanged)="pickDueBefore($event)"
+            (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
+          />
         }
         @case ('between') {
-          <hlm-date-range-picker
-            [date]="dueRangeBetween()"
+          <app-collection-filter-date-range
+            [value]="dueRangeBetween() ?? null"
+            placeholder="Pick start and end dates"
+            i18n-placeholder="@@intervention.list.filterDateRangePlaceholder"
+            [accessibleName]="chipAccessibleName('dueRange')"
+            triggerId="interventions-filter-due"
+            testId="interventions-filter-due"
+            [state]="fieldPopoverState('dueRange')"
             [disabled]="isFieldIgnored('dueRange')"
-            [class.opacity-60]="isFieldIgnored('dueRange')"
-            [hlmTooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            (dateChange)="pickDueBetween($event)"
-          >
-            <label for="interventions-filter-due" class="sr-only">{{
-              chipAccessibleName('dueRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-due"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-due"
-            >
-              <span i18n="@@intervention.list.filterDateRangePlaceholder"
-                >Pick start and end dates</span
-              >
-            </hlm-date-picker-trigger>
-          </hlm-date-range-picker>
+            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
+            [describedBy]="describedByFor('dueRange')"
+            (valueChanged)="pickDueBetween($event)"
+            (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
+          />
         }
       }
     </ng-template>
@@ -637,72 +635,58 @@
     <ng-template #plannedStartRangeChip>
       @switch (plannedStartRangeOperator()) {
         @case ('greaterThan') {
-          <hlm-date-picker
-            [date]="plannedStartRangeAfter() ?? undefined"
+          <app-collection-filter-date
+            [value]="plannedStartRangeAfter()"
+            placeholder="Pick a date"
+            i18n-placeholder="@@intervention.list.filterDatePlaceholder"
+            [accessibleName]="chipAccessibleName('plannedStartRange')"
+            triggerId="interventions-filter-planned-start"
+            testId="interventions-filter-planned-start"
+            [state]="fieldPopoverState('plannedStartRange')"
             [disabled]="isFieldIgnored('plannedStartRange')"
-            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
-            [hlmTooltip]="
+            [tooltip]="
               isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
             "
-            (dateChange)="pickPlannedStartAfter($event)"
-          >
-            <label for="interventions-filter-planned-start" class="sr-only">{{
-              chipAccessibleName('plannedStartRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-planned-start"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-planned-start"
-            >
-              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
-            </hlm-date-picker-trigger>
-          </hlm-date-picker>
+            [describedBy]="describedByFor('plannedStartRange')"
+            (valueChanged)="pickPlannedStartAfter($event)"
+            (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
+          />
         }
         @case ('lessThan') {
-          <hlm-date-picker
-            [date]="plannedStartRangeBefore() ?? undefined"
+          <app-collection-filter-date
+            [value]="plannedStartRangeBefore()"
+            placeholder="Pick a date"
+            i18n-placeholder="@@intervention.list.filterDatePlaceholder"
+            [accessibleName]="chipAccessibleName('plannedStartRange')"
+            triggerId="interventions-filter-planned-start"
+            testId="interventions-filter-planned-start"
+            [state]="fieldPopoverState('plannedStartRange')"
             [disabled]="isFieldIgnored('plannedStartRange')"
-            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
-            [hlmTooltip]="
+            [tooltip]="
               isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
             "
-            (dateChange)="pickPlannedStartBefore($event)"
-          >
-            <label for="interventions-filter-planned-start" class="sr-only">{{
-              chipAccessibleName('plannedStartRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-planned-start"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-planned-start"
-            >
-              <span i18n="@@intervention.list.filterDatePlaceholder">Pick a date</span>
-            </hlm-date-picker-trigger>
-          </hlm-date-picker>
+            [describedBy]="describedByFor('plannedStartRange')"
+            (valueChanged)="pickPlannedStartBefore($event)"
+            (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
+          />
         }
         @case ('between') {
-          <hlm-date-range-picker
-            [date]="plannedStartRangeBetween()"
+          <app-collection-filter-date-range
+            [value]="plannedStartRangeBetween() ?? null"
+            placeholder="Pick start and end dates"
+            i18n-placeholder="@@intervention.list.filterDateRangePlaceholder"
+            [accessibleName]="chipAccessibleName('plannedStartRange')"
+            triggerId="interventions-filter-planned-start"
+            testId="interventions-filter-planned-start"
+            [state]="fieldPopoverState('plannedStartRange')"
             [disabled]="isFieldIgnored('plannedStartRange')"
-            [class.opacity-60]="isFieldIgnored('plannedStartRange')"
-            [hlmTooltip]="
+            [tooltip]="
               isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
             "
-            (dateChange)="pickPlannedStartBetween($event)"
-          >
-            <label for="interventions-filter-planned-start" class="sr-only">{{
-              chipAccessibleName('plannedStartRange')
-            }}</label>
-            <hlm-date-picker-trigger
-              buttonId="interventions-filter-planned-start"
-              class="h-7 rounded-none border-0 bg-transparent shadow-none max-sm:min-h-11 dark:bg-transparent"
-              data-testid="interventions-filter-planned-start"
-            >
-              <span i18n="@@intervention.list.filterDateRangePlaceholder"
-                >Pick start and end dates</span
-              >
-            </hlm-date-picker-trigger>
-          </hlm-date-range-picker>
+            [describedBy]="describedByFor('plannedStartRange')"
+            (valueChanged)="pickPlannedStartBetween($event)"
+            (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
+          />
         }
       }
     </ng-template>
@@ -723,6 +707,7 @@
         [state]="fieldPopoverState('dueWindow')"
         [disabled]="isFieldIgnored('dueWindow')"
         [tooltip]="isFieldIgnored('dueWindow') ? ignoredReason('dueWindow') : ''"
+        [describedBy]="describedByFor('dueWindow')"
         (valueChanged)="applyFilter({ dueWindow: $any($event) })"
         (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
       />

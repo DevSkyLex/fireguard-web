@@ -82,6 +82,7 @@
   <ng-template #archivedChip>
     <div class="flex items-center gap-2 px-2">
       <hlm-checkbox
+        #archivedCheckboxHost
         id="facilities-filter-archived"
         data-testid="facilities-filter-archived"
         [checked]="includeArchived()"

@@ -2,6 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -92,7 +95,12 @@ type FacilityLayout = 'list' | 'grid';
  * Its title lives in the shell breadcrumb; "New facility" registers on the
  * shell header through `PageActionsService`.
  *
- * @version 1.4.0
+ * Picking "archived" from the "+ Filter" menu moves real focus onto its own
+ * checkbox once rendered ({@link focusArchivedCheckbox}) — the boolean
+ * chip's equivalent of the `state`/`stateChanged` open-on-pick contract the
+ * bar's other, popover-backed value controls use.
+ *
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -286,6 +294,29 @@ export class FacilitiesPage {
   private readonly archivedChipTemplate = viewChild<TemplateRef<unknown>>('archivedChip');
 
   /**
+   * Property archivedCheckboxHost
+   * @readonly
+   * @description The "archived" chip's own `hlm-checkbox` host element, so {@link focusArchivedCheckbox} can reach its rendered `[role="checkbox"]` node. `undefined` until the chip mounts.
+   * @access private
+   * @since 1.5.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly archivedCheckboxHost: Signal<ElementRef<HTMLElement> | undefined> = viewChild(
+    'archivedCheckboxHost',
+    { read: ElementRef },
+  );
+
+  /**
+   * Property injector
+   * @readonly
+   * @description This page's own injector, passed to the `afterNextRender` call in {@link focusArchivedCheckbox} — required since that call happens from an event handler, outside a reactive/DI context.
+   * @access private
+   * @since 1.5.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
+  /**
    * Property chipTemplates
    * @readonly
    * @description The `archived` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
@@ -473,14 +504,50 @@ export class FacilitiesPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "archived" chip before its checkbox is checked.
+   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "archived" chip before its checkbox is checked, then moving focus onto that checkbox — see {@link focusArchivedCheckbox}.
    * @access protected
-   * @since 1.3.0
+   * @since 1.5.0
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
     this.openFilterKey.set(key as 'archived');
+    this.focusArchivedCheckbox();
+  }
+
+  /**
+   * Method focusArchivedCheckbox
+   *
+   * @description
+   * Moves real DOM focus to the "archived" chip's own checkbox once the
+   * "+ Filter" pick has actually rendered it. A boolean field opens no
+   * popover to receive focus the way the bar's other value controls do
+   * (`organization/FEATURE.md` — "opening a selector" has no meaning for a
+   * boolean), so without this the chip appears with focus left behind in the
+   * menu that just closed. Deferred through `afterNextRender` rather than a
+   * `setTimeout`, since the app is zoneless — the same idiom
+   * `CollectionFilterBar.focusAfterRemoval` (`@shared/collection-filters`)
+   * uses for its own post-render focus move. Queries the rendered
+   * `[role="checkbox"]` node rather than reaching into `HlmCheckbox`
+   * (`@shared/ui/checkbox`) itself, which exposes no focus seam of its own
+   * and whose host renders as `display: contents`.
+   *
+   * @access private
+   * @since 1.5.0
+   *
+   * @returns {void}
+   */
+  private focusArchivedCheckbox(): void {
+    afterNextRender(
+      {
+        write: (): void => {
+          this.archivedCheckboxHost()
+            ?.nativeElement.querySelector<HTMLElement>('[role="checkbox"]')
+            ?.focus();
+        },
+      },
+      { injector: this.injector },
+    );
   }
 
   /**

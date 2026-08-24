@@ -37,9 +37,11 @@ import {
 } from '@features/organization/features/audit/state';
 import {
   CollectionFilterBar,
+  CollectionFilterDateRange,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterPopoverState,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
@@ -47,7 +49,6 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
-import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { AuditEventTable } from '../../tables/audit-event-table';
 
 /** How long typing settles before the search reaches the wire. */
@@ -127,7 +128,20 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
  * the backend accepts nine more (`actorType`, `subjectId`, `tenantId`, …) that
  * no page exposes yet, a separate decision.
  *
- * @version 2.0.0
+ * The "dateRange" chip renders `app-collection-filter-date-range`
+ * (`@shared/collection-filters`), the same component `InterventionsPage` uses
+ * for its own date-range chips. The "action" chip stays a hand-rolled
+ * `hlm-combobox`: its options are grouped by module through
+ * `hlmComboboxGroup`, a shape `CollectionFilterSelect` cannot render, and it
+ * is the sole consumer of that shape — below `CLAUDE.md` rule 8's
+ * third-consumer threshold for extracting a generic grouped-combobox
+ * variant. Both still open on a "+ Filter" pick and close themselves back
+ * out through the bar's `state`/`stateChanged` contract
+ * ({@link fieldPopoverState}/{@link onFieldPopoverStateChanged}) — the
+ * "action" combobox because `HlmCombobox` hosts the very same `BrnPopover`
+ * `app-collection-filter-select` wraps, not because it was converted.
+ *
+ * @version 3.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -138,13 +152,13 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
     ErrorState,
     AuditEventTable,
     CollectionFilterBar,
+    CollectionFilterDateRange,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
     ...HlmComboboxImports,
-    ...HlmDatePickerImports,
   ],
   providers: [
     provideIcons({
@@ -184,8 +198,8 @@ export class AuditPage {
   protected readonly action: WritableSignal<string | null> = signal<string | null>(null);
 
   /** The active `[from, to]` window, or `undefined` for no date narrowing. */
-  protected readonly dateRange: WritableSignal<[Date, Date] | undefined> = signal<
-    [Date, Date] | undefined
+  protected readonly dateRange: WritableSignal<readonly [Date, Date] | undefined> = signal<
+    readonly [Date, Date] | undefined
   >(undefined);
 
   /** The page window, one-based. */
@@ -312,7 +326,7 @@ export class AuditPage {
     effect((): void => {
       const organizationId: string = this.organizationId();
       const action: string | null = this.action();
-      const range: [Date, Date] | undefined = this.dateRange();
+      const range: readonly [Date, Date] | undefined = this.dateRange();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
       const search: string = this.search();
@@ -345,7 +359,7 @@ export class AuditPage {
 
   /**
    * Method applyAction
-   * @description Narrows the list to one action, or clears the narrowing. Closes the "action" chip's pending pick once a real value lands.
+   * @description Narrows the list to one action, or clears the narrowing. The "action" chip's own popover closes itself on a pick — see {@link onFieldPopoverStateChanged}, the same contract every converted chip in this bar uses.
    * @access protected
    * @since 1.0.0
    * @param {string | null | undefined} value - The combobox's emitted value.
@@ -354,21 +368,19 @@ export class AuditPage {
   protected applyAction(value: string | null | undefined): void {
     this.page.set(1);
     this.action.set(value ?? null);
-    if (value && this.openFilterKey() === 'action') this.openFilterKey.set(null);
   }
 
   /**
    * Method applyDateRange
-   * @description Narrows the list to an inclusive `[from, to]` window, or clears it. Closes the "dateRange" chip's pending pick once a real range lands.
+   * @description Narrows the list to an inclusive `[from, to]` window, or clears it. The "dateRange" chip's own popover closes itself on a pick — see {@link onFieldPopoverStateChanged}.
    * @access protected
    * @since 1.0.0
-   * @param {[Date, Date] | null | undefined} range - The picker's emitted range.
+   * @param {readonly [Date, Date] | null | undefined} range - The picker's emitted range.
    * @returns {void}
    */
-  protected applyDateRange(range: [Date, Date] | null | undefined): void {
+  protected applyDateRange(range: readonly [Date, Date] | null | undefined): void {
     this.page.set(1);
     this.dateRange.set(range ?? undefined);
-    if (range && this.openFilterKey() === 'dateRange') this.openFilterKey.set(null);
   }
 
   /**
@@ -421,6 +433,39 @@ export class AuditPage {
   }
 
   /**
+   * Method fieldPopoverState
+   * @description Whether a field's value control should currently render open — the "action" and "dateRange" chips' `state` input.
+   * @access protected
+   * @since 3.0.0
+   * @param {AuditFilterKey} key - The field to resolve.
+   * @returns {CollectionFilterPopoverState} `'open'` while {@link openFilterKey} names this field, `'closed'` otherwise.
+   */
+  protected fieldPopoverState(key: AuditFilterKey): CollectionFilterPopoverState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFieldPopoverStateChanged
+   * @description Keeps {@link openFilterKey} in sync with a field's own value control — opened from "+ Filter", closed on a pick, an outside click or Escape.
+   * @access protected
+   * @since 3.0.0
+   * @param {AuditFilterKey} key - The field whose popover changed.
+   * @param {CollectionFilterPopoverState} state - Its next state.
+   * @returns {void}
+   */
+  protected onFieldPopoverStateChanged(
+    key: AuditFilterKey,
+    state: CollectionFilterPopoverState,
+  ): void {
+    if (state === 'open') {
+      this.openFilterKey.set(key);
+      return;
+    }
+
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
+  }
+
+  /**
    * Method clearFilters
    * @description Drops every narrowing at once, including the search term.
    * @access protected
@@ -468,7 +513,7 @@ export class AuditPage {
    * @returns {void}
    */
   protected reload(): void {
-    const range: [Date, Date] | undefined = this.dateRange();
+    const range: readonly [Date, Date] | undefined = this.dateRange();
     const search: string = this.search();
 
     this.store.load({

@@ -49,33 +49,21 @@
   </ng-template>
 
   <ng-template #actionTypeChip>
-    <hlm-select
+    <app-collection-filter-select
+      [options]="actionTypeOptions()"
       [value]="actionType()"
-      [itemToString]="actionTypeLabelOf"
-      (valueChange)="applyActionType($event)"
-    >
-      <label for="approvals-filter-action-type" class="sr-only" i18n="@@approvals.filter.actionType"
-        >Action type</label
-      >
-      <hlm-select-trigger
-        size="sm"
-        buttonId="approvals-filter-action-type"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        data-testid="approvals-filter-action-type"
-      >
-        <hlm-select-value
-          placeholder="Any action"
-          i18n-placeholder="@@approvals.filter.anyAction"
-        />
-      </hlm-select-trigger>
-      <hlm-select-content *hlmSelectPortal>
-        <hlm-select-group>
-          @for (option of actionTypeOptions(); track option.value) {
-            <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-          }
-        </hlm-select-group>
-      </hlm-select-content>
-    </hlm-select>
+      placeholder="Any action"
+      i18n-placeholder="@@approvals.filter.anyAction"
+      emptyLabel="No action type matches."
+      i18n-emptyLabel="@@approvals.filter.noActionType"
+      accessibleName="Action type"
+      i18n-accessibleName="@@approvals.filter.actionType"
+      triggerId="approvals-filter-action-type"
+      testId="approvals-filter-action-type"
+      [state]="fieldPopoverState()"
+      (valueChanged)="applyActionType($any($event))"
+      (stateChanged)="onFieldPopoverStateChanged($event)"
+    />
   </ng-template>
 
   @if (store.hasListError()) {

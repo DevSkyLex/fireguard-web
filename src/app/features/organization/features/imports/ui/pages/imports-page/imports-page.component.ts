@@ -38,6 +38,7 @@ import {
 } from '@features/organization/models';
 import {
   CollectionFilterBar,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
@@ -48,7 +49,6 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmSelectImports } from '@shared/ui/select';
 
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
@@ -85,9 +85,12 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
  * that gate: it narrows what a reader sees and offers every kind regardless
  * of the active member's write permissions ({@link kindFilterOptions}).
  * There is no search box: `ImportJobCollectionProvider` accepts only
- * `organization` and `kind`, so this page has nothing else to send.
+ * `organization` and `kind`, so this page has nothing else to send. The
+ * "Kind" chip's value control is `app-collection-filter-select` — its
+ * two-option catalog needs no popover search, unlike the richer fields on
+ * other collection pages.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -100,12 +103,12 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
     ImportJobTable,
     ImportJobDetailSheet,
     CollectionFilterBar,
+    CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
     ...HlmCardImports,
-    ...HlmSelectImports,
   ],
   providers: [provideIcons({ lucideCircleAlert, lucideSearch, lucideTag, lucideUpload })],
   templateUrl: './imports-page.component.html',
@@ -188,7 +191,7 @@ export class ImportsPage {
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** The "Kind" chip's `hlm-select`, projected into the filter bar. */
+  /** The "Kind" chip's `app-collection-filter-select`, projected into the filter bar. */
   private readonly kindChipTemplate = viewChild<TemplateRef<unknown>>('kindChip');
 
   /**
@@ -207,10 +210,6 @@ export class ImportsPage {
   protected readonly hasFilters: Signal<boolean> = computed<boolean>(
     () => this.kindFilter() !== null,
   );
-
-  /** Names a kind on the filter chip's closed trigger. */
-  protected readonly kindLabelOf: (value: ImportJobKind) => string = (value) =>
-    this.kindFilterOptions.find((option) => option.value === value)?.label ?? value;
 
   /** The rows the table currently renders. */
   protected readonly items: Signal<readonly ImportJobOutput[]> = computed(() => this.store.jobs());
@@ -357,7 +356,7 @@ export class ImportsPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by opening the "Kind" chip's `hlm-select`.
+   * @description Reacts to the filter bar's `fieldPicked` output by opening the "Kind" chip's `app-collection-filter-select`.
    * @access protected
    * @since 1.1.0
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
@@ -403,7 +402,7 @@ export class ImportsPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether the "Kind" chip's `hlm-select` should currently render open.
+   * @description Whether the "Kind" chip's `app-collection-filter-select` should currently render open.
    * @access protected
    * @since 1.1.0
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
@@ -414,7 +413,7 @@ export class ImportsPage {
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with the "Kind" chip's own `hlm-select`.
+   * @description Keeps {@link openFilterKey} in sync with the "Kind" chip's own `app-collection-filter-select`.
    * @access protected
    * @since 1.1.0
    * @param {BrnOverlayState} state - Its next state.

@@ -1390,6 +1390,14 @@
         <source>Any type</source>
         <target>Tous les types</target>
       </trans-unit>
+      <trans-unit id="equipment.list.filterTypeSearchPlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Rechercher un type</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Aucun type ne correspond.</target>
+      </trans-unit>
       <trans-unit id="equipment.newButton" datatype="html">
         <source>New equipment</source>
         <target>Nouvel équipement</target>
@@ -1653,6 +1661,10 @@
       <trans-unit id="equipment.table.filterStatusPlaceholder" datatype="html">
         <source>Any status</source>
         <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Aucun statut ne correspond.</target>
       </trans-unit>
       <trans-unit id="route.facility.create" datatype="html">
         <source>Create Facility</source>
@@ -5172,9 +5184,17 @@
         <source>Any result</source>
         <target>Tous les résultats</target>
       </trans-unit>
+      <trans-unit id="inspection.list.filterNoResult" datatype="html">
+        <source>No result matches.</source>
+        <target>Aucun résultat ne correspond.</target>
+      </trans-unit>
       <trans-unit id="inspection.table.filterStatusPlaceholder" datatype="html">
         <source>Any status</source>
         <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Aucun statut ne correspond.</target>
       </trans-unit>
       <trans-unit id="inspection.table.filtersButton" datatype="html">
         <source>Filters</source>
@@ -6956,6 +6976,10 @@
         <source>Filter by</source>
         <target>Filtrer par</target>
       </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.regionLabel" datatype="html">
+        <source>Active filters</source>
+        <target>Filtres actifs</target>
+      </trans-unit>
       <trans-unit id="shared.collectionFilterBar.removeFilter" datatype="html">
         <source>Remove filter: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Retirer le filtre : <x id="field" equiv-text="fieldLabel"/></target>
@@ -6963,6 +6987,10 @@
       <trans-unit id="shared.collectionFilterBar.changeOperator" datatype="html">
         <source>Change operator: <x id="field" equiv-text="fieldLabel"/></source>
         <target>Modifier l'opérateur : <x id="field" equiv-text="fieldLabel"/></target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterMultiSelect.hiddenValues" datatype="html">
+        <source>Also selected: <x id="hidden" equiv-text="hidden"/></source>
+        <target>Également sélectionnés : <x id="hidden" equiv-text="hidden"/></target>
       </trans-unit>
       <trans-unit id="shared.collectionFilters.operatorEquals" datatype="html">
         <source>is</source>
@@ -7308,6 +7336,14 @@
         <source>Any facility</source>
         <target>Tous les sites</target>
       </trans-unit>
+      <trans-unit id="maintenance.filter.facilitySearchPlaceholder" datatype="html">
+        <source>Search a facility</source>
+        <target>Rechercher un site</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.noFacility" datatype="html">
+        <source>No facility matches.</source>
+        <target>Aucun site ne correspond.</target>
+      </trans-unit>
       <trans-unit id="maintenance.filter.equipmentType" datatype="html">
         <source>Equipment type</source>
         <target>Type d&apos;équipement</target>
@@ -7315,6 +7351,14 @@
       <trans-unit id="maintenance.filter.anyType" datatype="html">
         <source>Any type</source>
         <target>Tous les types</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.equipmentTypeSearchPlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Rechercher un type</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.noEquipmentType" datatype="html">
+        <source>No type matches.</source>
+        <target>Aucun type ne correspond.</target>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBefore" datatype="html">
         <source>Due before</source>
@@ -7675,6 +7719,10 @@
       <trans-unit id="approvals.filter.anyAction" datatype="html">
         <source>Any action</source>
         <target>N&apos;importe quelle action</target>
+      </trans-unit>
+      <trans-unit id="approvals.filter.noActionType" datatype="html">
+        <source>No action type matches.</source>
+        <target>Aucun type d&apos;action ne correspond.</target>
       </trans-unit>
       <trans-unit id="approvals.list.errorTitle" datatype="html">
         <source>Couldn&apos;t load approval requests</source>
@@ -8968,6 +9016,10 @@
         <source>Any kind</source>
         <target>Tous les types</target>
       </trans-unit>
+      <trans-unit id="imports.list.filterNoKind" datatype="html">
+        <source>No kind matches.</source>
+        <target>Aucun type ne correspond.</target>
+      </trans-unit>
       <trans-unit id="imports.list.filtersButton" datatype="html">
         <source>Filters</source>
         <target>Filtres</target>
@@ -8999,6 +9051,10 @@
       <trans-unit id="maintenance.filter.anyDueStatus" datatype="html">
         <source>Any status</source>
         <target>Tous les statuts</target>
+      </trans-unit>
+      <trans-unit id="maintenance.filter.noDueStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Aucun statut ne correspond.</target>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
         <source>before</source>

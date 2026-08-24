@@ -361,11 +361,24 @@ function serializeEnumFilter<T>(
   return kept.length === 0 ? null : kept.join(',');
 }
 
-/** A `YYYY-MM-DD` query param parsed to a `Date`, `null` for an absent or unparseable value — a tampered date param is dropped rather than sent to the API. */
+/** A `YYYY-MM-DD` query param parsed to **local** midnight, `null` for an absent or unparseable value — a tampered date param is dropped rather than sent to the API. The explicit field parse is the point: `new Date('2026-08-10')` is UTC midnight by specification, which reads as the previous day everywhere west of Greenwich and shifts the API window by a whole day. Anything that is not a bare `YYYY-MM-DD` falls back to the native parse, which handles a full instant correctly. */
 function parseIsoDate(raw: string | undefined): Date | null {
   if (!raw) return null;
-  const date: Date = new Date(raw);
+
+  const parts: RegExpExecArray | null = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  const date: Date = parts
+    ? new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]))
+    : new Date(raw);
+
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** A `Date` rendered as its own **local** `YYYY-MM-DD`. Never `toISOString().slice(0, 10)`: that converts to UTC first, so a calendar pick of local midnight serializes to the previous day at any positive offset — the round trip then reads back a day early. */
+function toLocalIsoDate(date: Date): string {
+  const month: string = String(date.getMonth() + 1).padStart(2, '0');
+  const day: string = String(date.getDate()).padStart(2, '0');
+
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 /**
@@ -484,8 +497,8 @@ export function parseInterventionListFilters(
  * Turns the active narrowing into the query params that express it — null
  * removes the param from the URL, so a cleared filter leaves no residue. The
  * reverse of {@link parseInterventionListFilters}. `dueRange`'s bounds
- * serialize to plain `YYYY-MM-DD` dates (`.toISOString().slice(0, 10)`), kept
- * separate from `dueWindow`'s own `due=` preset param.
+ * serialize to plain **local** `YYYY-MM-DD` dates, kept separate from
+ * `dueWindow`'s own `due=` preset param.
  *
  * @param {InterventionListFilters} filters - Active narrowing.
  *
@@ -510,21 +523,21 @@ export function serializeInterventionListFilters(
     due: filters.dueWindow,
     dueAfter:
       range && (range.operator === 'greaterThan' || range.operator === 'between')
-        ? range.after.toISOString().slice(0, 10)
+        ? toLocalIsoDate(range.after)
         : null,
     dueBefore:
       range && (range.operator === 'lessThan' || range.operator === 'between')
-        ? range.before.toISOString().slice(0, 10)
+        ? toLocalIsoDate(range.before)
         : null,
     plannedStartAfter:
       plannedStartRange &&
       (plannedStartRange.operator === 'greaterThan' || plannedStartRange.operator === 'between')
-        ? plannedStartRange.after.toISOString().slice(0, 10)
+        ? toLocalIsoDate(plannedStartRange.after)
         : null,
     plannedStartBefore:
       plannedStartRange &&
       (plannedStartRange.operator === 'lessThan' || plannedStartRange.operator === 'between')
-        ? plannedStartRange.before.toISOString().slice(0, 10)
+        ? toLocalIsoDate(plannedStartRange.before)
         : null,
   };
 }

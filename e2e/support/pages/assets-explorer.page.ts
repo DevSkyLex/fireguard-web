@@ -25,6 +25,9 @@ export class AssetsExplorerPage {
   public readonly inspectionsPane: Locator = this.page.getByTestId('assets-inspections-pane');
   public readonly inspectionsRows: Locator = this.page.getByTestId('assets-inspections-row');
 
+  public readonly newFacility: Locator = this.page.getByTestId('assets-new-facility');
+  public readonly newEquipment: Locator = this.page.getByTestId('assets-new-equipment');
+
   public readonly nodeMenu: Locator = this.page.getByTestId('assets-tree-node-menu');
   public readonly moveDialog: Locator = this.page.getByTestId('facility-move-dialog');
   public readonly moveSubmit: Locator = this.page.getByTestId('facility-move-submit');

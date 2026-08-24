@@ -37,6 +37,25 @@ test.describe('Assets explorer', () => {
     await expect(explorer.treeItems).toHaveCount(1);
   });
 
+  test('offers the facility and equipment creation entry points the sidebar no longer carries', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+
+    await expect(explorer.newFacility).toBeVisible();
+    await expect(explorer.newEquipment).toBeVisible();
+
+    await explorer.newFacility.click();
+    await expect(page).toHaveURL(
+      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/facilities/create$`),
+    );
+  });
+
   test('expands a node and loads its children', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();

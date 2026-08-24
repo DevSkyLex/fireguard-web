@@ -524,3 +524,34 @@
     }
   </section>
 </ng-template>
+
+<ng-template #pageActions>
+  @if (canCreateFacilities()) {
+    <a
+      hlmBtn
+      variant="outline"
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="assets-new-facility"
+      i18n-aria-label="@@facility.newButton"
+      aria-label="New facility"
+      [routerLink]="['/organizations', organizationId(), 'facilities', 'create']"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@facility.newButton">New facility</span>
+    </a>
+  }
+
+  @if (canCreateEquipment()) {
+    <a
+      hlmBtn
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="assets-new-equipment"
+      i18n-aria-label="@@equipment.newButton"
+      aria-label="New equipment"
+      [routerLink]="['/organizations', organizationId(), 'equipments', 'create']"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
+    </a>
+  }
+</ng-template>

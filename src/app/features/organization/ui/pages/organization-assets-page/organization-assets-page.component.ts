@@ -3,13 +3,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -25,11 +28,13 @@ import {
   lucideLayoutGrid,
   lucideMove,
   lucideNetwork,
+  lucidePlus,
   lucideShieldCheck,
   lucideSquareArrowOutUpRight,
   lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
 import type {
@@ -139,6 +144,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideLayoutGrid,
       lucideMove,
       lucideNetwork,
+      lucidePlus,
       lucideShieldCheck,
       lucideSquareArrowOutUpRight,
       lucideTriangleAlert,
@@ -186,7 +192,14 @@ export class OrganizationAssetsPage {
   protected readonly complianceBucketIconClass: typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS =
     COMPLIANCE_BUCKET_TAG_ICON_CLASS;
 
-  /** Organization permission checks gating the equipment pane. */
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "New facility" and "New equipment" buttons, rendered in the shell header. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+
+  /** Organization permission checks gating the creation actions and the equipment pane. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
@@ -281,6 +294,21 @@ export class OrganizationAssetsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
+  /**
+   * Whether the member may create facilities. This explorer replaced the
+   * facilities list in the sidebar, so it has to carry the entry point the
+   * list used to hold — otherwise creating a site is reachable only by typing
+   * the URL.
+   */
+  protected readonly canCreateFacilities: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
+  );
+
+  /** Whether the member may create equipment. Same reason as {@link canCreateFacilities}. */
+  protected readonly canCreateEquipment: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
+  );
+
   /** Whether the member may read equipment, gating the equipment pane. */
   protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
@@ -328,6 +356,8 @@ export class OrganizationAssetsPage {
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       untracked((): void => {

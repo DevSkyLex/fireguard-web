@@ -51,6 +51,12 @@ This feature does not own generic shell composition or account-level user identi
 > estate, gated on `FACILITIES_READ`; `facilities` and `equipments` stay mounted and gated on their
 > own read permissions so records, creation forms and deep links keep resolving, but neither is
 > listed by the sidebar navigation anymore.
+>
+> Because it replaced them in the sidebar, the explorer **carries their creation entry
+> points**: "New facility" and "New equipment" sit in the shell header through
+> `PageActionsService`, gated on `FACILITIES_WRITE` and `EQUIPMENT_WRITE`. Without them the
+> only way to create a site or a piece of equipment was to type the URL — the buttons live
+> on the two lists the sidebar no longer reaches.
 
 - `/organizations` — redirect-only: `organizationGuard` forwards to the default
   workspace (the last organization persisted in the `last-organization` cookie

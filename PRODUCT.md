@@ -144,16 +144,23 @@ Two further mechanisms are equally true and support it, but do not lead:
   **trustworthy, precise, efficient**. It should feel like a professional field
   tool that disappears into the task; closer to Linear/Stripe than to a
   consumer app.
-- **Binding visual rule:** hierarchy comes from rhythm, not boxes. Vary surface
-  levels (borderless headers, carded work surfaces, tinted secondary asides,
-  divider lists) instead of wrapping every section in an identical bordered
-  card.
+- **Binding visual rule:** hierarchy comes from rhythm, not boxes — and the
+  card is the section's shell, not its hierarchy. Sections are built on
+  `hlmCard`; what must vary is what happens _inside_ and _between_ them:
+  borderless headers, tinted secondary asides, divider lists, density, spacing.
+  A page whose sections differ only by their contents, with no internal
+  hierarchy and no rhythm between them, fails this rule whether or not it is
+  carded.
 
 ## Anti-references
 
 - Consumer-app playfulness, mascots, or decorative illustration.
 - Dashboard "hero metric" templates: big gradient numbers with tiny labels.
-- Card-everything layouts where every section is an identical bordered box.
+- Sections that are identical bordered boxes and nothing more — no internal
+  hierarchy, no rhythm between them. The objection is to the flatness, not to
+  the card: `hlmCard` is the section shell application-wide (see
+  `src/app/features/organization/FEATURE.md`), and `shared/page-section` was
+  deleted rather than kept as a second way to draw one.
 - Tiny uppercase tracked eyebrows above every section.
 - Gratuitous motion or page-load choreography that delays the task.
 - A reintroduced chromatic brand accent (see Brand Commitments).

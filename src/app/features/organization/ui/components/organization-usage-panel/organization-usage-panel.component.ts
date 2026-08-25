@@ -14,6 +14,7 @@ import type {
   OrganizationQuotaResource,
 } from '@features/organization/models';
 import { resolveQuotaStatus } from '@features/organization/utils';
+import { EmptyState } from '@shared/empty-state';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from './constants/organization-quota-resource-labels.constants';
@@ -59,7 +60,7 @@ const PERCENT_SCALE = 100;
  */
 @Component({
   selector: 'app-organization-usage-panel',
-  imports: [NgIcon, HlmSkeleton, ...HlmProgressImports],
+  imports: [EmptyState, NgIcon, HlmSkeleton, ...HlmProgressImports],
   providers: [provideIcons({ lucideCircleAlert, lucideGauge })],
   templateUrl: './organization-usage-panel.component.html',
   host: { class: 'block' },

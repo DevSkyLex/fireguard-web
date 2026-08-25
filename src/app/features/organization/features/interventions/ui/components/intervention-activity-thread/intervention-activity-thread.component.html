@@ -41,9 +41,11 @@
         </button>
       </div>
     } @else if (isEmpty()) {
-      <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.empty">
-        No activity recorded yet.
-      </p>
+      <app-empty-state
+        icon="lucideHistory"
+        title="No activity recorded yet."
+        i18n-title="@@intervention.activity.empty"
+      />
     } @else {
       @if (hasOlder()) {
         <button

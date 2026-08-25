@@ -98,9 +98,11 @@
         </div>
         <div hlmCardContent class="flex flex-col gap-2">
           @if (dayItems().length === 0) {
-            <p class="text-sm text-muted-foreground" i18n="@@calendar.dayEmpty">
-              Nothing scheduled this day.
-            </p>
+            <app-empty-state
+              icon="lucideCalendarDays"
+              title="Nothing scheduled this day."
+              i18n-title="@@calendar.dayEmpty"
+            />
           } @else {
             <app-calendar-entry-list
               [items]="dayItems()"

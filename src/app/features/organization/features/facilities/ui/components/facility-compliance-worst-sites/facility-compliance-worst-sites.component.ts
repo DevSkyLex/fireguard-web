@@ -11,6 +11,7 @@ import {
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type { WorstFacility } from '@features/organization/features/facilities/state';
 import { resolveComplianceBucket } from '@features/organization/features/facilities/utils';
+import { EmptyState } from '@shared/empty-state';
 import type { MapMarkerStatusKind } from '@shared/map';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmItemImports } from '@shared/ui/item';
@@ -47,7 +48,7 @@ const WORST_SITE_BADGE_VARIANT: Readonly<
  */
 @Component({
   selector: 'app-facility-compliance-worst-sites',
-  imports: [HlmBadge, ...HlmItemImports],
+  imports: [EmptyState, HlmBadge, ...HlmItemImports],
   templateUrl: './facility-compliance-worst-sites.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

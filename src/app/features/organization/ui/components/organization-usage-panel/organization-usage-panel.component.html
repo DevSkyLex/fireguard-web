@@ -12,9 +12,11 @@
     {{ err.message }}
   </p>
 } @else if (rows().length === 0) {
-  <p class="text-sm text-muted-foreground" i18n="@@org.settings.usage.empty">
-    No usage data is available yet.
-  </p>
+  <app-empty-state
+    icon="lucideGauge"
+    title="No usage data is available yet."
+    i18n-title="@@org.settings.usage.empty"
+  />
 } @else {
   <div class="flex flex-col gap-5">
     @for (row of rows(); track row.resource) {

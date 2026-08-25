@@ -50,9 +50,11 @@
         Top sites
       </h3>
       @if (bySite().length === 0) {
-        <p class="text-sm text-muted-foreground" i18n="@@intervention.statistics.analysis.empty">
-          Nothing to show yet.
-        </p>
+        <app-empty-state
+          icon="lucideChartLine"
+          title="Nothing to show yet."
+          i18n-title="@@intervention.statistics.analysis.empty"
+        />
       } @else {
         <ul class="flex flex-col gap-1.5">
           @for (row of bySite(); track row.siteId) {
@@ -83,9 +85,11 @@
         Top responsibles
       </h3>
       @if (byResponsible().length === 0) {
-        <p class="text-sm text-muted-foreground" i18n="@@intervention.statistics.analysis.empty">
-          Nothing to show yet.
-        </p>
+        <app-empty-state
+          icon="lucideChartLine"
+          title="Nothing to show yet."
+          i18n-title="@@intervention.statistics.analysis.empty"
+        />
       } @else {
         <ul class="flex flex-col gap-1.5">
           @for (row of byResponsible(); track row.memberId) {

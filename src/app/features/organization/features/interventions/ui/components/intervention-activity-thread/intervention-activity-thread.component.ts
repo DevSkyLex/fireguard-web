@@ -11,7 +11,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideCircleAlert } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideCircleAlert, lucideHistory } from '@ng-icons/lucide';
 import type {
   InterventionActivityOutput,
   InterventionMentionSegment,
@@ -24,6 +24,7 @@ import {
   resolveInterventionActivityActor,
   resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
+import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
@@ -160,6 +161,7 @@ const SKELETON_ROW_COUNT: number = 3;
 @Component({
   selector: 'app-intervention-activity-thread',
   imports: [
+    EmptyState,
     NgIcon,
     HlmSkeleton,
     InterventionTag,
@@ -172,7 +174,12 @@ const SKELETON_ROW_COUNT: number = 3;
     HlmButton,
   ],
   providers: [
-    provideIcons({ lucideArrowRight, lucideCircleAlert, ...INTERVENTION_ACTIVITY_EVENT_ICONS }),
+    provideIcons({
+      lucideArrowRight,
+      lucideCircleAlert,
+      lucideHistory,
+      ...INTERVENTION_ACTIVITY_EVENT_ICONS,
+    }),
   ],
   templateUrl: './intervention-activity-thread.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

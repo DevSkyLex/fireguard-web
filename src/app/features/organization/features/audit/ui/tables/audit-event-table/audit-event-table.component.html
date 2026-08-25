@@ -109,9 +109,11 @@
                 <td hlmTableCell colspan="1"></td>
                 <td hlmTableCell [attr.colspan]="columnCount - 1" class="bg-muted/40">
                   @if (metadataEntriesOf(item).length === 0) {
-                    <p class="text-sm text-muted-foreground" i18n="@@audit.table.metadataEmpty">
-                      No additional details.
-                    </p>
+                    <app-empty-state
+                      icon="lucideFileText"
+                      title="No additional details."
+                      i18n-title="@@audit.table.metadataEmpty"
+                    />
                   } @else {
                     <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
                       @for (entry of metadataEntriesOf(item); track entry[0]) {

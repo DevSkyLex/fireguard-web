@@ -10,6 +10,16 @@
 @import '@fontsource-variable/geist/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
 
+/* Tailwind v4 auto-detects its sources from the project root, so it also reads
+   the test code. Playwright page objects and specs hold CSS-selector strings
+   (`[data-testid="x"]:visible`) that the class extractor mistakes for an
+   arbitrary variant and compiles into malformed, dead rules — three
+   `css-syntax-error` build warnings today. Test code never contributes a real
+   utility class, so it is kept out of the scan. */
+@source not '../e2e';
+@source not './app/**/testing';
+@source not './**/*.spec.ts';
+
 @theme {
   --color-success: var(--success);
   --font-sans:

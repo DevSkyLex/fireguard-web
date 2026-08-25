@@ -119,9 +119,9 @@ export class AccountMenu {
    * @readonly
    *
    * @description
-   * Opens an account section in the shell's contextual column. Navigating the
-   * `panel` outlet leaves the page beside it activated, so the reader keeps
-   * their work, and the URL carries the section.
+   * Navigates to an account section's own route. The account is a page of the
+   * shell, not a panel beside one (`account/FEATURE.md`), and this menu is its
+   * only entry point — the sidebar lists no account destination.
    *
    * @access private
    * @since 1.1.0

@@ -47,7 +47,7 @@ styling helpers `clsx` / `tailwind-merge` / `class-variance-authority` that spar
 against, `@signality/core` (browser-signal helpers — `mediaQuery`, `online`, `pageVisibility`),
 the icon set `@ng-icons/core` / `@ng-icons/lucide`, the self-hosted variable fonts
 `@fontsource-variable/geist` / `@fontsource-variable/geist-mono`, the charting pair
-`@swimlane/ngx-charts` / `d3-shape` wrapped exclusively by `src/app/shared/chart/`,
+`chart.js` / `ng2-charts` wrapped exclusively by `src/app/shared/chart/`,
 **`qrcode`**, imported dynamically and browser-only by two components (the
 account TOTP panel and the facility QR dialog — see `features/account/FEATURE.md` and
 `features/organization/features/facilities/FEATURE.md`), and **`maplibre-gl`**, imported

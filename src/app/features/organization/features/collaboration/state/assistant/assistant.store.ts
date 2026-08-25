@@ -539,11 +539,11 @@ export const AssistantStore = signalStore(
         },
 
         /**
-         * Claims the shell's contextual column.
+         * Opens the assistant sheet.
          *
-         * Nothing has to be handed back on close: the slot is mono-active and
-         * resolves on this flag alone, so releasing it is enough for whatever
-         * ranks below to take over.
+         * The flag is the whole state: `AssistantToggle` reads it to open its
+         * right-anchored `hlm-sheet` and to keep the trigger's `aria-expanded`
+         * honest. Closing needs nothing handed back.
          */
         openPanel(): void {
           patchState(store, { panelOpen: true });

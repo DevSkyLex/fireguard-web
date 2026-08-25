@@ -22,6 +22,7 @@ import {
   lucideChevronRight,
   lucideCircleAlert,
   lucidePlus,
+  lucideCalendarDays,
 } from '@ng-icons/lucide';
 import type { CallState, StoreError } from '@core/request-state';
 import { isCallPending } from '@core/request-state';
@@ -41,6 +42,7 @@ import {
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
+import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -96,6 +98,7 @@ type CalendarPageAgendaGroup = {
 @Component({
   selector: 'app-calendar-page',
   imports: [
+    EmptyState,
     Calendar,
     CalendarEntryList,
     CalendarEventDeleteDialog,
@@ -108,7 +111,13 @@ type CalendarPageAgendaGroup = {
   ],
   providers: [
     CalendarFeedStore,
-    provideIcons({ lucideChevronLeft, lucideChevronRight, lucideCircleAlert, lucidePlus }),
+    provideIcons({
+      lucideChevronLeft,
+      lucideChevronRight,
+      lucideCircleAlert,
+      lucidePlus,
+      lucideCalendarDays,
+    }),
   ],
   templateUrl: './calendar-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

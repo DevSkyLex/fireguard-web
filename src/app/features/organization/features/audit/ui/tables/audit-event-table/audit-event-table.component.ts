@@ -24,6 +24,7 @@ import {
   lucideUpload,
   lucideWebhook,
   lucideWrench,
+  lucideFileText,
 } from '@ng-icons/lucide';
 import type {
   AuditActionTagDescriptor,
@@ -34,6 +35,7 @@ import {
   resolveAuditActorLabel,
   resolveAuditSubjectRoute,
 } from '@features/organization/features/audit/utils';
+import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -69,9 +71,10 @@ const COLUMN_COUNT: number = 5;
  */
 @Component({
   selector: 'app-audit-event-table',
-  imports: [DatePipe, RouterLink, NgIcon, HlmButton, HlmSkeleton, ...HlmTableImports],
+  imports: [EmptyState, DatePipe, RouterLink, NgIcon, HlmButton, HlmSkeleton, ...HlmTableImports],
   providers: [
     provideIcons({
+      lucideFileText,
       lucideBox,
       lucideBuilding,
       lucideBuilding2,

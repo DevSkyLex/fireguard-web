@@ -482,9 +482,11 @@
               }
             </div>
           } @else if (severityTotal() === 0) {
-            <p class="text-sm text-muted-foreground" i18n="@@org.statistics.severity.empty">
-              No non-conformities recorded.
-            </p>
+            <app-empty-state
+              icon="lucideCircleCheck"
+              title="No non-conformities recorded."
+              i18n-title="@@org.statistics.severity.empty"
+            />
           } @else {
             @for (entry of severityBreakdown(); track entry.severity) {
               <div

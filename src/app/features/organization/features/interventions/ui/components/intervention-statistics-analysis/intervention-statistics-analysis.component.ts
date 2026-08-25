@@ -10,13 +10,14 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown } from '@ng-icons/lucide';
+import { lucideChevronDown, lucideChartLine } from '@ng-icons/lucide';
 import type {
   InterventionPriority,
   InterventionResponsibleStatisticOutput,
   InterventionSiteStatisticOutput,
   InterventionStatisticsOutput,
 } from '@features/organization/features/interventions/models';
+import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { InterventionTag } from '../intervention-tag';
@@ -52,8 +53,8 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  */
 @Component({
   selector: 'app-intervention-statistics-analysis',
-  imports: [NgIcon, RouterLink, HlmButton, InterventionTag, ...HlmCollapsibleImports],
-  providers: [provideIcons({ lucideChevronDown })],
+  imports: [EmptyState, NgIcon, RouterLink, HlmButton, InterventionTag, ...HlmCollapsibleImports],
+  providers: [provideIcons({ lucideChevronDown, lucideChartLine })],
   templateUrl: './intervention-statistics-analysis.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

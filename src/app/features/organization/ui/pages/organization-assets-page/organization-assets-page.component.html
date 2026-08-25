@@ -244,7 +244,7 @@
                     </td>
                     <td hlmTableCell class="text-muted-foreground">{{ item.facilityName }}</td>
                     <td hlmTableCell>
-                      <span hlmBadge variant="outline">{{ item.status }}</span>
+                      <app-equipment-status-tag kind="status" [value]="item.status" />
                     </td>
                   </tr>
                 }
@@ -302,9 +302,11 @@
                       </a>
                     </td>
                     <td hlmTableCell>
-                      <span hlmBadge variant="outline">{{ item.result }}</span>
+                      <app-inspection-status-tag kind="result" [value]="item.result" />
                     </td>
-                    <td hlmTableCell class="text-muted-foreground">{{ item.status }}</td>
+                    <td hlmTableCell>
+                      <app-inspection-status-tag kind="status" [value]="item.status" />
+                    </td>
                   </tr>
                 }
               </tbody>

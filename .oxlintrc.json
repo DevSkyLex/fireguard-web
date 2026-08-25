@@ -236,9 +236,10 @@
                   "!@features/organization/features/equipments/data-access",
                   "!@features/organization/features/equipments/data-access/**",
                   "!@features/organization/features/equipments/models",
-                  "!@features/organization/features/equipments/models/**"
+                  "!@features/organization/features/equipments/models/**",
+                  "!@features/organization/features/equipments/ui/components/equipment-status-tag"
                 ],
-                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the equipments subfeature only through its data-access and models barrels (EquipmentService, EquipmentOutput), the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the equipments subfeature only through its data-access and models barrels (EquipmentService, EquipmentOutput) and the equipment-status-tag component, the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               },
               {
                 "group": [
@@ -246,9 +247,10 @@
                   "!@features/organization/features/inspections/data-access",
                   "!@features/organization/features/inspections/data-access/**",
                   "!@features/organization/features/inspections/models",
-                  "!@features/organization/features/inspections/models/**"
+                  "!@features/organization/features/inspections/models/**",
+                  "!@features/organization/features/inspections/ui/components/inspection-status-tag"
                 ],
-                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the inspections subfeature only through its data-access and models barrels (InspectionService, InspectionOutput), the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+                "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the inspections subfeature only through its data-access and models barrels (InspectionService, InspectionOutput) and the inspection-status-tag component, the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               }
             ]
           }

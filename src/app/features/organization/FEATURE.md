@@ -605,9 +605,21 @@ weight.
   (see facilities/FEATURE.md "Deferred, not built").
 - Consumes the nested `features/equipments` and `features/inspections` public
   APIs for the assets explorer's right pane: their `data-access` barrels
-  (`EquipmentService`, `InspectionService`) and `models` barrels
-  (`EquipmentOutput`, `InspectionOutput`). Read-only — the parent previews,
-  neither subfeature's own management surface or state is touched.
+  (`EquipmentService`, `InspectionService`), their `models` barrels
+  (`EquipmentOutput`, `InspectionOutput`), and their `EquipmentStatusTag` /
+  `InspectionStatusTag` components. Read-only — the parent previews, neither
+  subfeature's own management surface or state is touched.
+
+  The two components were added to this contract deliberately: the pane
+  previously printed `item.status` and `item.result` raw, so the same equipment
+  showed `in_progress` here and a localized, coloured tag everywhere else. The
+  `models` barrels do export `resolveEquipmentStatusTag`, which would have given
+  the label without widening anything — but not the severity colour or the icon,
+  so it would have traded one inconsistency for another and hand-rolled a
+  thinner copy of a component that already exists. The precedent is the
+  facilities dependency directly above, which already reaches `ui/dialogs` for
+  `FacilityMoveDialog`.
+
 - Consumes the nested `features/approvals` subfeature's `data-access` barrel
   (`ApprovalRequestService.listActionTypes()`) for the settings Compliance
   tab's approval-policy form. Read-only — the parent takes no approval

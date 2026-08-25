@@ -37,6 +37,7 @@ import {
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
+import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
 import type {
   FacilityMoveRequest,
   FacilityMoveSubmittedEvent,
@@ -48,6 +49,7 @@ import {
 } from '@features/organization/features/facilities/state';
 import { FacilityMoveDialog } from '@features/organization/features/facilities/ui/dialogs';
 import { facilityToTreeNode } from '@features/organization/features/facilities/utils';
+import { InspectionStatusTag } from '@features/organization/features/inspections/ui/components/inspection-status-tag';
 import {
   ORGANIZATION_PERMISSION,
   resolveComplianceBucketTag,
@@ -124,6 +126,8 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     ErrorState,
     Tree,
     FacilityMoveDialog,
+    EquipmentStatusTag,
+    InspectionStatusTag,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

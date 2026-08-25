@@ -45,11 +45,11 @@ export interface AssistantState {
   /** Whether the generation has been waiting long enough to look stuck. */
   readonly generationStalled: boolean;
   /**
-   * Whether the panel is claiming the shell's mono-active contextual column.
+   * Whether the assistant sheet is open.
    *
-   * Held here rather than in the shell because the slot contract is a signal
-   * per contribution, and both the header toggle and the panel's own close
-   * button have to agree on one answer.
+   * Held in the store rather than in the toggle because the header trigger and
+   * the panel's own close button have to agree on one answer, and the
+   * trigger's `aria-expanded` reads the same flag the sheet does.
    */
   readonly panelOpen: boolean;
 }

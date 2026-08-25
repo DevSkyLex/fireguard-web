@@ -81,6 +81,7 @@ const NOTIFICATION_TYPES_TRANSFER_KEY = makeStateKey<ReadonlyArray<NotificationT
  */
 const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
   totalNotifications: 0,
+  unreadCount: 0,
   currentPage: 1,
   itemsPerPage: 20,
   listCallState: idleCallState(),
@@ -202,9 +203,7 @@ export const NotificationStore = signalStore(
      *
      * @returns {number}
      */
-    unreadCount: computed<number>(
-      () => store.notificationEntities().filter((n) => !n.isRead).length,
-    ),
+    unreadCount: computed<number>(() => store.unreadCount()),
 
     /**
      * Computed hasUnread
@@ -284,6 +283,10 @@ export const NotificationStore = signalStore(
           }
 
           initializePromise = (async (): Promise<void> => {
+            void firstValueFrom(notificationService.unreadCount())
+              .then((unreadCount: number) => patchState(store, { unreadCount }))
+              .catch(() => undefined);
+
             const callState = store.listCallState();
             if (callState.status === 'pending' || callState.status === 'success') {
               return;
@@ -679,9 +682,16 @@ export const NotificationStore = signalStore(
               notificationService.markAsRead(id).pipe(
                 tapResponse({
                   next: (updated: NotificationOutput) => {
+                    const wasUnread: boolean =
+                      store.notificationEntityMap()[updated.id]?.isRead === false;
+                    const unreadCount: number = wasUnread
+                      ? Math.max(0, store.unreadCount() - 1)
+                      : store.unreadCount();
+
                     if (store.notificationEntityMap()[updated.id]) {
                       patchState(store, setEntity(updated, { collection: 'notification' }), {
                         markAsReadCallState: successCallState(updated),
+                        unreadCount,
                       });
                     } else {
                       patchState(store, { markAsReadCallState: successCallState(updated) });
@@ -717,6 +727,30 @@ export const NotificationStore = signalStore(
          *
          * @since 1.3.0
          */
+        /**
+         * Method loadUnreadCount
+         *
+         * @description
+         * Reads the unread total from the unified inbox. The badge cannot be
+         * derived from the loaded page: it would stop counting at the page size,
+         * which is precisely when it has something to say. Failures stay silent
+         * — a missing badge is better chrome than an error toast over one.
+         *
+         * @since 1.1.0
+         */
+        loadUnreadCount: rxMethod<void>(
+          pipe(
+            switchMap(() =>
+              notificationService.unreadCount().pipe(
+                tapResponse({
+                  next: (unreadCount: number) => patchState(store, { unreadCount }),
+                  error: () => undefined,
+                }),
+              ),
+            ),
+          ),
+        ),
+
         markAllAsRead: rxMethod<void>(
           pipe(
             tap(() => patchState(store, { markAllAsReadCallState: pendingCallState() })),
@@ -737,6 +771,7 @@ export const NotificationStore = signalStore(
 
                     patchState(store, setAllEntities(marked, { collection: 'notification' }), {
                       markAllAsReadCallState: successCallState(result),
+                      unreadCount: 0,
                     });
                   },
                   error: (error: unknown) => {

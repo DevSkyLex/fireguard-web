@@ -62,6 +62,7 @@ describe('NotificationStore', () => {
   let mockNotificationService: {
     list: ReturnType<typeof vi.fn>;
     listTypes: ReturnType<typeof vi.fn>;
+    unreadCount: ReturnType<typeof vi.fn>;
     markAsRead: ReturnType<typeof vi.fn>;
     markAllAsRead: ReturnType<typeof vi.fn>;
     getSubscription: ReturnType<typeof vi.fn>;
@@ -73,6 +74,7 @@ describe('NotificationStore', () => {
     mockNotificationService = {
       list: vi.fn(),
       listTypes: vi.fn(),
+      unreadCount: vi.fn().mockReturnValue(of(0)),
       markAsRead: vi.fn(),
       markAllAsRead: vi.fn(),
       getSubscription: vi.fn(),
@@ -597,7 +599,7 @@ describe('NotificationStore', () => {
       expect(store.isMarkingAsRead()).toBe(true);
     });
 
-    it('should compute unreadCount and hasUnread from the loaded collection', async () => {
+    it('should take unreadCount from the backend, not from the loaded page', async () => {
       const readNotification: NotificationOutput = { ...otherNotification, isRead: true };
       const mixedCollection: HydraCollection<NotificationOutput> = {
         '@id': '/api/notifications?page=1',
@@ -606,11 +608,13 @@ describe('NotificationStore', () => {
         member: [notification, readNotification],
       };
       mockNotificationService.list.mockReturnValue(of(mixedCollection));
+      mockNotificationService.unreadCount.mockReturnValue(of(42)); // One unread on this page, 42 overall.
 
       store.load();
+      store.loadUnreadCount();
       await Promise.resolve();
 
-      expect(store.unreadCount()).toBe(1);
+      expect(store.unreadCount()).toBe(42);
       expect(store.hasUnread()).toBe(true);
     });
 
@@ -638,6 +642,7 @@ describe('NotificationStore', () => {
       mockNotificationService = {
         list: vi.fn(),
         listTypes: vi.fn(),
+        unreadCount: vi.fn(),
         markAsRead: vi.fn(),
         markAllAsRead: vi.fn(),
         getSubscription: vi.fn(),

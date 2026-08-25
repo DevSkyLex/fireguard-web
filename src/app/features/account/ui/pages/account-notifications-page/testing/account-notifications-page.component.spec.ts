@@ -29,6 +29,7 @@ describe('AccountNotificationsPage', () => {
   let fixture: ComponentFixture<AccountNotificationsPage>;
   let store: {
     loadTypes: ReturnType<typeof vi.fn>;
+    loadUnreadCount: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
     loadMore: ReturnType<typeof vi.fn>;
     markAsRead: ReturnType<typeof vi.fn>;
@@ -48,6 +49,7 @@ describe('AccountNotificationsPage', () => {
   beforeEach(async () => {
     store = {
       loadTypes: vi.fn(),
+      loadUnreadCount: vi.fn(),
       load: vi.fn(),
       loadMore: vi.fn(),
       markAsRead: vi.fn(),

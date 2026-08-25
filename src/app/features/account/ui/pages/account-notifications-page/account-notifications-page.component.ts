@@ -103,6 +103,7 @@ export class AccountNotificationsPage implements OnInit {
    */
   public ngOnInit(): void {
     this.store.loadTypes();
+    this.store.loadUnreadCount();
   }
   //#endregion
 

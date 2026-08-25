@@ -5,6 +5,7 @@ import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
+  InboxUnreadCountOutput,
   MarkAllNotificationsAsReadOutput,
   NotificationListOptions,
   NotificationOutput,
@@ -54,6 +55,19 @@ export class NotificationService extends HydraApiService {
    * @type {string}
    */
   private static readonly TYPES_PATH: string = '/api/notification-types';
+
+  /**
+   * Property INBOX_UNREAD_COUNT_PATH
+   *
+   * @description
+   * The unified inbox's unread count, summed across every registered source.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  private static readonly INBOX_UNREAD_COUNT_PATH: string = '/api/inbox/unread-count';
   //#endregion
 
   //#region Public Methods
@@ -104,6 +118,29 @@ export class NotificationService extends HydraApiService {
   public listTypes(): Observable<ReadonlyArray<NotificationTypeOutput>> {
     return this.getCollection<NotificationTypeOutput>(NotificationService.TYPES_PATH).pipe(
       map((response) => response.member),
+    );
+  }
+
+  /**
+   * Method unreadCount
+   * @method unreadCount
+   *
+   * @description
+   * Retrieves the unread count from the unified inbox. This is the figure the
+   * bell badge shows: counting the loaded page client-side undercounts as soon
+   * as the unread items outnumber it. The inbox endpoint is preferred over
+   * `/notifications/unread-count` — the two agree today, and the inbox one
+   * keeps agreeing once Messaging registers mentions and direct messages as
+   * additional sources.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @return {Observable<number>} An observable emitting the unread item count.
+   */
+  public unreadCount(): Observable<number> {
+    return this.getOne<InboxUnreadCountOutput>(NotificationService.INBOX_UNREAD_COUNT_PATH).pipe(
+      map((response) => response.unreadCount),
     );
   }
 

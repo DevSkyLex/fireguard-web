@@ -188,6 +188,9 @@ export class ApiMock {
     await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection([]));
     });
+    await this.page.route(/\/api\/inbox\/unread-count(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, { unreadCount: 0 });
+    });
     // The collaboration sidebar loads on every workspace-shell route; without
     // these, the channel section renders its error state and the DM store
     // surfaces a raw-HTTP error toast that races into screenshots.

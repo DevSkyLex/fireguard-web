@@ -41,15 +41,17 @@ test.describe('Equipment list', () => {
 
     await equipments.addFilter('Type');
     await expect(equipments.typeFilter).toBeVisible();
-    await page.keyboard.press('Escape');
+    await expect(equipments.filterOptions).toHaveCount(1);
+    await equipments.closeFilterOptions();
+    await expect(equipments.filterOptions).toHaveCount(0);
 
     await equipments.addFilter('Status');
     await expect(equipments.statusFilter).toBeVisible();
-    await equipments.statusFilter.click();
-    const statusOption = page.getByRole('option').first();
+    await expect(equipments.filterOptions).toHaveCount(1);
+    const statusOption = equipments.filterOptions.getByRole('option').first();
     await expect(statusOption.locator('svg')).toBeVisible();
     await expect(statusOption).not.toHaveText('');
-    await page.keyboard.press('Escape');
+    await equipments.closeFilterOptions();
   });
 
   test('shows the empty state when no equipment matches, and hides New equipment without write permission', async ({

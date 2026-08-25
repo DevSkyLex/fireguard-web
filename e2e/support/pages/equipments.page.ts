@@ -21,6 +21,7 @@ export class EquipmentsPage {
   public readonly clearFiltersButton: Locator = this.page.getByTestId('equipments-clear-filters');
   public readonly typeFilter: Locator = this.page.getByTestId('equipments-filter-type');
   public readonly statusFilter: Locator = this.page.getByTestId('equipments-filter-status');
+  public readonly filterOptions: Locator = this.page.getByRole('listbox');
   public readonly newLink: Locator = this.page.getByTestId('equipments-new');
   public readonly rowCount: Locator = this.page.getByTestId('equipments-row-count');
   public readonly pageIndicator: Locator = this.page.getByTestId('equipments-page-indicator');
@@ -60,12 +61,24 @@ export class EquipmentsPage {
     await this.filtersToggle.click();
   }
 
-  /** Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Type"`. */
+  /**
+   * Opens the "+ Filter" menu and picks the field named `fieldLabel`, e.g. `"Type"`.
+   *
+   * The page forces the picked field's value control open (`onFieldPicked`), so
+   * the chip's listbox is already open on return — clicking its trigger would
+   * toggle it shut again.
+   */
   public async addFilter(fieldLabel: string): Promise<void> {
     await this.addFilterTrigger.click();
     await this.page
       .getByTestId('equipments-filters-add-option')
       .filter({ hasText: fieldLabel })
       .click();
+  }
+
+  /** Dismisses the filter chip value control that is currently open, and waits for its listbox to go. */
+  public async closeFilterOptions(): Promise<void> {
+    await this.page.keyboard.press('Escape');
+    await this.filterOptions.first().waitFor({ state: 'hidden' });
   }
 }

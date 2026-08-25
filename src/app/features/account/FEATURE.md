@@ -69,7 +69,13 @@ this one — the sameness a reader sees is that component, not a shared parent.
 Root-provided stores:
 
 - `UserStore` — the profile, its derived identity, and the SSR/`TransferState` handoff
-- `NotificationStore` — the feed as `withEntities`, its paging, filter and Mercure stream
+- `NotificationStore` — the feed as `withEntities`, its paging, filter and Mercure stream.
+  `unreadCount` is a state field fed by `GET /api/inbox/unread-count`, never derived from the
+  loaded page: that derivation stops counting at the page size, which is exactly when the badge
+  matters. The inbox endpoint is preferred over `/notifications/unread-count` — the two agree
+  today, and the inbox one keeps agreeing once Messaging registers mentions and direct messages
+  as sources. Local actions keep it honest between fetches: marking one read decrements it,
+  marking all read zeroes it.
 
 Page-scoped workflow stores (provided by the page, so an abandoned edit does not follow the user):
 

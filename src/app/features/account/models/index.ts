@@ -13,6 +13,7 @@ export type {
   ConfirmPasswordChangeOutput,
 } from './password-change';
 export type { NotificationOutput } from './notification/notification-output.interface';
+export type { InboxUnreadCountOutput } from './notification/inbox-unread-count-output.interface';
 export type { MarkAllNotificationsAsReadOutput } from './notification/mark-all-notifications-as-read-output.interface';
 export type { NotificationTypeOutput } from './notification/notification-type-output.interface';
 export type { NotificationFilter } from './notification/notification-filter.interface';

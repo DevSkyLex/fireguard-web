@@ -38,6 +38,21 @@ export interface NotificationStoreState {
   readonly totalNotifications: number;
 
   /**
+   * Property unreadCount
+   * @readonly
+   *
+   * @description
+   * Unread items across every inbox source, as the backend counts them.
+   * Deriving it from the loaded page instead undercounts the moment the unread
+   * items outnumber that page — which is exactly when the badge matters.
+   *
+   * @since 1.1.0
+   *
+   * @type {number}
+   */
+  readonly unreadCount: number;
+
+  /**
    * Property currentPage
    * @readonly
    *

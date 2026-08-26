@@ -17,7 +17,8 @@
       "Bash(git status)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "mcp__serena-web"
     ],
     "deny": ["Read(./.env)", "Read(./.env.*)"]
   },
@@ -49,7 +50,6 @@
     ]
   },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true,
-    "fireguard-web-lsp@fireguard": true
+    "frontend-design@claude-plugins-official": true
   }
 }

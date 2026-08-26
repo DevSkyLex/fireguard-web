@@ -12,6 +12,7 @@
     "importHelpers": true,
     "target": "ES2023",
     "module": "preserve",
+    "types": ["node", "vitest/globals", "@angular/localize"],
     "paths": {
       "@app": ["./src/app"],
       "@app/*": ["./src/app/*"],
@@ -87,13 +88,5 @@
       }
     }
   },
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ]
+  "include": ["src/**/*.ts", "src/app/shared/ui/**/src/**/*.ts"]
 }

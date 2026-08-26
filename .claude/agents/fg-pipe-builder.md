@@ -1,7 +1,7 @@
 ---
 name: fg-pipe-builder
 description: Use to create an Angular pipe in fireguard-sso-web at shared/<concept>/ui/pipes/<name>/. This repo has ZERO pipes today — the shape is prescribed by ARCHITECTURE.md §9.2 and §8.5 but has no exemplar, so the first pipe sets the precedent AND must update §9.2 in the same change (§14.3). Also checks that a pipe is the right tool at all, since a computed signal usually is. Invoke for "add a pipe to the web app". Writes code.
-tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__serena-web__find_symbol, mcp__serena-web__get_symbols_overview, mcp__serena-web__find_declaration, mcp__serena-web__find_referencing_symbols, mcp__serena-web__find_implementations, mcp__serena-web__get_diagnostics_for_file
 model: sonnet
 ---
 
@@ -23,22 +23,57 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 ## Navigating by symbol
 
 When you know a **symbol** — a class, an interface, a store feature, an injection token, a
-component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+component member — reach for **Serena** before `Grep`. It resolves the path aliases
 (`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
-search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
-`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
-nothing), and the call hierarchy.
+search miss half the truth: `find_declaration`, `find_referencing_symbols`, `get_symbols_overview`,
+`find_implementations`, and `find_symbol`. There is no call-hierarchy tool.
 
-Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
-on `.html`. The second is the one worth remembering — a binding in a template resolves to
+Serena's `angular` server indexes both `.ts` and every `.html` template. The templates are
+the half worth remembering — a binding in a template resolves to
 the component member it reads, so you can check a template against its class without
 opening both.
 
-Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+Before extracting anything shared, `find_referencing_symbols` is the cheapest way to settle the rule
 of three: it counts the real consumers instead of the ones you assume exist.
 
 `Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
 path, an i18n id, a naming convention swept over a tree.
+
+**There is no native `LSP` tool.** The language-server plugins were removed on 2026-08-26 —
+they never reached subagents, and Serena covers the same ground from both. See
+`.claude/rules/lsp-availability.md`. **Serena is the code intelligence here**, over MCP,
+answering these questions on this repository:
+
+| Question                       | Tool                                        |
+| ------------------------------ | ------------------------------------------- |
+| where is this symbol defined   | `mcp__serena-web__find_declaration`         |
+| who uses it                    | `mcp__serena-web__find_referencing_symbols` |
+| what implements or extends it  | `mcp__serena-web__find_implementations`     |
+| find a symbol by name anywhere | `mcp__serena-web__find_symbol`              |
+| what does this file declare    | `mcp__serena-web__get_symbols_overview`     |
+| what is broken in this file    | `mcp__serena-web__get_diagnostics_for_file` |
+
+The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
+resolves `.ts` **and** `.html` templates — a `find_referencing_symbols` on a component does surface the
+templates that use it. There is no project to activate.
+
+**Serena returns `*.spec.ts` files.** It did not before 2026-08-26: `tsconfig.app.json` excludes
+specs, so the server parsed them but linked them to nothing. The root `tsconfig.json` now covers
+`src/**/*.ts` as one project, which closed it. Measured on `InterventionService`:
+`find_referencing_symbols` returns 28 files, matching `Grep -w` exactly, 14 of them specs;
+`find_implementations` on `HydraApiService` returns 39, including the one declared inside a spec.
+**If a result ever comes back with no spec file at all, suspect the tsconfigs before the code** —
+that is exactly what the old symptom looked like.
+
+**A cold answer is not an answer.** The server indexes in the background; a thin or empty first
+result means _not indexed yet_ — repeat the call until the count stops growing, and never record
+"no consumers" from a first call.
+
+`get_symbols_overview` on a template returns every element with its full Tailwind class list —
+thousands of tokens for one file. Use it on `.ts`, and read templates directly.
+
+If Serena is unavailable too, fall back to `Grep` and **say so in your report**, so the reader
+knows a symbol question was answered by text matching.
 
 ## Step 0 — is a pipe even right?
 

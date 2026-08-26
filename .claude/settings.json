@@ -20,17 +20,9 @@
       "Bash(git show:*)",
       "mcp__serena-web"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)"
-    ]
+    "deny": ["Read(./.env)", "Read(./.env.*)"]
   },
-  "enabledMcpjsonServers": [
-    "angular",
-    "spartan",
-    "playwright",
-    "context7"
-  ],
+  "enabledMcpjsonServers": ["angular", "spartan", "playwright", "context7"],
   "hooks": {
     "PreToolUse": [
       {

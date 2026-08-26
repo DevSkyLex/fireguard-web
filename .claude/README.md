@@ -139,17 +139,17 @@ Path-scoped instructions. Unlike a skill, a rule loads **automatically** wheneve
 file matching its `paths:` glob — so it carries the few things that must never be got wrong on
 that kind of file, not the how-to.
 
-| Rule                  | Loads when you touch                       | Carries                                                                               |
-| --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `components.md`       | `*.component.ts` / `.html`                 | no `Component` suffix, selector = folder name, `OnPush`, only a page injects a store  |
-| `comments.md`         | any `src/app` `.ts` / `.html`              | documentation goes in the doc block — no `//` prose blocks, no template `<!-- -->`    |
-| `directives-pipes.md` | `*.directive.ts` / `*.pipe.ts`             | the **opposite** suffix rule, `[appCamelCase]`, SSR guards, `ngTemplateContextGuard`  |
-| `state.md`            | `state/**`                                 | `patchState` only, `rxMethod` + `tapResponse`, `toStoreError` before `errorCallState` |
-| `data-access.md`      | `data-access/**`                           | extends `HydraApiService`, never `catch`/`map`, unprefixed Hydra keys                 |
-| `models-utils.md`     | `models/` `utils/` `constants/` `options/` | type-only `models/`, folder-per-util, no type in `utils/`                             |
-| `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                           |
-| `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                      |
-| `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures               |
+| Rule                  | Loads when you touch                       | Carries                                                                                         |
+| --------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `components.md`       | `*.component.ts` / `.html`                 | no `Component` suffix, selector = folder name, `OnPush`, only a page injects a store            |
+| `comments.md`         | any `src/app` `.ts` / `.html`              | documentation goes in the doc block — no `//` prose blocks, no template `<!-- -->`              |
+| `directives-pipes.md` | `*.directive.ts` / `*.pipe.ts`             | the **opposite** suffix rule, `[appCamelCase]`, SSR guards, `ngTemplateContextGuard`            |
+| `state.md`            | `state/**`                                 | `patchState` only, `rxMethod` + `tapResponse`, `toStoreError` before `errorCallState`           |
+| `data-access.md`      | `data-access/**`                           | extends `HydraApiService`, never `catch`/`map`, unprefixed Hydra keys                           |
+| `models-utils.md`     | `models/` `utils/` `constants/` `options/` | type-only `models/`, folder-per-util, no type in `utils/`                                       |
+| `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                                     |
+| `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                                |
+| `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures                         |
 | `lsp-usage.md`        | `src/**/*.ts` / `.html`                    | Serena for symbols / grep for text, the cold index, `find_referencing_symbols` on the **token** |
 
 > `directives-pipes.md` currently matches **nothing** — the repo has zero directives and zero
@@ -186,11 +186,13 @@ worth knowing: a **port** is bound by `InjectionToken` + `useExisting`, so nothi
 `implements ThemePort` and both `find_implementations` and `find_referencing_symbols` on the
 interface come back empty — run `find_referencing_symbols` on the _token_ instead.
 
-**The specs are invisible, and it is the limit that bites.** `tsconfig.app.json` excludes
-`src/**/*.spec.ts`, and the server loads that project, so `find_referencing_symbols` and
-`find_implementations` never return a spec. Measured on `InterventionService`: 14 files from
-Serena against 28 real code references, the 14 missing ones being exactly the specs. Finish a
-rename with `Grep -w "<Symbol>" src --include="*.spec.ts"`.
+**The specs used to be invisible; they are not any more.** `tsconfig.app.json` excludes
+`src/**/*.spec.ts`, and the server resolved `src/` files to that project, so
+`find_referencing_symbols` and `find_implementations` returned no spec at all — 14 files on
+`InterventionService` against 28 real references. On 2026-08-26 the root `tsconfig.json` was
+widened from a solution stub to one project covering `src/**/*.ts`; Serena now answers **28**,
+matching `Grep -w` exactly, and `find_implementations` **39** instead of 38. A result with no
+spec in it now means the tsconfigs regressed.
 
 **Two further limits.** The `angular` server drops the repo's 111 `.js`/`.mjs`/`.cjs` files,
 which the plain `typescript` server did index — hooks, launchers and config are not

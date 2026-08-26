@@ -43,28 +43,29 @@ they never reached subagents, and Serena covers the same ground from both. See
 `.claude/rules/lsp-availability.md`. **Serena is the code intelligence here**, over MCP,
 answering these questions on this repository:
 
-| Question | Tool |
-| --- | --- |
-| where is this symbol defined | `mcp__serena-web__find_declaration` |
-| who uses it | `mcp__serena-web__find_referencing_symbols` |
-| what implements or extends it | `mcp__serena-web__find_implementations` |
-| find a symbol by name anywhere | `mcp__serena-web__find_symbol` |
-| what does this file declare | `mcp__serena-web__get_symbols_overview` |
-| what is broken in this file | `mcp__serena-web__get_diagnostics_for_file` |
+| Question                       | Tool                                        |
+| ------------------------------ | ------------------------------------------- |
+| where is this symbol defined   | `mcp__serena-web__find_declaration`         |
+| who uses it                    | `mcp__serena-web__find_referencing_symbols` |
+| what implements or extends it  | `mcp__serena-web__find_implementations`     |
+| find a symbol by name anywhere | `mcp__serena-web__find_symbol`              |
+| what does this file declare    | `mcp__serena-web__get_symbols_overview`     |
+| what is broken in this file    | `mcp__serena-web__get_diagnostics_for_file` |
 
 The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
 resolves `.ts` **and** `.html` templates — a `find_referencing_symbols` on a component does surface the
 templates that use it. There is no project to activate.
 
-**Serena never returns a `*.spec.ts` file.** `tsconfig.app.json` excludes them, so the language
-server parses specs but links them to nothing. Measured on `InterventionService`:
-`find_referencing_symbols` returns 14 files where `Grep -w` finds 28 real references — the 14
-missing ones are exactly the specs. `find_implementations` has the same hole. **Finish every
-rename or signature change with `Grep -w "<Symbol>" src --include="*.spec.ts"`**, or you leave
-broken specs behind that only `npx ng test` will find.
+**Serena returns `*.spec.ts` files.** It did not before 2026-08-26: `tsconfig.app.json` excludes
+specs, so the server parsed them but linked them to nothing. The root `tsconfig.json` now covers
+`src/**/*.ts` as one project, which closed it. Measured on `InterventionService`:
+`find_referencing_symbols` returns 28 files, matching `Grep -w` exactly, 14 of them specs;
+`find_implementations` on `HydraApiService` returns 39, including the one declared inside a spec.
+**If a result ever comes back with no spec file at all, suspect the tsconfigs before the code** —
+that is exactly what the old symptom looked like.
 
 **A cold answer is not an answer.** The server indexes in the background; a thin or empty first
-result means *not indexed yet* — repeat the call until the count stops growing, and never record
+result means _not indexed yet_ — repeat the call until the count stops growing, and never record
 "no consumers" from a first call.
 
 `get_symbols_overview` on a template returns every element with its full Tailwind class list —

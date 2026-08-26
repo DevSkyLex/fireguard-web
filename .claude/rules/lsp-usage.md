@@ -19,16 +19,16 @@ answered by grep alone is a review finding, not a shortcut.
 
 ## The reflexes that are not optional
 
-| Situation | First tool |
-| --- | --- |
-| Changing a signature, input/output, store member, model field, or token | `find_referencing_symbols` on the symbol, **then `Grep` over `*.spec.ts`** — the list is not exhaustive, see below. No aliased import missed, no barrel re-export lost |
-| "Who provides / consumes this port" | `find_referencing_symbols` on the **injection token** (`THEME_PORT`, not the interface — see below) |
-| "What implements or extends this" | `find_implementations` — it works here, unlike on the backend |
-| Creating a file that mirrors an exemplar | `find_symbol` to find the exemplar, `get_symbols_overview` to read its shape |
-| "Where does X live" across `@core` / `@shared` / `@features` | `find_declaration` / `find_symbol` — never globbing for the file |
-| Long file or template, only its structure needed | `get_symbols_overview` |
-| What is broken in a file you just edited | `get_diagnostics_for_file` — **it is not pushed to you, you must ask** |
-| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane |
+| Situation                                                                    | First tool                                                                                                                                |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Changing a signature, input/output, store member, model field, or token      | `find_referencing_symbols` on the symbol — specs included since 2026-08-26, see below. No aliased import missed, no barrel re-export lost |
+| "Who provides / consumes this port"                                          | `find_referencing_symbols` on the **injection token** (`THEME_PORT`, not the interface — see below)                                       |
+| "What implements or extends this"                                            | `find_implementations` — it works here, unlike on the backend                                                                             |
+| Creating a file that mirrors an exemplar                                     | `find_symbol` to find the exemplar, `get_symbols_overview` to read its shape                                                              |
+| "Where does X live" across `@core` / `@shared` / `@features`                 | `find_declaration` / `find_symbol` — never globbing for the file                                                                          |
+| Long file or template, only its structure needed                             | `get_symbols_overview`                                                                                                                    |
+| What is broken in a file you just edited                                     | `get_diagnostics_for_file` — **it is not pushed to you, you must ask**                                                                    |
+| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane                                                                                                                   |
 
 Serena addresses symbols by **name path** and **relative path**, not by line/character
 position: `find_referencing_symbols(name_path: "HydraApiService", relative_path: "src/app/core/api/services/hydra-api/hydra-api.service.ts")`.
@@ -44,20 +44,21 @@ larger answer.
 Serena ignores `.git/info/exclude` and would otherwise index every stale worktree as
 duplicate symbols.
 
-## The specs are invisible — the one thing you must work around
+## The specs were invisible until 2026-08-26 — they are not any more
 
-**`find_referencing_symbols` returns no `*.spec.ts` file, ever.** `tsconfig.app.json` carries
-`"exclude": ["src/**/*.spec.ts"]`, and the language server loads that project, so specs are
-parsed but linked to nothing.
+**`find_referencing_symbols` returns `*.spec.ts` files.** It did not before that date:
+`tsconfig.app.json` carries `"exclude": ["src/**/*.spec.ts"]` and the language server resolved
+`src/` files to that project, so specs were parsed but linked to nothing. Serena answered
+**14 files** on `InterventionService` where `Grep -w` found **28**, the 14 missing being exactly
+the specs; `find_implementations` had the same hole, missing `TestResourceService` which
+`extends HydraApiService` inside `hydra-api.service.spec.ts`.
 
-Measured on `InterventionService`: Serena returns **14 files**, `Grep -w` finds **28 real code
-references**, and the 14 missing ones are exactly the 14 specs — each with a genuine `import`,
-verified one by one. `find_implementations` has the same hole: `TestResourceService`, which
-`extends HydraApiService` inside `hydra-api.service.spec.ts`, is absent from its 38 results.
+The root `tsconfig.json` was widened from a solution stub to one project covering `src/**/*.ts`,
+and both closed: **28 files, 14 of them specs**, matching `Grep -w` exactly, and **39**
+implementations instead of 38, `TestResourceService` included. Verified from a subagent.
 
-**So a rename or a signature change is never complete on Serena's list alone.** Finish it with
-`Grep -w "<Symbol>" src --include="*.spec.ts"`. The gate catches it eventually — `npx ng test`
-fails — but hours later and without telling you which call site moved.
+**A result with no spec file in it is now a symptom, not the norm** — suspect the tsconfigs
+before the code.
 
 This is web-only. The backend server indexes `tests/` normally: on
 `AuditExportTooLargeException`, four of Serena's eight files are test files.

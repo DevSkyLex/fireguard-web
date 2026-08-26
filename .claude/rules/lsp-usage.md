@@ -21,7 +21,7 @@ answered by grep alone is a review finding, not a shortcut.
 
 | Situation | First tool |
 | --- | --- |
-| Changing a signature, input/output, store member, model field, or token | `find_referencing_symbols` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
+| Changing a signature, input/output, store member, model field, or token | `find_referencing_symbols` on the symbol, **then `Grep` over `*.spec.ts`** — the list is not exhaustive, see below. No aliased import missed, no barrel re-export lost |
 | "Who provides / consumes this port" | `find_referencing_symbols` on the **injection token** (`THEME_PORT`, not the interface — see below) |
 | "What implements or extends this" | `find_implementations` — it works here, unlike on the backend |
 | Creating a file that mirrors an exemplar | `find_symbol` to find the exemplar, `get_symbols_overview` to read its shape |
@@ -44,6 +44,24 @@ larger answer.
 Serena ignores `.git/info/exclude` and would otherwise index every stale worktree as
 duplicate symbols.
 
+## The specs are invisible — the one thing you must work around
+
+**`find_referencing_symbols` returns no `*.spec.ts` file, ever.** `tsconfig.app.json` carries
+`"exclude": ["src/**/*.spec.ts"]`, and the language server loads that project, so specs are
+parsed but linked to nothing.
+
+Measured on `InterventionService`: Serena returns **14 files**, `Grep -w` finds **28 real code
+references**, and the 14 missing ones are exactly the 14 specs — each with a genuine `import`,
+verified one by one. `find_implementations` has the same hole: `TestResourceService`, which
+`extends HydraApiService` inside `hydra-api.service.spec.ts`, is absent from its 38 results.
+
+**So a rename or a signature change is never complete on Serena's list alone.** Finish it with
+`Grep -w "<Symbol>" src --include="*.spec.ts"`. The gate catches it eventually — `npx ng test`
+fails — but hours later and without telling you which call site moved.
+
+This is web-only. The backend server indexes `tests/` normally: on
+`AuditExportTooLargeException`, four of Serena's eight files are test files.
+
 ## Where the server stops
 
 **A port has no `implements` edge to find.** Ports here bind through an `InjectionToken` and
@@ -56,6 +74,11 @@ On an interface that genuinely is implemented, `find_implementations` works norm
 
 **There is no call hierarchy** — no tool answers "who calls this method".
 `find_referencing_symbols` on the method is the nearest thing.
+
+**`Grep` over-reports where Serena under-reports.** On `InterventionService`, nine of `Grep`'s
+extra hits were JSDoc mentions (`mirrors {@link InterventionService.downloadAttachment}`), not
+references. Neither tool is trustworthy alone on this side: Serena's list is precise but short
+by every spec, `Grep`'s is complete but padded with prose.
 
 **The `angular` server drops `.js` / `.mjs` / `.cjs`.** The repo's 111 such files — hooks,
 launchers, config — are not symbol-searchable at all. The plain `typescript` server used to

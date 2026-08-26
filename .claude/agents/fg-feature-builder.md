@@ -56,6 +56,13 @@ The server is pinned to `fireguard-sso-web` and runs Serena's Angular language s
 resolves `.ts` **and** `.html` templates — a `find_referencing_symbols` on a component does surface the
 templates that use it. There is no project to activate.
 
+**Serena never returns a `*.spec.ts` file.** `tsconfig.app.json` excludes them, so the language
+server parses specs but links them to nothing. Measured on `InterventionService`:
+`find_referencing_symbols` returns 14 files where `Grep -w` finds 28 real references — the 14
+missing ones are exactly the specs. `find_implementations` has the same hole. **Finish every
+rename or signature change with `Grep -w "<Symbol>" src --include="*.spec.ts"`**, or you leave
+broken specs behind that only `npx ng test` will find.
+
 **A cold answer is not an answer.** The server indexes in the background; a thin or empty first
 result means *not indexed yet* — repeat the call until the count stops growing, and never record
 "no consumers" from a first call.

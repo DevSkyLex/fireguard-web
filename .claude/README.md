@@ -186,10 +186,17 @@ worth knowing: a **port** is bound by `InjectionToken` + `useExisting`, so nothi
 `implements ThemePort` and both `find_implementations` and `find_referencing_symbols` on the
 interface come back empty — run `find_referencing_symbols` on the _token_ instead.
 
-**Two limits.** The `angular` server drops the repo's 111 `.js`/`.mjs`/`.cjs` files, which the
-plain `typescript` server did index — hooks, launchers and config are not symbol-searchable.
-And **inline** templates in a `.ts` file get TypeScript's view, not Angular's; this repo puts
-every template in its own `.component.html` (§10.2), so that costs nothing today.
+**The specs are invisible, and it is the limit that bites.** `tsconfig.app.json` excludes
+`src/**/*.spec.ts`, and the server loads that project, so `find_referencing_symbols` and
+`find_implementations` never return a spec. Measured on `InterventionService`: 14 files from
+Serena against 28 real code references, the 14 missing ones being exactly the specs. Finish a
+rename with `Grep -w "<Symbol>" src --include="*.spec.ts"`.
+
+**Two further limits.** The `angular` server drops the repo's 111 `.js`/`.mjs`/`.cjs` files,
+which the plain `typescript` server did index — hooks, launchers and config are not
+symbol-searchable. And **inline** templates in a `.ts` file get TypeScript's view, not
+Angular's; this repo puts every template in its own `.component.html` (§10.2), so that costs
+nothing today.
 
 **The `fireguard-web-lsp` plugin was removed from `enabledPlugins` on 2026-08-26**, in the
 monorepo root and here. It ran `typescript-language-server` on `.ts` and

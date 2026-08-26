@@ -1,7 +1,7 @@
 ---
 name: fg-spartan-ui
 description: Use to build or adjust interface surfaces in fireguard-sso-web with spartan/ui — tables, forms, dialogs, sheets, menus, data surfaces — styled with Tailwind v4 utilities and the semantic theme tokens, with dark-mode (html[data-theme=dark]) parity. Checks the spartan catalog before anything is hand-rolled, adds missing components through the CLI, and looks up APIs through the spartan MCP instead of guessing. Invoke for feature UI and presentation work. Writes presentational code.
-tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_components_dependencies, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_blocks_dependencies, mcp__spartan__spartan_docs_get, mcp__spartan__spartan_accessibility_check, mcp__angular__search_documentation, mcp__angular__get_best_practices
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__spartan__spartan_components_list, mcp__spartan__spartan_components_get, mcp__spartan__spartan_components_dependencies, mcp__spartan__spartan_blocks_list, mcp__spartan__spartan_blocks_get, mcp__spartan__spartan_blocks_dependencies, mcp__spartan__spartan_docs_get, mcp__spartan__spartan_accessibility_check, mcp__angular__search_documentation, mcp__angular__get_best_practices, mcp__serena-web__find_symbol, mcp__serena-web__get_symbols_overview, mcp__serena-web__find_declaration, mcp__serena-web__find_referencing_symbols, mcp__serena-web__find_implementations, mcp__serena-web__get_diagnostics_for_file
 model: sonnet
 ---
 
@@ -45,6 +45,34 @@ of three: it counts the real consumers instead of the ones you assume exist.
 
 `Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
 path, an i18n id, a naming convention swept over a tree.
+
+**Subagents do not receive the `LSP` tool.** Re-measured on Claude Code 2.1.246: it is absent
+whatever this agent's `tools:` line declares — the full protocol is in
+`.claude/rules/lsp-availability.md`. **Use Serena instead**, which does reach subagents over MCP
+and answers the same questions on this repository:
+
+| Question | Tool |
+| --- | --- |
+| where is this symbol defined | `mcp__serena-web__find_declaration` |
+| who uses it | `mcp__serena-web__find_referencing_symbols` |
+| what implements or extends it | `mcp__serena-web__find_implementations` |
+| find a symbol by name anywhere | `mcp__serena-web__find_symbol` |
+| what does this file declare | `mcp__serena-web__get_symbols_overview` |
+| what is broken in this file | `mcp__serena-web__get_diagnostics_for_file` |
+
+The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
+resolves `.ts` **and** `.html` templates — a `findReferences` on a component does surface the
+templates that use it. There is no project to activate.
+
+**A cold answer is not an answer.** The server indexes in the background; a thin or empty first
+result means *not indexed yet* — repeat the call until the count stops growing, and never record
+"no consumers" from a first call.
+
+`get_symbols_overview` on a template returns every element with its full Tailwind class list —
+thousands of tokens for one file. Use it on `.ts`, and read templates directly.
+
+If Serena is unavailable too, fall back to `Grep` and **say so in your report**, so the reader
+knows a symbol question was answered by text matching.
 
 ## Your first move is always the catalog
 

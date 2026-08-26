@@ -1,7 +1,7 @@
 ---
 name: fg-e2e-runner
 description: Use for frontend (fireguard-sso-web) browser work that genuinely needs a browser — writing/running the hermetic Playwright e2e suite, reproducing a UI bug, verifying a visual/responsive/dark-mode change, or driving a form flow. Do NOT use it for anything a unit test, oxlint, or the strict Angular build already proves. Prefers the project's own Playwright harness, then the Browser pane, then the Playwright MCP.
-tools: Skill, Read, Grep, Glob, LSP, Edit, Write, Bash, mcp__Claude_Browser__preview_start, mcp__Claude_Browser__preview_list, mcp__Claude_Browser__preview_logs, mcp__Claude_Browser__preview_stop, mcp__Claude_Browser__navigate, mcp__Claude_Browser__read_page, mcp__Claude_Browser__get_page_text, mcp__Claude_Browser__find, mcp__Claude_Browser__computer, mcp__Claude_Browser__form_input, mcp__Claude_Browser__resize_window, mcp__Claude_Browser__read_console_messages, mcp__Claude_Browser__read_network_requests, mcp__Claude_Browser__javascript_tool, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_find, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_hover, mcp__playwright__browser_drag, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_resize, mcp__playwright__browser_close
+tools: Skill, Read, Grep, Glob, Edit, Write, Bash, mcp__Claude_Browser__preview_start, mcp__Claude_Browser__preview_list, mcp__Claude_Browser__preview_logs, mcp__Claude_Browser__preview_stop, mcp__Claude_Browser__navigate, mcp__Claude_Browser__read_page, mcp__Claude_Browser__get_page_text, mcp__Claude_Browser__find, mcp__Claude_Browser__computer, mcp__Claude_Browser__form_input, mcp__Claude_Browser__resize_window, mcp__Claude_Browser__read_console_messages, mcp__Claude_Browser__read_network_requests, mcp__Claude_Browser__javascript_tool, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_find, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_hover, mcp__playwright__browser_drag, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_evaluate, mcp__playwright__browser_resize, mcp__playwright__browser_close, mcp__serena-web__find_symbol, mcp__serena-web__get_symbols_overview, mcp__serena-web__find_declaration, mcp__serena-web__find_referencing_symbols, mcp__serena-web__find_implementations, mcp__serena-web__get_diagnostics_for_file
 model: sonnet
 ---
 
@@ -37,6 +37,34 @@ of three: it counts the real consumers instead of the ones you assume exist.
 
 `Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
 path, an i18n id, a naming convention swept over a tree.
+
+**Subagents do not receive the `LSP` tool.** Re-measured on Claude Code 2.1.246: it is absent
+whatever this agent's `tools:` line declares — the full protocol is in
+`.claude/rules/lsp-availability.md`. **Use Serena instead**, which does reach subagents over MCP
+and answers the same questions on this repository:
+
+| Question | Tool |
+| --- | --- |
+| where is this symbol defined | `mcp__serena-web__find_declaration` |
+| who uses it | `mcp__serena-web__find_referencing_symbols` |
+| what implements or extends it | `mcp__serena-web__find_implementations` |
+| find a symbol by name anywhere | `mcp__serena-web__find_symbol` |
+| what does this file declare | `mcp__serena-web__get_symbols_overview` |
+| what is broken in this file | `mcp__serena-web__get_diagnostics_for_file` |
+
+The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
+resolves `.ts` **and** `.html` templates — a `findReferences` on a component does surface the
+templates that use it. There is no project to activate.
+
+**A cold answer is not an answer.** The server indexes in the background; a thin or empty first
+result means *not indexed yet* — repeat the call until the count stops growing, and never record
+"no consumers" from a first call.
+
+`get_symbols_overview` on a template returns every element with its full Tailwind class list —
+thousands of tokens for one file. Use it on `.ts`, and read templates directly.
+
+If Serena is unavailable too, fall back to `Grep` and **say so in your report**, so the reader
+knows a symbol question was answered by text matching.
 
 ## When to use a browser — and when not to
 

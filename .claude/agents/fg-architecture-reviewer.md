@@ -1,7 +1,7 @@
 ---
 name: fg-architecture-reviewer
 description: Use to review fireguard-sso-web (Angular 22) code against ARCHITECTURE.md — layer ownership, dependency direction (core never imports features; shared never imports feature state/services/models), placement-by-usage-locality, type-only models/, ports/adapters, barrel & public-API discipline, and FEATURE.md currency. Invoke after writing or modifying feature code, or when asked whether the frontend respects its architecture. Read-only — reports findings, does not edit.
-tools: Skill, Read, Grep, Glob, LSP, Bash
+tools: Skill, Read, Grep, Glob, Bash, mcp__serena-web__find_symbol, mcp__serena-web__get_symbols_overview, mcp__serena-web__find_declaration, mcp__serena-web__find_referencing_symbols, mcp__serena-web__find_implementations, mcp__serena-web__get_diagnostics_for_file
 model: sonnet
 ---
 
@@ -37,6 +37,34 @@ of three: it counts the real consumers instead of the ones you assume exist.
 
 `Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
 path, an i18n id, a naming convention swept over a tree.
+
+**Subagents do not receive the `LSP` tool.** Re-measured on Claude Code 2.1.246: it is absent
+whatever this agent's `tools:` line declares — the full protocol is in
+`.claude/rules/lsp-availability.md`. **Use Serena instead**, which does reach subagents over MCP
+and answers the same questions on this repository:
+
+| Question | Tool |
+| --- | --- |
+| where is this symbol defined | `mcp__serena-web__find_declaration` |
+| who uses it | `mcp__serena-web__find_referencing_symbols` |
+| what implements or extends it | `mcp__serena-web__find_implementations` |
+| find a symbol by name anywhere | `mcp__serena-web__find_symbol` |
+| what does this file declare | `mcp__serena-web__get_symbols_overview` |
+| what is broken in this file | `mcp__serena-web__get_diagnostics_for_file` |
+
+The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
+resolves `.ts` **and** `.html` templates — a `findReferences` on a component does surface the
+templates that use it. There is no project to activate.
+
+**A cold answer is not an answer.** The server indexes in the background; a thin or empty first
+result means *not indexed yet* — repeat the call until the count stops growing, and never record
+"no consumers" from a first call.
+
+`get_symbols_overview` on a template returns every element with its full Tailwind class list —
+thousands of tokens for one file. Use it on `.ts`, and read templates directly.
+
+If Serena is unavailable too, fall back to `Grep` and **say so in your report**, so the reader
+knows a symbol question was answered by text matching.
 
 ## When to use — and when not to
 

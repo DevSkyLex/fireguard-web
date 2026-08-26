@@ -641,3 +641,21 @@ weight.
   invariant that kept it read-only (activating an undecidable policy would strand requests) is retired.
   `OrganizationApprovalForm` is the only writer of `UpdateOrganizationInput.approval`, section-scoped
   through `OrganizationSettingsStore.save`, matching every other settings section.
+
+## Not Built Yet
+
+Backend endpoints exist for these; no frontend model, service method or store does:
+
+- **Webhook subscriptions** — the whole `Webhook` module: `GET`/`POST /organizations/{id}/webhooks`,
+  `GET`/`PATCH`/`DELETE /organizations/{id}/webhooks/{webhookId}`, plus `ping`, `rotate-secret`,
+  the delivery log (`/deliveries`) and `redeliver`, and the `GET /webhooks/event-types` catalog.
+  The permissions are already minted and exposed —
+  `organization.webhooks.read` and `organization.webhooks.manage` are in
+  `OrganizationPermissionCatalog` and in `organization-permission-name.model.ts` — so a role editor
+  can grant an entitlement that reaches nothing, which is the part worth knowing before touching the
+  role UI.
+
+  This is a **deliberate deferral, not an oversight**: the natural home is an "Integrations" settings
+  surface that does not exist yet, and a secret-bearing subscription form needs its own design pass
+  (secret shown once, rotation, delivery-failure triage). Build it when integrations are a product
+  goal; until then this line is the record that the backend is ready and the frontend is not.

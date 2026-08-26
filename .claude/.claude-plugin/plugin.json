@@ -1,6 +1,6 @@
 {
   "name": "fireguard-web",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "FireGuard Web tooling — Angular/SignalStore/spartan-ui builders, reviewers, quality gate, and guard/format hooks for the frontend. Plugin root is the app's .claude/, so agents/, commands/, skills/, and hooks/hooks.json are auto-discovered (the language servers ship separately as fireguard-web-lsp, from .claude/lsp/); installing this plugin from the monorepo root makes the frontend tooling available there under the fireguard-web: namespace.",
   "author": { "name": "Valentin FORTIN", "email": "contact@valentin-fortin.pro" }
 }

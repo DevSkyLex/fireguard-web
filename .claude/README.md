@@ -1,7 +1,7 @@
 # FireGuard Web — Claude Code tooling
 
 This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 9 skills, 10 rules, 4 MCP servers, 2 LSP servers, and
+activate it: 12 agents, 13 commands, 9 skills, 10 rules, 4 MCP servers, and
 2 project hooks (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
 
 > **This directory is also a plugin.** The monorepo root installs it as
@@ -150,7 +150,7 @@ that kind of file, not the how-to.
 | `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                           |
 | `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                      |
 | `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures               |
-| `lsp-usage.md`        | `src/**/*.ts` / `.html`                    | LSP for symbols / grep for text, 1-based positions, `findReferences` on the **token** |
+| `lsp-usage.md`        | `src/**/*.ts` / `.html`                    | Serena for symbols / grep for text, the cold index, `find_referencing_symbols` on the **token** |
 
 > `directives-pipes.md` currently matches **nothing** — the repo has zero directives and zero
 > pipes. Both halves are dormant on purpose: the rule exists to cadre the first unit of each
@@ -172,74 +172,38 @@ automatically so nothing critical depends on that read happening.
 | `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; the writing agents scope it out via their `tools:` lists — only `fg-e2e-runner` declares it                                   |
 | `context7`   | `npx -y @upstash/context7-mcp` | 2     | NgRx, Tailwind, CDK — what the other two do not cover                                                                                       |
 
-## LSP servers (`lsp/`, plugin `fireguard-web-lsp`)
+## Code intelligence (Serena, user scope)
 
-Two language servers, both installed as devDependencies so the versions travel with the app
-and `npm ci` provisions them. They give Claude `goToDefinition` / `findReferences` / `hover` /
-`documentSymbol` / `workspaceSymbol` / `goToImplementation` — and, more importantly, push
-diagnostics into the session **after every edit**, instead of at `npm run build` time. When to
-reach for them rather than for grep is in `rules/lsp-usage.md`, along with the one trap worth
-knowing: a **port** is bound by `InjectionToken` + `useExisting`, so nothing declares
-`implements ThemePort` and both `goToImplementation` and `findReferences` on the interface come
-back empty — run `findReferences` on the _token_ instead.
+Reached through the **`serena-web`** MCP server rather than a language-server plugin. One
+server, Serena's `angular` backend, indexes 3 214 files — every `.ts` **and** all 249 `.html`
+templates — and gives `find_declaration` / `find_referencing_symbols` / `find_symbol` /
+`get_symbols_overview` / `find_implementations` / `get_diagnostics_for_file`. Because the
+templates are indexed, `find_referencing_symbols` on a component surfaces the templates that
+use it, not just the classes.
 
-| Server       | Runs                                  | Opens   | Catches                                                                             |
-| ------------ | ------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| `typescript` | `typescript-language-server --stdio`  | `.ts`   | type errors, unused symbols — the strict-build failures, at edit time               |
-| `angular`    | `@angular/language-server` (ngserver) | `.html` | template errors: unknown property on the component, element missing from `imports:` |
+When to reach for it rather than for grep is in `rules/lsp-usage.md`, along with the one trap
+worth knowing: a **port** is bound by `InjectionToken` + `useExisting`, so nothing declares
+`implements ThemePort` and both `find_implementations` and `find_referencing_symbols` on the
+interface come back empty — run `find_referencing_symbols` on the _token_ instead.
 
-The split is deliberate: `ngserver` also speaks TypeScript, so scoping it to `.html` avoids
-two servers publishing the same diagnostic twice. The trade-off is that **inline** templates
-in a `.ts` file get no Angular checking — this repo puts every template in its own
-`.component.html` (§10.2), so that costs nothing today.
+**Two limits.** The `angular` server drops the repo's 111 `.js`/`.mjs`/`.cjs` files, which the
+plain `typescript` server did index — hooks, launchers and config are not symbol-searchable.
+And **inline** templates in a `.ts` file get TypeScript's view, not Angular's; this repo puts
+every template in its own `.component.html` (§10.2), so that costs nothing today.
 
-**Why they are their own plugin, `lsp/` rather than a `.lsp.json` next to this file.** LSP
-configuration is the one component Claude Code loads _only from an enabled plugin_ — there is
-no project-level source for it. And `fireguard-web@fireguard` is deliberately **disabled**
-when this app is the workspace root (everything it carries already loads natively from
-`.claude/`), so a `.lsp.json` inside it would only ever start the servers from the monorepo
-root. `lsp/` is therefore a second, minimal plugin — nothing but `.lsp.json` and a manifest —
-installed and enabled at **both** scopes: `enabledPlugins` here _and_ in the root
-`.claude/settings.json`. Marketplace entry: `fireguard-web-lsp`, source
-`./fireguard-sso-web/.claude/lsp`.
+**The `fireguard-web-lsp` plugin was removed from `enabledPlugins` on 2026-08-26**, in the
+monorepo root and here. It ran `typescript-language-server` on `.ts` and
+`@angular/language-server` on `.html`, from the app's own devDependencies, and served the main
+session only — subagents never received the `LSP` tool — while Serena serves both. Its `lsp/`
+directory is still on disk, inert; re-enabling is one line in each `settings.json`.
 
-**No path in `.lsp.json` is machine-specific** — `lsp/start.mjs` resolves everything at
-runtime, and it exists because neither placeholder can do the job: `${CLAUDE_PLUGIN_ROOT}`
-points into `~/.claude/plugins/cache/…`, a _copy_ of this directory that cannot reach
-`node_modules/`, and `${CLAUDE_PROJECT_DIR}` is `G:\Projets\fireguard` from the monorepo root
-but `…\fireguard-sso-web` from here. The launcher walks up from both until it finds
-`angular.json`, spawns the server out of that app's own `node_modules` with the app as cwd,
-and rewrites `rootUri` / `rootPath` / `workspaceFolders` in the single `initialize` request —
-which is exactly what a hardcoded `workspaceFolder` used to do. Everything after that one
-message is piped through unparsed, so the proxy cannot corrupt a running session; if the app
-or the server binary is missing it exits with a one-line reason on stderr rather than hanging.
+**What went with it, and it is a real loss on this side:** the call hierarchy
+(`incomingCalls` / `outgoingCalls`), which Serena does not expose at all; and diagnostics
+pushed into the session **after every edit** instead of at `npm run build` time.
+`mcp__serena-web__get_diagnostics_for_file` is on demand, per file.
 
-**The TypeScript server runs with `preferences.disableSuggestions`.** Measured on 15
-committed files, tsserver produced exactly two diagnostics and both were hint-level
-suggestions — `ts80009` (JSDoc typedef convertible) and `ts6133` on a deliberately-held
-`EffectRef` — i.e. two false positives and nothing else. The preference drops the whole
-hint tier; errors and warnings are unaffected (re-verified by injecting a type error). What
-is genuinely lost is the unused-import/unused-variable tier, which `npm run lint` covers at
-gate time anyway.
-
-Expect ~4 s (TS) and ~8 s (Angular) before the first diagnostics of a session — the Angular
-project has to be typechecked once. To keep the navigation but silence the automatic
-injection on a server, set `"diagnostics": false` on it.
-
-**Rebuilding the wiring.** Half of it lives at the monorepo root, which is not a git repo and
-therefore backs up nowhere. On a fresh machine, after `npm ci`:
-
-1. declare the plugin in `G:\Projets\fireguard\.claude-plugin\marketplace.json` —
-   `{"name": "fireguard-web-lsp", "source": "./fireguard-sso-web/.claude/lsp"}`;
-2. run `claude plugin install fireguard-web-lsp@fireguard --scope project` **twice**, once
-   from the monorepo root and once from this app — each scope pins its own version, so an
-   update later also has to be run from both.
-
-Nothing else — moving or renaming the workspace needs no edit, the launcher finds the app.
-
-Verify with `claude --debug-file dbg.log -p ok`, then grep the log: a healthy session logs
-`Loaded 2 LSP server(s) from plugin: fireguard-web-lsp` and a `Registered diagnostics
-handler` line per server.
+Full account, including the measurements that justified the removal:
+`.claude/rules/lsp-availability.md`.
 
 ## Hooks
 

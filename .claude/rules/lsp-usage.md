@@ -4,56 +4,71 @@ paths:
   - 'src/**/*.html'
 ---
 
-# Use the language servers
+# Use the language server
 
-Two servers are running — typescript-language-server on `.ts`, `@angular/language-server` on
-`.html`. They are wired for you; the reflex is not.
+Code intelligence on this app comes from **Serena over MCP**, tool prefix
+`mcp__serena-web__`, backed by Serena's `angular` language server. The native `LSP` tool is
+gone — its plugin was removed on 2026-08-26 because it never reached subagents and Serena
+covers the same ground from both. See `.claude/rules/lsp-availability.md`.
 
-**Ask the LSP a question about a symbol. Grep a question about text.** A symbol question
+One server, not two: it indexes every `.ts` **and** all 249 `.html` templates, so a
+`find_referencing_symbols` on a component surfaces the templates that use it.
+
+**Ask Serena a question about a symbol. Grep a question about text.** A symbol question
 answered by grep alone is a review finding, not a shortcut.
 
 ## The reflexes that are not optional
 
-| Situation                                                                    | First tool                                                                                                                                                                                  |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Changing a signature, input/output, store member, model field, or token      | `findReferences` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
-| "Who provides / consumes this port"                                          | `findReferences` on the **injection token** (`THEME_PORT`, not the interface — see below)                                                                                                   |
-| Creating a file that mirrors an exemplar                                     | `workspaceSymbol` to find the exemplar, `documentSymbol` to read its shape                                                                                                                  |
-| "Where does X live" across `@core` / `@shared` / `@features`                 | `goToDefinition` / `workspaceSymbol` — never globbing for the file                                                                                                                          |
-| Long file or template, only its structure needed                             | `documentSymbol` — on a template it returns the real control-flow tree (`@if`, `@for`, `as` aliases), not raw markup                                                                        |
-| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane                                                                                                                                                                     |
+| Situation | First tool |
+| --- | --- |
+| Changing a signature, input/output, store member, model field, or token | `find_referencing_symbols` on the symbol — the change is complete when every reference in the list has been visited, not when grep stops matching. No aliased import missed, no barrel re-export lost |
+| "Who provides / consumes this port" | `find_referencing_symbols` on the **injection token** (`THEME_PORT`, not the interface — see below) |
+| "What implements or extends this" | `find_implementations` — it works here, unlike on the backend |
+| Creating a file that mirrors an exemplar | `find_symbol` to find the exemplar, `get_symbols_overview` to read its shape |
+| "Where does X live" across `@core` / `@shared` / `@features` | `find_declaration` / `find_symbol` — never globbing for the file |
+| Long file or template, only its structure needed | `get_symbols_overview` |
+| What is broken in a file you just edited | `get_diagnostics_for_file` — **it is not pushed to you, you must ask** |
+| Tailwind class strings, i18n ids in `.xlf`, anything not a resolvable symbol | Grep — that is its lane |
 
-## Worktrees: which diagnostics to trust
+Serena addresses symbols by **name path** and **relative path**, not by line/character
+position: `find_referencing_symbols(name_path: "HydraApiService", relative_path: "src/app/core/api/services/hydra-api/hydra-api.service.ts")`.
+Paths come back with Windows backslashes and are accepted either way.
 
-The servers resolve modules from the checkout they index. A secondary worktree without
-`node_modules/` installed floods "cannot find module" diagnostics that mean nothing — run
-`npm ci` first, or ignore that worktree's diagnostics entirely and let the gates decide.
-Diagnostics arriving for files in a worktree you are **not** currently editing are stale
-snapshots of another branch's mid-edit state; never "fix" one without reading the file
-first. `npm run quality` remains the decision.
+## The cold index answers wrong, not empty
 
-Positions are **1-based on both line and character**, as shown in the editor gutter.
+Right after the server starts, repeated identical calls can return a partial count before
+settling. **Never record "no consumers" from a first call** — repeat it once and take the
+larger answer.
 
-**Diagnostics arrive on their own** after every `Write`/`Edit`, and cost nothing to read.
-They are earlier than the gate, not a substitute for it: `npm run quality` still decides when
-a task is done, and only `npm run build` proves the strict template check.
+`.claude/worktrees/` is excluded through `ignored_paths` in `.serena/project.yml`, because
+Serena ignores `.git/info/exclude` and would otherwise index every stale worktree as
+duplicate symbols.
 
-## Where the servers stop
+## Where the server stops
 
 **A port has no `implements` edge to find.** Ports here bind through an `InjectionToken` and
 `{ provide: TOKEN, useExisting: Service }`, so no class declares `implements ThemePort` —
-`goToImplementation` and `findReferences` on the _interface_ both come back empty, and that
-is not evidence the port is unused. **Run `findReferences` on the token instead**: on
-`THEME_PORT` it returns 11 references across 7 files, including the `provide:` in
-`core/theme/theme.provider.ts`. On an interface that genuinely is implemented,
-`goToImplementation` works normally and reaches `node_modules` too.
+`find_implementations` and `find_referencing_symbols` on the _interface_ both come back
+empty, and that is not evidence the port is unused. **Run `find_referencing_symbols` on the
+token instead**: on `THEME_PORT` it reaches the `provide:` in `core/theme/theme.provider.ts`.
+On an interface that genuinely is implemented, `find_implementations` works normally — on
+`HydraApiService` it returns 38 entries.
 
-**Inline templates are not covered.** The Angular server is bound to `.html`; a template
-written inside a `.ts` `template:` string gets TypeScript's view of it, not Angular's. This
-repo uses separate `.html` files throughout, so this only bites if you introduce one.
+**There is no call hierarchy** — no tool answers "who calls this method".
+`find_referencing_symbols` on the method is the nearest thing.
 
-The **`.mjs` hooks and launcher** under `.claude/` have no server at all: no diagnostics, no
-navigation. Read them normally.
+**The `angular` server drops `.js` / `.mjs` / `.cjs`.** The repo's 111 such files — hooks,
+launchers, config — are not symbol-searchable at all. The plain `typescript` server used to
+index them; this one trades that for the templates. Read them with Grep and Read.
+
+**Inline templates are not covered.** A template written inside a `.ts` `template:` string
+gets TypeScript's view of it, not Angular's. This repo uses separate `.html` files throughout
+(§10.2), so this only bites if you introduce one.
+
+**Diagnostics no longer arrive on their own.** The removed plugin pushed them after every
+`Write`/`Edit`; `get_diagnostics_for_file` is on demand only. They remain earlier than the
+gate, not a substitute for it: `npm run quality` still decides when a task is done, and only
+`npm run build` proves the strict template check.
 
 > Triplicated by design — the monorepo root and `fireguard-sso-api` each carry their own copy,
 > because rules are not a plugin component and do not travel to another session root.

@@ -22,27 +22,26 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 ## Navigating by symbol
 
 When you know a **symbol** — a class, an interface, a store feature, an injection token, a
-component member — reach for the `LSP` tool before `Grep`. It resolves the path aliases
+component member — reach for **Serena** before `Grep`. It resolves the path aliases
 (`@core`, `@shared`, `@features`, `@layouts`) and the barrel re-exports that make a text
-search miss half the truth: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`,
-`goToImplementation`, `workspaceSymbol` (always pass `query`; an empty one returns
-nothing), and the call hierarchy.
+search miss half the truth: `find_declaration`, `find_referencing_symbols`, `get_symbols_overview`,
+`find_implementations`, and `find_symbol`. There is no call-hierarchy tool.
 
-Two servers are wired: `typescript-language-server` on `.ts`, the Angular language server
-on `.html`. The second is the one worth remembering — a binding in a template resolves to
+Serena's `angular` server indexes both `.ts` and every `.html` template. The templates are
+the half worth remembering — a binding in a template resolves to
 the component member it reads, so you can check a template against its class without
 opening both.
 
-Before extracting anything shared, `findReferences` is the cheapest way to settle the rule
+Before extracting anything shared, `find_referencing_symbols` is the cheapest way to settle the rule
 of three: it counts the real consumers instead of the ones you assume exist.
 
 `Grep` remains right for what is not a symbol: a Tailwind class across templates, a route
 path, an i18n id, a naming convention swept over a tree.
 
-**Subagents do not receive the `LSP` tool.** Re-measured on Claude Code 2.1.246: it is absent
-whatever this agent's `tools:` line declares — the full protocol is in
-`.claude/rules/lsp-availability.md`. **Use Serena instead**, which does reach subagents over MCP
-and answers the same questions on this repository:
+**There is no native `LSP` tool.** The language-server plugins were removed on 2026-08-26 —
+they never reached subagents, and Serena covers the same ground from both. See
+`.claude/rules/lsp-availability.md`. **Serena is the code intelligence here**, over MCP,
+answering these questions on this repository:
 
 | Question | Tool |
 | --- | --- |
@@ -54,7 +53,7 @@ and answers the same questions on this repository:
 | what is broken in this file | `mcp__serena-web__get_diagnostics_for_file` |
 
 The server is pinned to `fireguard-sso-web` and runs Serena's Angular language server, so it
-resolves `.ts` **and** `.html` templates — a `findReferences` on a component does surface the
+resolves `.ts` **and** `.html` templates — a `find_referencing_symbols` on a component does surface the
 templates that use it. There is no project to activate.
 
 **A cold answer is not an answer.** The server indexes in the background; a thin or empty first

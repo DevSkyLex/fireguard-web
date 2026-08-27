@@ -108,3 +108,66 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker compose -f docker-compose.prod.yml ps
             docker logout ghcr.io
+
+      # `docker compose ps` above runs a second after `up -d`, when health is still
+      # `starting`, and the job ended there. So the deploy reported success while
+      # the site served Traefik's 404 -- it could not structurally say anything
+      # else. These two steps are the difference between "the ssh command exited 0"
+      # and "the site answers".
+      - name: Wait for the container to become healthy
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ env.APP_DIR }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: APP_DIR,CONTAINER_NAME
+          script_stop: true
+          script: |
+            cd "$APP_DIR"
+
+            # The image declares HEALTHCHECK with a 20s start period, so give it
+            # room: 30 attempts, 5s apart.
+            attempt=1
+            while [ "$attempt" -le 30 ]; do
+              status=$(docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo missing)
+              if [ "$status" = "healthy" ]; then
+                echo "container healthy after ${attempt} attempt(s)"
+                exit 0
+              fi
+              echo "attempt ${attempt}/30: ${status}"
+              attempt=$((attempt + 1))
+              sleep 5
+            done
+
+            # Never fail silently: the container's own logs are the only place the
+            # reason lives, and nobody can read them without SSH otherwise.
+            echo "the container never became healthy — last 200 log lines:"
+            docker compose -f docker-compose.prod.yml logs --tail=200 --no-color || true
+            exit 1
+
+      # Deliberately fatal. A deploy that leaves the site unreachable is a failed
+      # deploy, and saying so is the entire point: the run of 2026-08-27 reported
+      # success while every path under the host answered Traefik's 404.
+      - name: Verify the site answers publicly
+        shell: bash
+        env:
+          APP_HOST: ${{ env.APP_HOST }}
+        run: |
+          attempt=1
+          while [ "$attempt" -le 10 ]; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${APP_HOST}/" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "https://${APP_HOST}/ answered 200 after ${attempt} attempt(s)"
+              exit 0
+            fi
+            echo "attempt ${attempt}/10: HTTP ${code}"
+            attempt=$((attempt + 1))
+            sleep 6
+          done
+
+          echo "::error::https://${APP_HOST}/ never answered 200. A plain-text '404 page not found' is Traefik's, not the application's: no router matched the host, so check the container's labels and its attachment to traefik_proxy."
+          exit 1

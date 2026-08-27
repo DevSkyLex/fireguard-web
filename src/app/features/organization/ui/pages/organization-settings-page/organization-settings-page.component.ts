@@ -142,6 +142,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
   interventionAssigned: true,
   inspectionDue: true,
   nonConformityOpened: true,
+  nonConformitySlaBreached: true,
   memberInvited: true,
 };
 

@@ -21,6 +21,8 @@ export interface OrganizationNotificationSettings {
   /** @type {boolean} */
   readonly nonConformityOpened: boolean;
   /** @type {boolean} */
+  readonly nonConformitySlaBreached: boolean;
+  /** @type {boolean} */
   readonly memberInvited: boolean;
   //#endregion
 }

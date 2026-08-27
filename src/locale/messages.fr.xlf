@@ -6176,6 +6176,10 @@
         <source>Non-conformity opened</source>
         <target>Non-conformité ouverte</target>
       </trans-unit>
+      <trans-unit id="org.settings.notifications.nonConformitySlaBreachedLabel" datatype="html">
+        <source>Non-conformity past its resolution deadline</source>
+        <target>Non-conformité au-delà de son délai de résolution</target>
+      </trans-unit>
       <trans-unit id="org.settings.notifications.memberInvitedLabel" datatype="html">
         <source>Member invited</source>
         <target>Membre invité</target>

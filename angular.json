@@ -71,6 +71,9 @@
                 "input": "public"
               }
             ],
+            "security": {
+              "allowedHosts": ["localhost", "127.0.0.1", "::1", "app.fireguard.valentin-fortin.pro"]
+            },
             "styles": ["src/styles.css"],
             "server": "src/main.server.ts",
             "outputMode": "server",

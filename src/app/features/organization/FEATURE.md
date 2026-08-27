@@ -290,6 +290,8 @@ the data is.
 - `OrganizationMemberAccessPort`
 - `MEMBER_DIRECTORY_PORT`
 - `MemberDirectoryPort`
+- `REGIONAL_FORMATTING_PORT`
+- `RegionalFormattingPort`
 - `organization/setup`
 - `OrganizationSetupService`
 - `organization/services`
@@ -302,6 +304,11 @@ These contracts are the stable boundaries for approved consumers:
 - layouts consume active organization context through `ORGANIZATION_CONTEXT_PORT`,
 - approved sibling features consume current organization member roles and permissions through `ORGANIZATION_MEMBER_ACCESS_PORT`,
 - approved sibling features resolve a bare member id to a name and an avatar through `MEMBER_DIRECTORY_PORT`,
+- pages feed the active organization's regional formatting preferences (date format, timezone)
+  through `REGIONAL_FORMATTING_PORT` into `shared/regional-format`'s pure `appOrgDate` pipe — the
+  one port in this set whose approved consumer is `shared` markup rather than a sibling feature:
+  the pipe never injects the port itself (dependency direction), callers pass the port's signal
+  value as the pipe's explicit settings argument,
 - onboarding consumes organization-owned setup workflows through `organization/setup`,
 - this feature's own pages, and its nested subfeatures, build a surface's claim on a store that
   multiplexes several mutations through one shared `mutationCallState` with

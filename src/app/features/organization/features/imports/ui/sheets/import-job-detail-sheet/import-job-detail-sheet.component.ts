@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -25,6 +24,11 @@ import {
   type ImportRowErrorOutput,
 } from '@features/organization/features/imports/models';
 import { ImportStatusTag } from '@features/organization/features/imports/ui/components/import-status-tag';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
@@ -62,7 +66,7 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-import-job-detail-sheet',
-  imports: [DatePipe, NgIcon, ImportStatusTag, ...HlmSheetImports],
+  imports: [OrgDatePipe, NgIcon, ImportStatusTag, ...HlmSheetImports],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -97,6 +101,17 @@ export class ImportJobDetailSheet {
    * @type {InputSignal<ImportJobOutput | null>}
    */
   public readonly job: InputSignal<ImportJobOutput | null> = input<ImportJobOutput | null>(null);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

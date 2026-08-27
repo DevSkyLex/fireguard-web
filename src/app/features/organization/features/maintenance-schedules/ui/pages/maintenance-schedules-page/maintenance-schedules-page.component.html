@@ -130,6 +130,7 @@
     </app-empty-state>
   } @else {
     <app-maintenance-schedule-table
+      [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoading() && items().length === 0"
       [canManage]="canManage()"

@@ -70,9 +70,13 @@
                 {{ item.requestedByUserId }}
               </td>
 
-              <td hlmTableCell class="whitespace-normal">{{ item.createdAt | date: 'medium' }}</td>
+              <td hlmTableCell class="whitespace-normal">
+                {{ item.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              </td>
 
-              <td hlmTableCell class="whitespace-normal">{{ item.expiresAt | date: 'medium' }}</td>
+              <td hlmTableCell class="whitespace-normal">
+                {{ item.expiresAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              </td>
 
               <td hlmTableCell>
                 <app-approval-status-tag [value]="item.status" />

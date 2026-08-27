@@ -22,6 +22,15 @@ describe('calendar month utils', () => {
     expect(days[days.length - 1]).toBe('2026-09-06');
   });
 
+  it('should build Sunday-first full weeks when the preference says so', () => {
+    const days = buildCalendarMonthDays(new Date(2026, 7, 15), 'sunday').map(toIsoDay);
+
+    expect(days.length % 7).toBe(0);
+    expect(days[0]).toBe('2026-07-26');
+    expect(days[6]).toBe('2026-08-01');
+    expect(days[days.length - 1]).toBe('2026-09-05');
+  });
+
   it('should be pure — the same anchor always yields the same grid', () => {
     const first = buildCalendarMonthDays(new Date(2026, 1, 10)).map(toIsoDay);
     const second = buildCalendarMonthDays(new Date(2026, 1, 27)).map(toIsoDay);

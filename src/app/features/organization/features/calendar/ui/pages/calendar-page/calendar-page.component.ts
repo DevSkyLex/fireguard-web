@@ -41,7 +41,16 @@ import {
 } from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
+import {
+  Calendar,
+  toIsoDay,
+  type CalendarDisplayEvent,
+  type CalendarFirstDayOfWeek,
+} from '@shared/calendar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
@@ -153,6 +162,10 @@ export class CalendarPage {
   /** Read-only source of the facility options offered by the event dialog. */
   private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
 
+  /** The active organization context, source of the regional first-day-of-week preference. */
+  private readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
@@ -166,6 +179,21 @@ export class CalendarPage {
   protected readonly canWriteEvents: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EVENTS_WRITE),
   );
+
+  /**
+   * Property firstDayOfWeek
+   * @readonly
+   * @description The organization's regional first-day-of-week preference, Monday when unset.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<CalendarFirstDayOfWeek>}
+   */
+  protected readonly firstDayOfWeek: Signal<CalendarFirstDayOfWeek> =
+    computed<CalendarFirstDayOfWeek>(
+      () =>
+        this.organizationContext.selectedOrganization()?.settings?.regional?.firstDayOfWeek ??
+        'monday',
+    );
 
   /** The organization's facilities, preloaded for the event dialog's optional association. */
   protected readonly facilityOptions: WritableSignal<

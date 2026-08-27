@@ -10,6 +10,8 @@ import {
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
 import { ApprovalRequestsStore } from '@features/organization/features/approvals/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ApprovalsPage } from '../approvals-page.component';
 
 const createPage = async (): Promise<ComponentFixture<ApprovalsPage>> => {
@@ -59,6 +61,10 @@ describe('ApprovalsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: ApprovalRequestsStore,

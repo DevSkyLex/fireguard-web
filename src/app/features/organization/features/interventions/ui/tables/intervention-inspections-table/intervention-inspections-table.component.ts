@@ -1,4 +1,4 @@
-import { DatePipe, formatDate } from '@angular/common';
+import { formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,6 +16,11 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
 import { resolveInterventionTag } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -48,7 +53,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 @Component({
   selector: 'app-intervention-inspections-table',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgIcon,
     RouterLink,
     EmptyState,
@@ -126,6 +131,17 @@ export class InterventionInspectionsTable {
    * @type {InputSignal<boolean>}
    */
   public readonly loadingMore: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

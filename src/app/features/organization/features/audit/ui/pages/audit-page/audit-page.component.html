@@ -118,6 +118,7 @@
     />
   } @else {
     <app-audit-event-table
+      [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoading() && items().length === 0"
       [organizationId]="organizationId()"

@@ -37,6 +37,7 @@
         >
           @for (item of board().get(status) ?? []; track item.intervention.id) {
             <app-intervention-board-card
+              [regionalFormatting]="regionalFormatting()"
               [item]="item"
               [detailRouteBase]="detailRouteBase()"
               [canTransition]="canTransition()"

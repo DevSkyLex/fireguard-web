@@ -28,7 +28,7 @@
   <div data-testid="intervention-about-updated">
     <app-inplace-field label="Updated" i18n-label="@@common.updated" class="w-full">
       <span fieldValue class="tabular-nums">{{
-        intervention().updatedAt | date: 'mediumDate'
+        intervention().updatedAt | appOrgDate: 'date' : regionalFormatting()
       }}</span>
     </app-inplace-field>
   </div>

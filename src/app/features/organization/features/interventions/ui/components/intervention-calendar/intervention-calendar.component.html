@@ -75,6 +75,7 @@
         <app-calendar
           class="min-h-0"
           [showToolbar]="false"
+          [firstDayOfWeek]="firstDayOfWeek()"
           [(month)]="month"
           [(selectedDay)]="selectedDay"
           [events]="events()"

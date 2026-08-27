@@ -22,6 +22,10 @@ import {
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
 import { isInterventionBoardMoveAllowed } from '@features/organization/features/interventions/utils';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import type { InterventionTransitionRequest } from '../../tables/intervention-table';
 import { InterventionBoardCard } from '../intervention-board-card';
@@ -80,6 +84,10 @@ export class InterventionBoard {
   /** Path segments a card's title link appends the intervention id to. */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /** The active organization's date pattern and timezone, bound by the parent. The default keeps the component renderable with no context wired. */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

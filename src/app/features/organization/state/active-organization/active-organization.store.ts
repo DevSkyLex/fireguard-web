@@ -29,6 +29,10 @@ import {
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { readRouteParam } from '@features/organization/utils';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { activeOrganizationStoreEvents } from './events';
 import type { ActiveOrganizationState } from './models';
 
@@ -75,7 +79,7 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedOrganization` without providing anything.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ActiveOrganizationStore = signalStore(
@@ -142,6 +146,29 @@ export const ActiveOrganizationStore = signalStore(
      * @type {StoreError | null}
      */
     getError: computed<StoreError | null>(() => store.getCallState().error),
+  })),
+
+  withComputed((store) => ({
+    /**
+     * Property regionalFormatting
+     *
+     * @description
+     * The active organization's date pattern and timezone, resolved from
+     * `settings.regional`. Falls back to
+     * {@link DEFAULT_REGIONAL_FORMAT_SETTINGS} while no organization is
+     * selected, or its `settings.regional` is absent — the API omits null
+     * fields rather than serializing them, so a not-yet-configured
+     * organization arrives with no `settings` at all.
+     *
+     * @type {RegionalFormatSettings}
+     */
+    regionalFormatting: computed<RegionalFormatSettings>(() => {
+      const regional = store.selectedOrganization()?.settings?.regional;
+
+      return regional === undefined || regional === null
+        ? DEFAULT_REGIONAL_FORMAT_SETTINGS
+        : { dateFormat: regional.dateFormat, timezone: regional.timezone };
+    }),
   })),
   withMethods(
     (

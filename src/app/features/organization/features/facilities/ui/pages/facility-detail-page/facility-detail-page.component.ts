@@ -1,4 +1,4 @@
-import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -46,9 +46,14 @@ import {
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -140,7 +145,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
 @Component({
   selector: 'app-facility-detail-page',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgIcon,
     RouterLink,
     EmptyState,
@@ -199,6 +204,21 @@ export class FacilityDetailPage {
   //#endregion
 
   //#region Properties
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
   /** The currently active facility, seeded by `facilityResolver`; null until the fetch lands. */
   protected readonly activeFacilityStore: ActiveFacilityStore =
     inject<ActiveFacilityStore>(ActiveFacilityStore);

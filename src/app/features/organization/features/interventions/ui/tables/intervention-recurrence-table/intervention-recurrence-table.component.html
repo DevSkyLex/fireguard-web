@@ -99,7 +99,7 @@
                 {{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}
               </td>
               <td hlmTableCell [attr.data-testid]="'intervention-recurrence-next-' + recurrence.id">
-                {{ recurrence.nextOccurrenceAt | date: 'short' }}
+                {{ recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting() }}
               </td>
               <td hlmTableCell class="text-center">
                 <span class="inline-flex min-h-11 min-w-11 items-center justify-center">

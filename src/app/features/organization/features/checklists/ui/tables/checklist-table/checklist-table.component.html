@@ -53,7 +53,7 @@
               <td hlmTableCell class="text-right tabular-nums">{{ item.items.length }}</td>
 
               <td hlmTableCell class="text-muted-foreground">
-                {{ item.updatedAt | date: 'mediumDate' }}
+                {{ item.updatedAt | appOrgDate: 'date' : regionalFormatting() }}
               </td>
 
               <td hlmTableCell class="text-right">

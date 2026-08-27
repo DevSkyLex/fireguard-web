@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +13,11 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
 import type { MaintenanceScheduleOutput } from '@features/organization/features/maintenance-schedules/models';
 import { MAINTENANCE_OVERRIDE_DURATION_OPTIONS } from '@features/organization/features/maintenance-schedules/options';
 import { iriId } from '@features/organization/features/maintenance-schedules/utils';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -53,7 +57,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 @Component({
   selector: 'app-maintenance-schedule-table',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     RouterLink,
     NgIcon,
     MaintenanceDueStatusTag,
@@ -140,6 +144,17 @@ export class MaintenanceScheduleTable {
   public readonly facilityLabelOf: InputSignal<(facilityId: string) => string | null> = input<
     (facilityId: string) => string | null
   >(() => null);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

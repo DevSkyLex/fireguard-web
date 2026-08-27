@@ -28,9 +28,10 @@ import {
   type OrganizationInvitationOutput,
   type OrganizationMemberOutput,
 } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationMembersPage } from '../organization-members-page.component';
 
 /**
@@ -123,6 +124,10 @@ describe('OrganizationMembersPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: ORGANIZATION_CONTEXT_PORT,

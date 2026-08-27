@@ -165,7 +165,7 @@
                         aria-label="Overdue"
                       />
                     }
-                    {{ item.intervention.dueAt | date: 'mediumDate' }}
+                    {{ item.intervention.dueAt | appOrgDate: 'date' : regionalFormatting() }}
                   </span>
                 </td>
               }

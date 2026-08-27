@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +13,11 @@ import type {
   ImportJobOutput,
 } from '@features/organization/features/imports/models';
 import { ImportStatusTag } from '@features/organization/features/imports/ui/components/import-status-tag';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -51,7 +55,7 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
 @Component({
   selector: 'app-import-job-table',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgIcon,
     ImportStatusTag,
     HlmBadge,
@@ -86,6 +90,17 @@ export class ImportJobTable {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

@@ -22,7 +22,12 @@ import {
   resolveInterventionTag,
   type InterventionOutput,
 } from '@features/organization/features/interventions/models';
-import { Calendar, toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
+import {
+  Calendar,
+  toIsoDay,
+  type CalendarDisplayEvent,
+  type CalendarFirstDayOfWeek,
+} from '@shared/calendar';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -128,6 +133,10 @@ export class InterventionCalendar {
 
   /** The workspace whose calendar is shown, for the "See all in list" link and the entry list's own row links. */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /** The day the rendered week starts on — the organization's regional preference, mapped by the page. */
+  public readonly firstDayOfWeek: InputSignal<CalendarFirstDayOfWeek> =
+    input<CalendarFirstDayOfWeek>('monday');
   //#endregion
 
   //#region Outputs

@@ -357,7 +357,10 @@
                           {{ site }}
                         }
                         @if (intervention.dueAt; as due) {
-                          · <time [attr.datetime]="due">{{ due | date: 'mediumDate' }}</time>
+                          ·
+                          <time [attr.datetime]="due">{{
+                            due | appOrgDate: 'date' : regionalFormatting()
+                          }}</time>
                         }
                       </span>
                     </span>

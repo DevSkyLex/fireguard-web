@@ -68,10 +68,12 @@
                 hlmTableCell
                 class="whitespace-normal"
                 [attr.title]="
-                  item.recordedAt !== item.occurredAt ? (item.recordedAt | date: 'medium') : null
+                  item.recordedAt !== item.occurredAt
+                    ? (item.recordedAt | appOrgDate: 'datetime' : regionalFormatting())
+                    : null
                 "
               >
-                {{ item.occurredAt | date: 'medium' }}
+                {{ item.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
               </td>
 
               <td hlmTableCell class="whitespace-normal text-foreground">

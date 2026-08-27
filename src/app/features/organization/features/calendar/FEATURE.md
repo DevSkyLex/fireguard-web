@@ -14,7 +14,9 @@ gated on `organization.events.write`. This feature owns the feed transport,
 the standalone-event write transport, its models and the page; the month
 grid itself is the **shared generic `Calendar`** (`@shared/calendar`) —
 structure in Tailwind, every interactive or tonal element a spartan
-primitive.
+primitive. The page maps the organization's regional preference
+(`settings.regional.firstDayOfWeek`, read through `ORGANIZATION_CONTEXT_PORT`)
+onto the grid's generic `firstDayOfWeek` input, Monday when unset.
 
 The page is a **full-height console**, not a scrolling document: a
 page-level toolbar band (Today, prev/next month, the current period label)

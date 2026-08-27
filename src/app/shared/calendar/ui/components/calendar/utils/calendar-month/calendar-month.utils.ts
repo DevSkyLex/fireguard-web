@@ -1,3 +1,5 @@
+import type { CalendarFirstDayOfWeek } from '../../../../../models/calendar-first-day-of-week.type';
+
 /**
  * Function toIsoDay
  *
@@ -40,24 +42,31 @@ export function startOfMonth(date: Date): Date {
  * Function buildCalendarMonthDays
  *
  * @description
- * The full weeks covering the anchor's month, Monday-first, as a flat run of
- * local midnights whose length is always a multiple of seven — the shape
- * `brnCalendarWeek` chunks into rows. Pure: "today" is not resolved here, so
- * the same anchor always yields the same grid.
+ * The full weeks covering the anchor's month, as a flat run of local
+ * midnights whose length is always a multiple of seven — the shape
+ * `brnCalendarWeek` chunks into rows. The week starts on the given day
+ * (Monday by default, per the organization's regional preference). Pure:
+ * "today" is not resolved here, so the same inputs always yield the same
+ * grid.
  *
  * @param {Date} anchor - Any date inside the month to build.
+ * @param {CalendarFirstDayOfWeek} firstDayOfWeek - The day the rendered week starts on.
  *
  * @returns {Date[]} The month's days plus the leading and trailing fillers.
  *
  * @since 1.0.0
  */
-export function buildCalendarMonthDays(anchor: Date): Date[] {
+export function buildCalendarMonthDays(
+  anchor: Date,
+  firstDayOfWeek: CalendarFirstDayOfWeek = 'monday',
+): Date[] {
   const first: Date = startOfMonth(anchor);
-  const mondayOffset: number = (first.getDay() + 6) % 7;
+  const startOffset: number =
+    firstDayOfWeek === 'monday' ? (first.getDay() + 6) % 7 : first.getDay();
   const month: number = first.getMonth();
 
   const days: Date[] = [];
-  const cursor: Date = new Date(first.getFullYear(), month, 1 - mondayOffset);
+  const cursor: Date = new Date(first.getFullYear(), month, 1 - startOffset);
   do {
     for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
       days.push(new Date(cursor));

@@ -35,6 +35,8 @@ import {
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { FacilityDetailPage } from '../facility-detail-page.component';
 
 const inBody = (id: string): HTMLElement | null => document.querySelector(`[data-testid="${id}"]`);
@@ -234,6 +236,10 @@ describe('FacilityDetailPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: ActiveFacilityStore,

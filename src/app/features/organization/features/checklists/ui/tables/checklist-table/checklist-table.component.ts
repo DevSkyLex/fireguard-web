@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,6 +9,11 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArchive, lucideEllipsis, lucidePencil } from '@ng-icons/lucide';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -43,7 +47,7 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 @Component({
   selector: 'app-checklist-table',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgIcon,
     ChecklistStatusTag,
     HlmButton,
@@ -88,6 +92,17 @@ export class ChecklistTable {
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

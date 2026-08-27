@@ -3,6 +3,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { AuditEventOutput } from '@features/organization/features/audit/models';
 import { AuditEventsStore } from '@features/organization/features/audit/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { AuditPage } from '../audit-page.component';
 
 const createPage = async (): Promise<ComponentFixture<AuditPage>> => {
@@ -49,6 +51,10 @@ describe('AuditPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: AuditEventsStore,

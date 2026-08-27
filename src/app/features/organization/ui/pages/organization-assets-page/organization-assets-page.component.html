@@ -298,7 +298,7 @@
                         class="font-medium text-foreground hover:underline"
                         [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
                       >
-                        {{ item.performedAt | date: 'short' }}
+                        {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
                       </a>
                     </td>
                     <td hlmTableCell>

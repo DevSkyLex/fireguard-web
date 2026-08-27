@@ -164,7 +164,7 @@
               </td>
 
               <td hlmTableCell class="text-muted-foreground">
-                {{ member.joinedAt | date: 'mediumDate' }}
+                {{ member.joinedAt | appOrgDate: 'date' : regionalFormatting() }}
               </td>
 
               <td hlmTableCell class="text-right">

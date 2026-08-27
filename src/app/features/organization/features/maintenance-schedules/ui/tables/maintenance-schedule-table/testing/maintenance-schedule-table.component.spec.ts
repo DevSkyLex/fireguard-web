@@ -88,7 +88,7 @@ describe('MaintenanceScheduleTable', () => {
   it('should render the formatted date when nextDueAt is present', async () => {
     await render([schedule({ nextDueAt: '2026-06-15T00:00:00+00:00' })]);
 
-    expect(root().textContent).toContain('Jun 15, 2026');
+    expect(root().textContent).toContain('2026-06-15');
   });
 
   it('should render the override duration label when set, or a dash when following the default', async () => {

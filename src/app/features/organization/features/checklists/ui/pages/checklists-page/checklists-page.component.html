@@ -87,6 +87,7 @@
     </app-empty-state>
   } @else {
     <app-checklist-table
+      [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoadingChecklists()"
       [canWrite]="canWrite()"

@@ -53,8 +53,10 @@ import { InterventionStore } from '@features/organization/features/interventions
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
+  REGIONAL_FORMATTING_PORT,
 } from '@features/organization/ports';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InterventionLinkedResourcesStore } from '../../../../state/intervention-linked-resources';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import {
@@ -325,6 +327,10 @@ describe('InterventionDetailPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         {
           provide: InterventionStore,
           useValue: {

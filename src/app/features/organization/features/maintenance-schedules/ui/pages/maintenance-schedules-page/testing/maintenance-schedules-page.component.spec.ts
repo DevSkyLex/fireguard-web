@@ -20,6 +20,8 @@ import type {
   MaintenanceScheduleOutput,
 } from '@features/organization/features/maintenance-schedules/models';
 import { MaintenanceSchedulesStore } from '@features/organization/features/maintenance-schedules/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { MaintenanceSchedulesPage } from '../maintenance-schedules-page.component';
 
 const createPage = async (): Promise<ComponentFixture<MaintenanceSchedulesPage>> => {
@@ -87,6 +89,10 @@ describe('MaintenanceSchedulesPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: MaintenanceSchedulesStore,

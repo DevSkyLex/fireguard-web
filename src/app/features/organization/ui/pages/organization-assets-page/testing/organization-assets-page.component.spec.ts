@@ -8,8 +8,10 @@ import type {
   ComplianceFacilityTreeNodeOutput,
   ComplianceSummaryOutput,
 } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from '@features/organization/state/organization-assets-pane';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationAssetsPage } from '../organization-assets-page.component';
 
 const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
@@ -114,6 +116,10 @@ describe('OrganizationAssetsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: FacilityTreeStore,

@@ -171,7 +171,9 @@
               <dt class="text-muted-foreground" i18n="@@org.invitationAccept.expiresLabel">
                 Expires
               </dt>
-              <dd class="text-foreground">{{ preview.expiresAt | date: 'mediumDate' }}</dd>
+              <dd class="text-foreground">
+                {{ preview.expiresAt | appOrgDate: 'date' : regionalFormatting() }}
+              </dd>
             </div>
             @if (preview.roleNames; as roleNames) {
               <div

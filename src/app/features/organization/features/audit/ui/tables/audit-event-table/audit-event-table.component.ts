@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -36,6 +35,11 @@ import {
   resolveAuditSubjectRoute,
 } from '@features/organization/features/audit/utils';
 import { EmptyState } from '@shared/empty-state';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -71,7 +75,15 @@ const COLUMN_COUNT: number = 5;
  */
 @Component({
   selector: 'app-audit-event-table',
-  imports: [EmptyState, DatePipe, RouterLink, NgIcon, HlmButton, HlmSkeleton, ...HlmTableImports],
+  imports: [
+    EmptyState,
+    OrgDatePipe,
+    RouterLink,
+    NgIcon,
+    HlmButton,
+    HlmSkeleton,
+    ...HlmTableImports,
+  ],
   providers: [
     provideIcons({
       lucideFileText,
@@ -127,6 +139,17 @@ export class AuditEventTable {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Properties

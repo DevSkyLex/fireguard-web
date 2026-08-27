@@ -7,6 +7,7 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { CalendarFeedStore } from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { CalendarPage } from '../calendar-page.component';
 
 function feedItem(overrides: Partial<CalendarFeedItemOutput> = {}): CalendarFeedItemOutput {
@@ -62,6 +63,10 @@ describe('CalendarPage', () => {
         provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission: () => canWrite } },
         { provide: FacilityService, useValue: { list: () => of({ member: [], totalItems: 0 }) } },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganization: signal(null) },
+        },
       ],
     });
 

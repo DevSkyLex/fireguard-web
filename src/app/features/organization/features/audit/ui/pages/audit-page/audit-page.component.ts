@@ -36,6 +36,10 @@ import {
   type AuditEventsStoreType,
 } from '@features/organization/features/audit/state';
 import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
+import {
   CollectionFilterBar,
   CollectionFilterDateRange,
   CollectionFilterToggle,
@@ -47,6 +51,7 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { AuditEventTable } from '../../tables/audit-event-table';
@@ -187,6 +192,21 @@ export class AuditPage {
   //#endregion
 
   //#region Properties
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
   /** The journal dataset, provided by this route. */
   protected readonly store: AuditEventsStoreType = inject<AuditEventsStoreType>(AuditEventsStore);
 

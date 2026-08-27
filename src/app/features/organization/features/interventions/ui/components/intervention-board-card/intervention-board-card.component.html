@@ -89,7 +89,7 @@
             i18n-aria-label="@@intervention.list.overdueLabel"
           />
         }
-        {{ item().intervention.dueAt | date: 'mediumDate' }}
+        {{ item().intervention.dueAt | appOrgDate: 'date' : regionalFormatting() }}
       </span>
     }
   </div>

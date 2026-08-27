@@ -11,7 +11,7 @@
           <app-import-status-tag [value]="job.status" />
         </h3>
         <p hlmSheetDescription>
-          {{ job.createdAt | date: 'medium' }}
+          {{ job.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
         </p>
       </hlm-sheet-header>
 

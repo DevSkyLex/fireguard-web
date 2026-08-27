@@ -6,7 +6,9 @@ import type { MockInstance } from 'vitest';
 import { toStoreError, type StoreError } from '@core/request-state';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
 import type { OrganizationInvitationPreviewOutput } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationInvitationAcceptPage } from '../organization-invitation-accept-page.component';
 
 /**
@@ -71,6 +73,10 @@ describe('OrganizationInvitationAcceptPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         { provide: AUTH_SESSION_PORT, useValue: authSession },
       ],

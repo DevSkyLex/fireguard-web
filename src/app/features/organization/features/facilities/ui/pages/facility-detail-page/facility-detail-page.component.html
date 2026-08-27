@@ -207,7 +207,9 @@
                       inspection.id,
                     ]"
                   >
-                    <span>{{ inspection.performedAt | date: 'mediumDate' }}</span>
+                    <span>{{
+                      inspection.performedAt | appOrgDate: 'date' : regionalFormatting()
+                    }}</span>
                     <span class="text-muted-foreground">{{
                       resultLabelOf(inspection.result)
                     }}</span>

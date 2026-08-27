@@ -1,10 +1,20 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
@@ -24,7 +34,9 @@ import type {
   InterventionRecurrenceOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
 import { InterventionRecurrenceDeleteDialog } from '../../../dialogs/intervention-recurrence-delete-dialog';
@@ -121,6 +133,30 @@ const createPage = async (
   return created;
 };
 
+/**
+ * Stands in for the shell's `DashboardPageActions` — the tab selector and
+ * "New intervention" render through `PageActionsService`, never inside this
+ * page's own `fixture.nativeElement`, so proving them means rendering the
+ * registered `TemplateRef` the same way the real shell does.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
 describe('InterventionsPage', () => {
   let fixture: ComponentFixture<InterventionsPage>;
   let load: ReturnType<typeof vi.fn>;
@@ -183,6 +219,14 @@ describe('InterventionsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganization: signal(null) },
+        },
         {
           provide: InterventionStore,
           useValue: {
@@ -951,13 +995,13 @@ describe('InterventionsPage', () => {
       );
     });
 
-    it("should name the ignored reason in the chip's accessible name on the Board", async () => {
+    it("should carry no reason in the chip's accessible name even for a field the Board does not honour", async () => {
       fixture = await createPage({ status: 'planned', view: 'board' });
 
       const name: string = fixture.componentInstance['chipAccessibleName']('status');
 
-      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
-      expect(name).toContain("the board's columns already narrow by status");
+      expect(fixture.componentInstance['honouredFilterKeys']().has('status')).toBe(false);
+      expect(name).not.toContain('Ignored');
     });
 
     it('should leave the accessible name reason-free on a tab that honours the field', async () => {
@@ -984,44 +1028,27 @@ describe('InterventionsPage', () => {
         'plannedStartRange',
         'dueWindow',
       ]);
-      expect(
-        fixture.componentInstance['offeredFilterFields']().every(
-          (field: { unavailableReason?: string }): boolean => field.unavailableReason === undefined,
-        ),
-      ).toBe(true);
     });
 
-    it('should mark status unavailable on the Board rather than withholding it', async () => {
+    it('should withhold status from the "+ Filter" menu on the Board rather than offering it disabled', async () => {
       fixture = await createPage({ view: 'board' });
 
-      const offered: readonly { key: string; unavailableReason?: string }[] =
-        fixture.componentInstance['offeredFilterFields']();
-
-      expect(offered.map((field): string => field.key)).toContain('status');
-      expect(offered.find((field): boolean => field.key === 'status')?.unavailableReason).toContain(
-        "board's columns",
+      const offered: readonly string[] = fixture.componentInstance['offeredFilterFields']().map(
+        (field: { key: string }): string => field.key,
       );
-      expect(
-        offered.find((field): boolean => field.key === 'type')?.unavailableReason,
-      ).toBeUndefined();
+
+      expect(offered).not.toContain('status');
+      expect(offered).toContain('type');
     });
 
-    it('should mark everything the Calendar cannot apply, and only that', async () => {
+    it('should offer only status, type, site and responsible on the Calendar', async () => {
       fixture = await createPage({ view: 'calendar' });
 
-      const unavailable: readonly string[] = fixture.componentInstance['offeredFilterFields']()
-        .filter(
-          (field: { unavailableReason?: string }): boolean => field.unavailableReason !== undefined,
-        )
-        .map((field: { key: string }): string => field.key);
+      const offered: readonly string[] = fixture.componentInstance['offeredFilterFields']().map(
+        (field: { key: string }): string => field.key,
+      );
 
-      expect(unavailable).toEqual([
-        'priority',
-        'label',
-        'dueRange',
-        'plannedStartRange',
-        'dueWindow',
-      ]);
+      expect(offered).toEqual(['status', 'type', 'site', 'responsible']);
     });
 
     it('should leave an unhonoured narrowing out of the Filters badge while still charting it', async () => {
@@ -1107,15 +1134,14 @@ describe('InterventionsPage', () => {
       );
     });
 
-    it('should keep an unhonoured field in the catalog while it is set, so its chip keeps a label', async () => {
+    it('should keep an unhonoured field out of the catalog even while it is still set from another tab', async () => {
       fixture = await createPage({ status: 'planned', view: 'board' });
 
       expect(
         fixture.componentInstance['offeredFilterFields']().map(
           (field: { key: string }): string => field.key,
         ),
-      ).toContain('status');
-      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
+      ).not.toContain('status');
     });
 
     it('should write ?view=null (dropped) when switching back to List', async () => {
@@ -1132,27 +1158,28 @@ describe('InterventionsPage', () => {
 
     it('should honour every filter field on the List tab', async () => {
       fixture = await createPage();
+      const honoured: ReadonlySet<string> = fixture.componentInstance['honouredFilterKeys']();
 
-      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
-      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(false);
+      expect(honoured.has('status')).toBe(true);
+      expect(honoured.has('dueRange')).toBe(true);
     });
 
-    it('should render an ignored chip as inert on the Board tab, naming the reason', async () => {
+    it('should not honour status on the Board tab', async () => {
       fixture = await createPage({ view: 'board' });
+      const honoured: ReadonlySet<string> = fixture.componentInstance['honouredFilterKeys']();
 
-      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(true);
-      expect(fixture.componentInstance['ignoredReason']('status')).toContain(
-        'columns already narrow by status',
-      );
+      expect(honoured.has('status')).toBe(false);
+      expect(honoured.has('type')).toBe(true);
     });
 
     it('should ignore priority, label and both date ranges on the Calendar tab', async () => {
       fixture = await createPage({ view: 'calendar' });
+      const honoured: ReadonlySet<string> = fixture.componentInstance['honouredFilterKeys']();
 
-      expect(fixture.componentInstance['isFieldIgnored']('priority')).toBe(true);
-      expect(fixture.componentInstance['isFieldIgnored']('label')).toBe(true);
-      expect(fixture.componentInstance['isFieldIgnored']('dueRange')).toBe(true);
-      expect(fixture.componentInstance['isFieldIgnored']('status')).toBe(false);
+      expect(honoured.has('priority')).toBe(false);
+      expect(honoured.has('label')).toBe(false);
+      expect(honoured.has('dueRange')).toBe(false);
+      expect(honoured.has('status')).toBe(true);
     });
 
     it('should not render Display or Export outside the List tab', async () => {
@@ -1165,9 +1192,10 @@ describe('InterventionsPage', () => {
 
     it('should render the Recurrences tab trigger for a viewer with INTERVENTIONS_READ', async () => {
       fixture = await createPage();
-      const root = fixture.nativeElement as HTMLElement;
 
-      expect(root.querySelector('[data-testid="interventions-tab-recurrences"]')).not.toBeNull();
+      expect(
+        renderPageActions().querySelector('[data-testid="interventions-tab-recurrences"]'),
+      ).not.toBeNull();
     });
 
     it('should hide the Recurrences tab trigger for a viewer without INTERVENTIONS_READ', async () => {
@@ -1175,9 +1203,51 @@ describe('InterventionsPage', () => {
         useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => false },
       });
       fixture = await createPage();
+
+      expect(
+        renderPageActions().querySelector('[data-testid="interventions-tab-recurrences"]'),
+      ).toBeNull();
+    });
+  });
+
+  describe('page header', () => {
+    it('should render the tab selector and "New intervention" through the shared page-actions template, on every tab', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const header: HTMLElement = renderPageActions();
+
+      expect(header.querySelector('[data-testid="intervention-view-toggle"]')).not.toBeNull();
+      expect(header.querySelector('[data-testid="intervention-view-toggle-list"]')).not.toBeNull();
+      expect(header.querySelector('[data-testid="intervention-view-toggle-board"]')).not.toBeNull();
+      expect(
+        header.querySelector('[data-testid="intervention-view-toggle-calendar"]'),
+      ).not.toBeNull();
+      expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
+    });
+
+    it('should keep no toolbar, mine toggle or filters toggle on the Recurrences tab', async () => {
+      fixture = await createPage({ view: 'recurrences' });
       const root = fixture.nativeElement as HTMLElement;
 
-      expect(root.querySelector('[data-testid="interventions-tab-recurrences"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-mine-toggle"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-filters-toggle"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-filter-chips"]')).toBeNull();
+    });
+
+    it('should keep the search box off the Calendar toolbar while keeping the mine toggle', async () => {
+      fixture = await createPage({ view: 'calendar' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-search"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-mine-toggle"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="interventions-filters-toggle"]')).not.toBeNull();
+    });
+
+    it('should render the search box and the filters toggle on the Board tab', async () => {
+      fixture = await createPage({ view: 'board' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-search"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="interventions-filters-toggle"]')).not.toBeNull();
     });
   });
 

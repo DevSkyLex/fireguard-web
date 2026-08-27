@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -56,6 +56,10 @@ import {
   type ComplianceFacilityTreeNodeOutput,
 } from '@features/organization/models';
 import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
+import {
   ComplianceExplorerStore,
   type ComplianceExplorerStoreType,
 } from '@features/organization/state/compliance-explorer';
@@ -66,6 +70,7 @@ import {
 import { resolveComplianceBucket } from '@features/organization/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -118,7 +123,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 @Component({
   selector: 'app-organization-assets-page',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgTemplateOutlet,
     RouterLink,
     NgIcon,
@@ -173,6 +178,21 @@ export class OrganizationAssetsPage {
   //#endregion
 
   //#region Properties
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
   /** The site hierarchy. */
   protected readonly tree: FacilityTreeStoreType = inject<FacilityTreeStoreType>(FacilityTreeStore);
 

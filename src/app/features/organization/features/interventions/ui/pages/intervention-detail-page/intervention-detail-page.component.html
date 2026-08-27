@@ -299,6 +299,7 @@
           <div hlmTabsContent="inspections" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-inspections-table
+                [regionalFormatting]="regionalFormatting()"
                 [organizationId]="organizationId()"
                 [items]="linkedResources.inspections()"
                 [loading]="linkedResources.inspectionsLoading()"
@@ -326,6 +327,7 @@
             </h2>
 
             <app-intervention-about
+              [regionalFormatting]="regionalFormatting()"
               [intervention]="intervention"
               [canEditDetails]="canEditDetails()"
               [editState]="editState()"
@@ -350,6 +352,7 @@
             </h2>
 
             <app-intervention-properties-grid
+              [regionalFormatting]="regionalFormatting()"
               [intervention]="intervention"
               [organizationId]="organizationId()"
               [siteOptions]="planningOptions.sites()"

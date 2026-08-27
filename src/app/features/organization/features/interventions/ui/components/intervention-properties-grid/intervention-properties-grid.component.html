@@ -197,7 +197,8 @@
     >
       @if (scheduleRange(); as range) {
         <span fieldValue class="font-medium tabular-nums">
-          {{ range[0] | date: 'mediumDate' }} – {{ range[1] | date: 'mediumDate' }}
+          {{ range[0] | appOrgDate: 'date' : regionalFormatting() }} –
+          {{ range[1] | appOrgDate: 'date' : regionalFormatting() }}
         </span>
       } @else {
         <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.notSet">

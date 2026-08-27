@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +7,7 @@ import {
   input,
   type EffectRef,
   type InputSignal,
+  type Signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -20,10 +21,15 @@ import {
   lucideTag,
 } from '@ng-icons/lucide';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from '@features/organization/ui/tables/organization-invitation-table/constants/organization-invitation-status-tag-severity.constants';
 import { resolveOrganizationInvitationStatusTag } from '@features/organization/ui/tables/organization-invitation-table/models';
 import { getOrganizationInitials } from '@features/organization/utils';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
@@ -62,7 +68,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
 @Component({
   selector: 'app-organization-invitation-accept-page',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgTemplateOutlet,
     RouterLink,
     NgIcon,
@@ -110,6 +116,21 @@ export class OrganizationInvitationAcceptPage {
   //#endregion
 
   //#region Properties
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
   /**
    * Property store
    * @readonly

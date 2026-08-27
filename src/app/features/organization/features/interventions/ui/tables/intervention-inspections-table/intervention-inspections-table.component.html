@@ -64,7 +64,7 @@
               <td hlmTableCell>
                 @if (isDraftRecord(item)) {
                   <span class="font-medium text-foreground">
-                    {{ item.performedAt | date: 'mediumDate' }}
+                    {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
                   </span>
                   <span
                     hlmBadge
@@ -81,7 +81,7 @@
                     [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
                     [attr.aria-label]="linkAriaLabelOf(item)"
                   >
-                    {{ item.performedAt | date: 'mediumDate' }}
+                    {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
                   </a>
                 }
               </td>

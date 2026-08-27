@@ -6,283 +6,343 @@
     [baseRoute]="detailRouteBase()"
   />
 
-  <hlm-tabs
-    [tab]="activeView()"
-    class="flex min-h-0 flex-1 flex-col gap-4"
-    (tabActivated)="switchView($event)"
-  >
-    <app-collection-toolbar>
-      <div toolbarStart class="flex items-center gap-2">
-        <app-collection-search-box
-          testIdPrefix="interventions"
-          placeholder="Search interventions..."
-          i18n-placeholder="@@intervention.list.searchPlaceholder"
-          ariaLabel="Search interventions..."
-          i18n-ariaLabel="@@intervention.list.searchPlaceholder"
-          [value]="draftSearch()"
-          (queryChanged)="onSearchQueryChanged($event)"
-        />
-
+  <ng-template #pageActions>
+    <div
+      role="tablist"
+      data-testid="intervention-view-toggle"
+      aria-label="Change view"
+      i18n-aria-label="@@intervention.list.viewToggleLabel"
+      class="inline-flex h-8 w-fit items-center justify-center gap-[3px] rounded-lg bg-muted p-[3px] text-muted-foreground"
+    >
+      <button
+        type="button"
+        role="tab"
+        id="brn-tabs-label-list"
+        aria-controls="brn-tabs-content-list"
+        [attr.aria-selected]="activeView() === 'list'"
+        [attr.tabindex]="activeView() === 'list' ? 0 : -1"
+        class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
+        [class.bg-background]="activeView() === 'list'"
+        [class.text-foreground]="activeView() === 'list'"
+        [class.shadow-sm]="activeView() === 'list'"
+        [class.text-muted-foreground]="activeView() !== 'list'"
+        data-testid="intervention-view-toggle-list"
+        (click)="switchView('list')"
+      >
+        <span i18n="@@intervention.board.viewList">List</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="brn-tabs-label-board"
+        aria-controls="brn-tabs-content-board"
+        [attr.aria-selected]="activeView() === 'board'"
+        [attr.tabindex]="activeView() === 'board' ? 0 : -1"
+        class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
+        [class.bg-background]="activeView() === 'board'"
+        [class.text-foreground]="activeView() === 'board'"
+        [class.shadow-sm]="activeView() === 'board'"
+        [class.text-muted-foreground]="activeView() !== 'board'"
+        data-testid="intervention-view-toggle-board"
+        (click)="switchView('board')"
+      >
+        <span i18n="@@intervention.board.viewBoard">Board</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="brn-tabs-label-calendar"
+        aria-controls="brn-tabs-content-calendar"
+        [attr.aria-selected]="activeView() === 'calendar'"
+        [attr.tabindex]="activeView() === 'calendar' ? 0 : -1"
+        class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
+        [class.bg-background]="activeView() === 'calendar'"
+        [class.text-foreground]="activeView() === 'calendar'"
+        [class.shadow-sm]="activeView() === 'calendar'"
+        [class.text-muted-foreground]="activeView() !== 'calendar'"
+        data-testid="intervention-view-toggle-calendar"
+        (click)="switchView('calendar')"
+      >
+        <span i18n="@@intervention.board.viewCalendar">Calendar</span>
+      </button>
+      @if (canReadRecurrences()) {
         <button
-          hlmToggle
           type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="interventions-mine-toggle"
-          [state]="filters().mine ? 'on' : 'off'"
-          (stateChange)="toggleMine()"
+          role="tab"
+          id="brn-tabs-label-recurrences"
+          aria-controls="brn-tabs-content-recurrences"
+          [attr.aria-selected]="activeView() === 'recurrences'"
+          [attr.tabindex]="activeView() === 'recurrences' ? 0 : -1"
+          class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
+          [class.bg-background]="activeView() === 'recurrences'"
+          [class.text-foreground]="activeView() === 'recurrences'"
+          [class.shadow-sm]="activeView() === 'recurrences'"
+          [class.text-muted-foreground]="activeView() !== 'recurrences'"
+          data-testid="interventions-tab-recurrences"
+          (click)="switchView('recurrences')"
         >
-          @if (filters().mine) {
-            <ng-icon name="lucideCheck" aria-hidden="true" />
-          }
-          <span i18n="@@intervention.list.mine">My interventions</span>
+          <span i18n="@@intervention.recurrences.tab">Recurrences</span>
         </button>
-      </div>
+      }
+    </div>
 
-      <div toolbarEnd class="flex flex-wrap items-center gap-2">
-        @if (activeView() === 'list') {
-          @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="max-sm:grow"
-              data-testid="interventions-bulk-actions"
-              [hlmDropdownMenuTrigger]="bulkMenu"
-              align="start"
-            >
-              <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
-              <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
-            </button>
+    <button
+      hlmBtn
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="interventions-new"
+      i18n-aria-label="@@intervention.list.newButton"
+      aria-label="New intervention"
+      (click)="openCreate()"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+        >New intervention</span
+      >
+    </button>
+  </ng-template>
+
+  <hlm-tabs [tab]="activeView()" class="flex min-h-0 flex-1 flex-col gap-4">
+    @if (activeView() !== 'recurrences') {
+      <app-collection-toolbar>
+        <div toolbarStart class="flex items-center gap-2">
+          @if (activeView() === 'list' || activeView() === 'board') {
+            <app-collection-search-box
+              testIdPrefix="interventions"
+              placeholder="Search interventions..."
+              i18n-placeholder="@@intervention.list.searchPlaceholder"
+              ariaLabel="Search interventions..."
+              i18n-ariaLabel="@@intervention.list.searchPlaceholder"
+              [value]="draftSearch()"
+              (queryChanged)="onSearchQueryChanged($event)"
+            />
           }
 
-          <ng-template #bulkMenu>
-            <hlm-dropdown-menu class="w-56">
-              @if (canTransition() && bulkTransitionTargets().length > 0) {
-                <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
-                  >Move to</hlm-dropdown-menu-label
-                >
-                @for (target of bulkTransitionTargets(); track target) {
-                  @if (transitionableSelectedIds(target).length > 0) {
-                    <button
-                      hlmDropdownMenuItem
-                      data-testid="interventions-bulk-transition"
-                      (click)="confirmBulkTransition(target)"
-                    >
-                      {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
-                    </button>
+          <button
+            hlmToggle
+            type="button"
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11"
+            data-testid="interventions-mine-toggle"
+            [state]="filters().mine ? 'on' : 'off'"
+            (stateChange)="toggleMine()"
+          >
+            @if (filters().mine) {
+              <ng-icon name="lucideCheck" aria-hidden="true" />
+            }
+            <span i18n="@@intervention.list.mine">My interventions</span>
+          </button>
+        </div>
+
+        <div toolbarEnd class="flex flex-wrap items-center gap-2">
+          @if (activeView() === 'list') {
+            @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="max-sm:grow"
+                data-testid="interventions-bulk-actions"
+                [hlmDropdownMenuTrigger]="bulkMenu"
+                align="start"
+              >
+                <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
+                <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
+              </button>
+            }
+
+            <ng-template #bulkMenu>
+              <hlm-dropdown-menu class="w-56">
+                @if (canTransition() && bulkTransitionTargets().length > 0) {
+                  <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
+                    >Move to</hlm-dropdown-menu-label
+                  >
+                  @for (target of bulkTransitionTargets(); track target) {
+                    @if (transitionableSelectedIds(target).length > 0) {
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="interventions-bulk-transition"
+                        (click)="confirmBulkTransition(target)"
+                      >
+                        {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
+                      </button>
+                    }
                   }
+                  <hlm-dropdown-menu-separator />
                 }
-                <hlm-dropdown-menu-separator />
-              }
 
-              @if (canAssign() && assignableSelectedIds().length > 0) {
-                <button
-                  hlmDropdownMenuItem
-                  data-testid="interventions-bulk-assign"
-                  (click)="requestBulkAssign()"
-                >
-                  <ng-icon name="lucideUserCog" aria-hidden="true" />
-                  {{ bulkAssignLabel() }}
-                </button>
-                <hlm-dropdown-menu-separator />
-              }
+                @if (canAssign() && assignableSelectedIds().length > 0) {
+                  <button
+                    hlmDropdownMenuItem
+                    data-testid="interventions-bulk-assign"
+                    (click)="requestBulkAssign()"
+                  >
+                    <ng-icon name="lucideUserCog" aria-hidden="true" />
+                    {{ bulkAssignLabel() }}
+                  </button>
+                  <hlm-dropdown-menu-separator />
+                }
 
-              @if (canDelete()) {
-                <button
-                  hlmDropdownMenuItem
-                  variant="destructive"
-                  data-testid="interventions-bulk-delete"
-                  [disabled]="deletableSelectedIds().length === 0"
-                  (click)="requestBulkDelete()"
-                >
-                  <ng-icon name="lucideTrash2" aria-hidden="true" />
-                  {{ bulkDeleteLabel() }}
-                </button>
-              }
-            </hlm-dropdown-menu>
-          </ng-template>
+                @if (canDelete()) {
+                  <button
+                    hlmDropdownMenuItem
+                    variant="destructive"
+                    data-testid="interventions-bulk-delete"
+                    [disabled]="deletableSelectedIds().length === 0"
+                    (click)="requestBulkDelete()"
+                  >
+                    <ng-icon name="lucideTrash2" aria-hidden="true" />
+                    {{ bulkDeleteLabel() }}
+                  </button>
+                }
+              </hlm-dropdown-menu>
+            </ng-template>
 
-          <hlm-popover sideOffset="5" align="end">
+            <hlm-popover sideOffset="5" align="end">
+              <button
+                hlmPopoverTrigger
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11 max-sm:grow"
+                data-testid="interventions-display"
+              >
+                <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
+                <span i18n="@@intervention.list.displayButton">Display</span>
+              </button>
+
+              <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
+                <div class="flex flex-col gap-1.5">
+                  <p
+                    class="text-xs font-medium text-muted-foreground"
+                    i18n="@@intervention.list.displaySortLabel"
+                  >
+                    Sort by
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <hlm-select
+                      class="flex-1"
+                      [value]="sortOrder().field"
+                      [itemToString]="sortFieldLabelOf"
+                      (valueChange)="onSortFieldPicked($event)"
+                    >
+                      <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
+                        <hlm-select-value />
+                      </hlm-select-trigger>
+                      <hlm-select-content *hlmSelectPortal>
+                        <hlm-select-group>
+                          @for (option of sortOptions; track option.value) {
+                            <hlm-select-item [value]="option.value">{{
+                              option.label
+                            }}</hlm-select-item>
+                          }
+                        </hlm-select-group>
+                      </hlm-select-content>
+                    </hlm-select>
+
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      data-testid="interventions-sort-direction"
+                      [attr.aria-label]="sortDirectionLabel()"
+                      (click)="toggleSortDirection()"
+                    >
+                      <ng-icon
+                        [name]="
+                          sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'
+                        "
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <hlm-separator />
+
+                <div class="flex flex-col gap-1.5">
+                  <p
+                    class="text-xs font-medium text-muted-foreground"
+                    i18n="@@intervention.list.displayColumnsLabel"
+                  >
+                    Columns
+                  </p>
+                  <div class="flex flex-col gap-0.5">
+                    @for (id of allColumns; track id) {
+                      <label
+                        class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
+                      >
+                        <hlm-checkbox
+                          data-testid="interventions-column-toggle"
+                          [checked]="isColumnVisible(id)"
+                          (checkedChange)="toggleColumn(id)"
+                        />
+                        {{ columnLabelOf(id) }}
+                      </label>
+                    }
+                  </div>
+                </div>
+              </hlm-popover-content>
+            </hlm-popover>
+
             <button
-              hlmPopoverTrigger
               hlmBtn
               type="button"
               variant="outline"
               size="sm"
               class="max-sm:min-h-11 max-sm:grow"
-              data-testid="interventions-display"
+              data-testid="interventions-export"
+              [disabled]="exportDisabled()"
+              [attr.aria-busy]="exportBusy() ? 'true' : null"
+              (click)="exportCsv()"
             >
-              <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
-              <span i18n="@@intervention.list.displayButton">Display</span>
+              @if (exportBusy()) {
+                <hlm-spinner class="size-4" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+              <span i18n="@@intervention.list.exportButton">Export</span>
             </button>
-
-            <hlm-popover-content *hlmPopoverPortal class="flex w-64 flex-col gap-3 p-3">
-              <div class="flex flex-col gap-1.5">
-                <p
-                  class="text-xs font-medium text-muted-foreground"
-                  i18n="@@intervention.list.displaySortLabel"
-                >
-                  Sort by
-                </p>
-                <div class="flex items-center gap-2">
-                  <hlm-select
-                    class="flex-1"
-                    [value]="sortOrder().field"
-                    [itemToString]="sortFieldLabelOf"
-                    (valueChange)="onSortFieldPicked($event)"
-                  >
-                    <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
-                      <hlm-select-value />
-                    </hlm-select-trigger>
-                    <hlm-select-content *hlmSelectPortal>
-                      <hlm-select-group>
-                        @for (option of sortOptions; track option.value) {
-                          <hlm-select-item [value]="option.value">{{
-                            option.label
-                          }}</hlm-select-item>
-                        }
-                      </hlm-select-group>
-                    </hlm-select-content>
-                  </hlm-select>
-
-                  <button
-                    hlmBtn
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    data-testid="interventions-sort-direction"
-                    [attr.aria-label]="sortDirectionLabel()"
-                    (click)="toggleSortDirection()"
-                  >
-                    <ng-icon
-                      [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-              </div>
-
-              <hlm-separator />
-
-              <div class="flex flex-col gap-1.5">
-                <p
-                  class="text-xs font-medium text-muted-foreground"
-                  i18n="@@intervention.list.displayColumnsLabel"
-                >
-                  Columns
-                </p>
-                <div class="flex flex-col gap-0.5">
-                  @for (id of allColumns; track id) {
-                    <label
-                      class="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-foreground hover:bg-accent max-sm:py-2"
-                    >
-                      <hlm-checkbox
-                        data-testid="interventions-column-toggle"
-                        [checked]="isColumnVisible(id)"
-                        (checkedChange)="toggleColumn(id)"
-                      />
-                      {{ columnLabelOf(id) }}
-                    </label>
-                  }
-                </div>
-              </div>
-            </hlm-popover-content>
-          </hlm-popover>
-
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            class="max-sm:min-h-11 max-sm:grow"
-            data-testid="interventions-export"
-            [disabled]="exportDisabled()"
-            [attr.aria-busy]="exportBusy() ? 'true' : null"
-            (click)="exportCsv()"
-          >
             @if (exportBusy()) {
-              <hlm-spinner class="size-4" aria-hidden="true" />
-            } @else {
-              <ng-icon name="lucideDownload" aria-hidden="true" />
+              <span
+                class="sr-only"
+                aria-live="polite"
+                data-testid="interventions-export-status"
+                i18n="@@intervention.list.exportingStatus"
+              >
+                Preparing the export…
+              </span>
             }
-            <span i18n="@@intervention.list.exportButton">Export</span>
-          </button>
-          @if (exportBusy()) {
-            <span
-              class="sr-only"
-              aria-live="polite"
-              data-testid="interventions-export-status"
-              i18n="@@intervention.list.exportingStatus"
-            >
-              Preparing the export…
-            </span>
           }
-        }
 
-        <hlm-tabs-list
-          data-testid="intervention-view-toggle"
-          aria-label="Change view"
-          i18n-aria-label="@@intervention.list.viewToggleLabel"
-        >
-          <button
-            hlmTabsTrigger="list"
-            class="max-sm:min-h-11"
-            data-testid="intervention-view-toggle-list"
-          >
-            <span i18n="@@intervention.board.viewList">List</span>
-          </button>
-          <button
-            hlmTabsTrigger="board"
-            class="max-sm:min-h-11"
-            data-testid="intervention-view-toggle-board"
-          >
-            <span i18n="@@intervention.board.viewBoard">Board</span>
-          </button>
-          <button
-            hlmTabsTrigger="calendar"
-            class="max-sm:min-h-11"
-            data-testid="intervention-view-toggle-calendar"
-          >
-            <span i18n="@@intervention.board.viewCalendar">Calendar</span>
-          </button>
-          @if (canReadRecurrences()) {
-            <button
-              hlmTabsTrigger="recurrences"
-              class="max-sm:min-h-11"
-              data-testid="interventions-tab-recurrences"
-            >
-              <span i18n="@@intervention.recurrences.tab">Recurrences</span>
-            </button>
-          }
-        </hlm-tabs-list>
+          <app-collection-filter-toggle
+            [visible]="filtersVisible()"
+            [activeCount]="honouredActiveFilterKeys().length"
+            label="Filters"
+            i18n-label="@@intervention.list.filtersButton"
+            testIdPrefix="interventions"
+            (visibleChange)="toggleFiltersVisible($event)"
+          />
+        </div>
+      </app-collection-toolbar>
 
-        <app-collection-filter-toggle
-          [visible]="filtersVisible()"
-          [activeCount]="honouredActiveFilterKeys().length"
-          label="Filters"
-          i18n-label="@@intervention.list.filtersButton"
+      @if (filtersVisible()) {
+        <app-collection-filter-bar
+          [fields]="offeredFilterFields()"
+          [activeKeys]="honouredActiveFilterKeys()"
+          [pendingKey]="openFilterKey()"
+          [templates]="chipTemplates()"
+          [activeOperators]="filterOperators()"
           testIdPrefix="interventions"
-          (visibleChange)="toggleFiltersVisible($event)"
+          (fieldPicked)="onFieldPicked($event)"
+          (fieldRemoved)="onFieldRemoved($event)"
+          (filtersCleared)="clearFilters()"
+          (operatorChanged)="onFilterOperatorChanged($event)"
         />
-      </div>
-    </app-collection-toolbar>
-
-    @if (filtersVisible()) {
-      <app-collection-filter-bar
-        [fields]="offeredFilterFields()"
-        [activeKeys]="activeFilterKeys()"
-        [pendingKey]="openFilterKey()"
-        [templates]="chipTemplates()"
-        [activeOperators]="filterOperators()"
-        testIdPrefix="interventions"
-        (fieldPicked)="onFieldPicked($event)"
-        (fieldRemoved)="onFieldRemoved($event)"
-        (filtersCleared)="clearFilters()"
-        (operatorChanged)="onFilterOperatorChanged($event)"
-      />
+      }
     }
 
     <ng-template #statusChip>
@@ -300,9 +360,6 @@
           triggerId="interventions-filter-status"
           testId="interventions-filter-status"
           [state]="fieldPopoverState('status')"
-          [disabled]="isFieldIgnored('status')"
-          [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
-          [describedBy]="describedByFor('status')"
           [optionTemplate]="statusOptionRow"
           [valueTemplate]="statusOptionRow"
           (valuesChanged)="applyStatusFilter($any($event))"
@@ -325,9 +382,6 @@
           triggerId="interventions-filter-status"
           testId="interventions-filter-status"
           [state]="fieldPopoverState('status')"
-          [disabled]="isFieldIgnored('status')"
-          [tooltip]="isFieldIgnored('status') ? ignoredReason('status') : ''"
-          [describedBy]="describedByFor('status')"
           [optionTemplate]="statusSingleOptionRow"
           [valueTemplate]="statusSingleOptionRow"
           (valueChanged)="applyFilter({ status: $any($event) })"
@@ -354,9 +408,6 @@
           triggerId="interventions-filter-type"
           testId="interventions-filter-type"
           [state]="fieldPopoverState('type')"
-          [disabled]="isFieldIgnored('type')"
-          [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
-          [describedBy]="describedByFor('type')"
           [optionTemplate]="typeOptionRow"
           [valueTemplate]="typeOptionRow"
           (valuesChanged)="applyTypeFilter($any($event))"
@@ -379,9 +430,6 @@
           triggerId="interventions-filter-type"
           testId="interventions-filter-type"
           [state]="fieldPopoverState('type')"
-          [disabled]="isFieldIgnored('type')"
-          [tooltip]="isFieldIgnored('type') ? ignoredReason('type') : ''"
-          [describedBy]="describedByFor('type')"
           [optionTemplate]="typeSingleOptionRow"
           [valueTemplate]="typeSingleOptionRow"
           (valueChanged)="applyFilter({ type: $any($event) })"
@@ -408,9 +456,6 @@
           triggerId="interventions-filter-priority"
           testId="interventions-filter-priority"
           [state]="fieldPopoverState('priority')"
-          [disabled]="isFieldIgnored('priority')"
-          [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
-          [describedBy]="describedByFor('priority')"
           [optionTemplate]="priorityOptionRow"
           [valueTemplate]="priorityOptionRow"
           (valuesChanged)="applyPriorityFilter($any($event))"
@@ -433,9 +478,6 @@
           triggerId="interventions-filter-priority"
           testId="interventions-filter-priority"
           [state]="fieldPopoverState('priority')"
-          [disabled]="isFieldIgnored('priority')"
-          [tooltip]="isFieldIgnored('priority') ? ignoredReason('priority') : ''"
-          [describedBy]="describedByFor('priority')"
           [optionTemplate]="prioritySingleOptionRow"
           [valueTemplate]="prioritySingleOptionRow"
           (valueChanged)="applyFilter({ priority: $any($event) })"
@@ -462,9 +504,6 @@
           triggerId="interventions-filter-site"
           testId="interventions-filter-site"
           [state]="fieldPopoverState('site')"
-          [disabled]="isFieldIgnored('site')"
-          [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
-          [describedBy]="describedByFor('site')"
           (valuesChanged)="applySiteFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
         />
@@ -482,9 +521,6 @@
           triggerId="interventions-filter-site"
           testId="interventions-filter-site"
           [state]="fieldPopoverState('site')"
-          [disabled]="isFieldIgnored('site')"
-          [tooltip]="isFieldIgnored('site') ? ignoredReason('site') : ''"
-          [describedBy]="describedByFor('site')"
           (valueChanged)="applyFilter({ site: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('site', $event)"
         />
@@ -506,9 +542,6 @@
           triggerId="interventions-filter-responsible"
           testId="interventions-filter-responsible"
           [state]="fieldPopoverState('responsible')"
-          [disabled]="isFieldIgnored('responsible')"
-          [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
-          [describedBy]="describedByFor('responsible')"
           (valuesChanged)="applyResponsibleFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
         />
@@ -526,9 +559,6 @@
           triggerId="interventions-filter-responsible"
           testId="interventions-filter-responsible"
           [state]="fieldPopoverState('responsible')"
-          [disabled]="isFieldIgnored('responsible')"
-          [tooltip]="isFieldIgnored('responsible') ? ignoredReason('responsible') : ''"
-          [describedBy]="describedByFor('responsible')"
           (valueChanged)="applyFilter({ responsible: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('responsible', $event)"
         />
@@ -550,9 +580,6 @@
           triggerId="interventions-filter-label"
           testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
-          [disabled]="isFieldIgnored('label')"
-          [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
-          [describedBy]="describedByFor('label')"
           (valuesChanged)="applyLabelFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -570,9 +597,6 @@
           triggerId="interventions-filter-label"
           testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
-          [disabled]="isFieldIgnored('label')"
-          [tooltip]="isFieldIgnored('label') ? ignoredReason('label') : ''"
-          [describedBy]="describedByFor('label')"
           (valueChanged)="applyFilter({ label: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -590,9 +614,6 @@
             triggerId="interventions-filter-due"
             testId="interventions-filter-due"
             [state]="fieldPopoverState('dueRange')"
-            [disabled]="isFieldIgnored('dueRange')"
-            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            [describedBy]="describedByFor('dueRange')"
             (valueChanged)="pickDueAfter($event)"
             (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
           />
@@ -606,9 +627,6 @@
             triggerId="interventions-filter-due"
             testId="interventions-filter-due"
             [state]="fieldPopoverState('dueRange')"
-            [disabled]="isFieldIgnored('dueRange')"
-            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            [describedBy]="describedByFor('dueRange')"
             (valueChanged)="pickDueBefore($event)"
             (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
           />
@@ -622,9 +640,6 @@
             triggerId="interventions-filter-due"
             testId="interventions-filter-due"
             [state]="fieldPopoverState('dueRange')"
-            [disabled]="isFieldIgnored('dueRange')"
-            [tooltip]="isFieldIgnored('dueRange') ? ignoredReason('dueRange') : ''"
-            [describedBy]="describedByFor('dueRange')"
             (valueChanged)="pickDueBetween($event)"
             (stateChanged)="onFieldPopoverStateChanged('dueRange', $event)"
           />
@@ -643,11 +658,6 @@
             triggerId="interventions-filter-planned-start"
             testId="interventions-filter-planned-start"
             [state]="fieldPopoverState('plannedStartRange')"
-            [disabled]="isFieldIgnored('plannedStartRange')"
-            [tooltip]="
-              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
-            "
-            [describedBy]="describedByFor('plannedStartRange')"
             (valueChanged)="pickPlannedStartAfter($event)"
             (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
           />
@@ -661,11 +671,6 @@
             triggerId="interventions-filter-planned-start"
             testId="interventions-filter-planned-start"
             [state]="fieldPopoverState('plannedStartRange')"
-            [disabled]="isFieldIgnored('plannedStartRange')"
-            [tooltip]="
-              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
-            "
-            [describedBy]="describedByFor('plannedStartRange')"
             (valueChanged)="pickPlannedStartBefore($event)"
             (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
           />
@@ -679,11 +684,6 @@
             triggerId="interventions-filter-planned-start"
             testId="interventions-filter-planned-start"
             [state]="fieldPopoverState('plannedStartRange')"
-            [disabled]="isFieldIgnored('plannedStartRange')"
-            [tooltip]="
-              isFieldIgnored('plannedStartRange') ? ignoredReason('plannedStartRange') : ''
-            "
-            [describedBy]="describedByFor('plannedStartRange')"
             (valueChanged)="pickPlannedStartBetween($event)"
             (stateChanged)="onFieldPopoverStateChanged('plannedStartRange', $event)"
           />
@@ -705,9 +705,6 @@
         triggerId="interventions-filter-due-window"
         testId="interventions-filter-due-window"
         [state]="fieldPopoverState('dueWindow')"
-        [disabled]="isFieldIgnored('dueWindow')"
-        [tooltip]="isFieldIgnored('dueWindow') ? ignoredReason('dueWindow') : ''"
-        [describedBy]="describedByFor('dueWindow')"
         (valueChanged)="applyFilter({ dueWindow: $any($event) })"
         (stateChanged)="onFieldPopoverStateChanged('dueWindow', $event)"
       />
@@ -755,6 +752,7 @@
         }
       } @else {
         <app-intervention-table
+          [regionalFormatting]="regionalFormatting()"
           [items]="items()"
           [loading]="store.isLoadingInterventions() && items().length === 0"
           [sortOrder]="sortOrder()"
@@ -791,6 +789,7 @@
     <div hlmTabsContent="board" class="min-h-0 flex-1">
       <ng-template hlmTabsContentLazy>
         <app-intervention-board
+          [regionalFormatting]="regionalFormatting()"
           [items]="boardItems()"
           [canTransition]="canTransition()"
           [transitioningIds]="store.transitioningInterventionIds()"
@@ -803,6 +802,7 @@
     <div hlmTabsContent="calendar" class="min-h-0 flex-1">
       <ng-template hlmTabsContentLazy>
         <app-intervention-calendar
+          [firstDayOfWeek]="firstDayOfWeek()"
           [interventions]="calendarStore.interventions()"
           [loading]="calendarStore.loading()"
           [loadError]="calendarStore.loadError()"
@@ -841,6 +841,7 @@
           </div>
 
           <app-intervention-recurrence-table
+            [regionalFormatting]="regionalFormatting()"
             [recurrences]="recurrenceStore.recurrenceEntities()"
             [templates]="planningOptions.templates()"
             [loading]="recurrenceStore.listCallState().status === 'pending'"
@@ -909,19 +910,3 @@
   (submitted)="submitAssign($event)"
   (dismissed)="dismissAssign()"
 />
-
-<ng-template #pageActions>
-  <button
-    hlmBtn
-    class="min-w-0 shrink max-sm:min-h-11"
-    data-testid="interventions-new"
-    i18n-aria-label="@@intervention.list.newButton"
-    aria-label="New intervention"
-    (click)="openCreate()"
-  >
-    <ng-icon name="lucidePlus" aria-hidden="true" />
-    <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
-      >New intervention</span
-    >
-  </button>
-</ng-template>

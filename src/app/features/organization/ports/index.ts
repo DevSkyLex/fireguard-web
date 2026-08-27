@@ -4,3 +4,5 @@ export { ORGANIZATION_MEMBER_ACCESS_PORT } from './organization-member-access';
 export type { OrganizationMemberAccessPort } from './organization-member-access';
 export { MEMBER_DIRECTORY_PORT } from './member-directory';
 export type { MemberDirectoryPort } from './member-directory';
+export { REGIONAL_FORMATTING_PORT } from './regional-formatting';
+export type { RegionalFormattingPort } from './regional-formatting';

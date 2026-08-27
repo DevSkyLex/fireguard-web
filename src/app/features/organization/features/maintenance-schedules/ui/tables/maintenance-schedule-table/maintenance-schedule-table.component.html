@@ -78,7 +78,7 @@
 
               <td hlmTableCell class="whitespace-normal">
                 @if (item.nextDueAt) {
-                  {{ item.nextDueAt | date: 'mediumDate' }}
+                  {{ item.nextDueAt | appOrgDate: 'date' : regionalFormatting() }}
                 } @else if (isNeverInspected(item)) {
                   <span class="text-destructive" i18n="@@maintenance.table.neverInspected"
                     >Never inspected</span

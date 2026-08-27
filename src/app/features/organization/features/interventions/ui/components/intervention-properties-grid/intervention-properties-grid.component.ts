@@ -1,5 +1,4 @@
 import type { BooleanInput } from '@angular/cdk/coercion';
-import { DatePipe } from '@angular/common';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -30,6 +29,11 @@ import type {
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
 import { InplaceField } from '@shared/inplace-field';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -95,7 +99,7 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     NgIcon,
     RouterLink,
     HlmButton,
@@ -268,6 +272,17 @@ export class InterventionPropertiesGrid {
    */
   public readonly editState: InputSignal<InterventionEditState> =
     input.required<InterventionEditState>();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

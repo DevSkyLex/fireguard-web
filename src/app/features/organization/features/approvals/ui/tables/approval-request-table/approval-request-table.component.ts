@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,6 +10,11 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideX } from '@ng-icons/lucide';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -61,7 +65,7 @@ const SUBJECT_ROUTE_BUILDERS: Readonly<
 @Component({
   selector: 'app-approval-request-table',
   imports: [
-    DatePipe,
+    OrgDatePipe,
     RouterLink,
     NgIcon,
     ApprovalStatusTag,
@@ -128,6 +132,17 @@ export class ApprovalRequestTable {
   public readonly actionTypeLabelOf: InputSignal<(actionType: string) => string> = input<
     (actionType: string) => string
   >((actionType) => actionType);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

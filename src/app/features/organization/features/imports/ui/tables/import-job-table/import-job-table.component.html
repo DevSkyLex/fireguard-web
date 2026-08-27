@@ -75,7 +75,9 @@
                 <span class="text-destructive">{{ item.failedRows }}</span>
               </td>
 
-              <td hlmTableCell class="whitespace-normal">{{ item.createdAt | date: 'medium' }}</td>
+              <td hlmTableCell class="whitespace-normal">
+                {{ item.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              </td>
 
               <td hlmTableCell>
                 <button

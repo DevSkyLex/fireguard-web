@@ -7,6 +7,8 @@ import type { ImportJobOutput } from '@features/organization/features/imports/mo
 import { ImportJobsStore } from '@features/organization/features/imports/state';
 import { ImportUploadForm } from '@features/organization/features/imports/ui/forms/import-upload-form';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ImportsPage } from '../imports-page.component';
 
 const createPage = async (): Promise<ComponentFixture<ImportsPage>> => {
@@ -48,6 +50,10 @@ describe('ImportsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         {
           provide: ImportJobsStore,

@@ -1,5 +1,4 @@
 import { CdkDrag } from '@angular/cdk/drag-drop';
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,6 +18,11 @@ import {
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
 import { isInterventionBoardMoveAllowed } from '@features/organization/features/interventions/utils';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -60,7 +64,7 @@ import { InterventionTag } from '../intervention-tag';
   selector: 'app-intervention-board-card',
   imports: [
     CdkDrag,
-    DatePipe,
+    OrgDatePipe,
     RouterLink,
     NgIcon,
     InterventionTag,
@@ -97,6 +101,10 @@ export class InterventionBoardCard {
    * describe the pre-transition state until the server entity lands.
    */
   public readonly locked: InputSignal<boolean> = input<boolean>(false);
+
+  /** The active organization's date pattern and timezone, bound by the parent. The default keeps the component renderable with no context wired. */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

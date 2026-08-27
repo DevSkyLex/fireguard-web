@@ -103,9 +103,16 @@ import {
 } from '@features/organization/features/interventions/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
+  ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
+  type OrganizationContextPort,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
+import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import type { CalendarFirstDayOfWeek } from '@shared/calendar';
 import {
   type CollectionFilterField,
   CollectionFilterBar,
@@ -122,6 +129,7 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
@@ -229,14 +237,18 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
  * @description
  * Which of the filter bar's eight fields each {@link InterventionView}
  * actually applies — the sole consumer is this page's own
- * {@link InterventionsPage.isFieldIgnored}, so it lives beside the page
+ * {@link InterventionsPage.honouredFilterKeys}, so it lives beside the page
  * rather than in a shared `constants/` or `options/` unit (rule of three).
  * The list honours all eight; the board omits `status` (its columns already
  * narrow by status); the calendar honours only `status`, `type`, `site` and
- * `responsible` (`InterventionCalendarFilters`'s own `Pick`). A chip whose
- * field the active view does not honour still renders when active, but
- * disabled and greyed, with an `hlmTooltip` naming the reason — never
- * silently dropped, never silently misapplied.
+ * `responsible` (`InterventionCalendarFilters`'s own `Pick`). A field the
+ * active view does not honour is simply absent from that view's own filter
+ * catalog ({@link InterventionsPage.offeredFilterFields}): the "+ Filter"
+ * menu never lists it and, if the URL still carries a value for it from
+ * another tab, no chip renders for it here either — the narrowing is neither
+ * applied (each view's own query builder already ignores what it does not
+ * declare) nor lost (the URL still carries it, and the chip reappears the
+ * moment the operator returns to a view that honours the field).
  *
  * @since 11.0.0
  *
@@ -276,12 +288,17 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  *
  * @description
  * Route entry page for the organization's interventions
- * (`/organizations/:organizationId/interventions`): the KPI strip, the
- * toolbar (search box, "My interventions", the filter bar and its eight
- * chips, the List/Board/Calendar tabs), and each tab's own surface — the
- * table with its Display popover and row/bulk actions on List, the Kanban
- * board on Board, the month grid on Calendar — plus the sheets and dialogs
- * any of the three can open.
+ * (`/organizations/:organizationId/interventions`): the KPI strip, a
+ * per-tab toolbar (search box, "My interventions", a filter bar scoped to
+ * that tab's own honoured fields — List, Board and Calendar each carry
+ * their own subset, Recurrences carries none at all), and each tab's own
+ * surface — the table with its Display popover and row/bulk actions on
+ * List, the Kanban board on Board, the month grid on Calendar — plus the
+ * sheets and dialogs any of the three can open. The tab selector itself is
+ * not part of the toolbar: it renders in the dashboard shell's own header,
+ * registered through {@link pageActions} alongside "New intervention". It is
+ * a hand-rolled `role="tablist"`/`role="tab"` control rather than
+ * `hlm-tabs-list`/`hlmTabsTrigger` — see that property's own doc for why.
  *
  * **One page, three tabs, replacing three routes.** `InterventionsShellPage`,
  * `InterventionsBoardPage` and `InterventionsCalendarPage` are retired: the
@@ -359,12 +376,9 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * surface, no double-padding fix. A side effect of adopting the shared
  * `state`/`stateChanged` contract: switching a chip's operator now reopens
  * its value control the same way an enum chip's already did, where the
- * hand-rolled pickers previously left it closed. {@link describedByFor}
- * carries a disabled field's reason row `id` down to whichever of the four
- * generic value controls a chip currently renders, since none of them can
- * discover it through Angular DI on its own — see that method's own doc.
+ * hand-rolled pickers previously left it closed.
  *
- * @version 12.1.0
+ * @version 13.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -493,6 +507,21 @@ export class InterventionsPage {
   //#endregion
 
   //#region Properties
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
   /** The List/Board tabs' shared dataset. */
   protected readonly store: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
@@ -517,6 +546,25 @@ export class InterventionsPage {
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
+  /** The active organization context, source of the regional first-day-of-week preference. */
+  private readonly organizationContext: OrganizationContextPort =
+    inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /**
+   * Property firstDayOfWeek
+   * @readonly
+   * @description The organization's regional first-day-of-week preference, Monday when unset.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<CalendarFirstDayOfWeek>}
+   */
+  protected readonly firstDayOfWeek: Signal<CalendarFirstDayOfWeek> =
+    computed<CalendarFirstDayOfWeek>(
+      () =>
+        this.organizationContext.selectedOrganization()?.settings?.regional?.firstDayOfWeek ??
+        'monday',
+    );
 
   /** Whether the app runs in the browser — gates the Calendar's fetch, a dated authenticated read that would immediately refetch after hydration. */
   private readonly platformId: object = inject(PLATFORM_ID);
@@ -554,7 +602,36 @@ export class InterventionsPage {
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
 
-  /** The "New intervention" header action, shared across all three tabs. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The dashboard shell header's contribution for this page: the tab
+   * selector and the "New intervention" action, unconditional across every
+   * tab. Both render from one `#pageActions` `ng-template` because
+   * `PageActionsService.register` holds a single `TemplateRef`, declared as
+   * a **sibling of `<hlm-tabs>`, not a descendant of it**. An earlier
+   * revision nested it inside `<hlm-tabs>` so `hlm-tabs-list`'s
+   * `hlmTabsTrigger` buttons could resolve `BrnTabs` through Angular DI —
+   * `<hlm-tabs>` is already driven from the outside via `[tab]="activeView()"`,
+   * so the internal triggers were never load-bearing for panel switching,
+   * only for their own DI. That placement made the template's declaring
+   * view depend on `<hlm-tabs>`'s own subtree, which is far more volatile
+   * than the page root; the tab selector below is a hand-rolled
+   * `role="tablist"`/`role="tab"` control that calls {@link switchView}
+   * directly, needs no `BrnTabs` injector, and can safely sit at the root
+   * where nothing recreates it. Its `id`/`aria-controls` pairs
+   * (`brn-tabs-label-<view>` / `brn-tabs-content-<view>`) reproduce the
+   * exact strings `BrnTabsContent` computes internally for the still-
+   * `hlm-tabs`-driven panels below, so a real tablist still controls real
+   * tabpanels without needing to share an injector with them.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -1035,15 +1112,18 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * The bar's `fields` input. The three tabs do not share one filter set, and
-   * a field the active tab cannot apply is listed all the same — disabled,
-   * with {@link ignoredReason} beside it — rather than dropped. Hiding it left
-   * a reader on the Board hunting for a Status filter with nothing saying why
-   * it was gone, while an *active* unhonoured chip already explains itself.
-   * The two halves of the rule now agree.
+   * The bar's `fields` input, narrowed to the active tab's own
+   * {@link honouredFilterKeys}. The four tabs do not share one filter set,
+   * and a field the active tab cannot apply is not part of its catalog at
+   * all: the "+ Filter" menu never lists it, and — since
+   * {@link honouredActiveFilterKeys} is what the bar's `activeKeys` input
+   * reads — a value the URL still carries for it from another tab renders no
+   * chip here either. The narrowing itself is unaffected: each tab's own
+   * query builder (`boardFilters`, `toCalendarFilters`) already reads only
+   * the fields it declares, regardless of what the bar renders.
    *
    * @access protected
-   * @since 12.0.0
+   * @since 13.0.0
    * @type {Signal<readonly CollectionFilterField[]>}
    */
   protected readonly offeredFilterFields: Signal<readonly CollectionFilterField[]> = computed<
@@ -1051,14 +1131,12 @@ export class InterventionsPage {
   >(() => {
     const honoured: ReadonlySet<InterventionFilterFieldKey> = this.honouredFilterKeys();
 
-    return INTERVENTION_FILTER_FIELDS.map((field: InterventionFilterFieldOption) =>
-      honoured.has(field.key)
-        ? field
-        : { ...field, unavailableReason: this.ignoredReason(field.key) },
+    return INTERVENTION_FILTER_FIELDS.filter((field: InterventionFilterFieldOption): boolean =>
+      honoured.has(field.key),
     );
   });
 
-  /** Which of `INTERVENTION_FILTER_FIELDS` currently carry a value — the bar's `activeKeys` input and the filter-toggle's badge count. Counted over the whole catalog, not {@link offeredFilterFields}, so a narrowing the active tab ignores still shows in the badge. */
+  /** Which of `INTERVENTION_FILTER_FIELDS` currently carry a value, over the whole catalog rather than {@link offeredFilterFields} — the base {@link honouredActiveFilterKeys} narrows to what the active tab actually renders, and {@link filtersVisible}'s own seed reads this one directly, so a filter set on another tab still auto-expands the bar on arrival. */
   protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
     readonly InterventionFilterFieldKey[]
   >(() => {
@@ -1074,11 +1152,13 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * The badge count on the "Filters" toggle: active keys the current tab
-   * actually applies. An unhonoured one is deliberately excluded — it narrows
-   * nothing here, so counting it would advertise a narrowing that is not in
-   * force. It stays discoverable all the same: the bar opens on any active
-   * key, {@link activeFilterKeys} included, and renders the inert chip.
+   * Active keys the current tab actually applies — the bar's own `activeKeys`
+   * input (which chips render) and the "Filters" toggle's badge count. An
+   * unhonoured key is deliberately excluded from both: it narrows nothing
+   * here, so rendering its chip or counting it in the badge would advertise a
+   * narrowing that is not in force. The value is not lost — it is still in
+   * {@link activeFilterKeys} and the URL, and reappears the moment the
+   * operator switches to a tab that honours it.
    *
    * @access protected
    * @since 11.1.0
@@ -1452,12 +1532,13 @@ export class InterventionsPage {
   /**
    * Method switchView
    * @description
-   * The tab list's `tabActivated` handler — writes the new `?view=` and merges
-   * it with every other query param, **including** the ones the destination
-   * does not honour. Dropping them here would delete a narrowing the user set,
-   * silently and irrecoverably; leaving them lets {@link isFieldIgnored} render
-   * the chip inert with a tooltip naming the reason, and restores the narrowing
-   * intact on the way back.
+   * {@link pageActions}'s hand-rolled tab buttons' `click` handler — writes
+   * the new `?view=` and merges it with every other query param,
+   * **including** the ones the destination does not honour. Dropping them
+   * here would delete a narrowing the user set, silently and irrecoverably;
+   * leaving them costs nothing, since a destination neither offers nor
+   * applies a field outside its own {@link honouredFilterKeys}, and
+   * restores the narrowing intact on the way back.
    *
    * @access protected
    * @since 11.0.0
@@ -2352,88 +2433,15 @@ export class InterventionsPage {
   }
 
   /**
-   * Method isFieldIgnored
-   * @description Whether the active tab does not honour a filter field — the chip still renders when active, but disabled and greyed rather than silently applied.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionFilterFieldKey} key - The field to check.
-   * @returns {boolean} True when the active tab ignores it.
-   */
-  protected isFieldIgnored(key: InterventionFilterFieldKey): boolean {
-    return !this.honouredFilterKeys().has(key);
-  }
-
-  /**
    * Method chipAccessibleName
-   *
-   * @description
-   * The chip's screen-reader name. When the active tab does not honour the
-   * field, {@link ignoredReason} is appended: the reason is otherwise carried
-   * only by an `hlmTooltip`, which a hover reveals and a screen reader does
-   * not, leaving a disabled chip announced as unavailable with no cause.
-   *
+   * @description The chip's screen-reader name. A field never renders a chip on a tab that does not honour it (see {@link offeredFilterFields}), so this name never needs to explain an inert state — it is always the field's own label.
    * @access protected
    * @since 11.0.0
-   *
    * @param {InterventionFilterFieldKey} key - The chip's field.
-   *
    * @returns {string} The localized accessible name.
    */
   protected chipAccessibleName(key: InterventionFilterFieldKey): string {
-    const name: string = this.changeFilterLabel(this.filterFieldOption(key).fieldLabel);
-
-    return this.isFieldIgnored(key) ? `${name}. ${this.ignoredReason(key)}` : name;
-  }
-
-  /**
-   * Method ignoredReason
-   * @description The tooltip explaining why an ignored chip is inert here — read only while {@link isFieldIgnored} is true for that key.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionFilterFieldKey} key - The ignored field.
-   * @returns {string} The localized reason.
-   */
-  protected ignoredReason(key: InterventionFilterFieldKey): string {
-    if (key === 'status') {
-      return $localize`:@@intervention.shell.filterIgnoredStatus:Ignored here — the board's columns already narrow by status.`;
-    }
-
-    if (key === 'dueRange' || key === 'plannedStartRange') {
-      return $localize`:@@intervention.shell.filterIgnoredDateRange:Ignored here — the visible month is already the date filter.`;
-    }
-
-    return $localize`:@@intervention.shell.filterIgnoredField:Ignored here — this view narrows only by status, type, site and responsible.`;
-  }
-
-  /**
-   * Method describedByFor
-   *
-   * @description
-   * The `describedBy` a field's value control (`app-collection-filter-select`,
-   * `app-collection-filter-multi-select`, `app-collection-filter-date`,
-   * `app-collection-filter-date-range`) carries while {@link isFieldIgnored}
-   * — `undefined` otherwise, rendering no `aria-describedby` at all.
-   * Mirrors `CollectionFilterBar.reasonIdFor`'s own `<testIdPrefix>-filter-reason-<key>`
-   * pattern rather than reading it back: the value control cannot discover
-   * `app-filter-chip`'s reason row through Angular DI, since it is declared
-   * here, in this page's own `ng-template`, and only *rendered* inside the
-   * chip through `NgTemplateOutlet` — DI resolves against the declaration
-   * site, never the insertion site, so `app-filter-chip`'s `brnField`
-   * (`@spartan-ng/brain/field`) is invisible to it. This page is the one
-   * place that knows both `app-collection-filter-bar`'s `testIdPrefix`
-   * (`'interventions'`, literal at every call site already) and each field's
-   * own key, so it is also the one place that can hand the id down as an
-   * explicit value instead.
-   *
-   * @access protected
-   * @since 12.1.0
-   *
-   * @param {InterventionFilterFieldKey} key - The field whose value control is being described.
-   *
-   * @returns {string | undefined} The reason row's `id`, or `undefined` while the field applies normally.
-   */
-  protected describedByFor(key: InterventionFilterFieldKey): string | undefined {
-    return this.isFieldIgnored(key) ? `interventions-filter-reason-${key}` : undefined;
+    return this.changeFilterLabel(this.filterFieldOption(key).fieldLabel);
   }
 
   /** Merges query params into the URL without touching the path. */

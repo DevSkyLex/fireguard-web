@@ -69,11 +69,11 @@
               </td>
 
               <td hlmTableCell class="text-muted-foreground">
-                {{ row.invitation.createdAt | date: 'mediumDate' }}
+                {{ row.invitation.createdAt | appOrgDate: 'date' : regionalFormatting() }}
               </td>
 
               <td hlmTableCell class="text-muted-foreground">
-                {{ row.invitation.expiresAt | date: 'mediumDate' }}
+                {{ row.invitation.expiresAt | appOrgDate: 'date' : regionalFormatting() }}
               </td>
 
               <td hlmTableCell class="text-right">

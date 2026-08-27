@@ -16,6 +16,8 @@ import { idleCallState, successCallState, type CallState } from '@core/request-s
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ChecklistsPage } from '../checklists-page.component';
 
 /**
@@ -91,6 +93,10 @@ describe('ChecklistsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
       ],

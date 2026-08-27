@@ -30,6 +30,7 @@ import {
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import type { CalendarDisplayEvent } from '../../../models/calendar-display-event.interface';
+import type { CalendarFirstDayOfWeek } from '../../../models/calendar-first-day-of-week.type';
 import type { CalendarDaySummary } from './models/calendar-day-summary.interface';
 import {
   buildCalendarMonthDays,
@@ -169,6 +170,21 @@ export class Calendar implements BrnCalendarBase<Date> {
    * @type {InputSignal<boolean>}
    */
   public readonly showToolbar: InputSignal<boolean> = input<boolean>(true);
+
+  /**
+   * Property firstDayOfWeek
+   * @readonly
+   *
+   * @description
+   * The day the rendered week starts on — Monday by default; the host maps
+   * the organization's regional preference onto this generic input.
+   *
+   * @access public
+   * @since 2.2.0
+   * @type {InputSignal<CalendarFirstDayOfWeek>}
+   */
+  public readonly firstDayOfWeek: InputSignal<CalendarFirstDayOfWeek> =
+    input<CalendarFirstDayOfWeek>('monday');
   //#endregion
 
   //#region Properties
@@ -223,7 +239,7 @@ export class Calendar implements BrnCalendarBase<Date> {
    * @type {Signal<Date[]>}
    */
   public readonly days: Signal<Date[]> = computed<Date[]>(() =>
-    buildCalendarMonthDays(this.month()),
+    buildCalendarMonthDays(this.month(), this.firstDayOfWeek()),
   );
 
   /**

@@ -8,16 +8,19 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
+      # Unions with the loopback names baked into the build manifest by
+      # angular.json; the engine merges both sources, it does not replace one.
+      NG_ALLOWED_HOSTS: ${APP_HOST:?APP_HOST is required}
     networks:
       - traefik_proxy
     labels:
       - 'traefik.enable=true'
 
-      - 'traefik.http.routers.fireguard-web-http.rule=Host(`app.fireguard.valentin-fortin.pro`)'
+      - 'traefik.http.routers.fireguard-web-http.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
       - 'traefik.http.routers.fireguard-web-http.entrypoints=web'
       - 'traefik.http.routers.fireguard-web-http.middlewares=fireguard-web-https-redirect'
       - 'traefik.http.middlewares.fireguard-web-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.fireguard-web.rule=Host(`app.fireguard.valentin-fortin.pro`)'
+      - 'traefik.http.routers.fireguard-web.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
       - 'traefik.http.routers.fireguard-web.entrypoints=websecure'
       - 'traefik.http.routers.fireguard-web.tls=true'
       - 'traefik.http.routers.fireguard-web.tls.certresolver=letsencrypt'

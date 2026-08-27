@@ -157,17 +157,27 @@ jobs:
         env:
           APP_HOST: ${{ env.APP_HOST }}
         run: |
+          # `-L` because `/` is a 302 to the locale prefix (`/en`), which is a
+          # correct answer, not a failure. Without it this step failed ten times
+          # against a site that was serving perfectly -- and the container's own
+          # HEALTHCHECK passed all along, because Node's fetch follows redirects.
           attempt=1
           while [ "$attempt" -le 10 ]; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${APP_HOST}/" || echo 000)
+            # curl still emits its `-w` line when it exits non-zero, so a `||`
+            # fallback would append to it rather than replace it. Tolerate the
+            # failure, then fill in only when nothing was written at all.
+            result=$(curl -sSL -o /dev/null -w '%{http_code} %{url_effective}' --max-time 15 "https://${APP_HOST}/") || true
+            [ -n "$result" ] || result="000 -"
+            code=${result%% *}
+            final=${result#* }
             if [ "$code" = "200" ]; then
-              echo "https://${APP_HOST}/ answered 200 after ${attempt} attempt(s)"
+              echo "https://${APP_HOST}/ answered 200 at ${final} after ${attempt} attempt(s)"
               exit 0
             fi
-            echo "attempt ${attempt}/10: HTTP ${code}"
+            echo "attempt ${attempt}/10: HTTP ${code} at ${final}"
             attempt=$((attempt + 1))
             sleep 6
           done
 
-          echo "::error::https://${APP_HOST}/ never answered 200. A plain-text '404 page not found' is Traefik's, not the application's: no router matched the host, so check the container's labels and its attachment to traefik_proxy."
+          echo "::error::https://${APP_HOST}/ never answered 200, redirects followed. A plain-text '404 page not found' is Traefik's, not the application's: no router matched the host, so check the container's labels and its attachment to traefik_proxy."
           exit 1

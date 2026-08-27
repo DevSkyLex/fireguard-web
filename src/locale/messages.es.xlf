@@ -9224,6 +9224,62 @@
         <source> Delete recurrence </source>
         <target>Eliminar recurrencia</target>
       </trans-unit>
+      <trans-unit id="route.accountNotificationPreferences" datatype="html">
+        <source>Notification preferences</source>
+        <target>Preferencias de notificación</target>
+      </trans-unit>
+      <trans-unit id="account.menu.notificationPreferences" datatype="html">
+        <source>Notification preferences</source>
+        <target>Preferencias de notificación</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.title" datatype="html">
+        <source>Notification preferences</source>
+        <target>Preferencias de notificación</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.description" datatype="html">
+        <source> Choose how each category reaches you. Everything is on by default; turning a channel off only stops that delivery — the notifications themselves stay in your in-app list. </source>
+        <target>Elija cómo le llega cada categoría. Todo está activado de forma predeterminada; desactivar un canal solo detiene esa entrega — las notificaciones permanecen en su lista de la aplicación.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.categoryHeader" datatype="html">
+        <source>Category</source>
+        <target>Categoría</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.emailHeader" datatype="html">
+        <source>Email</source>
+        <target>Correo</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.inAppHeader" datatype="html">
+        <source>In-app</source>
+        <target>En la app</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.loadError" datatype="html">
+        <source>Your notification preferences could not be loaded.</source>
+        <target>No se pudieron cargar sus preferencias de notificación.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.saveError" datatype="html">
+        <source>Your notification preferences could not be saved.</source>
+        <target>No se pudieron guardar sus preferencias de notificación.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.retry" datatype="html">
+        <source>Try again</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.emptyCategories" datatype="html">
+        <source>No notification categories are available yet.</source>
+        <target>Todavía no hay categorías de notificación disponibles.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.loading" datatype="html">
+        <source> Loading your notification preferences… </source>
+        <target>Cargando sus preferencias de notificación…</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your notification preferences</source>
+        <target>No se pudieron cargar sus preferencias de notificación</target>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.errorDescription" datatype="html">
+        <source>They can&apos;t be shown or changed until they load.</source>
+        <target>No se pueden mostrar ni cambiar hasta que se carguen.</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

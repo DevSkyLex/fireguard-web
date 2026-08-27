@@ -36,6 +36,8 @@ stores.
 - `/account/security` — authenticator app (TOTP), the two-step password change, active sessions and
   trusted devices
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
+- `/account/notifications/preferences` — the per-category delivery matrix (email / in-app), each
+  switch its own commit
 
 The tree carries `authGuard`: no shell route in this application carries one, and every account
 screen reads or writes the signed-in user.
@@ -52,7 +54,7 @@ none, and nothing on the page changes with the one the sidebar happens to show.
 
 **The account is not a destination of the sidebar's navigation.** That column lists the work; the
 reader reaches their own account through the seat menu pinned at its foot (`AccountMenu`), which
-carries all three sections.
+carries every section.
 
 **The account is read-only until asked otherwise.** The profile shows its values; one Edit control
 swaps the editable group — the two names and the interface language — for its form, in place, next
@@ -83,16 +85,32 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
 - `AccountPasswordChangeStore` — the two-step change, holding the challenge token that ties the
   steps together
 - `AccountTotpEnrollmentStore` — setup, confirm and disable
+- `AccountNotificationPreferencesStore` — the notification preferences matrix. The category list is
+  derived from the type catalog (`GET /api/notification-types`), never hard-coded, so a category
+  added server-side appears without a frontend change. A category with no server row is enabled on
+  every channel — the absence of a row is the "everything enabled" default — and the page merges
+  the explicit rows over that default. The `PATCH` answers with the full customized set, so a
+  successful commit refreshes the canonical rows without another `GET`. A failed commit leaves the
+  canonical rows untouched and raises the error toast, but the flipped switch keeps its local
+  position until the next successful load — the same trade the organization notifications form
+  makes. The matrix is a Signal Forms field tree over the dynamic row list, rendered as a real
+  `<table>`; the in-flight lock deliberately does **not** use the schema's `disabled()` — natively
+  disabling the focused switch mid-save drops keyboard focus (WCAG 2.4.3), so the fields stay
+  enabled, `aria-disabled` marks the lock, and the commit handler plus the store's `exhaustMap`
+  gate the race. Load failures render `@shared/error-state` (with retry) and an empty catalog
+  renders `@shared/empty-state`, inside a polite live region — the toast stays the message
+  channel.
 
 Services:
 
 - `UserProfileService` — `/api/me`, `/api/me/avatar`, `/api/me/password/{request,confirm}`
-- `NotificationService` — `/api/notifications*` (including the bulk `/read-all`),
-  `/api/notification-types`
+- `NotificationService` — `/api/notifications*` (including the bulk `/read-all` and
+  `/notifications/preferences`), `/api/notification-types`
 - `TotpService` — `/api/otp/totp/{setup,confirm,disable}`
 
 Every workflow store dispatches typed outcome events (`accountProfileEditStoreEvents`,
-`accountPasswordChangeStoreEvents`, `accountTotpEnrollmentStoreEvents`). They exist so the app-wide
+`accountPasswordChangeStoreEvents`, `accountTotpEnrollmentStoreEvents`,
+`accountNotificationPreferencesStoreEvents`). They exist so the app-wide
 feedback listener can raise a toast: no account page renders an error surface of its own, because a
 rejected save is a whole-request failure rather than a field problem (`ARCHITECTURE.md` §10.4).
 
@@ -115,8 +133,9 @@ inside a layout: it reads user identity, and rendering location does not transfe
 a user profile exists. The menu consumes `AUTH_LOGOUT_PORT` for sign-out rather than reaching into
 auth state.
 
-It is the **only** way into the account, so it carries all three sections. Adding one to
-`/account` means adding it here too, or it is unreachable.
+It is the **only** way into the account, so it carries every section — the three main pages and
+the notification preferences matrix. Adding a page to `/account` means adding it here too, or it
+is unreachable.
 
 These contracts are intended for shell consumers such as layouts and shared shell widgets,
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.
@@ -179,8 +198,6 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 Backend endpoints exist for these; no frontend model, service method or store does:
 
-- **Notification preferences** — `GET`/`PATCH /api/notifications/preferences` (per-category email
-  and Mercure delivery). Distinct from the bulk `/read-all`, which **is** wired.
 - **Account deactivation** — `POST /api/me/deactivate`. Self-service and irreversible without an
   administrator, so it needs a confirmation surface designed for that.
 

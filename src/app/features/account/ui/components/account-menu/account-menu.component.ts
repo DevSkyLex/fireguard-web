@@ -5,6 +5,7 @@ import {
   lucideBell,
   lucideEllipsisVertical,
   lucideLogOut,
+  lucideSettings2,
   lucideShieldCheck,
   lucideUserRound,
 } from '@ng-icons/lucide';
@@ -75,6 +76,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
       lucideBell,
       lucideEllipsisVertical,
       lucideLogOut,
+      lucideSettings2,
       lucideShieldCheck,
       lucideUserRound,
     }),
@@ -292,6 +294,22 @@ export class AccountMenu {
    */
   protected goToNotifications(): void {
     this.goToSection('notifications');
+  }
+
+  /**
+   * Method goToNotificationPreferences
+   * @method goToNotificationPreferences
+   *
+   * @description
+   * Opens the account workspace on the notification preferences matrix.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected goToNotificationPreferences(): void {
+    void this.router.navigate(['/account', 'notifications', 'preferences']);
   }
 
   /**

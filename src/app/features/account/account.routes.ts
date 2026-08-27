@@ -4,7 +4,7 @@ import { type Routes } from '@angular/router';
  * Constant ACCOUNT_ROUTES
  *
  * @description
- * The three account sections, each a full page in the workspace shell's content
+ * The account sections, each a full page in the workspace shell's content
  * column — never a panel beside another page, and never a second shell.
  *
  * They mount inside the one dashboard shell, alongside the organization tree,
@@ -32,6 +32,17 @@ export const ACCOUNT_ROUTES: Routes = [
       ),
     title: $localize`:@@route.accountSecurity:Security`,
     data: { breadcrumb: $localize`:@@route.accountSecurity:Security` },
+  },
+  {
+    path: 'notifications/preferences',
+    loadComponent: () =>
+      import('./ui/pages/account-notification-preferences-page/account-notification-preferences-page.component').then(
+        (m) => m.AccountNotificationPreferencesPage,
+      ),
+    title: $localize`:@@route.accountNotificationPreferences:Notification preferences`,
+    data: {
+      breadcrumb: $localize`:@@route.accountNotificationPreferences:Notification preferences`,
+    },
   },
   {
     path: 'notifications',

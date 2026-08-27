@@ -1,0 +1,69 @@
+<div class="overflow-hidden rounded-lg border border-border">
+  <table class="w-full border-collapse" aria-describedby="notif-pref-description">
+    <caption class="sr-only" i18n="@@account.notificationPreferences.title">
+      Notification preferences
+    </caption>
+    <thead>
+      <tr class="border-b border-border bg-muted/50">
+        <th
+          scope="col"
+          class="px-4 py-2.5 text-left text-xs font-semibold tracking-tight text-muted-foreground uppercase"
+          i18n="@@account.notificationPreferences.categoryHeader"
+        >
+          Category
+        </th>
+        <th
+          scope="col"
+          id="notif-pref-email-header"
+          class="w-16 px-2 py-2.5 text-center text-xs font-semibold tracking-tight text-muted-foreground uppercase"
+          i18n="@@account.notificationPreferences.emailHeader"
+        >
+          Email
+        </th>
+        <th
+          scope="col"
+          id="notif-pref-in-app-header"
+          class="w-16 px-2 py-2.5 text-center text-xs font-semibold tracking-tight text-muted-foreground uppercase"
+          i18n="@@account.notificationPreferences.inAppHeader"
+        >
+          In-app
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of model(); track row.category; let i = $index) {
+        <tr class="border-b border-border last:border-b-0">
+          <th
+            scope="row"
+            [id]="'notif-pref-cat-' + row.category"
+            class="px-4 py-2 text-left text-sm font-medium text-foreground"
+          >
+            {{ row.label }}
+          </th>
+          <td class="px-2 py-1" [attr.data-testid]="'notif-pref-email-' + row.category">
+            <span class="flex min-h-11 min-w-11 items-center justify-center">
+              <hlm-switch
+                [inputId]="'notif-pref-email-' + row.category"
+                [formField]="preferencesForm[i].emailEnabled"
+                [attr.aria-disabled]="pending() ? true : null"
+                [aria-labelledby]="'notif-pref-cat-' + row.category + ' notif-pref-email-header'"
+                (checkedChange)="commit(i)"
+              />
+            </span>
+          </td>
+          <td class="px-2 py-1" [attr.data-testid]="'notif-pref-in-app-' + row.category">
+            <span class="flex min-h-11 min-w-11 items-center justify-center">
+              <hlm-switch
+                [inputId]="'notif-pref-in-app-' + row.category"
+                [formField]="preferencesForm[i].mercureEnabled"
+                [attr.aria-disabled]="pending() ? true : null"
+                [aria-labelledby]="'notif-pref-cat-' + row.category + ' notif-pref-in-app-header'"
+                (checkedChange)="commit(i)"
+              />
+            </span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

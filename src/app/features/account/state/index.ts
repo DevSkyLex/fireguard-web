@@ -10,3 +10,7 @@ export { AccountProfileEditStore, accountProfileEditStoreEvents } from './profil
 export { AccountPasswordChangeStore, accountPasswordChangeStoreEvents } from './password-change';
 export type { AccountPasswordChangeStep } from './password-change';
 export { AccountTotpEnrollmentStore, accountTotpEnrollmentStoreEvents } from './totp-enrollment';
+export {
+  AccountNotificationPreferencesStore,
+  accountNotificationPreferencesStoreEvents,
+} from './notification-preferences';

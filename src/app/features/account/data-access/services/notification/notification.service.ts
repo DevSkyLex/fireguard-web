@@ -9,7 +9,9 @@ import type {
   MarkAllNotificationsAsReadOutput,
   NotificationListOptions,
   NotificationOutput,
+  NotificationPreferencesOutput,
   NotificationTypeOutput,
+  UpdateNotificationPreferencesInput,
 } from '@features/account/models';
 
 /**
@@ -68,6 +70,22 @@ export class NotificationService extends HydraApiService {
    * @type {string}
    */
   private static readonly INBOX_UNREAD_COUNT_PATH: string = '/api/inbox/unread-count';
+
+  /**
+   * Property PREFERENCES_PATH
+   * @readonly
+   * @static
+   *
+   * @description
+   * API path for the per-category delivery preferences of the authenticated
+   * user.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @type {string}
+   */
+  private static readonly PREFERENCES_PATH: string = '/api/notifications/preferences';
   //#endregion
 
   //#region Public Methods
@@ -220,6 +238,50 @@ export class NotificationService extends HydraApiService {
    */
   public getSubscription(): Observable<MercureSubscriptionOutput> {
     return this.getOne<MercureSubscriptionOutput>(`${NotificationService.BASE_PATH}/subscription`);
+  }
+
+  /**
+   * Method getPreferences
+   * @method getPreferences
+   *
+   * @description
+   * Retrieves the authenticated user's customized per-category delivery
+   * preferences. Categories with no entry in the returned list are enabled on
+   * every channel — the server never backfills defaults.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @return {Observable<NotificationPreferencesOutput>} An observable emitting the customized preference set.
+   */
+  public getPreferences(): Observable<NotificationPreferencesOutput> {
+    return this.getOne<NotificationPreferencesOutput>(NotificationService.PREFERENCES_PATH);
+  }
+
+  /**
+   * Method updatePreferences
+   * @method updatePreferences
+   *
+   * @description
+   * Upserts one or more per-category delivery preferences for the
+   * authenticated user and returns the full customized set. This suppresses
+   * email/Mercure delivery only — matching notifications are still persisted
+   * and remain visible in the in-app list.
+   *
+   * @access public
+   * @since 1.4.0
+   *
+   * @param {UpdateNotificationPreferencesInput} input - The category preference entries to upsert (at least one).
+   *
+   * @return {Observable<NotificationPreferencesOutput>} An observable emitting the updated customized preference set.
+   */
+  public updatePreferences(
+    input: UpdateNotificationPreferencesInput,
+  ): Observable<NotificationPreferencesOutput> {
+    return this.patch<UpdateNotificationPreferencesInput, NotificationPreferencesOutput>(
+      NotificationService.PREFERENCES_PATH,
+      input,
+    );
   }
   //#endregion
 }

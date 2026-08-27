@@ -17,6 +17,10 @@ export type { InboxUnreadCountOutput } from './notification/inbox-unread-count-o
 export type { MarkAllNotificationsAsReadOutput } from './notification/mark-all-notifications-as-read-output.interface';
 export type { NotificationTypeOutput } from './notification/notification-type-output.interface';
 export type { NotificationFilter } from './notification/notification-filter.interface';
+export type { NotificationPreferenceOutput } from './notification/notification-preference-output.interface';
+export type { NotificationPreferencesOutput } from './notification/notification-preferences-output.interface';
+export type { NotificationPreferenceItemInput } from './notification/notification-preference-item-input.interface';
+export type { UpdateNotificationPreferencesInput } from './notification/update-notification-preferences-input.interface';
 export type { NotificationListOptions } from './notification/notification-list-options.interface';
 export type {
   SetupTotpOutput,

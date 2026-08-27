@@ -67,27 +67,57 @@
           >
             Non-conformities
           </h2>
-          @if (canAddNonConformity()) {
+          <div class="flex items-center gap-2">
             <button
               hlmBtn
               type="button"
               variant="outline"
               size="sm"
               class="max-sm:min-h-11"
-              data-testid="inspection-non-conformities-add"
-              (click)="openAddNonConformityDialog()"
+              data-testid="inspection-non-conformities-export"
+              [disabled]="exportDisabled()"
+              [attr.aria-busy]="exportBusy() ? 'true' : null"
+              (click)="exportNonConformitiesCsv()"
             >
-              <span i18n="@@inspection.nc.addButton">Add non-conformity</span>
+              @if (exportBusy()) {
+                <hlm-spinner class="size-4" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+              <span i18n="@@inspection.nc.exportButton">Export</span>
             </button>
-          } @else if (canWrite()) {
-            <p
-              class="text-xs text-muted-foreground"
-              data-testid="inspection-non-conformities-add-closed"
-              i18n="@@inspection.nc.addClosedExplanation"
-            >
-              A closed inspection can no longer record new non-conformities.
-            </p>
-          }
+            @if (exportBusy()) {
+              <span
+                class="sr-only"
+                aria-live="polite"
+                data-testid="inspection-non-conformities-export-status"
+                i18n="@@inspection.nc.exportingStatus"
+              >
+                Preparing the export…
+              </span>
+            }
+            @if (canAddNonConformity()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11"
+                data-testid="inspection-non-conformities-add"
+                (click)="openAddNonConformityDialog()"
+              >
+                <span i18n="@@inspection.nc.addButton">Add non-conformity</span>
+              </button>
+            } @else if (canWrite()) {
+              <p
+                class="text-xs text-muted-foreground"
+                data-testid="inspection-non-conformities-add-closed"
+                i18n="@@inspection.nc.addClosedExplanation"
+              >
+                A closed inspection can no longer record new non-conformities.
+              </p>
+            }
+          </div>
         </div>
 
         <app-non-conformity-list

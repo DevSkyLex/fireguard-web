@@ -13,6 +13,7 @@ export type {
   InspectionListSort,
   InspectionSortField,
 } from './inspection/inspection-list-sort.interface';
+export type { InspectionExportOptions } from './inspection/inspection-export-options.interface';
 export type { CreateInspectionInput } from './inspection/create-inspection-input.interface';
 export type { UpdateInspectionInput } from './inspection/update-inspection-input.interface';
 export type {
@@ -24,6 +25,7 @@ export type {
   NonConformityListFilter,
   NonConformityListOptions,
 } from './non-conformity/non-conformity-list-options.interface';
+export type { NonConformityExportOptions } from './non-conformity/non-conformity-export-options.interface';
 export type { AddNonConformityInput } from './non-conformity/add-non-conformity-input.interface';
 export type { UpdateNonConformityStatusInput } from './non-conformity/update-non-conformity-status-input.interface';
 export type { NonConformityWaivePendingOutput } from './non-conformity/non-conformity-waive-pending-output.interface';

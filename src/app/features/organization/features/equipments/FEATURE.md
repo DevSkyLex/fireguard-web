@@ -42,6 +42,17 @@ This subfeature does not own top-level organization context or inspection workfl
   (`fg-equipment-list` cookie) — the third feature-local occurrence of the
   cookie-preference shape `InterventionListPreferencesService` introduced;
   kept local rather than shared (`ARCHITECTURE.md` §2.9).
+- The list toolbar's **Export** button downloads a server-side CSV
+  (`EquipmentService.exportCsv`, `GET
+/api/organizations/{organizationId}/equipment/export`, mirroring
+  `InterventionService.exportCsv`: direct `this.http` call, `responseType:
+'blob'`, saved through `BrowserDownloadService`). The endpoint accepts
+  **no filter by design** — the export always covers the whole inventory —
+  so any active search or filter raises the
+  `equipment.list.exportFiltersIgnored` warn toast before the download. The
+  server caps the collection at 50,000 rows; the resulting 422's RFC 7807
+  `detail` (read back through `resolveCsvExportErrorDetail`,
+  `@features/organization/utils`) is surfaced as the error toast.
 - `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
   `EquipmentCreateForm` (Signal Forms) asking for the one required field,
   `type`; the five remaining editable properties are filled in afterward, in

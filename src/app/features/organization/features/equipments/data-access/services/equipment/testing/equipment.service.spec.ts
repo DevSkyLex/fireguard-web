@@ -501,4 +501,24 @@ describe('EquipmentService', () => {
       req.flush(null);
     });
   });
+
+  describe('exportCsv', () => {
+    it('reads the CSV export as a blob from the organization equipment export route', () => {
+      const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+      let result: Blob | undefined;
+
+      service.exportCsv(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/export`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+  });
 });

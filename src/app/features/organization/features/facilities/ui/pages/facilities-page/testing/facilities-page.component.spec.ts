@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -10,6 +11,8 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -18,6 +21,7 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityStore } from '@features/organization/features/facilities/state';
 import { FacilitiesPage } from '../facilities-page.component';
@@ -86,6 +90,9 @@ describe('FacilitiesPage', () => {
   let totalRootFacilities: WritableSignal<number>;
   let rootListCallState: WritableSignal<CallState>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let exportCsv: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     loadRootFacilities = vi.fn();
@@ -95,6 +102,9 @@ describe('FacilitiesPage', () => {
     totalRootFacilities = signal<number>(0);
     rootListCallState = signal<CallState>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
+    exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -113,6 +123,8 @@ describe('FacilitiesPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        { provide: FacilityService, useValue: { exportCsv } },
+        { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
@@ -377,6 +389,67 @@ describe('FacilitiesPage', () => {
 
       expect(filterBar()).toBeNull();
       expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  describe('export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalRootFacilities.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+
+      totalRootFacilities.set(3);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should forward the search and archived narrowing, both accepted by the export, without warning', async () => {
+      totalRootFacilities.set(3);
+      fixture = await createPage({ q: 'north' });
+      fixture.componentInstance['includeArchived'].set(true);
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(exportCsv).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][0]).toBe('org-1');
+      expect(exportCsv.mock.calls[0][1]).toEqual({ search: 'north', includeArchived: true });
+      expect(feedbackWarn).not.toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should omit unset narrowing from the export options', async () => {
+      totalRootFacilities.set(3);
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(exportCsv.mock.calls[0][1]).toEqual({ search: undefined, includeArchived: undefined });
+    });
+
+    it('should clear the busy flag and surface an error toast when the export fails', async () => {
+      totalRootFacilities.set(3);
+      exportCsv.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 });

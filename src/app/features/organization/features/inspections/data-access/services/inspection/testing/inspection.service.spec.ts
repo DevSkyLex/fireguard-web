@@ -470,4 +470,81 @@ describe('InspectionService', () => {
       req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
     });
   });
+
+  describe('exportCsv', () => {
+    it('reads the CSV export as a blob from the organization inspections export route', () => {
+      const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+      let result: Blob | undefined;
+
+      service.exportCsv(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(`${inspectionsBaseUrl}/export`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('forwards the accepted narrowing as query params', () => {
+      service
+        .exportCsv(orgId, {
+          status: 'submitted',
+          result: 'fail',
+          facilityId: 'facility-1',
+          performedAtFrom: '2026-01-01T00:00:00Z',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${inspectionsBaseUrl}/export` &&
+          r.params.get('status') === 'submitted' &&
+          r.params.get('result') === 'fail' &&
+          r.params.get('facilityId') === 'facility-1' &&
+          r.params.get('performedAtFrom') === '2026-01-01T00:00:00Z',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
+
+  describe('exportNonConformitiesCsv', () => {
+    it('reads the CSV export as a blob from the organization non-conformities export route', () => {
+      const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+      let result: Blob | undefined;
+
+      service.exportNonConformitiesCsv(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/export`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('forwards severity and status as query params', () => {
+      service.exportNonConformitiesCsv(orgId, { severity: 'critical', status: 'open' }).subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/export` &&
+          r.params.get('severity') === 'critical' &&
+          r.params.get('status') === 'open',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
 });

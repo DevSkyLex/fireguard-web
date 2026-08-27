@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,15 +22,18 @@ import {
   lucideCircleAlert,
   lucideCircleDot,
   lucideClipboardCheck,
+  lucideDownload,
   lucideGauge,
   lucideListFilter,
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   InspectionListOptions,
   InspectionListSort,
@@ -45,6 +49,8 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
   CollectionFilterBar,
   CollectionFilterSelect,
@@ -58,6 +64,7 @@ import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolb
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionTable } from '../../tables/inspection-table';
 
@@ -124,12 +131,14 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
+    HlmSpinner,
   ],
   providers: [
     provideIcons({
       lucideCircleAlert,
       lucideCircleDot,
       lucideClipboardCheck,
+      lucideDownload,
       lucideGauge,
       lucideListFilter,
       lucidePlus,
@@ -276,6 +285,27 @@ export class InspectionsPage {
 
     return this.searchTerm() !== '' || filters.status !== null || filters.result !== null;
   });
+
+  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  private readonly inspectionService: InspectionService = inject(InspectionService);
+
+  /** Hands the export blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Global toast feedback for the export's warn and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight export when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a CSV export is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean =>
+      this.store.isLoadingInspections() || this.exportBusy() || this.store.totalInspections() === 0,
+  );
 
   /** The filter bar's field catalog: status, then result. */
   protected readonly filterFields: readonly CollectionFilterField[] = [
@@ -610,6 +640,59 @@ export class InspectionsPage {
     );
     this.preferences.writeSort(this.sortOrder());
     this.navigateQuery({ page: null });
+  }
+
+  /**
+   * Method exportCsv
+   *
+   * @description
+   * Downloads the organization's inspections as CSV
+   * (`InspectionService.exportCsv`), forwarding the screen's `status` and
+   * `result` narrowing — both of which the export endpoint accepts. The
+   * free-text search is not part of the export's contract, so when one is
+   * active the export is wider than the screen — announced through a warn
+   * toast before the download starts.
+   *
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected exportCsv(): void {
+    if (this.store.totalInspections() === 0) return;
+
+    if (this.searchTerm() !== '') {
+      this.feedback.warn(
+        $localize`:@@inspection.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
+      );
+    }
+
+    const filters = this.filters();
+
+    this.exportBusy.set(true);
+
+    this.inspectionService
+      .exportCsv(this.organizationId(), {
+        status: filters.status ?? undefined,
+        result: filters.result ?? undefined,
+      })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(
+            blob,
+            buildCsvExportFilename('inspections', this.organizationId()),
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@inspection.list.exportFailed:Couldn't export inspections.`,
+            );
+          });
+        },
+      });
   }
 
   /**

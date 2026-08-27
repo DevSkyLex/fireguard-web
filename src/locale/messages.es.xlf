@@ -1618,6 +1618,22 @@
         <source>Assigning…</source>
         <target>Asignando…</target>
       </trans-unit>
+      <trans-unit id="equipment.list.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.exportFiltersIgnored" datatype="html">
+        <source>The export always covers every equipment — the active filters and search were ignored.</source>
+        <target>La exportación siempre cubre todos los equipos — los filtros y la búsqueda activos se ignoraron.</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.exportFailed" datatype="html">
+        <source>Couldn&apos;t export equipment.</source>
+        <target>No se pudieron exportar los equipos.</target>
+      </trans-unit>
       <trans-unit id="equipment.list.errorTitle" datatype="html">
         <source>Couldn't load equipment</source>
         <target>No se pudieron cargar los equipos</target>
@@ -1938,6 +1954,18 @@
         <source>Facilities grid</source>
         <target>Cuadrícula de sitios</target>
       </trans-unit>
+      <trans-unit id="facility.list.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="facility.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
+      </trans-unit>
+      <trans-unit id="facility.list.exportFailed" datatype="html">
+        <source>Couldn&apos;t export facilities.</source>
+        <target>No se pudieron exportar las instalaciones.</target>
+      </trans-unit>
       <trans-unit id="facility.list.errorTitle" datatype="html">
         <source>Couldn't load facilities</source>
         <target>No se pudieron cargar las instalaciones</target>
@@ -2069,6 +2097,22 @@
       <trans-unit id="inspection.nc.title" datatype="html">
         <source>Non-conformities</source>
         <target>No conformidades</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.exportScope" datatype="html">
+        <source>The export covers every non-conformity in the organization, not only this inspection&apos;s.</source>
+        <target>La exportación cubre todas las no conformidades de la organización, no solo las de esta inspección.</target>
+      </trans-unit>
+      <trans-unit id="inspection.nc.exportFailed" datatype="html">
+        <source>Couldn&apos;t export non-conformities.</source>
+        <target>No se pudieron exportar las no conformidades.</target>
       </trans-unit>
       <trans-unit id="inspection.nc.addButton" datatype="html">
         <source>Add non-conformity</source>
@@ -5120,6 +5164,22 @@
         <source>The inspections could not be loaded. Check your connection and try again.</source>
         <target>No se pudieron cargar las inspecciones. Compruebe su conexión e inténtelo de nuevo.</target>
       </trans-unit>
+      <trans-unit id="inspection.list.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.exportFiltersDropped" datatype="html">
+        <source>Some active filters aren&apos;t supported by the export and were left out.</source>
+        <target>Algunos filtros activos no son compatibles con la exportación y se excluyeron.</target>
+      </trans-unit>
+      <trans-unit id="inspection.list.exportFailed" datatype="html">
+        <source>Couldn&apos;t export inspections.</source>
+        <target>No se pudieron exportar las inspecciones.</target>
+      </trans-unit>
       <trans-unit id="inspection.list.errorTitle" datatype="html">
         <source>Couldn't load inspections</source>
         <target>No se pudieron cargar las inspecciones</target>
@@ -7364,6 +7424,22 @@
         <source>Due before</source>
         <target>Vence antes de</target>
       </trans-unit>
+      <trans-unit id="maintenance.list.exportButton" datatype="html">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.exportingStatus" datatype="html">
+        <source>Preparing the export…</source>
+        <target>Preparando la exportación…</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.exportFiltersDropped" datatype="html">
+        <source>Some active filters aren&apos;t supported by the export and were left out.</source>
+        <target>Algunos filtros activos no son compatibles con la exportación y se excluyeron.</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.exportFailed" datatype="html">
+        <source>Couldn&apos;t export maintenance schedules.</source>
+        <target>No se pudieron exportar los calendarios de mantenimiento.</target>
+      </trans-unit>
       <trans-unit id="maintenance.list.errorTitle" datatype="html">
         <source>Couldn&apos;t load maintenance schedules</source>
         <target>No se pudieron cargar los planes de mantenimiento</target>
@@ -9071,18 +9147,6 @@
       <trans-unit id="approvals.list.filtersButton" datatype="html">
         <source>Filters</source>
         <target>Filtros</target>
-      </trans-unit>
-      <trans-unit id="intervention.shell.filterIgnoredStatus" datatype="html">
-        <source>Ignored here — the board&apos;s columns already narrow by status.</source>
-        <target>Sin efecto aquí: las columnas del tablero ya filtran por estado.</target>
-      </trans-unit>
-      <trans-unit id="intervention.shell.filterIgnoredDateRange" datatype="html">
-        <source>Ignored here — the visible month is already the date filter.</source>
-        <target>Sin efecto aquí: el mes visible ya es el filtro de fecha.</target>
-      </trans-unit>
-      <trans-unit id="intervention.shell.filterIgnoredField" datatype="html">
-        <source>Ignored here — this view narrows only by status, type, site and responsible.</source>
-        <target>Sin efecto aquí: esta vista solo filtra por estado, tipo, instalación y responsable.</target>
       </trans-unit>
       <trans-unit id="intervention.recurrences.tab" datatype="html">
         <source>Recurrences</source>

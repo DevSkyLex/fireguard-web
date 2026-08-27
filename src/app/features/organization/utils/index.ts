@@ -1,3 +1,7 @@
+export {
+  buildCsvExportFilename,
+  resolveCsvExportErrorDetail,
+} from './csv-export-error-detail/csv-export-error-detail.utils';
 export { getOrganizationInitials } from './get-organization-initials/get-organization-initials.utils';
 export {
   getOrganizationDashboardHealthComparisonDelta,

@@ -9,6 +9,37 @@
       testIdPrefix="maintenance"
       (visibleChange)="toggleFiltersVisible($event)"
     />
+
+    <div toolbarEnd class="flex items-center gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="max-sm:min-h-11"
+        data-testid="maintenance-export"
+        [disabled]="exportDisabled()"
+        [attr.aria-busy]="exportBusy() ? 'true' : null"
+        (click)="exportCsv()"
+      >
+        @if (exportBusy()) {
+          <hlm-spinner class="size-4" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideDownload" aria-hidden="true" />
+        }
+        <span i18n="@@maintenance.list.exportButton">Export</span>
+      </button>
+      @if (exportBusy()) {
+        <span
+          class="sr-only"
+          aria-live="polite"
+          data-testid="maintenance-export-status"
+          i18n="@@maintenance.list.exportingStatus"
+        >
+          Preparing the export…
+        </span>
+      }
+    </div>
   </app-collection-toolbar>
 
   @if (filtersVisible()) {

@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -23,6 +24,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArchive,
   lucideCircleAlert,
+  lucideDownload,
   lucideLayoutGrid,
   lucideList,
   lucideMap,
@@ -30,9 +32,11 @@ import {
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityListSort,
   FacilityOutput,
@@ -44,6 +48,8 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
   CollectionFilterBar,
   CollectionFilterToggle,
@@ -57,6 +63,7 @@ import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmLabel } from '@shared/ui/label';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityGrid } from '../../dataviews/facility-grid';
 import { FacilityTable } from '../../tables/facility-table';
@@ -121,12 +128,14 @@ type FacilityLayout = 'list' | 'grid';
     HlmButton,
     HlmCheckbox,
     HlmLabel,
+    HlmSpinner,
     ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({
       lucideArchive,
       lucideCircleAlert,
+      lucideDownload,
       lucideLayoutGrid,
       lucideList,
       lucideMap,
@@ -249,6 +258,29 @@ export class FacilitiesPage {
    */
   protected readonly hasSearchOrFilters: Signal<boolean> = computed<boolean>(
     () => this.searchTerm() !== '' || this.includeArchived(),
+  );
+
+  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  private readonly facilityService: FacilityService = inject(FacilityService);
+
+  /** Hands the export blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Global toast feedback for the export's error path. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight export when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a CSV export is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean =>
+      this.store.isLoadingRootFacilities() ||
+      this.exportBusy() ||
+      this.store.totalRootFacilities() === 0,
   );
 
   /** The filter bar's field catalog — a single "show archived" toggle. */
@@ -634,6 +666,52 @@ export class FacilitiesPage {
    */
   protected onRestoreRequested(facility: FacilityOutput): void {
     this.store.restore({ organizationId: this.organizationId(), facilityId: facility.id });
+  }
+
+  /**
+   * Method exportCsv
+   *
+   * @description
+   * Downloads the organization's facilities as CSV
+   * (`FacilityService.exportCsv`), forwarding the screen's active narrowing
+   * — free-text search and "show archived" — both of which the export
+   * endpoint accepts, so the file always matches what the operator is
+   * looking at (the whole tree, not only the visible roots).
+   *
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected exportCsv(): void {
+    if (this.store.totalRootFacilities() === 0) return;
+
+    const search: string = this.searchTerm();
+
+    this.exportBusy.set(true);
+
+    this.facilityService
+      .exportCsv(this.organizationId(), {
+        search: search === '' ? undefined : search,
+        includeArchived: this.includeArchived() || undefined,
+      })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(
+            blob,
+            buildCsvExportFilename('facilities', this.organizationId()),
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@facility.list.exportFailed:Couldn't export facilities.`,
+            );
+          });
+        },
+      });
   }
 
   /**

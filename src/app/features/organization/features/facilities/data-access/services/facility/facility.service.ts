@@ -4,6 +4,7 @@ import { HydraApiService, type PaginationOptions, type RequestOptions } from '@c
 import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityOutput,
+  FacilityExportOptions,
   FacilityListOptions,
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
@@ -96,6 +97,49 @@ export class FacilityService extends HydraApiService {
         itemsPerPage: options?.itemsPerPage,
         sort: options?.sort,
         params,
+      },
+    );
+  }
+
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Reads the organization's facilities export as CSV
+   * (`GET /api/organizations/{organizationId}/facilities/export`),
+   * forwarding the narrowing the endpoint accepts (see
+   * {@link FacilityExportOptions}). The collection is capped server-side at
+   * 50,000 rows; past it the endpoint answers `422` with an RFC 7807
+   * `detail` instead of the file. Calls `this.http` directly for a response
+   * shape (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {FacilityExportOptions} [options] - The narrowing to apply.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportCsv(organizationId: string, options?: FacilityExportOptions): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.includeArchived) params['includeArchived'] = true;
+    if (options?.type) params['type'] = options.type;
+    if (options?.status) params['status'] = options.status;
+    if (options?.parentFacilityId) params['parentFacilityId'] = options.parentFacilityId;
+    if (options?.rootsOnly) params['rootsOnly'] = true;
+    if (options?.code) params['code'] = options.code;
+    if (options?.search) params['search'] = options.search;
+    if (options?.hasCoordinates !== undefined) params['hasCoordinates'] = options.hasCoordinates;
+
+    return this.http.get(
+      this.buildUrl(`${FacilityService.BASE_PATH}/${organizationId}/facilities/export`),
+      {
+        params: this.buildParams({ params }),
+        responseType: 'blob',
+        withCredentials: true,
       },
     );
   }

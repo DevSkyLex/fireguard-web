@@ -211,6 +211,34 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Reads the organization's equipment export as CSV
+   * (`GET /api/organizations/{organizationId}/equipment/export`). The
+   * endpoint accepts no narrowing by design — the export always covers the
+   * organization's entire equipment inventory, whatever the list screen is
+   * currently filtered on. The collection is capped server-side at 50,000
+   * rows; past it the endpoint answers `422` with an RFC 7807 `detail`
+   * instead of the file. Calls `this.http` directly for a response shape
+   * (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportCsv(organizationId: string): Observable<Blob> {
+    return this.http.get(this.buildUrl(`${this.equipmentPath(organizationId)}/export`), {
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
+  /**
    * Method kpis
    * @method kpis
    *

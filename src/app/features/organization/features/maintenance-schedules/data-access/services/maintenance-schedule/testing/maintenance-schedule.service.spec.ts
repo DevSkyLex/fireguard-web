@@ -172,4 +172,49 @@ describe('MaintenanceScheduleService', () => {
       expect(captured).toBeTruthy();
     });
   });
+
+  describe('exportCsv', () => {
+    it('reads the CSV export as a blob, scoped by the organization IRI param', () => {
+      const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+      let result: Blob | undefined;
+
+      service.exportCsv({ organization: '/api/organizations/org-1' }).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${schedulesUrl}/export` &&
+          r.params.get('organization') === '/api/organizations/org-1' &&
+          r.params.keys().length === 1,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('forwards facility, equipmentType and dueStatus as query params', () => {
+      service
+        .exportCsv({
+          organization: '/api/organizations/org-1',
+          facility: '/api/organizations/org-1/facilities/facility-1',
+          equipmentType: 'extinguisher',
+          dueStatus: 'overdue',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${schedulesUrl}/export` &&
+          r.params.get('facility') === '/api/organizations/org-1/facilities/facility-1' &&
+          r.params.get('equipmentType') === 'extinguisher' &&
+          r.params.get('dueStatus') === 'overdue',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
 });

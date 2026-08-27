@@ -29,6 +29,19 @@ This subfeature does not own top-level organization selection. That remains in `
 `map` is listed ahead of `:facilityId` in `FACILITY_ROUTES` so it is never
 swallowed as a facility id.
 
+The list toolbar's **Export** button downloads a server-side CSV
+(`FacilityService.exportCsv`, `GET
+/api/organizations/{organizationId}/facilities/export`, mirroring
+`InterventionService.exportCsv`: direct `this.http` call, `responseType:
+'blob'`, saved through `BrowserDownloadService`). The screen's whole
+narrowing — free-text search and "show archived" — is part of the export's
+contract and is forwarded, so no "filters dropped" warning ever fires here;
+`rootsOnly` is deliberately **not** sent, the file covers the whole tree,
+not only the visible roots. The server caps the collection at 50,000 rows;
+the resulting 422's RFC 7807 `detail` (read back through
+`resolveCsvExportErrorDetail`, `@features/organization/utils`) is surfaced
+as the error toast.
+
 Facility detail routes **seed** facility context without blocking activation:
 `facilityResolver` fires the fetch into `ActiveFacilityStore` and returns
 immediately, the detail page paints a full-page skeleton from the store's

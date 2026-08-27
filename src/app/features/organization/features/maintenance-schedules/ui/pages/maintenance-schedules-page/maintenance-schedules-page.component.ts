@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,23 +15,28 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendar,
   lucideCircleAlert,
   lucideClock,
+  lucideDownload,
   lucideMapPin,
   lucidePackage,
   lucideSparkles,
   lucideTag,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import { take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
   GenerateMaintenanceCampaignInput,
   MaintenanceDueStatus,
@@ -47,6 +53,8 @@ import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
   CollectionFilterBar,
   CollectionFilterDate,
@@ -62,6 +70,7 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-dialog';
 import { MaintenanceOverrideDialog } from '../../dialogs/maintenance-override-dialog';
@@ -158,12 +167,14 @@ interface MaintenanceScheduleFilters {
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
+    HlmSpinner,
   ],
   providers: [
     provideIcons({
       lucideCalendar,
       lucideCircleAlert,
       lucideClock,
+      lucideDownload,
       lucideMapPin,
       lucidePackage,
       lucideSparkles,
@@ -217,6 +228,28 @@ export class MaintenanceSchedulesPage {
 
   /** Navigates to the created intervention after a successful campaign. */
   private readonly router: Router = inject(Router);
+
+  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  private readonly maintenanceScheduleService: MaintenanceScheduleService = inject(
+    MaintenanceScheduleService,
+  );
+
+  /** Hands the export blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Global toast feedback for the export's warn and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight export when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a CSV export is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean => this.store.isLoading() || this.exportBusy() || this.store.totalSchedules() === 0,
+  );
 
   /** The active narrowing. */
   protected readonly filters: WritableSignal<MaintenanceScheduleFilters> =
@@ -649,6 +682,62 @@ export class MaintenanceSchedulesPage {
    */
   protected goToPage(target: number): void {
     this.page.set(Math.min(Math.max(1, target), this.pageCount()));
+  }
+
+  /**
+   * Method exportCsv
+   *
+   * @description
+   * Downloads the organization's maintenance schedules as CSV
+   * (`MaintenanceScheduleService.exportCsv`), forwarding the screen's
+   * `facility`, `equipmentType` and `dueStatus` narrowing — all of which
+   * the export endpoint accepts. `dueBefore` is not part of the export's
+   * contract, so when that bound is active the export is wider than the
+   * screen — announced through a warn toast before the download starts.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected exportCsv(): void {
+    if (this.store.totalSchedules() === 0) return;
+
+    const current: MaintenanceScheduleFilters = this.filters();
+
+    if (current.dueBefore !== null) {
+      this.feedback.warn(
+        $localize`:@@maintenance.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
+      );
+    }
+
+    this.exportBusy.set(true);
+
+    this.maintenanceScheduleService
+      .exportCsv({
+        organization: `/api/organizations/${this.organizationId()}`,
+        facility: current.facility ?? undefined,
+        equipmentType: current.equipmentType ?? undefined,
+        dueStatus: current.dueStatus ?? undefined,
+      })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(
+            blob,
+            buildCsvExportFilename('maintenance-schedules', this.organizationId()),
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ??
+                $localize`:@@maintenance.list.exportFailed:Couldn't export maintenance schedules.`,
+            );
+          });
+        },
+      });
   }
 
   /**

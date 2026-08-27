@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -11,6 +12,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -24,6 +26,7 @@ import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   InspectionOutput,
   NonConformityOutput,
@@ -100,6 +103,9 @@ describe('InspectionDetailPage', () => {
   let addNonConformityCallState: WritableSignal<CallState<NonConformityOutput | null>>;
   let isUpdatingNonConformity: WritableSignal<boolean>;
   let checklistGet: ReturnType<typeof vi.fn>;
+  let exportNonConformitiesCsv: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(InspectionDetailPage);
@@ -134,6 +140,9 @@ describe('InspectionDetailPage', () => {
         name: 'Monthly fire panel check',
       } as unknown as ChecklistOutput),
     );
+    exportNonConformitiesCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -175,6 +184,8 @@ describe('InspectionDetailPage', () => {
           useValue: { hasPermission: (): boolean => true },
         },
         { provide: ChecklistService, useValue: { get: checklistGet } },
+        { provide: InspectionService, useValue: { exportNonConformitiesCsv } },
+        { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
       ],
     });
 
@@ -510,6 +521,49 @@ describe('InspectionDetailPage', () => {
       await fixture.whenStable();
 
       expect(fixture.componentInstance['pendingNonConformityId']()).toBeNull();
+    });
+  });
+
+  describe('non-conformities export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should always warn that the export covers the whole organization, then trigger the download', async () => {
+      await createPage();
+
+      fixture.componentInstance['exportNonConformitiesCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(exportNonConformitiesCsv).toHaveBeenCalledTimes(1);
+      expect(exportNonConformitiesCsv).toHaveBeenCalledWith('org-1');
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should disable the button while an export is in flight', async () => {
+      await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should clear the busy flag and surface an error toast when the export fails', async () => {
+      exportNonConformitiesCsv.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 })),
+      );
+      await createPage();
+
+      fixture.componentInstance['exportNonConformitiesCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 });

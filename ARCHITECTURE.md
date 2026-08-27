@@ -2034,6 +2034,8 @@ HttpClient error (HttpErrorResponse)
 
 No layer skips a step. A page must not read raw `HttpErrorResponse` from a service; it reads the normalized `StoreError` through the store's `CallState` signal (section 10.11).
 
+**Sanctioned exception — one-shot file downloads (section 14.3).** A page-local export/download (CSV, PDF) that holds no list state may call the transport service directly and handle the `HttpErrorResponse` itself (an `exportBusy` signal, a toast built from the RFC 7807 `detail` via `resolveCsvExportErrorDetail`): the flow is a fire-and-forget drain, not store state, and routing it through a store would create a `CallState` no view reads. Exemplars: `InterventionsPage.exportCsv` (the original), the equipment/facility/inspection/non-conformity/maintenance-schedule export buttons.
+
 ### 11.7 Hydra transport model
 
 Collection responses from the API follow the Hydra/JSON-LD envelope. The backend (API Platform 4) uses the **unprefixed** Hydra keys:

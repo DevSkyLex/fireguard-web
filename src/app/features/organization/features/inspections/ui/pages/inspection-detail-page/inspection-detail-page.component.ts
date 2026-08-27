@@ -1,4 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,15 +18,19 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBan, lucideCircleAlert, lucideWrench } from '@ng-icons/lucide';
+import { lucideBan, lucideCircleAlert, lucideDownload, lucideWrench } from '@ng-icons/lucide';
+import { take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   AddNonConformityInput,
   InspectionEditState,
@@ -40,6 +45,8 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -130,7 +137,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideBan, lucideCircleAlert, lucideWrench })],
+  providers: [provideIcons({ lucideBan, lucideCircleAlert, lucideDownload, lucideWrench })],
   templateUrl: './inspection-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -168,6 +175,26 @@ export class InspectionDetailPage {
 
   /** The route-scoped store carrying the update and lifecycle writes. */
   protected readonly store: InspectionStoreType = inject<InspectionStoreType>(InspectionStore);
+
+  /** Transport used directly for the one-shot non-conformities CSV export — a download, not list state. */
+  private readonly inspectionService: InspectionService = inject(InspectionService);
+
+  /** Hands the export blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Global toast feedback for the export's warn and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight export when the page is destroyed. */
+  private readonly exportDestroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a non-conformities CSV export is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the export button should be inert: the section's list still loading, nothing listed at all, or an export already in flight. */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean => this.store.isLoadingNonConformities() || this.exportBusy(),
+  );
 
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -553,6 +580,49 @@ export class InspectionDetailPage {
     if (visible) return;
 
     this.pendingCancel.set(false);
+  }
+
+  /**
+   * Method exportNonConformitiesCsv
+   *
+   * @description
+   * Downloads the organization's non-conformities as CSV
+   * (`InspectionService.exportNonConformitiesCsv`). The export endpoint has
+   * no per-inspection scoping — it always covers the whole organization,
+   * not only the inspection on screen — so a warn toast announces that the
+   * file is wider than the section before the download starts.
+   *
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected exportNonConformitiesCsv(): void {
+    this.feedback.warn(
+      $localize`:@@inspection.nc.exportScope:The export covers every non-conformity in the organization, not only this inspection's.`,
+    );
+
+    this.exportBusy.set(true);
+
+    this.inspectionService
+      .exportNonConformitiesCsv(this.organizationId())
+      .pipe(take(1), takeUntilDestroyed(this.exportDestroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(
+            blob,
+            buildCsvExportFilename('non-conformities', this.organizationId()),
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@inspection.nc.exportFailed:Couldn't export non-conformities.`,
+            );
+          });
+        },
+      });
   }
 
   /**

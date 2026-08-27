@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -10,7 +11,9 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { CookieService } from '@core/cookie';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
@@ -19,6 +22,7 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import { InspectionsPage } from '../inspections-page.component';
@@ -66,6 +70,9 @@ describe('InspectionsPage', () => {
   let listCallState: WritableSignal<CallState>;
   let totalInspections: WritableSignal<number>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let exportCsv: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     load = vi.fn();
@@ -73,6 +80,9 @@ describe('InspectionsPage', () => {
     listCallState = signal<CallState>(idleCallState());
     totalInspections = signal<number>(0);
     hasPermission = vi.fn().mockReturnValue(true);
+    exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -89,6 +99,8 @@ describe('InspectionsPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        { provide: InspectionService, useValue: { exportCsv } },
+        { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         {
           provide: CookieService,
           useValue: { getCookie: vi.fn().mockReturnValue(null), setCookie: vi.fn() },
@@ -314,6 +326,68 @@ describe('InspectionsPage', () => {
 
       expect(filterBar()).toBeNull();
       expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  describe('export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalInspections.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+
+      totalInspections.set(4);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should forward the status and result narrowing, both accepted by the export, without warning', async () => {
+      totalInspections.set(4);
+      fixture = await createPage();
+      fixture.componentInstance['filters'].set({ status: 'submitted', result: 'fail' });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(exportCsv).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][0]).toBe('org-1');
+      expect(exportCsv.mock.calls[0][1]).toEqual({ status: 'submitted', result: 'fail' });
+      expect(feedbackWarn).not.toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should warn that the free-text search is not exportable', async () => {
+      totalInspections.set(4);
+      fixture = await createPage({ q: 'boiler room' });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][1]).toEqual({ status: undefined, result: undefined });
+    });
+
+    it('should clear the busy flag and surface an error toast when the export fails', async () => {
+      totalInspections.set(4);
+      exportCsv.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 });

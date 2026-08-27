@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,15 +21,18 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
   lucideCircleDot,
+  lucideDownload,
   lucidePackage,
   lucidePlus,
   lucideSearch,
   lucideTag,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
   EquipmentListSort,
   EquipmentOutput,
@@ -46,6 +50,8 @@ import {
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
   CollectionFilterBar,
   CollectionFilterSelect,
@@ -59,6 +65,7 @@ import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolb
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTable } from '../../tables/equipment-table';
@@ -121,11 +128,13 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
+    HlmSpinner,
   ],
   providers: [
     provideIcons({
       lucideCircleAlert,
       lucideCircleDot,
+      lucideDownload,
       lucidePackage,
       lucidePlus,
       lucideSearch,
@@ -179,6 +188,21 @@ export class EquipmentsPage {
    */
   protected readonly kpisStore: EquipmentKpisStoreType =
     inject<EquipmentKpisStoreType>(EquipmentKpisStore);
+
+  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  private readonly equipmentService: EquipmentService = inject(EquipmentService);
+
+  /** Hands the export blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Global toast feedback for the export's warn and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight export when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a CSV export is currently in flight. */
+  protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Organization permission checks gating the "New equipment" action. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -263,6 +287,12 @@ export class EquipmentsPage {
 
     return this.searchTerm() !== '' || filters.type !== null || filters.status !== null;
   });
+
+  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  protected readonly exportDisabled: Signal<boolean> = computed(
+    (): boolean =>
+      this.store.isLoadingEquipment() || this.exportBusy() || this.store.totalEquipment() === 0,
+  );
 
   /** The filter bar's field catalog: type, then status. */
   protected readonly filterFields: readonly CollectionFilterField[] = [
@@ -582,6 +612,53 @@ export class EquipmentsPage {
    */
   protected goToPage(target: number): void {
     this.page.set(Math.min(Math.max(1, target), this.pageCount()));
+  }
+
+  /**
+   * Method exportCsv
+   *
+   * @description
+   * Downloads the organization's equipment inventory as CSV
+   * (`EquipmentService.exportCsv`). The endpoint accepts no narrowing by
+   * design, so when the screen is filtered or searched at all the export is
+   * wider than what the operator is looking at — announced through a warn
+   * toast before the download starts.
+   *
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected exportCsv(): void {
+    if (this.store.totalEquipment() === 0) return;
+
+    if (this.hasSearchOrFilters()) {
+      this.feedback.warn(
+        $localize`:@@equipment.list.exportFiltersIgnored:The export always covers every equipment — the active filters and search were ignored.`,
+      );
+    }
+
+    this.exportBusy.set(true);
+
+    this.equipmentService
+      .exportCsv(this.organizationId())
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.exportBusy.set(false);
+          this.browserDownload.trigger(
+            blob,
+            buildCsvExportFilename('equipments', this.organizationId()),
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.exportBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@equipment.list.exportFailed:Couldn't export equipment.`,
+            );
+          });
+        },
+      });
   }
 
   /**

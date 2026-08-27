@@ -10,6 +10,7 @@ export type {
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
 } from './facility/facility-list-options.interface';
+export type { FacilityExportOptions } from './facility/facility-export-options.interface';
 export type { FacilitySortField, FacilityListSort } from './facility/facility-list-sort.interface';
 export type { CreateFacilityInput } from './facility/create-facility-input.interface';
 export type { UpdateFacilityInput } from './facility/update-facility-input.interface';

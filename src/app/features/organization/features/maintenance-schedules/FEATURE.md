@@ -62,6 +62,19 @@ organization is instead a required filter/input field, the same shape
 `InspectionService.listByIntervention` already uses for its own
 canonical-collection bypass.
 
+The list toolbar's **Export** button downloads a server-side CSV
+(`MaintenanceScheduleService.exportCsv`, `GET
+/api/maintenance/schedules/export`, mirroring `InterventionService.exportCsv`:
+direct `this.http` call, `responseType: 'blob'`, saved through
+`BrowserDownloadService`); the organization travels as the same required
+`organization` IRI query parameter the list uses. The screen's
+`facility`/`equipmentType`/`dueStatus` narrowing is forwarded; `dueBefore`
+is **not** part of the export's contract, so an active bound raises the
+`maintenance.list.exportFiltersDropped` warn toast. The server caps the
+collection at 50,000 rows; the resulting 422's RFC 7807 `detail` (read back
+through `resolveCsvExportErrorDetail`, `@features/organization/utils`) is
+surfaced as the error toast.
+
 Every campaign-generation failure — including the backend's documented 422
 "No due maintenance schedules match the given filters." — stays in
 `campaignError` and is rendered inline in `MaintenanceCampaignDialog`, never

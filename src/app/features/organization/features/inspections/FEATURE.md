@@ -123,6 +123,23 @@ Primary service:
   backend's `ListInspectionsProvider` whitelist exactly; `createdAt` is
   whitelisted server-side but has no corresponding table column, so
   `InspectionTable` exposes no head for it.
+  The list toolbar's **Export** button downloads a server-side CSV
+  (`InspectionService.exportCsv`, `GET
+/api/organizations/{organizationId}/inspections/export`, mirroring
+  `InterventionService.exportCsv`: direct `this.http` call, `responseType:
+'blob'`, saved through `BrowserDownloadService`). The screen's
+  `status`/`result` narrowing is forwarded; the free-text search is **not**
+  part of the export's contract, so an active search raises the
+  `inspection.list.exportFiltersDropped` warn toast. The detail page's
+  non-conformities section carries its own **Export**
+  (`InspectionService.exportNonConformitiesCsv`, `GET
+/api/organizations/{organizationId}/non-conformities/export`,
+  `severity`/`status` params) — the endpoint has no per-inspection scoping,
+  so the `inspection.nc.exportScope` warn toast always announces that the
+  file covers the whole organization. Both endpoints cap the collection at
+  50,000 rows; the resulting 422's RFC 7807 `detail` (read back through
+  `resolveCsvExportErrorDetail`, `@features/organization/utils`) is
+  surfaced as the error toast.
   `updateNonConformityStatus` uses `HydraApiService.patchWithStatus`
   (`observe: 'response'`) rather than `patch`, because the endpoint's two
   success statuses carry different, meaningful bodies: a plain **200**

@@ -504,4 +504,48 @@ describe('FacilityService', () => {
       req.flush(duplicated);
     });
   });
+
+  describe('exportCsv', () => {
+    it('reads the CSV export as a blob without params when no option is given', () => {
+      const content = new Blob(['csv-bytes'], { type: 'text/csv' });
+      let result: Blob | undefined;
+
+      service.exportCsv(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/export`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('forwards the accepted narrowing as query params', () => {
+      service
+        .exportCsv(orgId, {
+          includeArchived: true,
+          search: 'north',
+          status: 'active',
+          rootsOnly: true,
+          hasCoordinates: false,
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${facilityBaseUrl}/export` &&
+          r.params.get('includeArchived') === 'true' &&
+          r.params.get('search') === 'north' &&
+          r.params.get('status') === 'active' &&
+          r.params.get('rootsOnly') === 'true' &&
+          r.params.get('hasCoordinates') === 'false',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
 });

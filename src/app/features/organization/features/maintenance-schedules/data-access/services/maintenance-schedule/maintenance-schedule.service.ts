@@ -5,6 +5,7 @@ import type { HydraCollection } from '@core/api/models';
 import type {
   GenerateMaintenanceCampaignInput,
   MaintenanceCampaignOutput,
+  MaintenanceScheduleExportOptions,
   MaintenanceScheduleListOptions,
   MaintenanceScheduleOutput,
   UpdateMaintenanceScheduleInput,
@@ -74,6 +75,43 @@ export class MaintenanceScheduleService extends HydraApiService {
       search: options.search,
       sort: options.sort,
       params,
+    });
+  }
+
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Reads the organization's maintenance-schedules export as CSV
+   * (`GET /api/maintenance/schedules/export`). Like {@link list}, the
+   * organization travels as a required `organization` IRI query parameter;
+   * the optional `facility`/`equipmentType`/`dueStatus` narrowing is
+   * forwarded the same way — `dueBefore` is not part of the export's
+   * contract. The collection is capped server-side at 50,000 rows; past it
+   * the endpoint answers `422` with an RFC 7807 `detail` instead of the
+   * file. Calls `this.http` directly for a response shape
+   * (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {MaintenanceScheduleExportOptions} options - Required `organization` IRI plus optional narrowing.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportCsv(options: MaintenanceScheduleExportOptions): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    params['organization'] = options.organization;
+    if (options.facility) params['facility'] = options.facility;
+    if (options.equipmentType) params['equipmentType'] = options.equipmentType;
+    if (options.dueStatus) params['dueStatus'] = options.dueStatus;
+
+    return this.http.get(this.buildUrl(`${SCHEDULES_PATH}/export`), {
+      params: this.buildParams({ params }),
+      responseType: 'blob',
+      withCredentials: true,
     });
   }
 

@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -10,6 +11,8 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
@@ -18,6 +21,7 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import {
   EquipmentKpisStore,
@@ -66,13 +70,21 @@ describe('EquipmentsPage', () => {
   let navigate: ReturnType<typeof vi.fn>;
   let equipmentList: WritableSignal<readonly EquipmentOutput[]>;
   let listCallState: WritableSignal<CallState>;
+  let totalEquipment: WritableSignal<number>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let exportCsv: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     load = vi.fn();
     equipmentList = signal<readonly EquipmentOutput[]>([]);
     listCallState = signal<CallState>(idleCallState());
+    totalEquipment = signal<number>(0);
     hasPermission = vi.fn().mockReturnValue(true);
+    exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -84,7 +96,7 @@ describe('EquipmentsPage', () => {
             load,
             equipmentList,
             listCallState,
-            totalEquipment: signal(0),
+            totalEquipment,
             isLoadingEquipment: signal(false),
           },
         },
@@ -97,6 +109,8 @@ describe('EquipmentsPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        { provide: EquipmentService, useValue: { exportCsv } },
+        { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
     });
@@ -284,6 +298,75 @@ describe('EquipmentsPage', () => {
 
       expect(filterBar()).toBeNull();
       expect(toggleButton()?.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  describe('export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalEquipment.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+
+      totalEquipment.set(5);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should request the whole-inventory export and trigger the download', async () => {
+      totalEquipment.set(2);
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(exportCsv).toHaveBeenCalledTimes(1);
+      expect(exportCsv).toHaveBeenCalledWith('org-1');
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should warn that every active filter is ignored, since the endpoint accepts none', async () => {
+      totalEquipment.set(2);
+      fixture = await createPage({ q: 'extinguisher' });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(exportCsv).toHaveBeenCalledWith('org-1');
+    });
+
+    it('should not warn when no filter or search is active', async () => {
+      totalEquipment.set(2);
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).not.toHaveBeenCalled();
+    });
+
+    it('should clear the busy flag and surface an error toast when the export fails', async () => {
+      totalEquipment.set(2);
+      exportCsv.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });
 });

@@ -12,7 +12,9 @@ import type {
   AddNonConformityInput,
   UpdateNonConformityStatusInput,
   UpdateNonConformityStatusResult,
+  InspectionExportOptions,
   InspectionListOptions,
+  NonConformityExportOptions,
   NonConformityListOptions,
 } from '@features/organization/features/inspections/models';
 
@@ -342,6 +344,47 @@ export class InspectionService extends HydraApiService {
       `${this.inspectionPath(organizationId, inspectionId)}/close`,
     );
   }
+
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Reads the organization's inspections export as CSV
+   * (`GET /api/organizations/{organizationId}/inspections/export`),
+   * forwarding the narrowing the endpoint accepts (see
+   * {@link InspectionExportOptions}) — free-text search is not part of it.
+   * The collection is capped server-side at 50,000 rows; past it the
+   * endpoint answers `422` with an RFC 7807 `detail` instead of the file.
+   * Calls `this.http` directly for a response shape
+   * (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {InspectionExportOptions} [options] - The narrowing to apply.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportCsv(organizationId: string, options?: InspectionExportOptions): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.equipmentId) params['equipmentId'] = options.equipmentId;
+    if (options?.facilityId) params['facilityId'] = options.facilityId;
+    if (options?.result) params['result'] = options.result;
+    if (options?.status) params['status'] = options.status;
+    if (options?.performedAtFrom) params['performedAtFrom'] = options.performedAtFrom;
+    if (options?.performedAtTo) params['performedAtTo'] = options.performedAtTo;
+    if (options?.inspectorUserId) params['inspectorUserId'] = options.inspectorUserId;
+    if (options?.checklistId) params['checklistId'] = options.checklistId;
+
+    return this.http.get(this.buildUrl(`${this.inspectionPath(organizationId)}/export`), {
+      params: this.buildParams({ params }),
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
   //#endregion
 
   //#region Public Methods — Non-Conformities
@@ -378,6 +421,48 @@ export class InspectionService extends HydraApiService {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,
         params,
+      },
+    );
+  }
+
+  /**
+   * Method exportNonConformitiesCsv
+   * @method exportNonConformitiesCsv
+   *
+   * @description
+   * Reads the organization-wide non-conformities export as CSV
+   * (`GET /api/organizations/{organizationId}/non-conformities/export`),
+   * forwarding the `severity`/`status` narrowing the endpoint accepts (see
+   * {@link NonConformityExportOptions}). There is no per-inspection scoping
+   * — the export always covers the whole organization. The collection is
+   * capped server-side at 50,000 rows; past it the endpoint answers `422`
+   * with an RFC 7807 `detail` instead of the file. Calls `this.http`
+   * directly for a response shape (`responseType: 'blob'`) the base class
+   * does not support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {NonConformityExportOptions} [options] - The narrowing to apply.
+   *
+   * @return {Observable<Blob>} The export's CSV binary content.
+   */
+  public exportNonConformitiesCsv(
+    organizationId: string,
+    options?: NonConformityExportOptions,
+  ): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.severity) params['severity'] = options.severity;
+    if (options?.status) params['status'] = options.status;
+
+    return this.http.get(
+      this.buildUrl(`${InspectionService.BASE_PATH}/${organizationId}/non-conformities/export`),
+      {
+        params: this.buildParams({ params }),
+        responseType: 'blob',
+        withCredentials: true,
       },
     );
   }

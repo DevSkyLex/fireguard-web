@@ -4,6 +4,7 @@ export type {
   MaintenanceScheduleListFilter,
   MaintenanceScheduleListOptions,
 } from './maintenance-schedule/maintenance-schedule-list-options.interface';
+export type { MaintenanceScheduleExportOptions } from './maintenance-schedule/maintenance-schedule-export-options.interface';
 export type { UpdateMaintenanceScheduleInput } from './maintenance-schedule/update-maintenance-schedule-input.interface';
 export type { GenerateMaintenanceCampaignInput } from './maintenance-campaign/generate-maintenance-campaign-input.interface';
 export type { MaintenanceCampaignOutput } from './maintenance-campaign/maintenance-campaign-output.interface';

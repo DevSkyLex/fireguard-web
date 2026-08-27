@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -10,11 +11,13 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
   MaintenanceCampaignOutput,
   MaintenanceScheduleOutput,
@@ -63,6 +66,10 @@ describe('MaintenanceSchedulesPage', () => {
   let campaignResult: WritableSignal<MaintenanceCampaignOutput | null>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
+  let totalSchedules: WritableSignal<number>;
+  let exportCsv: ReturnType<typeof vi.fn>;
+  let feedbackWarn: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   const schedule: MaintenanceScheduleOutput = {
     '@id': '/api/maintenance/schedules/schedule-1',
@@ -85,6 +92,10 @@ describe('MaintenanceSchedulesPage', () => {
     overrideCallState = signal<CallState<MaintenanceScheduleOutput>>(idleCallState());
     campaignResult = signal<MaintenanceCampaignOutput | null>(null);
     hasPermission = vi.fn().mockReturnValue(true);
+    totalSchedules = signal<number>(1);
+    exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    feedbackWarn = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -103,7 +114,7 @@ describe('MaintenanceSchedulesPage', () => {
             resetOverrideOperation,
             resetCampaignOperation,
             schedules: signal<readonly MaintenanceScheduleOutput[]>([schedule]),
-            totalSchedules: signal(1),
+            totalSchedules,
             isLoading: signal(false),
             hasListError: signal(false),
             isOverriding: signal(false),
@@ -114,6 +125,8 @@ describe('MaintenanceSchedulesPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        { provide: MaintenanceScheduleService, useValue: { exportCsv } },
+        { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         {
           provide: FacilityService,
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
@@ -257,5 +270,84 @@ describe('MaintenanceSchedulesPage', () => {
     expect(
       renderPageActions().querySelector('[data-testid="maintenance-generate-campaign"]'),
     ).not.toBeNull();
+  });
+
+  describe('export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalSchedules.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+
+      totalSchedules.set(2);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportDisabled']()).toBe(false);
+
+      fixture.componentInstance['exportBusy'].set(true);
+      expect(fixture.componentInstance['exportDisabled']()).toBe(true);
+    });
+
+    it('should forward the accepted narrowing with the organization IRI, without warning', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['filters'].set({
+        dueStatus: 'overdue',
+        facility: '/api/organizations/org-1/facilities/facility-1',
+        equipmentType: 'extinguisher',
+        dueBefore: null,
+      });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(exportCsv).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][0]).toEqual({
+        organization: '/api/organizations/org-1',
+        facility: '/api/organizations/org-1/facilities/facility-1',
+        equipmentType: 'extinguisher',
+        dueStatus: 'overdue',
+      });
+      expect(feedbackWarn).not.toHaveBeenCalled();
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+    });
+
+    it('should warn that the dueBefore bound is not exportable and leave it out', async () => {
+      fixture = await createPage();
+      fixture.componentInstance['filters'].set({
+        dueStatus: null,
+        facility: null,
+        equipmentType: null,
+        dueBefore: new Date('2026-12-31T00:00:00Z'),
+      });
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(exportCsv.mock.calls[0][0]).toEqual({
+        organization: '/api/organizations/org-1',
+        facility: undefined,
+        equipmentType: undefined,
+        dueStatus: undefined,
+      });
+    });
+
+    it('should clear the busy flag and surface an error toast when the export fails', async () => {
+      exportCsv.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
   });
 });

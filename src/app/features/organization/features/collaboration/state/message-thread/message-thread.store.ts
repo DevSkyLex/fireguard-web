@@ -56,6 +56,7 @@ import {
 } from '@features/organization/features/collaboration/data-access';
 import type {
   AddReactionInput,
+  EditMessageInput,
   MessageOutput,
   MessageReactionOutput,
   PostMessageInput,
@@ -85,6 +86,8 @@ const INITIAL_STATE: MessageThreadState = {
   listCallState: idleCallState(),
   postCallState: idleCallState(),
   interactionCallState: idleCallState(),
+  editCallState: idleCallState(),
+  deleteCallState: idleCallState(),
   realtimeTopic: null,
   pendingMessageIds: [],
   failedMessageIds: [],
@@ -206,8 +209,13 @@ export const MessageThreadStore = signalStore(
   withComputed((store) => ({
     isLoading: computed((): boolean => isCallPending(store.listCallState())),
     isPosting: computed((): boolean => isCallPending(store.postCallState())),
+    isEditing: computed((): boolean => isCallPending(store.editCallState())),
+    isDeleting: computed((): boolean => isCallPending(store.deleteCallState())),
+    isInteracting: computed((): boolean => isCallPending(store.interactionCallState())),
     loadError: computed(() => store.listCallState().error),
     postError: computed(() => store.postCallState().error),
+    editError: computed(() => store.editCallState().error),
+    deleteError: computed(() => store.deleteCallState().error),
 
     /** Whether older messages remain unfetched — that is, pages below the loaded window. */
     hasMore: computed((): boolean => store.oldestLoadedPage() > 1),
@@ -535,6 +543,292 @@ export const MessageThreadStore = signalStore(
           ),
         ),
       ),
+
+      /**
+       * Replaces a message's body.
+       *
+       * Author-only server-side; the UI never offers it to anyone else, and a
+       * `403` still surfaces through the edit dialog's own error. Only the
+       * fields the edit owns are patched from the response — the entity keeps
+       * everything the response could not have changed.
+       */
+      editMessage: rxMethod<{ readonly messageId: string; readonly input: EditMessageInput }>(
+        pipe(
+          tap(() => patchState(store, { editCallState: pendingCallState() })),
+          switchMap(({ messageId, input }) =>
+            service.editMessage(messageId, input).pipe(
+              tapResponse({
+                next: (message: MessageOutput): void => {
+                  patchState(
+                    store,
+                    updateEntity(
+                      {
+                        id: messageId,
+                        changes: {
+                          body: message.body,
+                          mentions: message.mentions,
+                          mentionNames: message.mentionNames,
+                          references: message.references,
+                          editedAt: message.editedAt,
+                          updatedAt: message.updatedAt,
+                        },
+                      },
+                      { collection: 'message' },
+                    ),
+                    { editCallState: successCallState(null) },
+                  );
+                  dispatcher.dispatch(messageThreadStoreEvents.edited(message));
+                },
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { editCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.editFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be edited.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Tombstones a message.
+       *
+       * The server answers `204` and keeps the row, redacting its content at
+       * the API boundary — so the local copy is redacted the same way rather
+       * than removed: readers see "deleted", never a hole. `replyCount` and
+       * the pin survive deliberately, mirroring the contract.
+       */
+      deleteMessage: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { deleteCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.deleteMessage(messageId).pipe(
+              tapResponse({
+                next: (): void => {
+                  patchState(
+                    store,
+                    updateEntity(
+                      {
+                        id: messageId,
+                        changes: {
+                          isDeleted: true,
+                          deletedAt: new Date().toISOString(),
+                          body: undefined,
+                          mentions: [],
+                          mentionNames: {},
+                          attachments: [],
+                          reactions: [],
+                          references: [],
+                        },
+                      },
+                      { collection: 'message' },
+                    ),
+                    { deleteCallState: successCallState(null) },
+                  );
+                  dispatcher.dispatch(messageThreadStoreEvents.deleted(messageId));
+                },
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { deleteCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.deleteFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be deleted.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Pins a message in its conversation.
+       *
+       * Only `pinnedAt`/`pinnedBy` are taken from the response, out of the
+       * same caution the reaction path applies — a fabricated field merged
+       * whole is a silent erasure.
+       */
+      pin: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.pinMessage(messageId).pipe(
+              tapResponse({
+                next: (message: MessageOutput): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      {
+                        id: messageId,
+                        changes: { pinnedAt: message.pinnedAt, pinnedBy: message.pinnedBy },
+                      },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be pinned.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Unpins a message. `204` with no body, so the pin fields are cleared
+       * locally on success — the server treats unpinning an unpinned message
+       * as a no-op, so this can never disagree with it.
+       */
+      unpin: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.unpinMessage(messageId).pipe(
+              tapResponse({
+                next: (): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      { id: messageId, changes: { pinnedAt: undefined, pinnedBy: undefined } },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be unpinned.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Bookmarks a message for the acting member.
+       *
+       * Only `isSaved` is taken from the response: the save handler rebuilds
+       * the message without its real reply count or references.
+       */
+      save: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.saveMessage(messageId).pipe(
+              tapResponse({
+                next: (message: MessageOutput): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      { id: messageId, changes: { isSaved: message.isSaved } },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(storeError, 'The message could not be saved.'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Withdraws the acting member's bookmark. Idempotent `204`, so the flag
+       * is cleared locally on success.
+       */
+      unsave: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { interactionCallState: pendingCallState() })),
+          switchMap((messageId: string) =>
+            service.unsaveMessage(messageId).pipe(
+              tapResponse({
+                next: (): void =>
+                  patchState(
+                    store,
+                    updateEntity(
+                      { id: messageId, changes: { isSaved: false } },
+                      { collection: 'message' },
+                    ),
+                    { interactionCallState: successCallState(null) },
+                  ),
+                error: (error: unknown): void => {
+                  const storeError = toStoreError(error);
+                  patchState(store, { interactionCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.interactionFailed(
+                      toStoreFailureEventPayload(
+                        storeError,
+                        'The message could not be removed from saved.',
+                      ),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Bumps a parent's reply count after a reply posted elsewhere — the
+       * reply sheet owns the write; this keeps the row's counter honest
+       * without a refetch that cannot target one message anyway.
+       */
+      noteReplyPosted(parentMessageId: string): void {
+        const parent: MessageOutput | undefined = store.messageEntityMap()[parentMessageId];
+
+        if (parent === undefined) return;
+
+        patchState(
+          store,
+          updateEntity(
+            { id: parentMessageId, changes: { replyCount: parent.replyCount + 1 } },
+            { collection: 'message' },
+          ),
+        );
+      },
+
+      /**
+       * Clears a message's pin fields after an unpin performed by another
+       * store — the channel info sheet keeps its own pinned list and owns
+       * that write.
+       */
+      noteUnpinned(messageId: string): void {
+        if (store.messageEntityMap()[messageId] === undefined) return;
+
+        patchState(
+          store,
+          updateEntity(
+            { id: messageId, changes: { pinnedAt: undefined, pinnedBy: undefined } },
+            { collection: 'message' },
+          ),
+        );
+      },
 
       /**
        * Puts a failed message back in the queue and asks for a drain now.

@@ -1,0 +1,1 @@
+export { pinnedMessagesStoreEvents } from './events';

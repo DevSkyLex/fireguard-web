@@ -68,6 +68,12 @@ describe('MessageThreadStore', () => {
     postMessageWithClientId: ReturnType<typeof vi.fn>;
     addReaction: ReturnType<typeof vi.fn>;
     removeReaction: ReturnType<typeof vi.fn>;
+    editMessage: ReturnType<typeof vi.fn>;
+    deleteMessage: ReturnType<typeof vi.fn>;
+    pinMessage: ReturnType<typeof vi.fn>;
+    unpinMessage: ReturnType<typeof vi.fn>;
+    saveMessage: ReturnType<typeof vi.fn>;
+    unsaveMessage: ReturnType<typeof vi.fn>;
   };
 
   let conversations: {
@@ -128,6 +134,12 @@ describe('MessageThreadStore', () => {
       postMessageWithClientId: vi.fn(),
       addReaction: vi.fn(),
       removeReaction: vi.fn(),
+      editMessage: vi.fn(),
+      deleteMessage: vi.fn(),
+      pinMessage: vi.fn(),
+      unpinMessage: vi.fn(),
+      saveMessage: vi.fn(),
+      unsaveMessage: vi.fn(),
     };
     realtime = new Subject<unknown>();
     topicStatus = signal<ReadonlyMap<string, MercureConnectionStatus>>(
@@ -575,6 +587,156 @@ describe('MessageThreadStore', () => {
 
     expect(store.loadError()).not.toBeNull();
     expect(store.messageEntities()).toHaveLength(1);
+  });
+
+  describe('message actions', () => {
+    function loadedStore(row: MessageOutput = message()): MessageThreadStoreType {
+      service.list.mockReturnValue(of(collection([row])));
+
+      const store = createStore();
+      store.load('conversation-1');
+
+      return store;
+    }
+
+    it('should patch only what an edit owns, keeping the rest of the row', () => {
+      const store = loadedStore(
+        message({ reactions: [{ emoji: '👍', count: 2, reactedByMe: true }] }),
+      );
+
+      service.editMessage.mockReturnValue(
+        of(
+          message({
+            body: 'Corrigé.',
+            editedAt: '2026-01-02T00:00:00+00:00',
+            reactions: [],
+          }),
+        ),
+      );
+
+      store.editMessage({ messageId: 'message-1', input: { body: 'Corrigé.' } });
+
+      const row = store.messageEntityMap()['message-1'];
+      expect(service.editMessage).toHaveBeenCalledWith('message-1', { body: 'Corrigé.' });
+      expect(row?.body).toBe('Corrigé.');
+      expect(row?.editedAt).toBe('2026-01-02T00:00:00+00:00');
+      expect(row?.reactions).toEqual([{ emoji: '👍', count: 2, reactedByMe: true }]);
+      expect(store.isEditing()).toBe(false);
+      expect(store.editError()).toBeNull();
+    });
+
+    it('should keep an edit failure on the edit call state only', () => {
+      const store = loadedStore();
+
+      service.editMessage.mockReturnValue(
+        throwError(() => ({
+          status: 403,
+          error: { detail: 'Only the message author can edit it.' },
+        })),
+      );
+
+      store.editMessage({ messageId: 'message-1', input: { body: 'Corrigé.' } });
+
+      expect(store.editError()).not.toBeNull();
+      expect(store.messageEntityMap()['message-1']?.body).toBe('Extincteur 3 non conforme.');
+      expect(store.postError()).toBeNull();
+    });
+
+    it('should tombstone a deleted message locally, keeping its reply count', () => {
+      const store = loadedStore(
+        message({ reactions: [{ emoji: '👍', count: 1, reactedByMe: false }] }),
+      );
+
+      service.deleteMessage.mockReturnValue(of(undefined));
+
+      store.deleteMessage('message-1');
+
+      const row = store.messageEntityMap()['message-1'];
+      expect(row?.isDeleted).toBe(true);
+      expect(row?.body).toBeUndefined();
+      expect(row?.reactions).toEqual([]);
+      expect(row?.references).toEqual([]);
+      expect(row?.replyCount).toBe(4);
+      expect(store.deleteError()).toBeNull();
+    });
+
+    it('should keep a delete failure on the delete call state, row intact', () => {
+      const store = loadedStore();
+
+      service.deleteMessage.mockReturnValue(throwError(() => ({ status: 403 })));
+
+      store.deleteMessage('message-1');
+
+      expect(store.deleteError()).not.toBeNull();
+      expect(store.messageEntityMap()['message-1']?.isDeleted).toBe(false);
+    });
+
+    it('should take only the pin fields from a pin response', () => {
+      const store = loadedStore();
+
+      // The pin response fabricates replyCount: 0, so merging it whole would erase the real count.
+      service.pinMessage.mockReturnValue(
+        of(
+          message({
+            pinnedAt: '2026-01-02T00:00:00+00:00',
+            pinnedBy: '/api/organizations/org-1/members/member-2',
+            replyCount: 0,
+          }),
+        ),
+      );
+
+      store.pin('message-1');
+
+      const row = store.messageEntityMap()['message-1'];
+      expect(row?.pinnedAt).toBe('2026-01-02T00:00:00+00:00');
+      expect(row?.pinnedBy).toBe('/api/organizations/org-1/members/member-2');
+      expect(row?.replyCount).toBe(4);
+    });
+
+    it('should clear the pin fields locally on the 204 unpin', () => {
+      const store = loadedStore(
+        message({ pinnedAt: '2026-01-02T00:00:00+00:00', pinnedBy: '/api/x/members/member-2' }),
+      );
+
+      service.unpinMessage.mockReturnValue(of(undefined));
+
+      store.unpin('message-1');
+
+      const row = store.messageEntityMap()['message-1'];
+      expect(row?.pinnedAt).toBeUndefined();
+      expect(row?.pinnedBy).toBeUndefined();
+    });
+
+    it('should take only isSaved from a save response, and clear it on unsave', () => {
+      const store = loadedStore();
+
+      service.saveMessage.mockReturnValue(of(message({ isSaved: true, replyCount: 0 })));
+
+      store.save('message-1');
+      expect(store.messageEntityMap()['message-1']?.isSaved).toBe(true);
+      expect(store.messageEntityMap()['message-1']?.replyCount).toBe(4);
+
+      service.unsaveMessage.mockReturnValue(of(undefined));
+
+      store.unsave('message-1');
+      expect(store.messageEntityMap()['message-1']?.isSaved).toBe(false);
+    });
+
+    it('should bump and note reply and pin facts pushed from sibling stores', () => {
+      const store = loadedStore(
+        message({ pinnedAt: '2026-01-02T00:00:00+00:00', pinnedBy: '/api/x/members/member-2' }),
+      );
+
+      store.noteReplyPosted('message-1');
+      expect(store.messageEntityMap()['message-1']?.replyCount).toBe(5);
+
+      store.noteUnpinned('message-1');
+      expect(store.messageEntityMap()['message-1']?.pinnedAt).toBeUndefined();
+
+      store.noteReplyPosted('missing');
+      store.noteUnpinned('missing');
+      expect(store.messageEntityMap()['missing']).toBeUndefined();
+    });
   });
 
   describe('realtime', () => {

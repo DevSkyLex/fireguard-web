@@ -167,6 +167,51 @@ export class MessageThread {
    * @type {InputSignal<boolean>}
    */
   public readonly canReact: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property canWrite
+   * @readonly
+   *
+   * @description
+   * Whether the reader holds messaging write access, passed to each row's
+   * menu for its reply and pin gates.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property actionsEnabled
+   * @readonly
+   *
+   * @description
+   * Whether rows offer their per-message menu. Off by default so surfaces
+   * without the dialogs and sheets behind it never show dead controls.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly actionsEnabled: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property actionsBusy
+   * @readonly
+   *
+   * @description
+   * Whether a message mutation is in flight, disabling every row's menu items
+   * for the duration.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly actionsBusy: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -244,6 +289,76 @@ export class MessageThread {
    * @type {OutputEmitterRef<void>}
    */
   public readonly loadRetried: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property threadRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id whose reply thread should open.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly threadRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property pinToggleRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants pinned or unpinned.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly pinToggleRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property saveToggleRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants bookmarked or un-bookmarked.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly saveToggleRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property editRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants to edit.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly editRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property deleteRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants deleted.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly deleteRequested: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties

@@ -74,6 +74,16 @@
         <button
           hlmDropdownMenuItem
           class="gap-2"
+          data-testid="channel-conversation-info-action"
+          (click)="infoSheetVisible.set(true)"
+        >
+          <ng-icon name="lucideInfo" class="text-sm" aria-hidden="true" />
+          <span i18n="@@channels.room.info">Channel info</span>
+        </button>
+
+        <button
+          hlmDropdownMenuItem
+          class="gap-2"
           data-testid="channel-conversation-participants-action"
           (click)="participantsSheetVisible.set(true)"
         >
@@ -118,10 +128,18 @@
   [hasMore]="thread.hasMore()"
   [errorMessage]="loadErrorMessage()"
   [canReact]="canWrite()"
+  [canWrite]="canWrite()"
+  [actionsEnabled]="true"
+  [actionsBusy]="thread.isInteracting()"
   (loadMore)="thread.loadOlder()"
   (retried)="thread.retryFailed($event)"
   (loadRetried)="thread.load(channelId())"
   (reactionToggled)="toggleReaction($event)"
+  (threadRequested)="replyTargetId.set($event)"
+  (pinToggleRequested)="togglePin($event)"
+  (saveToggleRequested)="toggleSave($event)"
+  (editRequested)="editTargetId.set($event)"
+  (deleteRequested)="messageDeleteTargetId.set($event)"
   (caughtUp)="markRead()"
 >
   <app-message-composer
@@ -161,4 +179,41 @@
   [error]="deleteDialogError()"
   (visibleChange)="onDeleteDialogStateChanged($event ? 'open' : 'closed')"
   (confirmed)="confirmDelete()"
+/>
+
+<app-channel-info-sheet
+  [visible]="infoSheetVisible()"
+  [channelName]="channelName()"
+  [participants]="participantViews()"
+  [pinned]="pinnedItems()"
+  [loading]="pinnedStore.isLoading()"
+  [pending]="pinnedStore.isUnpinning()"
+  (visibleChange)="infoSheetVisible.set($event)"
+  (unpinned)="unpinFromSheet($event)"
+/>
+
+<app-message-reply-sheet
+  [visible]="replyTargetId() !== null"
+  [parent]="replyTargetView()"
+  [canWrite]="canWrite()"
+  [members]="mentionCandidates()"
+  (visibleChange)="onReplySheetVisibleChange($event)"
+  (replyPosted)="thread.noteReplyPosted($event)"
+/>
+
+<app-message-edit-dialog
+  [visible]="editTargetId() !== null"
+  [message]="editTargetMessage()"
+  [pending]="messageEditBusy()"
+  [error]="messageEditError()"
+  (visibleChange)="onMessageEditDialogVisibleChange($event)"
+  (submitted)="submitMessageEdit($event)"
+/>
+
+<app-message-delete-dialog
+  [visible]="messageDeleteTargetId() !== null"
+  [pending]="messageDeleteBusy()"
+  [error]="messageDeleteError()"
+  (visibleChange)="onMessageDeleteDialogVisibleChange($event)"
+  (confirmed)="confirmMessageDelete()"
 />

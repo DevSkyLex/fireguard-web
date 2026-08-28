@@ -41,10 +41,18 @@
   [hasMore]="thread.hasMore()"
   [errorMessage]="loadErrorMessage()"
   [canReact]="canWrite()"
+  [canWrite]="canWrite()"
+  [actionsEnabled]="true"
+  [actionsBusy]="thread.isInteracting()"
   (loadMore)="thread.loadOlder()"
   (retried)="thread.retryFailed($event)"
   (loadRetried)="thread.load(conversationId())"
   (reactionToggled)="toggleReaction($event)"
+  (threadRequested)="replyTargetId.set($event)"
+  (pinToggleRequested)="togglePin($event)"
+  (saveToggleRequested)="toggleSave($event)"
+  (editRequested)="editTargetId.set($event)"
+  (deleteRequested)="deleteTargetId.set($event)"
   (caughtUp)="markRead()"
 >
   <app-message-composer
@@ -55,3 +63,29 @@
     (sent)="send($event)"
   />
 </app-message-thread>
+
+<app-message-reply-sheet
+  [visible]="replyTargetId() !== null"
+  [parent]="replyTargetView()"
+  [canWrite]="canWrite()"
+  [members]="mentionCandidates()"
+  (visibleChange)="onReplySheetVisibleChange($event)"
+  (replyPosted)="thread.noteReplyPosted($event)"
+/>
+
+<app-message-edit-dialog
+  [visible]="editTargetId() !== null"
+  [message]="editTargetMessage()"
+  [pending]="editDialogBusy()"
+  [error]="editDialogError()"
+  (visibleChange)="onEditDialogVisibleChange($event)"
+  (submitted)="submitEdit($event)"
+/>
+
+<app-message-delete-dialog
+  [visible]="deleteTargetId() !== null"
+  [pending]="deleteDialogBusy()"
+  [error]="deleteDialogError()"
+  (visibleChange)="onDeleteDialogVisibleChange($event)"
+  (confirmed)="confirmDeleteMessage()"
+/>

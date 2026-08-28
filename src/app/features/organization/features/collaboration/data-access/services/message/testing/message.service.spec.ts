@@ -50,6 +50,95 @@ describe('MessageService', () => {
     request.flush(message);
   });
 
+  it('should edit through a merge PATCH on the message route', () => {
+    service.editMessage('m1', { body: 'Corrigé.' }).subscribe();
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1`);
+
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
+    expect(request.request.body).toEqual({ body: 'Corrigé.' });
+    request.flush(message);
+  });
+
+  it('should delete through the message route and complete on 204', () => {
+    let completed = false;
+    service.deleteMessage('m1').subscribe({ complete: () => (completed = true) });
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1`);
+
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    expect(completed).toBe(true);
+  });
+
+  it('should pin and unpin through the pin subresource', () => {
+    service.pinMessage('m1').subscribe();
+    const pin = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1/pin`);
+    expect(pin.request.method).toBe('POST');
+    pin.flush(message);
+
+    service.unpinMessage('m1').subscribe();
+    const unpin = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1/pin`);
+    expect(unpin.request.method).toBe('DELETE');
+    unpin.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('should save and unsave through the save subresource', () => {
+    service.saveMessage('m1').subscribe();
+    const save = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1/save`);
+    expect(save.request.method).toBe('POST');
+    save.flush(message);
+
+    service.unsaveMessage('m1').subscribe();
+    const unsave = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1/save`);
+    expect(unsave.request.method).toBe('DELETE');
+    unsave.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('should list pinned messages under the conversation with its paging', () => {
+    service.listPinned('c1', { page: 2, itemsPerPage: 100 }).subscribe();
+
+    const request = httpMock.expectOne(
+      (candidate) =>
+        candidate.url === `${mockEnv.apiUrl}/api/conversations/c1/pinned-messages` &&
+        candidate.params.get('page') === '2' &&
+        candidate.params.get('itemsPerPage') === '100',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
+  it('should list saved messages with the required organization filter', () => {
+    service.listSaved({ organization: 'org-1', page: 1, itemsPerPage: 30 }).subscribe();
+
+    const request = httpMock.expectOne(
+      (candidate) =>
+        candidate.url === `${mockEnv.apiUrl}/api/saved-messages` &&
+        candidate.params.get('organization') === 'org-1' &&
+        candidate.params.get('page') === '1',
+    );
+
+    expect(request.request.method).toBe('GET');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
+  it('should post and list replies under the parent message', () => {
+    service.postReply('m1', { body: 'Réponse.' }).subscribe();
+    const post = httpMock.expectOne(`${mockEnv.apiUrl}/api/messages/m1/replies`);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ body: 'Réponse.' });
+    post.flush(message);
+
+    service.listReplies('m1', { page: 1, itemsPerPage: 100 }).subscribe();
+    const list = httpMock.expectOne(
+      (candidate) => candidate.url === `${mockEnv.apiUrl}/api/messages/m1/replies`,
+    );
+    expect(list.request.method).toBe('GET');
+    list.flush({ member: [], totalItems: 0 });
+  });
+
   it('should surface the replay conflict rather than swallowing it', () => {
     let status = 0;
     service

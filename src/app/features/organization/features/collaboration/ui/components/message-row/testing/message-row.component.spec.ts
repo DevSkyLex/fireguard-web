@@ -13,6 +13,11 @@ function view(overrides: Partial<MessageView> = {}): MessageView {
     isDeleted: false,
     isOwn: false,
     status: 'sent',
+    isPinned: false,
+    isSaved: false,
+    replyCount: 0,
+    canEdit: false,
+    canDelete: false,
     reactions: [],
     ...overrides,
   };
@@ -87,5 +92,64 @@ describe('MessageRow', () => {
     await render(view({ editedAt: '2026-01-01T10:00:00+00:00' }));
 
     expect(text()).toContain('Edited');
+  });
+
+  it('should mark a pinned message', async () => {
+    await render(view({ isPinned: true }));
+
+    expect(text()).toContain('Pinned');
+  });
+
+  it('should hide the actions trigger unless a surface enables it', async () => {
+    await render(view());
+
+    expect(fixture.nativeElement.querySelector('[data-testid="message-row-actions"]')).toBeNull();
+  });
+
+  it('should show the actions trigger once enabled, on sent messages only', async () => {
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view());
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-row-actions"]'),
+    ).not.toBeNull();
+
+    // An optimistic row has no server id anything could act on.
+    await render(view({ status: 'pending' }));
+    expect(fixture.nativeElement.querySelector('[data-testid="message-row-actions"]')).toBeNull();
+  });
+
+  it('should hide the trigger when no item survives the permission gates', async () => {
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view({ isDeleted: true, bodyHtml: '', replyCount: 0 }));
+
+    // A tombstone without replies offers nothing a reader may do.
+    expect(fixture.nativeElement.querySelector('[data-testid="message-row-actions"]')).toBeNull();
+  });
+
+  it('should keep the thread reachable on a tombstone that has replies', async () => {
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view({ isDeleted: true, bodyHtml: '', replyCount: 2 }));
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-row-actions"]'),
+    ).not.toBeNull();
+  });
+
+  it('should surface the reply count and open the thread from it', async () => {
+    const requested: string[] = [];
+    fixture.componentInstance.threadRequested.subscribe((id: string) => requested.push(id));
+
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view({ replyCount: 2 }));
+
+    const counter = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="message-row-replies"]',
+    );
+
+    expect(counter?.textContent).toContain('2 replies');
+    counter?.click();
+    await fixture.whenStable();
+
+    expect(requested).toEqual(['message-1']);
   });
 });

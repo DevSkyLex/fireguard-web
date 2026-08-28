@@ -2,6 +2,7 @@
 
 <div
   hlmMessage
+  class="group/row"
   [align]="entry.isOwn ? 'end' : 'start'"
   data-testid="message-row"
   [class.pb-4]="entry.reactions.length > 0"
@@ -29,27 +30,169 @@
       </div>
     }
 
-    <div hlmBubble [variant]="bubbleVariant()" [class.opacity-60]="entry.status === 'pending'">
-      <div hlmBubbleContent [class.border-dashed]="entry.isDeleted">
-        @if (entry.isDeleted) {
-          <span class="italic">{{ deletedLabel }}</span>
-        } @else {
-          <div
-            class="break-words whitespace-pre-wrap [&_a]:underline"
-            [innerHTML]="entry.bodyHtml"
-          ></div>
+    <div
+      class="flex items-start gap-1"
+      [class.flex-row-reverse]="entry.isOwn"
+      [class.self-end]="entry.isOwn"
+    >
+      <div hlmBubble [variant]="bubbleVariant()" [class.opacity-60]="entry.status === 'pending'">
+        <div hlmBubbleContent [class.border-dashed]="entry.isDeleted">
+          @if (entry.isDeleted) {
+            <span class="italic">{{ deletedLabel }}</span>
+          } @else {
+            <div
+              class="break-words whitespace-pre-wrap [&_a]:underline"
+              [innerHTML]="entry.bodyHtml"
+            ></div>
+          }
+        </div>
+
+        @if (!entry.isDeleted) {
+          <app-message-reactions
+            [reactions]="entry.reactions"
+            [canReact]="canReact()"
+            [align]="entry.isOwn ? 'start' : 'end'"
+            (toggled)="reactionToggled.emit({ messageId: entry.id, emoji: $event })"
+          />
         }
       </div>
 
-      @if (!entry.isDeleted) {
-        <app-message-reactions
-          [reactions]="entry.reactions"
-          [canReact]="canReact()"
-          [align]="entry.isOwn ? 'start' : 'end'"
-          (toggled)="reactionToggled.emit({ messageId: entry.id, emoji: $event })"
-        />
+      @if (hasActions()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          class="shrink-0 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100 max-sm:opacity-100"
+          data-testid="message-row-actions"
+          [hlmDropdownMenuTrigger]="messageActionsMenu"
+          [align]="entry.isOwn ? 'end' : 'start'"
+          i18n-aria-label="@@messages.row.actionsAria"
+          aria-label="Message actions"
+        >
+          <ng-icon name="lucideEllipsis" class="text-sm" aria-hidden="true" />
+        </button>
+
+        <ng-template #messageActionsMenu>
+          <hlm-dropdown-menu class="min-w-48">
+            <hlm-dropdown-menu-group>
+              @if (showThreadItem()) {
+                <button
+                  hlmDropdownMenuItem
+                  class="gap-2"
+                  data-testid="message-action-thread"
+                  (click)="threadRequested.emit(entry.id)"
+                >
+                  <ng-icon name="lucideMessageSquareReply" class="text-sm" aria-hidden="true" />
+                  @if (entry.replyCount > 0) {
+                    <span i18n="@@messages.row.viewThread">View thread</span>
+                  } @else {
+                    <span i18n="@@messages.row.replyInThread">Reply in thread</span>
+                  }
+                </button>
+              }
+
+              @if (showPinItem()) {
+                <button
+                  hlmDropdownMenuItem
+                  class="gap-2"
+                  data-testid="message-action-pin"
+                  [disabled]="actionsBusy()"
+                  (click)="pinToggleRequested.emit(entry.id)"
+                >
+                  <ng-icon
+                    [name]="entry.isPinned ? 'lucidePinOff' : 'lucidePin'"
+                    class="text-sm"
+                    aria-hidden="true"
+                  />
+                  @if (entry.isPinned) {
+                    <span i18n="@@messages.row.unpin">Unpin</span>
+                  } @else {
+                    <span i18n="@@messages.row.pin">Pin</span>
+                  }
+                </button>
+              }
+
+              @if (showSaveItem()) {
+                <button
+                  hlmDropdownMenuItem
+                  class="gap-2"
+                  data-testid="message-action-save"
+                  [disabled]="actionsBusy()"
+                  (click)="saveToggleRequested.emit(entry.id)"
+                >
+                  <ng-icon
+                    [name]="entry.isSaved ? 'lucideBookmarkX' : 'lucideBookmark'"
+                    class="text-sm"
+                    aria-hidden="true"
+                  />
+                  @if (entry.isSaved) {
+                    <span i18n="@@messages.row.unsave">Remove from saved</span>
+                  } @else {
+                    <span i18n="@@messages.row.save">Save for later</span>
+                  }
+                </button>
+              }
+
+              @if (entry.canEdit) {
+                <button
+                  hlmDropdownMenuItem
+                  class="gap-2"
+                  data-testid="message-action-edit"
+                  [disabled]="actionsBusy()"
+                  (click)="editRequested.emit(entry.id)"
+                >
+                  <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
+                  <span i18n="@@messages.row.edit">Edit</span>
+                </button>
+              }
+            </hlm-dropdown-menu-group>
+
+            @if (entry.canDelete) {
+              <hlm-dropdown-menu-separator />
+
+              <button
+                hlmDropdownMenuItem
+                variant="destructive"
+                class="gap-2"
+                data-testid="message-action-delete"
+                [disabled]="actionsBusy()"
+                (click)="deleteRequested.emit(entry.id)"
+              >
+                <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
+                <span i18n="@@messages.row.delete">Delete</span>
+              </button>
+            }
+          </hlm-dropdown-menu>
+        </ng-template>
       }
     </div>
+
+    @if (entry.replyCount > 0 && actionsEnabled()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="h-6 w-fit gap-1 px-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+        [class.self-end]="entry.isOwn"
+        data-testid="message-row-replies"
+        (click)="threadRequested.emit(entry.id)"
+      >
+        <ng-icon name="lucideMessageSquareReply" class="text-xs" aria-hidden="true" />
+        <span i18n="@@messages.row.replyCount">{entry.replyCount, plural,
+          one {1 reply}
+          other {{{ entry.replyCount }} replies}
+        }</span>
+      </button>
+    }
+
+    @if (entry.isPinned) {
+      <div hlmMessageFooter class="gap-1" [class.self-end]="entry.isOwn">
+        <ng-icon name="lucidePin" class="text-xs" aria-hidden="true" />
+        <span i18n="@@messages.row.pinned">Pinned</span>
+      </div>
+    }
 
     @if (entry.status === 'failed') {
       <div hlmMessageFooter class="gap-1.5 text-destructive">

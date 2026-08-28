@@ -12,7 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePenLine } from '@ng-icons/lucide';
+import { lucideBookmark, lucidePenLine } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type {
   ConversationOutput,
@@ -102,7 +102,7 @@ import { DirectMessageCreateDialog } from '../../dialogs/direct-message-create-d
     HlmSidebarMenuSkeleton,
     DirectMessageCreateDialog,
   ],
-  providers: [provideIcons({ lucidePenLine })],
+  providers: [provideIcons({ lucideBookmark, lucidePenLine })],
   templateUrl: './direct-messages-nav.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

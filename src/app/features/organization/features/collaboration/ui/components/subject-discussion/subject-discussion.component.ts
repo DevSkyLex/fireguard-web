@@ -214,6 +214,8 @@ export class SubjectDiscussion {
         ownMemberIri: memberIriOf(this.memberAccess.profile()),
         directory: this.directory.isAvailable() ? this.directory.byId() : null,
         unknownMemberLabel: this.unknownMemberLabel,
+        canWrite: false,
+        canManage: false,
       }),
   );
 

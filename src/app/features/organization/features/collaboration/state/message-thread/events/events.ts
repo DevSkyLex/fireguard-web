@@ -22,6 +22,12 @@ export const messageThreadStoreEvents = eventGroup({
     postFailed: type<StoreFailureEventPayload>(),
     loadFailed: type<StoreFailureEventPayload>(),
     interactionFailed: type<StoreFailureEventPayload>(),
+    /** A message edit was persisted; the page closes its edit dialog on this. */
+    edited: type<MessageOutput>(),
+    editFailed: type<StoreFailureEventPayload>(),
+    /** A message was tombstoned; carries its id so the page closes its confirm. */
+    deleted: type<string>(),
+    deleteFailed: type<StoreFailureEventPayload>(),
     /** A conversation was marked read; carries its bare id so sidebar lists can clear the badge. */
     conversationRead: type<string>(),
   },

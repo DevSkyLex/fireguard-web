@@ -26,4 +26,14 @@ export interface BuildMessageViewsInput {
   readonly directory: ReadonlyMap<string, MemberDirectoryEntry> | null;
   /** Stands in wherever a member cannot be named. Never a raw id. */
   readonly unknownMemberLabel: string;
+  /**
+   * Whether the reader holds `organization.messaging.write`, which gates
+   * editing their own messages (and, on the surface, replying and pinning).
+   */
+  readonly canWrite: boolean;
+  /**
+   * Whether the reader holds `organization.messaging.manage`, which lets
+   * them delete another member's message.
+   */
+  readonly canManage: boolean;
 }

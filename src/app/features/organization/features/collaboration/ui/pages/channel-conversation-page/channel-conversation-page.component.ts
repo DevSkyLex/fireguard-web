@@ -18,6 +18,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
   lucideEllipsisVertical,
+  lucideInfo,
   lucidePencilLine,
   lucideStar,
   lucideTrash2,
@@ -31,6 +32,7 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type {
   ChannelOutput,
   ChannelParticipantOutput,
+  MessageOutput,
   MessageReactionToggle,
   MessageView,
 } from '@features/organization/features/collaboration/models';
@@ -39,13 +41,17 @@ import {
   ChannelsStore,
   channelsStoreEvents,
   MessageThreadStore,
+  PinnedMessagesStore,
+  pinnedMessagesStoreEvents,
   type ChannelParticipantsStoreType,
   type ChannelsStoreType,
   type MessageThreadStoreType,
+  type PinnedMessagesStoreType,
 } from '@features/organization/features/collaboration/state';
 import {
   buildMessageViews,
   memberIriOf,
+  renderMessageBodyHtml,
 } from '@features/organization/features/collaboration/utils';
 import {
   ORGANIZATION_PERMISSION,
@@ -72,11 +78,15 @@ import {
 import { MessageThread } from '../../components/message-thread';
 import { ChannelDeleteDialog } from '../../dialogs/channel-delete-dialog';
 import { ChannelEditDialog, type ChannelEditDraft } from '../../dialogs/channel-edit-dialog';
+import { MessageDeleteDialog } from '../../dialogs/message-delete-dialog';
+import { MessageEditDialog } from '../../dialogs/message-edit-dialog';
 import { MessageComposer } from '../../forms/message-composer';
+import { ChannelInfoSheet, type PinnedMessageItem } from '../../sheets/channel-info-sheet';
 import {
   ChannelParticipantsSheet,
   type ChannelParticipantView,
 } from '../../sheets/channel-participants-sheet';
+import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 
 /**
  * Component ChannelConversationPage
@@ -121,6 +131,7 @@ import {
     NgIcon,
     RouterLink,
     ChannelDeleteDialog,
+    ChannelInfoSheet,
     ChannelParticipantsSheet,
     ChannelEditDialog,
     HlmButton,
@@ -130,14 +141,19 @@ import {
     HlmDropdownMenuSeparator,
     HlmDropdownMenuTrigger,
     MessageComposer,
+    MessageDeleteDialog,
+    MessageEditDialog,
+    MessageReplySheet,
     MessageThread,
   ],
   providers: [
     MessageThreadStore,
     ChannelParticipantsStore,
+    PinnedMessagesStore,
     provideIcons({
       lucideArrowLeft,
       lucideEllipsisVertical,
+      lucideInfo,
       lucidePencilLine,
       lucideStar,
       lucideTrash2,
@@ -210,6 +226,21 @@ export class ChannelConversationPage {
    */
   protected readonly participantsStore: ChannelParticipantsStoreType =
     inject<ChannelParticipantsStoreType>(ChannelParticipantsStore);
+
+  /**
+   * Property pinnedStore
+   * @readonly
+   *
+   * @description
+   * This channel's pinned messages, loaded when the info sheet opens.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {PinnedMessagesStoreType}
+   */
+  protected readonly pinnedStore: PinnedMessagesStoreType =
+    inject<PinnedMessagesStoreType>(PinnedMessagesStore);
 
   /**
    * Property channel
@@ -321,6 +352,8 @@ export class ChannelConversationPage {
         ownMemberIri: memberIriOf(this.memberAccess.profile()),
         directory: this.directory.isAvailable() ? this.directory.byId() : null,
         unknownMemberLabel: this.unknownMemberLabel,
+        canWrite: this.canWrite(),
+        canManage: this.canManage(),
       }),
   );
 
@@ -556,6 +589,139 @@ export class ChannelConversationPage {
   protected readonly participantsSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property infoSheetVisible
+   * @readonly
+   *
+   * @description
+   * Whether the channel info sheet — name, roster, pinned messages — is
+   * open. Opening it is what triggers the pinned list's read.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly infoSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pinnedItems
+   * @readonly
+   *
+   * @description
+   * The pinned messages as the info sheet lists them: rendered, named, and
+   * carrying whether the reader may unpin each — the pinning member or a
+   * manager, mirroring the server's own rule.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly PinnedMessageItem[]>}
+   */
+  protected readonly pinnedItems: Signal<readonly PinnedMessageItem[]> = computed(
+    (): readonly PinnedMessageItem[] => {
+      const ownMemberIri: string | null = memberIriOf(this.memberAccess.profile());
+      const canManage: boolean = this.canManage();
+
+      return this.pinnedStore.sortedPins().map((message: MessageOutput): PinnedMessageItem => ({
+        id: message.id,
+        authorName: message.authorDisplayName ?? this.unknownMemberLabel,
+        createdAt: message.createdAt,
+        bodyHtml: renderMessageBodyHtml(
+          message.body,
+          message.mentionNames,
+          this.unknownMemberLabel,
+        ),
+        isDeleted: message.isDeleted,
+        canUnpin: canManage || (ownMemberIri !== null && message.pinnedBy === ownMemberIri),
+      }));
+    },
+  );
+
+  /**
+   * Property replyTargetId
+   * @readonly
+   *
+   * @description
+   * The message whose reply thread is open in the side sheet, or `null`.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly replyTargetId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property replyTargetView
+   * @readonly
+   *
+   * @description
+   * The reply sheet's parent, drawn from the same views the thread renders.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<MessageView | null>}
+   */
+  protected readonly replyTargetView: Signal<MessageView | null> = computed(
+    (): MessageView | null =>
+      this.messages().find((view: MessageView): boolean => view.id === this.replyTargetId()) ??
+      null,
+  );
+
+  /**
+   * Property editTargetId
+   * @readonly
+   *
+   * @description
+   * The message being edited, or `null` while the edit dialog is closed.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly editTargetId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property editTargetMessage
+   * @readonly
+   *
+   * @description
+   * The edit dialog's message in transport form — it needs the raw body and
+   * the mention names, which the rendered view no longer carries.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<MessageOutput | null>}
+   */
+  protected readonly editTargetMessage: Signal<MessageOutput | null> = computed(
+    (): MessageOutput | null => {
+      const messageId: string | null = this.editTargetId();
+
+      return messageId === null ? null : (this.thread.messageEntityMap()[messageId] ?? null);
+    },
+  );
+
+  /**
+   * Property messageDeleteTargetId
+   * @readonly
+   *
+   * @description
+   * The message awaiting delete confirmation, or `null`. Named apart from
+   * the channel's own delete flow, which this page also hosts.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly messageDeleteTargetId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
    * Property deletePending
    * @readonly
    *
@@ -617,6 +783,82 @@ export class ChannelConversationPage {
    * @type {Signal<StoreError | null>}
    */
   protected readonly deleteDialogError: Signal<StoreError | null> = this.deleteGate.error;
+
+  /**
+   * Property messageEditGate
+   * @readonly
+   *
+   * @description
+   * The message edit dialog's claim on the thread's edit state; success
+   * closes the dialog.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {SubmissionGate}
+   */
+  private readonly messageEditGate: SubmissionGate = inject<SubmissionGateService>(
+    SubmissionGateService,
+  ).create(this.thread.editCallState, { onSuccess: (): void => this.editTargetId.set(null) });
+
+  /**
+   * Property messageDeleteGate
+   * @readonly
+   *
+   * @description
+   * The message delete confirmation's claim on the thread's delete state;
+   * success closes the confirm.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {SubmissionGate}
+   */
+  private readonly messageDeleteGate: SubmissionGate = inject<SubmissionGateService>(
+    SubmissionGateService,
+  ).create(this.thread.deleteCallState, {
+    onSuccess: (): void => this.messageDeleteTargetId.set(null),
+  });
+
+  /**
+   * Property messageEditBusy
+   * @readonly
+   * @description Whether the submitted message edit is in flight.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly messageEditBusy: Signal<boolean> = this.messageEditGate.isBusy;
+
+  /**
+   * Property messageEditError
+   * @readonly
+   * @description The message edit's own error, scoped to a submit from this dialog.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly messageEditError: Signal<StoreError | null> = this.messageEditGate.error;
+
+  /**
+   * Property messageDeleteBusy
+   * @readonly
+   * @description Whether the confirmed message delete is in flight.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly messageDeleteBusy: Signal<boolean> = this.messageDeleteGate.isBusy;
+
+  /**
+   * Property messageDeleteError
+   * @readonly
+   * @description The message delete's own error, scoped to a confirm from this dialog.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly messageDeleteError: Signal<StoreError | null> = this.messageDeleteGate.error;
 
   /**
    * Property favoritePending
@@ -714,6 +956,12 @@ export class ChannelConversationPage {
       const organizationId: string | null = this.organizationContext.selectedOrganizationId();
 
       untracked((): void => {
+        this.replyTargetId.set(null);
+        this.editTargetId.set(null);
+        this.messageDeleteTargetId.set(null);
+        this.infoSheetVisible.set(false);
+        this.pinnedStore.reset();
+
         this.thread.reset();
         this.thread.load(channelId);
         this.thread.connect(channelId);
@@ -727,6 +975,23 @@ export class ChannelConversationPage {
         if (organizationId !== null) this.directory.ensureLoaded(organizationId);
       });
     });
+
+    effect((): void => {
+      if (!this.infoSheetVisible()) return;
+
+      const channelId: string = this.channelId();
+
+      untracked((): void => {
+        this.pinnedStore.load(channelId);
+      });
+    });
+
+    this.events
+      .on(pinnedMessagesStoreEvents.unpinned)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }: { payload: string }): void => {
+        this.thread.noteUnpinned(payload);
+      });
 
     this.events
       .on(channelsStoreEvents.deleted)
@@ -774,6 +1039,189 @@ export class ChannelConversationPage {
    */
   protected toggleReaction(toggle: MessageReactionToggle): void {
     this.thread.toggleReaction(toggle.messageId, toggle.emoji);
+  }
+
+  /**
+   * Method togglePin
+   * @method togglePin
+   *
+   * @description
+   * Pins or unpins a message. The direction is resolved here because the
+   * thread holds the state the row was drawn from.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} messageId - The pressed row's message.
+   *
+   * @returns {void}
+   */
+  protected togglePin(messageId: string): void {
+    const message: MessageOutput | undefined = this.thread.messageEntityMap()[messageId];
+
+    if (message === undefined) return;
+
+    if (message.pinnedAt !== undefined) {
+      this.thread.unpin(messageId);
+
+      return;
+    }
+
+    this.thread.pin(messageId);
+  }
+
+  /**
+   * Method toggleSave
+   * @method toggleSave
+   *
+   * @description
+   * Bookmarks or un-bookmarks a message for the reader.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} messageId - The pressed row's message.
+   *
+   * @returns {void}
+   */
+  protected toggleSave(messageId: string): void {
+    const message: MessageOutput | undefined = this.thread.messageEntityMap()[messageId];
+
+    if (message === undefined) return;
+
+    if (message.isSaved) {
+      this.thread.unsave(messageId);
+
+      return;
+    }
+
+    this.thread.save(messageId);
+  }
+
+  /**
+   * Method submitMessageEdit
+   * @method submitMessageEdit
+   *
+   * @description
+   * Sends the edited body, claiming the edit state so the dialog owns the
+   * outcome.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} body - The replacement body, markers restored.
+   *
+   * @returns {void}
+   */
+  protected submitMessageEdit(body: string): void {
+    const messageId: string | null = this.editTargetId();
+
+    if (messageId === null) return;
+
+    this.messageEditGate.submit();
+    this.thread.editMessage({ messageId, input: { body } });
+  }
+
+  /**
+   * Method onMessageEditDialogVisibleChange
+   * @method onMessageEditDialogVisibleChange
+   *
+   * @description
+   * Clears the edit target and the gate's claim when the dialog closes.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {boolean} open - Whether the dialog is now open.
+   *
+   * @returns {void}
+   */
+  protected onMessageEditDialogVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.editTargetId.set(null);
+    this.messageEditGate.reset();
+  }
+
+  /**
+   * Method confirmMessageDelete
+   * @method confirmMessageDelete
+   *
+   * @description
+   * Tombstones the message awaiting confirmation.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @returns {void}
+   */
+  protected confirmMessageDelete(): void {
+    const messageId: string | null = this.messageDeleteTargetId();
+
+    if (messageId === null) return;
+
+    this.messageDeleteGate.submit();
+    this.thread.deleteMessage(messageId);
+  }
+
+  /**
+   * Method onMessageDeleteDialogVisibleChange
+   * @method onMessageDeleteDialogVisibleChange
+   *
+   * @description
+   * Clears the delete target and the gate's claim when the confirm closes.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {boolean} open - Whether the confirm is now open.
+   *
+   * @returns {void}
+   */
+  protected onMessageDeleteDialogVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.messageDeleteTargetId.set(null);
+    this.messageDeleteGate.reset();
+  }
+
+  /**
+   * Method onReplySheetVisibleChange
+   * @method onReplySheetVisibleChange
+   *
+   * @description
+   * Clears the reply target when the sheet closes.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {boolean} open - Whether the sheet is now open.
+   *
+   * @returns {void}
+   */
+  protected onReplySheetVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.replyTargetId.set(null);
+  }
+
+  /**
+   * Method unpinFromSheet
+   * @method unpinFromSheet
+   *
+   * @description
+   * Withdraws a pin from the info sheet's list; the open thread's own copy
+   * is cleared by the store's `unpinned` event.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string} messageId - The pinned message.
+   *
+   * @returns {void}
+   */
+  protected unpinFromSheet(messageId: string): void {
+    this.pinnedStore.unpin(messageId);
   }
 
   /**

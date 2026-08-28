@@ -15,3 +15,18 @@ export {
   messageThreadStoreEvents,
   type MessageThreadStoreType,
 } from './message-thread';
+export {
+  MessageRepliesStore,
+  messageRepliesStoreEvents,
+  type MessageRepliesStoreType,
+} from './message-replies';
+export {
+  PinnedMessagesStore,
+  pinnedMessagesStoreEvents,
+  type PinnedMessagesStoreType,
+} from './pinned-messages';
+export {
+  SavedMessagesStore,
+  savedMessagesStoreEvents,
+  type SavedMessagesStoreType,
+} from './saved-messages';

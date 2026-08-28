@@ -10006,6 +10006,190 @@
         <source>Confirm email change</source>
         <target>Confirmer le changement d'e-mail</target>
       </trans-unit>
+      <trans-unit id="messages.row.actionsAria" datatype="html">
+        <source>Message actions</source>
+        <target>Actions du message</target>
+      </trans-unit>
+      <trans-unit id="messages.row.viewThread" datatype="html">
+        <source>View thread</source>
+        <target>Voir le fil</target>
+      </trans-unit>
+      <trans-unit id="messages.row.replyInThread" datatype="html">
+        <source>Reply in thread</source>
+        <target>Répondre en fil</target>
+      </trans-unit>
+      <trans-unit id="messages.row.pin" datatype="html">
+        <source>Pin</source>
+        <target>Épingler</target>
+      </trans-unit>
+      <trans-unit id="messages.row.unpin" datatype="html">
+        <source>Unpin</source>
+        <target>Désépingler</target>
+      </trans-unit>
+      <trans-unit id="messages.row.save" datatype="html">
+        <source>Save for later</source>
+        <target>Enregistrer pour plus tard</target>
+      </trans-unit>
+      <trans-unit id="messages.row.unsave" datatype="html">
+        <source>Remove from saved</source>
+        <target>Retirer des messages enregistrés</target>
+      </trans-unit>
+      <trans-unit id="messages.row.edit" datatype="html">
+        <source>Edit</source>
+        <target>Modifier</target>
+      </trans-unit>
+      <trans-unit id="messages.row.delete" datatype="html">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="messages.row.replyCount" datatype="html">
+        <source>{VAR_PLURAL, plural, one {1 reply} other {<x id="INTERPOLATION"/> replies}}</source>
+        <target>{VAR_PLURAL, plural, one {1 réponse} other {<x id="INTERPOLATION"/> réponses}}</target>
+      </trans-unit>
+      <trans-unit id="messages.row.pinned" datatype="html">
+        <source>Pinned</source>
+        <target>Épinglé</target>
+      </trans-unit>
+      <trans-unit id="messages.delete.confirmTitle" datatype="html">
+        <source>Delete this message?</source>
+        <target>Supprimer ce message ?</target>
+      </trans-unit>
+      <trans-unit id="messages.delete.confirmDescription" datatype="html">
+        <source> Everyone in the conversation will see &quot;This message was deleted&quot; in its place. Its replies stay readable. This cannot be undone. </source>
+        <target> Tout le monde dans la conversation verra « Ce message a été supprimé » à sa place. Ses réponses restent lisibles. Cette action est irréversible. </target>
+      </trans-unit>
+      <trans-unit id="messages.delete.confirmAction" datatype="html">
+        <source> Delete </source>
+        <target> Supprimer </target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.title" datatype="html">
+        <source>Edit message</source>
+        <target>Modifier le message</target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.description" datatype="html">
+        <source> Everyone in the conversation will see the new text, marked as edited. </source>
+        <target> Tout le monde dans la conversation verra le nouveau texte, marqué comme modifié. </target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.body" datatype="html">
+        <source>Message</source>
+        <target>Message</target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.bodyRequired" datatype="html">
+        <source>A message cannot be empty — delete it instead.</source>
+        <target>Un message ne peut pas être vide — supprimez-le plutôt.</target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.bodyTooLong" datatype="html">
+        <source>Messages are capped at 4000 characters.</source>
+        <target>Les messages sont limités à 4000 caractères.</target>
+      </trans-unit>
+      <trans-unit id="messages.editDialog.submit" datatype="html">
+        <source> Save changes </source>
+        <target> Enregistrer les modifications </target>
+      </trans-unit>
+      <trans-unit id="messages.replies.title" datatype="html">
+        <source>Thread</source>
+        <target>Fil de discussion</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.sheetDescription" datatype="html">
+        <source> Replies to one message, kept out of the main conversation. </source>
+        <target> Les réponses à un message, hors de la conversation principale. </target>
+      </trans-unit>
+      <trans-unit id="messages.replies.loading" datatype="html">
+        <source>Loading replies…</source>
+        <target>Chargement des réponses…</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.loadFailed" datatype="html">
+        <source>Replies could not be loaded.</source>
+        <target>Les réponses n'ont pas pu être chargées.</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.posting" datatype="html">
+        <source>Sending reply…</source>
+        <target>Envoi de la réponse…</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.postFailed" datatype="html">
+        <source>The reply could not be sent.</source>
+        <target>La réponse n'a pas pu être envoyée.</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.empty" datatype="html">
+        <source>No replies yet.</source>
+        <target>Pas encore de réponse.</target>
+      </trans-unit>
+      <trans-unit id="messages.replies.composerPlaceholder" datatype="html">
+        <source>Reply in thread</source>
+        <target>Répondre en fil</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.title" datatype="html">
+        <source> Saved messages </source>
+        <target> Messages enregistrés </target>
+      </trans-unit>
+      <trans-unit id="messages.saved.errorTitle" datatype="html">
+        <source>Couldn&apos;t load saved messages</source>
+        <target>Impossible de charger les messages enregistrés</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.retry" datatype="html">
+        <source>Try again</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.emptyTitle" datatype="html">
+        <source>Nothing saved yet</source>
+        <target>Rien d'enregistré pour l'instant</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.emptyDescription" datatype="html">
+        <source>Save a message from its menu to find it again here.</source>
+        <target>Enregistrez un message depuis son menu pour le retrouver ici.</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.unsaveAria" datatype="html">
+        <source>Remove from saved</source>
+        <target>Retirer des messages enregistrés</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.loadMore" datatype="html">
+        <source>Load more</source>
+        <target>Afficher plus</target>
+      </trans-unit>
+      <trans-unit id="messages.saved.directConversation" datatype="html">
+        <source>Direct conversation</source>
+        <target>Conversation directe</target>
+      </trans-unit>
+      <trans-unit id="messages.nav.saved" datatype="html">
+        <source>Saved messages</source>
+        <target>Messages enregistrés</target>
+      </trans-unit>
+      <trans-unit id="route.savedMessages" datatype="html">
+        <source>Saved messages</source>
+        <target>Messages enregistrés</target>
+      </trans-unit>
+      <trans-unit id="channels.room.info" datatype="html">
+        <source>Channel info</source>
+        <target>Infos du canal</target>
+      </trans-unit>
+      <trans-unit id="channels.info.sheetDescription" datatype="html">
+        <source> Who&apos;s in this channel and what has been pinned. </source>
+        <target> Qui participe à ce canal et ce qui y est épinglé. </target>
+      </trans-unit>
+      <trans-unit id="channels.info.membersTitle" datatype="html">
+        <source>Members</source>
+        <target>Membres</target>
+      </trans-unit>
+      <trans-unit id="channels.info.membersEmpty" datatype="html">
+        <source> No members yet. </source>
+        <target> Pas encore de membre. </target>
+      </trans-unit>
+      <trans-unit id="channels.info.pinnedTitle" datatype="html">
+        <source>Pinned messages</source>
+        <target>Messages épinglés</target>
+      </trans-unit>
+      <trans-unit id="channels.info.pinnedEmptyTitle" datatype="html">
+        <source>Nothing pinned</source>
+        <target>Rien d'épinglé</target>
+      </trans-unit>
+      <trans-unit id="channels.info.pinnedEmptyDescription" datatype="html">
+        <source>Pin a message from its menu to keep it here.</source>
+        <target>Épinglez un message depuis son menu pour le garder ici.</target>
+      </trans-unit>
+      <trans-unit id="channels.info.unpinAria" datatype="html">
+        <source>Unpin this message</source>
+        <target>Désépingler ce message</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

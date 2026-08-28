@@ -1,6 +1,8 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { idleCallState } from '@core/request-state';
+import { MessageService } from '@features/organization/features/collaboration/data-access';
 import {
   DirectConversationsStore,
   MessageThreadStore,
@@ -43,6 +45,17 @@ describe('DirectConversationPage', () => {
     isPosting: ReturnType<typeof vi.fn>;
     hasMore: ReturnType<typeof vi.fn>;
     loadError: ReturnType<typeof vi.fn>;
+    isInteracting: ReturnType<typeof vi.fn>;
+    messageEntityMap: ReturnType<typeof vi.fn>;
+    noteReplyPosted: ReturnType<typeof vi.fn>;
+    editCallState: ReturnType<typeof signal>;
+    deleteCallState: ReturnType<typeof signal>;
+    pin: ReturnType<typeof vi.fn>;
+    unpin: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    unsave: ReturnType<typeof vi.fn>;
+    editMessage: ReturnType<typeof vi.fn>;
+    deleteMessage: ReturnType<typeof vi.fn>;
   };
   let counterpart: string | undefined;
   let directoryAvailable: WritableSignal<boolean>;
@@ -65,6 +78,10 @@ describe('DirectConversationPage', () => {
         {
           provide: DirectConversationsStore,
           useValue: { counterpartFor: (): string | undefined => counterpart },
+        },
+        {
+          provide: MessageService,
+          useValue: { listReplies: vi.fn(), postReply: vi.fn() },
         },
         {
           provide: MEMBER_DIRECTORY_PORT,
@@ -130,6 +147,17 @@ describe('DirectConversationPage', () => {
       isPosting: vi.fn(() => false),
       hasMore: vi.fn(() => false),
       loadError: vi.fn(() => null),
+      isInteracting: vi.fn(() => false),
+      messageEntityMap: vi.fn(() => ({})),
+      noteReplyPosted: vi.fn(),
+      editCallState: signal(idleCallState()),
+      deleteCallState: signal(idleCallState()),
+      pin: vi.fn(),
+      unpin: vi.fn(),
+      save: vi.fn(),
+      unsave: vi.fn(),
+      editMessage: vi.fn(),
+      deleteMessage: vi.fn(),
     };
   });
 
@@ -212,5 +240,71 @@ describe('DirectConversationPage', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="message-composer-input"]'),
     ).not.toBeNull();
+  });
+
+  it('should resolve the pin toggle direction from the thread state', async () => {
+    await createPage();
+
+    thread.messageEntityMap.mockReturnValue({ 'message-1': { id: 'message-1' } });
+    fixture.componentInstance['togglePin']('message-1');
+    expect(thread.pin).toHaveBeenCalledWith('message-1');
+
+    thread.messageEntityMap.mockReturnValue({
+      'message-1': { id: 'message-1', pinnedAt: '2026-01-02T00:00:00+00:00' },
+    });
+    fixture.componentInstance['togglePin']('message-1');
+    expect(thread.unpin).toHaveBeenCalledWith('message-1');
+  });
+
+  it('should resolve the save toggle direction from the thread state', async () => {
+    await createPage();
+
+    thread.messageEntityMap.mockReturnValue({ 'message-1': { id: 'message-1', isSaved: false } });
+    fixture.componentInstance['toggleSave']('message-1');
+    expect(thread.save).toHaveBeenCalledWith('message-1');
+
+    thread.messageEntityMap.mockReturnValue({ 'message-1': { id: 'message-1', isSaved: true } });
+    fixture.componentInstance['toggleSave']('message-1');
+    expect(thread.unsave).toHaveBeenCalledWith('message-1');
+  });
+
+  it('should submit an edit against the targeted message only', async () => {
+    await createPage();
+
+    fixture.componentInstance['submitEdit']('Corrigé.');
+    expect(thread.editMessage).not.toHaveBeenCalled();
+
+    fixture.componentInstance['editTargetId'].set('message-1');
+    fixture.componentInstance['submitEdit']('Corrigé.');
+    expect(thread.editMessage).toHaveBeenCalledWith({
+      messageId: 'message-1',
+      input: { body: 'Corrigé.' },
+    });
+  });
+
+  it('should delete only once the confirm names a target', async () => {
+    await createPage();
+
+    fixture.componentInstance['confirmDeleteMessage']();
+    expect(thread.deleteMessage).not.toHaveBeenCalled();
+
+    fixture.componentInstance['deleteTargetId'].set('message-1');
+    fixture.componentInstance['confirmDeleteMessage']();
+    expect(thread.deleteMessage).toHaveBeenCalledWith('message-1');
+  });
+
+  it('should clear the overlay targets when another conversation is routed to', async () => {
+    await createPage();
+
+    fixture.componentInstance['editTargetId'].set('message-1');
+    fixture.componentInstance['deleteTargetId'].set('message-2');
+    fixture.componentInstance['replyTargetId'].set('message-3');
+
+    fixture.componentRef.setInput('conversationId', 'dc-2');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['editTargetId']()).toBeNull();
+    expect(fixture.componentInstance['deleteTargetId']()).toBeNull();
+    expect(fixture.componentInstance['replyTargetId']()).toBeNull();
   });
 });

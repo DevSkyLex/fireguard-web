@@ -1,0 +1,74 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content class="sm:max-w-lg" data-testid="message-edit-dialog" *hlmDialogPortal>
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@messages.editDialog.title">Edit message</h3>
+      <p hlmDialogDescription i18n="@@messages.editDialog.description">
+        Everyone in the conversation will see the new text, marked as edited.
+      </p>
+    </hlm-dialog-header>
+
+    <form novalidate (submit)="submit($event)">
+      <hlm-field-group>
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            class="sr-only"
+            for="edit-message-body"
+            i18n="@@messages.editDialog.body"
+            >Message</label
+          >
+          <hlm-input-group>
+            <textarea
+              hlmInputGroupTextarea
+              id="edit-message-body"
+              rows="4"
+              data-testid="message-edit-body"
+              [formField]="editForm.body"
+              [attr.aria-required]="true"
+              [attr.aria-invalid]="editForm.body().touched() && editForm.body().invalid()"
+            ></textarea>
+          </hlm-input-group>
+          @if (editForm.body().touched() && editForm.body().invalid()) {
+            <hlm-field-error>{{ editForm.body().errors()[0].message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        @if (error(); as storeError) {
+          <p role="alert" class="text-sm text-destructive" data-testid="message-edit-error">
+            {{ storeError.message }}
+          </p>
+        }
+
+        <hlm-field orientation="horizontal" class="justify-end">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="max-sm:min-h-11"
+            data-testid="message-edit-cancel"
+            [disabled]="pending()"
+            (click)="visibleChange.emit(false)"
+            i18n="@@common.cancel"
+          >
+            Cancel
+          </button>
+          <button
+            hlmBtn
+            type="submit"
+            class="max-sm:min-h-11"
+            data-testid="message-edit-submit"
+            [disabled]="pending()"
+            [attr.aria-busy]="pending() ? 'true' : null"
+            i18n="@@messages.editDialog.submit"
+          >
+            Save changes
+          </button>
+        </hlm-field>
+      </hlm-field-group>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

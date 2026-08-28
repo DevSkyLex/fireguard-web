@@ -16,13 +16,17 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
-import { ConversationService } from '@features/organization/features/collaboration/data-access';
+import {
+  ConversationService,
+  MessageService,
+} from '@features/organization/features/collaboration/data-access';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import {
   channelsStoreEvents,
   ChannelParticipantsStore,
   ChannelsStore,
   MessageThreadStore,
+  PinnedMessagesStore,
 } from '@features/organization/features/collaboration/state';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -69,6 +73,12 @@ describe('ChannelConversationPage', () => {
     isPosting: ReturnType<typeof vi.fn>;
     hasMore: ReturnType<typeof vi.fn>;
     loadError: ReturnType<typeof vi.fn>;
+    isInteracting: ReturnType<typeof vi.fn>;
+    messageEntityMap: ReturnType<typeof vi.fn>;
+    noteReplyPosted: ReturnType<typeof vi.fn>;
+    noteUnpinned: ReturnType<typeof vi.fn>;
+    editCallState: ReturnType<typeof signal>;
+    deleteCallState: ReturnType<typeof signal>;
   };
   let channelEntityMap: WritableSignal<Readonly<Record<string, ChannelOutput>>>;
   let channelsLoadOne: ReturnType<typeof vi.fn>;
@@ -124,6 +134,10 @@ describe('ChannelConversationPage', () => {
         },
         { provide: ConversationService, useValue: { favorite, unfavorite } },
         {
+          provide: MessageService,
+          useValue: { listReplies: vi.fn(), postReply: vi.fn(), listPinned: vi.fn() },
+        },
+        {
           provide: MEMBER_DIRECTORY_PORT,
           useValue: {
             byId: directoryEntries,
@@ -155,10 +169,22 @@ describe('ChannelConversationPage', () => {
     });
 
     TestBed.overrideComponent(ChannelConversationPage, {
-      remove: { providers: [MessageThreadStore, ChannelParticipantsStore] },
+      remove: { providers: [MessageThreadStore, ChannelParticipantsStore, PinnedMessagesStore] },
       add: {
         providers: [
           { provide: MessageThreadStore, useValue: thread },
+          {
+            provide: PinnedMessagesStore,
+            useValue: {
+              reset: vi.fn(),
+              load: vi.fn(),
+              unpin: vi.fn(),
+              sortedPins: signal([]),
+              isLoading: signal(false),
+              isUnpinning: signal(false),
+              loadError: signal(null),
+            },
+          },
           {
             provide: ChannelParticipantsStore,
             useValue: {
@@ -222,6 +248,12 @@ describe('ChannelConversationPage', () => {
       isPosting: vi.fn(() => false),
       hasMore: vi.fn(() => false),
       loadError: vi.fn(() => null),
+      isInteracting: vi.fn(() => false),
+      messageEntityMap: vi.fn(() => ({})),
+      noteReplyPosted: vi.fn(),
+      noteUnpinned: vi.fn(),
+      editCallState: signal(idleCallState()),
+      deleteCallState: signal(idleCallState()),
     };
   });
 

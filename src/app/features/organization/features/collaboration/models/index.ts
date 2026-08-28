@@ -43,6 +43,8 @@ export type {
 } from './conversation';
 export type {
   AddReactionInput,
+  EditMessageInput,
+  ListSavedMessagesQuery,
   MessageAttachmentSummary,
   MessageOutput,
   MessageReactionOutput,
@@ -50,6 +52,7 @@ export type {
   MessageReferenceOutput,
   MessageReferenceType,
   PostMessageInput,
+  PostReplyInput,
 } from './message';
 export type { MentionQuery } from './composer';
 export type {

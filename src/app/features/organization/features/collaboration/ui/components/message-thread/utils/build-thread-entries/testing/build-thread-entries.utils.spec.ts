@@ -34,6 +34,11 @@ function view(overrides: Partial<MessageView> = {}): MessageView {
     isDeleted: false,
     isOwn: false,
     status: 'sent',
+    isPinned: false,
+    isSaved: false,
+    replyCount: 0,
+    canEdit: false,
+    canDelete: false,
     reactions: [],
     ...overrides,
   };

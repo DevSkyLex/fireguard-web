@@ -75,8 +75,16 @@
                   [message]="entry.message"
                   [continuation]="entry.continuation"
                   [canReact]="canReact()"
+                  [canWrite]="canWrite()"
+                  [actionsEnabled]="actionsEnabled()"
+                  [actionsBusy]="actionsBusy()"
                   (retried)="retried.emit($event)"
                   (reactionToggled)="reactionToggled.emit($event)"
+                  (threadRequested)="threadRequested.emit($event)"
+                  (pinToggleRequested)="pinToggleRequested.emit($event)"
+                  (saveToggleRequested)="saveToggleRequested.emit($event)"
+                  (editRequested)="editRequested.emit($event)"
+                  (deleteRequested)="deleteRequested.emit($event)"
                 />
               }
             </div>

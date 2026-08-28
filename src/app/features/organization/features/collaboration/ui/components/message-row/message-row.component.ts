@@ -11,7 +11,18 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideRotateCw, lucideTriangleAlert } from '@ng-icons/lucide';
+import {
+  lucideBookmark,
+  lucideBookmarkX,
+  lucideEllipsis,
+  lucideMessageSquareReply,
+  lucidePencilLine,
+  lucidePin,
+  lucidePinOff,
+  lucideRotateCw,
+  lucideTrash2,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import type {
   MessageReactionToggle,
   MessageView,
@@ -19,6 +30,13 @@ import type {
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBubble, HlmBubbleContent, type BubbleVariants } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
+import {
+  HlmDropdownMenu,
+  HlmDropdownMenuGroup,
+  HlmDropdownMenuItem,
+  HlmDropdownMenuSeparator,
+  HlmDropdownMenuTrigger,
+} from '@shared/ui/dropdown-menu';
 import {
   HlmMessage,
   HlmMessageAvatar,
@@ -65,6 +83,11 @@ import { MessageReactions } from '../message-reactions';
     HlmBubble,
     HlmBubbleContent,
     HlmButton,
+    HlmDropdownMenu,
+    HlmDropdownMenuGroup,
+    HlmDropdownMenuItem,
+    HlmDropdownMenuSeparator,
+    HlmDropdownMenuTrigger,
     HlmMessage,
     HlmMessageAvatar,
     HlmMessageContent,
@@ -72,7 +95,20 @@ import { MessageReactions } from '../message-reactions';
     HlmMessageHeader,
     MessageReactions,
   ],
-  providers: [provideIcons({ lucideRotateCw, lucideTriangleAlert })],
+  providers: [
+    provideIcons({
+      lucideBookmark,
+      lucideBookmarkX,
+      lucideEllipsis,
+      lucideMessageSquareReply,
+      lucidePencilLine,
+      lucidePin,
+      lucidePinOff,
+      lucideRotateCw,
+      lucideTrash2,
+      lucideTriangleAlert,
+    }),
+  ],
   templateUrl: './message-row.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -122,6 +158,53 @@ export class MessageRow {
    * @type {InputSignal<boolean>}
    */
   public readonly canReact: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property canWrite
+   * @readonly
+   *
+   * @description
+   * Whether the reader holds messaging write access, which gates replying and
+   * pinning from this row's menu. Mirrors the server's check, never replaces
+   * it.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property actionsEnabled
+   * @readonly
+   *
+   * @description
+   * Whether the row offers its per-message menu at all. Off by default so
+   * surfaces without the machinery behind it — the reply sheet's own rows,
+   * `SubjectDiscussion` — never show controls that lead nowhere.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly actionsEnabled: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property actionsBusy
+   * @readonly
+   *
+   * @description
+   * Whether a message mutation is already in flight, disabling the menu's
+   * items so a double press cannot race the first write.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly actionsBusy: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -154,6 +237,81 @@ export class MessageRow {
    */
   public readonly reactionToggled: OutputEmitterRef<MessageReactionToggle> =
     output<MessageReactionToggle>();
+
+  /**
+   * Property threadRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id whose reply thread the reader wants opened —
+   * whether to read the existing replies or to write the first one.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly threadRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property pinToggleRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants pinned or unpinned — the direction
+   * is the store's to resolve, since it holds the state the row was drawn
+   * from.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly pinToggleRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property saveToggleRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants bookmarked or un-bookmarked.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly saveToggleRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property editRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants to edit. Offered only on the
+   * reader's own messages.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly editRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property deleteRequested
+   * @readonly
+   *
+   * @description
+   * Emits the message id the reader wants deleted; the page confirms before
+   * anything is written.
+   *
+   * @access public
+   * @since 3.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly deleteRequested: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
@@ -234,6 +392,89 @@ export class MessageRow {
       return entry.isOwn ? 'default' : 'muted';
     },
   );
+
+  /**
+   * Property showThreadItem
+   * @readonly
+   *
+   * @description
+   * Whether the menu offers the reply thread: writers may always start one on
+   * a live message, and an existing thread stays readable to everyone — even
+   * under a tombstoned parent, whose replies the API keeps serving.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showThreadItem: Signal<boolean> = computed((): boolean => {
+    const entry: MessageView = this.message();
+
+    return (this.canWrite() && !entry.isDeleted) || entry.replyCount > 0;
+  });
+
+  /**
+   * Property showPinItem
+   * @readonly
+   *
+   * @description
+   * Whether the menu offers pinning — a write, gated like one.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showPinItem: Signal<boolean> = computed(
+    (): boolean => this.canWrite() && !this.message().isDeleted,
+  );
+
+  /**
+   * Property showSaveItem
+   * @readonly
+   *
+   * @description
+   * Whether the menu offers bookmarking — private to the reader, so read
+   * access is enough.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly showSaveItem: Signal<boolean> = computed(
+    (): boolean => !this.message().isDeleted,
+  );
+
+  /**
+   * Property hasActions
+   * @readonly
+   *
+   * @description
+   * Whether the row shows its menu trigger at all: actions must be enabled by
+   * the surface, the message must have reached the server — an optimistic row
+   * has no id anything can act on — and at least one item must survive the
+   * permission gates, because a menu the server would refuse item by item is
+   * worse than none.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasActions: Signal<boolean> = computed((): boolean => {
+    const entry: MessageView = this.message();
+
+    return (
+      this.actionsEnabled() &&
+      entry.status === 'sent' &&
+      (this.showThreadItem() ||
+        this.showPinItem() ||
+        this.showSaveItem() ||
+        entry.canEdit ||
+        entry.canDelete)
+    );
+  });
 
   /**
    * Property locale

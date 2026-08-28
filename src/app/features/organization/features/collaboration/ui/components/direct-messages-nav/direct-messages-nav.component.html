@@ -20,6 +20,23 @@
 
     <div hlmSidebarGroupContent>
       <ul hlmSidebarMenu>
+        <li hlmSidebarMenuItem>
+          <a
+            hlmSidebarMenuButton
+            data-testid="direct-messages-nav-saved"
+            routerLinkActive
+            #savedActive="routerLinkActive"
+            [routerLink]="[messagesRouteBase(), 'saved']"
+            [attr.data-active]="savedActive.isActive ? 'true' : null"
+            [attr.aria-current]="savedActive.isActive ? 'page' : null"
+            tooltip="Saved messages"
+            i18n-tooltip="@@messages.nav.saved"
+          >
+            <ng-icon name="lucideBookmark" class="shrink-0" aria-hidden="true" />
+            <span i18n="@@messages.nav.saved">Saved messages</span>
+          </a>
+        </li>
+
         @if (isLoading() && conversations().length === 0) {
           @for (row of skeletonRows; track row) {
             <li hlmSidebarMenuItem>

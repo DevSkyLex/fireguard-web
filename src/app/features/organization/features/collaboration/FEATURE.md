@@ -10,11 +10,13 @@ belongs to.
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
 messages and their reactions and attachments, plus presence and the AI assistant.
 
-**Direct conversations, channels and the assistant have a UI today, and the data layer covers
-exactly that.** The pin/save/edit/tombstone-delete, threaded-replies, saved-messages and
-channel-info-panel surfaces the API also exposes had complete frontend slices with no UI reaching
-them; they were pruned (2026-08-20) rather than left dead. Rebuilding one starts from the API
-contract (`MessageResource`, `ConversationResource`), not from a dormant store.
+**Direct conversations, channels, the assistant, and the per-message surfaces all have a UI
+today.** The pin/save/edit/tombstone-delete, threaded-replies, saved-messages and
+channel-info-panel slices were pruned once (2026-08-20) for having no UI, then **rebuilt from the
+API contract (2026-08-28)** — from `MessageResource`'s routes and DTOs, not from the dormant
+stores — and now have consuming surfaces: a per-message menu on the conversation pages, a reply
+sheet, a saved-messages page, and a channel info sheet. Rich-card `references` remain the one
+message facet with no UI.
 
 Backed end-to-end by the API's `Messaging` and `Assistant` modules — nothing here is mocked. Those
 modules reach `Organization` exactly like `Intervention` and `Facility` do: through its inbound
@@ -47,12 +49,17 @@ for those still goes through `@shared/layout-slot` and the dashboard layout's ow
 Gated by `organization.messaging.read`, on the parent only — the guard re-runs on an organization
 switch, and guarding just the child would leave the list open to a member without messaging access.
 
-| Path                       | Surface                                                    |
-| -------------------------- | ---------------------------------------------------------- |
-| `messages`                 | an empty-state placeholder, list in the sidebar            |
-| `messages/:conversationId` | that direct conversation, list in the sidebar              |
-| `channels`                 | the channel workspace: favorites, then a one-level tree    |
-| `channels/:channelId`      | that channel — same thread/composer machinery as a DM page |
+| Path                       | Surface                                                              |
+| -------------------------- | -------------------------------------------------------------------- |
+| `messages`                 | an empty-state placeholder, list in the sidebar                      |
+| `messages/saved`           | the reader's saved messages, one list, each item linking to its home |
+| `messages/:conversationId` | that direct conversation, list in the sidebar                        |
+| `channels`                 | the channel workspace: favorites, then a one-level tree              |
+| `channels/:channelId`      | that channel — same thread/composer machinery as a DM page           |
+
+`messages/saved` is declared **before** `messages/:conversationId` — order is what keeps the
+literal segment from being swallowed as a conversation id. Its entry point is a fixed row at the
+top of `DirectMessagesNav`, where the rest of the messaging surface already lives.
 
 `channels.routes.ts` mirrors `collaboration.routes.ts`: master-detail under one
 `organization.messaging.read` guard, the child titled by `channelTitleResolver`. The channels row
@@ -81,10 +88,24 @@ inherited and it would otherwise render "Messages / Messages". The counterpart's
 there either — resolving it needs the whole conversation list _plus_ the member directory, more than
 a title resolver can ask for — so it lives in the conversation's own header.
 
-Saved messages and the channel info panel are **not built**: their former stores
-(`SavedMessagesStore`, `ChannelPanelStore`) and the transport methods only they consumed were
-removed in the 2026-08-20 prune. The backend endpoints (`/saved-messages`, the conversation
-`activity`/`attachments`/`links`/`pinned-messages` reads) remain available for a rebuild.
+Saved messages and the channel info panel were rebuilt (2026-08-28) as `state/saved-messages/`
+(component-scoped by `SavedMessagesPage` — fresh on every visit, since no event can invalidate a
+bookmark added elsewhere) and `state/pinned-messages/` (component-scoped by
+`ChannelConversationPage`, loaded when the info sheet opens). The conversation
+`activity`/`attachments`/`links` reads remain unconsumed.
+
+`SavedMessagesStore` also resolves each distinct conversation its bookmarks point into
+(`GET /conversations/{id}`), because a `MessageOutput` names its conversation only as an IRI and
+`isChannel` decides whether an item links to the channel route or the messages route. A
+conversation the member can no longer read is skipped; its items still render and fall back to
+the direct route — which still opens the thread, since `channelId === conversationId`.
+
+The channel header's actions menu also opens `ChannelInfoSheet` — name, read-only member roster,
+and the pinned list with inline unpin. There is no description line because `ChannelOutput`
+carries no description field; do not invent one. Unpin controls appear only where the server
+would allow them (the pinning member, or `messaging.manage`), and an unpin performed there
+reaches the open thread through `pinnedMessagesStoreEvents.unpinned` →
+`MessageThreadStore.noteUnpinned`. Roster management stays in the participants sheet.
 
 Channel participant add/remove lives in its own `state/channel-participants/` slice.
 Favoriting a channel calls `ConversationService` from the page and
@@ -390,10 +411,22 @@ These look like they could be simplified. They cannot.
   real `alt` would repeat a name the row already prints. The author's name is adjacent text at every
   call site, so the image is decorative by construction.
 
-When per-message actions return, each control must be answerable per row rather than per surface:
-the API lets the author or a holder of `organization.messaging.manage` delete, so a control offered
-to someone the server will refuse is worse than no control at all. Whatever the row ends up taking,
-it mirrors and never replaces the server's own check.
+**Per-message actions are answerable per row, never per surface** — a control offered to someone
+the server will refuse is worse than none. `buildMessageViews` stamps `canEdit` (author only,
+holding `messaging.write`) and `canDelete` (author or `messaging.manage`) onto each view, and the
+row's menu hides items the server would refuse; the server still re-checks every write, and a
+`403` that slips through surfaces inline in the owning dialog. Other decisions in that menu:
+
+- The menu trigger is always in the DOM (revealed on hover/focus-within, always visible on
+  touch), so it stays keyboard-reachable; the dropdown itself is spartan's, keyboard and focus
+  handled by brain.
+- An optimistic (pending/failed) row shows no menu — it has no server id anything could act on.
+- A tombstone keeps exactly one item, "View thread", and only when it has replies: the API keeps
+  serving a deleted message's replies.
+- Menu items disable (`[disabled]`, mirrored to `aria-disabled` by the button) while an
+  interaction is in flight, and the edit/delete dialogs busy-lock with `aria-busy` until their
+  write settles — the same stay-open-on-failure contract as the channel delete confirm, each
+  behind its own `SubmissionGate` so a stale failure never leaks into a freshly opened dialog.
 
 ## The conversation surface is spartan, assembled here
 
@@ -468,11 +501,37 @@ reads as a control on its own, and colour alone never says whether the reader is
 Reacting is gated on `messaging.write`, not on being able to read the conversation. Without it the
 existing tallies still render, disabled, and the picker is absent.
 
-Reference cards, pins, saved messages and threaded replies are **not rendered** — their frontend
-slices were pruned (2026-08-20; see Purpose). Two API facts to keep in mind for a rebuild:
-`GET /conversations/{id}/messages` excludes replies (`parentMessage IS NULL`), so replies are a
-second collection read from their parent, and threading is single-level — the API refuses a reply
-to a reply.
+Pins, saved messages and threaded replies are rendered since 2026-08-28; **reference cards are
+not** — their slice stays pruned. The message actions surface is spartan too: the row menu is
+`dropdown-menu`, the edit and delete dialogs are `dialog` / `alert-dialog`, and the reply and
+channel-info panels are `sheet`s via `@shared/sheet-side`, exactly like the participants sheet.
+
+The threaded-reply facts that shaped `state/message-replies/` and `MessageReplySheet`:
+
+- `GET /conversations/{id}/messages` excludes replies (`parentMessage IS NULL`), so a thread is a
+  second collection read from its parent (`GET /messages/{id}/replies`), and there is no
+  `parentMessageId` on the wire — thread membership is only knowable from which list a row came.
+- Threading is **single-level**: the server refuses a reply to a reply, which is why reply rows
+  carry no menu and no counter of their own.
+- Replies are read once at the server's 100-row cap, oldest first. A longer thread truncates at
+  its newest end; the parent's `replyCount` still reports the real total. Revisit if real threads
+  ever approach the cap.
+- A posted reply bumps the parent row's counter through the sheet's `replyPosted` output and
+  `MessageThreadStore.noteReplyPosted` — there is no way to refetch one message, and
+  `message.created` frames trigger the thread's own newest-page refresh anyway.
+
+Two write responses stay **partially fabricated** and are merged field-by-field, exactly like
+reactions: the pin response's `replyCount`/`references` (only `pinnedAt`/`pinnedBy` are taken)
+and the save response's (only `isSaved` is taken). The `204` unpin/unsave/delete answers carry no
+body at all, so their effects are applied locally — the delete redacts the local row the way the
+API's tombstone does (body, mentions, attachments, reactions and references cleared;
+`replyCount` and the pin kept).
+
+Realtime already covers pin/edit/delete: `message.pinned`/`unpinned`/`updated`/`deleted` frames
+flow through the same coalesce-and-refresh path as `message.created`, within the same limit — a
+change outside the loaded newest page is not picked up. Saving is private and publishes no frame;
+another client's saved list refreshes only on its next visit (the page reloads per visit for
+exactly that reason).
 
 Known gap, deliberately not fixed here: a failed send is only retryable from inside the conversation
 it belongs to, so a member who navigates away has no way back to it short of reopening that

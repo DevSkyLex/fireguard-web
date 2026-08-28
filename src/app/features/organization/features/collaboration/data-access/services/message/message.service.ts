@@ -4,8 +4,11 @@ import { HydraApiService } from '@core/api';
 import type { HydraCollection, RequestOptions } from '@core/api/models';
 import type {
   AddReactionInput,
+  EditMessageInput,
+  ListSavedMessagesQuery,
   MessageOutput,
   PostMessageInput,
+  PostReplyInput,
 } from '@features/organization/features/collaboration/models';
 
 /**
@@ -14,9 +17,8 @@ import type {
  * @extends {HydraApiService}
  *
  * @description
- * Transport boundary for messages: posting and reactions. The API also exposes
- * edit, tombstone deletion, replies, pins and saves, but no UI consumes them —
- * their transport methods were pruned rather than left dead (2026-08-20).
+ * Transport boundary for messages: posting, reactions, editing, tombstone
+ * deletion, threaded replies, pins and saved bookmarks.
  *
  * There is no `GET /api/messages/{id}`: to refresh a single message you must
  * re-list its page, its replies, or the conversation's pins.
@@ -188,6 +190,227 @@ export class MessageService extends HydraApiService {
   public removeReaction(messageId: string, emoji: string): Observable<void> {
     return this.delete(
       `${this.messageEndpoint}/${messageId}/reactions/${encodeURIComponent(emoji)}`,
+    );
+  }
+
+  /**
+   * Method editMessage
+   * @method editMessage
+   *
+   * @description
+   * Replaces a message's body. Author only — the server answers `403` for
+   * anyone else. The response is complete and safe to merge whole; only the
+   * reaction and save responses fabricate fields.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   * @param {EditMessageInput} input - Replacement body and optional references.
+   *
+   * @returns {Observable<MessageOutput>} The edited message.
+   */
+  public editMessage(messageId: string, input: EditMessageInput): Observable<MessageOutput> {
+    return this.patch<EditMessageInput, MessageOutput>(
+      `${this.messageEndpoint}/${messageId}`,
+      input,
+    );
+  }
+
+  /**
+   * Method deleteMessage
+   * @method deleteMessage
+   *
+   * @description
+   * Tombstones a message — the row survives server-side with its body
+   * redacted at the API boundary, so readers see "deleted", never a hole.
+   * Allowed to the author or a holder of `organization.messaging.manage`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   *
+   * @returns {Observable<void>} Completion, `204`.
+   */
+  public deleteMessage(messageId: string): Observable<void> {
+    return this.delete(`${this.messageEndpoint}/${messageId}`);
+  }
+
+  /**
+   * Method pinMessage
+   * @method pinMessage
+   *
+   * @description
+   * Pins a message in its conversation, visible to every reader. Requires
+   * write access to the conversation. `200` with the pinned message.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   *
+   * @returns {Observable<MessageOutput>} The message, now carrying `pinnedAt`/`pinnedBy`.
+   */
+  public pinMessage(messageId: string): Observable<MessageOutput> {
+    return this.postAction<MessageOutput>(`${this.messageEndpoint}/${messageId}/pin`);
+  }
+
+  /**
+   * Method unpinMessage
+   * @method unpinMessage
+   *
+   * @description
+   * Unpins a message. Allowed to the pinning member or a manager; unpinning a
+   * message that is not pinned is a no-op that never errors. `204`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   *
+   * @returns {Observable<void>} Completion.
+   */
+  public unpinMessage(messageId: string): Observable<void> {
+    return this.delete(`${this.messageEndpoint}/${messageId}/pin`);
+  }
+
+  /**
+   * Method listPinned
+   * @method listPinned
+   *
+   * @description
+   * Lists a conversation's pinned messages.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} conversationId - Bare conversation UUID.
+   * @param {RequestOptions} [options] - Paging; `itemsPerPage` is clamped to 1–100.
+   *
+   * @returns {Observable<HydraCollection<MessageOutput>>} One page of pinned messages.
+   */
+  public listPinned(
+    conversationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>(
+      `${this.conversationEndpoint}/${conversationId}/pinned-messages`,
+      options,
+    );
+  }
+
+  /**
+   * Method saveMessage
+   * @method saveMessage
+   *
+   * @description
+   * Bookmarks a message for the acting member. Private — never a property of
+   * the conversation. `200`.
+   *
+   * The response rebuilds the message without its real reply count or
+   * references, reporting `replyCount: 0` and `references: []`. Merge only
+   * `isSaved` from it.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   *
+   * @returns {Observable<MessageOutput>} A partially fabricated message — see above.
+   */
+  public saveMessage(messageId: string): Observable<MessageOutput> {
+    return this.postAction<MessageOutput>(`${this.messageEndpoint}/${messageId}/save`);
+  }
+
+  /**
+   * Method unsaveMessage
+   * @method unsaveMessage
+   *
+   * @description
+   * Withdraws the acting member's bookmark. Idempotent, `204`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} messageId - Bare message UUID.
+   *
+   * @returns {Observable<void>} Completion.
+   */
+  public unsaveMessage(messageId: string): Observable<void> {
+    return this.delete(`${this.messageEndpoint}/${messageId}/save`);
+  }
+
+  /**
+   * Method listSaved
+   * @method listSaved
+   *
+   * @description
+   * Lists the acting member's saved messages across one organization — the
+   * required `organization` filter is what scopes them.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {ListSavedMessagesQuery} query - Organization scope and paging.
+   *
+   * @returns {Observable<HydraCollection<MessageOutput>>} One page of saved messages.
+   */
+  public listSaved(query: ListSavedMessagesQuery): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>('/api/saved-messages', {
+      page: query.page,
+      itemsPerPage: query.itemsPerPage,
+      params: { organization: query.organization },
+    });
+  }
+
+  /**
+   * Method postReply
+   * @method postReply
+   *
+   * @description
+   * Posts a threaded reply under a parent message. Threading is single-level:
+   * replying to a reply is refused by the server. Requires the same write
+   * access as posting in the conversation.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} parentMessageId - Bare UUID of the **root** message.
+   * @param {PostReplyInput} input - Reply body.
+   *
+   * @returns {Observable<MessageOutput>} The created reply.
+   */
+  public postReply(parentMessageId: string, input: PostReplyInput): Observable<MessageOutput> {
+    return this.post<PostReplyInput, MessageOutput>(
+      `${this.messageEndpoint}/${parentMessageId}/replies`,
+      input,
+    );
+  }
+
+  /**
+   * Method listReplies
+   * @method listReplies
+   *
+   * @description
+   * Lists a message's threaded replies, oldest first. The conversation's own
+   * message list excludes replies, so this is the only way to read them.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} parentMessageId - Bare UUID of the root message.
+   * @param {RequestOptions} [options] - Paging; `itemsPerPage` is clamped to 1–100.
+   *
+   * @returns {Observable<HydraCollection<MessageOutput>>} One page of replies.
+   */
+  public listReplies(
+    parentMessageId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<MessageOutput>> {
+    return this.getCollection<MessageOutput>(
+      `${this.messageEndpoint}/${parentMessageId}/replies`,
+      options,
     );
   }
 

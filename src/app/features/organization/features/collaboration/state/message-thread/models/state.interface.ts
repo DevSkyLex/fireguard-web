@@ -32,10 +32,14 @@ export interface MessageThreadState {
   readonly newestLoadedPage: number;
   /** `GET /conversations/{id}/messages`. */
   readonly listCallState: CallState;
-  /** Posting and editing. */
+  /** Posting. */
   readonly postCallState: CallState;
   /** Reactions, pins and saves — light, frequent, and worth keeping apart from posting. */
   readonly interactionCallState: CallState;
+  /** Editing a message — its own state so the edit dialog can busy-lock and show its error inline. */
+  readonly editCallState: CallState;
+  /** Tombstone deletion — its own state so the confirm dialog stays open, busy-locked, until it settles. */
+  readonly deleteCallState: CallState;
   /**
    * Mercure topic the thread is listening on, or `null` when not connected.
    *

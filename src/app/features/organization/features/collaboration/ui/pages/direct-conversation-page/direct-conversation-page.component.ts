@@ -6,13 +6,17 @@ import {
   effect,
   inject,
   input,
+  signal,
   untracked,
   type InputSignal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
+import type { StoreError } from '@core/request-state';
 import type {
+  MessageOutput,
   MessageReactionToggle,
   MessageView,
 } from '@features/organization/features/collaboration/models';
@@ -35,11 +39,15 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSidebarService } from '@shared/ui/sidebar';
 import { MessageThread } from '../../components/message-thread';
+import { MessageDeleteDialog } from '../../dialogs/message-delete-dialog';
+import { MessageEditDialog } from '../../dialogs/message-edit-dialog';
 import { MessageComposer } from '../../forms/message-composer';
+import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 
 /**
  * Component DirectConversationPage
@@ -77,6 +85,9 @@ import { MessageComposer } from '../../forms/message-composer';
     HlmAvatarImage,
     HlmButton,
     MessageComposer,
+    MessageDeleteDialog,
+    MessageEditDialog,
+    MessageReplySheet,
     MessageThread,
   ],
   providers: [MessageThreadStore, provideIcons({ lucideArrowLeft })],
@@ -200,6 +211,8 @@ export class DirectConversationPage {
         ownMemberIri: memberIriOf(this.memberAccess.profile()),
         directory: this.directory.isAvailable() ? this.directory.byId() : null,
         unknownMemberLabel: this.unknownLabel,
+        canWrite: this.canWrite(),
+        canManage: this.canManage(),
       }),
   );
 
@@ -261,6 +274,187 @@ export class DirectConversationPage {
             ORGANIZATION_PERMISSION.MESSAGING_WRITE.startsWith(granted.slice(0, -1))),
       ),
   );
+
+  /**
+   * Property canManage
+   * @readonly
+   *
+   * @description
+   * Whether the reader holds `organization.messaging.manage`, which lets
+   * them delete another member's message. Mirrors the server's check, never
+   * replaces it.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManage: Signal<boolean> = computed((): boolean =>
+    this.memberAccess
+      .permissions()
+      .some(
+        (granted: string): boolean =>
+          granted === ORGANIZATION_PERMISSION.MESSAGING_MANAGE ||
+          (granted.endsWith('.*') &&
+            ORGANIZATION_PERMISSION.MESSAGING_MANAGE.startsWith(granted.slice(0, -1))),
+      ),
+  );
+
+  /**
+   * Property replyTargetId
+   * @readonly
+   *
+   * @description
+   * The message whose reply thread is open in the side sheet, or `null`.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly replyTargetId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property replyTargetView
+   * @readonly
+   *
+   * @description
+   * The reply sheet's parent, drawn from the same views the thread renders.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<MessageView | null>}
+   */
+  protected readonly replyTargetView: Signal<MessageView | null> = computed(
+    (): MessageView | null =>
+      this.messages().find((view: MessageView): boolean => view.id === this.replyTargetId()) ??
+      null,
+  );
+
+  /**
+   * Property editTargetId
+   * @readonly
+   *
+   * @description
+   * The message being edited, or `null` while the edit dialog is closed.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly editTargetId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property editTargetMessage
+   * @readonly
+   *
+   * @description
+   * The edit dialog's message in transport form — it needs the raw body and
+   * the mention names, which the rendered view no longer carries.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {Signal<MessageOutput | null>}
+   */
+  protected readonly editTargetMessage: Signal<MessageOutput | null> = computed(
+    (): MessageOutput | null => {
+      const messageId: string | null = this.editTargetId();
+
+      return messageId === null ? null : (this.thread.messageEntityMap()[messageId] ?? null);
+    },
+  );
+
+  /**
+   * Property deleteTargetId
+   * @readonly
+   *
+   * @description
+   * The message awaiting delete confirmation, or `null`.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly deleteTargetId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property editGate
+   * @readonly
+   *
+   * @description
+   * The edit dialog's claim on the thread's edit state, so a failure from an
+   * earlier edit never leaks into a freshly opened dialog. Success closes
+   * the dialog.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {SubmissionGate}
+   */
+  private readonly editGate: SubmissionGate = inject<SubmissionGateService>(
+    SubmissionGateService,
+  ).create(this.thread.editCallState, { onSuccess: (): void => this.editTargetId.set(null) });
+
+  /**
+   * Property deleteGate
+   * @readonly
+   *
+   * @description
+   * The delete confirmation's claim on the thread's delete state. Success
+   * closes the confirm; a failure keeps it open, shown inline.
+   *
+   * @access private
+   * @since 3.0.0
+   *
+   * @type {SubmissionGate}
+   */
+  private readonly deleteGate: SubmissionGate = inject<SubmissionGateService>(
+    SubmissionGateService,
+  ).create(this.thread.deleteCallState, { onSuccess: (): void => this.deleteTargetId.set(null) });
+
+  /**
+   * Property editDialogBusy
+   * @readonly
+   * @description Whether the submitted edit is in flight.
+   * @access protected
+   * @since 3.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly editDialogBusy: Signal<boolean> = this.editGate.isBusy;
+
+  /**
+   * Property editDialogError
+   * @readonly
+   * @description The edit write's own error, scoped to a submit from this dialog.
+   * @access protected
+   * @since 3.0.0
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly editDialogError: Signal<StoreError | null> = this.editGate.error;
+
+  /**
+   * Property deleteDialogBusy
+   * @readonly
+   * @description Whether the confirmed delete is in flight.
+   * @access protected
+   * @since 3.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly deleteDialogBusy: Signal<boolean> = this.deleteGate.isBusy;
+
+  /**
+   * Property deleteDialogError
+   * @readonly
+   * @description The delete write's own error, scoped to a confirm from this dialog.
+   * @access protected
+   * @since 3.0.0
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly deleteDialogError: Signal<StoreError | null> = this.deleteGate.error;
 
   /**
    * Property composerPlaceholder
@@ -357,6 +551,9 @@ export class DirectConversationPage {
       const conversationId: string = this.conversationId();
 
       untracked((): void => {
+        this.replyTargetId.set(null);
+        this.editTargetId.set(null);
+        this.deleteTargetId.set(null);
         this.thread.reset();
         this.thread.load(conversationId);
         this.thread.connect(conversationId);
@@ -402,6 +599,170 @@ export class DirectConversationPage {
    */
   protected toggleReaction(toggle: MessageReactionToggle): void {
     this.thread.toggleReaction(toggle.messageId, toggle.emoji);
+  }
+
+  /**
+   * Method togglePin
+   * @method togglePin
+   *
+   * @description
+   * Pins or unpins a message. The direction is resolved here because the
+   * thread holds the state the row was drawn from.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {string} messageId - The pressed row's message.
+   *
+   * @returns {void}
+   */
+  protected togglePin(messageId: string): void {
+    const message: MessageOutput | undefined = this.thread.messageEntityMap()[messageId];
+
+    if (message === undefined) return;
+
+    if (message.pinnedAt !== undefined) {
+      this.thread.unpin(messageId);
+
+      return;
+    }
+
+    this.thread.pin(messageId);
+  }
+
+  /**
+   * Method toggleSave
+   * @method toggleSave
+   *
+   * @description
+   * Bookmarks or un-bookmarks a message for the reader.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {string} messageId - The pressed row's message.
+   *
+   * @returns {void}
+   */
+  protected toggleSave(messageId: string): void {
+    const message: MessageOutput | undefined = this.thread.messageEntityMap()[messageId];
+
+    if (message === undefined) return;
+
+    if (message.isSaved) {
+      this.thread.unsave(messageId);
+
+      return;
+    }
+
+    this.thread.save(messageId);
+  }
+
+  /**
+   * Method submitEdit
+   * @method submitEdit
+   *
+   * @description
+   * Sends the edited body, claiming the edit state so this dialog owns the
+   * outcome.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {string} body - The replacement body, markers restored.
+   *
+   * @returns {void}
+   */
+  protected submitEdit(body: string): void {
+    const messageId: string | null = this.editTargetId();
+
+    if (messageId === null) return;
+
+    this.editGate.submit();
+    this.thread.editMessage({ messageId, input: { body } });
+  }
+
+  /**
+   * Method onEditDialogVisibleChange
+   * @method onEditDialogVisibleChange
+   *
+   * @description
+   * Clears the edit target and the gate's claim when the dialog closes.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {boolean} open - Whether the dialog is now open.
+   *
+   * @returns {void}
+   */
+  protected onEditDialogVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.editTargetId.set(null);
+    this.editGate.reset();
+  }
+
+  /**
+   * Method confirmDeleteMessage
+   * @method confirmDeleteMessage
+   *
+   * @description
+   * Tombstones the message awaiting confirmation.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @returns {void}
+   */
+  protected confirmDeleteMessage(): void {
+    const messageId: string | null = this.deleteTargetId();
+
+    if (messageId === null) return;
+
+    this.deleteGate.submit();
+    this.thread.deleteMessage(messageId);
+  }
+
+  /**
+   * Method onDeleteDialogVisibleChange
+   * @method onDeleteDialogVisibleChange
+   *
+   * @description
+   * Clears the delete target and the gate's claim when the confirm closes.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {boolean} open - Whether the confirm is now open.
+   *
+   * @returns {void}
+   */
+  protected onDeleteDialogVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.deleteTargetId.set(null);
+    this.deleteGate.reset();
+  }
+
+  /**
+   * Method onReplySheetVisibleChange
+   * @method onReplySheetVisibleChange
+   *
+   * @description
+   * Clears the reply target when the sheet closes.
+   *
+   * @access protected
+   * @since 3.0.0
+   *
+   * @param {boolean} open - Whether the sheet is now open.
+   *
+   * @returns {void}
+   */
+  protected onReplySheetVisibleChange(open: boolean): void {
+    if (open) return;
+
+    this.replyTargetId.set(null);
   }
 
   /**

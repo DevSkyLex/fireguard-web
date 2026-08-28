@@ -42,6 +42,15 @@ export const COLLABORATION_ROUTES: Routes = [
     data: { breadcrumb: $localize`:@@route.messages:Messages` },
     children: [
       {
+        path: 'saved',
+        loadComponent: () =>
+          import('./ui/pages/saved-messages-page/saved-messages-page.component').then(
+            (m) => m.SavedMessagesPage,
+          ),
+        title: $localize`:@@route.savedMessages:Saved messages`,
+        data: { breadcrumb: false },
+      },
+      {
         path: ':conversationId',
         loadComponent: () =>
           import('./ui/pages/direct-conversation-page/direct-conversation-page.component').then(

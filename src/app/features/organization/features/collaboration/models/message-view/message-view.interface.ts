@@ -36,6 +36,24 @@ export interface MessageView {
   /** Whether the reading member wrote it, which decides the row's side. */
   readonly isOwn: boolean;
   readonly status: MessageSendStatus;
+  /** Whether the message is pinned in its conversation — visible to every reader. */
+  readonly isPinned: boolean;
+  /** Whether the reading member bookmarked it. Private to that member. */
+  readonly isSaved: boolean;
+  /** Threaded replies under this message. Never redacted on a tombstone. */
+  readonly replyCount: number;
+  /**
+   * Whether the reader may edit this message. Mirrors the server's rule —
+   * author only, holding `messaging.write` — and never replaces it: the
+   * server re-checks every write.
+   */
+  readonly canEdit: boolean;
+  /**
+   * Whether the reader may delete this message: its author, or a holder of
+   * `organization.messaging.manage`. Mirrors the server's check, never
+   * replaces it.
+   */
+  readonly canDelete: boolean;
   /**
    * Emoji tallies, passed through from the transport unchanged: the shape is
    * already a count and a "did I" flag, which is exactly what a chip draws.

@@ -40,6 +40,8 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
   return input.messages.map((message: MessageOutput): MessageView => {
     const authorId: string = memberIdOf(message.authorMember);
     const authorEntry: MemberDirectoryEntry | undefined = input.directory?.get(authorId);
+    const isOwn: boolean =
+      input.ownMemberIri !== null && message.authorMember === input.ownMemberIri;
 
     return {
       id: message.id,
@@ -50,8 +52,13 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
       createdAt: message.createdAt,
       editedAt: message.editedAt,
       isDeleted: message.isDeleted,
-      isOwn: input.ownMemberIri !== null && message.authorMember === input.ownMemberIri,
+      isOwn,
       status: failed.has(message.id) ? 'failed' : pending.has(message.id) ? 'pending' : 'sent',
+      isPinned: message.pinnedAt !== undefined,
+      isSaved: message.isSaved,
+      replyCount: message.replyCount,
+      canEdit: isOwn && input.canWrite && !message.isDeleted,
+      canDelete: (isOwn || input.canManage) && !message.isDeleted,
       reactions: message.reactions,
     };
   });

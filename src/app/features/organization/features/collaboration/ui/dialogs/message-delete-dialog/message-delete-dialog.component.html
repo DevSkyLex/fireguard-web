@@ -1,0 +1,44 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="message-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@messages.delete.confirmTitle">Delete this message?</h2>
+      <p hlmAlertDialogDescription i18n="@@messages.delete.confirmDescription">
+        Everyone in the conversation will see "This message was deleted" in its place. Its replies
+        stay readable. This cannot be undone.
+      </p>
+    </hlm-alert-dialog-header>
+
+    @if (error(); as storeError) {
+      <p role="alert" class="text-sm text-destructive" data-testid="message-delete-error">
+        {{ storeError.message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="max-sm:min-h-11"
+        [disabled]="pending()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="max-sm:min-h-11"
+        data-testid="message-delete-confirm"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        (click)="confirm()"
+        i18n="@@messages.delete.confirmAction"
+      >
+        Delete
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

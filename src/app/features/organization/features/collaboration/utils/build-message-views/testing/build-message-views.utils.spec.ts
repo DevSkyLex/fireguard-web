@@ -35,6 +35,8 @@ function baseInput(overrides: Partial<BuildMessageViewsInput> = {}): BuildMessag
     ownMemberIri: null,
     directory: null,
     unknownMemberLabel: 'Unknown member',
+    canWrite: false,
+    canManage: false,
     ...overrides,
   };
 }
@@ -94,6 +96,55 @@ describe('buildMessageViews', () => {
 
     const [sent] = buildMessageViews(baseInput());
     expect(sent.status).toBe('sent');
+  });
+
+  it('mirrors the server permission rules into canEdit and canDelete', () => {
+    const ownMemberIri = '/api/organizations/org-1/members/member-1';
+
+    const [ownWriter] = buildMessageViews(baseInput({ ownMemberIri, canWrite: true }));
+    expect(ownWriter.canEdit).toBe(true);
+    expect(ownWriter.canDelete).toBe(true);
+
+    const [readerOnOther] = buildMessageViews(
+      baseInput({ ownMemberIri: '/api/organizations/org-1/members/member-2', canWrite: true }),
+    );
+    expect(readerOnOther.canEdit).toBe(false);
+    expect(readerOnOther.canDelete).toBe(false);
+
+    const [managerOnOther] = buildMessageViews(
+      baseInput({
+        ownMemberIri: '/api/organizations/org-1/members/member-2',
+        canManage: true,
+      }),
+    );
+    expect(managerOnOther.canEdit).toBe(false);
+    expect(managerOnOther.canDelete).toBe(true);
+
+    const [tombstone] = buildMessageViews(
+      baseInput({
+        ownMemberIri,
+        canWrite: true,
+        canManage: true,
+        messages: [message({ isDeleted: true, body: undefined })],
+      }),
+    );
+    expect(tombstone.canEdit).toBe(false);
+    expect(tombstone.canDelete).toBe(false);
+  });
+
+  it('carries the pin, save and reply-count facts into the view', () => {
+    const [view] = buildMessageViews(
+      baseInput({
+        messages: [message({ pinnedAt: '2026-01-02T00:00:00.000Z', isSaved: true, replyCount: 3 })],
+      }),
+    );
+
+    expect(view.isPinned).toBe(true);
+    expect(view.isSaved).toBe(true);
+    expect(view.replyCount).toBe(3);
+
+    const [bare] = buildMessageViews(baseInput());
+    expect(bare.isPinned).toBe(false);
   });
 
   it('renders the body through renderMessageBodyHtml, mentions included', () => {

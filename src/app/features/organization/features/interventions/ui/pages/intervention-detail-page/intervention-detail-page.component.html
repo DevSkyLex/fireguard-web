@@ -255,6 +255,7 @@
             <ng-template hlmTabsContentLazy>
               <app-intervention-attachments
                 [attachments]="store.attachments()"
+                [queuedAttachments]="store.queuedAttachments()"
                 [workItems]="store.workItems()"
                 [canManage]="canManageAttachments()"
                 [pendingIds]="store.pendingAttachmentIds()"
@@ -263,6 +264,7 @@
                 [online]="online()"
                 (filesPicked)="uploadAttachments($event)"
                 (deleteRequested)="pendingAttachmentDelete.set($event)"
+                (queuedDeleteRequested)="pendingQueuedAttachmentDelete.set($event)"
                 (downloadRequested)="downloadAttachment($event)"
               />
             </ng-template>
@@ -522,6 +524,12 @@
   [request]="pendingAttachmentDelete()"
   (confirmed)="confirmAttachmentDelete($event)"
   (dismissed)="pendingAttachmentDelete.set(null)"
+/>
+
+<app-intervention-attachment-delete-dialog
+  [request]="queuedAttachmentDeleteRequest()"
+  (confirmed)="confirmQueuedAttachmentDelete()"
+  (dismissed)="pendingQueuedAttachmentDelete.set(null)"
 />
 
 <app-intervention-publish-dialog

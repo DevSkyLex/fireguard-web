@@ -1422,9 +1422,22 @@ reads the bearer-authenticated `GET /api/intervention-attachments/{id}/download`
 route as a `Blob` (a bare `<a href>` cannot carry the auth header) and the
 detail page hands it to the feature's `BrowserDownloadService` — the same
 service the list page's CSV export uses, lifted there once the attachment
-download became its second consumer. **Approved exception:** upload is
-**online-only** (the outbox has no attachment operation), a documented
-backend follow-up. The QR button in the field-work section
+download became its second consumer. Plain uploads **queue offline**: when the
+device is offline or the request fails on a network error (the comment
+policy), the compressed file is stored as an `attachment.upload` outbox
+operation — Blob plus metadata in IndexedDB — replayed with the other
+operations in queue order, shown as a dashed row with a "Pending sync" badge
+that counts toward the 25-file cap and the shell sync indicator, and
+discardable while queued (confirm-gated, it is data loss). The queue is
+bounded device-wide to **25 files / 50 MB**
+(`INTERVENTION_ATTACHMENT_QUEUE_MAX_*`); a full queue refuses the pick with an
+explicit message. Signature uploads stay online-only — the page chains the
+submit transition on their success. **Residual risk (documented backend
+follow-up):** `POST /api/interventions/{id}/attachments` reads no client
+idempotency key (the handler accepts an `attachmentId`, but the HTTP
+processor, unlike equipment's media endpoint with its multipart `clientId`,
+never forwards one), so no key is sent on replay and a crash between server
+success and local dequeue can duplicate the file on the next replay. The QR button in the field-work section
 (`scanSupported()` devices, execute phase only) decodes a capture through
 `InterventionFieldExecutionService.scan`, normalizes it via
 `InterventionDiscoveryService.normalizeScannedTarget` and reveals the matching

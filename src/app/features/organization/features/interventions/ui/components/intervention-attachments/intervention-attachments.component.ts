@@ -15,6 +15,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCamera,
+  lucideCloudUpload,
   lucideDownload,
   lucideFileText,
   lucideImage,
@@ -24,6 +25,7 @@ import {
 import {
   resolveInterventionTag,
   type InterventionAttachmentOutput,
+  type InterventionQueuedAttachment,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { EmptyState } from '@shared/empty-state';
@@ -62,6 +64,16 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
 const MAX_ATTACHMENTS = 25;
 
 /**
+ * The file metadata shared by a synced attachment row and a queued one, so the
+ * icon/extension/size helpers serve both.
+ */
+interface AttachmentFileMeta {
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly size: number;
+}
+
+/**
  * Component InterventionAttachments
  * @class InterventionAttachments
  *
@@ -75,13 +87,16 @@ const MAX_ATTACHMENTS = 25;
  * against the backend's MIME whitelist, 25-file cardinality cap, and — for
  * non-image files only, since the page compresses photos before upload —
  * the 10 MiB ceiling, so an invalid file fails fast; the server stays
- * authoritative. A `n / 25` counter appears once the list is half full and
+ * authoritative. Uploads queued in the offline outbox render ahead of the
+ * synced rows with a pending-sync badge and a delete button that emits
+ * {@link queuedDeleteRequested}; queued rows count toward the cap, since each
+ * one consumes a server slot on replay. A `n / 25` counter appears once the list is half full and
  * the pickers close at the ceiling — the alternative is an enabled button
  * that can only ever answer 422. Presentational — the page owns the store
  * calls, the photo compression, and the fetch-then-save that a download
  * requires.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @example
  * ```html
@@ -114,6 +129,7 @@ const MAX_ATTACHMENTS = 25;
   providers: [
     provideIcons({
       lucideCamera,
+      lucideCloudUpload,
       lucideDownload,
       lucideFileText,
       lucideImage,
@@ -136,6 +152,18 @@ export class InterventionAttachments {
    */
   public readonly attachments: InputSignal<readonly InterventionAttachmentOutput[]> = input<
     readonly InterventionAttachmentOutput[]
+  >([]);
+
+  /**
+   * Property queuedAttachments
+   * @readonly
+   * @description Uploads waiting in the offline outbox, rendered ahead of the synced rows with a pending-sync badge.
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<readonly InterventionQueuedAttachment[]>}
+   */
+  public readonly queuedAttachments: InputSignal<readonly InterventionQueuedAttachment[]> = input<
+    readonly InterventionQueuedAttachment[]
   >([]);
 
   /**
@@ -197,7 +225,7 @@ export class InterventionAttachments {
   /**
    * Property online
    * @readonly
-   * @description Whether the network is reachable — uploads are online-only, the outbox has no attachment operation.
+   * @description Whether the network is reachable — downloads and server-side deletes need it; uploads queue offline instead.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -226,6 +254,17 @@ export class InterventionAttachments {
    */
   public readonly deleteRequested: OutputEmitterRef<InterventionAttachmentOutput> =
     output<InterventionAttachmentOutput>();
+
+  /**
+   * Property queuedDeleteRequested
+   * @readonly
+   * @description Emits the queued row on a delete click; the page confirms and discards the outbox operation.
+   * @access public
+   * @since 1.3.0
+   * @type {OutputEmitterRef<InterventionQueuedAttachment>}
+   */
+  public readonly queuedDeleteRequested: OutputEmitterRef<InterventionQueuedAttachment> =
+    output<InterventionQueuedAttachment>();
 
   /**
    * Property downloadRequested
@@ -257,9 +296,14 @@ export class InterventionAttachments {
   /** The `accept` attribute, straight from the whitelist. */
   protected readonly acceptedTypes: string = ACCEPTED_MIME_TYPES.join(',');
 
+  /** Synced plus queued rows — what the cap and counter reason about, since queued files consume server slots on replay. */
+  protected readonly totalCount: Signal<number> = computed<number>(
+    () => this.attachments().length + this.queuedAttachments().length,
+  );
+
   /** How many more files this intervention may take, never below zero. */
   protected readonly remainingSlots: Signal<number> = computed<number>(() =>
-    Math.max(MAX_ATTACHMENTS - this.attachments().length, 0),
+    Math.max(MAX_ATTACHMENTS - this.totalCount(), 0),
   );
 
   /** Whether the intervention has reached the backend's attachment ceiling. */
@@ -269,7 +313,7 @@ export class InterventionAttachments {
 
   /** The `n / 25` counter text. */
   protected readonly countLabel: Signal<string> = computed<string>(
-    () => `${this.attachments().length} / ${MAX_ATTACHMENTS}`,
+    () => `${this.totalCount()} / ${MAX_ATTACHMENTS}`,
   );
 
   /**
@@ -286,12 +330,12 @@ export class InterventionAttachments {
    * @type {Signal<boolean>}
    */
   protected readonly showCounter: Signal<boolean> = computed<boolean>(
-    () => this.attachments().length >= MAX_ATTACHMENTS / 2,
+    () => this.totalCount() >= MAX_ATTACHMENTS / 2,
   );
 
   /** Whether the pickers are usable right now. */
   protected readonly canPick: Signal<boolean> = computed<boolean>(
-    () => this.canManage() && this.online() && !this.uploading() && !this.atCapacity(),
+    () => this.canManage() && !this.uploading() && !this.atCapacity(),
   );
 
   /**
@@ -390,10 +434,10 @@ export class InterventionAttachments {
    * @description The registered icon name matching the attachment's declared MIME type.
    * @access protected
    * @since 1.0.0
-   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
    * @returns {string} A name registered with `provideIcons`.
    */
-  protected iconOf(attachment: InterventionAttachmentOutput): string {
+  protected iconOf(attachment: AttachmentFileMeta): string {
     return attachment.mimeType.startsWith('image/') ? 'lucideImage' : 'lucideFileText';
   }
 
@@ -402,10 +446,10 @@ export class InterventionAttachments {
    * @description The attachment's file extension, badge-sized, read from the file name and falling back to the declared MIME subtype.
    * @access protected
    * @since 1.0.0
-   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
    * @returns {string} An uppercased extension of at most 4 characters, e.g. "PDF", "JPEG".
    */
-  protected extensionOf(attachment: InterventionAttachmentOutput): string {
+  protected extensionOf(attachment: AttachmentFileMeta): string {
     const dotIndex: number = attachment.fileName.lastIndexOf('.');
     const fromName: string = dotIndex > 0 ? attachment.fileName.slice(dotIndex + 1) : '';
     const extension: string = fromName || (attachment.mimeType.split('/').at(-1) ?? '');
@@ -467,10 +511,10 @@ export class InterventionAttachments {
    * @description The attachment's size as a compact localized label.
    * @access protected
    * @since 1.0.0
-   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
    * @returns {string} e.g. "1.2 MB".
    */
-  protected sizeLabelOf(attachment: InterventionAttachmentOutput): string {
+  protected sizeLabelOf(attachment: AttachmentFileMeta): string {
     const megabytes: number = attachment.size / (1024 * 1024);
     const format: Intl.NumberFormat | undefined = this.sizeFormats.get(megabytes >= 10 ? 0 : 1);
     const formatted: string = format?.format(Math.max(megabytes, 0.1)) ?? megabytes.toFixed(1);

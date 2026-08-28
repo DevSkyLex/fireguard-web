@@ -352,6 +352,26 @@ export class InterventionSyncService {
         );
         break;
       }
+      case 'attachment.upload': {
+        const file = operation.payload['file'];
+        const fileName = operation.payload['fileName'];
+        if (!(file instanceof Blob) || typeof fileName !== 'string') {
+          throw new Error('Invalid offline attachment operation');
+        }
+        // No idempotency key is sent: the intervention attachment endpoint
+        // reads no clientId (see FEATURE.md, residual duplicate risk).
+        await firstValueFrom(
+          this.service.uploadAttachment(
+            operation.interventionId,
+            file,
+            fileName,
+            operation.payload.label,
+            operation.payload.workItemId,
+            operation.payload.kind,
+          ),
+        );
+        break;
+      }
       case 'comment.create': {
         const body = operation.payload['body'];
         if (typeof body !== 'string') throw new Error('Invalid offline comment operation');

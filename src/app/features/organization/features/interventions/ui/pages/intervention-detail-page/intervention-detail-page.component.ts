@@ -58,6 +58,7 @@ import type {
   InterventionLinkedResourceTabId,
   InterventionOutput,
   InterventionPhase,
+  InterventionQueuedAttachment,
   InterventionReadinessItem,
   InterventionReadinessTarget,
   InterventionScanResult,
@@ -791,6 +792,44 @@ export class InterventionDetailPage {
   /** What the attachment delete confirmation is asking about, if anything. */
   protected readonly pendingAttachmentDelete: WritableSignal<InterventionAttachmentOutput | null> =
     signal<InterventionAttachmentOutput | null>(null);
+
+  /** What the queued-attachment discard confirmation is asking about, if anything. */
+  protected readonly pendingQueuedAttachmentDelete: WritableSignal<InterventionQueuedAttachment | null> =
+    signal<InterventionQueuedAttachment | null>(null);
+
+  /**
+   * Property queuedAttachmentDeleteRequest
+   * @readonly
+   *
+   * @description
+   * The queued row projected onto the delete dialog's attachment contract —
+   * the dialog only reads `fileName`, but its input is typed on the synced
+   * output, so the queued metadata is dressed as one. Discarding queued work
+   * is data loss and stays confirm-gated, like the sync indicator's discard.
+   *
+   * @access protected
+   * @since 6.0.0
+   * @type {Signal<InterventionAttachmentOutput | null>}
+   */
+  protected readonly queuedAttachmentDeleteRequest: Signal<InterventionAttachmentOutput | null> =
+    computed<InterventionAttachmentOutput | null>(() => {
+      const queued: InterventionQueuedAttachment | null = this.pendingQueuedAttachmentDelete();
+      if (!queued) return null;
+      return {
+        '@id': `/api/intervention-attachments/${queued.clientId}`,
+        '@type': 'InterventionAttachment',
+        id: queued.id,
+        interventionId: queued.interventionId,
+        fileName: queued.fileName,
+        mimeType: queued.mimeType,
+        size: queued.size,
+        label: queued.label ?? null,
+        workItemId: queued.workItemId ?? null,
+        kind: 'file',
+        revision: 0,
+        uploadedAt: queued.queuedAt,
+      };
+    });
 
   /** Whether the "Manage labels" dialog is open. */
   protected readonly manageLabelsVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -1783,6 +1822,24 @@ export class InterventionDetailPage {
   }
 
   /**
+   * Method confirmQueuedAttachmentDelete
+   *
+   * @description
+   * Discards the confirmed queued upload from the offline outbox and closes
+   * its confirmation dialog. Local-only: the file never reached the server.
+   *
+   * @access protected
+   * @since 6.0.0
+   *
+   * @returns {void}
+   */
+  protected confirmQueuedAttachmentDelete(): void {
+    const queued: InterventionQueuedAttachment | null = this.pendingQueuedAttachmentDelete();
+    this.pendingQueuedAttachmentDelete.set(null);
+    if (queued) this.store.removeQueuedAttachment(queued);
+  }
+
+  /**
    * Method downloadAttachment
    *
    * @description
@@ -2439,6 +2496,7 @@ export class InterventionDetailPage {
     if (this.signatureDialogVisible()) return;
     if (this.workItemSheetVisible()) return;
     if (this.discussionSheetVisible() || this.pendingAttachmentDelete() !== null) return;
+    if (this.pendingQueuedAttachmentDelete() !== null) return;
     if (this.editState().open !== null) return;
 
     const target: EventTarget | null = event.target;

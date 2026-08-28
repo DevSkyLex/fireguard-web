@@ -2672,9 +2672,21 @@
         <source>Take a photo</source>
         <target>Tomar una foto</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.offline" datatype="html">
-        <source> Connect to the network to add files — attachments do not queue offline. </source>
-        <target> Conéctese a la red para añadir archivos — los adjuntos no se ponen en cola sin conexión. </target>
+      <trans-unit id="intervention.attachments.offlineQueueHint" datatype="html">
+        <source> You are offline — added files stay on this device and upload once the connection returns. </source>
+        <target> Está sin conexión — los archivos añadidos permanecen en este dispositivo y se subirán cuando vuelva la conexión. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.pendingSync" datatype="html">
+        <source>Pending sync</source>
+        <target>Sincronización pendiente</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.queuedDelete" datatype="html">
+        <source>Remove this file from the sync queue</source>
+        <target>Quitar este archivo de la cola de sincronización</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
+        <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
+        <target>La cola de archivos sin conexión está llena (25 archivos o 50 MB). Reconéctese para sincronizar sus archivos pendientes antes de añadir más.</target>
       </trans-unit>
       <trans-unit id="intervention.attachments.download" datatype="html">
         <source>Download this file</source>

@@ -79,8 +79,8 @@
 
   <div hlmCardContent class="flex flex-col gap-3">
     @if (!online() && canManage()) {
-      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offline">
-        Connect to the network to add files — attachments do not queue offline.
+      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offlineQueueHint">
+        You are offline — added files stay on this device and upload once the connection returns.
       </p>
     }
 
@@ -100,7 +100,7 @@
       </p>
     }
 
-    @if (attachments().length === 0) {
+    @if (attachments().length === 0 && queuedAttachments().length === 0) {
       <app-empty-state
         icon="lucidePaperclip"
         title="No files attached yet"
@@ -110,6 +110,69 @@
       />
     } @else {
       <ul hlmItemGroup>
+        @for (queued of queuedAttachments(); track queued.id) {
+          <li
+            hlmItem
+            variant="outline"
+            size="sm"
+            class="rounded-md border-dashed transition-colors hover:bg-muted/50"
+            data-testid="intervention-attachment-queued-row"
+          >
+            <div
+              hlmItemMedia
+              variant="icon"
+              class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
+            >
+              <ng-icon [name]="iconOf(queued)" class="text-3xl" aria-hidden="true" />
+              @if (extensionOf(queued); as extension) {
+                <span
+                  hlmBadge
+                  class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
+                  aria-hidden="true"
+                  >{{ extension }}</span
+                >
+              }
+            </div>
+            <div hlmItemContent>
+              <span hlmItemTitle class="line-clamp-1">{{ queued.fileName }}</span>
+              <span hlmItemDescription>
+                {{ sizeLabelOf(queued) }}
+                @if (queued.label) {
+                  · {{ queued.label }}
+                }
+                ·
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="align-middle"
+                  data-testid="intervention-attachment-pending-sync-chip"
+                >
+                  <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+                  <ng-container i18n="@@intervention.attachments.pendingSync"
+                    >Pending sync</ng-container
+                  >
+                </span>
+              </span>
+            </div>
+            <div hlmItemActions>
+              @if (canManage()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                  data-testid="intervention-attachment-queued-delete"
+                  i18n-aria-label="@@intervention.attachments.queuedDelete"
+                  aria-label="Remove this file from the sync queue"
+                  (click)="queuedDeleteRequested.emit(queued)"
+                >
+                  <ng-icon name="lucideTrash2" aria-hidden="true" />
+                </button>
+              }
+            </div>
+          </li>
+        }
         @for (attachment of attachments(); track attachment.id) {
           <li
             hlmItem

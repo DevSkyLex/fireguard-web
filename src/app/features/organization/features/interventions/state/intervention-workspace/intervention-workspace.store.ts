@@ -35,6 +35,8 @@ import {
   type StoreError,
 } from '@core/request-state';
 import {
+  INTERVENTION_ATTACHMENT_QUEUE_MAX_BYTES,
+  INTERVENTION_ATTACHMENT_QUEUE_MAX_FILES,
   InterventionOfflineService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
@@ -43,7 +45,9 @@ import type {
   InterventionAttachmentOutput,
   InterventionChangeOutput,
   InterventionIssueOutput,
+  InterventionOutboxOperation,
   InterventionOutput,
+  InterventionQueuedAttachment,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
@@ -91,6 +95,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   addCommentCallState: idleCallState(),
   attachments: [],
   attachmentsCallState: idleCallState(),
+  queuedAttachments: [],
   attachmentWriteCallState: idleCallState(),
   attachmentDeleteCallState: idleCallState(),
   pendingAttachmentIds: new Set<string>(),
@@ -196,6 +201,43 @@ function workspaceFailure(error: unknown, fallback: string): StoreError {
   const detail: string | null = isApiError(storeError.error) ? storeError.message : null;
 
   return { ...storeError, message: detail ?? fallback };
+}
+
+/**
+ * Function toQueuedAttachments
+ * @function toQueuedAttachments
+ *
+ * @description
+ * Projects the outbox's `attachment.upload` operations onto the view contract
+ * the attachments list renders — metadata only, the Blob stays in IndexedDB.
+ *
+ * @since 6.0.0
+ *
+ * @param {readonly InterventionOutboxOperation[]} operations - Queued operations of one intervention.
+ *
+ * @return {readonly InterventionQueuedAttachment[]} Queued attachment rows, queue order.
+ */
+function toQueuedAttachments(
+  operations: readonly InterventionOutboxOperation[],
+): readonly InterventionQueuedAttachment[] {
+  return operations
+    .filter(
+      (
+        operation,
+      ): operation is Extract<InterventionOutboxOperation, { type: 'attachment.upload' }> =>
+        operation.type === 'attachment.upload',
+    )
+    .map((operation) => ({
+      id: operation.id,
+      clientId: operation.payload.clientId ?? operation.id,
+      interventionId: operation.interventionId,
+      fileName: operation.payload.fileName,
+      mimeType: operation.payload.mimeType,
+      size: operation.payload.size,
+      queuedAt: operation.createdAt,
+      label: operation.payload.label,
+      workItemId: operation.payload.workItemId,
+    }));
 }
 
 /**
@@ -559,6 +601,68 @@ export const InterventionWorkspaceStore = signalStore(
           }),
         ),
       );
+
+      /**
+       * Reads the intervention's queued `attachment.upload` operations as list
+       * rows; an IndexedDB failure degrades to an empty list rather than
+       * failing the attachments fetch.
+       */
+      const listQueuedAttachments = (interventionId: string) =>
+        from(offline.listOutbox(interventionId)).pipe(
+          map(toQueuedAttachments),
+          catchError(() => of<readonly InterventionQueuedAttachment[]>([])),
+        );
+
+      /**
+       * Queues an attachment upload in the outbox — the same durable path the
+       * other field actions take — after enforcing the device-global storage
+       * quota (25 files / 50 MB): IndexedDB space is finite and a silently
+       * unbounded photo queue would evict the workspace snapshots themselves.
+       * A full queue surfaces through `attachmentWriteCallState` with an
+       * explicit message instead of queueing and failing later.
+       */
+      const queueAttachment = (command: InterventionAttachmentUploadCommand) => {
+        const { interventionId, file, fileName, label, workItemId, kind } = command;
+        return from(offline.attachmentQueueUsage()).pipe(
+          concatMap((usage) => {
+            if (
+              usage.count >= INTERVENTION_ATTACHMENT_QUEUE_MAX_FILES ||
+              usage.bytes + file.size > INTERVENTION_ATTACHMENT_QUEUE_MAX_BYTES
+            ) {
+              patchState(store, {
+                attachmentWriteCallState: errorCallState(
+                  workspaceFailure(
+                    new Error('Offline attachment queue is full.'),
+                    $localize`:@@intervention.workspace.attachmentQueueFull:The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.`,
+                  ),
+                ),
+              });
+              return EMPTY;
+            }
+
+            return from(
+              offline.queue(interventionId, 'attachment.upload', {
+                clientId: crypto.randomUUID(),
+                file,
+                fileName,
+                mimeType: file.type,
+                size: file.size,
+                label,
+                workItemId,
+                kind,
+              }),
+            ).pipe(
+              concatMap(() => listQueuedAttachments(interventionId)),
+              map((queued) => {
+                patchState(store, {
+                  queuedAttachments: queued,
+                  attachmentWriteCallState: successCallState(null),
+                });
+              }),
+            );
+          }),
+        );
+      };
 
       /**
        * Queues a comment as an idempotent `comment.create` outbox operation and
@@ -1404,11 +1508,15 @@ export const InterventionWorkspaceStore = signalStore(
           pipe(
             tap(() => patchState(store, { attachmentsCallState: pendingCallState() })),
             switchMap((interventionId) =>
-              service.listAttachments(interventionId).pipe(
+              forkJoin({
+                collection: service.listAttachments(interventionId),
+                queued: listQueuedAttachments(interventionId),
+              }).pipe(
                 tapResponse({
-                  next: (collection) =>
+                  next: ({ collection, queued }) =>
                     patchState(store, {
                       attachments: collection.member,
+                      queuedAttachments: queued,
                       attachmentsCallState: successCallState(null),
                     }),
                   error: (error: unknown) =>
@@ -1426,8 +1534,13 @@ export const InterventionWorkspaceStore = signalStore(
          * @method uploadAttachment
          *
          * @description
-         * Uploads one file (online-only in this pass — the outbox has no
-         * attachment operation) and appends the created attachment. When the
+         * Uploads one file and appends the created attachment. Offline — or on
+         * a network failure that slipped past `navigator.onLine` — a plain
+         * upload is queued as an `attachment.upload` outbox operation (Blob
+         * and metadata in IndexedDB, bounded to 25 files / 50 MB device-wide)
+         * and surfaces as a queued row instead of being lost; a `signature`
+         * upload stays online-only because the page chains the submit
+         * transition on its success. When the
          * command carries a `workItemId`, the matching work item's
          * `evidenceCount` is bumped locally so its badge updates without a
          * reload. A `kind: 'signature'` upload dispatches
@@ -1444,42 +1557,88 @@ export const InterventionWorkspaceStore = signalStore(
         uploadAttachment: rxMethod<InterventionAttachmentUploadCommand>(
           pipe(
             tap(() => patchState(store, { attachmentWriteCallState: pendingCallState() })),
-            concatMap(({ interventionId, file, fileName, label, workItemId, kind }) =>
-              service
+            concatMap((command) => {
+              const { interventionId, file, fileName, label, workItemId, kind } = command;
+              if (kind !== 'signature' && connectivity.isOffline()) {
+                return queueAttachment(command);
+              }
+
+              return service
                 .uploadAttachment(interventionId, file, fileName, label, workItemId, kind)
                 .pipe(
-                  tapResponse({
-                    next: (created: InterventionAttachmentOutput) => {
-                      const workItem = workItemId
-                        ? store.workItems().find((item) => item.id === workItemId)
-                        : undefined;
-                      patchState(store, {
-                        attachments: [...store.attachments(), created],
-                        workItems: workItem
-                          ? replaceWorkItem(store.workItems(), workItemId as string, {
-                              ...workItem,
-                              evidenceCount: workItem.evidenceCount + 1,
-                            })
-                          : store.workItems(),
-                        attachmentWriteCallState: successCallState(null),
-                      });
-                      dispatcher.dispatch(
-                        interventionWorkspaceStoreEvents.attachmentUploadSucceeded({
-                          attachment: created,
-                        }),
-                      );
-                    },
-                    error: (error: unknown) =>
-                      patchState(store, {
-                        attachmentWriteCallState: errorCallState(
-                          workspaceFailure(
-                            error,
-                            $localize`:@@intervention.workspace.attachmentUploadFailed:The file could not be uploaded.`,
-                          ),
-                        ),
+                  map((created: InterventionAttachmentOutput) => {
+                    const workItem = workItemId
+                      ? store.workItems().find((item) => item.id === workItemId)
+                      : undefined;
+                    patchState(store, {
+                      attachments: [...store.attachments(), created],
+                      workItems: workItem
+                        ? replaceWorkItem(store.workItems(), workItemId as string, {
+                            ...workItem,
+                            evidenceCount: workItem.evidenceCount + 1,
+                          })
+                        : store.workItems(),
+                      attachmentWriteCallState: successCallState(null),
+                    });
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.attachmentUploadSucceeded({
+                        attachment: created,
                       }),
+                    );
                   }),
-                ),
+                  catchError((error: unknown) => {
+                    if (kind !== 'signature' && connectivity.isNetworkFailure(error)) {
+                      return queueAttachment(command);
+                    }
+                    patchState(store, {
+                      attachmentWriteCallState: errorCallState(
+                        workspaceFailure(
+                          error,
+                          $localize`:@@intervention.workspace.attachmentUploadFailed:The file could not be uploaded.`,
+                        ),
+                      ),
+                    });
+                    return EMPTY;
+                  }),
+                );
+            }),
+          ),
+        ),
+
+        /**
+         * Method removeQueuedAttachment
+         * @method removeQueuedAttachment
+         *
+         * @description
+         * Discards one attachment upload still waiting in the offline outbox —
+         * it never reached the server, so removal is purely local — and
+         * refreshes the queued rows from the outbox.
+         *
+         * @access public
+         * @since 6.0.0
+         *
+         * @type {RxMethod<InterventionQueuedAttachment>}
+         */
+        removeQueuedAttachment: rxMethod<InterventionQueuedAttachment>(
+          pipe(
+            concatMap((queued) =>
+              from(offline.removeOutbox(queued.id)).pipe(
+                concatMap(() => listQueuedAttachments(queued.interventionId)),
+                map((remaining) => {
+                  patchState(store, { queuedAttachments: remaining });
+                }),
+                catchError((error: unknown) => {
+                  patchState(store, {
+                    attachmentDeleteCallState: errorCallState(
+                      workspaceFailure(
+                        error,
+                        $localize`:@@intervention.workspace.attachmentDeleteFailed:The file could not be deleted.`,
+                      ),
+                    ),
+                  });
+                  return EMPTY;
+                }),
+              ),
             ),
           ),
         ),

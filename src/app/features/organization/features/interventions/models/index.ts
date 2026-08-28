@@ -80,6 +80,7 @@ export type { InterventionOutboxQueueEntry } from './intervention-outbox/interve
 export type { InterventionOutboxType } from './intervention-outbox/intervention-outbox-type.type';
 export type { InterventionAttachmentOutput } from './intervention-attachment/intervention-attachment-output.interface';
 export type { InterventionAttachmentKind } from './intervention-attachment/intervention-attachment-kind.type';
+export type { InterventionQueuedAttachment } from './intervention-attachment/intervention-queued-attachment.interface';
 export type { PublicationOutput } from './publication/publication-output.interface';
 export type { PublicationStatus } from './publication/publication-status.type';
 export type {

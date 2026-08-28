@@ -41,6 +41,7 @@ describe('InterventionSyncService', () => {
     listAllChanges: ReturnType<typeof vi.fn>;
     createChange: ReturnType<typeof vi.fn>;
     updateChange: ReturnType<typeof vi.fn>;
+    uploadAttachment: ReturnType<typeof vi.fn>;
   };
   let mockFacilities: { createForIntervention: ReturnType<typeof vi.fn> };
   let mockEquipment: {
@@ -67,6 +68,7 @@ describe('InterventionSyncService', () => {
       listAllChanges: vi.fn().mockReturnValue(of([])),
       createChange: vi.fn().mockReturnValue(of({})),
       updateChange: vi.fn().mockReturnValue(of({})),
+      uploadAttachment: vi.fn().mockReturnValue(of({})),
     };
     mockFacilities = { createForIntervention: vi.fn().mockReturnValue(of({})) };
     mockEquipment = {
@@ -139,6 +141,52 @@ describe('InterventionSyncService', () => {
       'media-client-id',
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should replay a queued attachment upload without any idempotency key', async () => {
+    const file = new Blob(['photo'], { type: 'image/jpeg' });
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'attachment.upload', {
+        clientId: 'client-1',
+        file,
+        fileName: 'photo.jpg',
+        mimeType: 'image/jpeg',
+        size: 5,
+        label: 'Extinguisher',
+        workItemId: 'work-item-1',
+      }),
+    ]);
+
+    await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(mockInterventionService.uploadAttachment).toHaveBeenCalledWith(
+      'intervention-1',
+      file,
+      'photo.jpg',
+      'Extinguisher',
+      'work-item-1',
+      undefined,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('should reject a malformed attachment operation', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'attachment.upload', {
+        file: 'not-a-blob',
+        fileName: 'photo.jpg',
+        mimeType: 'image/jpeg',
+        size: 5,
+      } as unknown as InterventionOutboxPayloadMap['attachment.upload']),
+    ]);
+
+    await service.replayOutbox('org-1', 'intervention-1');
+
+    expect(mockInterventionService.uploadAttachment).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxFailed).toHaveBeenCalledWith(
+      'op-1',
+      'Invalid offline attachment operation',
+    );
   });
 
   it('should dequeue operations the server already applied', async () => {

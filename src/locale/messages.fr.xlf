@@ -2672,9 +2672,21 @@
         <source>Take a photo</source>
         <target>Prendre une photo</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.offline" datatype="html">
-        <source> Connect to the network to add files — attachments do not queue offline. </source>
-        <target> Connectez-vous au réseau pour ajouter des fichiers — les pièces jointes ne sont pas mises en file d'attente hors ligne. </target>
+      <trans-unit id="intervention.attachments.offlineQueueHint" datatype="html">
+        <source> You are offline — added files stay on this device and upload once the connection returns. </source>
+        <target> Vous êtes hors ligne — les fichiers ajoutés restent sur cet appareil et seront envoyés au retour de la connexion. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.pendingSync" datatype="html">
+        <source>Pending sync</source>
+        <target>Synchronisation en attente</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.queuedDelete" datatype="html">
+        <source>Remove this file from the sync queue</source>
+        <target>Retirer ce fichier de la file de synchronisation</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
+        <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
+        <target>La file de fichiers hors ligne est pleine (25 fichiers ou 50 Mo). Reconnectez-vous pour synchroniser vos fichiers en attente avant d'en ajouter d'autres.</target>
       </trans-unit>
       <trans-unit id="intervention.attachments.download" datatype="html">
         <source>Download this file</source>

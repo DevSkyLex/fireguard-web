@@ -5,6 +5,7 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
+  InterventionQueuedAttachment,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 
@@ -84,6 +85,13 @@ export interface InterventionWorkspaceState {
 
   /** Lifecycle of the lazy attachments fetch (`loadAttachments`). */
   readonly attachmentsCallState: CallState;
+
+  /**
+   * Attachment uploads waiting in the offline outbox for this intervention,
+   * queue order. Loaded with the attachments and updated on queue/discard, so
+   * the list can show each one with its pending-sync badge.
+   */
+  readonly queuedAttachments: readonly InterventionQueuedAttachment[];
 
   /**
    * Lifecycle of the **last** attachment upload (`uploadAttachment`). Deletes

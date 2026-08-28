@@ -187,6 +187,57 @@ describe('InterventionOutboxRepository', () => {
     expect(ids.toSorted()).toEqual(['intervention-1', 'intervention-2']);
   });
 
+  it('queues an attachment upload with its blob and counts it as pending', async () => {
+    const store = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(store));
+
+    await repository.queue('intervention-1', 'attachment.upload', {
+      clientId: 'client-1',
+      file: new Blob(['x'.repeat(10)], { type: 'image/jpeg' }),
+      fileName: 'photo.jpg',
+      mimeType: 'image/jpeg',
+      size: 10,
+    });
+
+    const [operation] = [...store.values()];
+    expect(operation?.type).toBe('attachment.upload');
+    expect(operation?.payload).toEqual(
+      expect.objectContaining({ clientId: 'client-1', fileName: 'photo.jpg', size: 10 }),
+    );
+    expect((operation?.payload as { file?: Blob } | undefined)?.file).toBeInstanceOf(Blob);
+    expect(repository.pendingCount()).toBe(1);
+    expect(repository.hasPendingChanges()).toBe(true);
+  });
+
+  it('sums the queued attachment uploads across interventions, whatever their status', async () => {
+    const store = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(store));
+
+    await repository.queue('intervention-1', 'attachment.upload', {
+      file: new Blob(['a']),
+      fileName: 'a.jpg',
+      mimeType: 'image/jpeg',
+      size: 100,
+    });
+    await repository.queue('intervention-2', 'attachment.upload', {
+      file: new Blob(['b']),
+      fileName: 'b.pdf',
+      mimeType: 'application/pdf',
+      size: 250,
+    });
+    await repository.queue('intervention-1', 'comment.create', { body: 'not a file' });
+    const [first] = [...store.keys()];
+    await repository.markOutboxFailed(first as string, 'rejected');
+
+    await expect(repository.attachmentQueueUsage()).resolves.toEqual({ count: 2, bytes: 350 });
+  });
+
+  it('reports an empty attachment queue on the server', async () => {
+    const repository = build({ browser: false, ensureOwnerBound: vi.fn() });
+
+    await expect(repository.attachmentQueueUsage()).resolves.toEqual({ count: 0, bytes: 0 });
+  });
+
   it('removes a queued operation and recomputes unsynced state', async () => {
     const store = new Map<string, InterventionOutboxOperation>();
     const repository = build(inMemoryDatabase(store));

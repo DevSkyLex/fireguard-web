@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type {
   InterventionAttachmentOutput,
+  InterventionQueuedAttachment,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionAttachments } from '../intervention-attachments.component';
@@ -29,6 +30,20 @@ const attachment = (
 
 const attachments = (count: number): readonly InterventionAttachmentOutput[] =>
   Array.from({ length: count }, (_, index) => attachment(index));
+
+const queued = (
+  index: number,
+  overrides: Partial<InterventionQueuedAttachment> = {},
+): InterventionQueuedAttachment => ({
+  id: `op-${index}`,
+  clientId: `client-${index}`,
+  interventionId: 'intervention-1',
+  fileName: `queued-${index}.jpg`,
+  mimeType: 'image/jpeg',
+  size: 2048,
+  queuedAt: '2026-01-05T09:00:00Z',
+  ...overrides,
+});
 
 const pdf = (name: string, size = 1024): File => {
   const created: File = new File(['%PDF-content'], name, { type: 'application/pdf' });
@@ -200,7 +215,7 @@ describe('InterventionAttachments', () => {
     expect(root().querySelector('[data-testid="intervention-attachments-add"]')).toBeNull();
   });
 
-  it('should disable the pickers while offline', async () => {
+  it('should keep the pickers usable while offline, since uploads queue for sync', async () => {
     await create(3);
     fixture.componentRef.setInput('online', false);
     await fixture.whenStable();
@@ -209,7 +224,7 @@ describe('InterventionAttachments', () => {
       '[data-testid="intervention-attachments-add"]',
     );
 
-    expect(add?.disabled).toBe(true);
+    expect(add?.disabled).toBe(false);
   });
 
   it('should disable the pickers while an upload is in flight', async () => {
@@ -329,6 +344,68 @@ describe('InterventionAttachments', () => {
     expect(
       root().querySelector('[data-testid="intervention-attachments-empty"]')?.textContent,
     ).toContain('No one has attached a file to this intervention yet.');
+  });
+
+  it('should render a queued row ahead of the synced ones with a pending-sync badge', async () => {
+    await create(1);
+    fixture.componentRef.setInput('queuedAttachments', [queued(0)]);
+    await fixture.whenStable();
+
+    const rows = root().querySelectorAll(
+      '[data-testid="intervention-attachment-queued-row"], [data-testid="intervention-attachment-row"]',
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.getAttribute('data-testid')).toBe('intervention-attachment-queued-row');
+    expect(
+      rows[0]?.querySelector('[data-testid="intervention-attachment-pending-sync-chip"]'),
+    ).not.toBeNull();
+    expect(rows[0]?.textContent).toContain('queued-0.jpg');
+  });
+
+  it('should emit queuedDeleteRequested for the clicked queued row', async () => {
+    await create(0);
+    const row = queued(0);
+    fixture.componentRef.setInput('queuedAttachments', [row]);
+    await fixture.whenStable();
+    const emitted: InterventionQueuedAttachment[] = [];
+    fixture.componentInstance.queuedDeleteRequested.subscribe((value) => emitted.push(value));
+
+    root()
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-attachment-queued-delete"]')
+      ?.click();
+
+    expect(emitted).toEqual([row]);
+  });
+
+  it('should hide the queued delete button from a read-only viewer', async () => {
+    await create(0, false);
+    fixture.componentRef.setInput('queuedAttachments', [queued(0)]);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachment-queued-delete"]'),
+    ).toBeNull();
+  });
+
+  it('should count queued rows toward the cap and the counter', async () => {
+    await create(MAX_ATTACHMENTS - 1);
+    fixture.componentRef.setInput('queuedAttachments', [queued(0)]);
+    await fixture.whenStable();
+
+    const counter = root().querySelector('[data-testid="intervention-attachments-count"]');
+    expect(counter?.textContent).toContain(`${MAX_ATTACHMENTS} / ${MAX_ATTACHMENTS}`);
+    const add = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachments-add"]',
+    );
+    expect(add?.disabled).toBe(true);
+  });
+
+  it('should not show the empty state while uploads are queued', async () => {
+    await create(0);
+    fixture.componentRef.setInput('queuedAttachments', [queued(0)]);
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="intervention-attachments-empty"]')).toBeNull();
   });
 
   it('should show no work-item chip on a plain intervention-level attachment', async () => {

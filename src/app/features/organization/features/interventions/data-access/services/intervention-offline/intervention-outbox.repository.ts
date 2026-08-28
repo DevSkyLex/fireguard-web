@@ -327,6 +327,36 @@ export class InterventionOutboxRepository {
   }
 
   /**
+   * Method attachmentQueueUsage
+   * @method attachmentQueueUsage
+   *
+   * @description
+   * Sums the queued `attachment.upload` operations across every intervention —
+   * the outbox is device-global, so the storage quota is too. Counts every
+   * status (`pending`, `conflict`, `failed`): a blocked upload still occupies
+   * storage until the user retries or discards it.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @return {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
+   */
+  public async attachmentQueueUsage(): Promise<{ count: number; bytes: number }> {
+    if (!this.database.browser) return { count: 0, bytes: 0 };
+    await this.database.ensureOwnerBound();
+    const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    return operations
+      .filter((operation) => operation.type === 'attachment.upload')
+      .reduce(
+        (usage, operation) => ({
+          count: usage.count + 1,
+          bytes: usage.bytes + operation.payload.size,
+        }),
+        { count: 0, bytes: 0 },
+      );
+  }
+
+  /**
    * Method listInterventionIdsWithOutbox
    * @method listInterventionIdsWithOutbox
    *

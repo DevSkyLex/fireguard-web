@@ -972,6 +972,9 @@ describe('InterventionWorkspaceStore evidence upload', () => {
             getWorkspace: vi.fn(),
             saveWorkspace: vi.fn().mockResolvedValue(undefined),
             queue: vi.fn().mockResolvedValue(undefined),
+            listOutbox: vi.fn().mockResolvedValue([]),
+            removeOutbox: vi.fn().mockResolvedValue(undefined),
+            attachmentQueueUsage: vi.fn().mockResolvedValue({ count: 0, bytes: 0 }),
           },
         },
       ],
@@ -1092,5 +1095,204 @@ describe('InterventionWorkspaceStore evidence upload', () => {
         payload: { attachment: created },
       }),
     );
+  });
+});
+
+describe('InterventionWorkspaceStore offline attachment queue', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
+  let mockService: Record<string, ReturnType<typeof vi.fn>>;
+  let mockOffline: {
+    getWorkspace: ReturnType<typeof vi.fn>;
+    saveWorkspace: ReturnType<typeof vi.fn>;
+    queue: ReturnType<typeof vi.fn>;
+    listOutbox: ReturnType<typeof vi.fn>;
+    removeOutbox: ReturnType<typeof vi.fn>;
+    attachmentQueueUsage: ReturnType<typeof vi.fn>;
+  };
+
+  const queuedOperation = {
+    id: 'op-1',
+    interventionId: 'intervention-1',
+    type: 'attachment.upload',
+    payload: {
+      clientId: 'client-1',
+      file: new Blob(['data'], { type: 'image/jpeg' }),
+      fileName: 'evidence.jpg',
+      mimeType: 'image/jpeg',
+      size: 4,
+    },
+    createdAt: '2026-06-12T08:00:00.000Z',
+    status: 'pending',
+    error: null,
+  };
+
+  beforeEach(() => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    mockService = {
+      get: vi.fn().mockReturnValue(of(intervention)),
+      listAllWorkItems: vi.fn().mockReturnValue(of([workItem])),
+      listAllChanges: vi.fn().mockReturnValue(of([] as readonly InterventionChangeOutput[])),
+      listIssues: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/issues',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [] as readonly InterventionIssueOutput[],
+        }),
+      ),
+      listAttachments: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/attachments',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [],
+        }),
+      ),
+      uploadAttachment: vi.fn(),
+    };
+    mockOffline = {
+      getWorkspace: vi.fn(),
+      saveWorkspace: vi.fn().mockResolvedValue(undefined),
+      queue: vi.fn().mockResolvedValue(undefined),
+      listOutbox: vi.fn().mockResolvedValue([queuedOperation]),
+      removeOutbox: vi.fn().mockResolvedValue(undefined),
+      attachmentQueueUsage: vi.fn().mockResolvedValue({ count: 0, bytes: 0 }),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: mockService },
+        { provide: InterventionOfflineService, useValue: mockOffline },
+      ],
+    });
+
+    store = TestBed.inject(InterventionWorkspaceStore);
+    store.load('intervention-1');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('queues the upload offline with its metadata and surfaces the queued row', async () => {
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    store.uploadAttachment({ interventionId: 'intervention-1', file, fileName: 'evidence.jpg' });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
+
+    expect(mockService['uploadAttachment']).not.toHaveBeenCalled();
+    expect(mockOffline.queue).toHaveBeenCalledWith(
+      'intervention-1',
+      'attachment.upload',
+      expect.objectContaining({
+        file,
+        fileName: 'evidence.jpg',
+        mimeType: 'image/jpeg',
+        size: 4,
+        clientId: expect.any(String),
+      }),
+    );
+    expect(store.queuedAttachments()).toEqual([
+      expect.objectContaining({
+        id: 'op-1',
+        clientId: 'client-1',
+        fileName: 'evidence.jpg',
+        size: 4,
+        queuedAt: '2026-06-12T08:00:00.000Z',
+      }),
+    ]);
+  });
+
+  it('queues the upload when an online attempt fails on a network error', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    mockService['uploadAttachment'].mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    store.uploadAttachment({ interventionId: 'intervention-1', file, fileName: 'evidence.jpg' });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('success'));
+
+    expect(mockOffline.queue).toHaveBeenCalledWith(
+      'intervention-1',
+      'attachment.upload',
+      expect.objectContaining({ fileName: 'evidence.jpg' }),
+    );
+    expect(store.queuedAttachments()).toHaveLength(1);
+  });
+
+  it('refuses to queue past the storage quota and names the bound', async () => {
+    mockOffline.attachmentQueueUsage.mockResolvedValue({ count: 25, bytes: 1024 });
+
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    store.uploadAttachment({ interventionId: 'intervention-1', file, fileName: 'evidence.jpg' });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('error'));
+
+    expect(mockOffline.queue).not.toHaveBeenCalled();
+    const callState = store.attachmentWriteCallState();
+    expect(callState.status === 'error' ? callState.error?.message : null).toContain(
+      '25 files or 50 MB',
+    );
+  });
+
+  it('refuses to queue a file that would overflow the byte quota', async () => {
+    mockOffline.attachmentQueueUsage.mockResolvedValue({ count: 1, bytes: 50 * 1024 * 1024 });
+
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    store.uploadAttachment({ interventionId: 'intervention-1', file, fileName: 'evidence.jpg' });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('error'));
+
+    expect(mockOffline.queue).not.toHaveBeenCalled();
+  });
+
+  it('does not queue a signature upload offline', async () => {
+    mockService['uploadAttachment'].mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+
+    const file = new Blob(['data'], { type: 'image/png' });
+    store.uploadAttachment({
+      interventionId: 'intervention-1',
+      file,
+      fileName: 'signature.png',
+      kind: 'signature',
+    });
+
+    await vi.waitFor(() => expect(store.attachmentWriteCallState().status).toBe('error'));
+
+    expect(mockOffline.queue).not.toHaveBeenCalled();
+    expect(store.queuedAttachments()).toEqual([]);
+  });
+
+  it('discards a queued upload and refreshes the queued rows', async () => {
+    mockOffline.listOutbox.mockResolvedValue([]);
+
+    store.removeQueuedAttachment({
+      id: 'op-1',
+      clientId: 'client-1',
+      interventionId: 'intervention-1',
+      fileName: 'evidence.jpg',
+      mimeType: 'image/jpeg',
+      size: 4,
+      queuedAt: '2026-06-12T08:00:00.000Z',
+    });
+
+    await vi.waitFor(() => expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1'));
+    await vi.waitFor(() => expect(store.queuedAttachments()).toEqual([]));
+  });
+
+  it('loads the queued rows with the attachments', async () => {
+    store.loadAttachments('intervention-1');
+
+    await vi.waitFor(() => expect(store.attachmentsCallState().status).toBe('success'));
+
+    expect(store.attachments()).toEqual([]);
+    expect(store.queuedAttachments()).toEqual([
+      expect.objectContaining({ id: 'op-1', fileName: 'evidence.jpg' }),
+    ]);
   });
 });

@@ -1,6 +1,7 @@
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
+import type { InterventionAttachmentKind } from '../intervention-attachment/intervention-attachment-kind.type';
 import type { CreateInterventionChangeInput } from '../intervention-change/create-intervention-change-input.interface';
 import type { UpdateInterventionChangeInput } from '../intervention-change/update-intervention-change-input.interface';
 import type { CreateInterventionWorkItemInput } from '../intervention-work-item/create-intervention-work-item-input.interface';
@@ -20,6 +21,16 @@ export interface InterventionOutboxPayloadMap {
     readonly equipmentId: string;
     readonly file: Blob;
     readonly fileName: string;
+  };
+  readonly 'attachment.upload': {
+    readonly clientId?: string;
+    readonly file: Blob;
+    readonly fileName: string;
+    readonly mimeType: string;
+    readonly size: number;
+    readonly label?: string;
+    readonly workItemId?: string;
+    readonly kind?: InterventionAttachmentKind;
   };
   readonly 'comment.create': {
     readonly clientId?: string;

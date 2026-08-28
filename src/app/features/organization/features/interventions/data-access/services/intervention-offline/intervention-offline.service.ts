@@ -286,6 +286,23 @@ export class InterventionOfflineService {
   }
 
   /**
+   * Method attachmentQueueUsage
+   * @method attachmentQueueUsage
+   *
+   * @description
+   * Device-global count and byte size of queued `attachment.upload` operations,
+   * used to enforce the offline attachment storage quota before queueing more.
+   *
+   * @access public
+   * @since 6.0.0
+   *
+   * @return {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
+   */
+  public attachmentQueueUsage(): Promise<{ count: number; bytes: number }> {
+    return this.outbox.attachmentQueueUsage();
+  }
+
+  /**
    * Method listInterventionIdsWithOutbox
    * @method listInterventionIdsWithOutbox
    *

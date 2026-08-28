@@ -465,6 +465,8 @@ describe('InterventionDetailPage', () => {
               assignTeam: vi.fn(),
               addCommentCallState: signal(idleCallState()),
               attachments,
+              queuedAttachments: signal([]),
+              removeQueuedAttachment: vi.fn(),
               attachmentsCallState: signal(idleCallState()),
               attachmentWriteCallState: signal(idleCallState()),
               pendingAttachmentIds: signal(new Set<string>()),

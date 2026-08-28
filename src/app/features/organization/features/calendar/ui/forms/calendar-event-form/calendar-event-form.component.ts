@@ -27,7 +27,6 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDatePicker, HlmDatePickerTrigger } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
-import { HlmInputGroup, HlmInputGroupAddon, HlmInputGroupInput } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTextareaImports } from '@shared/ui/textarea';
@@ -105,9 +104,6 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
     HlmDatePickerTrigger,
     HlmSwitch,
     HlmInput,
-    HlmInputGroup,
-    HlmInputGroupAddon,
-    HlmInputGroupInput,
     ...HlmFieldImports,
     ...HlmSelectImports,
     ...HlmTextareaImports,

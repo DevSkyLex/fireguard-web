@@ -26,10 +26,11 @@ import { HlmTableImports } from '@shared/ui/table';
 /** Placeholder rows drawn while the first page loads. */
 const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
-/** Human labels for the two job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
+/** Human labels for the job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
 const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
   equipment: $localize`:@@imports.kind.equipment:Equipment`,
   facility: $localize`:@@imports.kind.facility:Facilities`,
+  member: $localize`:@@imports.kind.member:Members`,
 };
 
 /**

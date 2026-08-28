@@ -23,6 +23,7 @@ import {
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   CreateFacilityInput,
+  FacilityGeocodeOutput,
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
@@ -95,7 +96,7 @@ function isCoordinateInRange(value: string, bounds: readonly [number, number]): 
  * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
  * without owning the field tree itself.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -159,6 +160,37 @@ export class FacilityCreateForm {
   public readonly mapCenter: InputSignal<MapCoordinates | undefined> = input<
     MapCoordinates | undefined
   >(undefined);
+
+  /**
+   * Property geocodePending
+   * @readonly
+   * @description Whether the page's "Locate address" lookup is in flight, which makes the button inert (`aria-disabled`, still focusable).
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly geocodePending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property geocodeResult
+   * @readonly
+   * @description The latest successful lookup. Fills the latitude/longitude drafts — both stay editable — and its `displayName` renders as help under the address field.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<FacilityGeocodeOutput | null>}
+   */
+  public readonly geocodeResult: InputSignal<FacilityGeocodeOutput | null> =
+    input<FacilityGeocodeOutput | null>(null);
+
+  /**
+   * Property geocodeNotFound
+   * @readonly
+   * @description Whether the latest lookup answered `404` — shown as a non-blocking inline message, never a field error.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly geocodeNotFound: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -191,6 +223,16 @@ export class FacilityCreateForm {
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
+
+  /**
+   * Property geocodeRequested
+   * @readonly
+   * @description Asks the hosting page to resolve the trimmed address draft to coordinates — the page owns the transport call and answers through {@link geocodeResult} / {@link geocodeNotFound}.
+   * @access public
+   * @since 1.2.0
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly geocodeRequested: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
@@ -335,6 +377,19 @@ export class FacilityCreateForm {
 
       untracked((): void => this.dirtyChanged.emit(dirty));
     });
+
+    effect((): void => {
+      const result: FacilityGeocodeOutput | null = this.geocodeResult();
+      if (result === null) return;
+
+      untracked((): void => {
+        this.model.update((draft) => ({
+          ...draft,
+          latitude: String(result.latitude),
+          longitude: String(result.longitude),
+        }));
+      });
+    });
   }
   //#endregion
 
@@ -374,6 +429,29 @@ export class FacilityCreateForm {
       latitude: parsedCoordinate(draft.latitude),
       longitude: parsedCoordinate(draft.longitude),
     });
+  }
+
+  /**
+   * Method locateAddress
+   *
+   * @description
+   * Emits {@link geocodeRequested} with the trimmed address draft. A no-op
+   * while a lookup is already in flight or while the address is blank — the
+   * button stays focusable (`aria-disabled`, not `disabled`), so this guard
+   * is what prevents a double request.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @returns {void}
+   */
+  protected locateAddress(): void {
+    if (this.geocodePending()) return;
+
+    const address: string = this.model().address.trim();
+    if (address === '') return;
+
+    this.geocodeRequested.emit(address);
   }
 
   /**

@@ -3,14 +3,15 @@
 ## Purpose
 
 Owns the organization's bulk CSV import surface over the backend Import
-module: submitting a CSV file to bulk-create equipment or facilities,
+module: submitting a CSV file to bulk-create equipment, facilities or member
+invitations,
 listing an organization's import jobs, and viewing one job's report
 (row-level successes and failures) — including a dry-run mode that reports
 what would happen without writing anything.
 
-This subfeature does not own equipment or facility creation itself — a
-successful row is created by the Import module's own worker, through the
-same domain rules the manual create forms use. It does not compute or
+This subfeature does not own equipment, facility or invitation creation
+itself — a successful row is created by the Import module's own worker,
+through the same domain rules the manual create and invite forms use. It does not compute or
 second-guess `status`, `processedRows`, or the row-level `code` values;
 those are authoritative from the backend, read by polling.
 
@@ -26,10 +27,10 @@ those are authoritative from the backend, read by polling.
 ## Routes
 
 - `/organizations/:organizationId/imports` — `ImportsPage`: the only route
-  this subfeature owns. Guarded on `organization.equipment.read` **or**
-  `organization.facilities.read` on the pathless parent (`match: 'any'`), so
-  a reader holding only one may still reach the page and import that one
-  kind — mirrors `APPROVAL_ROUTES`'s guard shape. There is no detail route:
+  this subfeature owns. Guarded on `organization.equipment.read`,
+  `organization.facilities.read` **or** `organization.members.read` on the
+  pathless parent (`match: 'any'`), so a reader holding only one may still
+  reach the page and import that one kind — mirrors `APPROVAL_ROUTES`'s guard shape. There is no detail route:
   a job's report renders inline, in a sheet opened from its table row.
 
 ## State and Data Access
@@ -57,9 +58,10 @@ worker flushes progress every 50 rows and there is no push channel.
 ## Cross-Feature Dependencies
 
 - Depends on organization route context from the parent feature.
-- Depends on the parent feature's `EQUIPMENT_READ` and `FACILITIES_READ`
-  permission constants (`ORGANIZATION_PERMISSION`) for its route guard, and
-  on `EQUIPMENT_WRITE`/`FACILITIES_WRITE` for `ImportsPage.availableKindOptions`
+- Depends on the parent feature's `EQUIPMENT_READ`, `FACILITIES_READ` and
+  `MEMBERS_READ` permission constants (`ORGANIZATION_PERMISSION`) for its
+  route guard, and on `EQUIPMENT_WRITE`/`FACILITIES_WRITE`/`MEMBERS_MANAGE`
+  for `ImportsPage.availableKindOptions`
   — the upload form is narrowed client-side to the kinds the active member
   may actually write, per submitted `kind`, matching the backend's own
   `create` gate; this subfeature defines no permission constants of its
@@ -91,6 +93,11 @@ worker flushes progress every 50 rows and there is no push channel.
 - Status is never colour-only: `ImportStatusTag` and the row report's code
   badges always pair their severity tint with an icon and a label.
 - The upload card is gated client-side per kind (`ImportsPage.availableKindOptions`,
-  `EQUIPMENT_WRITE`/`FACILITIES_WRITE`) and disappears entirely once neither
-  is held — a reader can still reach the page on a read permission alone,
-  since the route guard is `match: 'any'` over the two read permissions.
+  `EQUIPMENT_WRITE`/`FACILITIES_WRITE`/`MEMBERS_MANAGE`) and disappears
+  entirely once none is held — a reader can still reach the page on a read
+  permission alone, since the route guard is `match: 'any'` over the three
+  read permissions.
+- A `member` row that is skipped as a duplicate (`already_member`,
+  `already_invited`) is non-fatal and renders as a `warning` tag;
+  `unknown_role` is a genuine row failure (`danger`). The `roles` column
+  takes role names separated by `|`, blank meaning the default member role.

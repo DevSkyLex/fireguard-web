@@ -65,6 +65,7 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPermissionName>> = {
   equipment: ORGANIZATION_PERMISSION.EQUIPMENT_WRITE,
   facility: ORGANIZATION_PERMISSION.FACILITIES_WRITE,
+  member: ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
 };
 
 /**
@@ -84,7 +85,7 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
  * just-created row updates in place on the same table without the page
  * driving the poll. The upload card renders only the kinds
  * {@link availableKindOptions} the active member holds the matching write
- * permission for, and disappears entirely once neither kind is writable —
+ * permission for, and disappears entirely once no kind is writable —
  * the route itself needs only one read permission, so a reader may reach the
  * page with no write permission at all. The "Kind" filter is unrelated to
  * that gate: it narrows what a reader sees and offers every kind regardless

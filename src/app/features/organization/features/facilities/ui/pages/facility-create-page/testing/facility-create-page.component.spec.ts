@@ -1,7 +1,10 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   CreateFacilityInput,
   FacilityOutput,
@@ -34,6 +37,8 @@ describe('FacilityCreatePage', () => {
   let ensureParentOptionsLoaded: ReturnType<typeof vi.fn>;
   let resetCreateOperation: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
+  let geocode: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
   let facilities: WritableSignal<readonly FacilityOutput[]>;
   let createCallState: WritableSignal<CallState<FacilityOutput | null>>;
 
@@ -41,6 +46,8 @@ describe('FacilityCreatePage', () => {
     create = vi.fn();
     ensureParentOptionsLoaded = vi.fn();
     resetCreateOperation = vi.fn();
+    geocode = vi.fn();
+    feedbackError = vi.fn();
     facilities = signal<readonly FacilityOutput[]>([]);
     createCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
 
@@ -48,6 +55,8 @@ describe('FacilityCreatePage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        { provide: FacilityService, useValue: { geocode } },
+        { provide: FeedbackService, useValue: { error: feedbackError } },
         {
           provide: FacilityStore,
           useValue: {
@@ -101,6 +110,73 @@ describe('FacilityCreatePage', () => {
 
     expect(resetCreateOperation).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities', 'facility-9']);
+  });
+
+  describe('the "Locate address" lookup', () => {
+    const requestGeocode = (address: string): void => {
+      (
+        fixture.componentInstance as unknown as { onGeocodeRequested(address: string): void }
+      ).onGeocodeRequested(address);
+    };
+
+    it('should hand a match to the form and clear the pending flag', async () => {
+      const match = {
+        '@id': '/api/organizations/org-1/facilities/geocode',
+        '@type': 'GeocodeAddress',
+        displayName: '1 Main Street, Springfield',
+        latitude: 12.5,
+        longitude: -7.25,
+      };
+      geocode.mockReturnValue(of(match));
+
+      requestGeocode('1 Main Street');
+      await fixture.whenStable();
+
+      expect(geocode).toHaveBeenCalledWith('org-1', '1 Main Street');
+      expect(fixture.componentInstance['geocodeResult']()).toEqual(match);
+      expect(fixture.componentInstance['geocodePending']()).toBe(false);
+      expect(fixture.componentInstance['geocodeNotFound']()).toBe(false);
+      expect(feedbackError).not.toHaveBeenCalled();
+    });
+
+    it('should render a 404 no-match inline rather than toasting', async () => {
+      geocode.mockReturnValue(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 404,
+          type: 'about:blank',
+          title: 'Not Found',
+          detail: 'No match for the given address.',
+        })),
+      );
+
+      requestGeocode('nowhere at all');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['geocodeNotFound']()).toBe(true);
+      expect(fixture.componentInstance['geocodeResult']()).toBeNull();
+      expect(feedbackError).not.toHaveBeenCalled();
+    });
+
+    it('should surface any other refusal detail as an error toast', async () => {
+      geocode.mockReturnValue(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 429,
+          type: 'about:blank',
+          title: 'Too Many Requests',
+          detail: 'Too many geocoding requests.',
+        })),
+      );
+
+      requestGeocode('1 Main Street');
+      await fixture.whenStable();
+
+      expect(feedbackError).toHaveBeenCalledWith('Too many geocoding requests.');
+      expect(fixture.componentInstance['geocodeNotFound']()).toBe(false);
+    });
   });
 
   it('should return to the facility list on cancel', () => {

@@ -104,16 +104,50 @@
       <label hlmFieldLabel for="facility-create-address" i18n="@@facility.form.addressLabel"
         >Address</label
       >
-      <input
-        hlmInput
-        id="facility-create-address"
-        type="text"
-        data-testid="facility-create-address"
-        placeholder="123 Main Street, City"
-        i18n-placeholder="@@facility.form.addressPlaceholder"
-        [formField]="createForm.address"
-        [attr.aria-invalid]="createForm.address().touched() && createForm.address().invalid()"
-      />
+      <div class="flex items-start gap-2">
+        <input
+          hlmInput
+          id="facility-create-address"
+          type="text"
+          class="min-w-0 flex-1"
+          data-testid="facility-create-address"
+          placeholder="123 Main Street, City"
+          i18n-placeholder="@@facility.form.addressPlaceholder"
+          [formField]="createForm.address"
+          [attr.aria-invalid]="createForm.address().touched() && createForm.address().invalid()"
+        />
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="shrink-0 max-sm:min-h-11"
+          data-testid="facility-create-locate-address"
+          [attr.aria-disabled]="geocodePending() ? 'true' : null"
+          [attr.aria-busy]="geocodePending() ? 'true' : null"
+          (click)="locateAddress()"
+        >
+          <span i18n="@@facility.form.locateAddress">Locate address</span>
+        </button>
+      </div>
+      <p
+        role="status"
+        aria-live="polite"
+        class="text-xs"
+        data-testid="facility-create-geocode-status"
+      >
+        @if (geocodePending()) {
+          <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
+            >Locating address…</span
+          >
+        } @else if (geocodeNotFound()) {
+          <span class="text-muted-foreground" i18n="@@facility.form.addressNotFound"
+            >Address not found — you can still enter the coordinates yourself.</span
+          >
+        } @else if (geocodeResult(); as match) {
+          <span class="text-muted-foreground">{{ match.displayName }}</span>
+        }
+      </p>
     </hlm-field>
 
     <div class="flex justify-end">

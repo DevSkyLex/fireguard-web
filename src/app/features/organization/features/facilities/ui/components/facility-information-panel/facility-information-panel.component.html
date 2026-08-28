@@ -151,7 +151,21 @@
       }
 
       <div fieldEditor class="flex flex-col gap-2">
-        <div class="flex justify-end">
+        <div class="flex justify-end gap-2">
+          @if (facility().address) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="facility-locate-address"
+              [attr.aria-disabled]="geocodePending() ? 'true' : null"
+              [attr.aria-busy]="geocodePending() ? 'true' : null"
+              (click)="locateAddress()"
+            >
+              <span i18n="@@facility.form.locateAddress">Locate address</span>
+            </button>
+          }
           <button
             hlmBtn
             type="button"
@@ -163,6 +177,19 @@
             <span i18n="@@facility.map.pickOnMap">Pick on map</span>
           </button>
         </div>
+        <p role="status" aria-live="polite" class="text-xs" data-testid="facility-geocode-status">
+          @if (geocodePending()) {
+            <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
+              >Locating address…</span
+            >
+          } @else if (geocodeNotFound()) {
+            <span class="text-muted-foreground" i18n="@@facility.form.addressNotFound"
+              >Address not found — you can still enter the coordinates yourself.</span
+            >
+          } @else if (geocodeResult(); as match) {
+            <span class="text-muted-foreground">{{ match.displayName }}</span>
+          }
+        </p>
         <div class="flex gap-2">
           <div class="flex-1">
             <label

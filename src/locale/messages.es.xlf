@@ -1018,6 +1018,18 @@
         <source>Equipment</source>
         <target>Equipos</target>
       </trans-unit>
+      <trans-unit id="org.assets.labelsFailed" datatype="html">
+        <source>Couldn't print the QR labels.</source>
+        <target>No se pudieron imprimir las etiquetas QR.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.printingLabelsStatus" datatype="html">
+        <source> Preparing the label sheet… </source>
+        <target> Preparando la hoja de etiquetas… </target>
+      </trans-unit>
+      <trans-unit id="org.assets.printLabelsButton" datatype="html">
+        <source>Print QR labels</source>
+        <target>Imprimir etiquetas QR</target>
+      </trans-unit>
       <trans-unit id="org.assets.equipment.error" datatype="html">
         <source>Couldn't load equipment.</source>
         <target>No se pudieron cargar los equipos.</target>
@@ -1732,6 +1744,18 @@
         <source>Export</source>
         <target>Exportar</target>
       </trans-unit>
+      <trans-unit id="equipment.list.labelsFailed" datatype="html">
+        <source>Couldn't print the QR labels.</source>
+        <target>No se pudieron imprimir las etiquetas QR.</target>
+      </trans-unit>
+      <trans-unit id="equipment.list.printingLabelsStatus" datatype="html">
+        <source> Preparing the label sheet… </source>
+        <target> Preparando la hoja de etiquetas… </target>
+      </trans-unit>
+      <trans-unit id="equipment.list.printLabelsButton" datatype="html">
+        <source>Print QR labels</source>
+        <target>Imprimir etiquetas QR</target>
+      </trans-unit>
       <trans-unit id="equipment.list.exportingStatus" datatype="html">
         <source>Preparing the export…</source>
         <target>Preparando la exportación…</target>
@@ -2379,6 +2403,22 @@
       <trans-unit id="facility.form.addressPlaceholder" datatype="html">
         <source>123 Main Street, City</source>
         <target>Calle Mayor 123, Ciudad</target>
+      </trans-unit>
+      <trans-unit id="facility.form.locateFailed" datatype="html">
+        <source>Couldn't locate the address.</source>
+        <target>No se pudo localizar la dirección.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.addressNotFound" datatype="html">
+        <source>Address not found — you can still enter the coordinates yourself.</source>
+        <target>Dirección no encontrada — aún puede introducir las coordenadas manualmente.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.locatingAddress" datatype="html">
+        <source>Locating address…</source>
+        <target>Localizando la dirección…</target>
+      </trans-unit>
+      <trans-unit id="facility.form.locateAddress" datatype="html">
+        <source>Locate address</source>
+        <target>Localizar dirección</target>
       </trans-unit>
       <trans-unit id="facility.form.coordinatesIncomplete" datatype="html">
         <source>Enter both latitude and longitude, or leave both empty.</source>
@@ -8582,6 +8622,14 @@
         <source>parentCode must reference a facility that already exists — order parent rows before their children. A dry run also resolves it against earlier &quot;would create&quot; rows in the same file.</source>
         <target>parentCode debe hacer referencia a una instalación que ya existe — coloque las filas principales antes que sus filas hijas. Una simulación también la resuelve entre las filas &quot;se crearía&quot; anteriores del mismo archivo.</target>
       </trans-unit>
+      <trans-unit id="imports.csvHelp.member.roles" datatype="html">
+        <source>roles takes organization role names separated by |. Leave it blank to grant the default member role.</source>
+        <target>roles acepta nombres de roles de la organización separados por |. Déjela en blanco para asignar el rol de miembro predeterminado.</target>
+      </trans-unit>
+      <trans-unit id="imports.csvHelp.equipment.facilityCode" datatype="html">
+        <source>facilityCode assigns the created item to the facility carrying that code — an unknown code fails the row.</source>
+        <target>facilityCode asigna el elemento creado a la instalación que lleva ese código — un código desconocido hace fallar la fila.</target>
+      </trans-unit>
       <trans-unit id="imports.csvHelp.general.delimiter" datatype="html">
         <source>Comma or semicolon delimited, UTF-8 (a leading BOM is fine).</source>
         <target>Delimitado por coma o punto y coma, UTF-8 (se admite un BOM inicial).</target>
@@ -8601,6 +8649,10 @@
       <trans-unit id="imports.kind.facility" datatype="html">
         <source>Facilities</source>
         <target>Instalaciones</target>
+      </trans-unit>
+      <trans-unit id="imports.kind.member" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
       </trans-unit>
       <trans-unit id="imports.list.emptyDesc" datatype="html">
         <source>Upload a CSV file above to bulk-create equipment or facilities.</source>
@@ -8661,6 +8713,18 @@
       <trans-unit id="imports.rowErrorCode.quotaExceeded" datatype="html">
         <source>Plan limit reached</source>
         <target>Límite del plan alcanzado</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.unknownRole" datatype="html">
+        <source>Unknown role</source>
+        <target>Rol desconocido</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.alreadyInvited" datatype="html">
+        <source>Already invited</source>
+        <target>Ya invitado</target>
+      </trans-unit>
+      <trans-unit id="imports.rowErrorCode.alreadyMember" datatype="html">
+        <source>Already a member</source>
+        <target>Ya es miembro</target>
       </trans-unit>
       <trans-unit id="imports.rowErrorCode.wouldCreate" datatype="html">
         <source>Would create</source>

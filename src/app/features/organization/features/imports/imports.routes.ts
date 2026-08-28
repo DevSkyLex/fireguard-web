@@ -14,8 +14,8 @@ import { ImportJobsStore } from './state';
  * singular, matching `facilities/facilities.routes.ts` → `FACILITY_ROUTES`.
  *
  * The read permission guard sits on the pathless parent, the same shape
- * `APPROVAL_ROUTES` uses, gated on either equipment or facility read since
- * a reader with only one may still import that one kind. There is no
+ * `APPROVAL_ROUTES` uses, gated on any of equipment, facility or
+ * member read since a reader with only one may still import that one kind. There is no
  * detail route: a job's report renders inline on the index page, so
  * {@link ImportJobsStore} is provided once, on the single leaf.
  *
@@ -31,6 +31,7 @@ export const IMPORT_ROUTES: Routes = [
         permissions: [
           ORGANIZATION_PERMISSION.EQUIPMENT_READ,
           ORGANIZATION_PERMISSION.FACILITIES_READ,
+          ORGANIZATION_PERMISSION.MEMBERS_READ,
         ],
         match: 'any',
       }),

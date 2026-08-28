@@ -219,6 +219,66 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── geocode ────────────────────────────────────────────────────────────────
+
+  describe('geocode', () => {
+    const match = {
+      '@id': `/api/organizations/${orgId}/facilities/geocode`,
+      '@type': 'GeocodeAddress',
+      displayName: '1 Rue de la Paix, 75001 Paris, France',
+      latitude: 48.8686,
+      longitude: 2.3314,
+    };
+
+    it('should send GET request with the address as a query param', () => {
+      service.geocode(orgId, '1 Rue de la Paix').subscribe((response) => {
+        expect(response.displayName).toBe(match.displayName);
+        expect(response.latitude).toBe(48.8686);
+        expect(response.longitude).toBe(2.3314);
+      });
+
+      const req = httpMock.expectOne(
+        (candidate) =>
+          candidate.url === `${facilityBaseUrl}/geocode` &&
+          candidate.params.get('address') === '1 Rue de la Paix',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(match);
+    });
+
+    it('should propagate a 404 no-match refusal as an ApiError', () => {
+      service.geocode(orgId, 'nowhere at all').subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(404),
+      });
+
+      const req = httpMock.expectOne((candidate) => candidate.url === `${facilityBaseUrl}/geocode`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+
+    it('should propagate a 429 rate-limit refusal with its RFC 7807 detail', () => {
+      service.geocode(orgId, '1 Rue de la Paix').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(429);
+          expect(error.detail).toBe('Too many geocoding requests.');
+        },
+      });
+
+      const req = httpMock.expectOne((candidate) => candidate.url === `${facilityBaseUrl}/geocode`);
+      req.flush(
+        {
+          '@id': '/errors/429',
+          '@type': 'Error',
+          status: 429,
+          type: 'about:blank',
+          title: 'Too Many Requests',
+          detail: 'Too many geocoding requests.',
+        },
+        { status: 429, statusText: 'Too Many Requests' },
+      );
+    });
+  });
+
   // ── getPlanOverlay ─────────────────────────────────────────────────────────
 
   describe('getPlanOverlay', () => {

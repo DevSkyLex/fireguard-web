@@ -7,6 +7,9 @@ const CODE_VALUES: readonly ImportRowErrorCode[] = [
   'invalid',
   'missing_required',
   'quota_exceeded',
+  'already_member',
+  'already_invited',
+  'unknown_role',
 ];
 
 describe('resolveImportRowErrorTag', () => {
@@ -27,6 +30,12 @@ describe('resolveImportRowErrorTag', () => {
     expect(resolveImportRowErrorTag('invalid').severity).toBe('danger');
     expect(resolveImportRowErrorTag('missing_required').severity).toBe('danger');
     expect(resolveImportRowErrorTag('quota_exceeded').severity).toBe('warning');
+  });
+
+  it('should render the member duplicate codes as warning and unknown_role as danger', () => {
+    expect(resolveImportRowErrorTag('already_member').severity).toBe('warning');
+    expect(resolveImportRowErrorTag('already_invited').severity).toBe('warning');
+    expect(resolveImportRowErrorTag('unknown_role').severity).toBe('danger');
   });
 
   it('should fall back to a humanised neutral descriptor for an unknown value', () => {

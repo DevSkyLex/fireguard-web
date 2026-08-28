@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,6 +16,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -30,16 +32,19 @@ import {
   lucideMove,
   lucideNetwork,
   lucidePlus,
+  lucideQrCode,
   lucideShieldCheck,
   lucideSquareArrowOutUpRight,
   lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
 import type {
   FacilityMoveRequest,
@@ -62,6 +67,7 @@ import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import {
   ComplianceExplorerStore,
   type ComplianceExplorerStoreType,
@@ -70,7 +76,7 @@ import {
   OrganizationAssetsPaneStore,
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
-import { resolveComplianceBucket } from '@features/organization/utils';
+import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
@@ -158,6 +164,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideMove,
       lucideNetwork,
       lucidePlus,
+      lucideQrCode,
       lucideShieldCheck,
       lucideSquareArrowOutUpRight,
       lucideTriangleAlert,
@@ -199,6 +206,18 @@ export class OrganizationAssetsPage {
 
   /** App-wide toast feedback for the archive and snapshot-download flows. */
   private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
+
+  /** Transport used directly for the selected node's one-shot QR label sheet — a download, not pane state. */
+  private readonly equipmentService: EquipmentService = inject(EquipmentService);
+
+  /** Hands the label sheet blob to the browser as a file download. */
+  private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
+
+  /** Unsubscribes an in-flight label sheet download when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a QR label sheet download is currently in flight. */
+  protected readonly labelsBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /** The site hierarchy. */
   protected readonly tree: FacilityTreeStoreType = inject<FacilityTreeStoreType>(FacilityTreeStore);
@@ -387,7 +406,7 @@ export class OrganizationAssetsPage {
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -534,6 +553,50 @@ export class OrganizationAssetsPage {
   protected onComplianceNodeSelected(node: TreeNode<ComplianceFacilityTreeNodeOutput>): void {
     this.selectedComplianceFacilityId.set(node.id);
     this.compliance.loadSummary({ organizationId: this.organizationId(), facilityId: node.id });
+  }
+
+  /**
+   * Method onPrintLabels
+   *
+   * @description
+   * Downloads the selected facility subtree's printable QR label sheet as
+   * PDF (`EquipmentService.exportLabels`, `facilityId` scope) and saves it
+   * to the visitor's device. Only reachable on the "By site" axis once a
+   * facility is selected. A selection past 500 labels is refused
+   * server-side with a `422` whose RFC 7807 `detail` surfaces as an error
+   * toast. A no-op while a sheet is already in flight — the button stays
+   * focusable (`aria-disabled`, not `disabled`), so this guard is what
+   * prevents a double request.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected onPrintLabels(): void {
+    if (this.labelsBusy()) return;
+
+    const facilityId: string | null = this.selectedFacilityId();
+    if (facilityId === null) return;
+
+    this.labelsBusy.set(true);
+
+    this.equipmentService
+      .exportLabels(this.organizationId(), { facilityId })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.labelsBusy.set(false);
+          this.browserDownload.trigger(blob, `equipment-labels-${facilityId}.pdf`);
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.labelsBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@org.assets.labelsFailed:Couldn't print the QR labels.`,
+            );
+          });
+        },
+      });
   }
 
   /**

@@ -73,8 +73,16 @@ This feature does not own generic shell composition or account-level user identi
   first-level axes: **by site** (the facility hierarchy on the left, via
   `shared/tree`'s `Tree` primitive and the facilities subfeature's
   `FacilityTreeStore`, with the selected site's equipment and inspections on
-  the right), **everything** (the same panes unscoped, so an operator
-  holding a serial number and no site can still find it), and **compliance**
+  the right — the equipment pane's header then offers **Print QR labels**,
+  streaming the selected subtree's label-sheet PDF through
+  `EquipmentService.exportLabels` (`GET …/equipment/labels?facilityId=…`)
+  and this page's own `BrowserDownloadService`, saved as
+  `equipment-labels-{facilityId}.pdf`; a selection past 500 labels is
+  refused server-side with a 422 whose RFC 7807 `detail` surfaces as an
+  error toast via `resolveCsvExportErrorDetail`. The whole-inventory
+  variant of the same endpoint lives on the equipment list's toolbar
+  (`equipments/FEATURE.md`)), **everything** (the same panes unscoped, so an
+  operator holding a serial number and no site can still find it), and **compliance**
   (the backend Compliance module's own enriched hierarchy — same `Tree`
   primitive, eager: the whole tree arrives nested in one call, so this
   page's own `ComplianceExplorerStore` maps it to a fully-populated

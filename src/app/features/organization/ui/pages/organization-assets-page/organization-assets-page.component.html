@@ -204,11 +204,39 @@
   <div class="flex min-h-0 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
     @if (canReadEquipment()) {
       <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
-        <h2 id="assets-equipment-title" class="mb-2 text-sm font-medium text-foreground">
-          <ng-icon name="lucideWrench" class="me-1 align-text-bottom" aria-hidden="true" />
-          <span i18n="@@org.assets.equipment.title">Equipment</span>
-          <span class="text-muted-foreground tabular-nums">({{ pane.equipment().length }})</span>
-        </h2>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <h2 id="assets-equipment-title" class="text-sm font-medium text-foreground">
+            <ng-icon name="lucideWrench" class="me-1 align-text-bottom" aria-hidden="true" />
+            <span i18n="@@org.assets.equipment.title">Equipment</span>
+            <span class="text-muted-foreground tabular-nums">({{ pane.equipment().length }})</span>
+          </h2>
+          @if (axis() === 'site' && selectedFacilityId() !== null) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="assets-print-labels"
+              [attr.aria-disabled]="labelsBusy() ? 'true' : null"
+              [attr.aria-busy]="labelsBusy() ? 'true' : null"
+              (click)="onPrintLabels()"
+            >
+              <ng-icon name="lucideQrCode" aria-hidden="true" />
+              <span i18n="@@org.assets.printLabelsButton">Print QR labels</span>
+            </button>
+            @if (labelsBusy()) {
+              <span
+                class="sr-only"
+                aria-live="polite"
+                data-testid="assets-print-labels-status"
+                i18n="@@org.assets.printingLabelsStatus"
+              >
+                Preparing the label sheet…
+              </span>
+            }
+          }
+        </div>
 
         @if (pane.hasEquipmentError()) {
           <app-error-state

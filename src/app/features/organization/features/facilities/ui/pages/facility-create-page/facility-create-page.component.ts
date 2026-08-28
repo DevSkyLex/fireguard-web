@@ -14,12 +14,18 @@ import {
   type WritableSignal,
   type TemplateRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { take } from 'rxjs';
+import { isApiError } from '@core/api/utils';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   CreateFacilityInput,
+  FacilityGeocodeOutput,
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
 import {
@@ -54,7 +60,7 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
  * work, hosting the shared {@link UnsavedChangesDialog} to resolve its own
  * confirmation.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -84,6 +90,25 @@ export class FacilityCreatePage implements UnsavedChangesAware {
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
+
+  /** Transport used directly for the one-shot "Locate address" lookup — a helper, not list state. */
+  private readonly facilityService: FacilityService = inject(FacilityService);
+
+  /** Global toast feedback for the lookup's rate-limit and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight lookup when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a "Locate address" lookup is in flight. */
+  protected readonly geocodePending: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The latest successful lookup, handed to the form to fill the coordinate drafts. */
+  protected readonly geocodeResult: WritableSignal<FacilityGeocodeOutput | null> =
+    signal<FacilityGeocodeOutput | null>(null);
+
+  /** Whether the latest lookup answered `404` — the form's non-blocking inline message. */
+  protected readonly geocodeNotFound: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property parentOptions
@@ -141,7 +166,7 @@ export class FacilityCreatePage implements UnsavedChangesAware {
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -179,6 +204,55 @@ export class FacilityCreatePage implements UnsavedChangesAware {
    */
   protected onSubmitted(payload: CreateFacilityInput): void {
     this.store.create({ organizationId: this.organizationId(), input: payload });
+  }
+
+  /**
+   * Method onGeocodeRequested
+   *
+   * @description
+   * Resolves the form's address draft to coordinates
+   * (`FacilityService.geocode`) and answers through the form's
+   * `geocodeResult` / `geocodeNotFound` inputs. A `404` (no match) renders
+   * inline and never blocks the form; any other refusal — the endpoint's
+   * `429` rate limit, a `400` — surfaces its RFC 7807 `detail` as an error
+   * toast. The operator can always correct the filled coordinates by hand.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {string} address - The trimmed address the form asked to locate.
+   * @returns {void}
+   */
+  protected onGeocodeRequested(address: string): void {
+    if (this.geocodePending()) return;
+
+    this.geocodePending.set(true);
+    this.geocodeResult.set(null);
+    this.geocodeNotFound.set(false);
+
+    this.facilityService
+      .geocode(this.organizationId(), address)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (match: FacilityGeocodeOutput): void => {
+          this.geocodePending.set(false);
+          this.geocodeResult.set(match);
+        },
+        error: (error: unknown): void => {
+          this.geocodePending.set(false);
+
+          if (isApiError(error) && error.status === 404) {
+            this.geocodeNotFound.set(true);
+            return;
+          }
+
+          this.feedback.error(
+            isApiError(error)
+              ? error.detail
+              : $localize`:@@facility.form.locateFailed:Couldn't locate the address.`,
+          );
+        },
+      });
   }
 
   /**

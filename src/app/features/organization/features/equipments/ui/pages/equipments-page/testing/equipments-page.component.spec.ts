@@ -73,6 +73,7 @@ describe('EquipmentsPage', () => {
   let totalEquipment: WritableSignal<number>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let exportCsv: ReturnType<typeof vi.fn>;
+  let exportLabels: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
 
@@ -83,6 +84,7 @@ describe('EquipmentsPage', () => {
     totalEquipment = signal<number>(0);
     hasPermission = vi.fn().mockReturnValue(true);
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    exportLabels = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
 
@@ -109,7 +111,7 @@ describe('EquipmentsPage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
-        { provide: EquipmentService, useValue: { exportCsv } },
+        { provide: EquipmentService, useValue: { exportCsv, exportLabels } },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
@@ -366,6 +368,76 @@ describe('EquipmentsPage', () => {
 
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
       expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the "Print QR labels" sheet', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should disable the button while the list is loading, busy or empty', async () => {
+      totalEquipment.set(0);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['labelsDisabled']()).toBe(true);
+
+      totalEquipment.set(5);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['labelsDisabled']()).toBe(false);
+
+      fixture.componentInstance['labelsBusy'].set(true);
+      expect(fixture.componentInstance['labelsDisabled']()).toBe(true);
+    });
+
+    it('should request the whole-inventory sheet and trigger the download', async () => {
+      totalEquipment.set(2);
+      fixture = await createPage();
+
+      fixture.componentInstance['printLabels']();
+      await fixture.whenStable();
+
+      expect(exportLabels).toHaveBeenCalledTimes(1);
+      expect(exportLabels).toHaveBeenCalledWith('org-1');
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
+    });
+
+    it('should surface the 422 over-500-labels detail as an error toast', async () => {
+      totalEquipment.set(2);
+      const detail = 'The selection matches 623 labels; at most 500 are printable per sheet.';
+      exportLabels.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 422,
+              error: new Blob(
+                [
+                  JSON.stringify({
+                    '@id': '/errors/422',
+                    '@type': 'Error',
+                    status: 422,
+                    type: 'about:blank',
+                    title: 'Unprocessable Entity',
+                    detail,
+                  }),
+                ],
+                { type: 'application/problem+json' },
+              ),
+            }),
+        ),
+      );
+      fixture = await createPage();
+
+      fixture.componentInstance['printLabels']();
+      await fixture.whenStable();
+      await vi.waitFor(() => expect(feedbackError).toHaveBeenCalled());
+
+      expect(feedbackError).toHaveBeenCalledWith(detail);
+      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
     });
   });

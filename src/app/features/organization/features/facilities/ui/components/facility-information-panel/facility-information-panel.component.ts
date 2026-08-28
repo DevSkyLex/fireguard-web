@@ -4,9 +4,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
@@ -17,6 +19,7 @@ import { RouterLink } from '@angular/router';
 import type {
   FacilityEditState,
   FacilityEditTarget,
+  FacilityGeocodeOutput,
   FacilityOutput,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
@@ -54,7 +57,7 @@ function parseCoordinate(value: string): number | null {
  * Coordinates commit together and only together: a value in one without the
  * other is refused client-side rather than sent half-filled.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -108,6 +111,37 @@ export class FacilityInformationPanel {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property geocodePending
+   * @readonly
+   * @description Whether the page's "Locate address" lookup is in flight, which makes the button inert (`aria-disabled`, still focusable).
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly geocodePending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property geocodeResult
+   * @readonly
+   * @description The latest successful lookup. Fills the coordinate drafts — both stay editable — and its `displayName` renders as help in the coordinates editor.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<FacilityGeocodeOutput | null>}
+   */
+  public readonly geocodeResult: InputSignal<FacilityGeocodeOutput | null> =
+    input<FacilityGeocodeOutput | null>(null);
+
+  /**
+   * Property geocodeNotFound
+   * @readonly
+   * @description Whether the latest lookup answered `404` — shown as a non-blocking inline message, never a field error.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly geocodeNotFound: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -132,6 +166,16 @@ export class FacilityInformationPanel {
    */
   public readonly editTargetChanged: OutputEmitterRef<FacilityEditTarget | null> =
     output<FacilityEditTarget | null>();
+
+  /**
+   * Property geocodeRequested
+   * @readonly
+   * @description Asks the page to resolve the record's stored address to coordinates — the page owns the transport call and answers through {@link geocodeResult} / {@link geocodeNotFound}.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly geocodeRequested: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
@@ -243,6 +287,29 @@ export class FacilityInformationPanel {
   });
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Fills the coordinate drafts from each new "Locate address" match while the coordinates editor is open.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const result: FacilityGeocodeOutput | null = this.geocodeResult();
+      if (result === null) return;
+
+      untracked((): void => {
+        if (this.editState().open !== 'coordinates') return;
+
+        this.latitudeDraft.set(String(result.latitude));
+        this.longitudeDraft.set(String(result.longitude));
+      });
+    });
+  }
+  //#endregion
+
   //#region Methods
   /**
    * Method isEditing
@@ -349,6 +416,29 @@ export class FacilityInformationPanel {
     const longitude: number | null = parseCoordinate(this.longitudeDraft());
 
     this.detailsChanged.emit({ latitude, longitude });
+  }
+
+  /**
+   * Method locateAddress
+   *
+   * @description
+   * Emits {@link geocodeRequested} with the record's stored address. A
+   * no-op while a lookup is already in flight or while the record has no
+   * address — the button stays focusable (`aria-disabled`, not
+   * `disabled`), so this guard is what prevents a double request.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  protected locateAddress(): void {
+    if (this.geocodePending()) return;
+
+    const address: string = this.facility().address?.trim() ?? '';
+    if (address === '') return;
+
+    this.geocodeRequested.emit(address);
   }
 
   /**

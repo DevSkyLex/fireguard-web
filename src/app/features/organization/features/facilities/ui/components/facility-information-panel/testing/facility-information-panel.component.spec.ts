@@ -264,6 +264,84 @@ describe('FacilityInformationPanel', () => {
     });
   });
 
+  describe('the "Locate address" lookup', () => {
+    const openCoordinates = async (facility: FacilityOutput = FACILITY): Promise<void> => {
+      fixture.componentRef.setInput('facility', facility);
+      fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'coordinates' });
+      await fixture.whenStable();
+    };
+
+    const locateButton = (): HTMLButtonElement | null =>
+      byTestId('facility-locate-address') as HTMLButtonElement | null;
+
+    it('should emit geocodeRequested with the stored address', async () => {
+      const requested: string[] = [];
+      fixture.componentInstance.geocodeRequested.subscribe((value) => requested.push(value));
+
+      await openCoordinates();
+      locateButton()?.click();
+      await fixture.whenStable();
+
+      expect(requested).toEqual(['1 Main Street']);
+    });
+
+    it('should not offer the lookup while the record has no address', async () => {
+      await openCoordinates({ ...FACILITY, address: null });
+
+      expect(locateButton()).toBeNull();
+    });
+
+    it('should be inert but focusable while a lookup is in flight', async () => {
+      const requested: string[] = [];
+      fixture.componentInstance.geocodeRequested.subscribe((value) => requested.push(value));
+
+      await openCoordinates();
+      fixture.componentRef.setInput('geocodePending', true);
+      await fixture.whenStable();
+
+      expect(locateButton()?.getAttribute('aria-disabled')).toBe('true');
+      expect(locateButton()?.disabled).toBe(false);
+
+      locateButton()?.click();
+      await fixture.whenStable();
+
+      expect(requested).toEqual([]);
+      expect(byTestId('facility-geocode-status')?.textContent).toContain('Locating address…');
+    });
+
+    it('should fill both coordinate drafts from a match, leaving Save to commit them', async () => {
+      await openCoordinates();
+      fixture.componentRef.setInput('geocodeResult', {
+        '@id': '/api/organizations/org-1/facilities/geocode',
+        '@type': 'GeocodeAddress',
+        displayName: '1 Main Street, Springfield',
+        latitude: 12.5,
+        longitude: -7.25,
+      });
+      await fixture.whenStable();
+
+      const [latitude, longitude] = coordinateInputs();
+
+      expect(latitude.value).toBe('12.5');
+      expect(longitude.value).toBe('-7.25');
+      expect(patches).toEqual([]);
+      expect(byTestId('facility-geocode-status')?.textContent).toContain(
+        '1 Main Street, Springfield',
+      );
+    });
+
+    it('should announce a 404 as a non-blocking inline message in the live region', async () => {
+      await openCoordinates();
+      fixture.componentRef.setInput('geocodeNotFound', true);
+      await fixture.whenStable();
+
+      const status: HTMLElement | null = byTestId('facility-geocode-status');
+
+      expect(status?.getAttribute('aria-live')).toBe('polite');
+      expect(status?.textContent).toContain('Address not found');
+    });
+  });
+
   describe('the "Pick on map" picker', () => {
     const openCoordinatesOn = async (facility: FacilityOutput): Promise<void> => {
       fixture.componentRef.setInput('facility', facility);

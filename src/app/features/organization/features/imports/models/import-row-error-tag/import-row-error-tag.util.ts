@@ -4,8 +4,9 @@ import type { ImportRowErrorTagDescriptor } from './import-row-error-tag-descrip
 /**
  * Descriptors for every `ImportRowErrorCode` value. `would_create` is the
  * one positive code — a dry run reports it for every row that validated —
- * so it alone renders `success`, never the danger tint the other three
- * (genuine row problems) carry.
+ * so it alone renders `success`, never the danger or warning tint the
+ * others (genuine row problems, or member rows skipped as duplicates)
+ * carry.
  */
 const IMPORT_ROW_ERROR_CODE: Record<ImportRowErrorCode, ImportRowErrorTagDescriptor> = {
   would_create: {
@@ -27,6 +28,21 @@ const IMPORT_ROW_ERROR_CODE: Record<ImportRowErrorCode, ImportRowErrorTagDescrip
     label: $localize`:@@imports.rowErrorCode.quotaExceeded:Plan limit reached`,
     severity: 'warning',
     icon: 'lucideTriangleAlert',
+  },
+  already_member: {
+    label: $localize`:@@imports.rowErrorCode.alreadyMember:Already a member`,
+    severity: 'warning',
+    icon: 'lucideCircleAlert',
+  },
+  already_invited: {
+    label: $localize`:@@imports.rowErrorCode.alreadyInvited:Already invited`,
+    severity: 'warning',
+    icon: 'lucideCircleAlert',
+  },
+  unknown_role: {
+    label: $localize`:@@imports.rowErrorCode.unknownRole:Unknown role`,
+    severity: 'danger',
+    icon: 'lucideCircleX',
   },
 };
 

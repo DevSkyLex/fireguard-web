@@ -24,6 +24,7 @@ import {
   lucideDownload,
   lucidePackage,
   lucidePlus,
+  lucideQrCode,
   lucideSearch,
   lucideTag,
 } from '@ng-icons/lucide';
@@ -137,6 +138,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
       lucideDownload,
       lucidePackage,
       lucidePlus,
+      lucideQrCode,
       lucideSearch,
       lucideTag,
     }),
@@ -203,6 +205,9 @@ export class EquipmentsPage {
 
   /** Whether a CSV export is currently in flight. */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether a QR label sheet export is currently in flight. */
+  protected readonly labelsBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Organization permission checks gating the "New equipment" action. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -287,6 +292,12 @@ export class EquipmentsPage {
 
     return this.searchTerm() !== '' || filters.type !== null || filters.status !== null;
   });
+
+  /** Whether the "Print QR labels" button should be inert: nothing loaded yet, nothing to print, or a sheet already in flight. */
+  protected readonly labelsDisabled: Signal<boolean> = computed(
+    (): boolean =>
+      this.store.isLoadingEquipment() || this.labelsBusy() || this.store.totalEquipment() === 0,
+  );
 
   /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
   protected readonly exportDisabled: Signal<boolean> = computed(
@@ -655,6 +666,45 @@ export class EquipmentsPage {
           void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
             this.feedback.error(
               detail ?? $localize`:@@equipment.list.exportFailed:Couldn't export equipment.`,
+            );
+          });
+        },
+      });
+  }
+
+  /**
+   * Method printLabels
+   *
+   * @description
+   * Downloads the organization's printable QR label sheet as PDF
+   * (`EquipmentService.exportLabels`). From this toolbar the scope is the
+   * whole active inventory — no `ids`/`facilityId` narrowing — so past 500
+   * labels the backend refuses with a `422` whose RFC 7807 `detail` is
+   * surfaced as an error toast (`resolveCsvExportErrorDetail` reads a blob
+   * error body regardless of the format the endpoint streams).
+   *
+   * @access protected
+   * @since 1.8.0
+   * @returns {void}
+   */
+  protected printLabels(): void {
+    if (this.labelsBusy() || this.store.totalEquipment() === 0) return;
+
+    this.labelsBusy.set(true);
+
+    this.equipmentService
+      .exportLabels(this.organizationId())
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.labelsBusy.set(false);
+          this.browserDownload.trigger(blob, `equipment-labels-${this.organizationId()}.pdf`);
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.labelsBusy.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ?? $localize`:@@equipment.list.labelsFailed:Couldn't print the QR labels.`,
             );
           });
         },

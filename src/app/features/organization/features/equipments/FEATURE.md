@@ -53,6 +53,17 @@ This subfeature does not own top-level organization context or inspection workfl
   server caps the collection at 50,000 rows; the resulting 422's RFC 7807
   `detail` (read back through `resolveCsvExportErrorDetail`,
   `@features/organization/utils`) is surfaced as the error toast.
+- The list toolbar's **Print QR labels** button downloads the printable QR
+  label sheet as PDF (`EquipmentService.exportLabels`, `GET
+/api/organizations/{organizationId}/equipment/labels`, same
+  direct-`this.http` blob shape, saved as
+  `equipment-labels-{organizationId}.pdf`). From this toolbar the scope is
+  the **whole active inventory** — no `ids[]`/`facilityId` narrowing is
+  sent. The endpoint refuses a selection past 500 labels with a 422 whose
+  RFC 7807 `detail` (read back through `resolveCsvExportErrorDetail`) is
+  surfaced as the error toast. The facility-scoped variant of the same
+  endpoint lives on the estate explorer (`organization/FEATURE.md`
+  "Assets"), which prints the selected node's subtree via `facilityId`.
 - The detail page's header carries **Export equipment sheet**
   (`EquipmentService.exportReport`, `GET
 /api/organizations/{organizationId}/equipment/{equipmentId}/report`): the

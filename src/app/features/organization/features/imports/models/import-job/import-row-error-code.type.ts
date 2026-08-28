@@ -11,4 +11,11 @@
  *
  * @since 1.0.0
  */
-export type ImportRowErrorCode = 'quota_exceeded' | 'invalid' | 'missing_required' | 'would_create';
+export type ImportRowErrorCode =
+  | 'quota_exceeded'
+  | 'invalid'
+  | 'missing_required'
+  | 'already_member'
+  | 'already_invited'
+  | 'unknown_role'
+  | 'would_create';

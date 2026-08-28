@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -21,6 +23,7 @@ import {
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityAttachmentOutput,
   FacilityOutput,
@@ -169,6 +172,8 @@ describe('FacilityDetailPage', () => {
   let planRemovePinFromPlan: ReturnType<typeof vi.fn>;
   let planEnsureZoneCandidatesLoaded: ReturnType<typeof vi.fn>;
   let planEnsureFacilityEquipmentLoaded: ReturnType<typeof vi.fn>;
+  let geocode: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(FacilityDetailPage);
@@ -232,6 +237,8 @@ describe('FacilityDetailPage', () => {
     planRemovePinFromPlan = vi.fn();
     planEnsureZoneCandidatesLoaded = vi.fn();
     planEnsureFacilityEquipmentLoaded = vi.fn();
+    geocode = vi.fn();
+    feedbackError = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -261,6 +268,8 @@ describe('FacilityDetailPage', () => {
           provide: OrganizationPermissionService,
           useValue: { hasPermission },
         },
+        { provide: FacilityService, useValue: { geocode } },
+        { provide: FeedbackService, useValue: { error: feedbackError } },
       ],
     });
 
@@ -1098,6 +1107,76 @@ describe('FacilityDetailPage', () => {
       await createPage();
 
       expect(fixture.componentInstance['resultLabelOf'](result)).toBe(label);
+    });
+  });
+
+  describe('the "Locate address" lookup', () => {
+    const requestGeocode = async (address: string): Promise<void> => {
+      (
+        fixture.componentInstance as unknown as { onGeocodeRequested(address: string): void }
+      ).onGeocodeRequested(address);
+      await fixture.whenStable();
+    };
+
+    it('hands a match to the panel and clears it when the editor closes', async () => {
+      await createPage();
+      const match = {
+        '@id': '/api/organizations/org-1/facilities/geocode',
+        '@type': 'GeocodeAddress',
+        displayName: '1 Main Street, Springfield',
+        latitude: 12.5,
+        longitude: -7.25,
+      };
+      geocode.mockReturnValue(of(match));
+
+      await requestGeocode('1 Main Street');
+
+      expect(geocode).toHaveBeenCalledWith('org-1', '1 Main Street');
+      expect(fixture.componentInstance['geocodeResult']()).toEqual(match);
+
+      (
+        fixture.componentInstance as unknown as { onEditTargetChanged(target: null): void }
+      ).onEditTargetChanged(null);
+
+      expect(fixture.componentInstance['geocodeResult']()).toBeNull();
+    });
+
+    it('renders a 404 no-match inline rather than toasting', async () => {
+      await createPage();
+      geocode.mockReturnValue(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 404,
+          type: 'about:blank',
+          title: 'Not Found',
+          detail: 'No match for the given address.',
+        })),
+      );
+
+      await requestGeocode('nowhere at all');
+
+      expect(fixture.componentInstance['geocodeNotFound']()).toBe(true);
+      expect(feedbackError).not.toHaveBeenCalled();
+    });
+
+    it('surfaces any other refusal detail as an error toast', async () => {
+      await createPage();
+      geocode.mockReturnValue(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 429,
+          type: 'about:blank',
+          title: 'Too Many Requests',
+          detail: 'Too many geocoding requests.',
+        })),
+      );
+
+      await requestGeocode('1 Main Street');
+
+      expect(feedbackError).toHaveBeenCalledWith('Too many geocoding requests.');
+      expect(fixture.componentInstance['geocodeNotFound']()).toBe(false);
     });
   });
 });

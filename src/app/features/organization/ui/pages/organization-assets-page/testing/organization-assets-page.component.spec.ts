@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import {
   errorCallState,
@@ -10,6 +12,7 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityTreeStore } from '@features/organization/features/facilities/state';
 import type {
@@ -18,6 +21,7 @@ import type {
   SafetyRegisterSnapshotOutput,
 } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from '@features/organization/state/organization-assets-pane';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
@@ -127,6 +131,8 @@ describe('OrganizationAssetsPage', () => {
   let downloadSnapshot: ReturnType<typeof vi.fn>;
   let feedbackSuccess: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+  let exportLabels: ReturnType<typeof vi.fn>;
+  let triggerDownload: ReturnType<typeof vi.fn>;
   let archiveCallStateSignal: WritableSignal<CallState>;
   let downloadCallStateSignal: WritableSignal<CallState>;
   let snapshotsSignal: WritableSignal<readonly SafetyRegisterSnapshotOutput[]>;
@@ -152,6 +158,8 @@ describe('OrganizationAssetsPage', () => {
     downloadSnapshot = vi.fn();
     feedbackSuccess = vi.fn();
     feedbackError = vi.fn();
+    exportLabels = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
+    triggerDownload = vi.fn();
     archiveCallStateSignal = signal<CallState>(idleCallState());
     downloadCallStateSignal = signal<CallState>(idleCallState());
     snapshotsSignal = signal<readonly SafetyRegisterSnapshotOutput[]>([]);
@@ -222,6 +230,8 @@ describe('OrganizationAssetsPage', () => {
           },
         },
         { provide: FeedbackService, useValue: { success: feedbackSuccess, error: feedbackError } },
+        { provide: EquipmentService, useValue: { exportLabels } },
+        { provide: BrowserDownloadService, useValue: { trigger: triggerDownload } },
         {
           provide: OrganizationPermissionService,
           useValue: { hasPermission },
@@ -366,6 +376,79 @@ describe('OrganizationAssetsPage', () => {
       organizationId: 'org-1',
       facilityId: 'facility-2',
     });
+  });
+
+  it('prints the selected facility subtree QR label sheet from the "By site" axis', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: facility(),
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance['onPrintLabels']();
+    await fixture.whenStable();
+
+    expect(exportLabels).toHaveBeenCalledWith('org-1', { facilityId: 'facility-1' });
+    expect(triggerDownload).toHaveBeenCalledWith(
+      expect.any(Blob),
+      'equipment-labels-facility-1.pdf',
+    );
+    expect(fixture.componentInstance['labelsBusy']()).toBe(false);
+  });
+
+  it('does nothing when labels are requested with no facility selected', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onPrintLabels']();
+    await fixture.whenStable();
+
+    expect(exportLabels).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the 422 over-500-labels detail as an error toast', async () => {
+    const detail = 'The selection matches 623 labels; at most 500 are printable per sheet.';
+    exportLabels.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: new Blob(
+              [
+                JSON.stringify({
+                  '@id': '/errors/422',
+                  '@type': 'Error',
+                  status: 422,
+                  type: 'about:blank',
+                  title: 'Unprocessable Entity',
+                  detail,
+                }),
+              ],
+              { type: 'application/problem+json' },
+            ),
+          }),
+      ),
+    );
+    fixture = await createPage();
+
+    fixture.componentInstance['onNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: facility(),
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance['onPrintLabels']();
+    await fixture.whenStable();
+    await vi.waitFor(() => expect(feedbackError).toHaveBeenCalled());
+
+    expect(feedbackError).toHaveBeenCalledWith(detail);
+    expect(fixture.componentInstance['labelsBusy']()).toBe(false);
+    expect(triggerDownload).not.toHaveBeenCalled();
   });
 
   it('does not touch the equipment/inspection pane on the "Compliance" axis', async () => {

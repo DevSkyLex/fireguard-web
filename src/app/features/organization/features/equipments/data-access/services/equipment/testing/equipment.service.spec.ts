@@ -522,6 +522,65 @@ describe('EquipmentService', () => {
     });
   });
 
+  describe('exportLabels', () => {
+    it('reads the whole-inventory label sheet PDF as a blob with no params', () => {
+      const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+      let result: Blob | undefined;
+
+      service.exportLabels(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/labels`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('sends an explicit selection as repeated ids[] params', () => {
+      service.exportLabels(orgId, { ids: ['eq-1', 'eq-2'] }).subscribe();
+
+      const req = httpMock.expectOne(
+        (candidate) =>
+          candidate.url === `${equipmentBaseUrl}/labels` &&
+          candidate.params.getAll('ids[]')?.join(',') === 'eq-1,eq-2',
+      );
+      expect(req.request.params.has('facilityId')).toBe(false);
+      req.flush(new Blob());
+    });
+
+    it('sends a facility subtree selection as facilityId', () => {
+      service.exportLabels(orgId, { facilityId: 'facility-1' }).subscribe();
+
+      const req = httpMock.expectOne(
+        (candidate) =>
+          candidate.url === `${equipmentBaseUrl}/labels` &&
+          candidate.params.get('facilityId') === 'facility-1',
+      );
+      expect(req.request.params.has('ids[]')).toBe(false);
+      req.flush(new Blob());
+    });
+
+    it('propagates the 422 over-500-labels refusal untouched', () => {
+      let status: number | undefined;
+
+      service.exportLabels(orgId).subscribe({
+        error: (error: { status: number }) => {
+          status = error.status;
+        },
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/labels`);
+      req.flush(new Blob(), { status: 422, statusText: 'Unprocessable Entity' });
+
+      expect(status).toBe(422);
+    });
+  });
+
   describe('exportReport', () => {
     it('reads the equipment sheet PDF as a blob from the equipment report route', () => {
       const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });

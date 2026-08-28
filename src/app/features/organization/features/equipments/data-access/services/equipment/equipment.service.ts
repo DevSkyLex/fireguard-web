@@ -239,6 +239,45 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method exportLabels
+   * @method exportLabels
+   *
+   * @description
+   * Reads a printable QR label sheet as PDF
+   * (`GET /api/organizations/{organizationId}/equipment/labels`), an A4
+   * Avery L7159-compatible grid of 24 labels per page. The selection is
+   * either explicit (`ids`) or one facility's subtree (`facilityId`) —
+   * mutually exclusive, a `400` when both are sent — and omitting both
+   * covers the organization's whole active inventory. A selection past 500
+   * labels answers `422` with an RFC 7807 `detail` instead of the file.
+   * Calls `this.http` directly, like {@link exportCsv}, for a response
+   * shape (`responseType: 'blob'`) the base class does not support.
+   *
+   * @access public
+   * @since 1.9.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {{ ids?: readonly string[]; facilityId?: string }} [options] - The selection to print.
+   *
+   * @return {Observable<Blob>} The label sheet's PDF binary content.
+   */
+  public exportLabels(
+    organizationId: string,
+    options?: { readonly ids?: readonly string[]; readonly facilityId?: string },
+  ): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.ids?.length) params['ids'] = options.ids;
+    if (options?.facilityId) params['facilityId'] = options.facilityId;
+
+    return this.http.get(this.buildUrl(`${this.equipmentPath(organizationId)}/labels`), {
+      params: this.buildParams({ params }),
+      responseType: 'blob',
+      withCredentials: true,
+    });
+  }
+
+  /**
    * Method exportReport
    * @method exportReport
    *

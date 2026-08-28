@@ -18,17 +18,23 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
+import { take } from 'rxjs';
+import { isApiError } from '@core/api/utils';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityAttachmentOutput,
   FacilityEditState,
   FacilityEditTarget,
+  FacilityGeocodeOutput,
   FacilityOutput,
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
@@ -250,6 +256,25 @@ export class FacilityDetailPage {
   /** Router used for hierarchy-node navigation, the post-delete return and the load-failure redirect. */
   private readonly router: Router = inject(Router);
 
+  /** Transport used directly for the one-shot "Locate address" lookup — a helper, not list state. */
+  private readonly facilityService: FacilityService = inject(FacilityService);
+
+  /** Global toast feedback for the lookup's rate-limit and error paths. */
+  private readonly feedback: FeedbackService = inject(FeedbackService);
+
+  /** Unsubscribes an in-flight lookup when the page is destroyed. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /** Whether a "Locate address" lookup is in flight. */
+  protected readonly geocodePending: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The latest successful lookup, handed to the panel to fill the coordinate drafts. */
+  protected readonly geocodeResult: WritableSignal<FacilityGeocodeOutput | null> =
+    signal<FacilityGeocodeOutput | null>(null);
+
+  /** Whether the latest lookup answered `404` — the panel's non-blocking inline message. */
+  protected readonly geocodeNotFound: WritableSignal<boolean> = signal<boolean>(false);
+
   /** The application's language, used to phrase the header's metadata line. */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
@@ -448,7 +473,7 @@ export class FacilityDetailPage {
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
       const callState: CallState<FacilityOutput | null> = this.store.updateCallState();
@@ -946,6 +971,58 @@ export class FacilityDetailPage {
    */
   protected onEditTargetChanged(target: FacilityEditTarget | null): void {
     this.editState.set({ open: target, saving: null, failed: null, failure: null });
+    this.geocodeResult.set(null);
+    this.geocodeNotFound.set(false);
+  }
+
+  /**
+   * Method onGeocodeRequested
+   *
+   * @description
+   * Resolves the record's stored address to coordinates
+   * (`FacilityService.geocode`) and answers through the panel's
+   * `geocodeResult` / `geocodeNotFound` inputs. A `404` (no match) renders
+   * inline in the coordinates editor and never blocks it; any other refusal
+   * — the endpoint's `429` rate limit, a `400` — surfaces its RFC 7807
+   * `detail` as an error toast. The operator can always correct the filled
+   * coordinates by hand before saving.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @param {string} address - The address the panel asked to locate.
+   * @returns {void}
+   */
+  protected onGeocodeRequested(address: string): void {
+    if (this.geocodePending()) return;
+
+    this.geocodePending.set(true);
+    this.geocodeResult.set(null);
+    this.geocodeNotFound.set(false);
+
+    this.facilityService
+      .geocode(this.organizationId(), address)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (match: FacilityGeocodeOutput): void => {
+          this.geocodePending.set(false);
+          this.geocodeResult.set(match);
+        },
+        error: (error: unknown): void => {
+          this.geocodePending.set(false);
+
+          if (isApiError(error) && error.status === 404) {
+            this.geocodeNotFound.set(true);
+            return;
+          }
+
+          this.feedback.error(
+            isApiError(error)
+              ? error.detail
+              : $localize`:@@facility.form.locateFailed:Couldn't locate the address.`,
+          );
+        },
+      });
   }
 
   /**

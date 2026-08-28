@@ -93,6 +93,22 @@ This subfeature is the primitive's first consumer, in two places:
   the create form only, since the data is already loaded for the parent
   combobox) the average of the organization's other located facilities, else
   the primitive's own neutral default — never a fetch made just for this.
+- **"Locate address"** is the geocoding affordance beside "Pick on map",
+  shared the same way by `FacilityCreateForm` (next to the address field)
+  and `FacilityInformationPanel`'s coordinates editor (using the record's
+  stored address; hidden while the record has none). Both stay
+  presentational: the component emits `geocodeRequested(address)` and the
+  hosting page (`FacilityCreatePage`, `FacilityDetailPage`) performs the
+  one-shot `FacilityService.geocode` call
+  (`GET /api/organizations/{organizationId}/facilities/geocode?address=…`)
+  and answers back through the `geocodePending` / `geocodeResult` /
+  `geocodeNotFound` inputs. A match fills the latitude/longitude drafts —
+  which remain the field of record, still editable — and its `displayName`
+  renders as help in a polite live region; a `404` renders inline as
+  "Address not found", non-blocking; any other refusal (the endpoint's
+  per-user `429` rate limit, a `400`) surfaces its RFC 7807 `detail` as an
+  error toast. The button is `aria-disabled` (never `disabled`) while a
+  lookup is in flight.
 
 ## UI (this pass)
 

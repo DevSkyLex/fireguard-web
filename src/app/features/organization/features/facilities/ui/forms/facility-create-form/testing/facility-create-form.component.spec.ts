@@ -293,6 +293,94 @@ describe('FacilityCreateForm', () => {
     expect(cancelIndex).toBeLessThan(submitIndex);
   });
 
+  describe('the "Locate address" lookup', () => {
+    const locateButton = (): HTMLButtonElement | null =>
+      element.querySelector<HTMLButtonElement>('[data-testid="facility-create-locate-address"]');
+
+    const statusRegion = (): HTMLElement | null =>
+      element.querySelector<HTMLElement>('[data-testid="facility-create-geocode-status"]');
+
+    it('should emit geocodeRequested with the trimmed address draft', async () => {
+      const emitted: string[] = [];
+      fixture.componentInstance.geocodeRequested.subscribe((value: string): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ address: '  1 Rue de la Paix  ' });
+      locateButton()?.click();
+      await fixture.whenStable();
+
+      expect(emitted).toEqual(['1 Rue de la Paix']);
+    });
+
+    it('should stay quiet while the address draft is blank', async () => {
+      const emitted: string[] = [];
+      fixture.componentInstance.geocodeRequested.subscribe((value: string): void => {
+        emitted.push(value);
+      });
+
+      locateButton()?.click();
+      await fixture.whenStable();
+
+      expect(emitted).toEqual([]);
+    });
+
+    it('should be inert but focusable while a lookup is in flight', async () => {
+      const emitted: string[] = [];
+      fixture.componentInstance.geocodeRequested.subscribe((value: string): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ address: '1 Rue de la Paix' });
+      fixture.componentRef.setInput('geocodePending', true);
+      await fixture.whenStable();
+
+      expect(locateButton()?.getAttribute('aria-disabled')).toBe('true');
+      expect(locateButton()?.disabled).toBe(false);
+
+      locateButton()?.click();
+      await fixture.whenStable();
+
+      expect(emitted).toEqual([]);
+      expect(statusRegion()?.textContent).toContain('Locating address…');
+    });
+
+    it('should fill the coordinate inputs from a match, leaving them editable', async () => {
+      fixture.componentRef.setInput('geocodeResult', {
+        '@id': '/api/organizations/org-1/facilities/geocode',
+        '@type': 'GeocodeAddress',
+        displayName: '1 Rue de la Paix, 75001 Paris, France',
+        latitude: 48.8686,
+        longitude: 2.3314,
+      });
+      await fixture.whenStable();
+
+      const latitude: HTMLInputElement | null = element.querySelector(
+        '[data-testid="facility-create-latitude"]',
+      );
+      const longitude: HTMLInputElement | null = element.querySelector(
+        '[data-testid="facility-create-longitude"]',
+      );
+
+      expect(latitude?.value).toBe('48.8686');
+      expect(longitude?.value).toBe('2.3314');
+      expect(latitude?.disabled).toBe(false);
+      expect(statusRegion()?.textContent).toContain('1 Rue de la Paix, 75001 Paris, France');
+    });
+
+    it('should announce a 404 as a non-blocking inline message in the live region', async () => {
+      fixture.componentRef.setInput('geocodeNotFound', true);
+      await fixture.whenStable();
+
+      expect(statusRegion()?.getAttribute('aria-live')).toBe('polite');
+      expect(statusRegion()?.textContent).toContain('Address not found');
+      expect(
+        element.querySelector<HTMLButtonElement>('[data-testid="facility-create-submit"]')
+          ?.disabled,
+      ).toBe(false);
+    });
+  });
+
   describe('the "Pick on map" picker', () => {
     it('should open the picker dialog when Pick on map is clicked', async () => {
       const trigger: HTMLButtonElement | null = element.querySelector<HTMLButtonElement>(

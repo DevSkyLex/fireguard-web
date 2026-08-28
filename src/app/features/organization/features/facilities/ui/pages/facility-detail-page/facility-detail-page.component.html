@@ -305,6 +305,10 @@
             [editable]="canWrite()"
             [editState]="editState()"
             [organizationId]="organizationId()"
+            [geocodePending]="geocodePending()"
+            [geocodeResult]="geocodeResult()"
+            [geocodeNotFound]="geocodeNotFound()"
+            (geocodeRequested)="onGeocodeRequested($event)"
             (detailsChanged)="onDetailsChanged($event)"
             (editTargetChanged)="onEditTargetChanged($event)"
           />

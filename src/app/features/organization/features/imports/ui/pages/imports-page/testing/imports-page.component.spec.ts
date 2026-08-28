@@ -120,9 +120,10 @@ describe('ImportsPage', () => {
     ).not.toBeNull();
     expect(hasPermission).toHaveBeenCalledWith(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE);
     expect(hasPermission).toHaveBeenCalledWith(ORGANIZATION_PERMISSION.FACILITIES_WRITE);
+    expect(hasPermission).toHaveBeenCalledWith(ORGANIZATION_PERMISSION.MEMBERS_MANAGE);
   });
 
-  it('should hide the upload card entirely when the reader holds neither write permission', async () => {
+  it('should hide the upload card entirely when the reader holds no write permission', async () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();
 
@@ -139,6 +140,18 @@ describe('ImportsPage', () => {
       .componentInstance as ImportUploadForm;
 
     expect(form.kindOptions()).toEqual([{ label: 'Facilities', value: 'facility' }]);
+  });
+
+  it('should gate the member kind on organization.members.manage', async () => {
+    hasPermission.mockImplementation(
+      (permission: string) => permission === ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
+    );
+    fixture = await createPage();
+
+    const form = fixture.debugElement.query(By.directive(ImportUploadForm))
+      .componentInstance as ImportUploadForm;
+
+    expect(form.kindOptions()).toEqual([{ label: 'Members', value: 'member' }]);
   });
 
   it('should re-run the current query on retry', async () => {

@@ -8,4 +8,4 @@
  *
  * @since 1.0.0
  */
-export type ImportJobKind = 'equipment' | 'facility';
+export type ImportJobKind = 'equipment' | 'facility' | 'member';

@@ -9,6 +9,7 @@ import type {
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
   FacilityPlanOverlayOutput,
+  FacilityGeocodeOutput,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -141,6 +142,33 @@ export class FacilityService extends HydraApiService {
         responseType: 'blob',
         withCredentials: true,
       },
+    );
+  }
+
+  /**
+   * Method geocode
+   * @method geocode
+   *
+   * @description
+   * Resolves a free-text address to coordinates
+   * (`GET /api/organizations/{organizationId}/facilities/geocode?address=…`),
+   * proxied server-side to the geocoding provider. A `404` means the
+   * provider found no match for the address; `429` is the endpoint's own
+   * per-user rate limit (30/min). The response is a single JSON-LD item
+   * keyed on `displayName`, so it flows through `getOne` unchanged.
+   *
+   * @access public
+   * @since 1.6.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} address - The free-text address to resolve.
+   *
+   * @return {Observable<FacilityGeocodeOutput>} An observable emitting the match.
+   */
+  public geocode(organizationId: string, address: string): Observable<FacilityGeocodeOutput> {
+    return this.getOne<FacilityGeocodeOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/geocode`,
+      { params: { address } },
     );
   }
 

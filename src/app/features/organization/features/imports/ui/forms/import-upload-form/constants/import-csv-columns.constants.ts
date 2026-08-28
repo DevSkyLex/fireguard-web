@@ -32,8 +32,10 @@ export interface ImportCsvColumnHelp {
 export const IMPORT_CSV_COLUMN_HELP: Readonly<Record<ImportJobKind, ImportCsvColumnHelp>> = {
   equipment: {
     required: ['type'],
-    optional: ['subType', 'brand', 'model', 'serialNumber', 'locationLabel'],
-    notes: [],
+    optional: ['subType', 'brand', 'model', 'serialNumber', 'locationLabel', 'facilityCode'],
+    notes: [
+      $localize`:@@imports.csvHelp.equipment.facilityCode:facilityCode assigns the created item to the facility carrying that code — an unknown code fails the row.`,
+    ],
   },
   facility: {
     required: ['type', 'name'],
@@ -41,6 +43,13 @@ export const IMPORT_CSV_COLUMN_HELP: Readonly<Record<ImportJobKind, ImportCsvCol
     notes: [
       $localize`:@@imports.csvHelp.facility.coordinates:latitude and longitude must be given together.`,
       $localize`:@@imports.csvHelp.facility.parentCode:parentCode must reference a facility that already exists — order parent rows before their children. A dry run also resolves it against earlier "would create" rows in the same file.`,
+    ],
+  },
+  member: {
+    required: ['email'],
+    optional: ['roles'],
+    notes: [
+      $localize`:@@imports.csvHelp.member.roles:roles takes organization role names separated by |. Leave it blank to grant the default member role.`,
     ],
   },
 };

@@ -19,20 +19,50 @@ primitive. The page maps the organization's regional preference
 onto the grid's generic `firstDayOfWeek` input, Monday when unset.
 
 The page is a **full-height console**, not a scrolling document: a
-page-level toolbar band (Today, prev/next month, the current period label)
-owns period navigation, driving the page's own `month`/`selectedDay` state.
-`app-calendar` renders with its built-in toolbar hidden
-(`[showToolbar]="false"`) so the grid and the page never show two sets of
-Today/prev/next controls — the grid's own month title stays in the DOM,
-`sr-only`, because `brnCalendarGrid`'s accessible name is `aria-labelledby`
-that title regardless of whether it is visible. There is no week mode or any
-other period granularity: the feed and the grid are month-only, so the
-toolbar carries no mode switcher. Below `md`, the shrunken grid does not
-render at all — an agenda (`#calendar-agenda`) shows the same loaded window's
-entries grouped by day instead. Both the grid's day panel and the agenda's
-day groups render through `CalendarEntryList`
+page-level toolbar band (Today, prev/next period, the current period label,
+and a Month/Week/Day granularity tablist mirroring the interventions page's
+view toggle) owns period navigation, driving the page's own
+`month`/`granularity`/`selectedDay` state. `app-calendar` renders with its
+built-in toolbar hidden (`[showToolbar]="false"`) so the grid and the page
+never show two sets of Today/prev/next controls — the grid's own month title
+stays in the DOM, `sr-only`, because `brnCalendarGrid`'s accessible name is
+`aria-labelledby` that title regardless of whether it is visible.
+
+**Three granularities**, all reading the same date-windowed feed: **month**
+is the shared grid plus the selected-day panel; **week** is deliberately a
+seven-day agenda list — every day of the week rendered as a heading plus its
+entries through `CalendarEntryList`, empty days included — rather than an
+hour-by-column grid, because the feed carries day-anchored entries (many
+all-day) for which an hours grid would be mostly whitespace, and the agenda
+form reuses the exact row renderer the rest of the page already trusts;
+**day** is the anchored day's list full-page with prev/next stepping one
+day. Week honours the same `firstDayOfWeek` preference as the grid. The
+feed window follows the granularity: month ± one week (the grid's filler
+days must keep their chips), the exact week, the exact day. Below `md`, the
+month view's shrunken grid does not render at all — an agenda
+(`#calendar-agenda`) shows the same loaded window's entries grouped by day
+instead. The grid's day panel, the agenda's day groups, and the week/day
+views all render through `CalendarEntryList`
 (`ui/components/calendar-entry-list/`), the single row renderer for a feed
 entry, so a row is never hand-rolled twice.
+
+**Quick create from a day** (gated on `organization.events.write`, like
+every write): each month-grid cell offers the shared calendar's "+" button
+— revealed on cell hover and on its own keyboard focus, dated `aria-label` —
+and each week/day section offers its own; both open the existing
+`calendar-event-dialog` with `startsAt` pre-filled on that day at 09:00
+local (`initialStartsAt`).
+
+**Drag reschedule** (same gate): only a `calendar_event`-source chip is
+flagged `draggable` on the month grid — inspection, intervention and
+maintenance entries are projections this page does not own (an intervention
+reschedules on its own page) and never drag. A drop on another day keeps the
+event's local wall-clock time, shifts a set end by the same delta, and runs
+`CalendarFeedStore.moveEvent`: optimistic reposition, PATCH, rollback plus
+error toast on failure, window re-read on success. **Drag is never the only
+path**: the row's Edit dialog changes the same dates by keyboard/AT, per the
+shared calendar's documented a11y contract, and an `aria-live` region on the
+page announces each move's outcome.
 
 ## Route entry points
 
@@ -51,10 +81,13 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   `deleteEvent`.
 - `CalendarFeedStore` (`state/calendar-feed/`) — component-scoped on the
   page. The feed read stays `withQueryState`, its one query concern; the
-  three standalone-event writes are named `CallState` fields
-  (`createEventCallState`/`updateEventCallState`/`deleteEventCallState`)
-  since each reports independently. `load` uses `switchMap`: paging to
-  another month supersedes the in-flight window.
+  four standalone-event writes are named `CallState` fields
+  (`createEventCallState`/`updateEventCallState`/`deleteEventCallState`/
+  `moveEventCallState`) since each reports independently. `load` uses
+  `switchMap`: paging to another period supersedes the in-flight window.
+  `moveEvent` is the drag-reschedule write (optimistic, see Invariants);
+  its failure dispatches `calendarFeedStoreEvents.moveEventFailed` for the
+  app-wide feedback toast.
 
 ## Invariants
 
@@ -67,6 +100,11 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   one write's response would drift from the server's own merge the moment a
   second source's entry sits nearby. The store owns the refetch; the page
   only closes the dialog once the write's own `CallState` reaches `success`.
+  **One sanctioned exception**: `moveEvent`, the drag-reschedule, repositions
+  the matching entry optimistically before its PATCH — a dropped chip
+  snapping back to its old day for a round-trip would read as a failed drop —
+  then still reconciles through the window re-read on success, and rolls back
+  to the pre-drop snapshot (plus an error toast) on failure.
 - **Only a `calendar_event`-source entry is ever editable.** `CalendarEntryList`
   — not the page — enforces the gate: its `isEditableOf()` shows the
   Edit/Delete icon buttons only when `item.sourceKey === 'calendar_event'`
@@ -82,9 +120,15 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   and includes only the fields that actually changed — instant comparison
   uses `Date#getTime()`, never string equality, since the same instant can
   round-trip through a different UTC offset.
-- **The feed window is one week wider than the visible month on each side**:
-  the shared grid shows leading/trailing filler days, and their chips must
-  not silently vanish.
+- **Only a `calendar_event`-source chip ever drags, and drag is never the
+  only path.** The page flags `draggable` only on writable standalone
+  events; the other three sources stay inert on the grid. The keyboard/AT
+  path to the same reschedule is the row's Edit dialog (its `startsAt`/
+  `endsAt` fields), and the page's `aria-live` region announces each move.
+- **The month feed window is one week wider than the visible month on each
+  side**: the shared grid shows leading/trailing filler days, and their
+  chips must not silently vanish. Week and day windows cover exactly their
+  period.
 - **The feed is a date-window fetch, not a paginated collection** — a
   sanctioned bounded drain under DESIGN.md § Collections' Server Rule. The
   server bounds the payload by `from`/`to`; the client's only in-memory

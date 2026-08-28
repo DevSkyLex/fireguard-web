@@ -24,6 +24,7 @@
       [serverError]="serverError()"
       [editing]="editing()"
       [facilityOptions]="facilityOptions()"
+      [initialStartsAt]="initialStartsAt()"
       (submitted)="submitted.emit($event)"
       (cancelled)="visibleChange.emit(false)"
     />

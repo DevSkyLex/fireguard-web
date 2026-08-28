@@ -3939,6 +3939,13 @@
           <context context-type="linenumber">146</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="calendar.moveError" datatype="html">
+        <source>The event could not be moved.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/state/calendar-feed/calendar-feed.store.ts</context>
+          <context context-type="linenumber">345</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="calendar.source.event" datatype="html">
         <source>Event</source>
         <context-group purpose="location">
@@ -4105,7 +4112,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">277</context>
+          <context context-type="linenumber">291</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.submitting" datatype="html">
@@ -4133,49 +4140,49 @@
         <source>A title is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">196</context>
+          <context context-type="linenumber">206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.titleTooLong" datatype="html">
         <source>This title is too long.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">199</context>
+          <context context-type="linenumber">209</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.descriptionTooLong" datatype="html">
         <source>This description is too long.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">202</context>
+          <context context-type="linenumber">212</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.startsAtRequired" datatype="html">
         <source>A start date/time is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="linenumber">215</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.endBeforeStart" datatype="html">
         <source>The end must not be before the start.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">214</context>
+          <context context-type="linenumber">224</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.genericError" datatype="html">
         <source>The event could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/forms/calendar-event-form/calendar-event-form.component.ts</context>
-          <context context-type="linenumber">232</context>
+          <context context-type="linenumber">242</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.today" datatype="html">
         <source>Today</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">12,15</context>
+          <context context-type="linenumber">16,19</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
@@ -4186,62 +4193,60 @@
           <context context-type="linenumber">22,24</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="calendar.previousMonth" datatype="html">
-        <source>Previous month</source>
+      <trans-unit id="calendar.granularityToggleLabel" datatype="html">
+        <source>Change period view</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">24,26</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
-          <context context-type="linenumber">27,29</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.html</context>
-          <context context-type="linenumber">31,33</context>
+          <context context-type="linenumber">57,58</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="calendar.nextMonth" datatype="html">
-        <source>Next month</source>
+      <trans-unit id="calendar.granularity.month" datatype="html">
+        <source>Month</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">37,39</context>
+          <context context-type="linenumber">76,79</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.granularity.week" datatype="html">
+        <source>Week</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
-          <context context-type="linenumber">40,42</context>
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
+          <context context-type="linenumber">93,96</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.granularity.day" datatype="html">
+        <source>Day</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.html</context>
-          <context context-type="linenumber">43,44</context>
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
+          <context context-type="linenumber">110,114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.newEvent" datatype="html">
         <source>New event</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">62,65</context>
+          <context context-type="linenumber">124,127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.errorTitle" datatype="html">
         <source>Couldn&apos;t load the calendar</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">70,71</context>
+          <context context-type="linenumber">132,133</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.errorText" datatype="html">
         <source>The calendar feed could not be loaded. Check your connection and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">72,73</context>
+          <context context-type="linenumber">134,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.tryAgain" datatype="html">
         <source>Try again</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">76,78</context>
+          <context context-type="linenumber">138,140</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.html</context>
@@ -4296,14 +4301,104 @@
         <source>Nothing scheduled this day.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">104,105</context>
+          <context context-type="linenumber">177,178</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
+          <context context-type="linenumber">304,305</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.agendaEmpty" datatype="html">
         <source> Nothing scheduled in this period. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
-          <context context-type="linenumber">129,131</context>
+          <context context-type="linenumber">202,204</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.weekDayEmpty" datatype="html">
+        <source> Nothing scheduled this day. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.html</context>
+          <context context-type="linenumber">259,260</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.previousMonth" datatype="html">
+        <source>Previous month</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">359</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
+          <context context-type="linenumber">27,29</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.html</context>
+          <context context-type="linenumber">31,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.previousWeek" datatype="html">
+        <source>Previous week</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">361</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.previousDay" datatype="html">
+        <source>Previous day</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">363</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.nextMonth" datatype="html">
+        <source>Next month</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">378</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-calendar/intervention-calendar.component.html</context>
+          <context context-type="linenumber">40,42</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.nextWeek" datatype="html">
+        <source>Next week</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">380</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.nextDay" datatype="html">
+        <source>Next day</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">382</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.moveErrorAnnounce" datatype="html">
+        <source>The event could not be moved and was put back.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">529</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.createOnDayAria" datatype="html">
+        <source>New event on <x id="date" equiv-text="label"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">761</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.moveAnnounce" datatype="html">
+        <source><x id="eventTitle" equiv-text="eventTitle"/> moved to <x id="date" equiv-text="dayLabel"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/calendar/ui/pages/calendar-page/calendar-page.component.ts</context>
+          <context context-type="linenumber">823</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.checklists" datatype="html">
@@ -19936,7 +20031,14 @@
         <source>{VAR_PLURAL, plural, =0 {No events} =1 {1 event} other {<x id="INTERPOLATION"/> events}}</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.html</context>
-          <context context-type="linenumber">97,100</context>
+          <context context-type="linenumber">103,106</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="calendar.cellCreateAria" datatype="html">
+        <source>New event on <x id="date" equiv-text="day"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/calendar/ui/components/calendar/calendar.component.ts</context>
+          <context context-type="linenumber">553</context>
         </context-group>
       </trans-unit>
       <trans-unit id="shared.chart.lineChart.empty.title" datatype="html">

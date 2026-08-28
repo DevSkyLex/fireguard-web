@@ -3836,6 +3836,62 @@
         <source>New event</source>
         <target>Nouvel événement</target>
       </trans-unit>
+      <trans-unit id="calendar.granularityToggleLabel" datatype="html">
+        <source>Change period view</source>
+        <target>Changer de vue de période</target>
+      </trans-unit>
+      <trans-unit id="calendar.granularity.month" datatype="html">
+        <source>Month</source>
+        <target>Mois</target>
+      </trans-unit>
+      <trans-unit id="calendar.granularity.week" datatype="html">
+        <source>Week</source>
+        <target>Semaine</target>
+      </trans-unit>
+      <trans-unit id="calendar.granularity.day" datatype="html">
+        <source>Day</source>
+        <target>Jour</target>
+      </trans-unit>
+      <trans-unit id="calendar.previousWeek" datatype="html">
+        <source>Previous week</source>
+        <target>Semaine précédente</target>
+      </trans-unit>
+      <trans-unit id="calendar.nextWeek" datatype="html">
+        <source>Next week</source>
+        <target>Semaine suivante</target>
+      </trans-unit>
+      <trans-unit id="calendar.previousDay" datatype="html">
+        <source>Previous day</source>
+        <target>Jour précédent</target>
+      </trans-unit>
+      <trans-unit id="calendar.nextDay" datatype="html">
+        <source>Next day</source>
+        <target>Jour suivant</target>
+      </trans-unit>
+      <trans-unit id="calendar.weekDayEmpty" datatype="html">
+        <source> Nothing scheduled this day. </source>
+        <target>Rien de prévu ce jour.</target>
+      </trans-unit>
+      <trans-unit id="calendar.moveError" datatype="html">
+        <source>The event could not be moved.</source>
+        <target>L'événement n'a pas pu être déplacé.</target>
+      </trans-unit>
+      <trans-unit id="calendar.moveErrorAnnounce" datatype="html">
+        <source>The event could not be moved and was put back.</source>
+        <target>L'événement n'a pas pu être déplacé et a été remis en place.</target>
+      </trans-unit>
+      <trans-unit id="calendar.cellCreateAria" datatype="html">
+        <source>New event on <x id="date" equiv-text="day"/></source>
+        <target>Nouvel événement le <x id="date" equiv-text="day"/></target>
+      </trans-unit>
+      <trans-unit id="calendar.createOnDayAria" datatype="html">
+        <source>New event on <x id="date" equiv-text="label"/></source>
+        <target>Nouvel événement le <x id="date" equiv-text="label"/></target>
+      </trans-unit>
+      <trans-unit id="calendar.moveAnnounce" datatype="html">
+        <source><x id="eventTitle" equiv-text="eventTitle"/> moved to <x id="date" equiv-text="dayLabel"/></source>
+        <target><x id="eventTitle" equiv-text="eventTitle"/> déplacé au <x id="date" equiv-text="dayLabel"/></target>
+      </trans-unit>
       <trans-unit id="calendar.eventDialog.createTitle" datatype="html">
         <source>New event</source>
         <target>Nouvel événement</target>

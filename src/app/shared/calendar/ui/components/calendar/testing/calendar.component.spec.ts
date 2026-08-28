@@ -3,6 +3,13 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CalendarDisplayEvent } from '../../../../models/calendar-display-event.interface';
 import { Calendar } from '../calendar.component';
 
+const dragEvent = (type: string): DragEvent => {
+  const raw: Event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(raw, 'dataTransfer', { value: null, configurable: true });
+
+  return raw as unknown as DragEvent;
+};
+
 const event = (overrides: Partial<CalendarDisplayEvent> = {}): CalendarDisplayEvent => ({
   id: 'event-1',
   date: '2026-08-09T10:00:00',
@@ -174,5 +181,72 @@ describe('Calendar', () => {
     expect(monthTitle).not.toBeNull();
     expect(monthTitle?.closest('.sr-only')).not.toBeNull();
     expect(grid?.getAttribute('aria-labelledby')).toBe(monthTitle?.parentElement?.id ?? null);
+  });
+
+  describe('quick create', () => {
+    it('should offer no per-cell create button by default', async () => {
+      await create();
+
+      expect(root().querySelector('[data-testid="calendar-day-create"]')).toBeNull();
+    });
+
+    it('should emit createRequested with the cell day, under a dated accessible name', async () => {
+      await create();
+      fixture.componentRef.setInput('canCreate', true);
+      await fixture.whenStable();
+
+      const days: string[] = [];
+      fixture.componentInstance.createRequested.subscribe((day: string) => days.push(day));
+
+      const button: HTMLButtonElement | null =
+        dayCell('2026-08-09')
+          ?.closest('td')
+          ?.querySelector<HTMLButtonElement>('[data-testid="calendar-day-create"]') ?? null;
+
+      expect(button?.getAttribute('aria-label')).toContain('August 9, 2026');
+
+      button?.click();
+      expect(days).toEqual(['2026-08-09']);
+    });
+  });
+
+  describe('chip drag', () => {
+    it('should flag only chips marked draggable', async () => {
+      await create([
+        event({ id: 'movable', draggable: true }),
+        event({ id: 'fixed', label: 'Maintenance' }),
+      ]);
+
+      const chips: NodeListOf<Element> = root().querySelectorAll('[data-draggable="true"]');
+      expect(chips).toHaveLength(1);
+      expect(chips[0]?.getAttribute('draggable')).toBe('true');
+    });
+
+    it('should emit eventDropped when a draggable chip lands on another day', async () => {
+      await create([event({ id: 'movable', draggable: true })]);
+
+      const drops: Array<{ id: string; day: string }> = [];
+      fixture.componentInstance.eventDropped.subscribe((drop) => drops.push(drop));
+
+      const chip: Element | null = root().querySelector('[data-draggable="true"]');
+      chip?.dispatchEvent(dragEvent('dragstart'));
+      dayCell('2026-08-12')?.dispatchEvent(dragEvent('dragover'));
+      dayCell('2026-08-12')?.dispatchEvent(dragEvent('drop'));
+      await fixture.whenStable();
+
+      expect(drops).toEqual([{ id: 'movable', day: '2026-08-12' }]);
+    });
+
+    it('should emit nothing on a drop with no drag in flight', async () => {
+      await create([event({ id: 'movable', draggable: true })]);
+
+      const drops: Array<{ id: string; day: string }> = [];
+      fixture.componentInstance.eventDropped.subscribe((drop) => drops.push(drop));
+
+      dayCell('2026-08-12')?.dispatchEvent(dragEvent('drop'));
+      await fixture.whenStable();
+
+      expect(drops).toEqual([]);
+    });
   });
 });

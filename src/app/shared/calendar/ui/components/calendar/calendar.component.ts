@@ -9,14 +9,17 @@ import {
   linkedSignal,
   LOCALE_ID,
   model,
+  output,
+  signal,
   viewChild,
   type InputSignal,
   type ModelSignal,
+  type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
+import { lucideChevronLeft, lucideChevronRight, lucidePlus } from '@ng-icons/lucide';
 import {
   BrnCalendarCell,
   BrnCalendarCellButton,
@@ -30,6 +33,7 @@ import {
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import type { CalendarDisplayEvent } from '../../../models/calendar-display-event.interface';
+import type { CalendarEventDrop } from '../../../models/calendar-event-drop.interface';
 import type { CalendarFirstDayOfWeek } from '../../../models/calendar-first-day-of-week.type';
 import type { CalendarDaySummary } from './models/calendar-day-summary.interface';
 import {
@@ -81,7 +85,22 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
  * `aria-labelledby` always points at it: hiding the whole header would leave
  * the grid with no accessible name.
  *
- * @version 2.1.0
+ * Two optional affordances, both off by default:
+ *
+ * - **Quick create** (`canCreate`): every day cell gains a small "+" button,
+ *   revealed on cell hover and on its own keyboard focus, whose dated
+ *   `aria-label` keeps repeated cells distinguishable; activating it emits
+ *   `createRequested` with the cell's `yyyy-MM-dd` day.
+ * - **Chip drag** (`CalendarDisplayEvent.draggable`): a flagged chip can be
+ *   pointer-dragged onto another day cell, emitting `eventDropped`.
+ *   **Accessibility contract**: HTML5 drag-and-drop is pointer-only by
+ *   construction — no browser exposes a keyboard equivalent — and the chips
+ *   are `aria-hidden` visual density anyway, so the consumer flagging chips
+ *   draggable **must** keep an equivalent keyboard/AT path to the same
+ *   reschedule (an edit dialog that changes the date suffices). This mirrors
+ *   the `Tree` widget's `draggable` contract.
+ *
+ * @version 2.3.0
  *
  * @example
  * ```html
@@ -104,7 +123,7 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
     BrnCalendarWeekday,
   ],
   providers: [
-    provideIcons({ lucideChevronLeft, lucideChevronRight }),
+    provideIcons({ lucideChevronLeft, lucideChevronRight, lucidePlus }),
     provideBrnCalendar(Calendar),
   ],
   templateUrl: './calendar.component.html',
@@ -185,6 +204,44 @@ export class Calendar implements BrnCalendarBase<Date> {
    */
   public readonly firstDayOfWeek: InputSignal<CalendarFirstDayOfWeek> =
     input<CalendarFirstDayOfWeek>('monday');
+
+  /**
+   * Property canCreate
+   * @readonly
+   *
+   * @description
+   * Whether every day cell offers the quick-create "+" button (revealed on
+   * cell hover and on its own keyboard focus) that emits
+   * {@link createRequested}. Off by default; the host turns it on only when
+   * creating something on a day is actually permitted.
+   *
+   * @access public
+   * @since 2.3.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly canCreate: InputSignal<boolean> = input<boolean>(false);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property createRequested
+   * @readonly
+   * @description A day cell's quick-create "+" button was activated, with that cell's `yyyy-MM-dd` day.
+   * @access public
+   * @since 2.3.0
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly createRequested: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property eventDropped
+   * @readonly
+   * @description A `draggable` chip was dropped onto a day cell. See the class doc's a11y contract — the host must keep a keyboard path to the same reschedule.
+   * @access public
+   * @since 2.3.0
+   * @type {OutputEmitterRef<CalendarEventDrop>}
+   */
+  public readonly eventDropped: OutputEmitterRef<CalendarEventDrop> = output<CalendarEventDrop>();
   //#endregion
 
   //#region Properties
@@ -199,6 +256,12 @@ export class Calendar implements BrnCalendarBase<Date> {
 
   /** Today's local day, resolved once so the grid cannot shift mid-session. */
   protected readonly todayIso: string = toIsoDay(new Date());
+
+  /** The id of the chip currently being dragged, or `null` outside a drag. */
+  private readonly draggedEventId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /** The `yyyy-MM-dd` day currently hovered by a chip drag, or `null`. */
+  protected readonly dragOverDay: WritableSignal<string | null> = signal<string | null>(null);
 
   /** The header's localized "Month Year" label. */
   protected readonly monthLabel: Signal<string> = computed<string>(() =>
@@ -474,6 +537,99 @@ export class Calendar implements BrnCalendarBase<Date> {
    */
   protected longWeekdayOf(weekday: number): string {
     return this.weekdayName(weekday, 'long');
+  }
+
+  /**
+   * Method createAriaLabelOf
+   * @description The quick-create button's accessible name, dated so repeated cells stay distinguishable to assistive tech.
+   * @access protected
+   * @since 2.3.0
+   * @param {Date} date - The day being rendered.
+   * @returns {string} The localized dated label.
+   */
+  protected createAriaLabelOf(date: Date): string {
+    const day: string = this.dayLabelOf(date);
+
+    return $localize`:@@calendar.cellCreateAria:New event on ${day}:date:`;
+  }
+
+  /**
+   * Method onChipDragStart
+   * @description Anchors the drag on a `draggable` chip and marks the transfer as a move.
+   * @access protected
+   * @since 2.3.0
+   * @param {DragEvent} event - The native `dragstart` event.
+   * @param {CalendarDisplayEvent} chip - The chip being dragged.
+   * @returns {void}
+   */
+  protected onChipDragStart(event: DragEvent, chip: CalendarDisplayEvent): void {
+    if (chip.draggable !== true) return;
+
+    this.draggedEventId.set(chip.id);
+    event.dataTransfer?.setData('text/plain', chip.id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  /**
+   * Method onChipDragEnd
+   * @description Clears the drag state whether or not the chip landed on a cell.
+   * @access protected
+   * @since 2.3.0
+   * @returns {void}
+   */
+  protected onChipDragEnd(): void {
+    this.draggedEventId.set(null);
+    this.dragOverDay.set(null);
+  }
+
+  /**
+   * Method onCellDragOver
+   * @description Allows the drop (`preventDefault`) so `drop` fires, and marks the hovered day for the target cue.
+   * @access protected
+   * @since 2.3.0
+   * @param {DragEvent} event - The native `dragover` event.
+   * @param {string} iso - The hovered cell's `yyyy-MM-dd` day.
+   * @returns {void}
+   */
+  protected onCellDragOver(event: DragEvent, iso: string): void {
+    if (this.draggedEventId() === null) return;
+
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    if (this.dragOverDay() !== iso) this.dragOverDay.set(iso);
+  }
+
+  /**
+   * Method onCellDragLeave
+   * @description Drops the target cue when the drag leaves a cell.
+   * @access protected
+   * @since 2.3.0
+   * @param {string} iso - The left cell's `yyyy-MM-dd` day.
+   * @returns {void}
+   */
+  protected onCellDragLeave(iso: string): void {
+    if (this.dragOverDay() === iso) this.dragOverDay.set(null);
+  }
+
+  /**
+   * Method onCellDrop
+   * @description Ends the drag on a cell and reports the gesture through {@link eventDropped}.
+   * @access protected
+   * @since 2.3.0
+   * @param {DragEvent} event - The native `drop` event.
+   * @param {string} iso - The target cell's `yyyy-MM-dd` day.
+   * @returns {void}
+   */
+  protected onCellDrop(event: DragEvent, iso: string): void {
+    const id: string | null = this.draggedEventId();
+
+    this.draggedEventId.set(null);
+    this.dragOverDay.set(null);
+
+    if (id === null) return;
+
+    event.preventDefault();
+    this.eventDropped.emit({ id, day: iso });
   }
 
   /**

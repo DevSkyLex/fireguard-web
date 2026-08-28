@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
@@ -179,6 +179,85 @@ describe('CalendarFeedStore', () => {
     });
   });
 
+  describe('moveEvent', () => {
+    const movableFeed: CalendarFeedOutput = {
+      ...feed,
+      items: [
+        {
+          sourceKey: 'calendar_event',
+          id: 'evt-1',
+          title: 'Fire drill',
+          startsAt: '2026-08-01T09:00:00+02:00',
+          endsAt: '2026-08-01T10:00:00+02:00',
+          allDay: false,
+          targetType: 'calendar_event',
+          targetId: 'evt-1',
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockCalendarService.getFeed.mockReturnValue(of(movableFeed));
+      store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+      await flushEffects();
+      mockCalendarService.getFeed.mockClear();
+    });
+
+    it('should optimistically reposition the entry, send the merge-patch, and re-read the window on success', async () => {
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00.000Z',
+        endsAt: '2026-08-03T10:00:00.000Z',
+      });
+      await flushEffects();
+
+      expect(mockCalendarService.updateEvent).toHaveBeenCalledWith('org-1', 'evt-1', {
+        startsAt: '2026-08-03T09:00:00.000Z',
+        endsAt: '2026-08-03T10:00:00.000Z',
+      });
+      expect(store.moveEventCallState().status).toBe('success');
+      expect(mockCalendarService.getFeed).toHaveBeenCalledWith('org-1', feed.from, feed.to);
+    });
+
+    it('should omit endsAt from the merge-patch when the command carries none', async () => {
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00.000Z',
+      });
+      await flushEffects();
+
+      expect(mockCalendarService.updateEvent).toHaveBeenCalledWith('org-1', 'evt-1', {
+        startsAt: '2026-08-03T09:00:00.000Z',
+      });
+    });
+
+    it('should roll the optimistic reposition back on failure', async () => {
+      const pendingUpdate = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValueOnce(pendingUpdate.asObservable());
+
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00.000Z',
+        endsAt: '2026-08-03T10:00:00.000Z',
+      });
+      await flushEffects();
+
+      expect(store.items()[0]?.startsAt).toBe('2026-08-03T09:00:00.000Z');
+
+      pendingUpdate.error(apiError(409, 'Conflict'));
+      await flushEffects();
+
+      expect(store.items()[0]?.startsAt).toBe('2026-08-01T09:00:00+02:00');
+      expect(store.items()[0]?.endsAt).toBe('2026-08-01T10:00:00+02:00');
+      expect(store.moveEventCallState().status).toBe('error');
+      expect(store.moveEventCallState().error?.code).toBe(409);
+      expect(mockCalendarService.getFeed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('resetWriteCallStates', () => {
     it('should idle every write call state', async () => {
       store.createEvent({
@@ -193,6 +272,7 @@ describe('CalendarFeedStore', () => {
       expect(store.createEventCallState().status).toBe('idle');
       expect(store.updateEventCallState().status).toBe('idle');
       expect(store.deleteEventCallState().status).toBe('idle');
+      expect(store.moveEventCallState().status).toBe('idle');
     });
   });
 });

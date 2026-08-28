@@ -32,6 +32,7 @@ describe('CalendarPage', () => {
   let createEvent: ReturnType<typeof vi.fn>;
   let updateEvent: ReturnType<typeof vi.fn>;
   let deleteEvent: ReturnType<typeof vi.fn>;
+  let moveEvent: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
@@ -43,6 +44,7 @@ describe('CalendarPage', () => {
     createEvent = vi.fn();
     updateEvent = vi.fn();
     deleteEvent = vi.fn();
+    moveEvent = vi.fn();
 
     const storeMock = {
       items,
@@ -52,9 +54,11 @@ describe('CalendarPage', () => {
       createEvent,
       updateEvent,
       deleteEvent,
+      moveEvent,
       createEventCallState: signal<CallState<unknown>>(idleCallState()),
       updateEventCallState: signal<CallState<unknown>>(idleCallState()),
       deleteEventCallState: signal<CallState<unknown>>(idleCallState()),
+      moveEventCallState: signal<CallState<unknown>>(idleCallState()),
     };
 
     TestBed.configureTestingModule({
@@ -216,7 +220,7 @@ describe('CalendarPage', () => {
     ).onEventFormSubmitted({
       title: 'Fire drill',
       description: null,
-      startsAt: '2026-08-01T09:00:00.000Z',
+      startsAt: '2026-08-01T09:00:00+00:00',
       endsAt: null,
       allDay: false,
       facilityId: null,
@@ -227,7 +231,7 @@ describe('CalendarPage', () => {
       input: {
         title: 'Fire drill',
         description: null,
-        startsAt: '2026-08-01T09:00:00.000Z',
+        startsAt: '2026-08-01T09:00:00+00:00',
         endsAt: null,
         allDay: false,
         facilityId: null,
@@ -293,5 +297,144 @@ describe('CalendarPage', () => {
     (fixture.componentInstance as unknown as { confirmDelete(): void }).confirmDelete();
 
     expect(deleteEvent).toHaveBeenCalledWith({ organizationId: 'org-1', eventId: 'evt-1' });
+  });
+
+  describe('granularities', () => {
+    it('switches to the week view and reloads a seven-day window', async () => {
+      await render();
+      load.mockClear();
+
+      root().querySelector<HTMLButtonElement>('[data-testid="calendar-granularity-week"]')?.click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="calendar-week"]')).not.toBeNull();
+      expect(root().querySelector('[data-testid="calendar-agenda"]')).toBeNull();
+      expect(load).toHaveBeenCalledTimes(1);
+
+      const command = load.mock.calls[0]?.[0] as { from: string; to: string };
+      const spanMs: number = new Date(command.to).getTime() - new Date(command.from).getTime();
+      expect(Math.round(spanMs / 3_600_000)).toBe(7 * 24);
+      expect(new Date(command.from).getDay()).toBe(1);
+    });
+
+    it('renders all seven day sections in the week view, empty days included', async () => {
+      await render();
+      items.set([feedItem({ id: 'a', startsAt: new Date().toISOString() })]);
+
+      root().querySelector<HTMLButtonElement>('[data-testid="calendar-granularity-week"]')?.click();
+      await fixture.whenStable();
+
+      expect(root().querySelectorAll('[data-testid="calendar-week-day"]')).toHaveLength(7);
+    });
+
+    it('switches to the day view and steps one day at a time', async () => {
+      await render();
+
+      root().querySelector<HTMLButtonElement>('[data-testid="calendar-granularity-day"]')?.click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="calendar-day-view"]')).not.toBeNull();
+      load.mockClear();
+
+      root().querySelector<HTMLButtonElement>('[data-testid="calendar-toolbar-next"]')?.click();
+      await fixture.whenStable();
+
+      expect(load).toHaveBeenCalledTimes(1);
+      const command = load.mock.calls[0]?.[0] as { from: string; to: string };
+      const tomorrow: Date = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      expect(new Date(command.from).toDateString()).toBe(tomorrow.toDateString());
+      expect(new Date(command.to).toDateString()).toBe(tomorrow.toDateString());
+    });
+  });
+
+  describe('quick create', () => {
+    it('pre-fills the create dialog with the requested day at the default time', async () => {
+      await render(true);
+
+      (
+        fixture.componentInstance as unknown as { onCreateRequested(day: string): void }
+      ).onCreateRequested('2026-08-12');
+      await fixture.whenStable();
+
+      const startsAt: HTMLInputElement | null = document.querySelector<HTMLInputElement>(
+        '[data-testid="calendar-event-starts-at"]',
+      );
+      expect(startsAt?.value).toBe('2026-08-12T09:00');
+    });
+
+    it('ignores a quick create without the write permission', async () => {
+      await render(false);
+
+      (
+        fixture.componentInstance as unknown as { onCreateRequested(day: string): void }
+      ).onCreateRequested('2026-08-12');
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-testid="calendar-event-dialog"]')).toBeNull();
+    });
+  });
+
+  describe('drag reschedule', () => {
+    it('moves a dropped standalone event to the target day, keeping its wall-clock time, and announces it', async () => {
+      await render(true);
+      const item: CalendarFeedItemOutput = feedItem({
+        sourceKey: 'calendar_event',
+        id: 'evt-1',
+        startsAt: '2026-08-09T09:30:00+02:00',
+        endsAt: '2026-08-09T10:30:00+02:00',
+        targetType: 'calendar_event',
+        targetId: 'evt-1',
+      });
+      items.set([item]);
+      await fixture.whenStable();
+
+      (
+        fixture.componentInstance as unknown as {
+          onEventDropped(drop: { id: string; day: string }): void;
+        }
+      ).onEventDropped({ id: 'calendar_event:evt-1', day: '2026-08-05' });
+      await fixture.whenStable();
+
+      const start: Date = new Date(item.startsAt);
+      const moved: Date = new Date(2026, 7, 5, start.getHours(), start.getMinutes(), 0);
+      const deltaMs: number = moved.getTime() - start.getTime();
+
+      expect(moveEvent).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: moved.toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+        endsAt: new Date(new Date('2026-08-09T10:30:00+02:00').getTime() + deltaMs)
+          .toISOString()
+          .replace(/\.\d{3}Z$/, '+00:00'),
+      });
+
+      const liveRegion: HTMLElement | null = root().querySelector(
+        '[data-testid="calendar-move-live-region"]',
+      );
+      expect(liveRegion?.textContent).toContain('RIA inspection');
+    });
+
+    it("ignores a drop on the event's own day and a drop of a non-event entry", async () => {
+      await render(true);
+      items.set([
+        feedItem({
+          sourceKey: 'calendar_event',
+          id: 'evt-1',
+          startsAt: '2026-08-09T09:30:00+02:00',
+        }),
+        feedItem({ sourceKey: 'inspection', id: 'insp-1', startsAt: '2026-08-09T09:00:00+02:00' }),
+      ]);
+      await fixture.whenStable();
+
+      const page = fixture.componentInstance as unknown as {
+        onEventDropped(drop: { id: string; day: string }): void;
+      };
+
+      page.onEventDropped({ id: 'calendar_event:evt-1', day: '2026-08-09' });
+      page.onEventDropped({ id: 'inspection:insp-1', day: '2026-08-05' });
+
+      expect(moveEvent).not.toHaveBeenCalled();
+    });
   });
 });

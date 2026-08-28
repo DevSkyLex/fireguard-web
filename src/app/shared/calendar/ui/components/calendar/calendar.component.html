@@ -75,7 +75,7 @@
 
             <td
               brnCalendarCell
-              class="border-e border-b border-border p-0 align-top last:border-e-0"
+              class="group/cell relative border-e border-b border-border p-0 align-top last:border-e-0"
             >
               <button
                 brnCalendarCellButton
@@ -86,6 +86,12 @@
                 [date]="day"
                 [attr.data-day]="iso"
                 [attr.aria-current]="iso === todayIso ? 'date' : null"
+                [class.ring-2]="dragOverDay() === iso"
+                [class.ring-ring]="dragOverDay() === iso"
+                [class.ring-inset]="dragOverDay() === iso"
+                (dragover)="onCellDragOver($event, iso)"
+                (dragleave)="onCellDragLeave(iso)"
+                (drop)="onCellDrop($event, iso)"
               >
                 <span
                   class="flex size-6 shrink-0 items-center justify-center self-start rounded-full text-xs tabular-nums group-data-[selected-single=true]/day:bg-primary group-data-[selected-single=true]/day:font-semibold group-data-[selected-single=true]/day:text-primary-foreground group-data-[today=true]/day:font-semibold group-data-[today=true]/day:ring-1 group-data-[today=true]/day:ring-muted-foreground"
@@ -116,7 +122,12 @@
                         hlmBadge
                         [variant]="event.tone"
                         class="max-w-full"
+                        [class.cursor-grab]="event.draggable === true"
                         [title]="event.label"
+                        [attr.draggable]="event.draggable === true ? 'true' : null"
+                        [attr.data-draggable]="event.draggable === true ? 'true' : null"
+                        (dragstart)="onChipDragStart($event, event)"
+                        (dragend)="onChipDragEnd()"
                       >
                         <span class="truncate">{{ event.label }}</span>
                       </span>
@@ -129,6 +140,21 @@
                   </span>
                 }
               </button>
+
+              @if (canCreate()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  class="absolute top-0.5 right-0.5 z-10 size-6 opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100"
+                  data-testid="calendar-day-create"
+                  [attr.aria-label]="createAriaLabelOf(day)"
+                  (click)="createRequested.emit(iso)"
+                >
+                  <ng-icon name="lucidePlus" aria-hidden="true" />
+                </button>
+              }
             </td>
           }
         </tr>

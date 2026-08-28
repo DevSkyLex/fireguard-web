@@ -22,6 +22,7 @@ import {
 } from '@angular/forms/signals';
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
+import { toApiDateTime } from '@features/organization/features/calendar/utils';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -150,6 +151,16 @@ export class CalendarEventForm {
   public readonly facilityOptions: InputSignal<
     ReadonlyArray<{ readonly label: string; readonly value: string }>
   > = input<ReadonlyArray<{ readonly label: string; readonly value: string }>>([]);
+
+  /**
+   * Property initialStartsAt
+   * @readonly
+   * @description A `yyyy-MM-ddTHH:mm` start pre-filling a fresh create draft — the quick-create path seeds the clicked day here. Ignored while {@link editing} holds a record.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly initialStartsAt: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs
@@ -258,7 +269,11 @@ export class CalendarEventForm {
         return;
       }
 
-      this.model.set(editing ? toDraft(editing) : EMPTY_DRAFT);
+      this.model.set(
+        editing
+          ? toDraft(editing)
+          : { ...EMPTY_DRAFT, startsAt: this.initialStartsAt() ?? EMPTY_DRAFT.startsAt },
+      );
     });
   }
   //#endregion
@@ -306,8 +321,8 @@ export class CalendarEventForm {
     this.submitted.emit({
       title: draft.title.trim(),
       description: draft.description.trim() === '' ? null : draft.description.trim(),
-      startsAt: new Date(draft.startsAt).toISOString(),
-      endsAt: draft.endsAt.trim() === '' ? null : new Date(draft.endsAt).toISOString(),
+      startsAt: toApiDateTime(new Date(draft.startsAt)),
+      endsAt: draft.endsAt.trim() === '' ? null : toApiDateTime(new Date(draft.endsAt)),
       allDay: draft.allDay,
       facilityId: draft.facilityId === NO_FACILITY_VALUE ? null : draft.facilityId,
     });

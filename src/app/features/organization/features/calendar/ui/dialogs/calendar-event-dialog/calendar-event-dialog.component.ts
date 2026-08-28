@@ -108,6 +108,16 @@ export class CalendarEventDialog {
   public readonly facilityOptions: InputSignal<
     ReadonlyArray<{ readonly label: string; readonly value: string }>
   > = input<ReadonlyArray<{ readonly label: string; readonly value: string }>>([]);
+
+  /**
+   * Property initialStartsAt
+   * @readonly
+   * @description A `yyyy-MM-ddTHH:mm` start pre-filling the create draft — set when the page opened the dialog from a day cell's quick-create. Ignored while {@link editing} holds a record.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly initialStartsAt: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs

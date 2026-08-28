@@ -39,6 +39,7 @@ import {
   CalendarFeedStore,
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
+import { toApiDateTime } from '@features/organization/features/calendar/utils';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
@@ -49,6 +50,7 @@ import {
   Calendar,
   toIsoDay,
   type CalendarDisplayEvent,
+  type CalendarEventDrop,
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
 import { EmptyState } from '@shared/empty-state';
@@ -63,6 +65,21 @@ import type { CalendarEventFormValues } from '../../dialogs/calendar-event-dialo
 
 /** How many facilities the event dialog's facility select offers, mirroring `equipment-detail-page`'s own facility picker. */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
+
+/** The local wall-clock time a quick-created event defaults to on its picked day. */
+const QUICK_CREATE_DEFAULT_TIME: string = '09:00';
+
+/**
+ * Type CalendarGranularity
+ *
+ * @description
+ * Which period the page shows: the month grid, one week as an agenda list,
+ * or one day's list. The feed window follows the granularity — always a
+ * bounded date-range fetch, never a paginated collection.
+ *
+ * @since 2.2.0
+ */
+type CalendarGranularity = 'month' | 'week' | 'day';
 
 /**
  * Type CalendarPageAgendaGroup
@@ -87,20 +104,27 @@ type CalendarPageAgendaGroup = {
  * @description
  * The organization's calendar: every dated commitment — standalone events,
  * inspections, interventions, preventive maintenance — read from the
- * backend's unified feed. A full-height console: a page-level toolbar band
- * (Today, prev/next month, the current period label) drives the page's own
- * `month`/`selectedDay` state — the shared `app-calendar` widget renders with
- * its own built-in toolbar hidden (`showToolbar="false"`) so the two never
- * duplicate — and the grid fills the remaining height, scrolling internally
- * if a month overflows. At `md` and below, the shrunken grid gives way to an
- * agenda: the same window's entries grouped by day, since a month grid is
- * unusable at phone width. The grid's own day panel and the agenda's day
- * groups both render through `CalendarEntryList`, the single row renderer for
- * a feed entry — an intervention entry links to its workspace. Browser-only
- * loading: the feed is a dated, authenticated read that would immediately
- * refetch after hydration (ARCHITECTURE.md §12.5-3).
+ * backend's unified feed, at three granularities: the month grid, one week
+ * as a seven-day agenda list, or a single day's list. A full-height console:
+ * a page-level toolbar band (Today, prev/next period, the current period
+ * label, the Month/Week/Day selector) drives the page's own
+ * `month`/`granularity`/`selectedDay` state — the shared `app-calendar`
+ * widget renders with its own built-in toolbar hidden (`showToolbar="false"`)
+ * so the two never duplicate — and the active view fills the remaining
+ * height, scrolling internally when it overflows. At `md` and below, the
+ * month view's shrunken grid gives way to an agenda: the same window's
+ * entries grouped by day, since a month grid is unusable at phone width. The
+ * grid's day panel, the agenda's day groups, and the week/day views all
+ * render through `CalendarEntryList`, the single row renderer for a feed
+ * entry — an intervention entry links to its workspace. Writable standalone
+ * events can also be quick-created from a day (the grid cell's "+" or a
+ * week/day section's) and drag-rescheduled between grid days — with the
+ * row's Edit dialog as the keyboard path to the same date change, so drag is
+ * never the only way. Browser-only loading: the feed is a dated,
+ * authenticated read that would immediately refetch after hydration
+ * (ARCHITECTURE.md §12.5-3).
  *
- * @version 2.1.0
+ * @version 2.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -249,7 +273,7 @@ export class CalendarPage {
     () => this.store.deleteEventCallState().error?.message ?? null,
   );
 
-  /** Anchor of the displayed month, driven two-way by the grid and by the toolbar. */
+  /** Anchor of the displayed period — any date inside the month, the day anchoring the week, or the shown day. Driven two-way by the grid (month view) and by the toolbar. */
   protected readonly month: WritableSignal<Date> = signal<Date>(new Date());
 
   /** The selected day (`yyyy-MM-dd`), today on arrival. */
@@ -257,7 +281,26 @@ export class CalendarPage {
     toIsoDay(new Date()),
   );
 
-  /** Feed items mapped onto the shared calendar's generic chips. */
+  /**
+   * Property granularity
+   * @readonly
+   * @description Which period the page shows — month grid, week agenda, or day list. See {@link CalendarGranularity}.
+   * @access protected
+   * @since 2.2.0
+   * @type {WritableSignal<CalendarGranularity>}
+   */
+  protected readonly granularity: WritableSignal<CalendarGranularity> =
+    signal<CalendarGranularity>('month');
+
+  /** The `yyyy-MM-ddTHH:mm` start pre-filling the create dialog when it was opened from a day's quick-create affordance, `null` otherwise. */
+  protected readonly createDefaultStart: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /** The `aria-live="polite"` announcement text — reflects the last drag-reschedule's outcome. */
+  protected readonly moveAnnouncement: WritableSignal<string> = signal<string>('');
+
+  /** Feed items mapped onto the shared calendar's generic chips — only a writable standalone event is flagged draggable. */
   protected readonly events: Signal<readonly CalendarDisplayEvent[]> = computed(() =>
     this.store.items().map((item: CalendarFeedItemOutput): CalendarDisplayEvent => {
       const key: CalendarSourceKey = item.sourceKey;
@@ -267,6 +310,7 @@ export class CalendarPage {
         date: item.startsAt,
         label: item.title,
         tone: SOURCE_TONE[key] ?? 'outline',
+        draggable: item.sourceKey === 'calendar_event' && this.canWriteEvents(),
       };
     }),
   );
@@ -274,14 +318,118 @@ export class CalendarPage {
   /**
    * Property periodLabel
    * @readonly
-   * @description The toolbar's "Month Year" label — the grid's own title, hidden, mirrors it.
+   * @description The toolbar's period label — "Month Year", the week's localized date range, or the day's full date, per {@link granularity}. The grid's own title, hidden, mirrors the month form.
    * @access protected
-   * @since 1.1.0
+   * @since 2.2.0
    * @type {Signal<string>}
    */
-  protected readonly periodLabel: Signal<string> = computed<string>(() =>
-    new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(this.month()),
-  );
+  protected readonly periodLabel: Signal<string> = computed<string>(() => {
+    const anchor: Date = this.month();
+
+    switch (this.granularity()) {
+      case 'month':
+        return new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(
+          anchor,
+        );
+      case 'week': {
+        const start: Date = this.startOfWeekOf(anchor);
+        const end: Date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+
+        return new Intl.DateTimeFormat(this.locale, {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }).formatRange(start, end);
+      }
+      case 'day':
+        return new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(anchor);
+    }
+  });
+
+  /**
+   * Property previousAriaLabel
+   * @readonly
+   * @description The prev button's accessible name, matching the active {@link granularity}.
+   * @access protected
+   * @since 2.2.0
+   * @type {Signal<string>}
+   */
+  protected readonly previousAriaLabel: Signal<string> = computed<string>(() => {
+    switch (this.granularity()) {
+      case 'month':
+        return $localize`:@@calendar.previousMonth:Previous month`;
+      case 'week':
+        return $localize`:@@calendar.previousWeek:Previous week`;
+      case 'day':
+        return $localize`:@@calendar.previousDay:Previous day`;
+    }
+  });
+
+  /**
+   * Property nextAriaLabel
+   * @readonly
+   * @description The next button's accessible name, matching the active {@link granularity}.
+   * @access protected
+   * @since 2.2.0
+   * @type {Signal<string>}
+   */
+  protected readonly nextAriaLabel: Signal<string> = computed<string>(() => {
+    switch (this.granularity()) {
+      case 'month':
+        return $localize`:@@calendar.nextMonth:Next month`;
+      case 'week':
+        return $localize`:@@calendar.nextWeek:Next week`;
+      case 'day':
+        return $localize`:@@calendar.nextDay:Next day`;
+    }
+  });
+
+  /**
+   * Property weekGroups
+   * @readonly
+   *
+   * @description
+   * The anchored week's seven days — empty days included, so the week always
+   * reads as a full week — each with its localized heading and its entries,
+   * earliest first. The week starts on {@link firstDayOfWeek}. This is the
+   * week view's whole body: a 7-day agenda list reusing `CalendarEntryList`
+   * rather than an hour-by-column grid (`FEATURE.md` documents the choice).
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @type {Signal<readonly CalendarPageAgendaGroup[]>}
+   */
+  protected readonly weekGroups: Signal<readonly CalendarPageAgendaGroup[]> = computed(() => {
+    const start: Date = this.startOfWeekOf(this.month());
+    const items: readonly CalendarFeedItemOutput[] = this.store.items();
+
+    return Array.from({ length: 7 }, (unused, index: number): CalendarPageAgendaGroup => {
+      const date: Date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
+      const day: string = toIsoDay(date);
+
+      return {
+        day,
+        label: new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(date),
+        items: items
+          .filter((item: CalendarFeedItemOutput) => toIsoDay(new Date(item.startsAt)) === day)
+          .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
+      };
+    });
+  });
+
+  /** The day view's `yyyy-MM-dd` day — the anchor itself. */
+  protected readonly dayViewIso: Signal<string> = computed<string>(() => toIsoDay(this.month()));
+
+  /** The day view's entries, earliest first. */
+  protected readonly dayViewItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
+    const day: string = this.dayViewIso();
+
+    return this.store
+      .items()
+      .filter((item: CalendarFeedItemOutput) => toIsoDay(new Date(item.startsAt)) === day)
+      .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
+  });
 
   /** The selected day's entries, earliest first. */
   protected readonly dayItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
@@ -362,11 +510,25 @@ export class CalendarPage {
     effect((): void => {
       const organizationId: string = this.organizationId();
       const anchor: Date = this.month();
+      const granularity: CalendarGranularity = this.granularity();
+      this.firstDayOfWeek();
 
       untracked((): void => {
         if (!isPlatformBrowser(this.platformId)) return;
 
-        this.store.load(this.windowOf(organizationId, anchor));
+        this.store.load(this.windowOf(organizationId, anchor, granularity));
+      });
+    });
+
+    effect((): void => {
+      const callState: CallState<CalendarEventOutput> = this.store.moveEventCallState();
+
+      untracked((): void => {
+        if (callState.status !== 'error') return;
+
+        this.moveAnnouncement.set(
+          $localize`:@@calendar.moveErrorAnnounce:The event could not be moved and was put back.`,
+        );
       });
     });
 
@@ -420,60 +582,136 @@ export class CalendarPage {
    * @returns {void}
    */
   protected reload(): void {
-    this.store.load(this.windowOf(this.organizationId(), this.month()));
+    this.store.load(this.windowOf(this.organizationId(), this.month(), this.granularity()));
+  }
+
+  /**
+   * Method switchGranularity
+   * @description The toolbar's Month/Week/Day tab handler — the anchor stays, so the new granularity shows the period containing it.
+   * @access protected
+   * @since 2.2.0
+   * @param {CalendarGranularity} granularity - The activated granularity.
+   * @returns {void}
+   */
+  protected switchGranularity(granularity: CalendarGranularity): void {
+    this.granularity.set(granularity);
   }
 
   /**
    * Method goToday
-   * @description Re-anchors the toolbar on the current month and selects today.
+   * @description Re-anchors the toolbar on today's period and selects today.
    * @access protected
    * @since 1.1.0
    * @returns {void}
    */
   protected goToday(): void {
     const today: Date = new Date();
-    this.month.set(new Date(today.getFullYear(), today.getMonth(), 1));
+    this.month.set(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
     this.selectedDay.set(toIsoDay(today));
   }
 
   /**
-   * Method stepMonth
-   * @description Moves the toolbar's anchor one month backwards or forwards.
+   * Method stepPeriod
+   * @description Moves the toolbar's anchor one period — month, week, or day per {@link granularity} — backwards or forwards.
    * @access protected
-   * @since 1.1.0
+   * @since 2.2.0
    * @param {number} offset - `-1` or `1`.
    * @returns {void}
    */
-  protected stepMonth(offset: number): void {
+  protected stepPeriod(offset: number): void {
     const current: Date = this.month();
-    this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
+
+    switch (this.granularity()) {
+      case 'month':
+        this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
+        return;
+      case 'week':
+        this.month.set(
+          new Date(current.getFullYear(), current.getMonth(), current.getDate() + offset * 7),
+        );
+        return;
+      case 'day':
+        this.month.set(
+          new Date(current.getFullYear(), current.getMonth(), current.getDate() + offset),
+        );
+    }
+  }
+
+  /**
+   * Method startOfWeekOf
+   * @description Local midnight on the first day of the anchor's week, honouring {@link firstDayOfWeek}.
+   * @access private
+   * @since 2.2.0
+   * @param {Date} anchor - Any date inside the week.
+   * @returns {Date} The week's first day.
+   */
+  private startOfWeekOf(anchor: Date): Date {
+    const offset: number =
+      this.firstDayOfWeek() === 'monday' ? (anchor.getDay() + 6) % 7 : anchor.getDay();
+
+    return new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - offset);
   }
 
   /**
    * Method windowOf
    *
    * @description
-   * The feed command covering the anchor's month plus one week each side, as
-   * the full ISO datetimes with explicit offset the endpoint demands — a bare
-   * `yyyy-MM-dd` is a 400.
+   * The feed command covering the displayed period — the anchor's month plus
+   * one week each side (the grid's filler days must not lose their chips),
+   * the anchored week, or the single day — as the full ISO datetimes with
+   * explicit offset the endpoint demands; a bare `yyyy-MM-dd` is a 400.
    *
    * @access private
-   * @since 1.0.0
+   * @since 2.2.0
    *
    * @param {string} organizationId - The organization to read.
-   * @param {Date} anchor - Any date inside the displayed month.
+   * @param {Date} anchor - Any date inside the displayed period.
+   * @param {CalendarGranularity} granularity - The displayed period kind.
    *
    * @returns {{ organizationId: string; from: string; to: string }} The load command.
    */
   private windowOf(
     organizationId: string,
     anchor: Date,
+    granularity: CalendarGranularity,
   ): { readonly organizationId: string; readonly from: string; readonly to: string } {
-    return {
-      organizationId,
-      from: new Date(anchor.getFullYear(), anchor.getMonth(), 1 - 7).toISOString(),
-      to: new Date(anchor.getFullYear(), anchor.getMonth() + 1, 7, 23, 59, 59).toISOString(),
-    };
+    switch (granularity) {
+      case 'month':
+        return {
+          organizationId,
+          from: new Date(anchor.getFullYear(), anchor.getMonth(), 1 - 7).toISOString(),
+          to: new Date(anchor.getFullYear(), anchor.getMonth() + 1, 7, 23, 59, 59).toISOString(),
+        };
+      case 'week': {
+        const start: Date = this.startOfWeekOf(anchor);
+
+        return {
+          organizationId,
+          from: start.toISOString(),
+          to: new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            start.getDate() + 6,
+            23,
+            59,
+            59,
+          ).toISOString(),
+        };
+      }
+      case 'day':
+        return {
+          organizationId,
+          from: new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()).toISOString(),
+          to: new Date(
+            anchor.getFullYear(),
+            anchor.getMonth(),
+            anchor.getDate(),
+            23,
+            59,
+            59,
+          ).toISOString(),
+        };
+    }
   }
 
   /**
@@ -484,8 +722,107 @@ export class CalendarPage {
    * @returns {void}
    */
   protected openCreateDialog(): void {
+    this.createDefaultStart.set(null);
     this.editingEvent.set(null);
     this.eventDialogVisible.set(true);
+  }
+
+  /**
+   * Method onCreateRequested
+   *
+   * @description
+   * Quick create from a day — the grid cell's "+" button or a week/day
+   * section's own — opens the create dialog with its start pre-filled on
+   * that day at a default morning time.
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {string} day - The picked `yyyy-MM-dd` day.
+   *
+   * @returns {void}
+   */
+  protected onCreateRequested(day: string): void {
+    if (!this.canWriteEvents()) return;
+
+    this.createDefaultStart.set(`${day}T${QUICK_CREATE_DEFAULT_TIME}`);
+    this.editingEvent.set(null);
+    this.eventDialogVisible.set(true);
+  }
+
+  /**
+   * Method createOnDayAriaLabelOf
+   * @description A week/day section's quick-create button's accessible name, dated so repeated sections stay distinguishable.
+   * @access protected
+   * @since 2.2.0
+   * @param {string} label - The section's localized full date.
+   * @returns {string} The localized dated label.
+   */
+  protected createOnDayAriaLabelOf(label: string): string {
+    return $localize`:@@calendar.createOnDayAria:New event on ${label}:date:`;
+  }
+
+  /**
+   * Method onEventDropped
+   *
+   * @description
+   * A `calendar_event` chip was dropped onto another grid day: keeps the
+   * event's local wall-clock time, moves it to the target day, shifts a set
+   * end by the same delta, announces the move for assistive tech, and hands
+   * the optimistic write to `CalendarFeedStore.moveEvent`. A drop on the
+   * event's own day is a no-op. Drag is never the only path — the row's Edit
+   * dialog changes the same dates by keyboard (`FEATURE.md`).
+   *
+   * @access protected
+   * @since 2.2.0
+   *
+   * @param {CalendarEventDrop} drop - The grid's reported gesture.
+   *
+   * @returns {void}
+   */
+  protected onEventDropped(drop: CalendarEventDrop): void {
+    if (!this.canWriteEvents()) return;
+
+    const item: CalendarFeedItemOutput | undefined = this.store
+      .items()
+      .find(
+        (candidate: CalendarFeedItemOutput) =>
+          candidate.sourceKey === 'calendar_event' &&
+          `${candidate.sourceKey}:${candidate.id}` === drop.id,
+      );
+    if (item === undefined) return;
+
+    const start: Date = new Date(item.startsAt);
+    const target: Date = new Date(`${drop.day}T00:00:00`);
+    const moved: Date = new Date(
+      target.getFullYear(),
+      target.getMonth(),
+      target.getDate(),
+      start.getHours(),
+      start.getMinutes(),
+      start.getSeconds(),
+    );
+    if (moved.getTime() === start.getTime()) return;
+
+    const deltaMs: number = moved.getTime() - start.getTime();
+    const endsAt: string | undefined = item.endsAt
+      ? toApiDateTime(new Date(new Date(item.endsAt).getTime() + deltaMs))
+      : undefined;
+
+    this.store.moveEvent({
+      organizationId: this.organizationId(),
+      eventId: item.id,
+      startsAt: toApiDateTime(moved),
+      ...(endsAt !== undefined ? { endsAt } : {}),
+    });
+
+    const eventTitle: string = item.title;
+    const dayLabel: string = new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
+      target,
+    );
+    this.moveAnnouncement.set(
+      $localize`:@@calendar.moveAnnounce:${eventTitle}:eventTitle: moved to ${dayLabel}:date:`,
+    );
   }
 
   /**
@@ -511,7 +848,10 @@ export class CalendarPage {
    */
   protected onEventDialogVisibleChanged(visible: boolean): void {
     this.eventDialogVisible.set(visible);
-    if (!visible) this.editingEvent.set(null);
+    if (!visible) {
+      this.editingEvent.set(null);
+      this.createDefaultStart.set(null);
+    }
   }
 
   /**

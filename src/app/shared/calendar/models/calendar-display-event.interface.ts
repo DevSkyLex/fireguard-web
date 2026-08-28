@@ -26,5 +26,13 @@ export interface CalendarDisplayEvent {
 
   /** The `hlm-badge` variant carrying the chip's tone. */
   readonly tone: 'default' | 'secondary' | 'destructive' | 'outline';
+
+  /**
+   * Whether the chip may be pointer-dragged onto another day, reported back
+   * through `eventDropped`. Off by default; the hosting feature sets it only
+   * on events it can actually reschedule, and must keep a keyboard path to
+   * the same reschedule (see the `Calendar` class doc's a11y contract).
+   */
+  readonly draggable?: boolean;
   //#endregion
 }

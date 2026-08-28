@@ -166,6 +166,7 @@ describe('InterventionSyncService', () => {
       'Extinguisher',
       'work-item-1',
       undefined,
+      'client-1',
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
   });

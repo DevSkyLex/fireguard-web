@@ -1432,12 +1432,12 @@ discardable while queued (confirm-gated, it is data loss). The queue is
 bounded device-wide to **25 files / 50 MB**
 (`INTERVENTION_ATTACHMENT_QUEUE_MAX_*`); a full queue refuses the pick with an
 explicit message. Signature uploads stay online-only — the page chains the
-submit transition on their success. **Residual risk (documented backend
-follow-up):** `POST /api/interventions/{id}/attachments` reads no client
-idempotency key (the handler accepts an `attachmentId`, but the HTTP
-processor, unlike equipment's media endpoint with its multipart `clientId`,
-never forwards one), so no key is sent on replay and a crash between server
-success and local dequeue can duplicate the file on the next replay. The QR button in the field-work section
+submit transition on their success. Replays are **idempotent**: the queued
+row's `clientId` rides along as the endpoint's multipart idempotency key
+(`POST /api/interventions/{id}/attachments` mirrors equipment's media
+endpoint), so a crash between server success and local dequeue returns the
+already-created attachment on the next replay instead of duplicating
+it. The QR button in the field-work section
 (`scanSupported()` devices, execute phase only) decodes a capture through
 `InterventionFieldExecutionService.scan`, normalizes it via
 `InterventionDiscoveryService.normalizeScannedTarget` and reveals the matching

@@ -890,6 +890,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} [label] - optional operator label.
    * @param {string} [workItemId] - Work item this upload documents, when scoped to one.
    * @param {InterventionAttachmentKind} [kind] - `'file'` (default) or `'signature'`.
+   * @param {string} [clientId] - Client-generated UUID making an offline replay idempotent (the endpoint returns the existing attachment instead of duplicating).
    *
    * @return {Observable<InterventionAttachmentOutput>} The created attachment.
    */
@@ -900,12 +901,14 @@ export class InterventionService extends HydraApiService {
     label?: string,
     workItemId?: string,
     kind?: InterventionAttachmentKind,
+    clientId?: string,
   ): Observable<InterventionAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
     if (label) body.set('label', label);
     if (workItemId) body.set('workItemId', workItemId);
     if (kind) body.set('kind', kind);
+    if (clientId) body.set('clientId', clientId);
 
     return this.http.post<InterventionAttachmentOutput>(
       this.buildUrl(`/api/interventions/${interventionId}/attachments`),

@@ -358,8 +358,6 @@ export class InterventionSyncService {
         if (!(file instanceof Blob) || typeof fileName !== 'string') {
           throw new Error('Invalid offline attachment operation');
         }
-        // No idempotency key is sent: the intervention attachment endpoint
-        // reads no clientId (see FEATURE.md, residual duplicate risk).
         await firstValueFrom(
           this.service.uploadAttachment(
             operation.interventionId,
@@ -368,6 +366,7 @@ export class InterventionSyncService {
             operation.payload.label,
             operation.payload.workItemId,
             operation.payload.kind,
+            operation.payload.clientId, // multipart idempotency key: a crash replay returns the existing attachment
           ),
         );
         break;

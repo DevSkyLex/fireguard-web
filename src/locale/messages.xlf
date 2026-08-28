@@ -10585,13 +10585,6 @@
           <context context-type="linenumber">191</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="inspection.analytics.title" datatype="html">
-        <source> Non-conformity analytics </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-analytics-page/inspection-analytics-page.component.html</context>
-          <context context-type="linenumber">5,7</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="inspection.analytics.subtitle" datatype="html">
         <source> Organization-wide, windowed on when non-conformities were opened </source>
         <context-group purpose="location">
@@ -16634,7 +16627,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
-        <source>Team</source>
+        <source>Roles &amp; permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
           <context context-type="linenumber">244</context>

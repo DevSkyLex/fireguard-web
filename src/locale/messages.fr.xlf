@@ -3737,8 +3737,8 @@
         <target>Membres</target>
       </trans-unit>
       <trans-unit id="route.team" datatype="html">
-        <source>Team</source>
-        <target>Équipe</target>
+        <source>Roles &amp; permissions</source>
+        <target>Rôles et permissions</target>
       </trans-unit>
       <trans-unit id="route.settings" datatype="html">
         <source>Settings</source>
@@ -8655,8 +8655,8 @@
         <target>Membres</target>
       </trans-unit>
       <trans-unit id="imports.list.emptyDesc" datatype="html">
-        <source>Upload a CSV file above to bulk-create equipment or facilities.</source>
-        <target>Importez un fichier CSV ci-dessus pour créer des équipements ou des établissements en masse.</target>
+        <source>Upload a CSV file above to bulk-create equipment, facilities or member invitations.</source>
+        <target>Importez un fichier CSV ci-dessus pour créer des équipements, des établissements ou des invitations de membres en masse.</target>
       </trans-unit>
       <trans-unit id="imports.list.emptyTitle" datatype="html">
         <source>No import jobs yet</source>
@@ -8787,8 +8787,8 @@
         <target>Choisir un fichier</target>
       </trans-unit>
       <trans-unit id="imports.upload.description" datatype="html">
-        <source> Bulk-create equipment or facilities from a spreadsheet export. </source>
-        <target> Créez des équipements ou des établissements en masse à partir d'un export de tableur. </target>
+        <source> Bulk-create equipment, facilities or member invitations from a spreadsheet export. </source>
+        <target> Créez des équipements, des établissements ou des invitations de membres en masse à partir d'un export de tableur. </target>
       </trans-unit>
       <trans-unit id="imports.upload.dryRun" datatype="html">
         <source>Dry run</source>
@@ -10325,10 +10325,6 @@
       <trans-unit id="inspection.analyticsButton" datatype="html">
         <source>Analytics</source>
         <target>Analytique</target>
-      </trans-unit>
-      <trans-unit id="inspection.analytics.title" datatype="html">
-        <source>Non-conformity analytics</source>
-        <target>Analytique des non-conformités</target>
       </trans-unit>
       <trans-unit id="inspection.analytics.subtitle" datatype="html">
         <source>Organization-wide, windowed on when non-conformities were opened</source>

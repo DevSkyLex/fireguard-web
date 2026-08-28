@@ -4,7 +4,7 @@
       <div hlmCardHeader>
         <h2 hlmCardTitle i18n="@@imports.upload.title">Import from CSV</h2>
         <p hlmCardDescription i18n="@@imports.upload.description">
-          Bulk-create equipment or facilities from a spreadsheet export.
+          Bulk-create equipment, facilities or member invitations from a spreadsheet export.
         </p>
       </div>
       <div hlmCardContent>
@@ -78,7 +78,7 @@
       [icon]="hasFilters() ? 'lucideSearch' : 'lucideUpload'"
       title="No import jobs yet"
       i18n-title="@@imports.list.emptyTitle"
-      description="Upload a CSV file above to bulk-create equipment or facilities."
+      description="Upload a CSV file above to bulk-create equipment, facilities or member invitations."
       i18n-description="@@imports.list.emptyDesc"
     >
       @if (hasFilters()) {

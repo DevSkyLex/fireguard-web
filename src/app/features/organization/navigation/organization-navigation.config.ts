@@ -241,7 +241,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
   },
   {
     id: 'team',
-    label: $localize`:@@route.team:Team`,
+    label: $localize`:@@route.team:Roles & permissions`,
     icon: 'lucideIdCard',
     path: 'team',
     group: 'administration',

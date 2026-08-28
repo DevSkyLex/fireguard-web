@@ -8,3 +8,4 @@ export type {
   CalendarFeedOutput,
   CalendarSourceKey,
 } from './calendar-feed';
+export type { CalendarFeedTokenOutput, CalendarFeedTokenSecretOutput } from './calendar-feed-token';

@@ -78,7 +78,12 @@ page announces each move's outcome.
 - `CalendarService` (`data-access/services/calendar/`) — `getFeed(orgId,
 from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   only the dirty fields — see the Writable events invariant below) and
-  `deleteEvent`.
+  `deleteEvent`. Also the member's iCal feed-token lifecycle against
+  `/organizations/{id}/calendar/feed-token`: `createFeedToken` (POST, no
+  body — the 201 is the only response ever carrying the raw secret and full
+  feed URL, and creating rotates any prior token), `getFeedTokenMetadata`
+  (GET — secret-less `createdAt`/`lastUsedAt`, 404 while none exists) and
+  `revokeFeedToken` (DELETE, 204).
 - `CalendarFeedStore` (`state/calendar-feed/`) — component-scoped on the
   page. The feed read stays `withQueryState`, its one query concern; the
   four standalone-event writes are named `CallState` fields
@@ -141,6 +146,21 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
 - Source→tone mapping lives in one constant (`constants/calendar-source-tone.constants.ts`
   → `SOURCE_TONE`) shared by the grid chips (`CalendarPage.events`) and the
   day/agenda row badges (`CalendarEntryList`).
+- **`CalendarFeedSubscribeDialog` injects `CalendarService` directly — a
+  sanctioned, documented deviation from §10.3.** The toolbar's "Subscribe
+  (iCal)" dialog (`ui/dialogs/calendar-feed-subscribe-dialog/`) owns the
+  member's feed-token lifecycle end to end: metadata read on open (404 =
+  no token), generate, regenerate and revoke each behind an in-dialog
+  confirmation. It mirrors the §11.6 one-shot exception (the CSV-export
+  precedent): every call is a fire-and-forget drain of dialog-local
+  ephemeral state, and the raw secret — shown exactly once — must not
+  outlive the dialog, so routing it through `CalendarFeedStore` would both
+  create `CallState` fields no other view reads and park a secret in
+  page-lifetime state. The page only holds the dialog's visibility and
+  forwards `organizationId` plus the `REGIONAL_FORMATTING_PORT` settings
+  for the `createdAt`/`lastUsedAt` rendering. No new route and no new
+  permission: the page's own `organization.events.read` gate covers the
+  token endpoints.
 
 ## Cross-feature dependencies
 

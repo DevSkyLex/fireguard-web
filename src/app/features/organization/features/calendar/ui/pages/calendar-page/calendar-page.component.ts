@@ -23,6 +23,7 @@ import {
   lucideCircleAlert,
   lucidePlus,
   lucideCalendarDays,
+  lucideRss,
 } from '@ng-icons/lucide';
 import type { CallState, StoreError } from '@core/request-state';
 import { isCallPending } from '@core/request-state';
@@ -44,7 +45,9 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
 import {
   Calendar,
@@ -55,6 +58,7 @@ import {
 } from '@shared/calendar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -62,6 +66,7 @@ import { CalendarEntryList } from '../../components/calendar-entry-list';
 import { CalendarEventDeleteDialog } from '../../dialogs/calendar-event-delete-dialog';
 import { CalendarEventDialog } from '../../dialogs/calendar-event-dialog';
 import type { CalendarEventFormValues } from '../../dialogs/calendar-event-dialog';
+import { CalendarFeedSubscribeDialog } from '../../dialogs/calendar-feed-subscribe-dialog';
 
 /** How many facilities the event dialog's facility select offers, mirroring `equipment-detail-page`'s own facility picker. */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
@@ -122,9 +127,11 @@ type CalendarPageAgendaGroup = {
  * row's Edit dialog as the keyboard path to the same date change, so drag is
  * never the only way. Browser-only loading: the feed is a dated,
  * authenticated read that would immediately refetch after hydration
- * (ARCHITECTURE.md §12.5-3).
+ * (ARCHITECTURE.md §12.5-3). The toolbar's "Subscribe (iCal)" button opens
+ * the feed-token dialog (`CalendarFeedSubscribeDialog`), which owns its own
+ * transport calls — this page only holds its visibility.
  *
- * @version 2.2.0
+ * @version 2.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -136,6 +143,7 @@ type CalendarPageAgendaGroup = {
     CalendarEntryList,
     CalendarEventDeleteDialog,
     CalendarEventDialog,
+    CalendarFeedSubscribeDialog,
     NgIcon,
     ErrorState,
     HlmButton,
@@ -150,6 +158,7 @@ type CalendarPageAgendaGroup = {
       lucideCircleAlert,
       lucidePlus,
       lucideCalendarDays,
+      lucideRss,
     }),
   ],
   templateUrl: './calendar-page.component.html',
@@ -189,6 +198,24 @@ export class CalendarPage {
   /** The active organization context, source of the regional first-day-of-week preference. */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, forwarded to the subscribe dialog's `createdAt`/`lastUsedAt` rendering.
+   * @access protected
+   * @since 2.3.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
+  /** Whether the "Subscribe (iCal)" dialog is open. */
+  protected readonly feedSubscribeDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 

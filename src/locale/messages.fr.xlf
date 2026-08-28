@@ -3832,6 +3832,110 @@
         <source>Delete <x id="eventTitle" equiv-text="eventTitle"/></source>
         <target>Supprimer <x id="eventTitle" equiv-text="eventTitle"/></target>
       </trans-unit>
+      <trans-unit id="calendar.subscribeButton" datatype="html">
+        <source>Subscribe (iCal)</source>
+        <target>S'abonner (iCal)</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.title" datatype="html">
+        <source>Subscribe (iCal)</source>
+        <target>S'abonner (iCal)</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.description" datatype="html">
+        <source>Follow this calendar from Outlook, Google Calendar or Apple Calendar through a personal read-only link.</source>
+        <target>Suivez ce calendrier depuis Outlook, Google Agenda ou Apple Calendrier via un lien personnel en lecture seule.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.loadError" datatype="html">
+        <source>The subscription status could not be loaded. Close the dialog and try again.</source>
+        <target>L'état de l'abonnement n'a pas pu être chargé. Fermez la fenêtre et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.generateError" datatype="html">
+        <source>The link could not be generated. Try again.</source>
+        <target>Le lien n'a pas pu être généré. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.revokeError" datatype="html">
+        <source>The link could not be revoked. Try again.</source>
+        <target>Le lien n'a pas pu être révoqué. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.rotatedNotice" datatype="html">
+        <source>Your previous link was revoked and no longer works.</source>
+        <target>Votre ancien lien a été révoqué et ne fonctionne plus.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.urlLabel" datatype="html">
+        <source>Calendar feed URL</source>
+        <target>URL du flux de calendrier</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.copy" datatype="html">
+        <source>Copy</source>
+        <target>Copier</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.copied" datatype="html">
+        <source>Copied</source>
+        <target>Copié</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.copiedAnnounce" datatype="html">
+        <source>Feed URL copied to the clipboard.</source>
+        <target>URL du flux copiée dans le presse-papiers.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.secretWarning" datatype="html">
+        <source>This link is shown only once — copy it now, it cannot be displayed again. Treat it like a password: anyone holding it can read your calendar. If it leaks, regenerate it to revoke this one.</source>
+        <target>Ce lien n'est affiché qu'une seule fois — copiez-le maintenant, il ne pourra plus être réaffiché. Traitez-le comme un mot de passe : quiconque le détient peut lire votre calendrier. S'il fuite, régénérez-le pour révoquer celui-ci.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.createdAt" datatype="html">
+        <source>Created</source>
+        <target>Créé le</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.lastUsedAt" datatype="html">
+        <source>Last used</source>
+        <target>Dernière utilisation</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.neverUsed" datatype="html">
+        <source>Never</source>
+        <target>Jamais</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.regenerate" datatype="html">
+        <source>Regenerate</source>
+        <target>Régénérer</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.revoke" datatype="html">
+        <source>Revoke</source>
+        <target>Révoquer</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.regenerateConfirmText" datatype="html">
+        <source>Regenerating creates a new link and immediately revokes the current one — every calendar subscribed to it stops updating. Continue?</source>
+        <target>Régénérer crée un nouveau lien et révoque immédiatement l'actuel — tous les calendriers abonnés cessent de se mettre à jour. Continuer ?</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.regenerateConfirm" datatype="html">
+        <source>Regenerate link</source>
+        <target>Régénérer le lien</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.regenerating" datatype="html">
+        <source>Regenerating…</source>
+        <target>Régénération…</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.revokeConfirmText" datatype="html">
+        <source>Revoking kills the link immediately — every calendar subscribed to it stops updating. Continue?</source>
+        <target>Révoquer désactive le lien immédiatement — tous les calendriers abonnés cessent de se mettre à jour. Continuer ?</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.revokeConfirm" datatype="html">
+        <source>Revoke link</source>
+        <target>Révoquer le lien</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.revoking" datatype="html">
+        <source>Revoking…</source>
+        <target>Révocation…</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.emptyDescription" datatype="html">
+        <source>Add this calendar to Outlook or Google — the link grants read access to your calendar; treat it like a password.</source>
+        <target>Ajoutez ce calendrier à Outlook ou Google — le lien donne accès en lecture à votre calendrier ; traitez-le comme un mot de passe.</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.generate" datatype="html">
+        <source>Generate link</source>
+        <target>Générer le lien</target>
+      </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.generating" datatype="html">
+        <source>Generating…</source>
+        <target>Génération…</target>
+      </trans-unit>
       <trans-unit id="calendar.newEvent" datatype="html">
         <source>New event</source>
         <target>Nouvel événement</target>

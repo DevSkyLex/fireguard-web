@@ -4,6 +4,8 @@ import { HydraApiService } from '@core/api';
 import type {
   CalendarEventOutput,
   CalendarFeedOutput,
+  CalendarFeedTokenOutput,
+  CalendarFeedTokenSecretOutput,
   CreateCalendarEventInput,
   UpdateCalendarEventInput,
 } from '@features/organization/features/calendar/models';
@@ -19,9 +21,13 @@ import type {
  * themselves. `updateEvent` sends a merge-patch body — the caller passes
  * only the fields that changed, since an omitted field is left unchanged
  * server-side while an explicit `null` clears `description`, `endsAt` or
- * `facilityId` (`Calendar\MODULE.md`).
+ * `facilityId` (`Calendar\MODULE.md`). Also carries the member's iCal feed
+ * token lifecycle: `createFeedToken` returns the raw secret and full feed
+ * URL exactly once (creating rotates any prior token), `getFeedTokenMetadata`
+ * reads secret-less metadata (404 while none exists), `revokeFeedToken`
+ * kills the active link.
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -118,5 +124,67 @@ export class CalendarService extends HydraApiService {
    */
   public deleteEvent(organizationId: string, eventId: string): Observable<void> {
     return this.delete(`/api/organizations/${organizationId}/calendar/events/${eventId}`);
+  }
+
+  /**
+   * Method createFeedToken
+   * @method createFeedToken
+   *
+   * @description
+   * Creates — or rotates, revoking the previous one — the member's iCal feed
+   * token. The 201 payload is the only response that ever carries the raw
+   * secret and the complete feed URL.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The owning organization.
+   *
+   * @return {Observable<CalendarFeedTokenSecretOutput>} The one-time secret payload.
+   */
+  public createFeedToken(organizationId: string): Observable<CalendarFeedTokenSecretOutput> {
+    return this.postAction<CalendarFeedTokenSecretOutput>(
+      `/api/organizations/${organizationId}/calendar/feed-token`,
+    );
+  }
+
+  /**
+   * Method getFeedTokenMetadata
+   * @method getFeedTokenMetadata
+   *
+   * @description
+   * Reads the active feed token's secret-less metadata. A 404 means the
+   * member holds no token for this organization.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The owning organization.
+   *
+   * @return {Observable<CalendarFeedTokenOutput>} The token metadata.
+   */
+  public getFeedTokenMetadata(organizationId: string): Observable<CalendarFeedTokenOutput> {
+    return this.getOne<CalendarFeedTokenOutput>(
+      `/api/organizations/${organizationId}/calendar/feed-token`,
+    );
+  }
+
+  /**
+   * Method revokeFeedToken
+   * @method revokeFeedToken
+   *
+   * @description
+   * Revokes the member's active feed token — the subscribed link stops
+   * working immediately.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @param {string} organizationId - The owning organization.
+   *
+   * @return {Observable<void>} Completes on success.
+   */
+  public revokeFeedToken(organizationId: string): Observable<void> {
+    return this.delete(`/api/organizations/${organizationId}/calendar/feed-token`);
   }
 }

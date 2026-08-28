@@ -4,10 +4,12 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { CalendarFeedStore } from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { CalendarPage } from '../calendar-page.component';
 
 function feedItem(overrides: Partial<CalendarFeedItemOutput> = {}): CalendarFeedItemOutput {
@@ -70,6 +72,18 @@ describe('CalendarPage', () => {
         {
           provide: ORGANIZATION_CONTEXT_PORT,
           useValue: { selectedOrganization: signal(null) },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: CalendarService,
+          useValue: {
+            getFeedTokenMetadata: vi.fn(),
+            createFeedToken: vi.fn(),
+            revokeFeedToken: vi.fn(),
+          },
         },
       ],
     });

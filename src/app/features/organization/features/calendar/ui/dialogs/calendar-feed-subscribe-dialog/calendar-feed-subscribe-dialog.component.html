@@ -1,0 +1,263 @@
+<hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
+  <hlm-dialog-content
+    class="sm:max-w-lg"
+    data-testid="calendar-feed-subscribe-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@calendar.feedSubscribe.title">Subscribe (iCal)</h3>
+      <p hlmDialogDescription i18n="@@calendar.feedSubscribe.description">
+        Follow this calendar from Outlook, Google Calendar or Apple Calendar through a personal
+        read-only link.
+      </p>
+    </hlm-dialog-header>
+
+    <div class="flex flex-col gap-4">
+      @if (errorMessage(); as message) {
+        <p
+          role="alert"
+          data-testid="calendar-feed-subscribe-error"
+          class="text-sm text-destructive"
+        >
+          {{ message }}
+        </p>
+      }
+
+      @if (loading()) {
+        <div
+          class="flex items-center justify-center py-6"
+          data-testid="calendar-feed-subscribe-loading"
+        >
+          <hlm-spinner class="size-6" />
+        </div>
+      } @else if (secret(); as generated) {
+        <div class="flex flex-col gap-3" data-testid="calendar-feed-subscribe-secret">
+          @if (generated.rotated) {
+            <p class="text-sm text-muted-foreground" i18n="@@calendar.feedSubscribe.rotatedNotice">
+              Your previous link was revoked and no longer works.
+            </p>
+          }
+          <div class="flex flex-col gap-1.5">
+            <label
+              for="calendar-feed-subscribe-url"
+              class="text-sm font-medium text-foreground"
+              i18n="@@calendar.feedSubscribe.urlLabel"
+            >
+              Calendar feed URL
+            </label>
+            <div class="flex items-center gap-2">
+              <input
+                hlmInput
+                id="calendar-feed-subscribe-url"
+                type="text"
+                readonly
+                class="flex-1 font-mono text-xs select-all"
+                data-testid="calendar-feed-subscribe-url"
+                [value]="generated.feedUrl"
+              />
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="shrink-0 max-sm:min-h-11"
+                data-testid="calendar-feed-subscribe-copy"
+                (click)="copyFeedUrl()"
+              >
+                @if (copied()) {
+                  <span i18n="@@calendar.feedSubscribe.copied">Copied</span>
+                } @else {
+                  <span i18n="@@calendar.feedSubscribe.copy">Copy</span>
+                }
+              </button>
+            </div>
+            <div aria-live="polite" class="sr-only" data-testid="calendar-feed-subscribe-copy-live">
+              @if (copied()) {
+                <span i18n="@@calendar.feedSubscribe.copiedAnnounce"
+                  >Feed URL copied to the clipboard.</span
+                >
+              }
+            </div>
+          </div>
+          <p class="text-sm text-muted-foreground" i18n="@@calendar.feedSubscribe.secretWarning">
+            This link is shown only once — copy it now, it cannot be displayed again. Treat it like
+            a password: anyone holding it can read your calendar. If it leaks, regenerate it to
+            revoke this one.
+          </p>
+        </div>
+      } @else if (metadata(); as token) {
+        <div class="flex flex-col gap-3" data-testid="calendar-feed-subscribe-metadata">
+          <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt class="text-muted-foreground" i18n="@@calendar.feedSubscribe.createdAt">Created</dt>
+            <dd class="text-foreground" data-testid="calendar-feed-subscribe-created-at">
+              {{ token.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+            </dd>
+            <dt class="text-muted-foreground" i18n="@@calendar.feedSubscribe.lastUsedAt">
+              Last used
+            </dt>
+            <dd class="text-foreground" data-testid="calendar-feed-subscribe-last-used-at">
+              @if (token.lastUsedAt) {
+                {{ token.lastUsedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              } @else {
+                <span i18n="@@calendar.feedSubscribe.neverUsed">Never</span>
+              }
+            </dd>
+          </dl>
+
+          @if (confirming() === 'regenerate') {
+            <div
+              class="flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3"
+              data-testid="calendar-feed-subscribe-regenerate-confirm"
+            >
+              <p
+                class="text-sm text-foreground"
+                i18n="@@calendar.feedSubscribe.regenerateConfirmText"
+              >
+                Regenerating creates a new link and immediately revokes the current one — every
+                calendar subscribed to it stops updating. Continue?
+              </p>
+              <div class="flex justify-end gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  [attr.aria-disabled]="busy() ? 'true' : null"
+                  (click)="cancelAction()"
+                  i18n="@@common.cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="calendar-feed-subscribe-regenerate-confirm-button"
+                  [attr.aria-disabled]="busy() ? 'true' : null"
+                  [attr.aria-busy]="busy() ? 'true' : null"
+                  (click)="confirmAction()"
+                >
+                  @if (busy()) {
+                    <span i18n="@@calendar.feedSubscribe.regenerating">Regenerating…</span>
+                  } @else {
+                    <span i18n="@@calendar.feedSubscribe.regenerateConfirm">Regenerate link</span>
+                  }
+                </button>
+              </div>
+            </div>
+          } @else if (confirming() === 'revoke') {
+            <div
+              class="flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3"
+              data-testid="calendar-feed-subscribe-revoke-confirm"
+            >
+              <p class="text-sm text-foreground" i18n="@@calendar.feedSubscribe.revokeConfirmText">
+                Revoking kills the link immediately — every calendar subscribed to it stops
+                updating. Continue?
+              </p>
+              <div class="flex justify-end gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  [attr.aria-disabled]="busy() ? 'true' : null"
+                  (click)="cancelAction()"
+                  i18n="@@common.cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="calendar-feed-subscribe-revoke-confirm-button"
+                  [attr.aria-disabled]="busy() ? 'true' : null"
+                  [attr.aria-busy]="busy() ? 'true' : null"
+                  (click)="confirmAction()"
+                >
+                  @if (busy()) {
+                    <span i18n="@@calendar.feedSubscribe.revoking">Revoking…</span>
+                  } @else {
+                    <span i18n="@@calendar.feedSubscribe.revokeConfirm">Revoke link</span>
+                  }
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex flex-wrap gap-2">
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11"
+                data-testid="calendar-feed-subscribe-regenerate"
+                [attr.aria-disabled]="busy() ? 'true' : null"
+                (click)="requestAction('regenerate')"
+              >
+                <span i18n="@@calendar.feedSubscribe.regenerate">Regenerate</span>
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="destructive"
+                size="sm"
+                class="max-sm:min-h-11"
+                data-testid="calendar-feed-subscribe-revoke"
+                [attr.aria-disabled]="busy() ? 'true' : null"
+                (click)="requestAction('revoke')"
+              >
+                <span i18n="@@calendar.feedSubscribe.revoke">Revoke</span>
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-3" data-testid="calendar-feed-subscribe-empty">
+          <p class="text-sm text-muted-foreground" i18n="@@calendar.feedSubscribe.emptyDescription">
+            Add this calendar to Outlook or Google — the link grants read access to your calendar;
+            treat it like a password.
+          </p>
+          <div>
+            <button
+              hlmBtn
+              type="button"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="calendar-feed-subscribe-generate"
+              [attr.aria-disabled]="busy() ? 'true' : null"
+              [attr.aria-busy]="busy() ? 'true' : null"
+              (click)="generate()"
+            >
+              @if (busy()) {
+                <span i18n="@@calendar.feedSubscribe.generating">Generating…</span>
+              } @else {
+                <span i18n="@@calendar.feedSubscribe.generate">Generate link</span>
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <hlm-dialog-footer>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="calendar-feed-subscribe-close"
+        [attr.aria-disabled]="busy() ? 'true' : null"
+        (click)="close()"
+        i18n="@@common.close"
+      >
+        Close
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

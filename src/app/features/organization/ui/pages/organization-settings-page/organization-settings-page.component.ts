@@ -143,6 +143,7 @@ const DEFAULT_NOTIFICATIONS: OrganizationNotificationSettings = {
   inspectionDue: true,
   nonConformityOpened: true,
   nonConformitySlaBreached: true,
+  weeklyDigest: true,
   memberInvited: true,
 };
 

@@ -24,6 +24,24 @@
           <span i18n="@@inspection.detail.siteInterventions">Interventions on this site</span>
         </a>
       }
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="ms-auto max-sm:min-h-11"
+        data-testid="inspection-detail-export-report"
+        [disabled]="reportExporting()"
+        [attr.aria-busy]="reportExporting() ? 'true' : null"
+        (click)="exportReport()"
+      >
+        @if (reportExporting()) {
+          <hlm-spinner class="size-4" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideDownload" aria-hidden="true" />
+        }
+        <span i18n="@@inspection.report.exportButton">Export report</span>
+      </button>
     </div>
     <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
       {{ metaLine() }}
@@ -85,6 +103,24 @@
                 <ng-icon name="lucideDownload" aria-hidden="true" />
               }
               <span i18n="@@inspection.nc.exportButton">Export</span>
+            </button>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="inspection-non-conformities-export-report"
+              [disabled]="ncReportDisabled()"
+              [attr.aria-busy]="ncReportExporting() ? 'true' : null"
+              (click)="exportNonConformitiesReport()"
+            >
+              @if (ncReportExporting()) {
+                <hlm-spinner class="size-4" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+              <span i18n="@@inspection.nc.exportReportButton">Export report (PDF)</span>
             </button>
             @if (exportBusy()) {
               <span

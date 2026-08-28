@@ -82,8 +82,20 @@ This feature does not own generic shell composition or account-level user identi
   fires. Each node badges its compliance rate and severity bucket — icon and
   label together, never colour alone. Selecting a node loads that facility's
   compliance summary on the right, with an "Export safety register" button
-  streaming the PDF through this page's own `BrowserDownloadService`). The
-  compliance tree loads only on the axis's first activation, per the
+  streaming the PDF through this page's own `BrowserDownloadService`, and an
+  "Archive register" button beside it (`POST
+…/compliance/register-snapshots`, facility-scoped when a node is selected,
+  organization-wide otherwise; success and the 403 non-entitled refusal both
+  surface as toasts, the latter carrying the backend's RFC 7807 `detail`).
+  An "Archived registers" panel below lists the dated snapshots (`GET
+…/compliance/register-snapshots`, paginated Hydra collection: generatedAt,
+  scope, size, truncated content hash) with a per-row download (`GET
+…/register-snapshots/{snapshotId}/download`); the panel renders only for
+  holders of `organization.compliance.export`, the same permission the
+  backend asserts on all three snapshot endpoints, which also share the live
+  export's pro/max plan gate). The
+  compliance tree — and, for members holding the export permission, the
+  snapshot list — loads only on the axis's first activation, per the
   secondary-UI loading rule. It is now the single navigation entry for the
   estate, replacing the "Facilities" and "Equipments" pair below; both route
   trees stay mounted regardless so records, creation forms and deep links
@@ -229,7 +241,7 @@ Primary stores:
 - `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped **once** to the landing Dashboard page, which reads it across the whole page — the overview counts, the alert feed and the recent-interventions list for the KPI strip and work-queue column, the health rates, comparison block and severity breakdown for the Trends section. Before the Today/Statistics merge each page held its own copy, fetching the aggregate `/dashboard` payload twice; one page now means one fetch)
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
-- `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; three named `CallState` fields — the tree, the selected/organization-wide summary, and the safety-register export — since the three are unrelated requests. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
+- `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; named `CallState` fields — the tree, the selected/organization-wide summary, the safety-register export, the archived-snapshot list, the archive write, and the per-row snapshot download (plus `downloadingSnapshotId` flagging the row in flight) — since they are unrelated requests. `archiveRegister` `exhaustMap`s so a double click cannot race the write; the page reloads the snapshot list from its success-toast effect. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
 - `OrganizationTodayStore` (component-scoped to the landing Dashboard page's work-queues column; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
 - `OverviewTrendStore`, `AssetGrowthTrendStore` (component-scoped to the landing Dashboard page's Trends section; combined trend datasets for the four charts — see `state/organization-dashboard/slices/`. Both load unconditionally on mount, correct now that the Trends section always renders on this single-scroll page)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
@@ -258,7 +270,7 @@ Primary services:
 - `OrganizationInvitationService`
 - `OrganizationMemberService`
 - `OrganizationRoleService`
-- `ComplianceService` (the backend Compliance module's read-only surface: the enriched facility tree, the organization/facility compliance summary, and the safety-register PDF export — `services/browser-download`'s `BrowserDownloadService` saves the exported blob to the visitor's device, mirroring `features/interventions/services/browser-download` rather than importing it: two small, single-purpose classes, not yet a third consumer that would justify lifting one to a shared location)
+- `ComplianceService` (the backend Compliance module's surface: the enriched facility tree, the organization/facility compliance summary, the safety-register PDF export, and the dated register-snapshot archive — `createRegisterSnapshot` (`POST …/compliance/register-snapshots`, `{}` or `{ facilityId }`), `listRegisterSnapshots` (paginated Hydra collection of `SafetyRegisterSnapshotOutput`), `downloadRegisterSnapshot` (per-snapshot PDF blob) — `services/browser-download`'s `BrowserDownloadService` saves the exported blob to the visitor's device, mirroring `features/interventions/services/browser-download` rather than importing it: two small, single-purpose classes, not yet a third consumer that would justify lifting one to a shared location)
 - `TeamService` (read-only: `list` only, no frontend team CRUD yet. Consumed directly by the nested `interventions` subfeature's team-assignment dialog and detail page, imported from this feature's `data-access` and `models` barrels rather than duplicated — see interventions/FEATURE.md Cross-Feature Dependencies)
 
 Access helpers (`access/`):

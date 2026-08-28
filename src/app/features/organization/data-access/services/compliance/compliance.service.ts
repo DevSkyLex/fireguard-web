@@ -1,9 +1,12 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type RequestOptions } from '@core/api';
+import type { HydraCollection } from '@core/api/models';
 import type {
   ComplianceFacilityTreeOutput,
   ComplianceSummaryOutput,
+  CreateSafetyRegisterSnapshotInput,
+  SafetyRegisterSnapshotOutput,
 } from '@features/organization/models';
 
 /**
@@ -14,7 +17,8 @@ import type {
  * @description
  * API service for the backend Compliance module's read-only surface: the
  * enriched facility hierarchy, the organization/facility compliance
- * register summary, and the safety-register PDF export.
+ * register summary, the safety-register PDF export, and the dated
+ * register-snapshot archive (create, list, download).
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -155,6 +159,95 @@ export class ComplianceService extends HydraApiService {
     return this.http.get(
       this.buildUrl(
         `${ComplianceService.BASE_PATH}/${organizationId}/facilities/${facilityId}/compliance/export`,
+      ),
+      { responseType: 'blob', withCredentials: true },
+    );
+  }
+
+  /**
+   * Method createRegisterSnapshot
+   * @method createRegisterSnapshot
+   *
+   * @description
+   * Archives the safety register as a dated snapshot
+   * (`POST /organizations/{organizationId}/compliance/register-snapshots`):
+   * the register is rendered through the same pipeline as the live export
+   * and stored with its SHA-256 content hash. Pass `facilityId` in the body
+   * for a facility-scoped register; an empty body archives the
+   * organization-wide one. Shares the live export's gate —
+   * `organization.compliance.export` AND a pro/max plan; a non-entitled
+   * plan answers `403` with an RFC 7807 `detail`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The organization to archive the register for.
+   * @param {CreateSafetyRegisterSnapshotInput} input - The scope: `{ facilityId }` or `{}`.
+   *
+   * @return {Observable<SafetyRegisterSnapshotOutput>} The created snapshot's metadata.
+   */
+  public createRegisterSnapshot(
+    organizationId: string,
+    input: CreateSafetyRegisterSnapshotInput,
+  ): Observable<SafetyRegisterSnapshotOutput> {
+    return this.post<CreateSafetyRegisterSnapshotInput, SafetyRegisterSnapshotOutput>(
+      `${ComplianceService.BASE_PATH}/${organizationId}/compliance/register-snapshots`,
+      input,
+    );
+  }
+
+  /**
+   * Method listRegisterSnapshots
+   * @method listRegisterSnapshots
+   *
+   * @description
+   * Reads the organization's archived safety-register snapshots
+   * (`GET /organizations/{organizationId}/compliance/register-snapshots`):
+   * a paginated Hydra collection of snapshot metadata, most recently
+   * generated first. Same gate as the live export — a non-entitled plan
+   * answers `403`.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The organization to list the snapshots for.
+   * @param {RequestOptions} [options] - Pagination options.
+   *
+   * @return {Observable<HydraCollection<SafetyRegisterSnapshotOutput>>} The snapshot page.
+   */
+  public listRegisterSnapshots(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<HydraCollection<SafetyRegisterSnapshotOutput>> {
+    return this.getCollection<SafetyRegisterSnapshotOutput>(
+      `${ComplianceService.BASE_PATH}/${organizationId}/compliance/register-snapshots`,
+      options,
+    );
+  }
+
+  /**
+   * Method downloadRegisterSnapshot
+   * @method downloadRegisterSnapshot
+   *
+   * @description
+   * Reads one archived snapshot's PDF
+   * (`GET /organizations/{organizationId}/compliance/register-snapshots/{snapshotId}/download`).
+   * Calls `this.http` directly, like `exportOrganizationSafetyRegister`, for
+   * a response shape (`responseType: 'blob'`) the base class does not
+   * support.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {string} organizationId - The owning organization.
+   * @param {string} snapshotId - The snapshot to download.
+   *
+   * @return {Observable<Blob>} The archived PDF's binary content.
+   */
+  public downloadRegisterSnapshot(organizationId: string, snapshotId: string): Observable<Blob> {
+    return this.http.get(
+      this.buildUrl(
+        `${ComplianceService.BASE_PATH}/${organizationId}/compliance/register-snapshots/${snapshotId}/download`,
       ),
       { responseType: 'blob', withCredentials: true },
     );

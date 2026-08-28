@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
@@ -10,7 +11,8 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -105,6 +107,9 @@ describe('EquipmentDetailPage', () => {
   let assignToFacilityCallState: WritableSignal<CallState<EquipmentOutput | null>>;
   let unassignFromFacilityCallState: WritableSignal<CallState<EquipmentOutput | null>>;
   let isChangingLifecycle: WritableSignal<boolean>;
+  let exportReport: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
+  let downloadTrigger: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
     fixture = TestBed.createComponent(EquipmentDetailPage);
@@ -136,6 +141,9 @@ describe('EquipmentDetailPage', () => {
     assignToFacilityCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
     unassignFromFacilityCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
     isChangingLifecycle = signal<boolean>(false);
+    exportReport = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
+    feedbackError = vi.fn();
+    downloadTrigger = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -188,9 +196,10 @@ describe('EquipmentDetailPage', () => {
         },
         {
           provide: EquipmentService,
-          useValue: { downloadAttachment: (): unknown => of(new Blob()) },
+          useValue: { downloadAttachment: (): unknown => of(new Blob()), exportReport },
         },
-        { provide: BrowserDownloadService, useValue: { trigger: vi.fn() } },
+        { provide: BrowserDownloadService, useValue: { trigger: downloadTrigger } },
+        { provide: FeedbackService, useValue: { error: feedbackError } },
       ],
     });
   });
@@ -550,6 +559,52 @@ describe('EquipmentDetailPage', () => {
       await fixture.whenStable();
 
       expect(fixture.componentInstance['assignFacilityDialogVisible']()).toBe(false);
+    });
+  });
+
+  describe('equipment sheet export', () => {
+    it('renders the header button and downloads the PDF sheet on click', async () => {
+      await createPage();
+
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="equipment-detail-export-report"]',
+      );
+      expect(button).not.toBeNull();
+
+      button?.click();
+      await fixture.whenStable();
+
+      expect(exportReport).toHaveBeenCalledTimes(1);
+      expect(exportReport).toHaveBeenCalledWith('org-1', 'equipment-1');
+      expect(downloadTrigger).toHaveBeenCalledWith(
+        expect.any(Blob),
+        'equipment-equipment-1-sheet.pdf',
+      );
+      expect(fixture.componentInstance['reportExporting']()).toBe(false);
+    });
+
+    it('surfaces the blob-wrapped RFC 7807 detail in the error toast on a 403', async () => {
+      exportReport.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 403,
+              error: new Blob(
+                [JSON.stringify({ '@type': 'Error', status: 403, detail: 'Plan not entitled' })],
+                { type: 'application/json' },
+              ),
+            }),
+        ),
+      );
+      await createPage();
+
+      fixture.componentInstance['exportReport']();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(fixture.componentInstance['reportExporting']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledWith('Plan not entitled');
+      expect(downloadTrigger).not.toHaveBeenCalled();
     });
   });
 });

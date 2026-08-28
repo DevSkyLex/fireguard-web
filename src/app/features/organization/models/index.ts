@@ -124,6 +124,8 @@ export type { FlattenedComplianceTree } from './compliance/flattened-compliance-
 export type { ComplianceSummaryTotals } from './compliance/compliance-summary-totals.interface';
 export type { ComplianceFacilitySummary } from './compliance/compliance-facility-summary.interface';
 export type { ComplianceSummaryOutput } from './compliance/compliance-summary-output.interface';
+export type { SafetyRegisterSnapshotOutput } from './compliance/safety-register-snapshot-output.interface';
+export type { CreateSafetyRegisterSnapshotInput } from './compliance/create-safety-register-snapshot-input.interface';
 export type { ComplianceBucketTagDescriptor } from './compliance-bucket-tag/compliance-bucket-tag-descriptor.interface';
 export { resolveComplianceBucketTag } from './compliance-bucket-tag/compliance-bucket-tag.util';
 export type { TeamOutput } from './team/team-output.interface';

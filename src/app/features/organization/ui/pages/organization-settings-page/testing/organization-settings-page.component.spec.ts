@@ -453,6 +453,29 @@ describe('OrganizationSettingsPage', () => {
     });
   });
 
+  it('should save the notifications form, weeklyDigest included, scoped to the active organization', async () => {
+    await createPage();
+
+    const notifications = {
+      emailEnabled: true,
+      inAppEnabled: true,
+      interventionPublished: true,
+      interventionAssigned: true,
+      inspectionDue: true,
+      nonConformityOpened: true,
+      nonConformitySlaBreached: true,
+      weeklyDigest: false,
+      memberInvited: true,
+    };
+
+    fixture.componentInstance['saveNotifications'](notifications);
+
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: { notifications },
+    });
+  });
+
   it('should save the automation form scoped to the active organization', async () => {
     await createPage();
 

@@ -115,7 +115,9 @@
             }
           </div>
 
-          <div class="min-h-0 flex-1">
+          <div
+            class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
+          >
             @if (selectedComplianceFacilityId() === null) {
               <app-empty-state
                 icon="lucideShieldCheck"
@@ -126,6 +128,10 @@
               />
             } @else {
               <ng-container *ngTemplateOutlet="complianceSummaryPane" />
+            }
+
+            @if (canExportCompliance()) {
+              <ng-container *ngTemplateOutlet="complianceSnapshotsPanel" />
             }
           </div>
         </div>
@@ -350,7 +356,7 @@
 <ng-template #complianceSummaryPane>
   <section
     aria-labelledby="assets-compliance-summary-title"
-    class="flex min-h-0 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
+    class="flex flex-col gap-4"
     data-testid="assets-compliance-summary-pane"
   >
     <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-foreground">
@@ -432,6 +438,26 @@
                 <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
               } @else {
                 <span i18n="@@org.assets.compliance.export">Export safety register</span>
+              }
+            </span>
+          </button>
+          <button
+            type="button"
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11 max-sm:px-3"
+            data-testid="assets-compliance-archive"
+            [attr.aria-disabled]="compliance.isArchiving()"
+            [attr.aria-busy]="compliance.isArchiving()"
+            (click)="onArchiveRegister()"
+          >
+            <ng-icon name="lucideArchive" aria-hidden="true" />
+            <span role="status" aria-live="polite">
+              @if (compliance.isArchiving()) {
+                <span i18n="@@org.assets.compliance.archiving">Archiving…</span>
+              } @else {
+                <span i18n="@@org.assets.compliance.archive">Archive register</span>
               }
             </span>
           </button>
@@ -520,6 +546,117 @@
                 }}
               </td>
             </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</ng-template>
+
+<ng-template #complianceSnapshotsPanel>
+  <section
+    aria-labelledby="assets-compliance-snapshots-title"
+    class="flex flex-col gap-2"
+    data-testid="assets-compliance-snapshots"
+  >
+    <h2 id="assets-compliance-snapshots-title" class="text-sm font-medium text-foreground">
+      <ng-icon name="lucideArchive" class="me-1 align-text-bottom" aria-hidden="true" />
+      <span i18n="@@org.assets.compliance.snapshotsTitle">Archived registers</span>
+    </h2>
+
+    @if (compliance.hasSnapshotsError()) {
+      <app-error-state
+        icon="lucideCircleAlert"
+        title="Couldn't load the archived registers."
+        i18n-title="@@org.assets.compliance.snapshotsError"
+        data-testid="assets-compliance-snapshots-error"
+      >
+        <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retrySnapshots()">
+          <span i18n="@@common.tryAgain">Try again</span>
+        </button>
+      </app-error-state>
+    } @else if (compliance.isLoadingSnapshots() && compliance.snapshots().length === 0) {
+      <div
+        class="flex flex-col gap-2"
+        role="status"
+        aria-label="Loading archived registers"
+        i18n-aria-label="@@org.assets.compliance.snapshotsLoading"
+      >
+        @for (row of [0, 1, 2]; track row) {
+          <hlm-skeleton class="h-10 w-full" />
+        }
+      </div>
+    } @else if (compliance.snapshots().length === 0) {
+      <p
+        class="text-sm text-muted-foreground"
+        data-testid="assets-compliance-snapshots-empty"
+        i18n="@@org.assets.compliance.snapshotsEmpty"
+      >
+        No archived register yet. "Archive register" stores a dated copy of the safety register.
+      </p>
+    } @else {
+      <div hlmTableContainer class="rounded-md border border-border">
+        <table hlmTable data-testid="assets-compliance-snapshots-table">
+          <thead hlmTableHeader>
+            <tr hlmTableRow>
+              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnGeneratedAt">
+                Generated
+              </th>
+              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnScope">Scope</th>
+              <th hlmTableHead class="text-end" i18n="@@org.assets.compliance.snapshotColumnSize">
+                Size
+              </th>
+              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnHash">Fingerprint</th>
+              <th hlmTableHead>
+                <span class="sr-only" i18n="@@org.assets.compliance.snapshotColumnActions">
+                  Actions
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody hlmTableBody>
+            @for (snapshot of compliance.snapshots(); track snapshot.id) {
+              <tr hlmTableRow data-testid="assets-compliance-snapshots-row">
+                <td hlmTableCell>
+                  {{ snapshot.generatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                </td>
+                <td hlmTableCell>
+                  @if (snapshot.scope === 'facility') {
+                    <span i18n="@@org.assets.compliance.snapshotScopeFacility">Site</span>
+                  } @else {
+                    <span i18n="@@org.assets.compliance.snapshotScopeOrganization">
+                      Organization
+                    </span>
+                  }
+                </td>
+                <td hlmTableCell class="text-end tabular-nums">
+                  {{ formatSnapshotSize(snapshot.sizeBytes) }}
+                </td>
+                <td hlmTableCell>
+                  <code class="font-mono text-xs text-muted-foreground">
+                    {{ truncateHash(snapshot.contentHash) }}
+                  </code>
+                </td>
+                <td hlmTableCell class="text-end">
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="max-sm:min-h-11"
+                    data-testid="assets-compliance-snapshots-download"
+                    i18n-aria-label="@@org.assets.compliance.snapshotDownloadAria"
+                    aria-label="Download this archived register"
+                    [attr.aria-disabled]="compliance.downloadingSnapshotId() !== null"
+                    [attr.aria-busy]="compliance.downloadingSnapshotId() === snapshot.id"
+                    (click)="onDownloadSnapshot(snapshot.id, snapshot.generatedAt)"
+                  >
+                    <ng-icon name="lucideDownload" aria-hidden="true" />
+                    <span i18n="@@org.assets.compliance.snapshotDownload">Download</span>
+                  </button>
+                </td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>

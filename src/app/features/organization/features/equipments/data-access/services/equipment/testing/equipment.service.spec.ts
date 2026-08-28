@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -519,6 +519,40 @@ describe('EquipmentService', () => {
       req.flush(content);
 
       expect(result).toEqual(content);
+    });
+  });
+
+  describe('exportReport', () => {
+    it('reads the equipment sheet PDF as a blob from the equipment report route', () => {
+      const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+      let result: Blob | undefined;
+
+      service.exportReport(orgId, 'equipment-1').subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/equipment-1/report`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('propagates a 403 error untouched for the page to resolve its RFC 7807 detail', () => {
+      let caught: unknown;
+
+      service.exportReport(orgId, 'equipment-1').subscribe({ error: (error) => (caught = error) });
+
+      const req = httpMock.expectOne(`${equipmentBaseUrl}/equipment-1/report`);
+      req.flush(new Blob(['{}'], { type: 'application/json' }), {
+        status: 403,
+        statusText: 'Forbidden',
+      });
+
+      expect(caught).toBeInstanceOf(HttpErrorResponse);
+      expect((caught as HttpErrorResponse).status).toBe(403);
     });
   });
 });

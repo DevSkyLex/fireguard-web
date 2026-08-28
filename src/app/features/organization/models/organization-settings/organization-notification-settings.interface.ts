@@ -23,6 +23,8 @@ export interface OrganizationNotificationSettings {
   /** @type {boolean} */
   readonly nonConformitySlaBreached: boolean;
   /** @type {boolean} */
+  readonly weeklyDigest: boolean;
+  /** @type {boolean} */
   readonly memberInvited: boolean;
   //#endregion
 }

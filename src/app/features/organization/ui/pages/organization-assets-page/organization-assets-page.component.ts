@@ -18,6 +18,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideArchive,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideCircleHelp,
@@ -34,7 +35,9 @@ import {
   lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
 import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
@@ -147,6 +150,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideCircleCheck,
       lucideCircleHelp,
       lucideClipboardList,
+      lucideArchive,
       lucideCopy,
       lucideDownload,
       lucideEllipsis,
@@ -192,6 +196,9 @@ export class OrganizationAssetsPage {
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
+
+  /** App-wide toast feedback for the archive and snapshot-download flows. */
+  private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
 
   /** The site hierarchy. */
   protected readonly tree: FacilityTreeStoreType = inject<FacilityTreeStoreType>(FacilityTreeStore);
@@ -390,6 +397,40 @@ export class OrganizationAssetsPage {
     });
 
     effect((): void => {
+      const callState: CallState = this.compliance.archiveCallState();
+
+      untracked((): void => {
+        if (callState.status === 'success') {
+          this.feedback.success(
+            $localize`:@@org.assets.compliance.archiveSuccess:Safety register archived.`,
+          );
+          this.compliance.loadSnapshots(this.organizationId());
+          return;
+        }
+
+        if (callState.status === 'error') {
+          const storeError: StoreError | null = callState.error;
+          this.feedback.error(
+            storeError?.message ??
+              $localize`:@@org.assets.compliance.archiveFailed:Couldn't archive the safety register.`,
+          );
+        }
+      });
+    });
+
+    effect((): void => {
+      const callState: CallState = this.compliance.downloadCallState();
+
+      untracked((): void => {
+        if (callState.status !== 'error') return;
+
+        this.feedback.error(
+          $localize`:@@org.assets.compliance.snapshotDownloadFailed:Couldn't download the archived register.`,
+        );
+      });
+    });
+
+    effect((): void => {
       const organizationId: string = this.organizationId();
       const axis: OrganizationAssetsAxis = this.axis();
       const facilityId: string | null = this.selectedFacilityId();
@@ -478,6 +519,7 @@ export class OrganizationAssetsPage {
     if (axis === 'compliance' && !this.hasRequestedComplianceTree()) {
       this.hasRequestedComplianceTree.set(true);
       this.compliance.loadTree(this.organizationId());
+      if (this.canExportCompliance()) this.compliance.loadSnapshots(this.organizationId());
     }
   }
 
@@ -519,6 +561,93 @@ export class OrganizationAssetsPage {
       facilityId,
       fileName: 'safety-register.pdf',
     });
+  }
+
+  /**
+   * Method onArchiveRegister
+   *
+   * @description
+   * Archives the safety register as a dated snapshot, scoped to the
+   * selected facility when one is selected — the axis's existing selection
+   * — organization-wide otherwise. A no-op while an archive is already
+   * running — the button stays focusable (`aria-disabled`, not `disabled`)
+   * so this guard is what prevents a double request. Success and failure
+   * both surface as toasts through the constructor effect.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected onArchiveRegister(): void {
+    if (this.compliance.isArchiving()) return;
+
+    const facilityId: string | null = this.selectedComplianceFacilityId();
+
+    this.compliance.archiveRegister({
+      organizationId: this.organizationId(),
+      ...(facilityId !== null ? { facilityId } : {}),
+    });
+  }
+
+  /**
+   * Method onDownloadSnapshot
+   *
+   * @description
+   * Fetches one archived snapshot's PDF and saves it to the visitor's
+   * device, stamped with the snapshot's generation date. A no-op while a
+   * snapshot download is already running.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @param {string} snapshotId - The snapshot row to download.
+   * @param {string} generatedAt - The snapshot's ISO 8601 generation instant.
+   * @returns {void}
+   */
+  protected onDownloadSnapshot(snapshotId: string, generatedAt: string): void {
+    if (this.compliance.downloadingSnapshotId() !== null) return;
+
+    this.compliance.downloadSnapshot({
+      organizationId: this.organizationId(),
+      snapshotId,
+      fileName: `safety-register-${generatedAt.slice(0, 10)}.pdf`,
+    });
+  }
+
+  /**
+   * Method retrySnapshots
+   * @description Re-requests the archived-snapshot list after a failed load.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected retrySnapshots(): void {
+    this.compliance.loadSnapshots(this.organizationId());
+  }
+
+  /**
+   * Method truncateHash
+   * @description The snapshot's SHA-256 content hash shortened to its first 12 characters for display.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} hash - The full content hash.
+   * @returns {string} The truncated hash.
+   */
+  protected truncateHash(hash: string): string {
+    return hash.slice(0, 12);
+  }
+
+  /**
+   * Method formatSnapshotSize
+   * @description The stored PDF's size rendered human-readable — KB below one megabyte, MB above.
+   * @access protected
+   * @since 1.1.0
+   * @param {number} sizeBytes - The stored PDF's size in bytes.
+   * @returns {string} The formatted size.
+   */
+  protected formatSnapshotSize(sizeBytes: number): string {
+    if (sizeBytes >= 1_048_576) return `${(sizeBytes / 1_048_576).toFixed(1)} MB`;
+
+    return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
   }
 
   /**

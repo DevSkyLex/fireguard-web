@@ -2,7 +2,8 @@ import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap } from 'rxjs';
+import { exhaustMap, mergeMap, pipe, switchMap } from 'rxjs';
+import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
@@ -16,6 +17,7 @@ import { ComplianceService } from '@features/organization/data-access';
 import type {
   ComplianceFacilityTreeNodeOutput,
   ComplianceSummaryOutput,
+  SafetyRegisterSnapshotOutput,
 } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { flattenComplianceTree } from '@features/organization/utils';
@@ -34,6 +36,10 @@ const INITIAL_STATE: ComplianceExplorerState = {
   treeCallState: idleCallState(),
   summaryCallState: idleCallState(),
   exportCallState: idleCallState(),
+  snapshotsCallState: idleCallState(),
+  archiveCallState: idleCallState(),
+  downloadCallState: idleCallState(),
+  downloadingSnapshotId: null,
 };
 
 /**
@@ -45,9 +51,13 @@ const INITIAL_STATE: ComplianceExplorerState = {
  * compliance axis: the enriched facility hierarchy (eager, mapped through
  * `flattenComplianceTree` onto the shared `Tree` primitive's shape), the
  * selected — or organization-wide — compliance summary, and the
- * safety-register export. `loadSummary` and `exportSafetyRegister` both
+ * safety-register export — plus the dated register-snapshot archive:
+ * `loadSnapshots` reads the paginated archive list, `archiveRegister`
+ * creates a snapshot (then reloads the list), and `downloadSnapshot`
+ * fetches one row's PDF. `loadSummary` and `exportSafetyRegister` both
  * `switchMap`, so switching the selected facility mid-flight cancels
- * whatever was still in flight; `loadTree` is fetched once per organization.
+ * whatever was still in flight; `loadTree` is fetched once per organization;
+ * `archiveRegister` `exhaustMap`s so a second click cannot race the write.
  *
  * @example
  * ```typescript
@@ -97,6 +107,20 @@ export const ComplianceExplorerStore = signalStore(
 
     /** Whether the last export attempt failed. */
     hasExportError: computed<boolean>(() => isCallError(store.exportCallState())),
+
+    /** The archived register snapshots, newest first — empty until loaded. */
+    snapshots: computed<ReadonlyArray<SafetyRegisterSnapshotOutput>>(
+      () => store.snapshotsCallState().data?.member ?? [],
+    ),
+
+    /** Whether the snapshot list is still resolving. */
+    isLoadingSnapshots: computed<boolean>(() => isCallPending(store.snapshotsCallState())),
+
+    /** Whether the snapshot list failed to load. */
+    hasSnapshotsError: computed<boolean>(() => isCallError(store.snapshotsCallState())),
+
+    /** Whether a register archive is currently in flight. */
+    isArchiving: computed<boolean>(() => isCallPending(store.archiveCallState())),
   })),
   //#endregion
 
@@ -216,6 +240,125 @@ export const ComplianceExplorerStore = signalStore(
                 },
                 error: (error: unknown): void => {
                   patchState(store, { exportCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method loadSnapshots
+       *
+       * @description
+       * Loads the organization's archived register snapshots — the
+       * paginated Hydra collection, most recently generated first.
+       *
+       * @access public
+       * @since 1.1.0
+       *
+       * @type {rxMethod<string>}
+       */
+      loadSnapshots: rxMethod<string>(
+        pipe(
+          switchMap((organizationId: string) => {
+            patchState(store, {
+              snapshotsCallState: pendingCallState(store.snapshotsCallState().data),
+            });
+
+            return complianceService.listRegisterSnapshots(organizationId).pipe(
+              tapResponse({
+                next: (page: HydraCollection<SafetyRegisterSnapshotOutput>): void => {
+                  patchState(store, { snapshotsCallState: successCallState(page) });
+                },
+                error: (error: unknown): void => {
+                  patchState(store, {
+                    snapshotsCallState: errorCallState(
+                      toStoreError(error),
+                      store.snapshotsCallState().data,
+                    ),
+                  });
+                },
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method archiveRegister
+       *
+       * @description
+       * Archives the safety register as a dated snapshot — facility-scoped
+       * when `facilityId` is given, organization-wide otherwise — then
+       * reloads the snapshot list so the new row appears. `exhaustMap`
+       * ignores re-triggers while the write is in flight.
+       *
+       * @access public
+       * @since 1.1.0
+       *
+       * @type {rxMethod<{ organizationId: string; facilityId?: string }>}
+       */
+      archiveRegister: rxMethod<{ readonly organizationId: string; readonly facilityId?: string }>(
+        pipe(
+          exhaustMap(({ organizationId, facilityId }) => {
+            patchState(store, { archiveCallState: pendingCallState() });
+
+            return complianceService
+              .createRegisterSnapshot(organizationId, facilityId ? { facilityId } : {})
+              .pipe(
+                tapResponse({
+                  next: (): void => {
+                    patchState(store, { archiveCallState: successCallState(null) });
+                  },
+                  error: (error: unknown): void => {
+                    patchState(store, { archiveCallState: errorCallState(toStoreError(error)) });
+                  },
+                }),
+              );
+          }),
+        ),
+      ),
+
+      /**
+       * Method downloadSnapshot
+       *
+       * @description
+       * Fetches one archived snapshot's PDF and saves it to the visitor's
+       * device under `fileName` through `BrowserDownloadService`, flagging
+       * the row on `downloadingSnapshotId` while the fetch is in flight.
+       *
+       * @access public
+       * @since 1.1.0
+       *
+       * @type {rxMethod<{ organizationId: string; snapshotId: string; fileName: string }>}
+       */
+      downloadSnapshot: rxMethod<{
+        readonly organizationId: string;
+        readonly snapshotId: string;
+        readonly fileName: string;
+      }>(
+        pipe(
+          mergeMap(({ organizationId, snapshotId, fileName }) => {
+            patchState(store, {
+              downloadCallState: pendingCallState(),
+              downloadingSnapshotId: snapshotId,
+            });
+
+            return complianceService.downloadRegisterSnapshot(organizationId, snapshotId).pipe(
+              tapResponse({
+                next: (blob: Blob): void => {
+                  browserDownload.trigger(blob, fileName);
+                  patchState(store, {
+                    downloadCallState: successCallState(null),
+                    downloadingSnapshotId: null,
+                  });
+                },
+                error: (error: unknown): void => {
+                  patchState(store, {
+                    downloadCallState: errorCallState(toStoreError(error)),
+                    downloadingSnapshotId: null,
+                  });
                 },
               }),
             );

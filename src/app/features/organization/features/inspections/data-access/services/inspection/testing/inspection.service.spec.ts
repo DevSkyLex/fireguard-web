@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -545,6 +545,81 @@ describe('InspectionService', () => {
       );
       expect(req.request.method).toBe('GET');
       req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
+
+  describe('exportReport', () => {
+    it('reads the inspection PDF report as a blob from the inspection report route', () => {
+      const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+      let result: Blob | undefined;
+
+      service.exportReport(orgId, 'inspection-1').subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/inspections/inspection-1/report`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('propagates a 403 error untouched for the page to resolve its RFC 7807 detail', () => {
+      let caught: unknown;
+
+      service.exportReport(orgId, 'inspection-1').subscribe({ error: (error) => (caught = error) });
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/inspections/inspection-1/report`,
+      );
+      req.flush(new Blob(['{}'], { type: 'application/json' }), {
+        status: 403,
+        statusText: 'Forbidden',
+      });
+
+      expect(caught).toBeInstanceOf(HttpErrorResponse);
+      expect((caught as HttpErrorResponse).status).toBe(403);
+    });
+  });
+
+  describe('exportNonConformitiesReport', () => {
+    it('reads the PDF report as a blob from the organization non-conformities report route', () => {
+      const content = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+      let result: Blob | undefined;
+
+      service.exportNonConformitiesReport(orgId).subscribe((blob) => {
+        result = blob;
+      });
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/report`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(content);
+
+      expect(result).toEqual(content);
+    });
+
+    it('forwards severity and status as query params', () => {
+      service
+        .exportNonConformitiesReport(orgId, { severity: 'critical', status: 'open' })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/report` &&
+          r.params.get('severity') === 'critical' &&
+          r.params.get('status') === 'open',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(new Blob(['pdf-bytes'], { type: 'application/pdf' }));
     });
   });
 });

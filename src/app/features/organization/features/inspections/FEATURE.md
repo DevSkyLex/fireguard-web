@@ -140,6 +140,17 @@ Primary service:
   50,000 rows; the resulting 422's RFC 7807 `detail` (read back through
   `resolveCsvExportErrorDetail`, `@features/organization/utils`) is
   surfaced as the error toast.
+  The detail page also exports the inspection's **PDF report**
+  (`InspectionService.exportReport`, `GET
+/api/organizations/{organizationId}/inspections/{inspectionId}/report`, the
+  header's **Export report** button), and the non-conformities section its
+  own **Export report (PDF)** (`InspectionService.exportNonConformitiesReport`,
+  `GET /api/organizations/{organizationId}/non-conformities/report`,
+  `severity`/`status` params, organization-wide like the CSV). Both PDF
+  endpoints share the pro/max plan entitlement gate: a non-entitled plan
+  answers 403 with an RFC 7807 `detail`, read back through
+  `resolveCsvExportErrorDetail` (it decodes any blob-wrapped problem
+  document) and surfaced verbatim as the error toast.
   `updateNonConformityStatus` uses `HydraApiService.patchWithStatus`
   (`observe: 'response'`) rather than `patch`, because the endpoint's two
   success statuses carry different, meaningful bodies: a plain **200**

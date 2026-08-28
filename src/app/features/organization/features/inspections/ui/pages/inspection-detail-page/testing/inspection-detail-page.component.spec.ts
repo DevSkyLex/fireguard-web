@@ -104,6 +104,8 @@ describe('InspectionDetailPage', () => {
   let isUpdatingNonConformity: WritableSignal<boolean>;
   let checklistGet: ReturnType<typeof vi.fn>;
   let exportNonConformitiesCsv: ReturnType<typeof vi.fn>;
+  let exportReport: ReturnType<typeof vi.fn>;
+  let exportNonConformitiesReport: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
 
@@ -141,6 +143,10 @@ describe('InspectionDetailPage', () => {
       } as unknown as ChecklistOutput),
     );
     exportNonConformitiesCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    exportReport = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
+    exportNonConformitiesReport = vi
+      .fn()
+      .mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
 
@@ -184,7 +190,10 @@ describe('InspectionDetailPage', () => {
           useValue: { hasPermission: (): boolean => true },
         },
         { provide: ChecklistService, useValue: { get: checklistGet } },
-        { provide: InspectionService, useValue: { exportNonConformitiesCsv } },
+        {
+          provide: InspectionService,
+          useValue: { exportNonConformitiesCsv, exportReport, exportNonConformitiesReport },
+        },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
       ],
     });
@@ -562,6 +571,89 @@ describe('InspectionDetailPage', () => {
       await fixture.whenStable();
 
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledTimes(1);
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('inspection report export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('renders the header button and downloads the PDF report on click', async () => {
+      await createPage();
+
+      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="inspection-detail-export-report"]',
+      );
+      expect(button).not.toBeNull();
+
+      button?.click();
+      await fixture.whenStable();
+
+      expect(exportReport).toHaveBeenCalledTimes(1);
+      expect(exportReport).toHaveBeenCalledWith('org-1', 'inspection-1');
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['reportExporting']()).toBe(false);
+    });
+
+    it('surfaces the blob-wrapped RFC 7807 detail in the error toast on a 403', async () => {
+      exportReport.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 403,
+              error: new Blob(
+                [JSON.stringify({ '@type': 'Error', status: 403, detail: 'Plan not entitled' })],
+                { type: 'application/json' },
+              ),
+            }),
+        ),
+      );
+      await createPage();
+
+      fixture.componentInstance['exportReport']();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(fixture.componentInstance['reportExporting']()).toBe(false);
+      expect(feedbackError).toHaveBeenCalledWith('Plan not entitled');
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('non-conformities report export', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('warns about the organization-wide scope, then downloads the PDF report', async () => {
+      await createPage();
+
+      fixture.componentInstance['exportNonConformitiesReport']();
+      await fixture.whenStable();
+
+      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(exportNonConformitiesReport).toHaveBeenCalledTimes(1);
+      expect(exportNonConformitiesReport).toHaveBeenCalledWith('org-1');
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance['ncReportExporting']()).toBe(false);
+    });
+
+    it('clears the busy flag and surfaces an error toast when the report export fails', async () => {
+      exportNonConformitiesReport.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 0 })),
+      );
+      await createPage();
+
+      fixture.componentInstance['exportNonConformitiesReport']();
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(fixture.componentInstance['ncReportExporting']()).toBe(false);
       expect(feedbackError).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
     });

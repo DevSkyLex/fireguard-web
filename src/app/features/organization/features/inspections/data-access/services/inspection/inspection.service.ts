@@ -468,6 +468,80 @@ export class InspectionService extends HydraApiService {
   }
 
   /**
+   * Method exportReport
+   * @method exportReport
+   *
+   * @description
+   * Reads the inspection's PDF report
+   * (`GET /api/organizations/{organizationId}/inspections/{inspectionId}/report`).
+   * Requires `organization.inspection.read` on the organization AND a
+   * pro/max plan — a non-entitled plan answers `403` with an RFC 7807
+   * `detail` instead of the file. Calls `this.http` directly, like
+   * {@link exportCsv}, for a response shape (`responseType: 'blob'`) the
+   * base class does not support.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} inspectionId - The inspection to export the report for.
+   *
+   * @return {Observable<Blob>} The report's PDF binary content.
+   */
+  public exportReport(organizationId: string, inspectionId: string): Observable<Blob> {
+    return this.http.get(
+      this.buildUrl(this.inspectionPath(organizationId, inspectionId) + '/report'),
+      {
+        responseType: 'blob',
+        withCredentials: true,
+      },
+    );
+  }
+
+  /**
+   * Method exportNonConformitiesReport
+   * @method exportNonConformitiesReport
+   *
+   * @description
+   * Reads the organization-wide non-conformities report as PDF
+   * (`GET /api/organizations/{organizationId}/non-conformities/report`),
+   * forwarding the same `severity`/`status` narrowing as
+   * {@link exportNonConformitiesCsv} (see {@link NonConformityExportOptions}).
+   * There is no per-inspection scoping — the report always covers the whole
+   * organization. Requires `organization.inspection.read` AND a pro/max plan
+   * — a non-entitled plan answers `403` with an RFC 7807 `detail` — and the
+   * same 50,000-row cap as the CSV export answers `422` past it. Calls
+   * `this.http` directly for a response shape (`responseType: 'blob'`) the
+   * base class does not support.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {NonConformityExportOptions} [options] - The narrowing to apply.
+   *
+   * @return {Observable<Blob>} The report's PDF binary content.
+   */
+  public exportNonConformitiesReport(
+    organizationId: string,
+    options?: NonConformityExportOptions,
+  ): Observable<Blob> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.severity) params['severity'] = options.severity;
+    if (options?.status) params['status'] = options.status;
+
+    return this.http.get(
+      this.buildUrl(`${InspectionService.BASE_PATH}/${organizationId}/non-conformities/report`),
+      {
+        params: this.buildParams({ params }),
+        responseType: 'blob',
+        withCredentials: true,
+      },
+    );
+  }
+
+  /**
    * Retrieves a single non-conformity.
    */
   public getNonConformity(

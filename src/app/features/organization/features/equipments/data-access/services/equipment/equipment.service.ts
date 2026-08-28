@@ -239,6 +239,37 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method exportReport
+   * @method exportReport
+   *
+   * @description
+   * Reads the equipment's PDF sheet
+   * (`GET /api/organizations/{organizationId}/equipment/{equipmentId}/report`).
+   * Requires `organization.equipment.read` on the organization AND a
+   * pro/max plan — a non-entitled plan answers `403` with an RFC 7807
+   * `detail` instead of the file. Calls `this.http` directly, like
+   * {@link exportCsv}, for a response shape (`responseType: 'blob'`) the
+   * base class does not support.
+   *
+   * @access public
+   * @since 1.8.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} equipmentId - The equipment to export the sheet for.
+   *
+   * @return {Observable<Blob>} The sheet's PDF binary content.
+   */
+  public exportReport(organizationId: string, equipmentId: string): Observable<Blob> {
+    return this.http.get(
+      this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/report`),
+      {
+        responseType: 'blob',
+        withCredentials: true,
+      },
+    );
+  }
+
+  /**
    * Method kpis
    * @method kpis
    *

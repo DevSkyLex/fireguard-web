@@ -5,6 +5,7 @@ import type {
   ComplianceFacilityTreeNodeOutput,
   ComplianceFacilityTreeOutput,
   ComplianceSummaryOutput,
+  SafetyRegisterSnapshotOutput,
 } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import {
@@ -55,6 +56,22 @@ const summary = (overrides: Partial<ComplianceSummaryOutput> = {}): ComplianceSu
     ...overrides,
   }) as ComplianceSummaryOutput;
 
+const snapshot = (
+  overrides: Partial<SafetyRegisterSnapshotOutput> = {},
+): SafetyRegisterSnapshotOutput => ({
+  '@id': '/api/organizations/org-1/compliance/register-snapshots/snap-1',
+  '@type': 'SafetyRegisterSnapshot',
+  id: 'snap-1',
+  organizationId: 'org-1',
+  scope: 'organization',
+  generatedAt: '2026-08-27T10:00:00+00:00',
+  generatedByUserId: 'user-1',
+  contentHash: 'a'.repeat(64),
+  sizeBytes: 12_345,
+  createdAt: '2026-08-27T10:00:00+00:00',
+  ...overrides,
+});
+
 describe('ComplianceExplorerStore', () => {
   let store: ComplianceExplorerStoreType;
   let mockComplianceService: {
@@ -63,6 +80,9 @@ describe('ComplianceExplorerStore', () => {
     getFacilityCompliance: ReturnType<typeof vi.fn>;
     exportOrganizationSafetyRegister: ReturnType<typeof vi.fn>;
     exportFacilitySafetyRegister: ReturnType<typeof vi.fn>;
+    createRegisterSnapshot: ReturnType<typeof vi.fn>;
+    listRegisterSnapshots: ReturnType<typeof vi.fn>;
+    downloadRegisterSnapshot: ReturnType<typeof vi.fn>;
   };
   let mockBrowserDownload: { trigger: ReturnType<typeof vi.fn> };
 
@@ -73,6 +93,9 @@ describe('ComplianceExplorerStore', () => {
       getFacilityCompliance: vi.fn(),
       exportOrganizationSafetyRegister: vi.fn(),
       exportFacilitySafetyRegister: vi.fn(),
+      createRegisterSnapshot: vi.fn(),
+      listRegisterSnapshots: vi.fn(),
+      downloadRegisterSnapshot: vi.fn(),
     };
     mockBrowserDownload = { trigger: vi.fn() };
 
@@ -168,5 +191,105 @@ describe('ComplianceExplorerStore', () => {
 
     expect(mockBrowserDownload.trigger).not.toHaveBeenCalled();
     expect(store.hasExportError()).toBe(true);
+  });
+
+  it('loads the archived snapshot page and exposes its members', async () => {
+    mockComplianceService.listRegisterSnapshots.mockReturnValue(
+      of({ member: [snapshot()], totalItems: 1 }),
+    );
+
+    store.loadSnapshots('org-1');
+    await flushEffects();
+
+    expect(mockComplianceService.listRegisterSnapshots).toHaveBeenCalledWith('org-1');
+    expect(store.isLoadingSnapshots()).toBe(false);
+    expect(store.hasSnapshotsError()).toBe(false);
+    expect(store.snapshots()).toEqual([snapshot()]);
+  });
+
+  it('records a snapshot list failure', async () => {
+    mockComplianceService.listRegisterSnapshots.mockReturnValue(
+      throwError(() => new Error('boom')),
+    );
+
+    store.loadSnapshots('org-1');
+    await flushEffects();
+
+    expect(store.hasSnapshotsError()).toBe(true);
+    expect(store.snapshots()).toEqual([]);
+  });
+
+  it('archives the organization-wide register with an empty body and reports success', async () => {
+    mockComplianceService.createRegisterSnapshot.mockReturnValue(of(snapshot()));
+
+    store.archiveRegister({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(mockComplianceService.createRegisterSnapshot).toHaveBeenCalledWith('org-1', {});
+    expect(store.isArchiving()).toBe(false);
+    expect(store.archiveCallState().status).toBe('success');
+  });
+
+  it('archives a facility-scoped register with the facilityId in the body', async () => {
+    mockComplianceService.createRegisterSnapshot.mockReturnValue(
+      of(snapshot({ scope: 'facility', facilityId: 'facility-1' })),
+    );
+
+    store.archiveRegister({ organizationId: 'org-1', facilityId: 'facility-1' });
+    await flushEffects();
+
+    expect(mockComplianceService.createRegisterSnapshot).toHaveBeenCalledWith('org-1', {
+      facilityId: 'facility-1',
+    });
+    expect(store.archiveCallState().status).toBe('success');
+  });
+
+  it('records an archive failure with the normalized error', async () => {
+    mockComplianceService.createRegisterSnapshot.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 403, detail: 'Plan not entitled' })),
+    );
+
+    store.archiveRegister({ organizationId: 'org-1' });
+    await flushEffects();
+
+    expect(store.archiveCallState().status).toBe('error');
+    expect(store.archiveCallState().error?.message).toBe('Plan not entitled');
+  });
+
+  it('downloads one snapshot, flags its row while in flight, and triggers the browser download', async () => {
+    const blob = new Blob(['pdf-bytes'], { type: 'application/pdf' });
+    mockComplianceService.downloadRegisterSnapshot.mockReturnValue(of(blob));
+
+    store.downloadSnapshot({
+      organizationId: 'org-1',
+      snapshotId: 'snap-1',
+      fileName: 'safety-register-2026-08-27.pdf',
+    });
+    await flushEffects();
+
+    expect(mockComplianceService.downloadRegisterSnapshot).toHaveBeenCalledWith('org-1', 'snap-1');
+    expect(mockBrowserDownload.trigger).toHaveBeenCalledWith(
+      blob,
+      'safety-register-2026-08-27.pdf',
+    );
+    expect(store.downloadingSnapshotId()).toBeNull();
+    expect(store.downloadCallState().status).toBe('success');
+  });
+
+  it('records a snapshot download failure and clears the row flag', async () => {
+    mockComplianceService.downloadRegisterSnapshot.mockReturnValue(
+      throwError(() => new Error('boom')),
+    );
+
+    store.downloadSnapshot({
+      organizationId: 'org-1',
+      snapshotId: 'snap-1',
+      fileName: 'safety-register-2026-08-27.pdf',
+    });
+    await flushEffects();
+
+    expect(mockBrowserDownload.trigger).not.toHaveBeenCalled();
+    expect(store.downloadingSnapshotId()).toBeNull();
+    expect(store.downloadCallState().status).toBe('error');
   });
 });

@@ -1,12 +1,21 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { FeedbackService } from '@core/feedback';
+import {
+  errorCallState,
+  idleCallState,
+  successCallState,
+  toStoreError,
+  type CallState,
+} from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityTreeStore } from '@features/organization/features/facilities/state';
 import type {
   ComplianceFacilityTreeNodeOutput,
   ComplianceSummaryOutput,
+  SafetyRegisterSnapshotOutput,
 } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { ComplianceExplorerStore } from '@features/organization/state/compliance-explorer';
@@ -82,6 +91,22 @@ const createPage = async (
   return created;
 };
 
+const snapshot = (
+  overrides: Partial<SafetyRegisterSnapshotOutput> = {},
+): SafetyRegisterSnapshotOutput => ({
+  '@id': '/api/organizations/org-1/compliance/register-snapshots/snap-1',
+  '@type': 'SafetyRegisterSnapshot',
+  id: 'snap-1',
+  organizationId: 'org-1',
+  scope: 'organization',
+  generatedAt: '2026-08-27T10:00:00+00:00',
+  generatedByUserId: 'user-1',
+  contentHash: 'a'.repeat(64),
+  sizeBytes: 12_345,
+  createdAt: '2026-08-27T10:00:00+00:00',
+  ...overrides,
+});
+
 describe('OrganizationAssetsPage', () => {
   let fixture: ComponentFixture<OrganizationAssetsPage>;
   let hasPermission: ReturnType<typeof vi.fn>;
@@ -97,6 +122,16 @@ describe('OrganizationAssetsPage', () => {
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
   let summarySignal: WritableSignal<ComplianceSummaryOutput | null>;
   let isExportingSignal: WritableSignal<boolean>;
+  let loadSnapshots: ReturnType<typeof vi.fn>;
+  let archiveRegister: ReturnType<typeof vi.fn>;
+  let downloadSnapshot: ReturnType<typeof vi.fn>;
+  let feedbackSuccess: ReturnType<typeof vi.fn>;
+  let feedbackError: ReturnType<typeof vi.fn>;
+  let archiveCallStateSignal: WritableSignal<CallState>;
+  let downloadCallStateSignal: WritableSignal<CallState>;
+  let snapshotsSignal: WritableSignal<readonly SafetyRegisterSnapshotOutput[]>;
+  let isArchivingSignal: WritableSignal<boolean>;
+  let downloadingSnapshotIdSignal: WritableSignal<string | null>;
 
   beforeEach(() => {
     hasPermission = vi.fn().mockReturnValue(true);
@@ -112,6 +147,16 @@ describe('OrganizationAssetsPage', () => {
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
     summarySignal = signal<ComplianceSummaryOutput | null>(null);
     isExportingSignal = signal<boolean>(false);
+    loadSnapshots = vi.fn();
+    archiveRegister = vi.fn();
+    downloadSnapshot = vi.fn();
+    feedbackSuccess = vi.fn();
+    feedbackError = vi.fn();
+    archiveCallStateSignal = signal<CallState>(idleCallState());
+    downloadCallStateSignal = signal<CallState>(idleCallState());
+    snapshotsSignal = signal<readonly SafetyRegisterSnapshotOutput[]>([]);
+    isArchivingSignal = signal<boolean>(false);
+    downloadingSnapshotIdSignal = signal<string | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -164,8 +209,19 @@ describe('OrganizationAssetsPage', () => {
             loadTree,
             loadSummary,
             exportSafetyRegister,
+            snapshots: snapshotsSignal,
+            isLoadingSnapshots: signal(false),
+            hasSnapshotsError: signal(false),
+            isArchiving: isArchivingSignal,
+            archiveCallState: archiveCallStateSignal,
+            downloadCallState: downloadCallStateSignal,
+            downloadingSnapshotId: downloadingSnapshotIdSignal,
+            loadSnapshots,
+            archiveRegister,
+            downloadSnapshot,
           },
         },
+        { provide: FeedbackService, useValue: { success: feedbackSuccess, error: feedbackError } },
         {
           provide: OrganizationPermissionService,
           useValue: { hasPermission },
@@ -393,6 +449,108 @@ describe('OrganizationAssetsPage', () => {
     await fixture.whenStable();
 
     expect(exportSafetyRegister).not.toHaveBeenCalled();
+  });
+
+  it('archives the register scoped to the selected facility', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    fixture.componentInstance['onArchiveRegister']();
+    await fixture.whenStable();
+
+    expect(archiveRegister).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
+  it('archives the organization-wide register when no facility is selected', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onArchiveRegister']();
+    await fixture.whenStable();
+
+    expect(archiveRegister).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('ignores an archive request while an archive is already running', async () => {
+    fixture = await createPage();
+    isArchivingSignal.set(true);
+
+    fixture.componentInstance['onArchiveRegister']();
+    await fixture.whenStable();
+
+    expect(archiveRegister).not.toHaveBeenCalled();
+  });
+
+  it('loads the archived snapshots on first compliance-axis activation', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    expect(loadTree).toHaveBeenCalledWith('org-1');
+    expect(loadSnapshots).toHaveBeenCalledWith('org-1');
+  });
+
+  it('toasts success and reloads the snapshot list once the archive settles', async () => {
+    fixture = await createPage();
+
+    archiveCallStateSignal.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(feedbackSuccess).toHaveBeenCalledTimes(1);
+    expect(loadSnapshots).toHaveBeenCalledWith('org-1');
+  });
+
+  it('toasts the RFC 7807 detail when the archive is refused', async () => {
+    fixture = await createPage();
+
+    archiveCallStateSignal.set(
+      errorCallState(toStoreError({ '@type': 'Error', status: 403, detail: 'Plan not entitled' })),
+    );
+    await fixture.whenStable();
+
+    expect(feedbackError).toHaveBeenCalledWith('Plan not entitled');
+  });
+
+  it('toasts a failure when a snapshot download errors', async () => {
+    fixture = await createPage();
+
+    downloadCallStateSignal.set(errorCallState(toStoreError(new Error('boom'))));
+    await fixture.whenStable();
+
+    expect(feedbackError).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the archived snapshots and downloads one row on click', async () => {
+    fixture = await createPage();
+    snapshotsSignal.set([snapshot()]);
+
+    fixture.componentInstance['onAxisActivated']('compliance');
+    await fixture.whenStable();
+
+    const rows: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll(
+      '[data-testid="assets-compliance-snapshots-row"]',
+    );
+    expect(rows).toHaveLength(1);
+
+    const download: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="assets-compliance-snapshots-download"]',
+    );
+    download?.click();
+    await fixture.whenStable();
+
+    expect(downloadSnapshot).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      snapshotId: 'snap-1',
+      fileName: 'safety-register-2026-08-27.pdf',
+    });
   });
 
   it('switches the export button live-region label while exporting', async () => {

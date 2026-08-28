@@ -63,6 +63,24 @@
           </span>
         </a>
       }
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="ms-auto max-sm:min-h-11"
+        data-testid="equipment-detail-export-report"
+        [disabled]="reportExporting()"
+        [attr.aria-busy]="reportExporting() ? 'true' : null"
+        (click)="exportReport()"
+      >
+        @if (reportExporting()) {
+          <hlm-spinner class="size-4" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideDownload" aria-hidden="true" />
+        }
+        <span i18n="@@equipment.report.exportButton">Export equipment sheet</span>
+      </button>
     </div>
     <p class="text-sm text-muted-foreground" data-testid="equipment-detail-meta">
       {{ metaLine() }}

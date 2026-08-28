@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +19,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMapPin, lucidePencil, lucideWrench } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideDownload,
+  lucideMapPin,
+  lucidePencil,
+  lucideWrench,
+} from '@ng-icons/lucide';
+import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -44,6 +52,7 @@ import {
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -140,7 +149,9 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     ...HlmSpinnerImports,
     ...HlmTabsImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideMapPin, lucidePencil, lucideWrench })],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideDownload, lucideMapPin, lucidePencil, lucideWrench }),
+  ],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -206,6 +217,12 @@ export class EquipmentDetailPage {
   /** Saves a fetched attachment blob to the visitor's device. */
   private readonly browserDownload: BrowserDownloadService =
     inject<BrowserDownloadService>(BrowserDownloadService);
+
+  /** Global toast feedback for the sheet export's error path. */
+  private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
+
+  /** Whether the equipment sheet's PDF export is currently in flight. */
+  protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
 
   /** For cancelling in-flight downloads when the page is destroyed. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
@@ -654,6 +671,47 @@ export class EquipmentDetailPage {
             next.delete(attachment.id);
 
             return next;
+          });
+        },
+      });
+  }
+
+  /**
+   * Method exportReport
+   *
+   * @description
+   * Fetches the equipment's PDF sheet (`EquipmentService.exportReport`) and
+   * saves it to the visitor's device, locking the button on
+   * {@link reportExporting} — a single boolean, since there is only one
+   * sheet to export at a time — mirroring
+   * `InterventionDetailPage.exportReport`'s flow. The backend additionally
+   * gates the sheet on the organization's plan tier: a non-entitled plan
+   * answers `403` with an RFC 7807 `detail`, surfaced verbatim in the error
+   * toast through `resolveCsvExportErrorDetail` (which reads any
+   * blob-wrapped problem document, not only CSV ones).
+   *
+   * @access protected
+   * @since 1.8.0
+   * @returns {void}
+   */
+  protected exportReport(): void {
+    this.reportExporting.set(true);
+
+    this.equipmentService
+      .exportReport(this.organizationId(), this.equipmentId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.reportExporting.set(false);
+          this.browserDownload.trigger(blob, `equipment-${this.equipmentId()}-sheet.pdf`);
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.reportExporting.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ??
+                $localize`:@@equipment.report.exportFailed:Couldn't export the equipment sheet.`,
+            );
           });
         },
       });

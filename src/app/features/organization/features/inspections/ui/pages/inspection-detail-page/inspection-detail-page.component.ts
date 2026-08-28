@@ -196,6 +196,17 @@ export class InspectionDetailPage {
     (): boolean => this.store.isLoadingNonConformities() || this.exportBusy(),
   );
 
+  /** Whether the inspection's PDF report export is currently in flight. */
+  protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the non-conformities PDF report export is currently in flight. */
+  protected readonly ncReportExporting: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the non-conformities report button should be inert: the section's list still loading, or a report already in flight. */
+  protected readonly ncReportDisabled: Signal<boolean> = computed(
+    (): boolean => this.store.isLoadingNonConformities() || this.ncReportExporting(),
+  );
+
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
@@ -619,6 +630,92 @@ export class InspectionDetailPage {
           void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
             this.feedback.error(
               detail ?? $localize`:@@inspection.nc.exportFailed:Couldn't export non-conformities.`,
+            );
+          });
+        },
+      });
+  }
+
+  /**
+   * Method exportReport
+   *
+   * @description
+   * Fetches the inspection's PDF report
+   * (`InspectionService.exportReport`) and saves it to the visitor's
+   * device, locking the button on {@link reportExporting} — a single
+   * boolean, since there is only one report to export at a time —
+   * mirroring `InterventionDetailPage.exportReport`'s flow. The backend
+   * additionally gates the report on the organization's plan tier: a
+   * non-entitled plan answers `403` with an RFC 7807 `detail`, surfaced
+   * verbatim in the error toast through `resolveCsvExportErrorDetail`
+   * (which reads any blob-wrapped problem document, not only CSV ones).
+   *
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected exportReport(): void {
+    this.reportExporting.set(true);
+
+    this.inspectionService
+      .exportReport(this.organizationId(), this.inspectionId())
+      .pipe(take(1), takeUntilDestroyed(this.exportDestroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.reportExporting.set(false);
+          this.browserDownload.trigger(blob, `inspection-${this.inspectionId()}-report.pdf`);
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.reportExporting.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ??
+                $localize`:@@inspection.report.exportFailed:Couldn't export the inspection report.`,
+            );
+          });
+        },
+      });
+  }
+
+  /**
+   * Method exportNonConformitiesReport
+   *
+   * @description
+   * Downloads the organization's non-conformities as a PDF report
+   * (`InspectionService.exportNonConformitiesReport`). Like the CSV export
+   * beside it, the endpoint has no per-inspection scoping — a warn toast
+   * announces that the file is wider than the section before the download
+   * starts. A non-entitled plan answers `403` with an RFC 7807 `detail`,
+   * surfaced verbatim in the error toast.
+   *
+   * @access protected
+   * @since 1.7.0
+   * @returns {void}
+   */
+  protected exportNonConformitiesReport(): void {
+    this.feedback.warn(
+      $localize`:@@inspection.nc.exportScope:The export covers every non-conformity in the organization, not only this inspection's.`,
+    );
+
+    this.ncReportExporting.set(true);
+
+    this.inspectionService
+      .exportNonConformitiesReport(this.organizationId())
+      .pipe(take(1), takeUntilDestroyed(this.exportDestroyRef))
+      .subscribe({
+        next: (blob: Blob): void => {
+          this.ncReportExporting.set(false);
+          this.browserDownload.trigger(
+            blob,
+            `non-conformities-${this.organizationId()}-report.pdf`,
+          );
+        },
+        error: (error: HttpErrorResponse): void => {
+          this.ncReportExporting.set(false);
+          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
+            this.feedback.error(
+              detail ??
+                $localize`:@@inspection.nc.reportExportFailed:Couldn't export the non-conformities report.`,
             );
           });
         },

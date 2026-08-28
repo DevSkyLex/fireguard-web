@@ -53,6 +53,14 @@ This subfeature does not own top-level organization context or inspection workfl
   server caps the collection at 50,000 rows; the resulting 422's RFC 7807
   `detail` (read back through `resolveCsvExportErrorDetail`,
   `@features/organization/utils`) is surfaced as the error toast.
+- The detail page's header carries **Export equipment sheet**
+  (`EquipmentService.exportReport`, `GET
+/api/organizations/{organizationId}/equipment/{equipmentId}/report`): the
+  equipment's PDF sheet, same direct-`this.http` blob shape, saved as
+  `equipment-{equipmentId}-sheet.pdf`. The endpoint is additionally gated on
+  the organization's plan tier (pro/max): a non-entitled plan answers 403
+  with an RFC 7807 `detail`, read back through `resolveCsvExportErrorDetail`
+  and surfaced verbatim as the error toast.
 - `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
   `EquipmentCreateForm` (Signal Forms) asking for the one required field,
   `type`; the five remaining editable properties are filled in afterward, in

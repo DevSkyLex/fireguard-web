@@ -111,6 +111,20 @@
     <hlm-field orientation="horizontal" class="justify-between">
       <label
         hlmFieldLabel
+        for="org-notif-weekly-digest"
+        i18n="@@org.settings.notifications.weeklyDigestLabel"
+        >Weekly summary email</label
+      >
+      <hlm-switch
+        id="org-notif-weekly-digest"
+        [formField]="notificationsForm.weeklyDigest"
+        (checkedChange)="commit()"
+      />
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-between">
+      <label
+        hlmFieldLabel
         for="org-notif-member-invited"
         i18n="@@org.settings.notifications.memberInvitedLabel"
         >Member invited</label

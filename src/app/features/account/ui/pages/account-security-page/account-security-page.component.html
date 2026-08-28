@@ -121,6 +121,46 @@
           (retried)="retryDevices()"
         />
       </section>
+
+      <section id="account-danger-zone" class="flex flex-col gap-3 border-t border-border pt-5">
+        <header class="flex min-w-0 flex-col gap-1">
+          <h3 class="flex items-center gap-2 text-sm font-semibold tracking-tight text-destructive">
+            <ng-icon name="lucideTriangleAlert" class="shrink-0" aria-hidden="true" />
+            <span i18n="@@account.danger.title">Danger zone</span>
+          </h3>
+        </header>
+
+        <div hlmCard class="border-destructive/40">
+          <div hlmCardHeader>
+            <h4 hlmCardTitle i18n="@@account.danger.deactivateTitle">Deactivate account</h4>
+            <p hlmCardDescription i18n="@@account.danger.deactivateDescription">
+              Deactivating signs you out everywhere and disables sign-in. Only an administrator can
+              reactivate your account.
+            </p>
+          </div>
+          <div hlmCardContent>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="w-fit gap-2 text-destructive max-sm:min-h-11"
+              data-testid="account-danger-deactivate-open"
+              (click)="openDeactivateDialog()"
+            >
+              <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+              <span i18n="@@account.danger.deactivateOpen">Deactivate account</span>
+            </button>
+          </div>
+        </div>
+
+        <app-account-deactivate-dialog
+          [visible]="confirmingDeactivation()"
+          [pending]="deactivationStore.isDeactivating()"
+          [error]="deactivationStore.deactivateError()?.message ?? null"
+          (visibleChange)="confirmingDeactivation.set($event)"
+          (confirmed)="deactivateAccount()"
+        />
+      </section>
     }
   </div>
 </div>

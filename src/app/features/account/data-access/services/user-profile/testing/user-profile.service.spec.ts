@@ -164,6 +164,43 @@ describe('UserProfileService', () => {
     });
   });
 
+  describe('deactivateCurrentAccount', () => {
+    it('should send a bodiless POST to the deactivate endpoint and return the inactive profile', () => {
+      const response = { id: 'user-uuid-123', status: 'inactive' } as UserProfileOutput;
+
+      service.deactivateCurrentAccount().subscribe((profile) => {
+        expect(profile.status).toBe('inactive');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/deactivate`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush(response);
+    });
+
+    it('should propagate a denial untouched', () => {
+      const errorResponse: ApiError = {
+        '@id': '',
+        '@type': 'Error',
+        status: 403,
+        type: 'https://api.test.com/errors/forbidden',
+        title: 'Forbidden',
+        detail: 'Insufficient permissions.',
+      };
+
+      service.deactivateCurrentAccount().subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(403);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/deactivate`);
+      req.flush(errorResponse, { status: 403, statusText: 'Forbidden' });
+    });
+  });
+
   describe('uploadCurrentAvatar', () => {
     it('should send a multipart PUT to the current avatar endpoint', () => {
       const avatar = new File(['avatar'], 'avatar.png', { type: 'image/png' });

@@ -8,6 +8,7 @@ This feature is responsible for:
 
 - user profile state, its editable fields and the avatar,
 - the authenticated password change and the authenticator-app (TOTP) enrollment lifecycle,
+- self-service account deactivation (`POST /api/me/deactivate`),
 - notification center state and UI,
 - shell-facing user identity, access, and notification contracts,
 - current-user global permission helpers built on the account-owned access contract,
@@ -33,8 +34,8 @@ stores.
 `/account` redirects to `/account/profile`. Each section is a full page:
 
 - `/account/profile` — identity, avatar, first/last name and interface language
-- `/account/security` — authenticator app (TOTP), the two-step password change, active sessions and
-  trusted devices
+- `/account/security` — authenticator app (TOTP), the two-step password change, active sessions,
+  trusted devices, and the danger zone carrying self-service account deactivation
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
 - `/account/notifications/preferences` — the per-category delivery matrix (email / in-app), each
   switch its own commit
@@ -85,6 +86,13 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
 - `AccountPasswordChangeStore` — the two-step change, holding the challenge token that ties the
   steps together
 - `AccountTotpEnrollmentStore` — setup, confirm and disable
+- `AccountDeactivationStore` — self-service account deactivation. The endpoint takes no body and
+  is idempotent; on success the backend has already revoked every server-side session, so
+  `AccountSecurityPage` performs the logout flow's local half — `AUTH_SESSION_PORT.clearSession()`
+  (token, profile, `sessionEnded`) — and navigates to `/auth/login`. The confirmation dialog adds
+  no typed-name or password gate, because the API asks for none; its copy states the verified
+  backend behavior: reactivation is admin-only (`POST /users/{id}/activate`), signing in again
+  does **not** reactivate — a deactivated login is rejected as invalid credentials.
 - `AccountNotificationPreferencesStore` — the notification preferences matrix. The category list is
   derived from the type catalog (`GET /api/notification-types`), never hard-coded, so a category
   added server-side appears without a frontend change. A category with no server row is enabled on
@@ -103,14 +111,15 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
 
 Services:
 
-- `UserProfileService` — `/api/me`, `/api/me/avatar`, `/api/me/password/{request,confirm}`
+- `UserProfileService` — `/api/me`, `/api/me/avatar`, `/api/me/password/{request,confirm}`,
+  `/api/me/deactivate`
 - `NotificationService` — `/api/notifications*` (including the bulk `/read-all` and
   `/notifications/preferences`), `/api/notification-types`
 - `TotpService` — `/api/otp/totp/{setup,confirm,disable}`
 
 Every workflow store dispatches typed outcome events (`accountProfileEditStoreEvents`,
 `accountPasswordChangeStoreEvents`, `accountTotpEnrollmentStoreEvents`,
-`accountNotificationPreferencesStoreEvents`). They exist so the app-wide
+`accountNotificationPreferencesStoreEvents`, `accountDeactivationStoreEvents`). They exist so the app-wide
 feedback listener can raise a toast: no account page renders an error surface of its own, because a
 rejected save is a whole-request failure rather than a field problem (`ARCHITECTURE.md` §10.4).
 
@@ -152,6 +161,8 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   `FEATURE.md`.
 - **Injects `features/auth`'s `SessionStore` and `TrustedDeviceStore` directly** in
   `AccountSecurityPage`, scoped to that page. Recorded in auth's `FEATURE.md`.
+- **Consumes `features/auth`'s `AUTH_SESSION_PORT`** in `AccountSecurityPage` to purge the local
+  session after a successful account deactivation — the same `clearSession()` the 401 path uses.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
   features to gate routes or UI on a global permission.
@@ -195,11 +206,6 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   here; the symptom is a rejected `PATCH`.
 
 ## Not Built Yet
-
-Backend endpoints exist for these; no frontend model, service method or store does:
-
-- **Account deactivation** — `POST /api/me/deactivate`. Self-service and irreversible without an
-  administrator, so it needs a confirmation surface designed for that.
 
 Email cannot be changed by the user at all: `email` is read-only on `CurrentUserProfileOutput` and
 absent from the input DTO, and no endpoint exists.

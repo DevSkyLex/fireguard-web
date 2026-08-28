@@ -9814,6 +9814,46 @@
         <source><x id="count" equiv-text="count"/> members</source>
         <target><x id="count" equiv-text="count"/> miembros</target>
       </trans-unit>
+      <trans-unit id="account.danger.title" datatype="html">
+        <source>Danger zone</source>
+        <target>Zona de peligro</target>
+      </trans-unit>
+      <trans-unit id="account.danger.deactivateTitle" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar la cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.danger.deactivateDescription" datatype="html">
+        <source>Deactivating signs you out everywhere and disables sign-in. Only an administrator can reactivate your account.</source>
+        <target>La desactivación cierra tu sesión en todas partes y bloquea el inicio de sesión. Solo un administrador puede reactivar tu cuenta.</target>
+      </trans-unit>
+      <trans-unit id="account.danger.deactivateOpen" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar la cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.confirmTitle" datatype="html">
+        <source>Deactivate your account?</source>
+        <target>¿Desactivar tu cuenta?</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.confirmText" datatype="html">
+        <source> You will be signed out everywhere, and only an administrator can reactivate your account — signing in again will not. </source>
+        <target> Se cerrará tu sesión en todas partes, y solo un administrador puede reactivar tu cuenta — volver a iniciar sesión no lo hará. </target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.deactivating" datatype="html">
+        <source>Deactivating…</source>
+        <target>Desactivando…</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.confirmAction" datatype="html">
+        <source>Deactivate account</source>
+        <target>Desactivar la cuenta</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.succeeded" datatype="html">
+        <source>Your account has been deactivated and every session signed out. An administrator can reactivate it.</source>
+        <target>Tu cuenta ha sido desactivada y todas las sesiones cerradas. Un administrador puede reactivarla.</target>
+      </trans-unit>
+      <trans-unit id="account.deactivate.failed" datatype="html">
+        <source>Your account could not be deactivated.</source>
+        <target>Tu cuenta no pudo ser desactivada.</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

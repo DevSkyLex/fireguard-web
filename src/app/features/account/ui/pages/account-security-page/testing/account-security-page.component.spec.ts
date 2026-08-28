@@ -1,12 +1,22 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { idleCallState, type CallState, type StoreError } from '@core/request-state';
+import { provideRouter, Router } from '@angular/router';
+import {
+  errorCallState,
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
 import type { SetupTotpOutput, UserProfileOutput } from '@features/account/models';
 import {
+  AccountDeactivationStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
   UserStore,
 } from '@features/account/state';
+import { AUTH_SESSION_PORT } from '@features/auth';
 import type { SessionOutput, TrustedDeviceOutput } from '@features/auth/models';
 import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { AccountSecurityPage } from '../account-security-page.component';
@@ -68,6 +78,13 @@ describe('AccountSecurityPage', () => {
     isRevoking: WritableSignal<boolean>;
     isRevokingAll: WritableSignal<boolean>;
   };
+  let deactivationStore: {
+    deactivate: ReturnType<typeof vi.fn>;
+    deactivateCallState: WritableSignal<CallState<UserProfileOutput | null>>;
+    isDeactivating: WritableSignal<boolean>;
+    deactivateError: WritableSignal<StoreError | null>;
+  };
+  let authSession: { clearSession: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     profile = signal<UserProfileOutput | null>({ totpEnabled: false } as UserProfileOutput);
@@ -119,8 +136,21 @@ describe('AccountSecurityPage', () => {
       isRevokingAll: signal(false),
     };
 
+    deactivationStore = {
+      deactivate: vi.fn(),
+      deactivateCallState: signal<CallState<UserProfileOutput | null>>(idleCallState()),
+      isDeactivating: signal(false),
+      deactivateError: signal<StoreError | null>(null),
+    };
+    authSession = { clearSession: vi.fn() };
+
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), { provide: UserStore, useValue: userStore }],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: UserStore, useValue: userStore },
+        { provide: AUTH_SESSION_PORT, useValue: authSession },
+      ],
     })
       .overrideComponent(AccountSecurityPage, {
         set: {
@@ -129,6 +159,7 @@ describe('AccountSecurityPage', () => {
             { provide: AccountPasswordChangeStore, useValue: passwordStore },
             { provide: SessionStore, useValue: sessionStore },
             { provide: TrustedDeviceStore, useValue: trustedDeviceStore },
+            { provide: AccountDeactivationStore, useValue: deactivationStore },
           ],
         },
       })
@@ -273,5 +304,50 @@ describe('AccountSecurityPage', () => {
     fixture.componentInstance['retryDevices']();
 
     expect(trustedDeviceStore.load).toHaveBeenCalledTimes(2);
+  });
+
+  it('should open the deactivation dialog from the danger zone', async () => {
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="account-danger-deactivate-open"]',
+      ) as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['confirmingDeactivation']()).toBe(true);
+  });
+
+  it('should forward the confirmed deactivation to the store', () => {
+    fixture.componentInstance['deactivateAccount']();
+
+    expect(deactivationStore.deactivate).toHaveBeenCalled();
+  });
+
+  it('should purge the local session and leave for the login page once deactivation succeeds', async () => {
+    const router: Router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    deactivationStore.deactivateCallState.set(pendingCallState());
+    await fixture.whenStable();
+    deactivationStore.deactivateCallState.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(authSession.clearSession).toHaveBeenCalledTimes(1);
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  it('should not purge anything when deactivation fails', async () => {
+    const router: Router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    deactivationStore.deactivateCallState.set(pendingCallState());
+    await fixture.whenStable();
+    deactivationStore.deactivateCallState.set(
+      errorCallState({ error: null, message: 'Boom', code: 403, retryable: false, timestamp: 0 }),
+    );
+    await fixture.whenStable();
+
+    expect(authSession.clearSession).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 });

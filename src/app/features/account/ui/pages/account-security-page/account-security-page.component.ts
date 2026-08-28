@@ -2,11 +2,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   OnInit,
+  signal,
+  untracked,
+  type EffectRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
+import { Router } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideTriangleAlert } from '@ng-icons/lucide';
 import {
+  AccountDeactivationStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
   UserStore,
@@ -14,10 +23,13 @@ import {
 import { AccountMfaPanel } from '@features/account/ui/components/account-mfa-panel';
 import { AccountSessionsPanel } from '@features/account/ui/components/account-sessions-panel';
 import { AccountTrustedDevicesPanel } from '@features/account/ui/components/account-trusted-devices-panel';
+import { AccountDeactivateDialog } from '@features/account/ui/dialogs/account-deactivate-dialog';
 import { AccountPasswordForm } from '@features/account/ui/forms';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
 import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -33,26 +45,35 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * password is a whole-request failure, which the app-wide feedback listener
  * raises as a toast (`ARCHITECTURE.md` §10.4).
  *
- * @version 1.1.0
+ * The danger zone at the foot of the page carries self-service account
+ * deactivation: a destructive card opening a confirmation dialog, and on
+ * success the local session is purged and the reader lands on the login page.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-account-security-page',
   imports: [
+    AccountDeactivateDialog,
     AccountMfaPanel,
     AccountPasswordForm,
     AccountSessionsPanel,
     AccountTrustedDevicesPanel,
     ErrorState,
     HlmButton,
+    ...HlmCardImports,
     HlmSkeleton,
+    NgIcon,
   ],
   providers: [
+    AccountDeactivationStore,
     AccountPasswordChangeStore,
     AccountTotpEnrollmentStore,
     SessionStore,
     TrustedDeviceStore,
+    provideIcons({ lucideTriangleAlert }),
   ],
   templateUrl: './account-security-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,6 +160,109 @@ export class AccountSecurityPage implements OnInit {
    */
   protected readonly trustedDeviceStore: TrustedDeviceStore =
     inject<TrustedDeviceStore>(TrustedDeviceStore);
+
+  /**
+   * Property deactivationStore
+   * @readonly
+   *
+   * @description
+   * Scoped account deactivation workflow. The endpoint takes no confirmation
+   * body, so the store carries nothing but the single call state.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {AccountDeactivationStore}
+   */
+  protected readonly deactivationStore = inject(AccountDeactivationStore);
+
+  /**
+   * Property authSession
+   * @readonly
+   *
+   * @description
+   * Auth-owned session surface, consumed as a port so this feature never
+   * reaches into auth state. `clearSession()` is the same local purge the 401
+   * path uses: it drops the token, clears the profile and fires `sessionEnded`.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {AuthSessionPort}
+   */
+  private readonly authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Used to leave for the login page once the account has been deactivated.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property confirmingDeactivation
+   * @readonly
+   *
+   * @description
+   * Whether the deactivation confirmation dialog is open.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly confirmingDeactivation: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property previousDeactivateStatus
+   *
+   * @description
+   * The deactivation call state as of the last time
+   * {@link leaveForLoginOnDeactivate} ran, so it can spot the transition into
+   * success rather than the state of being in it.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @type {string}
+   */
+  private previousDeactivateStatus: string = 'idle';
+
+  /**
+   * Property leaveForLoginOnDeactivate
+   * @readonly
+   *
+   * @description
+   * Once the deactivation succeeds, purges the local session and leaves for
+   * the login page. The backend has already revoked every server-side session,
+   * so this is the logout flow's local half — `clearSession()` (token, profile,
+   * `sessionEnded`) followed by the navigation the interceptor's 401 path also
+   * performs. Keyed on the transition into success, matching
+   * `OrganizationSettingsPage`'s `navigateAwayOnDelete`.
+   *
+   * @access private
+   * @since 1.3.0
+   */
+  private readonly leaveForLoginOnDeactivate: EffectRef = effect((): void => {
+    const status: string = this.deactivationStore.deactivateCallState().status;
+    const previous: string = this.previousDeactivateStatus;
+    this.previousDeactivateStatus = status;
+
+    if (previous !== 'pending' || status !== 'success') return;
+
+    untracked((): void => {
+      this.confirmingDeactivation.set(false);
+      this.authSession.clearSession();
+      void this.router.navigate(['/auth/login']);
+    });
+  });
 
   /**
    * Property totpEnabled
@@ -491,6 +615,38 @@ export class AccountSecurityPage implements OnInit {
    */
   protected retryDevices(): void {
     this.trustedDeviceStore.load();
+  }
+
+  /**
+   * Method openDeactivateDialog
+   * @method openDeactivateDialog
+   *
+   * @description
+   * Opens the deactivation confirmation dialog.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @returns {void}
+   */
+  protected openDeactivateDialog(): void {
+    this.confirmingDeactivation.set(true);
+  }
+
+  /**
+   * Method deactivateAccount
+   * @method deactivateAccount
+   *
+   * @description
+   * Deactivates the account once the dialog confirms it.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @returns {void}
+   */
+  protected deactivateAccount(): void {
+    this.deactivationStore.deactivate();
   }
   //#endregion
 }

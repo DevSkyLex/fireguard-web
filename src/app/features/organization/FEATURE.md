@@ -348,6 +348,20 @@ These contracts are the stable boundaries for approved consumers:
   `withOrganizationSwitcher()`, and the organization navigation to the top of its sidebar-nav slot
   through `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
   component without importing it, and never learns that an organization exists.
+- a shell contributes the global search — the header magnifier and its Ctrl+K / Cmd+K command
+  palette (`OrganizationGlobalSearch`, `ui/components/organization-global-search/`) — to its
+  header-actions slot through `withGlobalSearch()`, ahead of the assistant toggle. The palette
+  answers `GET /organizations/{organizationId}/search` through
+  `OrganizationService.search()` behind a component-scoped `OrganizationSearchStore`
+  (`state/organization-search/`): one debounced (300 ms) `withQueryState` query per settled
+  keystroke — a typeahead, so no multi-call slice — that never dials under 2 trimmed characters
+  (the backend's own 400 bound) and resets to idle instead. Hits are grouped by type in the
+  backend's stable order and navigate by `type` + `id`: equipment, facility, intervention and
+  inspection to their detail routes; a non-conformity to the inspections index, because it has
+  no detail page and its hit carries no owning-inspection id. The component renders nothing
+  without an active organization, and spartan's command primitive supplies the combobox/listbox
+  ARIA contract; a polite live region announces the settled result count, and closing hands
+  focus back to the trigger.
 
 `navigation/` is the single source for what the sidebar lists and, once it returns, what the
 landing guard falls back to: `ORGANIZATION_NAVIGATION_ITEMS` carries each destination's required

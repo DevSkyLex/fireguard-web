@@ -7,6 +7,7 @@ export {
   provideCollaborationAssistant,
   withAssistantToggle,
   withDirectMessagesNav,
+  withGlobalSearch,
   withOrganizationNav,
   withOrganizationSwitcher,
   withSyncIndicator,

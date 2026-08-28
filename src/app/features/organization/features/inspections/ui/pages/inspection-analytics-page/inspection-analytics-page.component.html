@@ -1,0 +1,333 @@
+<div id="inspection-analytics" class="flex min-h-0 w-full flex-1 flex-col gap-6 p-4 md:p-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-base font-medium text-foreground" i18n="@@inspection.analytics.title">
+        Non-conformity analytics
+      </h2>
+      <p class="text-sm text-muted-foreground" i18n="@@inspection.analytics.subtitle">
+        Organization-wide, windowed on when non-conformities were opened
+      </p>
+    </div>
+
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      variant="outline"
+      size="sm"
+      [value]="selectedPeriod()"
+      data-testid="inspection-analytics-period-toggle"
+      aria-label="Time period"
+      i18n-aria-label="@@inspection.analytics.period.ariaLabel"
+      (valueChange)="onPeriodChanged($event)"
+    >
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="7d"
+        i18n="@@inspection.analytics.period.7d"
+      >
+        7D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="30d"
+        i18n="@@inspection.analytics.period.30d"
+      >
+        30D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="90d"
+        i18n="@@inspection.analytics.period.90d"
+      >
+        90D
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="12m"
+        i18n="@@inspection.analytics.period.12m"
+      >
+        12M
+      </button>
+      <button
+        hlmToggleGroupItem
+        class="max-sm:min-h-11"
+        value="all"
+        i18n="@@inspection.analytics.period.all"
+      >
+        All
+      </button>
+    </hlm-toggle-group>
+  </div>
+
+  @if (store.queryHasError()) {
+    <div class="flex flex-col items-center gap-3 py-10" data-testid="inspection-analytics-error">
+      <app-error-state
+        icon="lucideTriangleAlert"
+        title="The analytics could not be loaded."
+        i18n-title="@@inspection.analytics.loadError"
+      />
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="inspection-analytics-retry"
+        (click)="retry()"
+        i18n="@@inspection.analytics.retry"
+      >
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      @if (store.isQueryLoading()) {
+        <span
+          class="sr-only"
+          role="status"
+          data-testid="inspection-analytics-loading"
+          i18n="@@inspection.analytics.loadingAria"
+          >Loading key figures</span
+        >
+      }
+
+      <div class="h-full" data-testid="inspection-analytics-kpi-open">
+        <app-stat-tile
+          class="block h-full"
+          [value]="totalOpen()"
+          label="Open non-conformities"
+          i18n-label="@@inspection.analytics.kpi.open"
+          icon="lucideCircleAlert"
+          [tone]="totalOpen() > 0 ? 'destructive' : 'neutral'"
+          caption="Unresolved in the selected period"
+          i18n-caption="@@inspection.analytics.kpi.open.caption"
+          [loading]="store.isQueryLoading()"
+        />
+      </div>
+
+      <div class="h-full" data-testid="inspection-analytics-kpi-sla">
+        <app-stat-tile
+          class="block h-full"
+          [value]="store.queryData()?.slaBreachedOpen ?? 0"
+          label="SLA breached, still open"
+          i18n-label="@@inspection.analytics.kpi.slaBreached"
+          icon="lucideTriangleAlert"
+          [tone]="(store.queryData()?.slaBreachedOpen ?? 0) > 0 ? 'destructive' : 'neutral'"
+          caption="Past their resolution deadline"
+          i18n-caption="@@inspection.analytics.kpi.slaBreached.caption"
+          [loading]="store.isQueryLoading()"
+        />
+      </div>
+
+      <div class="h-full" data-testid="inspection-analytics-kpi-average">
+        <app-stat-tile
+          class="block h-full"
+          [value]="averageDaysLabel()"
+          label="Average resolution (days)"
+          i18n-label="@@inspection.analytics.kpi.averageDays"
+          icon="lucideClock"
+          tone="neutral"
+          caption="From opening to resolution"
+          i18n-caption="@@inspection.analytics.kpi.averageDays.caption"
+          [loading]="store.isQueryLoading()"
+        />
+      </div>
+
+      <div class="h-full" data-testid="inspection-analytics-kpi-median">
+        <app-stat-tile
+          class="block h-full"
+          [value]="medianDaysLabel()"
+          label="Median resolution (days)"
+          i18n-label="@@inspection.analytics.kpi.medianDays"
+          icon="lucideGauge"
+          tone="neutral"
+          caption="Half resolve faster than this"
+          i18n-caption="@@inspection.analytics.kpi.medianDays.caption"
+          [loading]="store.isQueryLoading()"
+        />
+      </div>
+    </div>
+
+    <div hlmCard>
+      <div hlmCardHeader>
+        <h3 hlmCardTitle i18n="@@inspection.analytics.severity.title">By severity</h3>
+        <p hlmCardDescription i18n="@@inspection.analytics.severity.subtitle">
+          Open share per severity, with resolved counts alongside
+        </p>
+      </div>
+      <div hlmCardContent class="flex flex-col gap-4">
+        @if (store.isQueryLoading()) {
+          <div
+            class="flex flex-col gap-4"
+            role="status"
+            aria-label="Loading severity breakdown…"
+            i18n-aria-label="@@inspection.analytics.severity.loadingAria"
+          >
+            @for (row of severitySkeletonRows; track row) {
+              <div class="flex flex-col gap-1.5">
+                <hlm-skeleton class="h-4 w-24" />
+                <hlm-skeleton class="h-1.5 w-full rounded-full" />
+              </div>
+            }
+          </div>
+        } @else if (isSnapshotEmpty()) {
+          <app-empty-state
+            icon="lucideCircleCheck"
+            title="No non-conformities in this period."
+            i18n-title="@@inspection.analytics.severity.empty"
+          />
+        } @else {
+          @for (row of severityRows(); track row.severity) {
+            <div
+              class="flex flex-col gap-1.5"
+              [attr.data-testid]="'inspection-analytics-severity-' + row.severity"
+            >
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="flex items-center gap-1.5 text-foreground">
+                  <ng-icon
+                    [name]="row.descriptor.icon"
+                    class="shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  {{ row.descriptor.label }}
+                </span>
+                <span class="flex items-baseline gap-2 tabular-nums">
+                  <span class="font-medium text-foreground">{{ row.open }}</span>
+                  <span class="text-xs text-muted-foreground">
+                    <ng-container i18n="@@inspection.analytics.severity.resolvedCount"
+                      >{{ row.resolved }} resolved</ng-container
+                    >
+                  </span>
+                </span>
+              </div>
+              <hlm-progress [value]="row.percent" [attr.aria-label]="row.descriptor.label">
+                <hlm-progress-indicator />
+              </hlm-progress>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div hlmCard data-testid="inspection-analytics-facilities">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle i18n="@@inspection.analytics.facilities.title">Top facilities</h3>
+          <p hlmCardDescription i18n="@@inspection.analytics.facilities.subtitle">
+            Up to 10 facilities, by open non-conformities
+          </p>
+        </div>
+        <div hlmCardContent>
+          @if (store.isQueryLoading()) {
+            <div class="flex flex-col gap-2" aria-hidden="true">
+              @for (row of severitySkeletonRows; track row) {
+                <hlm-skeleton class="h-8 w-full" />
+              }
+            </div>
+          } @else if ((store.queryData()?.byFacility ?? []).length === 0) {
+            <app-empty-state
+              icon="lucideCircleCheck"
+              title="No facility has open non-conformities."
+              i18n-title="@@inspection.analytics.facilities.empty"
+            />
+          } @else {
+            <div class="w-full overflow-x-auto rounded-md border border-border">
+              <table hlmTable data-testid="inspection-analytics-facilities-table">
+                <caption class="sr-only" i18n="@@inspection.analytics.facilities.caption">
+                  Facilities with the most open non-conformities.
+                </caption>
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead>
+                      <span i18n="@@inspection.analytics.facilities.columnName">Facility</span>
+                    </th>
+                    <th hlmTableHead class="text-right">
+                      <span i18n="@@inspection.analytics.facilities.columnOpen">Open</span>
+                    </th>
+                    <th hlmTableHead class="text-right">
+                      <span i18n="@@inspection.analytics.facilities.columnCritical">Critical</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody hlmTableBody>
+                  @for (facility of store.queryData()?.byFacility ?? []; track facility.id) {
+                    <tr hlmTableRow>
+                      <td hlmTableCell class="max-w-56 truncate">
+                        @if (facility.name) {
+                          {{ facility.name }}
+                        } @else {
+                          <span
+                            class="text-muted-foreground"
+                            i18n="@@inspection.analytics.facilities.unnamed"
+                            >Unnamed facility</span
+                          >
+                        }
+                      </td>
+                      <td hlmTableCell class="text-right tabular-nums">{{ facility.open }}</td>
+                      <td hlmTableCell class="text-right tabular-nums">{{ facility.critical }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div hlmCard data-testid="inspection-analytics-equipment-types">
+        <div hlmCardHeader>
+          <h3 hlmCardTitle i18n="@@inspection.analytics.equipmentTypes.title">
+            Top equipment types
+          </h3>
+          <p hlmCardDescription i18n="@@inspection.analytics.equipmentTypes.subtitle">
+            Up to 10 types, by open non-conformities
+          </p>
+        </div>
+        <div hlmCardContent>
+          @if (store.isQueryLoading()) {
+            <div class="flex flex-col gap-2" aria-hidden="true">
+              @for (row of severitySkeletonRows; track row) {
+                <hlm-skeleton class="h-8 w-full" />
+              }
+            </div>
+          } @else if ((store.queryData()?.byEquipmentType ?? []).length === 0) {
+            <app-empty-state
+              icon="lucideCircleCheck"
+              title="No equipment type has open non-conformities."
+              i18n-title="@@inspection.analytics.equipmentTypes.empty"
+            />
+          } @else {
+            <div class="w-full overflow-x-auto rounded-md border border-border">
+              <table hlmTable data-testid="inspection-analytics-equipment-types-table">
+                <caption class="sr-only" i18n="@@inspection.analytics.equipmentTypes.caption">
+                  Equipment types with the most open non-conformities.
+                </caption>
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead>
+                      <span i18n="@@inspection.analytics.equipmentTypes.columnType">Type</span>
+                    </th>
+                    <th hlmTableHead class="text-right">
+                      <span i18n="@@inspection.analytics.equipmentTypes.columnOpen">Open</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody hlmTableBody>
+                  @for (entry of store.queryData()?.byEquipmentType ?? []; track entry.type) {
+                    <tr hlmTableRow>
+                      <td hlmTableCell class="max-w-56 truncate">{{ entry.type }}</td>
+                      <td hlmTableCell class="text-right tabular-nums">{{ entry.open }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

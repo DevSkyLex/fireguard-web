@@ -15,6 +15,7 @@ import type {
   UpdateNonConformityStatusResult,
   InspectionListOptions,
   NonConformityListOptions,
+  NonConformityStatisticsOutput,
 } from '@features/organization/features/inspections/models';
 import { InspectionService } from '../inspection.service';
 
@@ -510,6 +511,74 @@ describe('InspectionService', () => {
       );
       expect(req.request.method).toBe('GET');
       req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
+    });
+  });
+
+  describe('getNonConformityStatistics', () => {
+    const mockStatistics: NonConformityStatisticsOutput = {
+      '@id': `/api/organizations/${orgId}/non-conformities/statistics`,
+      '@type': 'NonConformityStatistics',
+      bySeverity: {
+        low: { open: 1, resolved: 0 },
+        medium: { open: 2, resolved: 1 },
+        high: { open: 0, resolved: 3 },
+        critical: { open: 4, resolved: 0 },
+      },
+      byFacility: [{ id: 'facility-uuid-1', name: 'Main site', open: 5, critical: 2 }],
+      byEquipmentType: [{ type: 'extinguisher', open: 3 }],
+      resolution: { averageDays: 4.5, medianDays: 3 },
+      slaBreachedOpen: 2,
+    };
+
+    it('reads the organization-wide statistics snapshot without a window', () => {
+      let result: NonConformityStatisticsOutput | undefined;
+
+      service.getNonConformityStatistics(orgId).subscribe((statistics) => {
+        result = statistics;
+      });
+
+      const req = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/statistics`,
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockStatistics);
+
+      expect(result).toEqual(mockStatistics);
+      expect(result?.bySeverity.critical.open).toBe(4);
+      expect(result?.slaBreachedOpen).toBe(2);
+    });
+
+    it('forwards the from/to window as query params', () => {
+      service
+        .getNonConformityStatistics(orgId, {
+          from: '2026-03-01T00:00:00Z',
+          to: '2026-03-31T23:59:59Z',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/statistics` &&
+          r.params.get('from') === '2026-03-01T00:00:00Z' &&
+          r.params.get('to') === '2026-03-31T23:59:59Z',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush(mockStatistics);
+    });
+
+    it('propagates a bad-request error untouched', () => {
+      service.getNonConformityStatistics(orgId, { from: 'nonsense' }).subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(400);
+        },
+      });
+
+      const req = httpMock.expectOne(
+        (r) => r.url === `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/statistics`,
+      );
+      req.flush({ status: 400, title: 'Bad Request' }, { status: 400, statusText: 'Bad Request' });
     });
   });
 

@@ -6,3 +6,8 @@ export type { InspectionState } from './inspection';
 export { inspectionStoreEvents } from './inspection';
 export { InspectionStore } from './inspection';
 export type { InspectionStoreType } from './inspection';
+export { NonConformityStatisticsStore } from './non-conformity-statistics';
+export type {
+  NonConformityStatisticsStoreType,
+  NonConformityStatisticsLoadParams,
+} from './non-conformity-statistics';

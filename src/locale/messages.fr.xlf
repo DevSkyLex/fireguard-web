@@ -10254,6 +10254,230 @@
         <source>Unpin this message</source>
         <target>Désépingler ce message</target>
       </trans-unit>
+      <trans-unit id="org.search.trigger.aria" datatype="html">
+        <source>Search this organization</source>
+        <target>Rechercher dans cette organisation</target>
+      </trans-unit>
+      <trans-unit id="org.search.dialog.title" datatype="html">
+        <source>Search this organization</source>
+        <target>Rechercher dans cette organisation</target>
+      </trans-unit>
+      <trans-unit id="org.search.dialog.description" datatype="html">
+        <source>Search equipments, facilities, interventions, inspections and non-conformities</source>
+        <target>Rechercher des équipements, sites, interventions, inspections et non-conformités</target>
+      </trans-unit>
+      <trans-unit id="org.search.input.placeholder" datatype="html">
+        <source>Search equipments, facilities, interventions…</source>
+        <target>Rechercher des équipements, sites, interventions…</target>
+      </trans-unit>
+      <trans-unit id="org.search.hint" datatype="html">
+        <source>Type at least 2 characters to search.</source>
+        <target>Saisissez au moins 2 caractères pour rechercher.</target>
+      </trans-unit>
+      <trans-unit id="org.search.loading" datatype="html">
+        <source>Searching…</source>
+        <target>Recherche…</target>
+      </trans-unit>
+      <trans-unit id="org.search.error" datatype="html">
+        <source>The search failed. Type again to retry.</source>
+        <target>La recherche a échoué. Saisissez à nouveau pour réessayer.</target>
+      </trans-unit>
+      <trans-unit id="org.search.noResults" datatype="html">
+        <source>No results for this search.</source>
+        <target>Aucun résultat pour cette recherche.</target>
+      </trans-unit>
+      <trans-unit id="org.search.announce.none" datatype="html">
+        <source>No results</source>
+        <target>Aucun résultat</target>
+      </trans-unit>
+      <trans-unit id="org.search.announce.one" datatype="html">
+        <source>1 result</source>
+        <target>1 résultat</target>
+      </trans-unit>
+      <trans-unit id="org.search.announce.many" datatype="html">
+        <source><x id="count" equiv-text="count"/> results</source>
+        <target><x id="count" equiv-text="count"/> résultats</target>
+      </trans-unit>
+      <trans-unit id="org.search.group.equipment" datatype="html">
+        <source>Equipments</source>
+        <target>Équipements</target>
+      </trans-unit>
+      <trans-unit id="org.search.group.facility" datatype="html">
+        <source>Facilities</source>
+        <target>Sites</target>
+      </trans-unit>
+      <trans-unit id="org.search.group.intervention" datatype="html">
+        <source>Interventions</source>
+        <target>Interventions</target>
+      </trans-unit>
+      <trans-unit id="org.search.group.inspection" datatype="html">
+        <source>Inspections</source>
+        <target>Inspections</target>
+      </trans-unit>
+      <trans-unit id="org.search.group.nonConformity" datatype="html">
+        <source>Non-conformities</source>
+        <target>Non-conformités</target>
+      </trans-unit>
+      <trans-unit id="route.inspections.analytics" datatype="html">
+        <source>Non-conformity analytics</source>
+        <target>Analytique des non-conformités</target>
+      </trans-unit>
+      <trans-unit id="inspection.analyticsButton" datatype="html">
+        <source>Analytics</source>
+        <target>Analytique</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.title" datatype="html">
+        <source>Non-conformity analytics</source>
+        <target>Analytique des non-conformités</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.subtitle" datatype="html">
+        <source>Organization-wide, windowed on when non-conformities were opened</source>
+        <target>À l'échelle de l'organisation, fenêtré sur l'ouverture des non-conformités</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.ariaLabel" datatype="html">
+        <source>Time period</source>
+        <target>Période</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.7d" datatype="html">
+        <source>7D</source>
+        <target>7J</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.30d" datatype="html">
+        <source>30D</source>
+        <target>30J</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.90d" datatype="html">
+        <source>90D</source>
+        <target>90J</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.12m" datatype="html">
+        <source>12M</source>
+        <target>12M</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.period.all" datatype="html">
+        <source>All</source>
+        <target>Tout</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.loadError" datatype="html">
+        <source>The analytics could not be loaded.</source>
+        <target>L'analytique n'a pas pu être chargée.</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.loadingAria" datatype="html">
+        <source>Loading key figures</source>
+        <target>Chargement des chiffres clés</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.open" datatype="html">
+        <source>Open non-conformities</source>
+        <target>Non-conformités ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.open.caption" datatype="html">
+        <source>Unresolved in the selected period</source>
+        <target>Non résolues sur la période sélectionnée</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.slaBreached" datatype="html">
+        <source>SLA breached, still open</source>
+        <target>SLA dépassé, toujours ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.slaBreached.caption" datatype="html">
+        <source>Past their resolution deadline</source>
+        <target>Au-delà de leur échéance de résolution</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.averageDays" datatype="html">
+        <source>Average resolution (days)</source>
+        <target>Résolution moyenne (jours)</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.averageDays.caption" datatype="html">
+        <source>From opening to resolution</source>
+        <target>De l'ouverture à la résolution</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.medianDays" datatype="html">
+        <source>Median resolution (days)</source>
+        <target>Résolution médiane (jours)</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.kpi.medianDays.caption" datatype="html">
+        <source>Half resolve faster than this</source>
+        <target>La moitié se résout plus vite que cela</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.severity.title" datatype="html">
+        <source>By severity</source>
+        <target>Par sévérité</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.severity.subtitle" datatype="html">
+        <source>Open share per severity, with resolved counts alongside</source>
+        <target>Part des ouvertes par sévérité, avec les résolues en regard</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.severity.loadingAria" datatype="html">
+        <source>Loading severity breakdown…</source>
+        <target>Chargement de la répartition par sévérité…</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.severity.empty" datatype="html">
+        <source>No non-conformities in this period.</source>
+        <target>Aucune non-conformité sur cette période.</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.severity.resolvedCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ row.resolved }}"/> resolved</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ row.resolved }}"/> résolues</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.title" datatype="html">
+        <source>Top facilities</source>
+        <target>Principaux sites</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.subtitle" datatype="html">
+        <source>Up to 10 facilities, by open non-conformities</source>
+        <target>Jusqu'à 10 sites, par non-conformités ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.caption" datatype="html">
+        <source>Facilities with the most open non-conformities.</source>
+        <target>Sites comptant le plus de non-conformités ouvertes.</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.columnName" datatype="html">
+        <source>Facility</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.columnOpen" datatype="html">
+        <source>Open</source>
+        <target>Ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.columnCritical" datatype="html">
+        <source>Critical</source>
+        <target>Critiques</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.empty" datatype="html">
+        <source>No facility has open non-conformities.</source>
+        <target>Aucun site n'a de non-conformité ouverte.</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.facilities.unnamed" datatype="html">
+        <source>Unnamed facility</source>
+        <target>Site sans nom</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.title" datatype="html">
+        <source>Top equipment types</source>
+        <target>Principaux types d'équipement</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.subtitle" datatype="html">
+        <source>Up to 10 types, by open non-conformities</source>
+        <target>Jusqu'à 10 types, par non-conformités ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.caption" datatype="html">
+        <source>Equipment types with the most open non-conformities.</source>
+        <target>Types d'équipement comptant le plus de non-conformités ouvertes.</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.columnType" datatype="html">
+        <source>Type</source>
+        <target>Type</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.columnOpen" datatype="html">
+        <source>Open</source>
+        <target>Ouvertes</target>
+      </trans-unit>
+      <trans-unit id="inspection.analytics.equipmentTypes.empty" datatype="html">
+        <source>No equipment type has open non-conformities.</source>
+        <target>Aucun type d'équipement n'a de non-conformité ouverte.</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

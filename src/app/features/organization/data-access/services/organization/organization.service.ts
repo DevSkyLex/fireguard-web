@@ -19,6 +19,7 @@ import type {
   OrganizationPermissionOutput,
   TransferOrganizationOwnershipInput,
   OrganizationNavigationCountersOutput,
+  OrganizationSearchOutput,
 } from '@features/organization/models';
 
 /**
@@ -612,6 +613,33 @@ export class OrganizationService extends HydraApiService {
   ): Observable<OrganizationNavigationCountersOutput> {
     return this.getOne<OrganizationNavigationCountersOutput>(
       `${OrganizationService.BASE_PATH}/${organizationId}/navigation-counters`,
+    );
+  }
+
+  /**
+   * Method search
+   * @method search
+   *
+   * @description
+   * Runs the organization-wide global search
+   * (`GET /organizations/{organizationId}/search?q=…`) behind the command
+   * palette: at most 5 hits per result type, types the caller cannot read
+   * silently omitted. The backend rejects a trimmed term shorter than 2 or
+   * longer than 100 characters with a 400 — callers guard the lower bound
+   * before dialing.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The unique identifier of the organization.
+   * @param {string} query - The free-text search term (2..100 characters after trimming).
+   *
+   * @return {Observable<OrganizationSearchOutput>} An observable emitting the grouped-ready flat hit list.
+   */
+  public search(organizationId: string, query: string): Observable<OrganizationSearchOutput> {
+    return this.getOne<OrganizationSearchOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/search`,
+      { params: { q: query } },
     );
   }
 

@@ -9,6 +9,7 @@ import {
   provideCollaborationAssistant,
   withAssistantToggle,
   withDirectMessagesNav,
+  withGlobalSearch,
   withOrganizationNav,
   withOrganizationSwitcher,
   withSyncIndicator,
@@ -130,7 +131,12 @@ export const APP_ROUTES: Routes = [
         sidebarNav: [withOrganizationNav(), withDirectMessagesNav(), withDashboardGlobalNav()],
         sidebarFooter: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
-        headerActions: [withAssistantToggle(), withSyncIndicator(), withThemeSwitcher()],
+        headerActions: [
+          withGlobalSearch(),
+          withAssistantToggle(),
+          withSyncIndicator(),
+          withThemeSwitcher(),
+        ],
       }),
     ],
     children: [

@@ -3,7 +3,7 @@ import { organizationPermissionGuard } from '@features/organization/http/guards'
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { inspectionResolver, inspectionTitleResolver } from './http/resolvers';
-import { InspectionStore } from './state';
+import { InspectionStore, NonConformityStatisticsStore } from './state';
 
 /**
  * Constant INSPECTION_ROUTES
@@ -69,6 +69,16 @@ export const INSPECTION_ROUTES: Routes = [
             (m) => m.InspectionCreatePage,
           ),
         title: $localize`:@@route.inspection.create:Create Inspection`,
+      },
+      {
+        path: 'analytics',
+        providers: [NonConformityStatisticsStore],
+        loadComponent: () =>
+          import('./ui/pages/inspection-analytics-page/inspection-analytics-page.component').then(
+            (m) => m.InspectionAnalyticsPage,
+          ),
+        title: $localize`:@@route.inspections.analytics:Non-conformity analytics`,
+        data: { breadcrumb: $localize`:@@route.inspections.analytics:Non-conformity analytics` },
       },
       {
         path: ':inspectionId',

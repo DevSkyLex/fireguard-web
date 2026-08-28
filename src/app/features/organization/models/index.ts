@@ -134,3 +134,6 @@ export type { CreateTeamInput } from './team/create-team-input.interface';
 export type { UpdateTeamInput } from './team/update-team-input.interface';
 export type { AddTeamMemberInput } from './team/add-team-member-input.interface';
 export type { OrganizationNavigationCountersOutput } from './navigation/organization-navigation-counters-output.interface';
+export type { OrganizationSearchResultType } from './search/organization-search-result-type.type';
+export type { OrganizationSearchHitOutput } from './search/organization-search-hit-output.interface';
+export type { OrganizationSearchOutput } from './search/organization-search-output.interface';

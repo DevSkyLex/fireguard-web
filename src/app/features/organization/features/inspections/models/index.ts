@@ -41,3 +41,11 @@ export { resolveInspectionStatusTag } from './inspection-status-tag/inspection-s
 export type { InspectionEditState } from './inspection-edit/inspection-edit-state.interface';
 export type { InspectionEditTarget } from './inspection-edit/inspection-edit-target.type';
 export type { SelectOption } from './select-option/select-option.interface';
+export type {
+  NonConformityStatisticsOutput,
+  NonConformitySeverityStatisticOutput,
+  NonConformityFacilityStatisticOutput,
+  NonConformityEquipmentTypeStatisticOutput,
+  NonConformityResolutionStatisticOutput,
+} from './non-conformity-statistics/non-conformity-statistics-output.interface';
+export type { NonConformityStatisticsOptions } from './non-conformity-statistics/non-conformity-statistics-options.interface';

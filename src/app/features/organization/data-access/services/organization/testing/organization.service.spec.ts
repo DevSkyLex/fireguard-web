@@ -13,6 +13,7 @@ import type {
   OrganizationNavigationCountersOutput,
   OrganizationPermissionOutput,
   TransferOrganizationOwnershipInput,
+  OrganizationSearchOutput,
 } from '@features/organization/models';
 import { OrganizationService } from '../organization.service';
 
@@ -696,6 +697,45 @@ describe('OrganizationService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/navigation-counters`);
       req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    });
+  });
+
+  // ── search ────────────────────────────────────────────
+
+  describe('search', () => {
+    const mockSearch: OrganizationSearchOutput = {
+      '@id': '/api/organizations/org-uuid-1/search',
+      '@type': 'OrganizationSearch',
+      query: 'extinguisher',
+      results: [
+        { type: 'equipment', id: 'eq-1', title: 'Brand X100', subtitle: 'SN-42', extra: 'Hall A' },
+        { type: 'non_conformity', id: 'nc-1', title: 'Broken seal', subtitle: 'critical' },
+      ],
+    };
+
+    it('should send GET request with the q parameter and return the hit list', () => {
+      service.search('org-uuid-1', 'extinguisher').subscribe((response) => {
+        expect(response.query).toBe('extinguisher');
+        expect(response.results).toHaveLength(2);
+        expect(response.results[0]?.type).toBe('equipment');
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/search?q=extinguisher`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('q')).toBe('extinguisher');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(mockSearch);
+    });
+
+    it('should propagate a bad-request error untouched', () => {
+      service.search('org-uuid-1', 'a').subscribe({
+        error: (error: ApiError) => {
+          expect(error.status).toBe(400);
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/search?q=a`);
+      req.flush({ status: 400, title: 'Bad Request' }, { status: 400, statusText: 'Bad Request' });
     });
   });
 

@@ -1,0 +1,112 @@
+@if (organizationContext.selectedOrganizationId() !== null) {
+  <button
+    #trigger
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    data-testid="global-search-trigger"
+    i18n-aria-label="@@org.search.trigger.aria"
+    aria-label="Search this organization"
+    aria-haspopup="dialog"
+    aria-keyshortcuts="Control+K Meta+K"
+    [attr.aria-expanded]="open()"
+    (click)="open.set(true)"
+  >
+    <ng-icon name="lucideSearch" class="text-base" aria-hidden="true" />
+  </button>
+
+  <hlm-command-dialog
+    [state]="open() ? 'open' : 'closed'"
+    (stateChange)="onDialogStateChange($event)"
+    dialogContentClass="w-full sm:max-w-xl"
+    title="Search this organization"
+    i18n-title="@@org.search.dialog.title"
+    description="Search equipments, facilities, interventions, inspections and non-conformities"
+    i18n-description="@@org.search.dialog.description"
+  >
+    <hlm-command
+      class="max-h-[70vh]"
+      data-testid="global-search-palette"
+      [filter]="passThroughFilter"
+      (searchChange)="onSearchChanged($event)"
+    >
+      <hlm-command-input
+        placeholder="Search equipments, facilities, interventions…"
+        i18n-placeholder="@@org.search.input.placeholder"
+      />
+
+      <span class="sr-only" role="status" aria-live="polite" data-testid="global-search-announce">
+        {{ resultAnnouncement() }}
+      </span>
+
+      <div hlmCommandList class="overflow-y-auto">
+        @if (!termLongEnough()) {
+          <p
+            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            data-testid="global-search-hint"
+            i18n="@@org.search.hint"
+          >
+            Type at least 2 characters to search.
+          </p>
+        } @else if (store.isQueryLoading()) {
+          <div
+            class="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground"
+            data-testid="global-search-loading"
+          >
+            <hlm-spinner class="size-4" aria-hidden="true" />
+            <span i18n="@@org.search.loading">Searching…</span>
+          </div>
+        } @else if (store.queryHasError()) {
+          <p
+            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            data-testid="global-search-error"
+            i18n="@@org.search.error"
+          >
+            The search failed. Type again to retry.
+          </p>
+        } @else if (showNoResults()) {
+          <p
+            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            data-testid="global-search-empty"
+            i18n="@@org.search.noResults"
+          >
+            No results for this search.
+          </p>
+        } @else {
+          @for (group of groups(); track group.type) {
+            <div hlmCommandGroup [attr.data-testid]="'global-search-group-' + group.type">
+              <span hlmCommandGroupLabel class="flex items-center gap-1.5">
+                <ng-icon [name]="group.icon" class="shrink-0" aria-hidden="true" />
+                {{ group.label }}
+              </span>
+
+              @for (hit of group.hits; track hit.id) {
+                <button
+                  hlmCommandItem
+                  type="button"
+                  [value]="group.type + ':' + hit.id"
+                  (selected)="onHitSelected(hit)"
+                >
+                  <span class="flex min-w-0 flex-col items-start">
+                    <span class="w-full truncate text-start">{{ hit.title }}</span>
+                    @if (hit.subtitle) {
+                      <span class="w-full truncate text-start text-xs text-muted-foreground">
+                        {{ hit.subtitle }}
+                      </span>
+                    }
+                  </span>
+                  @if (hit.extra) {
+                    <span class="ms-auto shrink-0 text-xs text-muted-foreground">
+                      {{ hit.extra }}
+                    </span>
+                  }
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    </hlm-command>
+  </hlm-command-dialog>
+}

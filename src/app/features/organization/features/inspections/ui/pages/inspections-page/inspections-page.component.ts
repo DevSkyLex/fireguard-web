@@ -19,6 +19,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideChartColumn,
   lucideCircleAlert,
   lucideCircleDot,
   lucideClipboardCheck,
@@ -135,6 +136,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   ],
   providers: [
     provideIcons({
+      lucideChartColumn,
       lucideCircleAlert,
       lucideCircleDot,
       lucideClipboardCheck,

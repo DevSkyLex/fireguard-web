@@ -16,6 +16,8 @@ import type {
   InspectionListOptions,
   NonConformityExportOptions,
   NonConformityListOptions,
+  NonConformityStatisticsOptions,
+  NonConformityStatisticsOutput,
 } from '@features/organization/features/inspections/models';
 
 /**
@@ -422,6 +424,40 @@ export class InspectionService extends HydraApiService {
         itemsPerPage: options?.itemsPerPage,
         params,
       },
+    );
+  }
+
+  /**
+   * Method getNonConformityStatistics
+   * @method getNonConformityStatistics
+   *
+   * @description
+   * Reads the organization-wide non-conformity KPI snapshot
+   * (`GET /organizations/{organizationId}/non-conformities/statistics`):
+   * per-severity open/resolved counters, top facilities and equipment types
+   * by open count, resolution timing and the SLA-breached open count. The
+   * optional `from`/`to` bounds window on `createdAt`.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The unique identifier of the organization.
+   * @param {NonConformityStatisticsOptions} [options] - Optional inclusive ISO 8601 window bounds.
+   *
+   * @return {Observable<NonConformityStatisticsOutput>} An observable emitting the statistics snapshot.
+   */
+  public getNonConformityStatistics(
+    organizationId: string,
+    options?: NonConformityStatisticsOptions,
+  ): Observable<NonConformityStatisticsOutput> {
+    const params: NonNullable<RequestOptions['params']> = {};
+
+    if (options?.from) params['from'] = options.from;
+    if (options?.to) params['to'] = options.to;
+
+    return this.getOne<NonConformityStatisticsOutput>(
+      `${InspectionService.BASE_PATH}/${organizationId}/non-conformities/statistics`,
+      { params },
     );
   }
 

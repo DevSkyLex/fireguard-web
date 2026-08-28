@@ -166,6 +166,18 @@
 </div>
 
 <ng-template #pageActions>
+  <a
+    hlmBtn
+    variant="outline"
+    class="min-w-0 shrink max-sm:min-h-11"
+    data-testid="inspections-analytics-link"
+    i18n-aria-label="@@inspection.analyticsButton"
+    aria-label="Analytics"
+    [routerLink]="[...listRouteBase(), 'analytics']"
+  >
+    <ng-icon name="lucideChartColumn" aria-hidden="true" />
+    <span class="truncate max-sm:hidden" i18n="@@inspection.analyticsButton">Analytics</span>
+  </a>
   @if (canCreate()) {
     <a
       hlmBtn

@@ -25,7 +25,22 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 
 - `/organizations/:organizationId/inspections`
 - `/organizations/:organizationId/inspections/create`
+- `/organizations/:organizationId/inspections/analytics`
 - `/organizations/:organizationId/inspections/:inspectionId`
+
+`analytics` (`InspectionAnalyticsPage`) renders the organization-wide
+non-conformity statistics snapshot
+(`GET /organizations/{organizationId}/non-conformities/statistics`): a KPI
+strip (open total, SLA-breached open, average/median resolution days), the
+per-severity open/resolved breakdown as labelled proportional bars
+(`hlm-progress` + the status-tag registry — never colour alone; deliberately
+not the shared line-chart primitive, which a four-row categorical breakdown
+does not warrant), and top-10 facilities / equipment types tables. Its
+period selector mirrors the dashboard Trends presets (7d/30d/90d/12m,
+default 30d) plus **All time**, resolved to inclusive ISO 8601 `from`/`to`
+bounds on `createdAt`. It sits under the same pathless
+`organization.inspection.read` guard as the rest of the feature and is
+reached from the index's **Analytics** page action.
 
 Inspection detail routes **seed** active inspection context without blocking
 activation: `inspectionResolver` fires the fetch into `ActiveInspectionStore`
@@ -102,6 +117,10 @@ Primary stores:
 
 - `InspectionStore`
 - `ActiveInspectionStore`
+- `NonConformityStatisticsStore` (route-scoped to the analytics page;
+  `withQueryState` over the statistics snapshot, refetched on every
+  organization or period-window change — mirrors
+  `InterventionStatisticsStore`)
 - `InspectionCreationOptionsStore` (component-scoped to the create page;
   loads the organization's equipment into the creation form's combobox
   through `EquipmentService`, imported via the sibling `equipments` feature's

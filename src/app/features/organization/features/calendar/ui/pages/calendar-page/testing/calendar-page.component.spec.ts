@@ -371,10 +371,13 @@ describe('CalendarPage', () => {
       ).onCreateRequested('2026-08-12');
       await fixture.whenStable();
 
-      const startsAt: HTMLInputElement | null = document.querySelector<HTMLInputElement>(
-        '[data-testid="calendar-event-starts-at"]',
-      );
-      expect(startsAt?.value).toBe('2026-08-12T09:00');
+      expect(
+        (
+          fixture.componentInstance as unknown as {
+            createDefaultStart: { (): string | null };
+          }
+        ).createDefaultStart(),
+      ).toBe('2026-08-12T09:00');
     });
 
     it('ignores a quick create without the write permission', async () => {

@@ -43,7 +43,8 @@
       <div hlmCommandList class="overflow-y-auto">
         @if (!termLongEnough()) {
           <p
-            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            hlmCommandEmpty
+            class="px-3 text-muted-foreground"
             data-testid="global-search-hint"
             i18n="@@org.search.hint"
           >
@@ -51,7 +52,8 @@
           </p>
         } @else if (store.isQueryLoading()) {
           <div
-            class="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground"
+            hlmCommandEmpty
+            class="flex items-center justify-center gap-2 px-3 text-muted-foreground"
             data-testid="global-search-loading"
           >
             <hlm-spinner class="size-4" aria-hidden="true" />
@@ -59,7 +61,8 @@
           </div>
         } @else if (store.queryHasError()) {
           <p
-            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            hlmCommandEmpty
+            class="px-3 text-muted-foreground"
             data-testid="global-search-error"
             i18n="@@org.search.error"
           >
@@ -67,7 +70,8 @@
           </p>
         } @else if (showNoResults()) {
           <p
-            class="px-3 py-6 text-center text-sm text-muted-foreground"
+            hlmCommandEmpty
+            class="px-3 text-muted-foreground"
             data-testid="global-search-empty"
             i18n="@@org.search.noResults"
           >

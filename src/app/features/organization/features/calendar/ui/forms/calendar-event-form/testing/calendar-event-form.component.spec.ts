@@ -1,9 +1,9 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { CalendarEventForm } from '../calendar-event-form.component';
-import type { CalendarEventFormValues } from '../models';
+import type { CalendarEventDraft, CalendarEventFormValues } from '../models';
 
 const setValue = (testId: string, value: string): void => {
   const input: HTMLInputElement | HTMLTextAreaElement = document.querySelector<
@@ -11,6 +11,22 @@ const setValue = (testId: string, value: string): void => {
   >(`[data-testid="${testId}"]`) as HTMLInputElement;
   input.value = value;
   input.dispatchEvent(new Event('input'));
+};
+
+/**
+ * Sets the draft's date fields directly on the component's private model
+ * signal — `hlm-date-picker`'s trigger opens a popover calendar that a jsdom
+ * unit spec cannot practically click through, so this reaches the same value
+ * `writeValue`/`updateDate` would, exactly the way `calendar-page`'s own spec
+ * reaches protected members through a narrow cast.
+ */
+const setDraftDates = (
+  fixture: ComponentFixture<CalendarEventForm>,
+  patch: Partial<Pick<CalendarEventDraft, 'startsAtDate' | 'endsAtDate'>>,
+): void => {
+  (
+    fixture.componentInstance as unknown as { model: WritableSignal<CalendarEventDraft> }
+  ).model.update((draft) => ({ ...draft, ...patch }));
 };
 
 const EVENT: CalendarFeedItemOutput = {
@@ -46,7 +62,7 @@ describe('CalendarEventForm', () => {
     await fixture.whenStable();
 
     expect(submitted.length).toBe(0);
-    expect(fixture.nativeElement.textContent).toContain('A title is required.');
+    expect(fixture.nativeElement.textContent).toContain('A start date is required.');
   });
 
   it('should emit submitted with the trimmed title and ISO instants when valid', async () => {
@@ -54,7 +70,8 @@ describe('CalendarEventForm', () => {
     fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
 
     setValue('calendar-event-title', '  Fire drill  ');
-    setValue('calendar-event-starts-at', '2026-08-01T09:00');
+    setDraftDates(fixture, { startsAtDate: new Date(2026, 7, 1) });
+    setValue('calendar-event-starts-at-time', '09:00');
     await fixture.whenStable();
 
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
@@ -69,8 +86,12 @@ describe('CalendarEventForm', () => {
 
   it('should reject an end before the start', async () => {
     setValue('calendar-event-title', 'Fire drill');
-    setValue('calendar-event-starts-at', '2026-08-01T11:00');
-    setValue('calendar-event-ends-at', '2026-08-01T09:00');
+    setDraftDates(fixture, {
+      startsAtDate: new Date(2026, 7, 1),
+      endsAtDate: new Date(2026, 7, 1),
+    });
+    setValue('calendar-event-starts-at-time', '11:00');
+    setValue('calendar-event-ends-at-time', '09:00');
     await fixture.whenStable();
 
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
@@ -86,6 +107,10 @@ describe('CalendarEventForm', () => {
     expect(
       document.querySelector<HTMLInputElement>('[data-testid="calendar-event-title"]')?.value,
     ).toBe('Fire drill');
+    expect(
+      document.querySelector<HTMLInputElement>('[data-testid="calendar-event-starts-at-time"]')
+        ?.value,
+    ).not.toBe('');
     expect(fixture.nativeElement.textContent).toContain('Save changes');
   });
 

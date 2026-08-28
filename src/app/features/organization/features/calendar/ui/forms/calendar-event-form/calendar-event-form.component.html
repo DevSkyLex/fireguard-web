@@ -48,41 +48,88 @@
       }
     </hlm-field>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4">
       <hlm-field>
-        <label hlmFieldLabel for="calendar-event-starts-at"
+        <label hlmFieldLabel for="calendar-event-starts-at-date"
           ><span i18n="@@calendar.eventDialog.startsAt">Starts</span
           ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
           ><span class="sr-only" i18n="@@common.required"> required</span></label
         >
-        <input
-          hlmInput
-          id="calendar-event-starts-at"
-          type="datetime-local"
-          data-testid="calendar-event-starts-at"
-          [formField]="eventForm.startsAt"
-          [attr.aria-required]="true"
-          [attr.aria-invalid]="eventForm.startsAt().touched() && eventForm.startsAt().invalid()"
-        />
-        @if (eventForm.startsAt().touched() && eventForm.startsAt().invalid()) {
-          <hlm-field-error>{{ eventForm.startsAt().errors()[0].message }}</hlm-field-error>
+        <div class="flex gap-2">
+          <div class="min-w-0 flex-1">
+            <hlm-date-picker
+              class="w-full [&>hlm-date-picker-trigger]:block"
+              [formField]="eventForm.startsAtDate"
+            >
+              <hlm-date-picker-trigger
+                buttonId="calendar-event-starts-at-date"
+                class="w-full justify-between max-sm:min-h-11"
+                data-testid="calendar-event-starts-at"
+              >
+                <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
+              </hlm-date-picker-trigger>
+            </hlm-date-picker>
+          </div>
+          <label class="sr-only" for="calendar-event-starts-at-time"
+            ><span i18n="@@calendar.eventDialog.startsAtTimeLabel">Start time</span
+            ><span aria-hidden="true">&nbsp;*</span></label
+          >
+          <input
+            hlmInput
+            id="calendar-event-starts-at-time"
+            type="time"
+            data-testid="calendar-event-starts-at-time"
+            class="w-28 shrink-0 max-sm:min-h-11"
+            [formField]="eventForm.startsAtTime"
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="
+              eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()
+            "
+          />
+        </div>
+        @if (eventForm.startsAtDate().touched() && eventForm.startsAtDate().invalid()) {
+          <hlm-field-error>{{ eventForm.startsAtDate().errors()[0].message }}</hlm-field-error>
+        } @else if (eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()) {
+          <hlm-field-error>{{ eventForm.startsAtTime().errors()[0].message }}</hlm-field-error>
         }
       </hlm-field>
 
       <hlm-field>
-        <label hlmFieldLabel for="calendar-event-ends-at" i18n="@@calendar.eventDialog.endsAt"
+        <label hlmFieldLabel for="calendar-event-ends-at-date" i18n="@@calendar.eventDialog.endsAt"
           >Ends</label
         >
-        <input
-          hlmInput
-          id="calendar-event-ends-at"
-          type="datetime-local"
-          data-testid="calendar-event-ends-at"
-          [formField]="eventForm.endsAt"
-          [attr.aria-invalid]="eventForm.endsAt().touched() && eventForm.endsAt().invalid()"
-        />
-        @if (eventForm.endsAt().touched() && eventForm.endsAt().invalid()) {
-          <hlm-field-error>{{ eventForm.endsAt().errors()[0].message }}</hlm-field-error>
+        <div class="flex gap-2">
+          <div class="min-w-0 flex-1">
+            <hlm-date-picker
+              class="w-full [&>hlm-date-picker-trigger]:block"
+              [formField]="eventForm.endsAtDate"
+            >
+              <hlm-date-picker-trigger
+                buttonId="calendar-event-ends-at-date"
+                class="w-full justify-between max-sm:min-h-11"
+                data-testid="calendar-event-ends-at"
+              >
+                <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
+              </hlm-date-picker-trigger>
+            </hlm-date-picker>
+          </div>
+          <label
+            class="sr-only"
+            for="calendar-event-ends-at-time"
+            i18n="@@calendar.eventDialog.endsAtTimeLabel"
+            >End time</label
+          >
+          <input
+            hlmInput
+            id="calendar-event-ends-at-time"
+            type="time"
+            data-testid="calendar-event-ends-at-time"
+            class="w-28 shrink-0 max-sm:min-h-11"
+            [formField]="eventForm.endsAtTime"
+          />
+        </div>
+        @if (eventForm.endsAtDate().touched() && eventForm.endsAtDate().invalid()) {
+          <hlm-field-error>{{ eventForm.endsAtDate().errors()[0].message }}</hlm-field-error>
         }
       </hlm-field>
     </div>

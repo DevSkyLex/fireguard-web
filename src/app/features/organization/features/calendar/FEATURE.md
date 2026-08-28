@@ -20,13 +20,17 @@ onto the grid's generic `firstDayOfWeek` input, Monday when unset.
 
 The page is a **full-height console**, not a scrolling document: a
 page-level toolbar band (Today, prev/next period, the current period label,
-and a Month/Week/Day granularity tablist mirroring the interventions page's
-view toggle) owns period navigation, driving the page's own
-`month`/`granularity`/`selectedDay` state. `app-calendar` renders with its
-built-in toolbar hidden (`[showToolbar]="false"`) so the grid and the page
-never show two sets of Today/prev/next controls — the grid's own month title
-stays in the DOM, `sr-only`, because `brnCalendarGrid`'s accessible name is
-`aria-labelledby` that title regardless of whether it is visible.
+and a Month/Week/Day granularity selector) owns period navigation, driving
+the page's own `month`/`granularity`/`selectedDay` state. The selector is
+`hlm-tabs` (`@shared/ui/tabs`) — the whole toolbar-plus-content section sits
+inside one `[tab]="granularity()"`-bound `hlm-tabs`, `class="contents"` so it
+stays invisible to the page's own flex layout, with each of the three panels
+wired through `hlmTabsContent` — not a hand-rolled `role="tablist"`.
+`app-calendar` renders with its built-in toolbar hidden
+(`[showToolbar]="false"`) so the grid and the page never show two sets of
+Today/prev/next controls — the grid's own month title stays in the DOM,
+`sr-only`, because `brnCalendarGrid`'s accessible name is `aria-labelledby`
+that title regardless of whether it is visible.
 
 **Three granularities**, all reading the same date-windowed feed: **month**
 is the shared grid plus the selected-day panel; **week** is deliberately a

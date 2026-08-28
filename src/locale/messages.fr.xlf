@@ -4108,6 +4108,22 @@
         <source>Create event</source>
         <target>Créer l'événement</target>
       </trans-unit>
+      <trans-unit id="calendar.eventDialog.startsAtTimeRequired" datatype="html">
+        <source>A start time is required.</source>
+        <target>Une heure de début est requise.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.pickDate" datatype="html">
+        <source>Pick a date</source>
+        <target>Choisir une date</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.startsAtTimeLabel" datatype="html">
+        <source>Start time</source>
+        <target>Heure de début</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.endsAtTimeLabel" datatype="html">
+        <source>End time</source>
+        <target>Heure de fin</target>
+      </trans-unit>
       <trans-unit id="calendar.eventDialog.titleRequired" datatype="html">
         <source>A title is required.</source>
         <target>Un titre est requis.</target>
@@ -4121,8 +4137,8 @@
         <target>Cette description est trop longue.</target>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.startsAtRequired" datatype="html">
-        <source>A start date/time is required.</source>
-        <target>Une date/heure de début est requise.</target>
+        <source>A start date is required.</source>
+        <target>Une date de début est requise.</target>
       </trans-unit>
       <trans-unit id="calendar.eventDialog.endBeforeStart" datatype="html">
         <source>The end must not be before the start.</source>

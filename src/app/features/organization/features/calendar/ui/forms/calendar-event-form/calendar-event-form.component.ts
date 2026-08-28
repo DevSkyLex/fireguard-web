@@ -24,6 +24,7 @@ import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { toApiDateTime } from '@features/organization/features/calendar/utils';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDatePicker, HlmDatePickerTrigger } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -34,12 +35,17 @@ import type { CalendarEventDraft, CalendarEventFormValues } from './models';
 /** The select's value for "no facility" — no narrowing. */
 const NO_FACILITY_VALUE: string = '';
 
+/** The local wall-clock time a fresh draft's start defaults to, mirroring the page's own quick-create default. */
+const DEFAULT_EVENT_TIME: string = '09:00';
+
 /** A blank draft. */
 const EMPTY_DRAFT: CalendarEventDraft = {
   title: '',
   description: '',
-  startsAt: '',
-  endsAt: '',
+  startsAtDate: null,
+  startsAtTime: DEFAULT_EVENT_TIME,
+  endsAtDate: null,
+  endsAtTime: '',
   allDay: false,
   facilityId: NO_FACILITY_VALUE,
 };
@@ -57,15 +63,22 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
  * @description
  * Names, times and optionally describes/locates a standalone calendar
  * event — title, start/end, all-day flag, optional description and
- * facility. Mode follows {@link editing}: `null` creates a new event, a
- * value seeds the draft with that record's fields and switches the submit
- * label to editing.
+ * facility. Start and end are each a `hlm-date-picker` (`@shared/ui/date-picker`)
+ * paired with an `hlmInput type="time"` for the hour — spartan/ui ships no
+ * combined date-time control, and no range picker either: `endsAt` is
+ * genuinely optional and independent of `startsAt` (unlike, say,
+ * `intervention-create-form`'s `plannedRange`, whose two bounds are always
+ * set together), while `hlm-date-range-picker` only ever commits a
+ * *complete* pair — it structurally cannot represent "a start with no end".
+ * Mode follows {@link editing}: `null` creates a new event, a value seeds
+ * the draft with that record's fields and switches the submit label to
+ * editing.
  *
  * Presentational: it validates and emits {@link submitted}; the hosting
  * `CalendarEventDialog` forwards it untouched and the page calls the store
  * (`ARCHITECTURE.md` §10.5).
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -87,6 +100,8 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
   imports: [
     FormField,
     HlmButton,
+    HlmDatePicker,
+    HlmDatePickerTrigger,
     HlmSwitch,
     HlmInput,
     ...HlmFieldImports,
@@ -212,13 +227,20 @@ export class CalendarEventForm {
     maxLength(path.description, DESCRIPTION_MAX_LENGTH, {
       message: $localize`:@@calendar.eventDialog.descriptionTooLong:This description is too long.`,
     });
-    required(path.startsAt, {
-      message: $localize`:@@calendar.eventDialog.startsAtRequired:A start date/time is required.`,
+    required(path.startsAtDate, {
+      message: $localize`:@@calendar.eventDialog.startsAtRequired:A start date is required.`,
     });
-    validate(path.endsAt, ({ value, valueOf }): ValidationError | null => {
-      const endsAt: string = value();
-      const startsAt: string = valueOf(path.startsAt);
-      if (!endsAt || !startsAt || new Date(endsAt) >= new Date(startsAt)) return null;
+    required(path.startsAtTime, {
+      message: $localize`:@@calendar.eventDialog.startsAtTimeRequired:A start time is required.`,
+    });
+    validate(path.endsAtDate, ({ value, valueOf }): ValidationError | null => {
+      const endsAtDate: Date | null = value();
+      const startsAtDate: Date | null = valueOf(path.startsAtDate);
+      if (!endsAtDate || !startsAtDate) return null;
+
+      const start: Date = combineDateAndTime(startsAtDate, valueOf(path.startsAtTime));
+      const end: Date = combineDateAndTime(endsAtDate, valueOf(path.endsAtTime) || '00:00');
+      if (end >= start) return null;
 
       return {
         kind: 'calendarEventEndBeforeStart',
@@ -269,11 +291,7 @@ export class CalendarEventForm {
         return;
       }
 
-      this.model.set(
-        editing
-          ? toDraft(editing)
-          : { ...EMPTY_DRAFT, startsAt: this.initialStartsAt() ?? EMPTY_DRAFT.startsAt },
-      );
+      this.model.set(editing ? toDraft(editing) : draftFromInitialStartsAt(this.initialStartsAt()));
     });
   }
   //#endregion
@@ -301,6 +319,9 @@ export class CalendarEventForm {
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits the
    * validated draft converted to ISO instants and blank-to-`null` sentinels.
+   * A `null` {@link CalendarEventDraft.startsAtDate} at this point would mean
+   * the schema's own `required` rule let an invalid tree through, so this
+   * bails defensively rather than asserting the type away.
    *
    * @access protected
    * @since 1.0.0
@@ -317,12 +338,15 @@ export class CalendarEventForm {
     if (this.eventForm().invalid()) return;
 
     const draft: CalendarEventDraft = this.model();
+    if (!draft.startsAtDate) return;
 
     this.submitted.emit({
       title: draft.title.trim(),
       description: draft.description.trim() === '' ? null : draft.description.trim(),
-      startsAt: toApiDateTime(new Date(draft.startsAt)),
-      endsAt: draft.endsAt.trim() === '' ? null : toApiDateTime(new Date(draft.endsAt)),
+      startsAt: toApiDateTime(combineDateAndTime(draft.startsAtDate, draft.startsAtTime)),
+      endsAt: draft.endsAtDate
+        ? toApiDateTime(combineDateAndTime(draft.endsAtDate, draft.endsAtTime || '00:00'))
+        : null,
       allDay: draft.allDay,
       facilityId: draft.facilityId === NO_FACILITY_VALUE ? null : draft.facilityId,
     });
@@ -338,27 +362,81 @@ export class CalendarEventForm {
  * @returns {CalendarEventDraft} The form's draft shape, seeded from the record.
  */
 function toDraft(item: CalendarFeedItemOutput): CalendarEventDraft {
+  const starts: Date = new Date(item.startsAt);
+  const ends: Date | null = item.endsAt ? new Date(item.endsAt) : null;
+
   return {
     title: item.title,
     description: item.description ?? '',
-    startsAt: toDatetimeLocalValue(item.startsAt),
-    endsAt: item.endsAt ? toDatetimeLocalValue(item.endsAt) : '',
+    startsAtDate: toDateOnly(starts),
+    startsAtTime: toTimeString(starts),
+    endsAtDate: ends ? toDateOnly(ends) : null,
+    endsAtTime: ends ? toTimeString(ends) : '',
     allDay: item.allDay,
     facilityId: item.facilityId ?? NO_FACILITY_VALUE,
   };
 }
 
 /**
- * Function toDatetimeLocalValue
+ * Function draftFromInitialStartsAt
  * @access private
- * @since 1.0.0
- * @param {string} iso - An ISO 8601 instant.
- * @returns {string} The equivalent `yyyy-MM-ddTHH:mm` value in the browser's local time, as a native `datetime-local` input expects.
+ * @since 2.0.0
+ * @param {string | null} value - The quick-create path's `yyyy-MM-ddTHH:mm` seed, or `null` for a plain blank draft.
+ * @returns {CalendarEventDraft} {@link EMPTY_DRAFT} with the start date/time pre-filled from `value`, when given.
  */
-function toDatetimeLocalValue(iso: string): string {
-  const date: Date = new Date(iso);
+function draftFromInitialStartsAt(value: string | null): CalendarEventDraft {
+  if (!value) return EMPTY_DRAFT;
 
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const [datePart, timePart]: readonly string[] = value.split('T');
+  const [year, month, day]: readonly number[] = datePart.split('-').map(Number);
+
+  return {
+    ...EMPTY_DRAFT,
+    startsAtDate: new Date(year, month - 1, day),
+    startsAtTime: timePart ?? DEFAULT_EVENT_TIME,
+  };
+}
+
+/**
+ * Function toDateOnly
+ * @access private
+ * @since 2.0.0
+ * @param {Date} date - Any instant.
+ * @returns {Date} Local midnight on `date`'s calendar day — the value shape `hlm-date-picker` expects.
+ */
+function toDateOnly(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
+ * Function toTimeString
+ * @access private
+ * @since 2.0.0
+ * @param {Date} date - Any instant.
+ * @returns {string} The local wall-clock time as `HH:mm`, matching a native `type="time"` input.
+ */
+function toTimeString(date: Date): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * Function combineDateAndTime
+ * @access private
+ * @since 2.0.0
+ * @param {Date} date - A calendar day, as {@link toDateOnly} produces.
+ * @param {string} time - An `HH:mm` wall-clock time; an unparsable value falls back to midnight.
+ * @returns {Date} The local instant combining both.
+ */
+function combineDateAndTime(date: Date, time: string): Date {
+  const [hours, minutes]: readonly number[] = time.split(':').map(Number);
+
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    Number.isFinite(hours) ? hours : 0,
+    Number.isFinite(minutes) ? minutes : 0,
+  );
 }
 
 /**

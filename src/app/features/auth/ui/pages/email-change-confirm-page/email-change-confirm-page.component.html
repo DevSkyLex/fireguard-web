@@ -41,13 +41,10 @@
     />
 
     @if (errorMessage(); as message) {
-      <div
-        class="flex flex-col gap-2 rounded-lg border border-destructive/40 p-4"
-        role="alert"
-        data-testid="email-change-confirm-error"
-      >
-        <p class="text-sm text-destructive">{{ message }}</p>
-        <p class="text-sm text-muted-foreground" i18n="@@auth.emailChangeConfirm.errorHint">
+      <div hlmAlert variant="destructive" data-testid="email-change-confirm-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle>{{ message }}</p>
+        <p hlmAlertDescription i18n="@@auth.emailChangeConfirm.errorHint">
           You can request a new change from your account's security page.
         </p>
       </div>

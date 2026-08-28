@@ -62,6 +62,7 @@ import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTabsImports } from '@shared/ui/tabs';
 import { CalendarEntryList } from '../../components/calendar-entry-list';
 import { CalendarEventDeleteDialog } from '../../dialogs/calendar-event-delete-dialog';
 import { CalendarEventDialog } from '../../dialogs/calendar-event-dialog';
@@ -116,7 +117,14 @@ type CalendarPageAgendaGroup = {
  * `month`/`granularity`/`selectedDay` state — the shared `app-calendar`
  * widget renders with its own built-in toolbar hidden (`showToolbar="false"`)
  * so the two never duplicate — and the active view fills the remaining
- * height, scrolling internally when it overflows. At `md` and below, the
+ * height, scrolling internally when it overflows. The Month/Week/Day
+ * selector is `hlm-tabs` (`@shared/ui/tabs`), not a hand-rolled
+ * `role="tablist"`: the whole toolbar-plus-content section sits inside one
+ * `[tab]="granularity()"`-bound `hlm-tabs`, which owns the roving tabindex,
+ * arrow-key navigation and `aria-controls`/`aria-selected` wiring the three
+ * panels below reference through `hlmTabsContent`; `class="contents"` on the
+ * `hlm-tabs` host keeps it invisible to the page's own flex layout. At `md`
+ * and below, the
  * month view's shrunken grid gives way to an agenda: the same window's
  * entries grouped by day, since a month grid is unusable at phone width. The
  * grid's day panel, the agenda's day groups, and the week/day views all
@@ -131,7 +139,7 @@ type CalendarPageAgendaGroup = {
  * the feed-token dialog (`CalendarFeedSubscribeDialog`), which owns its own
  * transport calls — this page only holds its visibility.
  *
- * @version 2.3.0
+ * @version 2.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -149,6 +157,7 @@ type CalendarPageAgendaGroup = {
     HlmButton,
     HlmSkeleton,
     ...HlmCardImports,
+    ...HlmTabsImports,
   ],
   providers: [
     CalendarFeedStore,
@@ -622,6 +631,18 @@ export class CalendarPage {
    */
   protected switchGranularity(granularity: CalendarGranularity): void {
     this.granularity.set(granularity);
+  }
+
+  /**
+   * Method onGranularityTabActivated
+   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload to {@link CalendarGranularity} before delegating to {@link switchGranularity}.
+   * @access protected
+   * @since 2.4.0
+   * @param {string} tab - The `hlm-tabs` id that just activated.
+   * @returns {void}
+   */
+  protected onGranularityTabActivated(tab: string): void {
+    if (tab === 'month' || tab === 'week' || tab === 'day') this.switchGranularity(tab);
   }
 
   /**

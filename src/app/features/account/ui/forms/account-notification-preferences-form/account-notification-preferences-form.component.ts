@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { form, FormField, type FieldTree } from '@angular/forms/signals';
 import { HlmSwitch } from '@shared/ui/switch';
+import { HlmTableImports } from '@shared/ui/table';
 import type {
   AccountNotificationPreferenceRow,
   AccountNotificationPreferenceToggle,
@@ -46,7 +47,7 @@ import type {
  */
 @Component({
   selector: 'app-account-notification-preferences-form',
-  imports: [FormField, HlmSwitch],
+  imports: [FormField, HlmSwitch, ...HlmTableImports],
   templateUrl: './account-notification-preferences-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

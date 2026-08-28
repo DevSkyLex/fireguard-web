@@ -9,9 +9,12 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { EmailChangeConfirmStore } from '@features/auth/state';
 import { PageHeading } from '@shared/page-heading';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 
 /**
@@ -40,8 +43,8 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-email-change-confirm-page',
-  imports: [HlmButton, PageHeading, RouterLink],
-  providers: [EmailChangeConfirmStore],
+  imports: [HlmButton, NgIcon, PageHeading, RouterLink, ...HlmAlertImports],
+  providers: [EmailChangeConfirmStore, provideIcons({ lucideCircleAlert })],
   templateUrl: './email-change-confirm-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

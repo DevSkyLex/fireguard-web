@@ -1,0 +1,78 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    <hlm-field>
+      <label hlmFieldLabel for="account-email-change-new"
+        ><span i18n="@@account.email.newLabel">New email address</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="account-email-change-new"
+        type="email"
+        autocomplete="email"
+        inputmode="email"
+        class="max-sm:min-h-11"
+        placeholder="you@company.com"
+        i18n-placeholder="@@account.email.newPlaceholder"
+        data-testid="account-email-change-new"
+        [formField]="changeForm.newEmail"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="changeForm.newEmail().touched() && changeForm.newEmail().invalid()"
+      />
+      @if (changeForm.newEmail().touched() && changeForm.newEmail().invalid()) {
+        <hlm-field-error>{{ changeForm.newEmail().errors()[0].message }}</hlm-field-error>
+      }
+      <p class="text-xs text-muted-foreground" i18n="@@account.email.newHint">
+        We will send a confirmation link to this address. Nothing changes until you open it.
+      </p>
+    </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="account-email-change-password"
+        ><span i18n="@@account.email.passwordLabel">Current password</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <app-password-input
+        inputId="account-email-change-password"
+        autocomplete="current-password"
+        placeholder="Your current password"
+        i18n-placeholder="@@account.email.passwordPlaceholder"
+        [field]="changeForm.currentPassword"
+      />
+      @if (changeForm.currentPassword().touched() && changeForm.currentPassword().invalid()) {
+        <hlm-field-error>{{ changeForm.currentPassword().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="account-email-change-cancel"
+        [disabled]="pending()"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="account-email-change-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@account.email.submitting">Sending…</span>
+        } @else {
+          <span i18n="@@account.email.submit">Send confirmation link</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

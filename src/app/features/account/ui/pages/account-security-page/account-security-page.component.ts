@@ -16,6 +16,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert } from '@ng-icons/lucide';
 import {
   AccountDeactivationStore,
+  AccountEmailChangeStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
   UserStore,
@@ -24,7 +25,8 @@ import { AccountMfaPanel } from '@features/account/ui/components/account-mfa-pan
 import { AccountSessionsPanel } from '@features/account/ui/components/account-sessions-panel';
 import { AccountTrustedDevicesPanel } from '@features/account/ui/components/account-trusted-devices-panel';
 import { AccountDeactivateDialog } from '@features/account/ui/dialogs/account-deactivate-dialog';
-import { AccountPasswordForm } from '@features/account/ui/forms';
+import { AccountEmailChangeDialog } from '@features/account/ui/dialogs/account-email-change-dialog';
+import { AccountPasswordForm, type AccountEmailChangeFormValues } from '@features/account/ui/forms';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
 import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { ErrorState } from '@shared/error-state';
@@ -57,6 +59,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   selector: 'app-account-security-page',
   imports: [
     AccountDeactivateDialog,
+    AccountEmailChangeDialog,
     AccountMfaPanel,
     AccountPasswordForm,
     AccountSessionsPanel,
@@ -69,6 +72,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   ],
   providers: [
     AccountDeactivationStore,
+    AccountEmailChangeStore,
     AccountPasswordChangeStore,
     AccountTotpEnrollmentStore,
     SessionStore,
@@ -128,6 +132,24 @@ export class AccountSecurityPage implements OnInit {
   protected readonly passwordStore: AccountPasswordChangeStore = inject<AccountPasswordChangeStore>(
     AccountPasswordChangeStore,
   );
+
+  /**
+   * Property emailChangeStore
+   * @readonly
+   *
+   * @description
+   * Scoped sign-in email change workflow. The backend keeps no readable
+   * pending state, so the "link sent" panel this drives lives exactly as
+   * long as this page does — a reload shows the plain form again, which is
+   * safe because a new request replaces the pending one server-side.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {AccountEmailChangeStore}
+   */
+  protected readonly emailChangeStore: AccountEmailChangeStore =
+    inject<AccountEmailChangeStore>(AccountEmailChangeStore);
 
   /**
    * Property sessionStore
@@ -219,6 +241,78 @@ export class AccountSecurityPage implements OnInit {
    * @type {WritableSignal<boolean>}
    */
   protected readonly confirmingDeactivation: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property changingEmail
+   * @readonly
+   *
+   * @description
+   * Whether the email change dialog is open. The resend path reopens it with
+   * the pending address prefilled — the password is asked again because it is
+   * never retained client-side.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly changingEmail: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property previousEmailRequestStatus
+   *
+   * @description
+   * The email change request call state as of the last time
+   * {@link closeDialogOnEmailRequest} ran, so it can spot the transition into
+   * success rather than the state of being in it.
+   *
+   * @access private
+   * @since 1.4.0
+   *
+   * @type {string}
+   */
+  private previousEmailRequestStatus: string = 'idle';
+
+  /**
+   * Property closeDialogOnEmailRequest
+   * @readonly
+   *
+   * @description
+   * Closes the email change dialog the moment a request is accepted (202) —
+   * the section swaps to its "link sent" panel naming the address, which is
+   * the confirmation. Keyed on the transition into success, matching
+   * {@link leaveForLoginOnDeactivate}.
+   *
+   * @access private
+   * @since 1.4.0
+   */
+  private readonly closeDialogOnEmailRequest: EffectRef = effect((): void => {
+    const status: string = this.emailChangeStore.requestCallState().status;
+    const previous: string = this.previousEmailRequestStatus;
+    this.previousEmailRequestStatus = status;
+
+    if (previous === status || status !== 'success') return;
+
+    untracked((): void => {
+      this.changingEmail.set(false);
+    });
+  });
+
+  /**
+   * Property currentEmail
+   * @readonly
+   *
+   * @description
+   * The address the user signs in with today, read from the profile.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly currentEmail: Signal<string | null> = computed(
+    (): string | null => this.userStore.profile()?.email ?? null,
+  );
 
   /**
    * Property previousDeactivateStatus
@@ -615,6 +709,60 @@ export class AccountSecurityPage implements OnInit {
    */
   protected retryDevices(): void {
     this.trustedDeviceStore.load();
+  }
+
+  /**
+   * Method openEmailChangeDialog
+   * @method openEmailChangeDialog
+   *
+   * @description
+   * Opens the email change dialog. Also the resend path: with a request
+   * pending, the form prefills the pending address and asks only for the
+   * password again — submitting re-POSTs, and the backend replaces the
+   * pending request.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected openEmailChangeDialog(): void {
+    this.changingEmail.set(true);
+  }
+
+  /**
+   * Method requestEmailChange
+   * @method requestEmailChange
+   *
+   * @description
+   * Requests the sign-in email change (or resends the link) once the dialog
+   * form validates.
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @param {AccountEmailChangeFormValues} values - New address and current password.
+   *
+   * @returns {void}
+   */
+  protected requestEmailChange(values: AccountEmailChangeFormValues): void {
+    this.emailChangeStore.request(values);
+  }
+
+  /**
+   * Method cancelEmailChange
+   * @method cancelEmailChange
+   *
+   * @description
+   * Withdraws the pending email change request (idempotent server-side).
+   *
+   * @access protected
+   * @since 1.4.0
+   *
+   * @returns {void}
+   */
+  protected cancelEmailChange(): void {
+    this.emailChangeStore.cancel();
   }
 
   /**

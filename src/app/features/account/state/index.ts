@@ -11,6 +11,7 @@ export { AccountPasswordChangeStore, accountPasswordChangeStoreEvents } from './
 export type { AccountPasswordChangeStep } from './password-change';
 export { AccountTotpEnrollmentStore, accountTotpEnrollmentStoreEvents } from './totp-enrollment';
 export { AccountDeactivationStore, accountDeactivationStoreEvents } from './deactivation';
+export { AccountEmailChangeStore, accountEmailChangeStoreEvents } from './email-change';
 export {
   AccountNotificationPreferencesStore,
   accountNotificationPreferencesStoreEvents,

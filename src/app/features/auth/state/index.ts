@@ -26,6 +26,8 @@ export { trustedDeviceStoreEvents } from './trusted-device';
 export { PasswordResetStore } from './password-reset';
 export type { PasswordResetState } from './password-reset';
 export { passwordResetStoreEvents } from './password-reset';
+export { EmailChangeConfirmStore } from './email-change-confirm';
+export type { EmailChangeConfirmState } from './email-change-confirm';
 export { RegisterStore } from './register';
 export type { RegisterState, RegisterStoreType } from './register';
 export { registerStoreEvents } from './register';

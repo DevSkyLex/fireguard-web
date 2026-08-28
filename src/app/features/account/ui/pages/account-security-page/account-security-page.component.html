@@ -41,6 +41,98 @@
         (cancelled)="totpStore.cancelSetup()"
       />
 
+      <section id="account-email" class="flex flex-col gap-3 border-t border-border pt-5">
+        <header class="flex min-w-0 flex-col gap-1">
+          <h3
+            class="text-sm font-semibold tracking-tight text-foreground"
+            i18n="@@account.email.title"
+          >
+            Email address
+          </h3>
+          <p class="text-sm text-muted-foreground" i18n="@@account.email.description">
+            The address you sign in with. Changing it asks for your password and a confirmation from
+            the new address.
+          </p>
+        </header>
+
+        @if (emailChangeStore.hasPendingRequest()) {
+          <div
+            class="flex flex-col gap-3 rounded-lg border border-border p-4"
+            role="status"
+            data-testid="account-email-pending"
+          >
+            <p class="text-sm text-foreground">
+              <span i18n="@@account.email.pendingText"
+                >We sent a confirmation link to {{ emailChangeStore.pendingEmail() }}. Open it from
+                that inbox to finish the change — until then you keep signing in with your current
+                address.</span
+              >
+            </p>
+            <p class="text-xs text-muted-foreground" i18n="@@account.email.pendingHint">
+              The link expires after one hour. Confirming signs you out everywhere, and you sign
+              back in with the new address.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11"
+                data-testid="account-email-resend"
+                [disabled]="emailChangeStore.isCancelling()"
+                (click)="openEmailChangeDialog()"
+              >
+                <span i18n="@@account.email.resend">Resend link</span>
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="max-sm:min-h-11"
+                data-testid="account-email-cancel-request"
+                aria-live="polite"
+                [disabled]="emailChangeStore.isCancelling()"
+                [attr.aria-busy]="emailChangeStore.isCancelling() ? 'true' : null"
+                (click)="cancelEmailChange()"
+              >
+                @if (emailChangeStore.isCancelling()) {
+                  <span i18n="@@account.email.cancelling">Cancelling…</span>
+                } @else {
+                  <span i18n="@@account.email.cancelRequest">Cancel request</span>
+                }
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-foreground" data-testid="account-email-current">
+              {{ currentEmail() }}
+            </p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="account-email-change-open"
+              (click)="openEmailChangeDialog()"
+            >
+              <span i18n="@@account.email.changeOpen">Change email</span>
+            </button>
+          </div>
+        }
+
+        <app-account-email-change-dialog
+          [visible]="changingEmail()"
+          [pending]="emailChangeStore.isRequesting()"
+          [initialEmail]="emailChangeStore.pendingEmail()"
+          (visibleChange)="changingEmail.set($event)"
+          (submitted)="requestEmailChange($event)"
+        />
+      </section>
+
       <section id="account-password" class="flex flex-col gap-3 border-t border-border pt-5">
         <header class="flex min-w-0 flex-col gap-1">
           <h3

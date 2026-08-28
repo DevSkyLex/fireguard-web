@@ -1,0 +1,27 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content
+    class="sm:max-w-lg"
+    data-testid="account-email-change-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@account.email.dialogTitle">Change your email address</h3>
+      <p hlmDialogDescription i18n="@@account.email.dialogDescription">
+        Enter the new address and confirm your password. A confirmation link goes to the new
+        address; your sign-in email only changes once you open it.
+      </p>
+    </hlm-dialog-header>
+
+    <app-account-email-change-form
+      [visible]="visible()"
+      [pending]="pending()"
+      [initialEmail]="initialEmail()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

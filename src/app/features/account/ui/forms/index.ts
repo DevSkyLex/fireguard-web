@@ -7,3 +7,5 @@ export type {
   AccountNotificationPreferenceRow,
   AccountNotificationPreferenceToggle,
 } from './account-notification-preferences-form';
+export { AccountEmailChangeForm } from './account-email-change-form';
+export type { AccountEmailChangeFormValues } from './account-email-change-form';

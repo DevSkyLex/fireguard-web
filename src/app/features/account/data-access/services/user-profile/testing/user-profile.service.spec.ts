@@ -4,7 +4,11 @@ import { TestBed } from '@angular/core/testing';
 import type { ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
-import type { UserOutput, UserProfileOutput } from '@features/account/models';
+import type {
+  RequestEmailChangeOutput,
+  UserOutput,
+  UserProfileOutput,
+} from '@features/account/models';
 import { UserProfileService } from '../user-profile.service';
 
 describe('UserProfileService', () => {
@@ -220,6 +224,106 @@ describe('UserProfileService', () => {
       expect(req.request.withCredentials).toBe(true);
 
       req.flush(response);
+    });
+  });
+  describe('requestEmailChange', () => {
+    it('should POST the new address and current password to the email-change endpoint', () => {
+      const response = {
+        '@id': '/api/me/email-change',
+        '@type': 'RequestEmailChangeOutput',
+        success: true,
+        message: 'A confirmation link has been sent to the new email address.',
+        expiresAt: '2026-08-28T12:00:00+00:00',
+      } as RequestEmailChangeOutput;
+
+      service
+        .requestEmailChange({ newEmail: 'new@example.com', currentPassword: 'Secret123!' })
+        .subscribe((result) => {
+          expect(result.success).toBe(true);
+          expect(result.expiresAt).toBe('2026-08-28T12:00:00+00:00');
+        });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/email-change`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        newEmail: 'new@example.com',
+        currentPassword: 'Secret123!',
+      });
+      expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Content-Type')).toBe('application/ld+json');
+
+      req.flush(response, { status: 202, statusText: 'Accepted' });
+    });
+
+    it('should propagate the neutral 409 untouched', () => {
+      service
+        .requestEmailChange({ newEmail: 'taken@example.com', currentPassword: 'Secret123!' })
+        .subscribe({
+          next: () => {
+            throw new Error('should not succeed');
+          },
+          error: (error: ApiError) => {
+            expect(error.status).toBe(409);
+          },
+        });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/email-change`);
+      req.flush(
+        {
+          '@id': '',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'Conflict',
+          detail: 'This email address cannot be used.',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+    });
+
+    it('should propagate the 422 of a wrong current password untouched', () => {
+      service
+        .requestEmailChange({ newEmail: 'new@example.com', currentPassword: 'wrong' })
+        .subscribe({
+          next: () => {
+            throw new Error('should not succeed');
+          },
+          error: (error: ApiError) => {
+            expect(error.status).toBe(422);
+          },
+        });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/email-change`);
+      req.flush(
+        {
+          '@id': '',
+          '@type': 'Error',
+          status: 422,
+          type: 'about:blank',
+          title: 'Unprocessable Entity',
+          detail: 'Current password is incorrect.',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+    });
+  });
+
+  describe('cancelEmailChange', () => {
+    it('should send a DELETE to the email-change endpoint and complete', () => {
+      let completed = false;
+
+      service.cancelEmailChange().subscribe({
+        complete: () => {
+          completed = true;
+        },
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/me/email-change`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      expect(completed).toBe(true);
     });
   });
 });

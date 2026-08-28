@@ -1,0 +1,83 @@
+<div id="email-change-confirm-page" class="flex w-full flex-col gap-6">
+  @if (confirmStore.isConfirmed()) {
+    <app-page-heading
+      heading="Email address changed"
+      i18n-heading="@@auth.emailChangeConfirm.successTitle"
+      description="Every session has been signed out. Sign in again with your new address."
+      i18n-description="@@auth.emailChangeConfirm.successText"
+    />
+
+    <a
+      hlmBtn
+      class="w-full max-sm:min-h-11"
+      routerLink="/auth/login"
+      data-testid="email-change-confirm-login"
+    >
+      <span i18n="@@auth.emailChangeConfirm.signIn">Go to sign-in</span>
+    </a>
+  } @else if (token === null || token === '') {
+    <app-page-heading
+      heading="Confirm your new email address"
+      i18n-heading="@@auth.emailChangeConfirm.title"
+      description="This link is missing its confirmation token. Open the link from the email again, or request a new change."
+      i18n-description="@@auth.emailChangeConfirm.missingToken"
+    />
+
+    <a
+      hlmBtn
+      variant="outline"
+      class="w-full max-sm:min-h-11"
+      routerLink="/account/security"
+      data-testid="email-change-confirm-request-again"
+    >
+      <span i18n="@@auth.emailChangeConfirm.requestAgain">Request a new change</span>
+    </a>
+  } @else {
+    <app-page-heading
+      heading="Confirm your new email address"
+      i18n-heading="@@auth.emailChangeConfirm.title"
+      description="One click applies the change. You will be signed out everywhere and sign back in with the new address."
+      i18n-description="@@auth.emailChangeConfirm.subtitle"
+    />
+
+    @if (errorMessage(); as message) {
+      <div
+        class="flex flex-col gap-2 rounded-lg border border-destructive/40 p-4"
+        role="alert"
+        data-testid="email-change-confirm-error"
+      >
+        <p class="text-sm text-destructive">{{ message }}</p>
+        <p class="text-sm text-muted-foreground" i18n="@@auth.emailChangeConfirm.errorHint">
+          You can request a new change from your account's security page.
+        </p>
+      </div>
+
+      <a
+        hlmBtn
+        variant="outline"
+        class="w-full max-sm:min-h-11"
+        routerLink="/account/security"
+        data-testid="email-change-confirm-request-again"
+      >
+        <span i18n="@@auth.emailChangeConfirm.requestAgain">Request a new change</span>
+      </a>
+    } @else {
+      <button
+        hlmBtn
+        type="button"
+        class="w-full max-sm:min-h-11"
+        data-testid="email-change-confirm-submit"
+        aria-live="polite"
+        [disabled]="confirmStore.isConfirming()"
+        [attr.aria-busy]="confirmStore.isConfirming() ? 'true' : null"
+        (click)="confirm()"
+      >
+        @if (confirmStore.isConfirming()) {
+          <span i18n="@@auth.emailChangeConfirm.confirming">Confirming…</span>
+        } @else {
+          <span i18n="@@auth.emailChangeConfirm.action">Confirm my new email address</span>
+        }
+      </button>
+    }
+  }
+</div>

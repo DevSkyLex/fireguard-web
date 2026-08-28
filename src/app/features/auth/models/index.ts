@@ -23,6 +23,8 @@ export type { PasswordResetResendInput } from './password-reset/password-reset-r
 export type { PasswordResetResendOutput } from './password-reset/password-reset-resend-output.interface';
 export type { PasswordResetVerifyInput } from './password-reset/password-reset-verify-input.interface';
 export type { PasswordResetVerifyOutput } from './password-reset/password-reset-verify-output.interface';
+export type { ConfirmEmailChangeInput } from './email-change/confirm-email-change.interface';
+export type { ConfirmEmailChangeOutput } from './email-change/confirm-email-change.interface';
 export type { RegisterInput } from './register/register-input.interface';
 export type { RegisterOutput } from './register/register-output.interface';
 export type { RegisterResendInput } from './register/register-resend-input.interface';

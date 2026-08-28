@@ -8,6 +8,8 @@ This feature is responsible for:
 
 - user profile state, its editable fields and the avatar,
 - the authenticated password change and the authenticator-app (TOTP) enrollment lifecycle,
+- the authenticated half of the sign-in email change (request and cancel; the public
+  confirmation page belongs to `features/auth`),
 - self-service account deactivation (`POST /api/me/deactivate`),
 - notification center state and UI,
 - shell-facing user identity, access, and notification contracts,
@@ -34,8 +36,9 @@ stores.
 `/account` redirects to `/account/profile`. Each section is a full page:
 
 - `/account/profile` — identity, avatar, first/last name and interface language
-- `/account/security` — authenticator app (TOTP), the two-step password change, active sessions,
-  trusted devices, and the danger zone carrying self-service account deactivation
+- `/account/security` — authenticator app (TOTP), the sign-in email address (current address +
+  the change-email dialog), the two-step password change, active sessions, trusted devices, and
+  the danger zone carrying self-service account deactivation
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
 - `/account/notifications/preferences` — the per-category delivery matrix (email / in-app), each
   switch its own commit
@@ -93,6 +96,19 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
   no typed-name or password gate, because the API asks for none; its copy states the verified
   backend behavior: reactivation is admin-only (`POST /users/{id}/activate`), signing in again
   does **not** reactivate — a deactivated login is rejected as invalid credentials.
+- `AccountEmailChangeStore` — the sign-in email change: `POST /api/me/email-change` (202,
+  verifies the current password, emails a confirmation link to the NEW address) and the
+  idempotent `DELETE /api/me/email-change` (204). Confirmation is NOT this store's job — the
+  emailed link lands on auth's public `/auth/email-change/confirm` page. **Known limit,
+  by backend design**: there is no `GET` for a pending request, so the "link sent to X"
+  panel (with its Resend and Cancel controls) lives exactly as long as the page does — a
+  reload shows the plain form again. That is safe: requesting again REPLACES the pending
+  request server-side, and cancel is idempotent. Resend reopens the dialog with the pending
+  address prefilled and asks for the password again, because the password is required by the
+  API and never retained client-side. Failures toast the backend's neutral RFC 7807 detail
+  (wrong password → 422, "This email address cannot be used." → 409, rate limit → 429);
+  the accepted request and the cancellation stay toast-free — their outcome is the panel swap
+  on screen.
 - `AccountNotificationPreferencesStore` — the notification preferences matrix. The category list is
   derived from the type catalog (`GET /api/notification-types`), never hard-coded, so a category
   added server-side appears without a frontend change. A category with no server row is enabled on
@@ -112,6 +128,7 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
 Services:
 
 - `UserProfileService` — `/api/me`, `/api/me/avatar`, `/api/me/password/{request,confirm}`,
+  `/api/me/email-change` (request + cancel; the public confirm is auth's `EmailChangeService`),
   `/api/me/deactivate`
 - `NotificationService` — `/api/notifications*` (including the bulk `/read-all` and
   `/notifications/preferences`), `/api/notification-types`
@@ -119,7 +136,7 @@ Services:
 
 Every workflow store dispatches typed outcome events (`accountProfileEditStoreEvents`,
 `accountPasswordChangeStoreEvents`, `accountTotpEnrollmentStoreEvents`,
-`accountNotificationPreferencesStoreEvents`, `accountDeactivationStoreEvents`). They exist so the app-wide
+`accountNotificationPreferencesStoreEvents`, `accountDeactivationStoreEvents`, `accountEmailChangeStoreEvents`). They exist so the app-wide
 feedback listener can raise a toast: no account page renders an error surface of its own, because a
 rejected save is a whole-request failure rather than a field problem (`ARCHITECTURE.md` §10.4).
 
@@ -207,5 +224,5 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Not Built Yet
 
-Email cannot be changed by the user at all: `email` is read-only on `CurrentUserProfileOutput` and
-absent from the input DTO, and no endpoint exists.
+Nothing pending. The sign-in email change (formerly listed here) shipped: request/cancel on
+`/account/security`, public confirmation on auth's `/auth/email-change/confirm`.

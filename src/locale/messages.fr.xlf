@@ -9866,6 +9866,146 @@
         <source>Your account could not be deactivated.</source>
         <target>Votre compte n&apos;a pas pu être désactivé.</target>
       </trans-unit>
+      <trans-unit id="account.email.title" datatype="html">
+        <source>Email address</source>
+        <target>Adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="account.email.description" datatype="html">
+        <source>The address you sign in with. Changing it asks for your password and a confirmation from the new address.</source>
+        <target>L'adresse avec laquelle vous vous connectez. La changer demande votre mot de passe et une confirmation depuis la nouvelle adresse.</target>
+      </trans-unit>
+      <trans-unit id="account.email.changeOpen" datatype="html">
+        <source>Change email</source>
+        <target>Changer d'e-mail</target>
+      </trans-unit>
+      <trans-unit id="account.email.pendingText" datatype="html">
+        <source>We sent a confirmation link to <x id="INTERPOLATION" equiv-text="{{ emailChangeStore.pendingEmail() }}"/>. Open it from that inbox to finish the change — until then you keep signing in with your current address.</source>
+        <target>Nous avons envoyé un lien de confirmation à <x id="INTERPOLATION" equiv-text="{{ emailChangeStore.pendingEmail() }}"/>. Ouvrez-le depuis cette boîte pour terminer le changement — d'ici là, vous continuez à vous connecter avec votre adresse actuelle.</target>
+      </trans-unit>
+      <trans-unit id="account.email.pendingHint" datatype="html">
+        <source>The link expires after one hour. Confirming signs you out everywhere, and you sign back in with the new address.</source>
+        <target>Le lien expire au bout d'une heure. La confirmation vous déconnecte partout, et vous vous reconnectez avec la nouvelle adresse.</target>
+      </trans-unit>
+      <trans-unit id="account.email.resend" datatype="html">
+        <source>Resend link</source>
+        <target>Renvoyer le lien</target>
+      </trans-unit>
+      <trans-unit id="account.email.cancelRequest" datatype="html">
+        <source>Cancel request</source>
+        <target>Annuler la demande</target>
+      </trans-unit>
+      <trans-unit id="account.email.cancelling" datatype="html">
+        <source>Cancelling…</source>
+        <target>Annulation…</target>
+      </trans-unit>
+      <trans-unit id="account.email.dialogTitle" datatype="html">
+        <source>Change your email address</source>
+        <target>Changer votre adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="account.email.dialogDescription" datatype="html">
+        <source>Enter the new address and confirm your password. A confirmation link goes to the new address; your sign-in email only changes once you open it.</source>
+        <target>Saisissez la nouvelle adresse et confirmez votre mot de passe. Un lien de confirmation part vers la nouvelle adresse ; votre e-mail de connexion ne change qu'une fois le lien ouvert.</target>
+      </trans-unit>
+      <trans-unit id="account.email.newLabel" datatype="html">
+        <source>New email address</source>
+        <target>Nouvelle adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="account.email.newPlaceholder" datatype="html">
+        <source>you@company.com</source>
+        <target>vous@entreprise.com</target>
+      </trans-unit>
+      <trans-unit id="account.email.newHint" datatype="html">
+        <source>We will send a confirmation link to this address. Nothing changes until you open it.</source>
+        <target>Nous enverrons un lien de confirmation à cette adresse. Rien ne change tant que vous ne l'ouvrez pas.</target>
+      </trans-unit>
+      <trans-unit id="account.email.newRequired" datatype="html">
+        <source>Enter the new email address</source>
+        <target>Saisissez la nouvelle adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="account.email.newInvalid" datatype="html">
+        <source>Enter a valid email address</source>
+        <target>Saisissez une adresse e-mail valide</target>
+      </trans-unit>
+      <trans-unit id="account.email.newTooLong" datatype="html">
+        <source>The email address must not exceed 320 characters</source>
+        <target>L'adresse e-mail ne doit pas dépasser 320 caractères</target>
+      </trans-unit>
+      <trans-unit id="account.email.passwordLabel" datatype="html">
+        <source>Current password</source>
+        <target>Mot de passe actuel</target>
+      </trans-unit>
+      <trans-unit id="account.email.passwordPlaceholder" datatype="html">
+        <source>Your current password</source>
+        <target>Votre mot de passe actuel</target>
+      </trans-unit>
+      <trans-unit id="account.email.passwordRequired" datatype="html">
+        <source>Enter your current password</source>
+        <target>Saisissez votre mot de passe actuel</target>
+      </trans-unit>
+      <trans-unit id="account.email.submit" datatype="html">
+        <source>Send confirmation link</source>
+        <target>Envoyer le lien de confirmation</target>
+      </trans-unit>
+      <trans-unit id="account.email.submitting" datatype="html">
+        <source>Sending…</source>
+        <target>Envoi…</target>
+      </trans-unit>
+      <trans-unit id="account.email.requestFailed" datatype="html">
+        <source>The email change could not be requested.</source>
+        <target>Le changement d'e-mail n'a pas pu être demandé.</target>
+      </trans-unit>
+      <trans-unit id="account.email.cancelFailed" datatype="html">
+        <source>The pending email change could not be cancelled.</source>
+        <target>La demande de changement d'e-mail en attente n'a pas pu être annulée.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.title" datatype="html">
+        <source>Confirm your new email address</source>
+        <target>Confirmez votre nouvelle adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.subtitle" datatype="html">
+        <source>One click applies the change. You will be signed out everywhere and sign back in with the new address.</source>
+        <target>Un clic applique le changement. Vous serez déconnecté partout et vous reconnecterez avec la nouvelle adresse.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.action" datatype="html">
+        <source>Confirm my new email address</source>
+        <target>Confirmer ma nouvelle adresse e-mail</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.confirming" datatype="html">
+        <source>Confirming…</source>
+        <target>Confirmation…</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.successTitle" datatype="html">
+        <source>Email address changed</source>
+        <target>Adresse e-mail changée</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.successText" datatype="html">
+        <source>Every session has been signed out. Sign in again with your new address.</source>
+        <target>Toutes les sessions ont été déconnectées. Reconnectez-vous avec votre nouvelle adresse.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.signIn" datatype="html">
+        <source>Go to sign-in</source>
+        <target>Aller à la connexion</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.missingToken" datatype="html">
+        <source>This link is missing its confirmation token. Open the link from the email again, or request a new change.</source>
+        <target>Ce lien ne contient pas son jeton de confirmation. Rouvrez le lien depuis l'e-mail, ou demandez un nouveau changement.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.errorFallback" datatype="html">
+        <source>This confirmation link is invalid or has expired.</source>
+        <target>Ce lien de confirmation est invalide ou a expiré.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.errorHint" datatype="html">
+        <source>You can request a new change from your account's security page.</source>
+        <target>Vous pouvez demander un nouveau changement depuis la page Sécurité de votre compte.</target>
+      </trans-unit>
+      <trans-unit id="auth.emailChangeConfirm.requestAgain" datatype="html">
+        <source>Request a new change</source>
+        <target>Demander un nouveau changement</target>
+      </trans-unit>
+      <trans-unit id="route.emailChangeConfirm" datatype="html">
+        <source>Confirm email change</source>
+        <target>Confirmer le changement d'e-mail</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

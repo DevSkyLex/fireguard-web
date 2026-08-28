@@ -12,6 +12,7 @@ export type {
   ConfirmPasswordChangeInput,
   ConfirmPasswordChangeOutput,
 } from './password-change';
+export type { RequestEmailChangeInput, RequestEmailChangeOutput } from './email-change';
 export type { NotificationOutput } from './notification/notification-output.interface';
 export type { InboxUnreadCountOutput } from './notification/inbox-unread-count-output.interface';
 export type { MarkAllNotificationsAsReadOutput } from './notification/mark-all-notifications-as-read-output.interface';

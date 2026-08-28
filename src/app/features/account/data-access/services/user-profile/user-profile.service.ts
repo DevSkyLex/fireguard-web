@@ -4,6 +4,8 @@ import { HydraApiService } from '@core/api';
 import type {
   ConfirmPasswordChangeInput,
   ConfirmPasswordChangeOutput,
+  RequestEmailChangeInput,
+  RequestEmailChangeOutput,
   RequestPasswordChangeInput,
   RequestPasswordChangeOutput,
   UpdateCurrentUserProfileInput,
@@ -141,5 +143,38 @@ export class UserProfileService extends HydraApiService {
       `${UserProfileService.BASE_PATH}/me/password/confirm`,
       input,
     );
+  }
+
+  /**
+   * Method requestEmailChange
+   *
+   * @description
+   * Requests a sign-in email change: verifies the current password, then the
+   * backend emails a confirmation link (1 h validity) to the new address and
+   * an alert to the current one. Answers 202; a new request replaces any
+   * pending one. A wrong current password is a 422, an address that cannot
+   * be used a neutral 409.
+   *
+   * @param {RequestEmailChangeInput} input - New address and current password.
+   * @returns {Observable<RequestEmailChangeOutput>} Observable emitting the request outcome.
+   */
+  public requestEmailChange(input: RequestEmailChangeInput): Observable<RequestEmailChangeOutput> {
+    return this.post<RequestEmailChangeInput, RequestEmailChangeOutput>(
+      `${UserProfileService.BASE_PATH}/me/email-change`,
+      input,
+    );
+  }
+
+  /**
+   * Method cancelEmailChange
+   *
+   * @description
+   * Cancels the pending sign-in email change request. Idempotent: the
+   * backend answers 204 whether or not a request was pending.
+   *
+   * @returns {Observable<void>} Observable completing when the request is cancelled.
+   */
+  public cancelEmailChange(): Observable<void> {
+    return this.delete(`${UserProfileService.BASE_PATH}/me/email-change`);
   }
 }

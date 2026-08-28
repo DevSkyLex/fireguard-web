@@ -9,9 +9,14 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
-import type { SetupTotpOutput, UserProfileOutput } from '@features/account/models';
+import type {
+  RequestEmailChangeOutput,
+  SetupTotpOutput,
+  UserProfileOutput,
+} from '@features/account/models';
 import {
   AccountDeactivationStore,
+  AccountEmailChangeStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
   UserStore,
@@ -84,6 +89,18 @@ describe('AccountSecurityPage', () => {
     isDeactivating: WritableSignal<boolean>;
     deactivateError: WritableSignal<StoreError | null>;
   };
+  let emailChangeStore: {
+    request: ReturnType<typeof vi.fn>;
+    cancel: ReturnType<typeof vi.fn>;
+    pendingEmail: WritableSignal<string | null>;
+    expiresAt: WritableSignal<string | null>;
+    requestCallState: WritableSignal<CallState<RequestEmailChangeOutput | null>>;
+    cancelCallState: WritableSignal<CallState<null>>;
+    isRequesting: WritableSignal<boolean>;
+    isCancelling: WritableSignal<boolean>;
+    hasPendingRequest: WritableSignal<boolean>;
+    requestError: WritableSignal<StoreError | null>;
+  };
   let authSession: { clearSession: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -142,6 +159,18 @@ describe('AccountSecurityPage', () => {
       isDeactivating: signal(false),
       deactivateError: signal<StoreError | null>(null),
     };
+    emailChangeStore = {
+      request: vi.fn(),
+      cancel: vi.fn(),
+      pendingEmail: signal<string | null>(null),
+      expiresAt: signal<string | null>(null),
+      requestCallState: signal<CallState<RequestEmailChangeOutput | null>>(idleCallState()),
+      cancelCallState: signal<CallState<null>>(idleCallState()),
+      isRequesting: signal(false),
+      isCancelling: signal(false),
+      hasPendingRequest: signal(false),
+      requestError: signal<StoreError | null>(null),
+    };
     authSession = { clearSession: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -160,6 +189,7 @@ describe('AccountSecurityPage', () => {
             { provide: SessionStore, useValue: sessionStore },
             { provide: TrustedDeviceStore, useValue: trustedDeviceStore },
             { provide: AccountDeactivationStore, useValue: deactivationStore },
+            { provide: AccountEmailChangeStore, useValue: emailChangeStore },
           ],
         },
       })
@@ -349,5 +379,60 @@ describe('AccountSecurityPage', () => {
 
     expect(authSession.clearSession).not.toHaveBeenCalled();
     expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should show the current address with a way to change it', () => {
+    profile.set({ totpEnabled: false, email: 'ada@example.com' } as UserProfileOutput);
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="account-email-change-open"]',
+      ) as HTMLButtonElement
+    ).click();
+
+    expect(fixture.componentInstance['changingEmail']()).toBe(true);
+  });
+
+  it('should forward the email change request to the store', () => {
+    fixture.componentInstance['requestEmailChange']({
+      newEmail: 'new@example.com',
+      currentPassword: 'Secret123!',
+    });
+
+    expect(emailChangeStore.request).toHaveBeenCalledWith({
+      newEmail: 'new@example.com',
+      currentPassword: 'Secret123!',
+    });
+  });
+
+  it('should close the dialog once the request is accepted', async () => {
+    fixture.componentInstance['changingEmail'].set(true);
+    emailChangeStore.requestCallState.set(pendingCallState());
+    await fixture.whenStable();
+    emailChangeStore.requestCallState.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['changingEmail']()).toBe(false);
+  });
+
+  it('should swap to the pending panel with Resend and Cancel once a link was sent', async () => {
+    emailChangeStore.pendingEmail.set('new@example.com');
+    emailChangeStore.hasPendingRequest.set(true);
+    await fixture.whenStable();
+
+    const panel: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="account-email-pending"]',
+    ) as HTMLElement;
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('new@example.com');
+
+    (
+      panel.querySelector('[data-testid="account-email-cancel-request"]') as HTMLButtonElement
+    ).click();
+    expect(emailChangeStore.cancel).toHaveBeenCalledTimes(1);
+
+    (panel.querySelector('[data-testid="account-email-resend"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['changingEmail']()).toBe(true);
   });
 });

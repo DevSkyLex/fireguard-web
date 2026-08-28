@@ -9,6 +9,7 @@ This feature is responsible for:
 - sign-in and MFA flows,
 - public self-service registration (account creation + email verification),
 - password reset workflows,
+- the public confirmation of a sign-in email change (the emailed token is the credential),
 - access token and refresh bootstrap,
 - auth guards and auth-related HTTP interceptors,
 - publishing the application auth session contract.
@@ -30,6 +31,15 @@ This feature does not own user profile presentation or notification UX. Those be
 - `/auth/password-reset/forgot`
 - `/auth/password-reset/verify`
 - `/auth/password-reset/new`
+- `/auth/email-change/confirm` — the landing page of the email change confirmation link.
+  **Guardless on purpose**: the link lands in the NEW mailbox, where the visitor may be
+  signed in, signed out, or someone mid-session — `guestGuard` would bounce a signed-in
+  user away from their own confirmation. The page never consumes the single-use token on
+  load (mail clients and browsers prefetch links); the POST happens only on an explicit
+  click. On success the backend has revoked every session, so the page performs the local
+  purge (`AUTH_SESSION_PORT.clearSession()`) and links to sign-in — the user reconnects
+  with the new address. The authenticated half of the workflow (request/cancel) is owned
+  by `features/account` and lives on `/account/security`.
 
 Route access is enforced by auth-owned guards such as `guestGuard`, `mfaGuard`, `registerVerifyGuard`, `passwordResetVerifyGuard`, and `passwordResetNewGuard`.
 
@@ -67,6 +77,8 @@ Primary stores:
 - `ActiveTrustedDeviceStore`
 - `PasswordResetStore`
 - `RegisterStore`
+- `EmailChangeConfirmStore` — page-scoped (provided by `EmailChangeConfirmPage`): one call,
+  one outcome, rendered inline rather than toasted, because the outcome is the page's content
 
 Primary services:
 
@@ -75,6 +87,8 @@ Primary services:
 - `TrustedDeviceService`
 - `PasswordResetService`
 - `RegistrationService`
+- `EmailChangeService` — the public confirm endpoint only (`POST /api/me/email-change/confirm`);
+  request and cancel belong to account's `UserProfileService`, which owns the authenticated `/me` surface
 
 ## Published Contracts
 

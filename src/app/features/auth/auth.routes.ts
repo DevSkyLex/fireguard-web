@@ -80,5 +80,13 @@ export const AUTH_ROUTES: Routes = [
       ),
     title: $localize`:@@route.newPassword:Choose a new password`,
   },
+  {
+    path: 'email-change/confirm',
+    loadComponent: () =>
+      import('./ui/pages/email-change-confirm-page/email-change-confirm-page.component').then(
+        (m) => m.EmailChangeConfirmPage,
+      ),
+    title: $localize`:@@route.emailChangeConfirm:Confirm email change`,
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 ];

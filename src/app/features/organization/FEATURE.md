@@ -126,6 +126,14 @@ This feature does not own generic shell composition or account-level user identi
 - `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
 - `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
+- `/organizations/:organizationId/teams` — named member groups used to scope intervention
+  assignment (`ui/pages/organization-teams-page`, `OrganizationTeamsPage`); gated by
+  `organization.teams.read`. See the naming disambiguation in **Invariants** — this is
+  distinct from `/team` above. `TeamService` and `OrganizationTeamsStore`
+  (`state/organization-teams`, component-scoped, provided on `OrganizationTeamsPage`) back the
+  full list/create/edit/delete + member roster panel surface (`OrganizationTeamTable`, the
+  create/edit/delete dialogs, `OrganizationTeamMembersSheet`) — see **Not Built Yet** for the
+  one thing still owed (real specs).
 - `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, compliance, assistant, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
@@ -648,6 +656,16 @@ weight.
   invariant that kept it read-only (activating an undecidable policy would strand requests) is retired.
   `OrganizationApprovalForm` is the only writer of `UpdateOrganizationInput.approval`, section-scoped
   through `OrganizationSettingsStore.save`, matching every other settings section.
+- **`organization-team-*` and `organization-teams-*` name two unrelated concepts — never
+  merge, rename across, or copy between them.** `OrganizationTeamStore` (`state/organization-team`),
+  `OrganizationTeamPage` (`ui/pages/organization-team-page`) and the `/team` route manage **RBAC
+  roles** (`organization.roles.*`). `OrganizationTeamsStore` (`state/organization-teams`,
+  component-scoped, provided on `OrganizationTeamsPage`), `OrganizationTeamsPage`
+  (`ui/pages/organization-teams-page`) and the `/teams` route
+  manage **teams** — named groups of members over `POST/GET/PATCH/DELETE
+/organizations/{organizationId}/teams` and its `/members` sub-resource, gated by
+  `organization.teams.{read,write,manage}`. The singular/plural distinction is the only thing that
+  tells them apart; do not rely on it disambiguating itself in a diff.
 
 ## Not Built Yet
 
@@ -666,3 +684,15 @@ Backend endpoints exist for these; no frontend model, service method or store do
   surface that does not exist yet, and a secret-bearing subscription form needs its own design pass
   (secret shown once, rotation, delivery-failure triage). Build it when integrations are a product
   goal; until then this line is the record that the backend is ready and the frontend is not.
+
+- **Teams management real specs** — the whole `Team` slice behind the `/teams` route (see Routes
+  and Invariants above) is now built end to end: `TeamOutput`, `TeamMemberOutput`,
+  `CreateTeamInput`, `UpdateTeamInput`, `AddTeamMemberInput` (`models/team/`), `TeamService`
+  (`data-access/services/team/team.service.ts`), `OrganizationTeamsStore`
+  (`state/organization-teams`), and the UI: `OrganizationTeamsPage`
+  (`ui/pages/organization-teams-page`, list/create/edit/delete + a members panel),
+  `OrganizationTeamTable` (`ui/tables/organization-team-table`), the create/edit/delete dialogs
+  (`ui/dialogs/organization-team-*-dialog`), `OrganizationTeamMembersSheet`
+  (`ui/sheets/organization-team-members-sheet`) and its `OrganizationTeamMemberAddForm`
+  (`ui/forms/organization-team-member-add-form`). Still owed: real specs replacing the smoke
+  tests each of those units carries today (`fg-web-test-writer`).

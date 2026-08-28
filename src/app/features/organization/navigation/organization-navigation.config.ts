@@ -249,6 +249,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     match: 'any',
   },
   {
+    id: 'teams',
+    label: $localize`:@@route.teams:Teams`,
+    icon: 'lucideUsersRound',
+    path: 'teams',
+    group: 'administration',
+    permissions: [ORGANIZATION_PERMISSION.TEAMS_READ],
+  },
+  {
     id: 'settings',
     label: $localize`:@@route.settings:Settings`,
     icon: 'lucideSettings',

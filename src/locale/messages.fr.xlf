@@ -9280,6 +9280,270 @@
         <source>They can&apos;t be shown or changed until they load.</source>
         <target>Elles ne peuvent être affichées ni modifiées tant qu&apos;elles ne sont pas chargées.</target>
       </trans-unit>
+      <trans-unit id="org.teams.toast.mutationFailed" datatype="html">
+        <source>The action could not be completed.</source>
+        <target>L'action n'a pas pu être effectuée.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.toast.created" datatype="html">
+        <source>Team created</source>
+        <target>Équipe créée</target>
+      </trans-unit>
+      <trans-unit id="org.teams.toast.updated" datatype="html">
+        <source>Team updated</source>
+        <target>Équipe mise à jour</target>
+      </trans-unit>
+      <trans-unit id="org.teams.toast.removed" datatype="html">
+        <source>Team deleted</source>
+        <target>Équipe supprimée</target>
+      </trans-unit>
+      <trans-unit id="org.teams.toast.memberAdded" datatype="html">
+        <source>Member added</source>
+        <target>Membre ajouté</target>
+      </trans-unit>
+      <trans-unit id="org.teams.toast.memberRemoved" datatype="html">
+        <source>Member removed</source>
+        <target>Membre retiré</target>
+      </trans-unit>
+      <trans-unit id="org.teams.createDialog.title" datatype="html">
+        <source>New team</source>
+        <target>Nouvelle équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.createDialog.description" datatype="html">
+        <source> Create a named group of members you can assign to interventions. </source>
+        <target>Créez un groupe nommé de membres que vous pouvez affecter aux interventions.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.deleteDialog.title" datatype="html">
+        <source>Delete this team?</source>
+        <target>Supprimer cette équipe ?</target>
+      </trans-unit>
+      <trans-unit id="org.teams.deleteDialog.warning" datatype="html">
+        <source> Channels bound to this team keep referencing it. </source>
+        <target>Les canaux liés à cette équipe continuent d'y faire référence.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.deleteDialog.confirming" datatype="html">
+        <source>Deleting…</source>
+        <target>Suppression…</target>
+      </trans-unit>
+      <trans-unit id="org.teams.deleteDialog.confirm" datatype="html">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="org.teams.deleteDialog.description" datatype="html">
+        <source>Delete &quot;<x id="name" equiv-text="team.name"/>&quot;? This cannot be undone.</source>
+        <target>Supprimer « <x id="name" equiv-text="team.name"/> » ? Cette action est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.editDialog.title" datatype="html">
+        <source>Edit team</source>
+        <target>Modifier l'équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.editDialog.description" datatype="html">
+        <source> Rename the team or update its description. </source>
+        <target>Renommez l'équipe ou modifiez sa description.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.name" datatype="html">
+        <source>Name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.namePlaceholder" datatype="html">
+        <source>Facilities response team</source>
+        <target>Équipe d'intervention facilities</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.description" datatype="html">
+        <source>Description</source>
+        <target>Description</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.descriptionPlaceholder" datatype="html">
+        <source>What this team is for</source>
+        <target>À quoi sert cette équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.submitting" datatype="html">
+        <source>Creating…</source>
+        <target>Création…</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.submit" datatype="html">
+        <source>Create team</source>
+        <target>Créer l'équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.nameRequired" datatype="html">
+        <source>Team name is required.</source>
+        <target>Le nom de l'équipe est requis.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.descriptionTooLong" datatype="html">
+        <source>This description is too long.</source>
+        <target>Cette description est trop longue.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.form.createFailed" datatype="html">
+        <source>The team could not be created.</source>
+        <target>L'équipe n'a pas pu être créée.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.editForm.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+      </trans-unit>
+      <trans-unit id="org.teams.editForm.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Enregistrer les modifications</target>
+      </trans-unit>
+      <trans-unit id="org.teams.editForm.updateFailed" datatype="html">
+        <source>The team could not be updated.</source>
+        <target>L'équipe n'a pas pu être mise à jour.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberLabel" datatype="html">
+        <source>Member</source>
+        <target>Membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberPlaceholder" datatype="html">
+        <source>Search a member</source>
+        <target>Rechercher un membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberNoMatch" datatype="html">
+        <source>No member matches.</source>
+        <target>Aucun membre ne correspond.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberRoleLabel" datatype="html">
+        <source>Membership label (optional)</source>
+        <target>Libellé de rattachement (facultatif)</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberRolePlaceholder" datatype="html">
+        <source>lead</source>
+        <target>responsable</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberRoleHint" datatype="html">
+        <source> A free-form label, not an RBAC role. </source>
+        <target>Un libellé libre, pas un rôle RBAC.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberSubmitting" datatype="html">
+        <source>Adding…</source>
+        <target>Ajout…</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberSubmit" datatype="html">
+        <source>Add member</source>
+        <target>Ajouter un membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addFailed" datatype="html">
+        <source>The member could not be added.</source>
+        <target>Le membre n'a pas pu être ajouté.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.announce.loading" datatype="html">
+        <source>Loading teams…</source>
+        <target>Chargement des équipes…</target>
+      </trans-unit>
+      <trans-unit id="org.teams.announce.loadFailed" datatype="html">
+        <source>Teams could not be loaded.</source>
+        <target>Les équipes n'ont pas pu être chargées.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.errorTitle" datatype="html">
+        <source>Couldn&apos;t load teams</source>
+        <target>Impossible de charger les équipes</target>
+      </trans-unit>
+      <trans-unit id="org.teams.retry" datatype="html">
+        <source>Try again</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="org.teams.emptyTitle" datatype="html">
+        <source>No teams yet</source>
+        <target>Pas encore d'équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.emptyText" datatype="html">
+        <source>Create a named group of members to assign to interventions.</source>
+        <target>Créez un groupe nommé de membres à affecter aux interventions.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.createButton" datatype="html">
+        <source>New team</source>
+        <target>Nouvelle équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.countOne" datatype="html">
+        <source>1 team</source>
+        <target>1 équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.countMany" datatype="html">
+        <source><x id="count" equiv-text="total"/> teams</source>
+        <target><x id="count" equiv-text="total"/> équipes</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.description" datatype="html">
+        <source> Members currently on this team. </source>
+        <target>Membres actuels de cette équipe.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.loadErrorTitle" datatype="html">
+        <source>Couldn&apos;t load members</source>
+        <target>Impossible de charger les membres</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.emptyTitle" datatype="html">
+        <source>No members yet</source>
+        <target>Pas encore de membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.emptyText" datatype="html">
+        <source>Add an organization member below to get started.</source>
+        <target>Ajoutez un membre de l'organisation ci-dessous pour commencer.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.rosterLabel" datatype="html">
+        <source>Team members</source>
+        <target>Membres de l'équipe</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.addMemberHeading" datatype="html">
+        <source> Add a member </source>
+        <target>Ajouter un membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.unknownMember" datatype="html">
+        <source>Member</source>
+        <target>Membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.removeLabel" datatype="html">
+        <source>Remove <x id="name" equiv-text="name"/></source>
+        <target>Retirer <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.caption" datatype="html">
+        <source> Organization teams </source>
+        <target>Équipes de l'organisation</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.colName" datatype="html">
+        <source>Name</source>
+        <target>Nom</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.colDescription" datatype="html">
+        <source>Description</source>
+        <target>Description</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.colMembers" datatype="html">
+        <source>Members</source>
+        <target>Membres</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.colCreated" datatype="html">
+        <source>Created</source>
+        <target>Créée le</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.colActions" datatype="html">
+        <source>Actions</source>
+        <target>Actions</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.rowMenu" datatype="html">
+        <source>Open menu</source>
+        <target>Ouvrir le menu</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.rowEdit" datatype="html">
+        <source>Edit</source>
+        <target>Modifier</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.rowMembers" datatype="html">
+        <source>Members</source>
+        <target>Membres</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.rowDelete" datatype="html">
+        <source>Delete</source>
+        <target>Supprimer</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.noResults" datatype="html">
+        <source> No results. </source>
+        <target>Aucun résultat.</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.memberCountOne" datatype="html">
+        <source>1 member</source>
+        <target>1 membre</target>
+      </trans-unit>
+      <trans-unit id="org.teams.table.memberCountMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> members</source>
+        <target><x id="count" equiv-text="count"/> membres</target>
+      </trans-unit>
 </body>
   </file>
 </xliff>

@@ -1,0 +1,132 @@
+<div class="h-full w-full overflow-hidden rounded-md border border-border">
+  <div
+    hlmTableContainer
+    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+    tabindex="0"
+    role="region"
+    aria-labelledby="organization-team-table-caption"
+  >
+    <table hlmTable data-testid="organization-team-table">
+      <caption
+        hlmTableCaption
+        id="organization-team-table-caption"
+        class="sr-only"
+        i18n="@@org.teams.table.caption"
+      >
+        Organization teams
+      </caption>
+
+      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
+        <tr hlmTableRow>
+          <th hlmTableHead i18n="@@org.teams.table.colName">Name</th>
+          <th hlmTableHead i18n="@@org.teams.table.colDescription">Description</th>
+          <th hlmTableHead i18n="@@org.teams.table.colMembers">Members</th>
+          <th hlmTableHead i18n="@@org.teams.table.colCreated">Created</th>
+          <th hlmTableHead class="w-[52px]">
+            <span class="sr-only" i18n="@@org.teams.table.colActions">Actions</span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody hlmTableBody>
+        @if (loading() && items().length === 0) {
+          @for (row of skeletonRows; track row) {
+            <tr hlmTableRow aria-hidden="true">
+              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-48" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
+              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
+              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
+            </tr>
+          }
+        } @else {
+          @for (team of items(); track team.id) {
+            <tr hlmTableRow data-testid="organization-team-table-row">
+              <td hlmTableCell class="font-medium text-foreground">{{ team.name }}</td>
+
+              <td hlmTableCell class="max-w-xs truncate text-muted-foreground">
+                @if (team.description) {
+                  {{ team.description }}
+                } @else {
+                  <span aria-hidden="true">—</span>
+                }
+              </td>
+
+              <td hlmTableCell class="text-muted-foreground">
+                {{ memberCountLabel(team.memberCount) }}
+              </td>
+
+              <td hlmTableCell class="text-muted-foreground">
+                {{ team.createdAt | appOrgDate: 'date' : regionalFormatting() }}
+              </td>
+
+              <td hlmTableCell class="text-right">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  align="end"
+                  class="max-sm:size-11"
+                  data-testid="organization-team-table-row-menu"
+                  [hlmDropdownMenuTrigger]="rowMenu"
+                >
+                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                  <span class="sr-only" i18n="@@org.teams.table.rowMenu">Open menu</span>
+                </button>
+
+                <ng-template #rowMenu>
+                  <hlm-dropdown-menu class="w-48">
+                    @if (canEdit()) {
+                      <button
+                        hlmDropdownMenuItem
+                        data-testid="organization-team-table-row-edit"
+                        (click)="editRequested.emit(team)"
+                      >
+                        <ng-icon name="lucidePencil" aria-hidden="true" />
+                        <span i18n="@@org.teams.table.rowEdit">Edit</span>
+                      </button>
+                    }
+
+                    <button
+                      hlmDropdownMenuItem
+                      data-testid="organization-team-table-row-members"
+                      (click)="membersRequested.emit(team)"
+                    >
+                      <ng-icon name="lucideUsersRound" aria-hidden="true" />
+                      <span i18n="@@org.teams.table.rowMembers">Members</span>
+                    </button>
+
+                    @if (canDelete()) {
+                      <hlm-dropdown-menu-separator />
+                      <button
+                        hlmDropdownMenuItem
+                        variant="destructive"
+                        data-testid="organization-team-table-row-delete"
+                        (click)="deleteRequested.emit(team)"
+                      >
+                        <ng-icon name="lucideTrash2" aria-hidden="true" />
+                        <span i18n="@@org.teams.table.rowDelete">Delete</span>
+                      </button>
+                    }
+                  </hlm-dropdown-menu>
+                </ng-template>
+              </td>
+            </tr>
+          } @empty {
+            <tr hlmTableRow>
+              <td
+                hlmTableCell
+                class="h-24 text-center text-muted-foreground"
+                colspan="5"
+                i18n="@@org.teams.table.noResults"
+              >
+                No results.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

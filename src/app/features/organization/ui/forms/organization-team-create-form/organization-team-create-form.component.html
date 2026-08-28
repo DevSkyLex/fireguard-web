@@ -1,0 +1,89 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div
+        role="alert"
+        data-testid="organization-team-create-error"
+        class="text-sm text-destructive"
+      >
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="organization-team-create-name"
+        ><span i18n="@@org.teams.form.name">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="organization-team-create-name"
+        type="text"
+        data-testid="organization-team-create-name"
+        placeholder="Facilities response team"
+        i18n-placeholder="@@org.teams.form.namePlaceholder"
+        [formField]="createForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="createForm.name().touched() && createForm.name().invalid()"
+      />
+      @if (createForm.name().touched() && createForm.name().invalid()) {
+        <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="organization-team-create-description"
+        i18n="@@org.teams.form.description"
+        >Description</label
+      >
+      <textarea
+        hlmTextarea
+        id="organization-team-create-description"
+        rows="2"
+        data-testid="organization-team-create-description"
+        placeholder="What this team is for"
+        i18n-placeholder="@@org.teams.form.descriptionPlaceholder"
+        [formField]="createForm.description"
+        [attr.aria-invalid]="
+          createForm.description().touched() && createForm.description().invalid()
+        "
+      ></textarea>
+      @if (createForm.description().touched() && createForm.description().invalid()) {
+        <hlm-field-error>{{ createForm.description().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="organization-team-create-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="organization-team-create-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.teams.form.submitting">Creating…</span>
+        } @else {
+          <span i18n="@@org.teams.form.submit">Create team</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

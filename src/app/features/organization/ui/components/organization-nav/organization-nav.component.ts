@@ -15,6 +15,7 @@ import {
   lucideShieldCheck,
   lucideUpload,
   lucideUsers,
+  lucideUsersRound,
   lucideWrench,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -103,6 +104,7 @@ import {
       lucideShieldCheck,
       lucideUpload,
       lucideUsers,
+      lucideUsersRound,
       lucideWrench,
     }),
   ],

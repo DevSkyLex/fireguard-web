@@ -1,0 +1,79 @@
+<form novalidate (submit)="submit($event)">
+  <hlm-field-group>
+    @if (serverMessages().length > 0) {
+      <div role="alert" data-testid="organization-team-edit-error" class="text-sm text-destructive">
+        @for (message of serverMessages(); track message) {
+          <p>{{ message }}</p>
+        }
+      </div>
+    }
+
+    <hlm-field>
+      <label hlmFieldLabel for="organization-team-edit-name"
+        ><span i18n="@@org.teams.form.name">Name</span
+        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
+        ><span class="sr-only" i18n="@@common.required"> required</span></label
+      >
+      <input
+        hlmInput
+        id="organization-team-edit-name"
+        type="text"
+        data-testid="organization-team-edit-name"
+        [formField]="editForm.name"
+        [attr.aria-required]="true"
+        [attr.aria-invalid]="editForm.name().touched() && editForm.name().invalid()"
+      />
+      @if (editForm.name().touched() && editForm.name().invalid()) {
+        <hlm-field-error>{{ editForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field>
+      <label
+        hlmFieldLabel
+        for="organization-team-edit-description"
+        i18n="@@org.teams.form.description"
+        >Description</label
+      >
+      <textarea
+        hlmTextarea
+        id="organization-team-edit-description"
+        rows="2"
+        data-testid="organization-team-edit-description"
+        [formField]="editForm.description"
+        [attr.aria-invalid]="editForm.description().touched() && editForm.description().invalid()"
+      ></textarea>
+      @if (editForm.description().touched() && editForm.description().invalid()) {
+        <hlm-field-error>{{ editForm.description().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <hlm-field orientation="horizontal" class="justify-end">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="organization-team-edit-cancel"
+        (click)="cancelled.emit()"
+      >
+        <span i18n="@@common.cancel">Cancel</span>
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="max-sm:min-h-11"
+        data-testid="organization-team-edit-submit"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        aria-live="polite"
+      >
+        @if (pending()) {
+          <span i18n="@@org.teams.editForm.submitting">Saving…</span>
+        } @else {
+          <span i18n="@@org.teams.editForm.submit">Save changes</span>
+        }
+      </button>
+    </hlm-field>
+  </hlm-field-group>
+</form>

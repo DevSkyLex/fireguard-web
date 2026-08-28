@@ -127,4 +127,8 @@ export type { ComplianceSummaryOutput } from './compliance/compliance-summary-ou
 export type { ComplianceBucketTagDescriptor } from './compliance-bucket-tag/compliance-bucket-tag-descriptor.interface';
 export { resolveComplianceBucketTag } from './compliance-bucket-tag/compliance-bucket-tag.util';
 export type { TeamOutput } from './team/team-output.interface';
+export type { TeamMemberOutput } from './team/team-member-output.interface';
+export type { CreateTeamInput } from './team/create-team-input.interface';
+export type { UpdateTeamInput } from './team/update-team-input.interface';
+export type { AddTeamMemberInput } from './team/add-team-member-input.interface';
 export type { OrganizationNavigationCountersOutput } from './navigation/organization-navigation-counters-output.interface';

@@ -184,6 +184,20 @@ export const ORGANIZATION_ROUTES: Routes = [
         data: { breadcrumb: $localize`:@@route.team:Team` },
       },
       {
+        path: 'teams',
+        canActivate: [
+          organizationPermissionGuard({
+            permissions: [ORGANIZATION_PERMISSION.TEAMS_READ],
+          }),
+        ],
+        loadComponent: () =>
+          import('./ui/pages/organization-teams-page/organization-teams-page.component').then(
+            (m) => m.OrganizationTeamsPage,
+          ),
+        title: $localize`:@@route.teams:Teams`,
+        data: { breadcrumb: $localize`:@@route.teams:Teams` },
+      },
+      {
         path: 'settings',
         canActivate: [
           organizationPermissionGuard({

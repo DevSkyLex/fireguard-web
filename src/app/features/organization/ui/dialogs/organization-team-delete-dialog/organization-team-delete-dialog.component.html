@@ -1,0 +1,43 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="organization-team-delete-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.teams.deleteDialog.title">Delete this team?</h2>
+      <p hlmAlertDialogDescription>{{ description() }}</p>
+    </hlm-alert-dialog-header>
+
+    <p
+      class="text-sm text-muted-foreground"
+      data-testid="organization-team-delete-warning"
+      i18n="@@org.teams.deleteDialog.warning"
+    >
+      Channels bound to this team keep referencing it.
+    </p>
+
+    @if (error(); as message) {
+      <p role="alert" class="text-sm text-destructive" data-testid="organization-team-delete-error">
+        {{ message }}
+      </p>
+    }
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="organization-team-delete-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@org.teams.deleteDialog.confirming">Deleting…</span>
+        } @else {
+          <span i18n="@@org.teams.deleteDialog.confirm">Delete</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

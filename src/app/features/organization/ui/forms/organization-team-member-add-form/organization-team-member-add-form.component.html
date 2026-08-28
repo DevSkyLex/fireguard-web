@@ -1,0 +1,87 @@
+@if (serverMessages().length > 0) {
+  <div
+    role="alert"
+    data-testid="organization-team-member-add-error"
+    class="text-sm text-destructive"
+  >
+    @for (message of serverMessages(); track message) {
+      <p>{{ message }}</p>
+    }
+  </div>
+}
+
+<hlm-field>
+  <label
+    hlmFieldLabel
+    for="organization-team-member-add-picker"
+    i18n="@@org.teams.membersSheet.addMemberLabel"
+    >Member</label
+  >
+  <hlm-combobox
+    [value]="selectedMemberId()"
+    [itemToString]="memberLabelOf"
+    [disabled]="pending() || !hasCandidates()"
+    (valueChange)="selectedMemberId.set($any($event))"
+  >
+    <hlm-combobox-input
+      inputId="organization-team-member-add-picker"
+      placeholder="Search a member"
+      i18n-placeholder="@@org.teams.membersSheet.addMemberPlaceholder"
+      data-testid="organization-team-member-add-picker-input"
+    />
+    <hlm-combobox-content *hlmComboboxPortal>
+      <hlm-combobox-empty i18n="@@org.teams.membersSheet.addMemberNoMatch"
+        >No member matches.</hlm-combobox-empty
+      >
+      <div hlmComboboxList>
+        @for (candidate of candidates(); track candidate.memberId) {
+          <hlm-combobox-item
+            [value]="candidate.memberId"
+            [attr.data-testid]="'organization-team-member-add-option-' + candidate.memberId"
+            >{{ candidate.label }}</hlm-combobox-item
+          >
+        }
+      </div>
+    </hlm-combobox-content>
+  </hlm-combobox>
+</hlm-field>
+
+<hlm-field class="mt-3">
+  <label
+    hlmFieldLabel
+    for="organization-team-member-add-role"
+    i18n="@@org.teams.membersSheet.addMemberRoleLabel"
+    >Membership label (optional)</label
+  >
+  <input
+    hlmInput
+    id="organization-team-member-add-role"
+    type="text"
+    data-testid="organization-team-member-add-role"
+    placeholder="lead"
+    i18n-placeholder="@@org.teams.membersSheet.addMemberRolePlaceholder"
+    [disabled]="pending()"
+    [value]="roleLabel()"
+    (input)="roleLabel.set($any($event.target).value)"
+  />
+  <hlm-field-description i18n="@@org.teams.membersSheet.addMemberRoleHint">
+    A free-form label, not an RBAC role.
+  </hlm-field-description>
+</hlm-field>
+
+<button
+  hlmBtn
+  type="button"
+  class="mt-3 max-sm:min-h-11"
+  data-testid="organization-team-member-add-submit"
+  [disabled]="!canSubmit()"
+  [attr.aria-busy]="pending() ? 'true' : null"
+  aria-live="polite"
+  (click)="submit()"
+>
+  @if (pending()) {
+    <span i18n="@@org.teams.membersSheet.addMemberSubmitting">Adding…</span>
+  } @else {
+    <span i18n="@@org.teams.membersSheet.addMemberSubmit">Add member</span>
+  }
+</button>

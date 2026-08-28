@@ -1,0 +1,26 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content
+    class="sm:max-w-lg"
+    data-testid="organization-team-edit-dialog"
+    *hlmDialogPortal
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@org.teams.editDialog.title">Edit team</h3>
+      <p hlmDialogDescription i18n="@@org.teams.editDialog.description">
+        Rename the team or update its description.
+      </p>
+    </hlm-dialog-header>
+
+    <app-organization-team-edit-form
+      [team]="team()"
+      [pending]="pending()"
+      [serverError]="serverError()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>

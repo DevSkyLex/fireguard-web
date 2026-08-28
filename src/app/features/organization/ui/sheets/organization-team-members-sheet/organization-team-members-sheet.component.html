@@ -1,0 +1,125 @@
+<hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    data-testid="organization-team-members-sheet"
+  >
+    @if (team(); as team) {
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle>{{ team.name }}</h3>
+        <p hlmSheetDescription i18n="@@org.teams.membersSheet.description">
+          Members currently on this team.
+        </p>
+      </hlm-sheet-header>
+
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        @if (membersError(); as message) {
+          <app-error-state
+            icon="lucideCircleAlert"
+            title="Couldn't load members"
+            i18n-title="@@org.teams.membersSheet.loadErrorTitle"
+            [description]="message"
+          >
+            <button
+              hlmBtn
+              variant="outline"
+              class="max-sm:min-h-11"
+              data-testid="organization-team-members-retry"
+              (click)="retryLoad.emit()"
+            >
+              <span i18n="@@org.teams.retry">Try again</span>
+            </button>
+          </app-error-state>
+        } @else if (loadingMembers() && rosterRows().length === 0) {
+          <ul class="flex flex-col gap-2" aria-hidden="true">
+            @for (row of skeletonRows; track row) {
+              <li class="flex items-center gap-2.5">
+                <hlm-skeleton class="size-8 rounded-full" />
+                <hlm-skeleton class="h-4 w-32" />
+              </li>
+            }
+          </ul>
+        } @else if (rosterRows().length === 0) {
+          <app-empty-state
+            icon="lucideUsersRound"
+            title="No members yet"
+            i18n-title="@@org.teams.membersSheet.emptyTitle"
+            description="Add an organization member below to get started."
+            i18n-description="@@org.teams.membersSheet.emptyText"
+          />
+        } @else {
+          <ul
+            class="flex flex-col gap-1"
+            role="list"
+            aria-label="Team members"
+            i18n-aria-label="@@org.teams.membersSheet.rosterLabel"
+            data-testid="organization-team-members-roster"
+          >
+            @for (row of rosterRows(); track row.memberId) {
+              <li
+                class="flex items-center justify-between gap-2 rounded-md px-2 py-1.5"
+                data-testid="organization-team-members-row"
+              >
+                <span class="flex min-w-0 items-center gap-2.5">
+                  <hlm-avatar size="sm" class="shrink-0">
+                    @if (row.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(row.name) }}</span>
+                  </hlm-avatar>
+                  <span class="flex min-w-0 flex-col">
+                    <span class="truncate text-sm font-medium text-foreground">{{ row.name }}</span>
+                    @if (row.email) {
+                      <span class="truncate text-xs text-muted-foreground">{{ row.email }}</span>
+                    }
+                  </span>
+                  @if (row.role) {
+                    <span hlmBadge variant="secondary">{{ row.role }}</span>
+                  }
+                </span>
+
+                <span class="flex shrink-0 items-center gap-2">
+                  <span class="hidden text-xs text-muted-foreground sm:inline">
+                    {{ row.addedAt | appOrgDate: 'date' : regionalFormatting() }}
+                  </span>
+                  @if (canWrite()) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      class="max-sm:size-11"
+                      data-testid="organization-team-members-row-remove"
+                      [disabled]="isRemovingMember()"
+                      [attr.aria-label]="removeLabel(row.name)"
+                      (click)="memberRemoveRequested.emit(row.memberId)"
+                    >
+                      <ng-icon name="lucideTrash2" aria-hidden="true" />
+                    </button>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (canWrite()) {
+          <div class="border-t border-border pt-4">
+            <h4
+              class="mb-2 text-sm font-medium text-foreground"
+              i18n="@@org.teams.membersSheet.addMemberHeading"
+            >
+              Add a member
+            </h4>
+            <app-organization-team-member-add-form
+              [candidates]="candidates()"
+              [pending]="isAddingMember()"
+              [serverError]="addMemberError()"
+              (submitted)="memberAdded.emit($event)"
+            />
+          </div>
+        }
+      </div>
+    }
+  </hlm-sheet-content>
+</hlm-sheet>

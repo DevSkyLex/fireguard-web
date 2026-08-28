@@ -1,0 +1,111 @@
+<div id="organization-teams" class="flex h-full flex-col gap-6 p-4 md:p-6">
+  <p class="shrink-0 text-sm text-muted-foreground">{{ subtitle() }}</p>
+
+  <p class="sr-only" aria-live="polite" aria-atomic="true" data-testid="organization-teams-status">
+    {{ listAnnouncement() }}
+  </p>
+
+  @if (store.listCallState().status === 'error') {
+    <app-error-state
+      icon="lucideCircleAlert"
+      title="Couldn't load teams"
+      i18n-title="@@org.teams.errorTitle"
+      [description]="store.listError()?.message ?? null"
+    >
+      <button
+        hlmBtn
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="organization-teams-retry"
+        (click)="reload()"
+      >
+        <span i18n="@@org.teams.retry">Try again</span>
+      </button>
+    </app-error-state>
+  } @else if (!store.isLoading() && store.teams().length === 0) {
+    <app-empty-state
+      icon="lucideUsersRound"
+      title="No teams yet"
+      i18n-title="@@org.teams.emptyTitle"
+      description="Create a named group of members to assign to interventions."
+      i18n-description="@@org.teams.emptyText"
+    >
+      @if (canWrite()) {
+        <button hlmBtn class="max-sm:min-h-11" (click)="openCreateDialog()">
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@org.teams.createButton">New team</span>
+        </button>
+      }
+    </app-empty-state>
+  } @else {
+    <app-organization-team-table
+      [items]="store.teams()"
+      [loading]="store.isLoading()"
+      [canEdit]="canWrite()"
+      [canDelete]="canManage()"
+      [regionalFormatting]="regionalFormatting()"
+      (editRequested)="openEditDialog($event)"
+      (membersRequested)="openMembersSheet($event)"
+      (deleteRequested)="requestDelete($event)"
+    />
+  }
+</div>
+
+<app-organization-team-create-dialog
+  [visible]="createDialogVisible()"
+  [pending]="store.isCreating()"
+  [serverError]="store.createError()"
+  (visibleChange)="onCreateDialogVisibleChange($event)"
+  (submitted)="createTeam($event)"
+/>
+
+<app-organization-team-edit-dialog
+  [visible]="editDialogState() === 'open'"
+  [team]="editingTeam()"
+  [pending]="store.isUpdating()"
+  [serverError]="store.updateError()"
+  (visibleChange)="onEditDialogVisibleChange($event)"
+  (submitted)="updateTeam($event)"
+/>
+
+<app-organization-team-delete-dialog
+  [visible]="deleteDialogState() === 'open'"
+  [team]="pendingDeleteTeam()"
+  [pending]="store.isRemoving()"
+  [error]="store.removeError()?.message ?? null"
+  (visibleChange)="onDeleteDialogVisibleChange($event)"
+  (confirmed)="confirmDelete()"
+/>
+
+<app-organization-team-members-sheet
+  [visible]="membersSheetTeam() !== null"
+  [team]="membersSheetTeam()"
+  [members]="store.members()"
+  [orgMembers]="orgMembers()"
+  [loadingMembers]="store.isLoadingMembers()"
+  [membersError]="store.membersError()?.message ?? null"
+  [canWrite]="canWrite()"
+  [isAddingMember]="store.isAddingMember()"
+  [addMemberError]="store.addMemberError()"
+  [isRemovingMember]="store.isRemovingMember()"
+  [regionalFormatting]="regionalFormatting()"
+  (visibleChange)="onMembersSheetVisibleChange($event)"
+  (memberAdded)="addMember($event)"
+  (memberRemoveRequested)="removeMember($event)"
+  (retryLoad)="retryLoadMembers()"
+/>
+
+<ng-template #pageActions>
+  @if (canWrite()) {
+    <button
+      hlmBtn
+      type="button"
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="organization-teams-create"
+      (click)="openCreateDialog()"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@org.teams.createButton">New team</span>
+    </button>
+  }
+</ng-template>

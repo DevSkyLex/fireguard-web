@@ -6,29 +6,29 @@
         <source>Your account</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">24</context>
+          <context context-type="linenumber">25</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">25</context>
+          <context context-type="linenumber">26</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.accountSecurity" datatype="html">
         <source>Security</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">33</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
           <context context-type="linenumber">34</context>
         </context-group>
-      </trans-unit>
-      <trans-unit id="route.accountNotificationPreferences" datatype="html">
-        <source>Notification preferences</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">42</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.accountOrganizations" datatype="html">
+        <source>Your organizations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
@@ -39,11 +39,11 @@
         <source>Notifications</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">59</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
-          <context context-type="linenumber">54</context>
+          <context context-type="linenumber">60</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.locale.system" datatype="html">
@@ -235,25 +235,32 @@
           <context context-type="linenumber">84,86</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="account.menu.organizations" datatype="html">
+        <source>Your organizations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">88,90</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="account.menu.notifications" datatype="html">
         <source>Notifications</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
-          <context context-type="linenumber">88,90</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.menu.notificationPreferences" datatype="html">
         <source>Notification preferences</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
-          <context context-type="linenumber">92,94</context>
+          <context context-type="linenumber">96,98</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.menu.logout" datatype="html">
         <source>Log out</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
-          <context context-type="linenumber">100,102</context>
+          <context context-type="linenumber">104,106</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.mfa.title" datatype="html">
@@ -641,6 +648,69 @@
           <context context-type="linenumber">128,130</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="account.notificationBell.title" datatype="html">
+        <source>Notifications</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.errorTitle" datatype="html">
+        <source> Couldn&apos;t load your notifications </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">47,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.retry" datatype="html">
+        <source>Retry</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">57,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.loading" datatype="html">
+        <source>Loading notifications</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">63,64</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.empty" datatype="html">
+        <source> Nothing here yet. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">83,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.centre" datatype="html">
+        <source>Notification centre</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.html</context>
+          <context context-type="linenumber">143,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.triggerIdle" datatype="html">
+        <source>Notifications</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.ts</context>
+          <context context-type="linenumber">231</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.trigger" datatype="html">
+        <source>Notifications, <x id="unread" equiv-text="unread"/> unread</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.ts</context>
+          <context context-type="linenumber">235</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.justNow" datatype="html">
+        <source>Just now</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/notification-bell/notification-bell.component.ts</context>
+          <context context-type="linenumber">335</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="account.deactivate.confirmTitle" datatype="html">
         <source>Deactivate your account?</source>
         <context-group purpose="location">
@@ -660,6 +730,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-deactivate-dialog/account-deactivate-dialog.component.html</context>
           <context context-type="linenumber">26,28</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-leave-organization-dialog/account-leave-organization-dialog.component.html</context>
+          <context context-type="linenumber">29,31</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-email-change-form/account-email-change-form.component.html</context>
@@ -842,10 +916,6 @@
           <context context-type="linenumber">29,31</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
-          <context context-type="linenumber">25,27</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-member-remove-dialog/organization-member-remove-dialog.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
@@ -920,6 +990,34 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-email-change-dialog/account-email-change-dialog.component.html</context>
           <context context-type="linenumber">14,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmTitle" datatype="html">
+        <source> Leave this organization? </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-leave-organization-dialog/account-leave-organization-dialog.component.html</context>
+          <context context-type="linenumber">13,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaving" datatype="html">
+        <source>Leaving…</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-leave-organization-dialog/account-leave-organization-dialog.component.html</context>
+          <context context-type="linenumber">41,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmAction" datatype="html">
+        <source>Leave organization</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-leave-organization-dialog/account-leave-organization-dialog.component.html</context>
+          <context context-type="linenumber">43,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmText" datatype="html">
+        <source>You will lose access to <x id="organizationName" equiv-text="name"/> and everything in it. You can only rejoin if another member invites you back.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/dialogs/account-leave-organization-dialog/account-leave-organization-dialog.component.ts</context>
+          <context context-type="linenumber">92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.email.newLabel" datatype="html">
@@ -1240,10 +1338,6 @@
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-notification-preferences-form/account-notification-preferences-form.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">5,8</context>
-        </context-group>
       </trans-unit>
       <trans-unit id="account.notificationPreferences.categoryHeader" datatype="html">
         <source> Category </source>
@@ -1534,60 +1628,123 @@
           <context context-type="linenumber">177</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="account.notificationPreferences.description" datatype="html">
-        <source> Choose how each category reaches you. Everything is on by default; turning a channel off only stops that delivery — the notifications themselves stay in your in-app list. </source>
+      <trans-unit id="account.notifications.tabsAriaLabel" datatype="html">
+        <source>Notification sections</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">12,17</context>
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">10,11</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="account.notificationPreferences.loading" datatype="html">
-        <source> Loading your notification preferences… </source>
+      <trans-unit id="account.notifications.tabs.inbox" datatype="html">
+        <source>Inbox</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">21,23</context>
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">18,21</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="account.notificationPreferences.errorTitle" datatype="html">
-        <source>Couldn&apos;t load your notification preferences</source>
+      <trans-unit id="account.notifications.tabs.preferences" datatype="html">
+        <source>Preferences</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">30,31</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="account.notificationPreferences.errorDescription" datatype="html">
-        <source>They can&apos;t be shown or changed until they load.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">32,33</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="account.notificationPreferences.retry" datatype="html">
-        <source>Try again</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">37,39</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="account.notificationPreferences.emptyCategories" datatype="html">
-        <source>No notification categories are available yet.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notification-preferences-page/account-notification-preferences-page.component.html</context>
-          <context context-type="linenumber">43,44</context>
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">25,29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.notifications.unreadCount" datatype="html">
         <source>Unread</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
-          <context context-type="linenumber">5,6</context>
+          <context context-type="linenumber">32,33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.notifications.allRead" datatype="html">
         <source> You are all caught up. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
-          <context context-type="linenumber">10,14</context>
+          <context context-type="linenumber">37,41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.description" datatype="html">
+        <source> Choose how each category reaches you. Everything is on by default; turning a channel off only stops that delivery — the notifications themselves stay in your in-app list. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">66,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.loading" datatype="html">
+        <source> Loading your notification preferences… </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">74,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your notification preferences</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">83,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.errorDescription" datatype="html">
+        <source>They can&apos;t be shown or changed until they load.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">85,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.retry" datatype="html">
+        <source>Try again</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">96,98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationPreferences.emptyCategories" datatype="html">
+        <source>No notification categories are available yet.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-notifications-page/account-notifications-page.component.html</context>
+          <context context-type="linenumber">102,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.loadingAria" datatype="html">
+        <source>Loading your organizations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">6,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.emptyTitle" datatype="html">
+        <source>No organizations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">15,16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.emptyDescription" datatype="html">
+        <source>You are not a member of any organization yet.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.activeBadge" datatype="html">
+        <source>Currently open</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">41,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.ownerNote" datatype="html">
+        <source> You own this organization </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">50,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveOpen" datatype="html">
+        <source>Leave</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-organizations-page/account-organizations-page.component.html</context>
+          <context context-type="linenumber">62,65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.profile.errorTitle" datatype="html">
@@ -17602,7 +17759,7 @@
         <source>Create organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-switcher/organization-switcher.component.html</context>
-          <context context-type="linenumber">103,105</context>
+          <context context-type="linenumber">95,97</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.queueAllClear" datatype="html">
@@ -18084,34 +18241,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-invite-dialog/organization-invite-dialog.component.html</context>
           <context context-type="linenumber">12,15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaveConfirmTitle" datatype="html">
-        <source> Leave this organization? </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
-          <context context-type="linenumber">13,15</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaving" datatype="html">
-        <source>Leaving…</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
-          <context context-type="linenumber">37,39</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaveConfirmAction" datatype="html">
-        <source>Leave organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.html</context>
-          <context context-type="linenumber">39,42</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaveConfirmText" datatype="html">
-        <source>You will lose access to <x id="organizationName" equiv-text="name"/> and everything in it. You can only rejoin if another member invites you back.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-leave-dialog/organization-leave-dialog.component.ts</context>
-          <context context-type="linenumber">141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.members.removeConfirmPending" datatype="html">
@@ -19867,752 +19996,752 @@
         <source>Loading the organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">33,35</context>
+          <context context-type="linenumber">26,28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.forbiddenTitle" datatype="html">
         <source>Not available with your permissions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">47,48</context>
+          <context context-type="linenumber">40,41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.error.title" datatype="html">
         <source>Couldn&apos;t load the dashboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">53,54</context>
+          <context context-type="linenumber">46,47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.error.description" datatype="html">
         <source>Summary figures, alerts and the severity breakdown couldn&apos;t be fetched.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">55,56</context>
+          <context context-type="linenumber">48,49</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">66,68</context>
+          <context context-type="linenumber">59,61</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">550,552</context>
+          <context context-type="linenumber">543,545</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">588,590</context>
+          <context context-type="linenumber">581,583</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">626,628</context>
+          <context context-type="linenumber">619,621</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">665,667</context>
+          <context context-type="linenumber">658,660</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.errorTitle" datatype="html">
         <source>Couldn&apos;t load your work queues</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">99,100</context>
+          <context context-type="linenumber">92,93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.errorDescription" datatype="html">
         <source>The interventions waiting on you couldn&apos;t be fetched. Anything saved on this device is still listed below.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">101,102</context>
+          <context context-type="linenumber">94,95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.retry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">112,114</context>
+          <context context-type="linenumber">105,107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.allClearTitle" datatype="html">
         <source>Nothing is blocking</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">120,121</context>
+          <context context-type="linenumber">113,114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.allClearDescription" datatype="html">
         <source>No intervention is overdue, none is waiting for review, and everything on this device is synced.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">122,123</context>
+          <context context-type="linenumber">115,116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.nextDue" datatype="html">
         <source>Next due</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">127,128</context>
+          <context context-type="linenumber">120,121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.queues.title" datatype="html">
         <source>Your work queues</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">136,138</context>
+          <context context-type="linenumber">129,131</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.overdue" datatype="html">
         <source>Overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">155,157</context>
+          <context context-type="linenumber">148,150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.changesRequested" datatype="html">
         <source>Sent back to you</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">190,192</context>
+          <context context-type="linenumber">183,185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.awaitingReview" datatype="html">
         <source>Awaiting your review</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">223,225</context>
+          <context context-type="linenumber">216,218</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.unsynced" datatype="html">
         <source>Waiting to sync</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">248,250</context>
+          <context context-type="linenumber">241,243</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">256,257</context>
+          <context context-type="linenumber">249,250</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.title" datatype="html">
         <source>Also worth a look</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">277,279</context>
+          <context context-type="linenumber">270,272</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.loadingAria" datatype="html">
         <source>Loading what else needs attention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">283,284</context>
+          <context context-type="linenumber">276,277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.title" datatype="html">
         <source>Recently updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">328,330</context>
+          <context context-type="linenumber">321,323</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.recent.loadingAria" datatype="html">
         <source>Loading recently updated interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">335,336</context>
+          <context context-type="linenumber">328,329</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.trends.title" datatype="html">
         <source>Trends</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">402,403</context>
+          <context context-type="linenumber">395,396</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.trends.scopeNote" datatype="html">
         <source> Applies to the charts and figures below, not the summary above </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">404,408</context>
+          <context context-type="linenumber">397,401</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.ariaLabel" datatype="html">
         <source>Time period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">416,417</context>
+          <context context-type="linenumber">409,410</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.7d" datatype="html">
         <source> 7D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">426,428</context>
+          <context context-type="linenumber">419,421</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.30d" datatype="html">
         <source> 30D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">434,436</context>
+          <context context-type="linenumber">427,429</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.90d" datatype="html">
         <source> 90D </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">442,444</context>
+          <context context-type="linenumber">435,437</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.period.12m" datatype="html">
         <source> 12M </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">450,452</context>
+          <context context-type="linenumber">443,445</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.compareToggle.label" datatype="html">
         <source>Compare to previous period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">459,462</context>
+          <context context-type="linenumber">452,455</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.title" datatype="html">
         <source>Non-conformities by severity</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">474,475</context>
+          <context context-type="linenumber">467,468</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.loadingAria" datatype="html">
         <source>Loading severity breakdown…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">482,483</context>
+          <context context-type="linenumber">475,476</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.empty" datatype="html">
         <source>No non-conformities recorded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">495,496</context>
+          <context context-type="linenumber">488,489</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.newIntervention" datatype="html">
         <source>New intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">690,692</context>
+          <context context-type="linenumber">683,685</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.html</context>
-          <context context-type="linenumber">695,699</context>
+          <context context-type="linenumber">688,692</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.memberCountOne" datatype="html">
         <source>1 member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">321</context>
+          <context context-type="linenumber">323</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.dashboard.memberCountMany" datatype="html">
         <source><x id="count" equiv-text="count"/> members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">323</context>
+          <context context-type="linenumber">325</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openInterventions" datatype="html">
         <source>Open interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">406</context>
+          <context context-type="linenumber">408</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openInterventions.caption" datatype="html">
         <source>Currently open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">414</context>
+          <context context-type="linenumber">416</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openInterventions.context" datatype="html">
         <source>Planned, in progress, or sent back for changes</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">415</context>
+          <context context-type="linenumber">417</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities" datatype="html">
         <source>Open non-conformities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">422</context>
+          <context context-type="linenumber">424</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.badge.overdue" datatype="html">
         <source><x id="count" equiv-text="overdueNonConformities"/> overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">433</context>
+          <context context-type="linenumber">435</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.badge.onTrack" datatype="html">
         <source>On track</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">439</context>
+          <context context-type="linenumber">441</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.caption.pastDue" datatype="html">
         <source>Past due date</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">446</context>
+          <context context-type="linenumber">448</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.caption.none" datatype="html">
         <source>Nothing overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">448</context>
+          <context context-type="linenumber">450</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.caption.default" datatype="html">
         <source>Open findings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">449</context>
+          <context context-type="linenumber">451</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.openNonConformities.context" datatype="html">
         <source>From inspections, not yet resolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">450</context>
+          <context context-type="linenumber">452</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted" datatype="html">
         <source>Inspections completed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">454</context>
+          <context context-type="linenumber">456</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted.caption" datatype="html">
         <source>Finished this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">462</context>
+          <context context-type="linenumber">464</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.inspectionsCompleted.context" datatype="html">
         <source>Closed inspections compared to the previous period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">463</context>
+          <context context-type="linenumber">465</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance" datatype="html">
         <source>Equipment under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">467</context>
+          <context context-type="linenumber">469</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance.caption" datatype="html">
         <source>Out of service</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">476</context>
+          <context context-type="linenumber">478</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.kpi.equipmentUnderMaintenance.context" datatype="html">
         <source>Equipment currently flagged for maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">477</context>
+          <context context-type="linenumber">479</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.facilities" datatype="html">
         <source>Facilities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">481</context>
+          <context context-type="linenumber">483</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.facilities.caption" datatype="html">
         <source>Registered facilities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">483</context>
+          <context context-type="linenumber">485</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.facilities.context" datatype="html">
         <source>Sites currently tracked across your organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">484</context>
+          <context context-type="linenumber">486</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.equipment" datatype="html">
         <source>Equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">493</context>
+          <context context-type="linenumber">495</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.equipment.caption" datatype="html">
         <source>Tracked equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">495</context>
+          <context context-type="linenumber">497</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.equipment.context" datatype="html">
         <source>Assets currently registered across your facilities</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">496</context>
+          <context context-type="linenumber">498</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.resolutionRate" datatype="html">
         <source>Non-conformity resolution rate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">505</context>
+          <context context-type="linenumber">507</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.resolutionRate.caption" datatype="html">
         <source>Resolution rate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">507</context>
+          <context context-type="linenumber">509</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.kpi.resolutionRate.context" datatype="html">
         <source>Share of non-conformities resolved this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">508</context>
+          <context context-type="linenumber">510</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.pendingChanges" datatype="html">
         <source><x id="count" equiv-text="entry.pendingCount"/> changes waiting to sync</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">548</context>
+          <context context-type="linenumber">550</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.forbidden" datatype="html">
         <source>Not available with your permissions.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">623</context>
+          <context context-type="linenumber">625</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.loadError" datatype="html">
         <source>This chart could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">626</context>
+          <context context-type="linenumber">628</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.inspections.title" datatype="html">
         <source>Inspections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">629</context>
+          <context context-type="linenumber">631</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.inspections.chartLabel" datatype="html">
         <source>Inspections performed over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">632</context>
+          <context context-type="linenumber">634</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.title" datatype="html">
         <source>Non-conformities opened vs resolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">635</context>
+          <context context-type="linenumber">637</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.chartLabel" datatype="html">
         <source>Non-conformities opened and resolved over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">638</context>
+          <context context-type="linenumber">640</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.seriesOpened" datatype="html">
         <source>Opened</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">641</context>
+          <context context-type="linenumber">643</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformities.seriesResolved" datatype="html">
         <source>Resolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">644</context>
+          <context context-type="linenumber">646</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.equipment.title" datatype="html">
         <source>Equipment added</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">647</context>
+          <context context-type="linenumber">649</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.equipment.chartLabel" datatype="html">
         <source>Equipment added over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">650</context>
+          <context context-type="linenumber">652</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.facilities.title" datatype="html">
         <source>Facilities added</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">653</context>
+          <context context-type="linenumber">655</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.facilities.chartLabel" datatype="html">
         <source>Facilities added over time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">656</context>
+          <context context-type="linenumber">658</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.summaryOne" datatype="html">
         <source>1 open and unresolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">684</context>
+          <context context-type="linenumber">686</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.severity.summaryMany" datatype="html">
         <source><x id="total" equiv-text="total"/> open and unresolved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">685</context>
+          <context context-type="linenumber">687</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.nonConformitiesSummary" datatype="html">
         <source><x id="opened" equiv-text="openedTotal"/> opened, <x id="resolved" equiv-text="resolvedTotal"/> resolved this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">736</context>
+          <context context-type="linenumber">738</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.criticalNonConformitiesOpen" datatype="html">
         <source><x id="count" equiv-text="count"/> critical non-conformities still open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">933</context>
+          <context context-type="linenumber">935</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.nonConformitiesOverdue" datatype="html">
         <source><x id="count" equiv-text="count"/> non-conformities overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">935</context>
+          <context context-type="linenumber">937</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.expiredInvitations" datatype="html">
         <source><x id="count" equiv-text="count"/> invitations expired</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">937</context>
+          <context context-type="linenumber">939</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.equipmentUnderMaintenance" datatype="html">
         <source><x id="count" equiv-text="count"/> equipment items under maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">939</context>
+          <context context-type="linenumber">941</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.today.alerts.generic" datatype="html">
         <source><x id="label" equiv-text="fallbackLabel"/> (<x id="count" equiv-text="count"/>)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">941</context>
+          <context context-type="linenumber">943</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.summary" datatype="html">
         <source><x id="total" equiv-text="total"/> total this period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">1034</context>
+          <context context-type="linenumber">1036</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.statistics.trend.summaryWithDelta" datatype="html">
         <source><x id="total" equiv-text="total"/> total this period, <x id="delta" equiv-text="formattedDelta"/>% vs previous period</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-dashboard-page/organization-dashboard-page.component.ts</context>
-          <context context-type="linenumber">1040</context>
+          <context context-type="linenumber">1042</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.goHome" datatype="html">
         <source> Go to homepage </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">42,45</context>
+          <context context-type="linenumber">33,36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.loadingAria" datatype="html">
         <source>Loading invitation…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">64,65</context>
+          <context context-type="linenumber">55,56</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.acceptedTitle" datatype="html">
         <source>You&apos;re in</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">114</context>
+          <context context-type="linenumber">100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.accepted" datatype="html">
         <source> You have joined the organization. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">116,119</context>
+          <context context-type="linenumber">102,105</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.openOrganization" datatype="html">
         <source>Open</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">126,128</context>
+          <context context-type="linenumber">112,114</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.goToOrganization" datatype="html">
         <source> Go to your workspace </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">131,135</context>
+          <context context-type="linenumber">117,121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.title" datatype="html">
         <source>You&apos;ve been invited</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">153,154</context>
+          <context context-type="linenumber">134,135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.invitedBy" datatype="html">
         <source>Invited by</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">157,158</context>
+          <context context-type="linenumber">138,139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.toJoin" datatype="html">
         <source>to join</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">159,160</context>
+          <context context-type="linenumber">140,141</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.invitedEmailLabel" datatype="html">
         <source> Invited email </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">169,171</context>
+          <context context-type="linenumber">150,152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.expiresLabel" datatype="html">
         <source> Expires </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">175,177</context>
+          <context context-type="linenumber">156,158</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.rolesLabel" datatype="html">
         <source> Roles </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">187,189</context>
+          <context context-type="linenumber">168,170</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.noRole" datatype="html">
         <source> No role </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">196,197</context>
+          <context context-type="linenumber">177,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.acceptErrorTitle" datatype="html">
         <source> We couldn&apos;t accept this invitation </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">208,210</context>
+          <context context-type="linenumber">189,191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.decline" datatype="html">
         <source>Not now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">222,225</context>
+          <context context-type="linenumber">203,206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.accept" datatype="html">
         <source>Accept invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.html</context>
-          <context context-type="linenumber">236,238</context>
+          <context context-type="linenumber">217,219</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.missingTokenTitle" datatype="html">
         <source>Invalid invitation link</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">240</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.missingToken" datatype="html">
         <source>This invitation link is missing its token.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">250</context>
+          <context context-type="linenumber">248</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.previewErrorTitle" datatype="html">
         <source>We can&apos;t open this invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">260</context>
+          <context context-type="linenumber">258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.previewError" datatype="html">
         <source>This invitation link is invalid, expired or has already been used.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">270</context>
+          <context context-type="linenumber">268</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.notAvailableTitle" datatype="html">
         <source>This invitation isn&apos;t available</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">280</context>
+          <context context-type="linenumber">278</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.invitationAccept.notAcceptable" datatype="html">
         <source>This invitation can no longer be accepted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-invitation-accept-page/organization-invitation-accept-page.component.ts</context>
-          <context context-type="linenumber">290</context>
+          <context context-type="linenumber">288</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.memberProfile.forbiddenTitle" datatype="html">
@@ -21279,67 +21408,46 @@
           <context context-type="linenumber">544,546</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="org.settings.danger.leaveTitle" datatype="html">
-        <source>Leave this organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">569,571</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaveDescription" datatype="html">
-        <source> Removes your own membership. Another member will need to invite you back. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">572,574</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="org.settings.danger.leaveOpen" datatype="html">
-        <source>Leave organization</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">585,587</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="org.settings.danger.title" datatype="html">
         <source>Delete this organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">609,611</context>
+          <context context-type="linenumber">568,570</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.description" datatype="html">
         <source> Permanently deletes every facility, piece of equipment, inspection, intervention and member record. This cannot be undone. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">612,614</context>
+          <context context-type="linenumber">571,573</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.open" datatype="html">
         <source>Delete organization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
-          <context context-type="linenumber">626,628</context>
+          <context context-type="linenumber">585,587</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.endsOn" datatype="html">
         <source>Ends on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">866</context>
+          <context context-type="linenumber">834</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.subscription.renewsOn" datatype="html">
         <source>Renews on <x id="date" equiv-text="date"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">867</context>
+          <context context-type="linenumber">835</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.danger.transferMemberUnnamed" datatype="html">
         <source>Member</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.ts</context>
-          <context context-type="linenumber">1865</context>
+          <context context-type="linenumber">1761</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.team.loadErrorTitle" datatype="html">

@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { withAccountMenu } from '@features/account';
+import { withAccountMenu, withNotificationBell } from '@features/account';
 import { authGuard } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
@@ -133,6 +133,7 @@ export const APP_ROUTES: Routes = [
         header: [withDashboardBreadcrumb()],
         headerActions: [
           withGlobalSearch(),
+          withNotificationBell(),
           withAssistantToggle(),
           withSyncIndicator(),
           withThemeSwitcher(),

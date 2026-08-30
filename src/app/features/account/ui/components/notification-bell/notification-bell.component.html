@@ -1,0 +1,147 @@
+<hlm-popover sideOffset="5" [align]="panelAlign()" (stateChanged)="onPanelState($event)">
+  <button
+    hlmPopoverTrigger
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    class="relative max-sm:size-11"
+    id="notification-bell-trigger"
+    data-testid="notification-bell-trigger"
+    [attr.aria-label]="triggerLabel()"
+  >
+    <ng-icon name="lucideBell" aria-hidden="true" />
+    @if (hasUnread()) {
+      <span
+        class="absolute end-1 top-1 size-2 rounded-full bg-destructive"
+        data-testid="notification-bell-dot"
+        aria-hidden="true"
+      ></span>
+    }
+  </button>
+
+  <hlm-popover-content *hlmPopoverPortal class="w-80 gap-0 overflow-hidden p-0">
+    <div hlmItem size="xs">
+      <span hlmItemMedia variant="icon">
+        <ng-icon name="lucideBell" aria-hidden="true" />
+      </span>
+      <span hlmItemContent>
+        <span hlmItemTitle i18n="@@account.notificationBell.title">Notifications</span>
+      </span>
+      @if (hasUnread()) {
+        <span hlmItemActions>
+          <span class="text-xs text-muted-foreground">{{ unreadLabel() }}</span>
+        </span>
+      }
+    </div>
+
+    <hlm-separator />
+
+    <div
+      class="max-h-[165.75px] overflow-y-auto overscroll-contain"
+      data-testid="notification-bell-list"
+    >
+      @if (store.listError() !== null) {
+        <div class="flex flex-col items-center gap-2 px-2.5 py-6 text-center">
+          <p class="text-sm text-muted-foreground" i18n="@@account.notificationBell.errorTitle">
+            Couldn't load your notifications
+          </p>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            type="button"
+            class="max-sm:min-h-11"
+            (click)="retry()"
+          >
+            <span i18n="@@account.notificationBell.retry">Retry</span>
+          </button>
+        </div>
+      } @else if (store.isLoading() && store.notifications().length === 0) {
+        <div
+          role="status"
+          aria-label="Loading notifications"
+          i18n-aria-label="@@account.notificationBell.loading"
+        >
+          @for (placeholder of [1, 2, 3]; track placeholder) {
+            <div hlmItem size="xs" class="rounded-none">
+              <span hlmItemMedia>
+                <hlm-skeleton class="size-1.5 rounded-full" />
+              </span>
+              <span hlmItemContent>
+                <hlm-skeleton class="h-5 w-2/3" />
+                <hlm-skeleton class="h-4 w-full" />
+              </span>
+            </div>
+          }
+        </div>
+      } @else if (store.notifications().length === 0) {
+        <p
+          class="px-2.5 py-6 text-center text-sm text-muted-foreground"
+          i18n="@@account.notificationBell.empty"
+        >
+          Nothing here yet.
+        </p>
+      } @else {
+        <ul>
+          @for (notification of store.notifications(); track notification.id) {
+            <li>
+              <button
+                hlmItem
+                size="xs"
+                type="button"
+                class="rounded-none text-start transition-colors hover:bg-accent focus-visible:bg-accent max-sm:min-h-11"
+                data-testid="notification-bell-item"
+                [attr.aria-current]="notification.isRead ? null : 'true'"
+                (click)="markRead(notification)"
+              >
+                <span hlmItemMedia>
+                  <span
+                    class="size-1.5 rounded-full"
+                    [class]="notification.isRead ? 'bg-transparent' : 'bg-foreground'"
+                    aria-hidden="true"
+                  ></span>
+                </span>
+                <span hlmItemContent class="min-w-0">
+                  <span
+                    hlmItemTitle
+                    class="max-w-full"
+                    [class]="notification.isRead ? 'font-normal' : 'font-medium'"
+                  >
+                    <span class="min-w-0 truncate">{{ notification.subject }}</span>
+                  </span>
+                  <span hlmItemDescription>
+                    <span class="min-w-0 truncate">{{ notification.body }}</span>
+                  </span>
+                </span>
+                <span hlmItemActions>
+                  <time
+                    class="text-xs text-muted-foreground"
+                    [attr.datetime]="notification.createdAt"
+                    >{{ relativeTime(notification.createdAt) }}</time
+                  >
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <hlm-separator />
+
+    <a
+      hlmItem
+      size="xs"
+      class="rounded-none transition-colors hover:bg-accent focus-visible:bg-accent max-sm:min-h-11"
+      routerLink="/account/notifications"
+    >
+      <span hlmItemMedia variant="icon">
+        <ng-icon name="lucideArrowRight" aria-hidden="true" />
+      </span>
+      <span hlmItemContent>
+        <span hlmItemTitle i18n="@@account.notificationBell.centre">Notification centre</span>
+      </span>
+    </a>
+  </hlm-popover-content>
+</hlm-popover>

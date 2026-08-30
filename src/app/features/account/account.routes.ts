@@ -1,4 +1,5 @@
-import { type Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, type Routes, type UrlTree } from '@angular/router';
 
 /**
  * Constant ACCOUNT_ROUTES
@@ -44,14 +45,10 @@ export const ACCOUNT_ROUTES: Routes = [
   },
   {
     path: 'notifications/preferences',
-    loadComponent: () =>
-      import('./ui/pages/account-notification-preferences-page/account-notification-preferences-page.component').then(
-        (m) => m.AccountNotificationPreferencesPage,
-      ),
-    title: $localize`:@@route.accountNotificationPreferences:Notification preferences`,
-    data: {
-      breadcrumb: $localize`:@@route.accountNotificationPreferences:Notification preferences`,
-    },
+    redirectTo: (): UrlTree =>
+      inject(Router).createUrlTree(['/account', 'notifications'], {
+        queryParams: { tab: 'preferences' },
+      }),
   },
   {
     path: 'notifications',

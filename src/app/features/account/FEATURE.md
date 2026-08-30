@@ -46,7 +46,7 @@ stores.
   mutation come from `features/organization`'s `MY_ORGANIZATIONS_PORT` — see Cross-Feature
   Dependencies
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
-- `/account/notifications/preferences` — the per-category delivery matrix (email / in-app), each
+- `/account/notifications?tab=preferences` — the per-category delivery matrix (email / in-app), each
   switch its own commit
 
 The tree carries `authGuard`: no shell route in this application carries one, and every account
@@ -156,6 +156,7 @@ rejected save is a whole-request failure rather than a field problem (`ARCHITECT
 - `UserPermissionService`
 - `accountPermissionGuard`
 - `withAccountMenu()`
+- `withNotificationBell()`
 - `provideAccountFeature()`
 
 `AccountMenu` (`ui/components/account-menu/`) is account-owned even though it only ever renders
@@ -168,6 +169,11 @@ auth state.
 It is the **only** way into the account, so it carries every section — the three main pages and
 the notification preferences matrix. Adding a page to `/account` means adding it here too, or it
 is unreachable.
+
+`NotificationBell` (`ui/components/notification-bell/`) is account-owned for the same reason, and a
+shell contributes it to its header-actions slot through `withNotificationBell()` (`order: 7`, between
+the global search and the assistant toggle). It is the only ambient signal that a notification
+arrived; the notification centre itself stays at `/account/notifications`.
 
 These contracts are intended for shell consumers such as layouts and shared shell widgets,
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.
@@ -206,6 +212,10 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Approved Exceptions
 
+- **`NotificationBell` injects `NotificationStore` directly.** `.claude/rules/components.md` reserves
+  store injection for pages. A slot-root component is the orchestrator of its own surface, with no
+  page above it to inject on its behalf — the same exception `OrganizationSwitcher` takes. It stays
+  read-mostly: `load()` on first open, `markAsRead()` on click, nothing else.
 - **`qrcode` dependency.** The TOTP enrollment renders the `otpauth://` provisioning URI as a QR
   image. It is imported **dynamically and browser-only** inside `AccountMfaPanel`, so it never
   enters the SSR bundle, and a failure to render is swallowed: the setup key is printed beside the
@@ -217,6 +227,27 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 - User profile remains account-owned even when auth bootstrap triggers its loading.
 - Shell-level user identity and notification behavior must cross feature boundaries through ports.
+- **The bell's panel is capped at `max-h-[165.75px]`, which is exactly three rows.** A row is an
+  `hlmItem size="xs"` and measures 55.25px, identical on chromium and webkit; 165.75px holds three
+  and cuts cleanly, leaving no sliver of a fourth. Two things about `HlmPopoverContent` make this
+  work and must not be undone: its base `gap-2.5 p-2.5` is neutralised with `gap-0 p-0` so the
+  separators run full-bleed, and `overflow-hidden` is then **required** — the primitive is
+  `rounded-lg` without it, because its own padding normally keeps children off the corners, so
+  full-bleed children would square them off. Any change to a row's padding or line count breaks the
+  cap — re-measure rather than adjusting it by eye.
+- **`/account/notifications` is one page with two tabs**, the feed and the preference matrix,
+  selected by `?tab=inbox|preferences` (default `inbox`). They were two routes; they share the
+  same type catalog and splitting them put "stop sending me these" a navigation away from "read
+  these". The old `/account/notifications/preferences` survives as a `RedirectFunction` to
+  `?tab=preferences`, so existing links and bookmarks still land. The matrix fetches its rows on
+  first activation of its pane, never on arrival at the feed.
+- **The bell is a popover, not a dropdown menu.** `CdkMenuItem.trigger()` closes the whole menu
+  stack on every click and takes no per-item opt-out, so marking one notification read inside a
+  dropdown would dismiss the panel. Measured on chromium and webkit before the switch.
+- **The bell's unread dot reads `NotificationStore.unreadCount`, never `hasUnread`.** `hasUnread` is
+  derived from the loaded entity collection, which is empty until the menu has been opened once;
+  only the count, primed from `/api/inbox/unread-count` by `provideAccountFeature()`, is meaningful
+  before then. Its spec locks this.
 - **Leaving the organization currently open in the workspace navigates to `/organizations`**,
   which re-resolves the next accessible workspace or onboarding. Leaving any other organization
   only removes its row from `/account/organizations` — no navigation. This mirrors

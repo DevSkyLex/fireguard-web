@@ -1,31 +1,116 @@
 <div id="account-notifications" class="flex h-full flex-col gap-6 p-4 md:p-6">
-  <div class="flex max-w-3xl flex-col gap-4">
-    @if (store.unreadCount(); as unread) {
-      <p class="text-sm text-muted-foreground">
-        <span i18n="@@account.notifications.unreadCount">Unread</span>
-        <span class="ml-1 font-medium text-foreground">{{ unread }}</span>
-      </p>
-    } @else {
-      <p class="text-sm text-muted-foreground" i18n="@@account.notifications.allRead">
-        You are all caught up.
-      </p>
-    }
+  <hlm-tabs
+    [tab]="activeTab()"
+    class="flex max-w-3xl flex-col gap-4"
+    (tabActivated)="onTabActivated($event)"
+  >
+    <hlm-tabs-list
+      variant="line"
+      aria-label="Notification sections"
+      i18n-aria-label="@@account.notifications.tabsAriaLabel"
+    >
+      <button
+        hlmTabsTrigger="inbox"
+        class="max-sm:min-h-11"
+        data-testid="account-notifications-tab-inbox"
+      >
+        <span i18n="@@account.notifications.tabs.inbox">Inbox</span>
+      </button>
+      <button
+        hlmTabsTrigger="preferences"
+        class="max-sm:min-h-11"
+        data-testid="account-notifications-tab-preferences"
+      >
+        <span i18n="@@account.notifications.tabs.preferences">Preferences</span>
+      </button>
+    </hlm-tabs-list>
 
-    <app-account-notification-list
-      [notifications]="store.notifications()"
-      [categories]="categories()"
-      [activeCategory]="activeCategory()"
-      [loading]="store.isLoading()"
-      [loadingMore]="store.isLoadingMore()"
-      [hasMore]="store.hasMore()"
-      [hasError]="store.listError() !== null"
-      [unreadCount]="store.unreadCount()"
-      [markingAll]="store.isMarkingAllAsRead()"
-      (categorySelected)="filterByCategory($event)"
-      (markedAsRead)="store.markAsRead($event)"
-      (allMarkedAsRead)="store.markAllAsRead()"
-      (loadMoreRequested)="store.loadMore()"
-      (retried)="store.load()"
-    />
-  </div>
+    <div hlmTabsContent="inbox" class="flex flex-col gap-4">
+      @if (store.unreadCount(); as unread) {
+        <p class="text-sm text-muted-foreground">
+          <span i18n="@@account.notifications.unreadCount">Unread</span>
+          <span class="ml-1 font-medium text-foreground">{{ unread }}</span>
+        </p>
+      } @else {
+        <p class="text-sm text-muted-foreground" i18n="@@account.notifications.allRead">
+          You are all caught up.
+        </p>
+      }
+
+      <app-account-notification-list
+        [notifications]="store.notifications()"
+        [categories]="categories()"
+        [activeCategory]="activeCategory()"
+        [loading]="store.isLoading()"
+        [loadingMore]="store.isLoadingMore()"
+        [hasMore]="store.hasMore()"
+        [hasError]="store.listError() !== null"
+        [unreadCount]="store.unreadCount()"
+        [markingAll]="store.isMarkingAllAsRead()"
+        (categorySelected)="filterByCategory($event)"
+        (markedAsRead)="store.markAsRead($event)"
+        (allMarkedAsRead)="store.markAllAsRead()"
+        (loadMoreRequested)="store.loadMore()"
+        (retried)="store.load()"
+      />
+    </div>
+
+    <div hlmTabsContent="preferences" class="flex flex-col gap-4">
+      <ng-template hlmTabsContentLazy>
+        <p
+          id="notif-pref-description"
+          class="text-sm text-muted-foreground"
+          i18n="@@account.notificationPreferences.description"
+        >
+          Choose how each category reaches you. Everything is on by default; turning a channel off
+          only stops that delivery — the notifications themselves stay in your in-app list.
+        </p>
+
+        <div aria-live="polite" aria-atomic="true">
+          @if (preferencesLoading()) {
+            <div class="flex flex-col gap-2" data-testid="notif-pref-loading">
+              <p class="sr-only" i18n="@@account.notificationPreferences.loading">
+                Loading your notification preferences…
+              </p>
+              <hlm-skeleton class="h-10 w-full" />
+              <hlm-skeleton class="h-10 w-full" />
+              <hlm-skeleton class="h-10 w-full" />
+            </div>
+          } @else if (preferencesStore.loadError() !== null) {
+            <app-error-state
+              icon="lucideTriangleAlert"
+              title="Couldn't load your notification preferences"
+              i18n-title="@@account.notificationPreferences.errorTitle"
+              description="They can't be shown or changed until they load."
+              i18n-description="@@account.notificationPreferences.errorDescription"
+              data-testid="notif-pref-error"
+            >
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11"
+                (click)="loadPreferences()"
+              >
+                <span i18n="@@account.notificationPreferences.retry">Try again</span>
+              </button>
+            </app-error-state>
+          } @else if (rows().length === 0) {
+            <app-empty-state
+              icon="lucideBellOff"
+              title="No notification categories are available yet."
+              i18n-title="@@account.notificationPreferences.emptyCategories"
+              data-testid="notif-pref-empty"
+            />
+          } @else {
+            <app-account-notification-preferences-form
+              [rows]="rows()"
+              [pending]="preferencesStore.isSaving()"
+              (toggled)="commit($event)"
+            />
+          }
+        </div>
+      </ng-template>
+    </div>
+  </hlm-tabs>
 </div>

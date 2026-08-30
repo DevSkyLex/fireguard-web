@@ -9778,6 +9778,54 @@
         <source>Notification preferences</source>
         <target>Préférences de notification</target>
       </trans-unit>
+      <trans-unit id="account.notifications.tabsAriaLabel" datatype="html">
+        <source>Notification sections</source>
+        <target>Sections des notifications</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.tabs.inbox" datatype="html">
+        <source>Inbox</source>
+        <target>Boîte de réception</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.tabs.preferences" datatype="html">
+        <source>Preferences</source>
+        <target>Préférences</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.title" datatype="html">
+        <source>Notifications</source>
+        <target>Notifications</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.triggerIdle" datatype="html">
+        <source>Notifications</source>
+        <target>Notifications</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.trigger" datatype="html">
+        <source>Notifications, <x id="unread" equiv-text="unread"/> unread</source>
+        <target>Notifications, <x id="unread" equiv-text="unread"/> non lues</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.errorTitle" datatype="html">
+        <source> Couldn&apos;t load your notifications </source>
+        <target>Impossible de charger vos notifications</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.loading" datatype="html">
+        <source>Loading notifications</source>
+        <target>Chargement des notifications</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.empty" datatype="html">
+        <source> Nothing here yet. </source>
+        <target>Rien pour le moment.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.justNow" datatype="html">
+        <source>Just now</source>
+        <target>À l&apos;instant</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.centre" datatype="html">
+        <source>Notification centre</source>
+        <target>Centre des notifications</target>
+      </trans-unit>
       <trans-unit id="account.notificationPreferences.title" datatype="html">
         <source>Notification preferences</source>
         <target>Préférences de notification</target>

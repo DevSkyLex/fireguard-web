@@ -9778,6 +9778,54 @@
         <source>Notification preferences</source>
         <target>Preferencias de notificación</target>
       </trans-unit>
+      <trans-unit id="account.notifications.tabsAriaLabel" datatype="html">
+        <source>Notification sections</source>
+        <target>Secciones de notificaciones</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.tabs.inbox" datatype="html">
+        <source>Inbox</source>
+        <target>Bandeja de entrada</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.tabs.preferences" datatype="html">
+        <source>Preferences</source>
+        <target>Preferencias</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.title" datatype="html">
+        <source>Notifications</source>
+        <target>Notificaciones</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.triggerIdle" datatype="html">
+        <source>Notifications</source>
+        <target>Notificaciones</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.trigger" datatype="html">
+        <source>Notifications, <x id="unread" equiv-text="unread"/> unread</source>
+        <target>Notificaciones, <x id="unread" equiv-text="unread"/> sin leer</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.errorTitle" datatype="html">
+        <source> Couldn&apos;t load your notifications </source>
+        <target>No se pudieron cargar tus notificaciones</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.loading" datatype="html">
+        <source>Loading notifications</source>
+        <target>Cargando notificaciones</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.empty" datatype="html">
+        <source> Nothing here yet. </source>
+        <target>Nada por ahora.</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.justNow" datatype="html">
+        <source>Just now</source>
+        <target>Ahora mismo</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.centre" datatype="html">
+        <source>Notification centre</source>
+        <target>Centro de notificaciones</target>
+      </trans-unit>
       <trans-unit id="account.notificationPreferences.title" datatype="html">
         <source>Notification preferences</source>
         <target>Preferencias de notificación</target>

@@ -8,9 +8,11 @@ import {
   organizationNavigationCountersOutput,
   optionOutput,
   mercureSubscriptionOutput,
+  notificationOutput,
   userProfileOutput,
   type CurrentOrganizationMemberProfileOverrides,
   type LoginOutputFixture,
+  type NotificationOutputFixture,
   type OnboardingOutputFixture,
   type OptionFixture,
   type OrganizationOutputFixture,
@@ -171,6 +173,8 @@ export class ApiMock {
     profile?: Partial<UserProfileOutputFixture>;
     onboarding?: Partial<OnboardingOutputFixture>;
     organizations?: ReadonlyArray<OrganizationOutputFixture>;
+    notifications?: ReadonlyArray<NotificationOutputFixture>;
+    unreadCount?: number;
   }): Promise<void> {
     await this.installSafetyNet();
 
@@ -186,11 +190,19 @@ export class ApiMock {
     await this.page.route(`${API_BASE_URL}/api/notifications/subscription`, async (route) => {
       await fulfillJson(route, 200, mercureSubscriptionOutput());
     });
+    const notifications: ReadonlyArray<NotificationOutputFixture> = options?.notifications ?? [];
     await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
-      await fulfillJson(route, 200, hydraCollection([]));
+      await fulfillJson(route, 200, hydraCollection([...notifications]));
+    });
+    await this.page.route(/\/api\/notifications\/[^/]+\/read$/, async (route) => {
+      const id: string = route.request().url().split('/').at(-2) ?? '';
+      const target: NotificationOutputFixture | undefined = notifications.find(
+        (notification) => notification.id === id,
+      );
+      await fulfillJson(route, 200, { ...(target ?? notificationOutput({ id })), isRead: true });
     });
     await this.page.route(/\/api\/inbox\/unread-count(\?.*)?$/, async (route) => {
-      await fulfillJson(route, 200, { unreadCount: 0 });
+      await fulfillJson(route, 200, { unreadCount: options?.unreadCount ?? 0 });
     });
     // The collaboration sidebar loads on every workspace-shell route; without
     // these, the channel section renders its error state and the DM store
@@ -253,6 +265,8 @@ export class ApiMock {
     profile?: Partial<UserProfileOutputFixture>;
     onboarding?: Partial<OnboardingOutputFixture>;
     organizations?: ReadonlyArray<OrganizationOutputFixture>;
+    notifications?: ReadonlyArray<NotificationOutputFixture>;
+    unreadCount?: number;
   }): Promise<void> {
     await this.installSafetyNet();
 

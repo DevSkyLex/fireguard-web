@@ -327,7 +327,9 @@ export class AccountMenu {
    * @returns {void}
    */
   protected goToNotificationPreferences(): void {
-    void this.router.navigate(['/account', 'notifications', 'preferences']);
+    void this.router.navigate(['/account', 'notifications'], {
+      queryParams: { tab: 'preferences' },
+    });
   }
 
   /**

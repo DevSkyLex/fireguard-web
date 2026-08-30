@@ -426,6 +426,48 @@ export function mercureSubscriptionOutput(
 }
 
 /**
+ * One inbox notification, as the bell and the notification centre read it.
+ * `mockSessionData` serves an empty feed by default; pass `notifications` to
+ * seed one.
+ */
+export interface NotificationOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly type: string;
+  readonly category: string;
+  readonly subject: string;
+  readonly body: string;
+  readonly channels: ReadonlyArray<string>;
+  readonly payload: Record<string, string | null>;
+  readonly isRead: boolean;
+  readonly createdAt: string;
+  readonly readAt: string | null;
+}
+
+export function notificationOutput(
+  overrides: Partial<NotificationOutputFixture> = {},
+): NotificationOutputFixture {
+  const id: string = overrides.id ?? 'e2e-notification-1';
+
+  return {
+    '@id': `/api/notifications/${id}`,
+    '@type': 'Notification',
+    id,
+    type: 'intervention.assigned',
+    category: 'work',
+    subject: 'An intervention was assigned to you',
+    body: 'Boiler room inspection, tomorrow morning.',
+    channels: ['in_app'],
+    payload: {},
+    isRead: false,
+    createdAt: '2026-08-30T08:00:00+00:00',
+    readAt: null,
+    ...overrides,
+  };
+}
+
+/**
  * Sidebar navigation badge counters. The workspace shell reads these on every
  * organization route, so `mockSessionData` serves them ambiently.
  */

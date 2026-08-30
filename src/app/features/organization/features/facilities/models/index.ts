@@ -41,6 +41,11 @@ export type {
   FacilityBuildingModelOutline,
   FacilityBuildingModelOutlineSource,
 } from './facility-building-model/facility-building-model-output.interface';
+export type {
+  SanitizedPolygonAccepted,
+  SanitizedPolygonRejected,
+  SanitizedPolygonResult,
+} from './sanitized-polygon/sanitized-polygon.type';
 export type { EquipmentStatusTagDescriptor } from './equipment-status-tag/equipment-status-tag-descriptor.interface';
 export type { EquipmentStatusTagSeverity } from './equipment-status-tag/equipment-status-tag-severity.type';
 export { resolveEquipmentStatusTag } from './equipment-status-tag/equipment-status-tag.util';

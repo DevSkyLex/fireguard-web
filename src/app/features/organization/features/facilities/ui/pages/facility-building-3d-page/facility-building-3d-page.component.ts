@@ -33,6 +33,7 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { FacilityBuilding3dScene } from '../../components/facility-building-3d-scene';
 
 /**
  * Component FacilityBuilding3dPage
@@ -40,22 +41,33 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *
  * @description
  * Route entry page for the dedicated building 3D view
- * (`/organizations/:organizationId/facilities/:facilityId/3d`). This lot
- * (P0) ships no three.js scene at all — the page orchestrates
- * {@link FacilityBuilding3dStore}'s browser-only `loadModel` and renders one
- * of five states: a full-frame skeleton while the model is unresolved (also
- * the exact SSR output, since the store's fetch never fires on the server),
- * `app-error-state` with a retry, `app-empty-state` when the building has no
- * floors, a dedicated incompatible-device state when this browser lacks
- * WebGL, and — once P1 exists — an explicit placeholder standing in for the
- * scene, beside a toolbar already wired to the store (reset camera, toggle
- * exploded layout, link to the 2D plan, back to the record).
+ * (`/organizations/:organizationId/facilities/:facilityId/3d`). The page
+ * orchestrates {@link FacilityBuilding3dStore}'s browser-only `loadModel`
+ * and renders one of five states: a full-frame skeleton while the model is
+ * unresolved (also the exact SSR output, since the store's fetch never
+ * fires on the server), `app-error-state` with a retry, `app-empty-state`
+ * when the building has no floors, a dedicated incompatible-device state
+ * when this browser lacks WebGL, and — once loaded and WebGL-capable —
+ * `app-facility-building-3d-scene` (P1) beside a toolbar wired to the store
+ * (reset camera, toggle exploded layout, link to the 2D plan, back to the
+ * record). The scene's own `renderingUnavailable` output (a `getContext`
+ * failure the inline probe below did not catch, or a lost WebGL context)
+ * falls back to the same incompatible-device state by flipping
+ * {@link webglSupported}.
  *
  * WebGL support is probed inline, once, in {@link afterNextRender} — a
  * three-line `canvas.getContext` check does not earn a shared `utils/`
  * helper (rule of three, `ARCHITECTURE.md` §2.9) and never runs on the
  * server, where {@link webglSupported} simply keeps its optimistic default
  * masked by the loading state.
+ *
+ * The scene is presentational (`ARCHITECTURE.md` §10.3): this page owns
+ * every store call its outputs trigger — `roomActivated`/`floorActivated`
+ * select, `backgroundActivated` clears the selection, and `roomHovered`
+ * only ever writes {@link hoveredRoomId}, a page-local signal reserved for
+ * a future hover detail chip, never the store (a per-frame `patchState`
+ * would be a store misuse `FacilityBuilding3dStore`'s own `@description`
+ * already rules out).
  *
  * The empty state's "Go to Plans" call to action links to this facility's
  * record with `?tab=plans`, gated on `FACILITIES_WRITE` — floors are added
@@ -67,7 +79,15 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-facility-building-3d-page',
-  imports: [RouterLink, NgIcon, EmptyState, ErrorState, HlmButton, HlmSkeleton],
+  imports: [
+    RouterLink,
+    NgIcon,
+    EmptyState,
+    ErrorState,
+    FacilityBuilding3dScene,
+    HlmButton,
+    HlmSkeleton,
+  ],
   providers: [
     provideIcons({
       lucideArrowLeft,
@@ -150,6 +170,22 @@ export class FacilityBuilding3dPage {
     'facilities',
     this.facilityId(),
   ]);
+
+  /**
+   * Property hoveredRoomId
+   * @readonly
+   *
+   * @description
+   * The scene's currently hovered room, mirrored from its `roomHovered`
+   * output — page-local only, reserved for a future hover detail chip.
+   * Never written to a store: hover is a per-frame signal the scene already
+   * keeps local to itself.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly hoveredRoomId: WritableSignal<string | null> = signal<string | null>(null);
   //#endregion
 
   //#region Constructor
@@ -191,6 +227,17 @@ export class FacilityBuilding3dPage {
    */
   protected retryLoad(): void {
     this.store.loadModel({ organizationId: this.organizationId(), facilityId: this.facilityId() });
+  }
+
+  /**
+   * Method onRenderingUnavailable
+   * @description The scene's `renderingUnavailable` output — falls back to the incompatible-device state.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected onRenderingUnavailable(): void {
+    this.webglSupported.set(false);
   }
   //#endregion
 }

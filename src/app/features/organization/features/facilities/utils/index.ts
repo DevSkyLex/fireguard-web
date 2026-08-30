@@ -4,3 +4,4 @@ export { facilityToComplianceMapMarker } from './facility-compliance-marker/faci
 export { facilityToMapMarker } from './facility-marker/facility-marker.utils';
 export { facilityToTreeNode } from './facility-to-tree-node/facility-to-tree-node.utils';
 export { flattenComplianceTree } from './facility-tree-flatten/facility-tree-flatten.utils';
+export { sanitizePolygon } from './sanitize-polygon/sanitize-polygon.utils';

@@ -1,0 +1,18 @@
+@if (isBrowser) {
+  <div #container class="relative h-full min-h-64 w-full" data-testid="facility-3d-scene">
+    <canvas
+      #canvas
+      role="img"
+      [attr.aria-label]="ariaLabel()"
+      class="block h-full w-full touch-none"
+    ></canvas>
+    @if (!ready()) {
+      <hlm-skeleton
+        class="pointer-events-none absolute inset-0 block"
+        [attr.aria-label]="ariaLabel()"
+      />
+    }
+  </div>
+} @else {
+  <hlm-skeleton class="block h-full min-h-64 w-full" [attr.aria-label]="ariaLabel()" />
+}

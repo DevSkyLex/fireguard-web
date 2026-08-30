@@ -52,8 +52,20 @@ the icon set `@ng-icons/core` / `@ng-icons/lucide`, the self-hosted variable fon
 account TOTP panel and the facility QR dialog — see `features/account/FEATURE.md` and
 `features/organization/features/facilities/FEATURE.md`), and **`maplibre-gl`**, imported
 dynamically and browser-only by the single `shared/map` map primitive (see
-`features/organization/features/facilities/FEATURE.md`). Adding another is a documented decision,
-recorded in the owning `FEATURE.md` and here in the same change (section 14.3).
+`features/organization/features/facilities/FEATURE.md`), and **`three`** (+ `@types/three`),
+imported dynamically and browser-only by the single `FacilityBuilding3dScene` component that
+renders the building view (see `features/organization/features/facilities/FEATURE.md`).
+Adding another is a documented decision, recorded in the owning `FEATURE.md` and here in the
+same change (section 14.3).
+
+`three` was weighed against `angular-three` and Babylon before being taken plain. The wrapper
+would have been a second dependency, would have put the scene graph inside Angular's change
+detection, and would have added a version to keep in step with every Angular upgrade — for an
+abstraction this view barely uses. Babylon costs roughly twice the bytes for nothing this scene
+needs. `OrbitControls` ships inside the `three` package
+(`three/examples/jsm/controls/OrbitControls.js`), so no companion package is required. Imports
+are named rather than a namespace import, and the whole thing stays inside the 3D route's lazy
+chunk: the `initial` bundle budgets (700 kB warning, 1.8 MB error) must not see it.
 
 Do not introduce new dependencies or architectural patterns unless the task requires it and no existing pattern fits.
 

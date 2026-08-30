@@ -321,6 +321,100 @@ describe('FacilityService', () => {
     });
   });
 
+  // ── getBuildingModel ───────────────────────────────────────────────────────
+
+  describe('getBuildingModel', () => {
+    const buildingModel = {
+      buildingId: facilityId,
+      buildingName: 'Building A',
+      floors: [
+        {
+          facilityId: 'floor-1',
+          name: 'RDC',
+          levelIndex: 0,
+          status: 'active',
+          plan: { attachmentId: 'plan-1', imageWidth: 2400, imageHeight: 1600 },
+          outline: {
+            source: 'plan_geometry',
+            points: [
+              [0.02, 0.03],
+              [0.98, 0.03],
+              [0.98, 0.97],
+              [0.02, 0.97],
+            ],
+          },
+          rooms: [
+            {
+              facilityId: 'room-1',
+              name: 'Salle serveur',
+              type: 'area',
+              status: 'active',
+              points: [
+                [0.1, 0.1],
+                [0.3, 0.1],
+                [0.3, 0.4],
+                [0.1, 0.4],
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    it('should send GET request to the building-model endpoint and return the model', () => {
+      service.getBuildingModel(orgId, facilityId).subscribe((response) => {
+        expect(response).toEqual(buildingModel);
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/building-model`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(buildingModel);
+    });
+
+    it('should preserve floors without a plan or an outline as explicit nulls', () => {
+      const withoutPlan = {
+        ...buildingModel,
+        floors: [{ ...buildingModel.floors[0], plan: null, outline: null }],
+      };
+
+      service.getBuildingModel(orgId, facilityId).subscribe((response) => {
+        expect(response.floors[0]?.plan).toBeNull();
+        expect(response.floors[0]?.outline).toBeNull();
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/building-model`);
+      req.flush(withoutPlan);
+    });
+
+    it('should propagate a 403 forbidden error', () => {
+      service.getBuildingModel(orgId, facilityId).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(403),
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/building-model`);
+      req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+    });
+
+    it('should propagate a 409 conflict when the facility is not a building', () => {
+      service.getBuildingModel(orgId, facilityId).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(409),
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/building-model`);
+      req.flush({ status: 409, title: 'Conflict' }, { status: 409, statusText: 'Conflict' });
+    });
+
+    it('should propagate a 404 error when the facility is unknown', () => {
+      service.getBuildingModel(orgId, facilityId).subscribe({
+        error: (error: ApiError) => expect(error.status).toBe(404),
+      });
+
+      const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/building-model`);
+      req.flush({ status: 404, title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
+    });
+  });
+
   // ── setPlanGeometry ────────────────────────────────────────────────────────
 
   describe('setPlanGeometry', () => {

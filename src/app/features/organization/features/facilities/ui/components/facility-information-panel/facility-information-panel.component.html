@@ -126,6 +126,76 @@
     </app-inplace-field>
   </div>
 
+  @if (facility().type === 'floor') {
+    <div data-testid="facility-field-level-index">
+      <app-inplace-field
+        #levelIndexField
+        label="Stacking order"
+        i18n-label="@@facility.info.levelIndex"
+        commit="confirm"
+        [editable]="editable()"
+        [editing]="isEditing('levelIndex')"
+        [pending]="isSaving('levelIndex')"
+        [error]="errorFor('levelIndex')"
+        [canSave]="canSaveLevelIndex()"
+        (editingChange)="onLevelIndexEditing($event)"
+        (saved)="saveLevelIndex()"
+      >
+        @if (facility().levelIndex != null) {
+          <span fieldValue class="font-medium tabular-nums">{{ facility().levelIndex }}</span>
+        } @else {
+          <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+            >Not specified</span
+          >
+        }
+
+        <div fieldEditor class="flex flex-col gap-2">
+          <label
+            [attr.for]="levelIndexField.editorId + '-value'"
+            class="sr-only"
+            i18n="@@facility.info.levelIndex"
+            >Stacking order</label
+          >
+          <input
+            hlmInput
+            type="number"
+            step="1"
+            min="-100"
+            max="200"
+            class="w-full"
+            [id]="levelIndexField.editorId + '-value'"
+            [attr.aria-invalid]="levelIndexError() !== null"
+            [attr.aria-describedby]="
+              levelIndexError() !== null
+                ? levelIndexField.editorId + '-hint ' + levelIndexField.editorId + '-range'
+                : levelIndexField.editorId + '-hint'
+            "
+            [value]="levelIndexDraft()"
+            (input)="levelIndexDraft.set($any($event.target).value)"
+          />
+
+          @if (levelIndexError(); as rangeError) {
+            <p
+              role="alert"
+              class="text-xs text-destructive"
+              [id]="levelIndexField.editorId + '-range'"
+            >
+              {{ rangeError }}
+            </p>
+          }
+          <p
+            [id]="levelIndexField.editorId + '-hint'"
+            class="text-xs text-muted-foreground"
+            i18n="@@facility.info.levelIndexHint"
+          >
+            Where this floor stacks among its siblings — ground floor is 0, a basement level is
+            negative. Ties between floors are allowed.
+          </p>
+        </div>
+      </app-inplace-field>
+    </div>
+  }
+
   <div data-testid="facility-field-coordinates">
     <app-inplace-field
       #coordinatesField

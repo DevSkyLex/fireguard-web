@@ -198,6 +198,104 @@ describe('FacilityInformationPanel', () => {
     expect(trigger?.hasAttribute('disabled')).toBe(true);
   });
 
+  describe('levelIndex — floor only', () => {
+    const levelIndexInput = (): HTMLInputElement | null =>
+      byTestId('facility-field-level-index')?.querySelector<HTMLInputElement>('input') ?? null;
+
+    const openLevelIndexOn = async (facility: FacilityOutput): Promise<void> => {
+      fixture.componentRef.setInput('facility', facility);
+      await fixture.whenStable();
+      byTestId('facility-field-level-index')?.querySelector<HTMLButtonElement>('button')?.click();
+      fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'levelIndex' });
+      await fixture.whenStable();
+    };
+
+    it('should stay hidden for a non-floor facility', () => {
+      expect(byTestId('facility-field-level-index')).toBeNull();
+    });
+
+    it('should show for a floor facility', async () => {
+      fixture.componentRef.setInput('facility', { ...FACILITY, type: 'floor', levelIndex: 0 });
+      await fixture.whenStable();
+
+      expect(byTestId('facility-field-level-index')).not.toBeNull();
+      expect(byTestId('facility-field-level-index')?.textContent).toContain('0');
+    });
+
+    it('should show a placeholder when unset', async () => {
+      fixture.componentRef.setInput('facility', {
+        ...FACILITY,
+        type: 'floor',
+        levelIndex: null,
+      });
+      await fixture.whenStable();
+
+      expect(byTestId('facility-field-level-index')?.textContent).toContain('Not specified');
+    });
+
+    it('should send an empty draft as null, clearing the stored value', async () => {
+      await openLevelIndexOn({ ...FACILITY, type: 'floor', levelIndex: 1 });
+
+      const field: HTMLInputElement | null = levelIndexInput();
+      if (field) {
+        field.value = '';
+        field.dispatchEvent(new Event('input'));
+      }
+      await fixture.whenStable();
+
+      saveButton()?.click();
+
+      expect(patches).toEqual([{ levelIndex: null }]);
+    });
+
+    it('should save a changed integer', async () => {
+      await openLevelIndexOn({ ...FACILITY, type: 'floor', levelIndex: 1 });
+
+      const field: HTMLInputElement | null = levelIndexInput();
+      if (field) {
+        field.value = '2';
+        field.dispatchEvent(new Event('input'));
+      }
+      await fixture.whenStable();
+
+      saveButton()?.click();
+
+      expect(patches).toEqual([{ levelIndex: 2 }]);
+    });
+
+    it('should refuse a level index below -100', async () => {
+      await openLevelIndexOn({ ...FACILITY, type: 'floor', levelIndex: 0 });
+
+      const field: HTMLInputElement | null = levelIndexInput();
+      if (field) {
+        field.value = '-101';
+        field.dispatchEvent(new Event('input'));
+      }
+      await fixture.whenStable();
+
+      expect(saveButton()?.hasAttribute('disabled')).toBe(true);
+    });
+
+    it('should refuse a level index above 200', async () => {
+      await openLevelIndexOn({ ...FACILITY, type: 'floor', levelIndex: 0 });
+
+      const field: HTMLInputElement | null = levelIndexInput();
+      if (field) {
+        field.value = '201';
+        field.dispatchEvent(new Event('input'));
+      }
+      await fixture.whenStable();
+
+      expect(saveButton()?.hasAttribute('disabled')).toBe(true);
+    });
+
+    it('should not let an unchanged draft be saved', async () => {
+      await openLevelIndexOn({ ...FACILITY, type: 'floor', levelIndex: 3 });
+
+      expect(saveButton()?.hasAttribute('disabled')).toBe(true);
+    });
+  });
+
   describe('coordinates — both-or-neither', () => {
     const openCoordinatesOn = async (facility: FacilityOutput): Promise<void> => {
       fixture.componentRef.setInput('facility', facility);

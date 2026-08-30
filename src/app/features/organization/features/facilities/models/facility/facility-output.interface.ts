@@ -196,6 +196,19 @@ export interface FacilityOutput extends HydraItem {
   readonly longitude?: number | null;
 
   /**
+   * Property levelIndex
+   * @readonly
+   *
+   * @description
+   * This facility's stacking order among its siblings when `type` is
+   * `floor` — ground floor is `0`, a basement level is negative. `null`
+   * when unset. Siblings are not required to be unique on this value.
+   *
+   * @type {number | null | undefined}
+   */
+  readonly levelIndex?: number | null;
+
+  /**
    * Property planGeometry
    * @readonly
    *

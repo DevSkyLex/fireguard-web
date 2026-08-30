@@ -3,7 +3,7 @@ import { organizationPermissionGuard } from '@features/organization/http/guards'
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { facilityResolver, facilityTitleResolver } from './http/resolvers';
-import { FacilityStore } from './state';
+import { FacilityBuilding3dStore, FacilityStore } from './state';
 
 /**
  * Constant FACILITY_ROUTES
@@ -12,8 +12,11 @@ import { FacilityStore } from './state';
  * @description
  * Organization-scoped facility workflows: the roots-only index at
  * `/organizations/:organizationId/facilities`, a map surface over every
- * located facility, a creation page, and one facility record under it. `map`
- * is listed ahead of `:facilityId` so it never matches as a facility id.
+ * located facility, a creation page, one facility record, and that
+ * record's dedicated 3D view. `map` is listed ahead of `:facilityId` so it
+ * never matches as a facility id; `:facilityId/3d` needs no such ordering —
+ * it is two segments against `:facilityId`'s one, so the two can never be
+ * confused regardless of declaration order.
  *
  * The read permission guard sits on the pathless parent, as it does in
  * `EQUIPMENT_ROUTES`: it re-runs on an organization switch because the
@@ -33,6 +36,11 @@ import { FacilityStore } from './state';
  * from the same state, falling back to a neutral section label until the
  * record lands. `create` also carries `unsavedChangesGuard`, confirming
  * before the operator loses an in-progress registration.
+ *
+ * `:facilityId/3d` reuses both {@link facilityResolver} and
+ * {@link facilityTitleResolver} unchanged, and additionally provides
+ * `FacilityBuilding3dStore` for its own model fetch and view-local scene
+ * state (`FEATURE.md` "Building 3D View").
  *
  * @since 1.0.0
  *
@@ -88,6 +96,14 @@ export const FACILITY_ROUTES: Routes = [
           import('./ui/pages/facility-detail-page/facility-detail-page.component').then(
             (m) => m.FacilityDetailPage,
           ),
+      },
+      {
+        path: ':facilityId/3d',
+        providers: [FacilityStore, FacilityBuilding3dStore],
+        resolve: { facilitySeeded: facilityResolver },
+        title: facilityTitleResolver,
+        loadComponent: () =>
+          import('./ui/pages/facility-building-3d-page').then((m) => m.FacilityBuilding3dPage),
       },
     ],
   },

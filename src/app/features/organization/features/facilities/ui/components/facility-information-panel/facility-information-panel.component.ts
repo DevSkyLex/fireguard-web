@@ -37,6 +37,16 @@ function parseCoordinate(value: string): number | null {
   return trimmed === '' ? null : Number(trimmed);
 }
 
+/** The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object. */
+const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
+
+/** Parses a level-index draft, returning `null` for a blank string and `NaN` for anything unparsable. */
+function parseLevelIndex(value: string): number | null {
+  const trimmed: string = value.trim();
+
+  return trimmed === '' ? null : Number(trimmed);
+}
+
 /**
  * Component FacilityInformationPanel
  * @class FacilityInformationPanel
@@ -57,7 +67,12 @@ function parseCoordinate(value: string): number | null {
  * Coordinates commit together and only together: a value in one without the
  * other is refused client-side rather than sent half-filled.
  *
- * @version 1.1.0
+ * `levelIndex` only renders when the facility's `type` is `floor` — it means
+ * nothing on any other type — and shares the same confirm-mode shape as the
+ * text fields: blank clears it, an integer outside `[-100, 200]` is refused
+ * client-side.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -198,6 +213,9 @@ export class FacilityInformationPanel {
    */
   protected readonly textDraft: WritableSignal<string> = signal<string>('');
 
+  /** The in-flight level-index draft, seeded when `levelIndex` opens. */
+  protected readonly levelIndexDraft: WritableSignal<string> = signal<string>('');
+
   /** The in-flight latitude draft, seeded when `coordinates` opens. */
   protected readonly latitudeDraft: WritableSignal<string> = signal<string>('');
 
@@ -248,6 +266,61 @@ export class FacilityInformationPanel {
     if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return false;
 
     return latitude !== this.facility().latitude || longitude !== this.facility().longitude;
+  });
+
+  /**
+   * Property canSaveLevelIndex
+   * @readonly
+   *
+   * @description
+   * Whether the level-index draft is worth sending: blank (clears a stored
+   * value), or a whole number within `[-100, 200]` different from what is
+   * stored.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSaveLevelIndex: Signal<boolean> = computed<boolean>(() => {
+    const parsed: number | null = parseLevelIndex(this.levelIndexDraft());
+    const stored: number | null = this.facility().levelIndex ?? null;
+
+    if (parsed === null) return stored !== null;
+    if (!Number.isInteger(parsed)) return false;
+    if (parsed < LEVEL_INDEX_BOUNDS[0] || parsed > LEVEL_INDEX_BOUNDS[1]) return false;
+
+    return parsed !== stored;
+  });
+
+  /**
+   * Property levelIndexError
+   * @readonly
+   *
+   * @description
+   * The reason a level-index draft cannot be saved, or `null` when it is
+   * blank or acceptable. Without this the Save button simply greys out and
+   * the user is left to guess why — the bound is a domain rule, not a
+   * self-evident one.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly levelIndexError: Signal<string | null> = computed<string | null>(() => {
+    const raw: string = this.levelIndexDraft().trim();
+    if (raw === '') return null;
+
+    const parsed: number | null = parseLevelIndex(raw);
+    if (
+      parsed === null ||
+      !Number.isInteger(parsed) ||
+      parsed < LEVEL_INDEX_BOUNDS[0] ||
+      parsed > LEVEL_INDEX_BOUNDS[1]
+    ) {
+      return $localize`:@@facility.info.levelIndexRange:Enter a whole number between -100 and 200.`;
+    }
+
+    return null;
   });
 
   /** Names a facility type for the read-only type row. */
@@ -389,6 +462,23 @@ export class FacilityInformationPanel {
   }
 
   /**
+   * Method onLevelIndexEditing
+   * @description Seeds the level-index draft on open and forwards the open/close request.
+   * @access protected
+   * @since 1.2.0
+   * @param {boolean} open - Whether the field is being opened.
+   * @returns {void}
+   */
+  protected onLevelIndexEditing(open: boolean): void {
+    if (open) {
+      const value: number | null | undefined = this.facility().levelIndex;
+      this.levelIndexDraft.set(value != null ? String(value) : '');
+    }
+
+    this.editTargetChanged.emit(open ? 'levelIndex' : null);
+  }
+
+  /**
    * Method saveText
    * @description Emits the drafted value for the currently open text field, trimmed and nulled if blank (never for `name`).
    * @access protected
@@ -416,6 +506,17 @@ export class FacilityInformationPanel {
     const longitude: number | null = parseCoordinate(this.longitudeDraft());
 
     this.detailsChanged.emit({ latitude, longitude });
+  }
+
+  /**
+   * Method saveLevelIndex
+   * @description Emits the drafted level index, cleared to `null` when blank.
+   * @access protected
+   * @since 1.2.0
+   * @returns {void}
+   */
+  protected saveLevelIndex(): void {
+    this.detailsChanged.emit({ levelIndex: parseLevelIndex(this.levelIndexDraft()) });
   }
 
   /**
@@ -463,7 +564,7 @@ export class FacilityInformationPanel {
    * @returns {string | null} The stored value.
    */
   private storedTextValueOf(target: FacilityEditTarget | null): string | null {
-    if (target === null || target === 'coordinates') return null;
+    if (target === null || target === 'coordinates' || target === 'levelIndex') return null;
 
     return this.facility()[target];
   }

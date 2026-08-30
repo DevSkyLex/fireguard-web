@@ -9,6 +9,7 @@ import type {
   FacilityChildrenOptions,
   FacilityDescendantsOptions,
   FacilityPlanOverlayOutput,
+  FacilityBuildingModelOutput,
   FacilityGeocodeOutput,
   CreateFacilityInput,
   UpdateFacilityInput,
@@ -352,6 +353,40 @@ export class FacilityService extends HydraApiService {
           params: this.buildParams(attachmentId ? { params: { attachmentId } } : undefined),
           withCredentials: true,
         },
+      )
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method getBuildingModel
+   * @method getBuildingModel
+   *
+   * @description
+   * Reads one building facility's 3D model — its floors, each with its plan,
+   * outline and rooms (`GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model`).
+   * Calls `this.http` directly, like {@link getPlanOverlay}: the response is
+   * a computed projection, not a stored Hydra item, so it carries no
+   * `@id`/`@type` and cannot satisfy `getOne`'s `T extends HydraItem` bound.
+   * `floors` arrives in server render order — never re-sort it.
+   *
+   * @access public
+   * @since 1.7.0
+   *
+   * @param {string} organizationId - The ID of the organization.
+   * @param {string} facilityId - The ID of the building facility.
+   *
+   * @return {Observable<FacilityBuildingModelOutput>} An observable emitting the building model.
+   */
+  public getBuildingModel(
+    organizationId: string,
+    facilityId: string,
+  ): Observable<FacilityBuildingModelOutput> {
+    return this.http
+      .get<FacilityBuildingModelOutput>(
+        this.buildUrl(
+          `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/building-model`,
+        ),
+        { headers: this.buildHeaders(), withCredentials: true },
       )
       .pipe(catchError(this.handleError));
   }

@@ -31,7 +31,6 @@ import {
   lucideExternalLink,
   lucideGauge,
   lucideGlobe,
-  lucideLogOut,
   lucideReceipt,
   lucideRefreshCw,
   lucideSettings,
@@ -60,6 +59,7 @@ import type {
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { AT_LEAST_LG, mediaQuery } from '@shared/breakpoint';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -73,7 +73,6 @@ import { OrganizationPlanSelector } from '../../components/organization-plan-sel
 import { OrganizationUsagePanel } from '../../components/organization-usage-panel';
 import { OrganizationCancelSubscriptionDialog } from '../../dialogs/organization-cancel-subscription-dialog';
 import { OrganizationDeleteDialog } from '../../dialogs/organization-delete-dialog';
-import { OrganizationLeaveDialog } from '../../dialogs/organization-leave-dialog';
 import { OrganizationSuspendDialog } from '../../dialogs/organization-suspend-dialog';
 import { OrganizationTransferOwnershipDialog } from '../../dialogs/organization-transfer-ownership-dialog';
 import {
@@ -273,7 +272,6 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
     OrganizationComplianceForm,
     OrganizationDeleteDialog,
     OrganizationGeneralForm,
-    OrganizationLeaveDialog,
     OrganizationLegalForm,
     OrganizationLogoPicker,
     OrganizationNotificationsForm,
@@ -307,7 +305,6 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
       lucideExternalLink,
       lucideGauge,
       lucideGlobe,
-      lucideLogOut,
       lucideReceipt,
       lucideRefreshCw,
       lucideSettings,
@@ -606,16 +603,6 @@ export class OrganizationSettingsPage {
   );
 
   /**
-   * Property canLeave
-   * @readonly
-   * @description Whether the Leave control may render — the owner cannot leave (`LeaveOrganizationHandler`).
-   * @access protected
-   * @since 1.6.0
-   * @type {Signal<boolean>}
-   */
-  protected readonly canLeave: Signal<boolean> = computed((): boolean => !this.isOwner());
-
-  /**
    * Property activeTab
    * @readonly
    *
@@ -648,17 +635,25 @@ export class OrganizationSettingsPage {
    * Whether the section list lays out as a `lg`-and-up left rail
    * (`vertical`, `hlm-tabs-list`) or a horizontally-scrollable row above the
    * panes (`horizontal`, `hlm-paginated-tabs-list`) on narrower viewports —
-   * driven by a `(min-width: 1024px)` media query. Starts `horizontal`
-   * (server/pre-hydration default) and upgrades once the browser evaluates
-   * the query.
+   * derived from `@shared/breakpoint`'s `lg` query rather than a `matchMedia`
+   * of its own. Starts `horizontal` (server/pre-hydration default) and
+   * upgrades once the browser evaluates the query.
    *
    * @access protected
    * @since 1.2.0
    * @type {WritableSignal<'horizontal' | 'vertical'>}
    */
-  protected readonly settingsTabsOrientation: WritableSignal<'horizontal' | 'vertical'> = signal<
-    'horizontal' | 'vertical'
-  >('horizontal');
+  protected readonly settingsTabsOrientation: Signal<'horizontal' | 'vertical'> = computed(
+    (): 'horizontal' | 'vertical' => (this.isAtLeastLg() ? 'vertical' : 'horizontal'),
+  );
+
+  /**
+   * Whether the viewport is `lg` or wider, from the one shared breakpoint
+   * primitive. Read from the `min-width` side on purpose: the signal is
+   * `false` before the browser answers, and this page must render its
+   * horizontal row — not its desktop rail — on the server.
+   */
+  private readonly isAtLeastLg: Signal<boolean> = mediaQuery(AT_LEAST_LG);
 
   /**
    * Property generalFormValues
@@ -871,16 +866,6 @@ export class OrganizationSettingsPage {
   protected readonly confirmingTransfer: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property confirmingLeave
-   * @readonly
-   * @description Whether the danger-zone leave confirmation dialog is open.
-   * @access protected
-   * @since 1.6.0
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly confirmingLeave: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
    * Property confirmingCancelSubscription
    * @readonly
    * @description Whether the subscription tab's cancel confirmation dialog is open.
@@ -1013,15 +998,6 @@ export class OrganizationSettingsPage {
    * @type {string}
    */
   private previousDeleteStatus: string = 'idle';
-
-  /**
-   * Property previousLeaveStatus
-   * @description The leave call state as of the last time {@link navigateAwayOnLeave} ran.
-   * @access private
-   * @since 1.6.0
-   * @type {string}
-   */
-  private previousLeaveStatus: string = 'idle';
 
   /**
    * Property previousStatusChangeStatus
@@ -1253,46 +1229,7 @@ export class OrganizationSettingsPage {
     untracked((): void => this.confirmingCancelSubscription.set(false));
   });
 
-  /**
-   * Property navigateAwayOnLeave
-   * @readonly
-   *
-   * @description
-   * Once leaving succeeds, clears the active organization context and
-   * returns to the organization redirector, mirroring
-   * {@link navigateAwayOnDelete} — the acting member no longer belongs here
-   * either way.
-   *
-   * @access private
-   * @since 1.6.0
-   */
-  private readonly navigateAwayOnLeave: EffectRef = effect((): void => {
-    const status: string = this.settingsStore.leaveCallState().status;
-    const previous: string = this.previousLeaveStatus;
-    this.previousLeaveStatus = status;
-
-    if (previous !== 'pending' || status !== 'success') return;
-
-    untracked((): void => {
-      this.confirmingLeave.set(false);
-      this.activeOrganizationStore.clear();
-      void this.router.navigate(['/organizations']);
-    });
-  });
   //#endregion
-
-  constructor() {
-    const desktopQuery: MediaQueryList | undefined = globalThis.matchMedia?.('(min-width: 1024px)');
-    if (!desktopQuery) return;
-
-    this.settingsTabsOrientation.set(desktopQuery.matches ? 'vertical' : 'horizontal');
-    const onDesktopQueryChange = (event: MediaQueryListEvent): void =>
-      this.settingsTabsOrientation.set(event.matches ? 'vertical' : 'horizontal');
-    desktopQuery.addEventListener('change', onDesktopQueryChange);
-    this.destroyRef.onDestroy(() =>
-      desktopQuery.removeEventListener('change', onDesktopQueryChange),
-    );
-  }
 
   //#region Methods
   /**
@@ -1793,33 +1730,6 @@ export class OrganizationSettingsPage {
       newOwnerUserId: event.newOwnerUserId,
       slug,
     });
-  }
-
-  /**
-   * Method openLeaveDialog
-   * @method openLeaveDialog
-   * @description Opens the danger-zone leave confirmation dialog.
-   * @access protected
-   * @since 1.6.0
-   * @returns {void}
-   */
-  protected openLeaveDialog(): void {
-    this.confirmingLeave.set(true);
-  }
-
-  /**
-   * Method leaveOrganization
-   * @method leaveOrganization
-   * @description Deactivates the acting member's own membership once the reader confirms.
-   * @access protected
-   * @since 1.6.0
-   * @returns {void}
-   */
-  protected leaveOrganization(): void {
-    const organizationId: string | null = this.organizationId();
-    if (organizationId === null) return;
-
-    this.settingsStore.leave({ organizationId });
   }
 
   /**

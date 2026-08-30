@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,17 +14,15 @@ import type {
   FacilityOutput,
   FacilityType,
 } from '@features/organization/features/facilities/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
 /** Placeholder rows drawn while the tab's own fetch is in flight. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
-
 /**
  * The localized label for each facility type, resolved through a component
  * method rather than a template branch — a plain taxonomy, not a severity
@@ -60,13 +59,14 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
 @Component({
   selector: 'app-intervention-facilities-table',
   imports: [
+    NgTemplateOutlet,
+    CollectionSurface,
     NgIcon,
     RouterLink,
     EmptyState,
     ErrorState,
     HlmBadge,
     HlmButton,
-    HlmSkeleton,
     InterventionTag,
     ...HlmTableImports,
   ],
@@ -152,7 +152,12 @@ export class InterventionFacilitiesTable {
 
   //#region Properties
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'h-4 w-40 max-w-full',
+    'h-4 w-20',
+    'h-4 w-20',
+  ];
   //#endregion
 
   //#region Methods

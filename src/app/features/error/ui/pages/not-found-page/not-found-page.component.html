@@ -5,18 +5,14 @@
 
   <div class="flex flex-col gap-2">
     <p class="font-mono text-sm text-muted-foreground">404</p>
-    <h1 class="text-2xl font-semibold tracking-tight text-foreground" i18n="@@error.notFound.title">
-      That page is not here
-    </h1>
-    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.notFound.description">
-      The link may be out of date, or the record it pointed to may have been removed.
-    </p>
+    <app-page-heading
+      heading="That page is not here"
+      i18n-heading="@@error.notFound.title"
+      description="The link may be out of date, or the record it pointed to may have been removed."
+      i18n-description="@@error.notFound.description"
+    />
   </div>
 
-  <!--
-    The address is shown so a stale bookmark can be recognised — and broken out
-    of the sentence, because a URL wrapped mid-word inside prose is unreadable.
-  -->
   @if (attemptedUrl(); as attempted) {
     <p
       class="max-w-full truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground"

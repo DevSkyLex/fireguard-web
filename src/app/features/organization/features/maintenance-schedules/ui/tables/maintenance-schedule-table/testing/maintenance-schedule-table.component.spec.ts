@@ -190,4 +190,46 @@ describe('MaintenanceScheduleTable', () => {
 
     expect(emitted).toEqual([target]);
   });
+
+  it('should draw skeleton rows on a first load, and no data rows', async () => {
+    await render([], { loading: true });
+
+    expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]').length).toBe(
+      0,
+    );
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    // The shared surface's loading contract is "first load only": flashing the
+    // table to skeletons on page 2 loses the operator's place for nothing.
+    await render([schedule()], { loading: true });
+
+    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]').length).toBe(
+      1,
+    );
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should mirror every row as a card, the equipment link first and the facility demoted', async () => {
+    await render([schedule({ facility: '/api/facilities/facility-1' })], {
+      facilityLabelOf: (facilityId) => (facilityId === 'facility-1' ? 'Building A' : null),
+    });
+
+    const cards: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="maintenance-schedule-table-card"]',
+    );
+    const cardLinks: NodeListOf<HTMLAnchorElement> = cards[0].querySelectorAll('a');
+
+    expect(cards.length).toBe(1);
+    expect(cardLinks[0].getAttribute('href')).toBe('/organizations/org-1/equipments/equipment-1');
+    expect(cardLinks[1].getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+  });
+
+  it('should say so plainly when a page holds no rows', async () => {
+    await render([]);
+
+    expect(root().querySelector('[data-testid="maintenance-schedule-table-row"]')).toBeNull();
+    expect(root().textContent).toContain('No results.');
+  });
 });

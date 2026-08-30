@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -26,6 +27,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationMemberSortField,
 } from '@features/organization/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -36,11 +38,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component OrganizationMemberTable
@@ -73,15 +71,17 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * the backend's own sort whitelist (`ListOrganizationMembersProvider`) has
  * no other orderable field.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-member-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
+    CollectionSurface,
     NgIcon,
     HlmAvatar,
     HlmAvatarFallback,
@@ -89,7 +89,6 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
     HlmBadge,
     HlmButton,
     HlmCheckbox,
-    HlmSkeleton,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
@@ -154,6 +153,24 @@ export class OrganizationMemberTable {
    * @type {InputSignal<boolean>}
    */
   public readonly canRemove: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property selectionMode
+   * @readonly
+   *
+   * @description
+   * Whether the card layout offers its selection checkbox. Below the surface's
+   * compact breakpoint a permanent checkbox column costs an eighth of a 375px
+   * screen for an action rarely performed there, so selection is a mode the
+   * page turns on rather than a column that is always there — the same rule
+   * `app-intervention-table` already follows. The table layout is unaffected.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly selectionMode: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property canAssignRoles
@@ -267,9 +284,6 @@ export class OrganizationMemberTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
-
   /**
    * Property allSelected
    * @readonly
@@ -304,6 +318,26 @@ export class OrganizationMemberTable {
       this.items().some((member: OrganizationMemberOutput): boolean => selected.has(member.id))
     );
   });
+
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. Literal strings because Tailwind scans source text, and column-aware because a skeleton whose blocks do not line up with the header it replaces reads as a broken table rather than a loading one.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const widths: string[] = [];
+
+      if (this.canRemove()) widths.push('size-4');
+
+      widths.push('w-32', 'w-40', 'w-24', 'w-16', 'w-20', 'ms-auto size-6');
+
+      return widths;
+    },
+  );
   //#endregion
 
   //#region Methods

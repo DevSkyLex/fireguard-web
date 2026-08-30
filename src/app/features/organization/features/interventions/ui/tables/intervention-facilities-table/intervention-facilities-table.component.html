@@ -1,117 +1,65 @@
-@if (loading() && items().length === 0) {
-  <span class="sr-only" role="status" i18n="@@intervention.linked.loading">Loading…</span>
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="overflow-y-auto">
-      <table hlmTable data-testid="intervention-facilities-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.facilities.caption">
-          The facilities linked to this intervention.
-        </caption>
+<app-collection-surface
+  caption="The facilities linked to this intervention."
+  i18n-caption="@@intervention.linked.facilities.caption"
+  testId="intervention-facilities-table"
+  density="compact"
+  [loading]="loading()"
+  [hasError]="error() !== null"
+  [rowCount]="items().length"
+  [columnCount]="3"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead i18n="@@intervention.linked.facilities.columnName">Name</th>
+      <th hlmTableHead i18n="@@intervention.linked.facilities.columnType">Type</th>
+      <th hlmTableHead i18n="@@intervention.linked.facilities.columnStatus">Status</th>
+    </tr>
+  </ng-container>
 
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnName">Name</th>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnType">Type</th>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnStatus">Status</th>
-          </tr>
-        </thead>
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="intervention-facilities-table-row">
+        <td hlmTableCell class="whitespace-normal">
+          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+        </td>
+        <td hlmTableCell>
+          <span hlmBadge variant="outline">{{ typeLabelOf(item) }}</span>
+        </td>
+        <td hlmTableCell>
+          <app-intervention-tag kind="facilityStatus" [value]="item.status" />
+        </td>
+      </tr>
+    }
+  </ng-container>
 
-        <tbody hlmTableBody>
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-40 max-w-full" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-} @else if (error(); as message) {
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        data-testid="intervention-facilities-table-card"
+      >
+        <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <app-intervention-tag kind="facilityStatus" [value]="item.status" />
+          <span class="truncate">{{ typeLabelOf(item) }}</span>
+        </div>
+      </div>
+    }
+  </ng-container>
+
   <app-error-state
+    surfaceError
     icon="lucideCircleAlert"
     title="Linked facilities could not be loaded"
     i18n-title="@@intervention.linked.facilities.errorTitle"
-    [description]="message"
+    [description]="error() ?? ''"
     data-testid="intervention-facilities-error"
   />
-} @else if (items().length > 0) {
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="overflow-y-auto">
-      <table hlmTable data-testid="intervention-facilities-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.facilities.caption">
-          The facilities linked to this intervention.
-        </caption>
 
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnName">Name</th>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnType">Type</th>
-            <th hlmTableHead i18n="@@intervention.linked.facilities.columnStatus">Status</th>
-          </tr>
-        </thead>
-
-        <tbody hlmTableBody>
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="intervention-facilities-table-row">
-              <td hlmTableCell class="whitespace-normal">
-                @if (isDraftRecord(item)) {
-                  <span class="font-medium text-foreground">{{ item.name }}</span>
-                  <span
-                    hlmBadge
-                    variant="outline"
-                    class="ms-1.5 gap-1 align-middle text-muted-foreground"
-                    data-testid="intervention-facilities-draft-badge"
-                  >
-                    <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
-                    <span i18n="@@intervention.linked.facilities.draftBadge">Draft</span>
-                  </span>
-                } @else {
-                  <a
-                    class="font-medium text-foreground hover:underline"
-                    [routerLink]="['/organizations', organizationId(), 'facilities', item.id]"
-                  >
-                    {{ item.name }}
-                  </a>
-                }
-                @if (item.code) {
-                  <span class="block text-sm text-muted-foreground">{{ item.code }}</span>
-                }
-              </td>
-              <td hlmTableCell>
-                <span hlmBadge variant="outline">{{ typeLabelOf(item) }}</span>
-              </td>
-              <td hlmTableCell>
-                <app-intervention-tag kind="facilityStatus" [value]="item.status" />
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  @if (totalItems() > items().length) {
-    <div class="flex justify-center pt-4">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="intervention-facilities-load-more"
-        [disabled]="loadingMore()"
-        (click)="loadMoreRequested.emit()"
-      >
-        @if (loadingMore()) {
-          <span i18n="@@intervention.linked.facilities.loadingMore">Loading…</span>
-        } @else {
-          <span i18n="@@intervention.linked.facilities.loadMore">Show more</span>
-        }
-      </button>
-    </div>
-  }
-} @else {
   <app-empty-state
+    surfaceEmpty
     icon="lucideMapPin"
     title="No linked facilities"
     i18n-title="@@intervention.linked.facilities.emptyTitle"
@@ -119,4 +67,49 @@
     i18n-description="@@intervention.linked.facilities.emptyDesc"
     data-testid="intervention-facilities-empty"
   />
+</app-collection-surface>
+
+@if (totalItems() > items().length) {
+  <div class="flex justify-center pt-4">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="intervention-facilities-load-more"
+      [disabled]="loadingMore()"
+      (click)="loadMoreRequested.emit()"
+    >
+      @if (loadingMore()) {
+        <span i18n="@@intervention.linked.facilities.loadingMore">Loading…</span>
+      } @else {
+        <span i18n="@@intervention.linked.facilities.loadMore">Show more</span>
+      }
+    </button>
+  </div>
 }
+
+<ng-template #identity let-item="item">
+  @if (isDraftRecord(item)) {
+    <span class="font-medium text-foreground">{{ item.name }}</span>
+    <span
+      hlmBadge
+      variant="outline"
+      class="ms-1.5 gap-1 align-middle text-muted-foreground"
+      data-testid="intervention-facilities-draft-badge"
+    >
+      <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
+      <span i18n="@@intervention.linked.facilities.draftBadge">Draft</span>
+    </span>
+  } @else {
+    <a
+      class="font-medium text-foreground hover:underline"
+      [routerLink]="['/organizations', organizationId(), 'facilities', item.id]"
+    >
+      {{ item.name }}
+    </a>
+  }
+  @if (item.code) {
+    <span class="block text-sm text-muted-foreground">{{ item.code }}</span>
+  }
+</ng-template>

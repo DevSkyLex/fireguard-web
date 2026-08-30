@@ -56,6 +56,48 @@ test.describe('Assets explorer', () => {
     );
   });
 
+  /*
+   * The explorer replaced two routed list pages that both wrote their state to
+   * the URL, and inherited neither — a reload came back on "By site" with
+   * nothing selected, and "the equipment of this site" could not be shared.
+   */
+  test('puts the selected site in the URL and carries it into creation', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await explorer.treeItems.first().click();
+
+    await expect(page).toHaveURL(new RegExp(`[?&]facility=${E2E_FACILITY_ID}`));
+
+    // The href is the contract: the operator lands on a form already scoped.
+    await expect(explorer.newEquipment).toHaveAttribute(
+      'href',
+      `/organizations/${E2E_ORGANIZATION_ID}/equipments/create?facility=${E2E_FACILITY_ID}`,
+    );
+    await expect(explorer.newFacility).toHaveAttribute(
+      'href',
+      `/organizations/${E2E_ORGANIZATION_ID}/facilities/create?parent=${E2E_FACILITY_ID}`,
+    );
+  });
+
+  test('restores the compliance axis from the URL on reload', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    const explorer = new AssetsExplorerPage(page);
+
+    await explorer.goto(E2E_ORGANIZATION_ID);
+    await explorer.complianceTab.click();
+    await expect(page).toHaveURL(/[?&]axis=compliance/);
+
+    await page.reload();
+    await expect(explorer.complianceTab).toHaveAttribute('data-state', 'active');
+  });
+
   test('expands a node and loads its children', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();

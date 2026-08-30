@@ -74,6 +74,7 @@ import {
   type StatTileLink,
   type StatTileTone,
 } from '@features/organization/ui/components';
+import { OrganizationAvatar } from '@features/organization/ui/components';
 import {
   getOrganizationDashboardHealthComparisonDelta,
   getOrganizationDashboardHealthValue,
@@ -231,6 +232,7 @@ type OrganizationDashboardSeverityEntry = {
     HlmBadge,
     HlmButton,
     HlmSkeleton,
+    OrganizationAvatar,
     HlmSwitch,
     InterventionTag,
     LineChart,

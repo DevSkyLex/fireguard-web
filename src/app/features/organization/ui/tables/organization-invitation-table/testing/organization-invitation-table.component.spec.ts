@@ -60,7 +60,7 @@ describe('OrganizationInvitationTable', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
-  it('should draw placeholder rows while loading and nothing empty in their place', async () => {
+  it('should draw placeholder rows on a first load, and nothing empty in their place', async () => {
     await createTable();
     fixture.componentRef.setInput('items', []);
     fixture.componentRef.setInput('loading', true);
@@ -70,6 +70,32 @@ describe('OrganizationInvitationTable', () => {
       root().querySelectorAll('[data-testid="organization-invitation-table-row"]'),
     ).toHaveLength(0);
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    await createTable([invitation()]);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    // The shared surface's loading contract is "first load only": flashing the
+    // table to skeletons on page 2 loses the reader's place for nothing.
+    expect(
+      root().querySelectorAll('[data-testid="organization-invitation-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
+  });
+
+  it('should render the same invitation a second time as a card, under the row testid plus -card', async () => {
+    await createTable([invitation({ id: 'a' }), invitation({ id: 'b' })]);
+
+    // Both layouts stay mounted — a container query, not an `@if`, picks the
+    // visible one — so a card is a second render of the same row.
+    expect(
+      root().querySelectorAll('[data-testid="organization-invitation-table-row-card"]'),
+    ).toHaveLength(2);
+    expect(
+      root().querySelectorAll('[data-testid="organization-invitation-table-row"]'),
+    ).toHaveLength(2);
   });
 
   it('should say so plainly when there is nothing to show', async () => {

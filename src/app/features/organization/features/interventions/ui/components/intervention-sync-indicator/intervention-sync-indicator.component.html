@@ -1,4 +1,4 @@
-<hlm-popover sideOffset="5" align="end">
+<hlm-popover sideOffset="5" align="end" (stateChanged)="onPanelState($event)">
   <button
     hlmPopoverTrigger
     hlmBtn
@@ -58,6 +58,11 @@
           <p class="text-xs text-destructive" i18n="@@intervention.sync.blocked">
             {{ blockedCount() }} change(s) could not be replayed.
           </p>
+          @if (blockedReason(); as reason) {
+            <p class="text-xs text-muted-foreground" data-testid="intervention-sync-problem">
+              {{ reason }}
+            </p>
+          }
         }
         @case ('syncing') {
           <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.running">
@@ -76,6 +81,80 @@
         }
       }
     </div>
+
+    @if (queueLoading()) {
+      <p
+        class="text-xs text-muted-foreground"
+        role="status"
+        i18n="@@intervention.sync.queueLoading"
+      >
+        Reading the queue…
+      </p>
+    } @else if (queue().length > 0) {
+      <ul
+        class="flex max-h-56 flex-col gap-1 overflow-y-auto overscroll-contain"
+        data-testid="intervention-sync-queue"
+        aria-label="Waiting to sync"
+        i18n-aria-label="@@intervention.sync.queueAriaLabel"
+      >
+        @for (operation of queue(); track operation.id) {
+          <li
+            class="flex flex-col gap-1 rounded-md border border-border p-2"
+            data-testid="intervention-sync-queue-item"
+          >
+            <div class="flex items-center gap-2">
+              @if (operation.status === 'conflict' || operation.status === 'failed') {
+                <ng-icon
+                  name="lucideTriangleAlert"
+                  class="shrink-0 text-destructive"
+                  aria-hidden="true"
+                />
+              } @else {
+                <ng-icon
+                  name="lucideCloudUpload"
+                  class="shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              }
+              <span class="min-w-0 flex-1 truncate text-xs text-foreground">{{
+                operationLabel(operation.type)
+              }}</span>
+            </div>
+            @if (operation.error) {
+              <p class="text-xs text-muted-foreground">{{ operation.error }}</p>
+            }
+            @if (operation.status === 'conflict' || operation.status === 'failed') {
+              <div class="flex items-center gap-1">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="intervention-sync-queue-retry"
+                  [attr.aria-label]="retryLabel(operation.type)"
+                  (click)="retryOperation(operation.id)"
+                >
+                  <span i18n="@@intervention.sync.queueRetry">Retry</span>
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="text-destructive hover:text-destructive max-sm:min-h-11"
+                  data-testid="intervention-sync-queue-discard"
+                  [attr.aria-label]="discardLabel(operation.type)"
+                  (click)="discardOperation(operation.id)"
+                >
+                  <span i18n="@@intervention.sync.queueDiscard">Discard</span>
+                </button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
 
     <div class="flex flex-wrap items-center gap-2">
       <button

@@ -17,7 +17,7 @@ const STATUS: Record<SubscriptionStatus, SubscriptionStatusTagDescriptor> = {
   },
   trialing: {
     label: $localize`:@@org.settings.subscriptionStatus.trialing:Trial`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideClock',
   },
   past_due: {

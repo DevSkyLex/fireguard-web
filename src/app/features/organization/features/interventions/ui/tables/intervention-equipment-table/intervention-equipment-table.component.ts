@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,17 +11,15 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDotDashed, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
 /** Placeholder rows drawn while the tab's own fetch is in flight. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
-
 /**
  * Component InterventionEquipmentTable
  * @class InterventionEquipmentTable
@@ -44,13 +43,14 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 @Component({
   selector: 'app-intervention-equipment-table',
   imports: [
+    NgTemplateOutlet,
+    CollectionSurface,
     NgIcon,
     RouterLink,
     EmptyState,
     ErrorState,
     HlmBadge,
     HlmButton,
-    HlmSkeleton,
     InterventionTag,
     ...HlmTableImports,
   ],
@@ -136,7 +136,13 @@ export class InterventionEquipmentTable {
 
   //#region Properties
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'h-4 w-40 max-w-full',
+    'h-4 w-28',
+    'h-4 w-20',
+    'h-4 w-24',
+  ];
   //#endregion
 
   //#region Methods

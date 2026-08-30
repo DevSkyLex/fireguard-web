@@ -2,29 +2,33 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   DestroyRef,
+  LOCALE_ID,
+  PLATFORM_ID,
+  computed,
   effect,
   inject,
   input,
-  LOCALE_ID,
-  PLATFORM_ID,
   signal,
-  untracked,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendarDays,
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
+  lucideLock,
   lucidePlus,
-  lucideCalendarDays,
   lucideRss,
 } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState, StoreError } from '@core/request-state';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -162,6 +166,7 @@ type CalendarPageAgendaGroup = {
   providers: [
     CalendarFeedStore,
     provideIcons({
+      lucideLock,
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
@@ -185,6 +190,11 @@ export class CalendarPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.queryError()?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties
@@ -526,6 +536,13 @@ export class CalendarPage {
   protected readonly loadFailed: Signal<boolean> = computed<boolean>(
     () => this.store.queryError() !== null,
   );
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** "Subscribe (iCal)" and "New event", registered on the shell's title band rather than left in the toolbar — the toolbar keeps only what scopes the view (Today, prev/next, granularity). */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -539,10 +556,14 @@ export class CalendarPage {
    * window (see `CalendarFeedStore`) is what makes the new/changed/removed
    * entry show up, this page only owns the dialogs' visibility.
    *
+   * Also registers {@link pageActions}.
+   *
    * @access public
    * @since 2.2.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const anchor: Date = this.month();

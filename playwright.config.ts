@@ -47,32 +47,49 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
-  /* Configure projects for major browsers */
+  /*
+   * Desktop projects run every spec EXCEPT `*.mobile.spec.ts`, and the mobile
+   * projects run only those. The split is not cosmetic: a device preset sets
+   * the viewport, `isMobile`, `hasTouch` and the user agent for the whole
+   * project, so running the existing suite under `Pixel 5` would put fifteen
+   * desktop-oriented specs on a 393px screen. The twelve specs that already
+   * call `page.setViewportSize({ width: 375 })` would not benefit either —
+   * an explicit viewport overrides the preset's, and only the preset's, size:
+   * touch emulation and the mobile user agent stay whatever the project says.
+   * A `*.mobile.spec.ts` therefore gets what those twelve cannot have — real
+   * touch input, `pointer: coarse`, and a mobile UA — while the desktop suite
+   * keeps its own contract.
+   */
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /.*\.mobile\.spec\.ts/,
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /.*\.mobile\.spec\.ts/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: /.*\.mobile\.spec\.ts/,
     },
 
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+      testMatch: /.*\.mobile\.spec\.ts/,
+    },
+
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+      testMatch: /.*\.mobile\.spec\.ts/,
+    },
 
     /* Test against branded browsers. */
     // {

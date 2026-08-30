@@ -63,12 +63,29 @@ export class InterventionDetailPage {
     await this.blockerItems.first().click();
   }
 
-  /** Toggles a work item row's completion by its visible label. */
+  /**
+   * Toggles a work item's completion by its visible label.
+   *
+   * The collection renders as a table or as cards depending on the width of
+   * its own container, and the detail page's column is narrow enough that the
+   * card form is what shows on a desktop too. Both forms are in the DOM — the
+   * switch is CSS — so the locator matches either and takes the visible one.
+   */
   public async toggleWorkItem(label: string): Promise<void> {
-    await this.workItemRows
+    await this.workItemToggle(label).click();
+  }
+
+  /** The visible completion toggle for one work item, whichever form renders it. */
+  public workItemToggle(label: string): Locator {
+    return this.page
+      .locator(
+        '[data-testid="intervention-work-item-table-row"], [data-testid="intervention-work-item-table-card"]',
+      )
       .filter({ hasText: label })
-      .getByTestId('intervention-work-item-toggle')
-      .click();
+      .locator(
+        '[data-testid="intervention-work-item-toggle"], [data-testid="intervention-work-item-toggle-card"]',
+      )
+      .locator('visible=true');
   }
 
   /** Opens the live discussion sheet from the detail page's header trigger. */

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-09T18:47:09Z",
+  "generatedAt": "2026-08-28T00:00:00Z",
   "title": "Design System: FireGuard",
   "extensions": {
     "colorMeta": {
@@ -82,7 +82,7 @@
       "ring": {
         "role": "neutral",
         "displayName": "Halo",
-        "canonical": "oklch(0.708 0 0)",
+        "canonical": "oklch(0.64 0 0)",
         "tonalRamp": [
           "oklch(0.205 0 0)",
           "oklch(0.269 0 0)",
@@ -122,21 +122,6 @@
           "oklch(70.7% 0.165 254.624)",
           "oklch(80.9% 0.105 251.813)",
           "oklch(88.2% 0.059 254.128)"
-        ]
-      },
-      "glyph-success": {
-        "role": "tertiary",
-        "displayName": "Success Glyph",
-        "canonical": "oklch(72.3% 0.219 149.579)",
-        "tonalRamp": [
-          "oklch(39.3% 0.095 152.535)",
-          "oklch(44.8% 0.119 151.328)",
-          "oklch(52.7% 0.154 150.069)",
-          "oklch(62.7% 0.194 149.214)",
-          "oklch(72.3% 0.219 149.579)",
-          "oklch(79.2% 0.209 151.711)",
-          "oklch(87.1% 0.15 154.449)",
-          "oklch(92.5% 0.084 155.995)"
         ]
       },
       "glyph-warning": {
@@ -183,9 +168,124 @@
           "oklch(80.8% 0.114 19.571)",
           "oklch(88.5% 0.062 18.334)"
         ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Success",
+        "canonical": "oklch(72.3% 0.219 149.579)",
+        "tonalRamp": [
+          "oklch(39.3% 0.095 152.535)",
+          "oklch(44.8% 0.119 151.328)",
+          "oklch(52.7% 0.154 150.069)",
+          "oklch(62.7% 0.194 149.214)",
+          "oklch(72.3% 0.219 149.579)",
+          "oklch(79.2% 0.209 151.711)",
+          "oklch(87.1% 0.15 154.449)",
+          "oklch(92.5% 0.084 155.995)"
+        ]
+      },
+      "chart-1": {
+        "role": "chart",
+        "displayName": "Signal Indigo",
+        "canonical": "oklch(0.53 0.20 272)",
+        "purpose": "Series 1. Echoes the #4f46e5 brand mark — the accent’s one surviving home outside the logo.",
+        "tonalRamp": [
+          "oklch(0.15 0.2 272)",
+          "oklch(0.28 0.2 272)",
+          "oklch(0.4 0.2 272)",
+          "oklch(0.52 0.2 272)",
+          "oklch(0.62 0.2 272)",
+          "oklch(0.72 0.2 272)",
+          "oklch(0.84 0.2 272)",
+          "oklch(0.95 0.2 272)"
+        ]
+      },
+      "chart-2": {
+        "role": "chart",
+        "displayName": "Ember Orange",
+        "canonical": "oklch(0.67 0.19 41)",
+        "purpose": "Series 2.",
+        "tonalRamp": [
+          "oklch(0.15 0.19 41)",
+          "oklch(0.28 0.19 41)",
+          "oklch(0.4 0.19 41)",
+          "oklch(0.52 0.19 41)",
+          "oklch(0.62 0.19 41)",
+          "oklch(0.72 0.19 41)",
+          "oklch(0.84 0.19 41)",
+          "oklch(0.95 0.19 41)"
+        ]
+      },
+      "chart-3": {
+        "role": "chart",
+        "displayName": "Field Teal",
+        "canonical": "oklch(0.67 0.14 162)",
+        "purpose": "Series 3. Under the 3:1 relief floor in light; legal only because the legend and tooltip always name the series.",
+        "tonalRamp": [
+          "oklch(0.15 0.14 162)",
+          "oklch(0.28 0.14 162)",
+          "oklch(0.4 0.14 162)",
+          "oklch(0.52 0.14 162)",
+          "oklch(0.62 0.14 162)",
+          "oklch(0.72 0.14 162)",
+          "oklch(0.84 0.14 162)",
+          "oklch(0.95 0.14 162)"
+        ]
+      },
+      "chart-4": {
+        "role": "chart",
+        "displayName": "Signal Amber",
+        "canonical": "oklch(0.76 0.155 75)",
+        "purpose": "Series 4. Under the 3:1 relief floor in light.",
+        "tonalRamp": [
+          "oklch(0.15 0.155 75)",
+          "oklch(0.28 0.155 75)",
+          "oklch(0.4 0.155 75)",
+          "oklch(0.52 0.155 75)",
+          "oklch(0.62 0.155 75)",
+          "oklch(0.72 0.155 75)",
+          "oklch(0.84 0.155 75)",
+          "oklch(0.95 0.155 75)"
+        ]
+      },
+      "chart-5": {
+        "role": "chart",
+        "displayName": "Alert Magenta",
+        "canonical": "oklch(0.70 0.17 357)",
+        "purpose": "Series 5. Under the 3:1 relief floor in light.",
+        "tonalRamp": [
+          "oklch(0.15 0.17 357)",
+          "oklch(0.28 0.17 357)",
+          "oklch(0.4 0.17 357)",
+          "oklch(0.52 0.17 357)",
+          "oklch(0.62 0.17 357)",
+          "oklch(0.72 0.17 357)",
+          "oklch(0.84 0.17 357)",
+          "oklch(0.95 0.17 357)"
+        ]
+      },
+      "chart-6": {
+        "role": "chart",
+        "displayName": "Deep Green",
+        "canonical": "oklch(0.55 0.17 142)",
+        "purpose": "Series 6.",
+        "tonalRamp": [
+          "oklch(0.15 0.17 142)",
+          "oklch(0.28 0.17 142)",
+          "oklch(0.4 0.17 142)",
+          "oklch(0.52 0.17 142)",
+          "oklch(0.62 0.17 142)",
+          "oklch(0.72 0.17 142)",
+          "oklch(0.84 0.17 142)",
+          "oklch(0.95 0.17 142)"
+        ]
       }
     },
     "typographyMeta": {
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "The dashboard shell's own <h1>, in DashboardPageHeader. One step below the out-of-shell headline: the shell already frames the page with a breadcrumb and a sidebar."
+      },
       "headline": {
         "displayName": "Headline",
         "purpose": "The page title, and the only element at this size. Always tracking-tight. One per page."
@@ -247,8 +347,22 @@
       }
     ],
     "breakpoints": [
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -290,7 +404,7 @@
       "refersTo": "badge-status",
       "description": "The positive terminal state. Only the two ends of a workflow enumeration carry colour; every intermediate step renders the same badge with a neutral grey glyph.",
       "html": "<span class=\"ds-badge\"><svg class=\"ds-badge-icon ds-glyph-success\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"12\" height=\"12\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Published</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; width: fit-content; height: 1.25rem; padding: 0.125rem 0.375rem; border: 1px solid var(--border); border-radius: 1.625rem; background: transparent; color: var(--muted-foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; } .ds-badge-icon { flex-shrink: 0; } .ds-glyph-success { color: oklch(72.3% 0.219 149.579); }"
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; width: fit-content; height: 1.25rem; padding: 0.125rem 0.375rem; border: 1px solid var(--border); border-radius: 1.625rem; background: transparent; color: var(--muted-foreground); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; } .ds-badge-icon { flex-shrink: 0; } .ds-glyph-success { color: var(--success); }"
     },
     {
       "name": "Text Input",
@@ -323,28 +437,56 @@
       "description": "A dashed border marks a container with nothing in it yet. Three inputs stand in for a six-element composition, so thirteen call sites cannot get it wrong thirteen different ways.",
       "html": "<div class=\"ds-empty\"><div class=\"ds-empty-media\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" width=\"20\" height=\"20\" aria-hidden=\"true\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/></svg></div><p class=\"ds-empty-title\">No interventions yet</p><p class=\"ds-empty-description\">Interventions you plan will appear here.</p></div>",
       "css": ".ds-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; padding: 2.5rem; border: 1px dashed var(--border); border-radius: 0.5rem; font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; } .ds-empty-media { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; margin-bottom: 0.25rem; border-radius: 0.5rem; background: var(--muted); color: var(--muted-foreground); } .ds-empty-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--foreground); } .ds-empty-description { margin: 0; font-size: 0.875rem; color: var(--muted-foreground); }"
+    },
+    {
+      "name": "Page Title Band",
+      "kind": "nav",
+      "refersTo": "subhead",
+      "description": "The dashboard shell's second band: the activated route's title as the document's one <h1>, with the page's own actions. No feature template carries an <h1> inside the shell.",
+      "html": "<div class=\"ds-page-header\"><h1 class=\"ds-page-title\">Interventions</h1><div class=\"ds-page-actions\"><button class=\"ds-btn ds-btn-outline\">Export</button><button class=\"ds-btn ds-btn-default\">New intervention</button></div></div>",
+      "css": ".ds-page-header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; } .ds-page-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--foreground); } .ds-page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-inline-start: auto; }"
+    },
+    {
+      "name": "Global Search Palette",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The shell's one command surface, opened from a ghost icon trigger or Ctrl/Cmd+K. Results group by entity type; every state is a sentence in the list rather than a chrome change.",
+      "html": "<div class=\"ds-palette\"><div class=\"ds-palette-input\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><span>extincteur</span></div><div class=\"ds-palette-list\"><div class=\"ds-palette-group\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M12 2v6\"/><path d=\"M5 10h14v10H5z\"/></svg>Equipments</div><button class=\"ds-palette-item\" type=\"button\"><span class=\"ds-palette-lines\"><span class=\"ds-palette-title\">Extincteur CO₂ 5 kg</span><span class=\"ds-palette-sub\">Hall A · Niveau 0</span></span><span class=\"ds-palette-extra\">FG-2481</span></button><button class=\"ds-palette-item\" type=\"button\"><span class=\"ds-palette-lines\"><span class=\"ds-palette-title\">Extincteur eau pulvérisée</span><span class=\"ds-palette-sub\">Atelier · Niveau 1</span></span><span class=\"ds-palette-extra\">FG-2502</span></button></div></div>",
+      "css": ".ds-palette { display: flex; flex-direction: column; overflow: hidden; width: 100%; max-width: 36rem; background: var(--popover); color: var(--popover-foreground); border-radius: 0.875rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; } .ds-palette-input { display: flex; align-items: center; gap: 0.5rem; height: 2.75rem; padding: 0 0.75rem; border-bottom: 1px solid var(--border); color: var(--muted-foreground); font-size: 0.875rem; } .ds-palette-input span { color: var(--foreground); } .ds-palette-list { display: flex; flex-direction: column; padding: 0.25rem; } .ds-palette-group { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.5rem 0.25rem; font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); } .ds-palette-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.375rem 0.5rem; border: 0; border-radius: 0.5rem; background: transparent; color: var(--foreground); text-align: start; cursor: pointer; transition: background 150ms ease; } .ds-palette-item:hover, .ds-palette-item:focus-visible { background: var(--accent); outline: none; } .ds-palette-lines { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; } .ds-palette-title { font-size: 0.875rem; } .ds-palette-sub { font-size: 0.75rem; color: var(--muted-foreground); } .ds-palette-extra { margin-inline-start: auto; flex-shrink: 0; font-size: 0.75rem; color: var(--muted-foreground); }"
+    },
+    {
+      "name": "Chart Series & Legend",
+      "kind": "custom",
+      "refersTo": "chart-1",
+      "description": "The one surface that draws with chroma. Gridlines on the horizontal axis only, achromatic chrome, and a legend of pills with swatches below the plot — the legend is what makes the low-relief light slots legal.",
+      "html": "<div class=\"ds-chart\"><svg class=\"ds-chart-plot\" viewBox=\"0 0 320 120\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Non-conformities per month, three series\"><g class=\"ds-chart-grid\"><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\"/><line x1=\"0\" y1=\"55\" x2=\"320\" y2=\"55\"/><line x1=\"0\" y1=\"90\" x2=\"320\" y2=\"90\"/></g><polyline class=\"ds-s1\" points=\"4,88 56,70 108,74 160,42 212,36 264,20 316,14\"/><polyline class=\"ds-s2\" points=\"4,60 56,66 108,52 160,58 212,44 264,50 316,38\"/><polyline class=\"ds-s3\" points=\"4,102 56,96 108,100 160,86 212,92 264,78 316,84\"/></svg><div class=\"ds-chart-legend\"><span class=\"ds-chart-key\"><i class=\"ds-sw1\"></i>Opened</span><span class=\"ds-chart-key\"><i class=\"ds-sw2\"></i>Resolved</span><span class=\"ds-chart-key\"><i class=\"ds-sw3\"></i>Overdue</span></div></div>",
+      "css": ".ds-chart { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 24rem; font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; } .ds-chart-plot { width: 100%; height: 120px; } .ds-chart-grid line { stroke: color-mix(in oklab, var(--border) 60%, transparent); stroke-width: 1; } .ds-chart-plot polyline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; } .ds-s1 { stroke: oklch(0.53 0.20 272); } .ds-s2 { stroke: oklch(0.67 0.19 41); } .ds-s3 { stroke: oklch(0.67 0.14 162); } .ds-chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; } .ds-chart-key { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; color: var(--muted-foreground); } .ds-chart-key i { width: 0.5rem; height: 0.5rem; border-radius: 9999px; } .ds-sw1 { background: oklch(0.53 0.20 272); } .ds-sw2 { background: oklch(0.67 0.19 41); } .ds-sw3 { background: oklch(0.67 0.14 162); }"
     }
   ],
   "narrative": {
-    "northStar": "The Control Surface",
-    "overview": "FireGuard is an operator's console. It is dense, unambiguous, and built for someone who already knows what they are doing and needs zero friction between intent and action. Nothing on screen is there to impress: every pixel is either a value to read, a control to press, or the whitespace that keeps the two apart. The interface is the flat panel a professional works against for eight hours, not a page they visit.\n\nThe system is achromatic by decision. Surfaces, text, borders and controls are pure zero-chroma neutral — genuinely neither warm nor cool. Colour is not a decorative resource here; it is a scarce, load-bearing signal, and it is spent in exactly one place: the glyph of a status indicator. That single constraint is what makes a dense table readable. When nothing else is coloured, a red chevron at 12px is impossible to miss.\n\nDensity is the second half of the identity. The largest type in the entire application is 24px, and 86% of sized text is 14px or 12px. Controls are 32px tall. This is deliberate compression: more of the operator's actual work fits in one viewport, and the interface stops competing with the data it carries.",
+    "overview": "**Creative North Star: \"The Control Surface\"**\n\nFireGuard is an operator's console. It is dense, unambiguous, and built for\nsomeone who already knows what they are doing and needs zero friction between\nintent and action. Nothing on screen is there to impress: every pixel is either\na value to read, a control to press, or the whitespace that keeps the two apart.\nThe interface is the flat panel a professional works against for eight hours,\nnot a page they visit.\n\nThe system is **achromatic by decision**. Surfaces, text, borders and controls\nare pure zero-chroma neutral — genuinely neither warm nor cool. Colour is not a\ndecorative resource here; it is a scarce, load-bearing signal, and it is spent\nin one place: the glyph of a status indicator. That single constraint is\nwhat makes a dense table readable. When nothing else is coloured, a red chevron\nat 12px is impossible to miss.\n\nThere is one named exception, and naming it is what keeps it from spreading: a\nchart has no glyph to tint, so `shared/chart` carries its own six-slot ordinal\npalette. It is admitted on the same terms the glyph rule sets — a series is\nnever told apart by hue alone, because the legend and the tooltip always name\nit — and it never leaves the plot.\n\nDensity is the second half of the identity. The largest type in the entire\napplication is 24px, and 86% of sized text is 14px or 12px. Controls are 32px\ntall. This is deliberate compression: more of the operator's actual work fits in\none viewport, and the interface stops competing with the data it carries.",
     "keyCharacteristics": [
-      "Achromatic neutral palette; chroma confined to status glyphs",
+      "Achromatic neutral palette; chroma confined to status glyphs and chart series",
       "Compressed scale — a hard 24px type ceiling, 32px controls",
       "Flat in-page surfaces; a hairline ring instead of shadows or borders",
       "Compact and mechanical controls with a 1px press displacement",
       "Motion belongs to primitives, never to page composition",
-      "Full dark parity via html[data-theme=\"dark\"]"
+      "Full dark parity via `html[data-theme=\"dark\"]`"
     ],
     "rules": [
       {
         "name": "The Glyph Rule",
-        "body": "Chroma appears on a status icon and nowhere else. The badge around it stays outline — transparent ground, hairline border, muted text — and only the glyph carries tone. Filling the badge instead turns a dense table into a row of coloured pills and destroys the one signal that should stand out.",
+        "body": "Chroma appears on a status icon and nowhere else. The badge around it stays `outline` — transparent ground, hairline border, muted text — and only the glyph carries tone. Filling the badge instead turns a dense table into a row of coloured pills and destroys the one signal that should stand out.",
         "section": "colors"
       },
       {
         "name": "The Two Ends Rule",
         "body": "In a workflow enumeration, only the terminal states carry colour: success for the positive end, danger for the destructive one. Every intermediate step is neutral. Colour therefore reads as \"this is finished\", not as a heat map of progress.",
+        "section": "colors"
+      },
+      {
+        "name": "The Chart-Only Chroma Rule",
+        "body": "The chart palette is the one place chroma is spent on a filled shape, and it never leaves `shared/chart`. Do not sample a chart slot for a badge, a button, a tag or a surface: outside a plot those six hues have no legend to disambiguate them, which is the entire basis on which they are allowed.",
         "section": "colors"
       },
       {
@@ -354,7 +496,7 @@
       },
       {
         "name": "The 24px Ceiling",
-        "body": "Nothing in the application renders larger than 1.5rem. There is no display size and no hero type. A screen that needs more presence earns it through spacing and position, not through scale.",
+        "body": "Nothing in the operator's console renders larger than 1.5rem. There is no display size and no hero type. A screen that needs more presence earns it through spacing and position, not through scale.",
         "section": "typography"
       },
       {
@@ -364,7 +506,7 @@
       },
       {
         "name": "The Sentence Case Rule",
-        "body": "Labels are sentence case. Uppercase with widened tracking is not part of this system — it appears three times in the entire feature tree and should not spread.",
+        "body": "Labels are sentence case. Uppercase is not part of this system — it survives twice in the entire feature tree, both on the channel-info sheet's `<h4>` group labels, and should not spread.",
         "section": "typography"
       },
       {
@@ -379,36 +521,49 @@
       },
       {
         "name": "The Overlay-Only Shadow Rule",
-        "body": "A shadow means \"this is floating above the page and will be dismissed\". Four shadow utilities exist across the entire feature and layout tree; that number should not grow.",
+        "body": "A shadow means \"this is floating above the page and will be dismissed\". **Zero** `shadow-*` utilities remain across the feature, layout, core and shared-behaviour trees — every shadow in the running application comes from an overlay primitive. The rule is no longer a budget to hold under; it is an invariant, and the next `shadow-*` in a feature template is the one that breaks it.",
         "section": "elevation"
       },
       {
         "name": "The Dashed-Means-Absent Rule",
         "body": "A dashed border marks a container with nothing in it yet — an empty collection, an unfilled slot, a drop target. Solid means real content. A dashed border never decorates a populated surface, and its destructive variant (40% opacity) marks a slot whose content failed rather than one that was never filled.",
         "section": "shapes"
+      },
+      {
+        "name": "The card is the section",
+        "body": "An ordinary page section and a self-contained working surface — a form, the calendar's day panel, a stat tile — are the same chrome: `hlmCard`. One card family across the application, rather than a borderless idiom and a carded one whose boundary nobody could state twice the same way.",
+        "section": "page-grammar"
+      },
+      {
+        "name": "The Server Rule",
+        "body": "Any collection that is not bounded by nature paginates, sorts and filters **through the API**. In-memory filtering is legitimate only for bounded, documented collections (roles, member directory, facility map, assets pane preview, the calendar's date window, offline work items) — each such drain is recorded in its owning `FEATURE.md`. - **Collection page skeleton**: `collection-toolbar` (search box + filter toggle) → `collection-filter-bar` (editable chips) → table/dataview → `collection-pagination` (30/60/100). The interventions list is the reference implementation. - **Tables**: `hlmTable` inside `hlmTableContainer`; sortable heads follow the `intervention-table` sortable-head pattern (the head emits `sortChanged`, the server sorts); row actions in an `hlmDropdownMenu`; bulk checkboxes only where bulk actions exist. The spartan `data-table` recipe (`@tanstack/angular-table`) is **excluded**: its row models are client-side, which the Server Rule forbids. - **URL and persistence**: search and filters sync to the URL (questions asked now); sort and page size persist in a cookie (preferences). - **Detail sub-collections** show a compact pager or \"Show more\" as soon as `totalItems > itemsPerPage` — a silently truncated list reads as complete and is therefore wrong.",
+        "section": "collections"
       }
     ],
     "dos": [
       "Do spend colour only on a status glyph. If a new surface needs to distinguish states, reach for icon, weight, position and tone first.",
-      "Do pair every severity colour with a label and an icon, and give the icon aria-hidden so the label is the accessible name.",
-      "Do keep a page's largest text at 1.5rem, font-semibold, tracking-tight — the canonical page title is one exact class string, and reusing it verbatim is how the ceiling stays intact.",
-      "Do separate in-page surfaces with ring-1 at 10% foreground, or with one tonal step to Wash.",
+      "Do pair every severity colour with a label and an icon, and give the icon `aria-hidden` so the label is the accessible name.",
+      "Do let the shell own the page title. Inside `DashboardLayout` no feature template carries an `<h1>`; outside it, `app-page-heading` sets the one exact class string (`text-2xl font-semibold tracking-tight`), and reusing it verbatim is how the ceiling stays intact.",
+      "Do draw a chart from `shared/chart`, which resolves its palette from the theme signal. A colour written by hand into a chart config will not follow an appearance switch, because a canvas never resolves `var()`.",
+      "Do separate in-page surfaces with `ring-1` at 10% foreground, or with one tonal step to Wash.",
       "Do use the 32px control height as the default rhythm; step to 24px or 28px inside dense toolbars rather than shrinking padding on a 32px control.",
       "Do give every interactive element a visible 3px focus ring; on bare inline links a 2px ring is the established exception.",
       "Do mark genuinely empty containers with a dashed border.",
       "Do verify every new surface in both themes — dark is not a filter, it inverts the primary relationship and makes borders translucent."
     ],
     "donts": [
-      "Don't reintroduce a chromatic brand accent. The interface is achromatic by decision; indigo lives on the mark and in browser chrome only.",
+      "Don't reintroduce a chromatic brand accent. The interface is achromatic by decision; indigo lives on the mark, in browser chrome, and as the first chart slot — nowhere else.",
+      "Don't borrow a chart slot for a badge, a tag, a button or a surface. Outside a plot those six hues have no legend, which is the only reason they are allowed at all.",
       "Don't fill a status badge with its severity colour, and don't colour the label. The ground stays transparent and the text stays muted.",
       "Don't colour intermediate workflow states. Only the two terminal ends carry tone.",
       "Don't render a destructive action as a solid red button. Tint the ground and colour the text.",
-      "Don't introduce type above 1.5rem, or a display typeface. There is one family at four sizes.",
+      "Don't introduce type above 1.5rem on any surface an authenticated operator can reach, and never a display typeface. There is one family at five sizes; the split-layout showcase's 30/36px promise is the single exception, and it lives outside the shell.",
       "Don't set uppercase with widened tracking as a section eyebrow.",
-      "Don't add a shadow to an in-page surface. Shadow means \"floating and dismissable\".",
-      "Don't wrap every section in an identical bordered card. Vary surface levels — borderless headers, carded work surfaces, divider lists — so hierarchy comes from rhythm rather than from boxes.",
-      "Don't add page-level motion. Transitions belong to the primitives; a feature template's motion vocabulary is transition-colors and the button's 1px press.",
+      "Don't add a shadow to an in-page surface. Shadow means \"floating and dismissable\", and the feature tree currently holds zero `shadow-*` utilities — the next one is a regression, not a rounding error.",
+      "Don't nest a card inside a card, or reach for a second card family. One section is one `hlmCard`; inside it, hierarchy comes from the header, the spacing and divider lists — from rhythm rather than from more boxes.",
+      "Don't add page-level motion. Transitions belong to the primitives; a feature template's motion vocabulary is `transition-colors` and the button's 1px press.",
       "Don't let the page scroll as a whole. Columns own their own overflow."
-    ]
+    ],
+    "northStar": "The Control Surface"
   }
 }

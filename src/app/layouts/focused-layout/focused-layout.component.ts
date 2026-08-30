@@ -20,6 +20,11 @@ import { FOCUSED_FOOTER_SLOT, FOCUSED_HEADER_SLOT } from './slots';
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * Three rows, the middle one taking the slack. The shell itself never scrolls:
+ * the content row owns the scroller, so the header and footer stay put on a
+ * page taller than the viewport, and its `justify-center` centres a short page
+ * while a tall one pushes past it and scrolls rather than clipping.
  */
 @Component({
   selector: 'app-focused-layout',

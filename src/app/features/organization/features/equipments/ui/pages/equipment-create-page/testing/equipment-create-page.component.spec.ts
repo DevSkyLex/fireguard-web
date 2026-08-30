@@ -1,9 +1,11 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { EquipmentStore } from '@features/organization/features/equipments/state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { EquipmentCreatePage } from '../equipment-create-page.component';
 
 const CREATED: EquipmentOutput = {
@@ -44,6 +46,10 @@ describe('EquipmentCreatePage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: FacilityService,
+          useValue: { list: (): unknown => of({ member: [], totalItems: 0 }) },
+        },
         {
           provide: EquipmentStore,
           useValue: {

@@ -1,0 +1,60 @@
+@if (isInitialLoading()) {
+  <span class="sr-only" role="status" i18n="@@shared.collectionSurface.loading">Loading…</span>
+}
+
+@switch (visibleSlot()) {
+  @case ('error') {
+    <ng-content select="[surfaceError]" />
+  }
+  @case ('empty') {
+    <ng-content select="[surfaceEmpty]" />
+  }
+  @default {
+    <div [class]="tableWrapperClass()">
+      <div
+        hlmTableContainer
+        [class]="containerClass()"
+        tabindex="0"
+        role="region"
+        [attr.aria-labelledby]="captionId()"
+      >
+        <table hlmTable [attr.data-testid]="testId()">
+          <caption hlmTableCaption [id]="captionId()" class="sr-only">
+            {{
+              caption()
+            }}
+          </caption>
+
+          <thead hlmTableHeader [class]="theadClass()">
+            <ng-content select="[surfaceHead]" />
+          </thead>
+
+          <tbody hlmTableBody [class]="tbodyClass()">
+            @if (isInitialLoading()) {
+              <app-collection-skeleton-rows
+                [rows]="skeletonRowCount()"
+                [columns]="skeletonColumns()"
+                [columnCount]="columnCount()"
+              />
+            } @else {
+              <ng-content select="[surfaceRows]" />
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div [class]="cardsWrapperClass()" [attr.data-testid]="testId() + '-cards'">
+      @if (isInitialLoading()) {
+        @for (index of skeletonRowIndexes(); track index) {
+          <div class="flex flex-col gap-2 rounded-md border border-border p-3" aria-hidden="true">
+            <hlm-skeleton class="h-4 w-40 max-w-full" />
+            <hlm-skeleton class="h-3 w-24" />
+          </div>
+        }
+      } @else {
+        <ng-content select="[surfaceCards]" />
+      }
+    </div>
+  }
+}

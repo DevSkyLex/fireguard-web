@@ -11,7 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -89,7 +89,21 @@ function invitation(
   } as unknown as OrganizationInvitationOutput;
 }
 
+/**
+ * Minimal ResizeObserver stand-in: the role filter's select popover observes
+ * its anchor, and the test environment provides no implementation.
+ */
+class ResizeObserverStub {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+}
+
 describe('OrganizationMembersPage', () => {
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+  });
+
   let fixture: ComponentFixture<OrganizationMembersPage>;
   let members: WritableSignal<readonly OrganizationMemberOutput[]>;
   let activeInvitations: WritableSignal<readonly OrganizationInvitationOutput[]>;
@@ -115,6 +129,10 @@ describe('OrganizationMembersPage', () => {
 
   const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
+
+  let roleIdParam: string | undefined;
+  let tabParam: string | undefined;
+  let navigate: ReturnType<typeof vi.fn>;
 
   async function createPage(): Promise<void> {
     const memberEntityMap: Signal<Readonly<Record<string, OrganizationMemberOutput>>> = computed(
@@ -191,12 +209,18 @@ describe('OrganizationMembersPage', () => {
       },
     });
 
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) as never;
+
     fixture = TestBed.createComponent(OrganizationMembersPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
+    if (roleIdParam !== undefined) fixture.componentRef.setInput('roleId', roleIdParam);
+    if (tabParam !== undefined) fixture.componentRef.setInput('tab', tabParam);
     await fixture.whenStable();
   }
 
   beforeEach(() => {
+    roleIdParam = undefined;
+    tabParam = undefined;
     members = signal<readonly OrganizationMemberOutput[]>([member()]);
     activeInvitations = signal<readonly OrganizationInvitationOutput[]>([invitation()]);
     membersTotal = signal<number>(1);
@@ -227,6 +251,21 @@ describe('OrganizationMembersPage', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
+  it('should narrow the first roster page from ?roleId=, without a second round trip', async () => {
+    roleIdParam = 'role-7';
+    await createPage();
+
+    expect(load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      includeMembers: true,
+      includeInvitations: true,
+      includeRoles: true,
+      sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: 'role-7',
+    });
+    expect(loadMembers).not.toHaveBeenCalled();
+  });
+
   it('should load exactly the resources the routed member’s permissions allow', async () => {
     await createPage();
 
@@ -236,6 +275,7 @@ describe('OrganizationMembersPage', () => {
       includeInvitations: true,
       includeRoles: true,
       sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: null,
     });
   });
 
@@ -249,6 +289,7 @@ describe('OrganizationMembersPage', () => {
       includeInvitations: false,
       includeRoles: false,
       sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: null,
     });
   });
 
@@ -517,6 +558,7 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -530,6 +572,7 @@ describe('OrganizationMembersPage', () => {
       page: 3,
       search: '',
       status: 'all',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -543,6 +586,7 @@ describe('OrganizationMembersPage', () => {
       page: 2,
       search: '',
       status: 'all',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -560,6 +604,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'all',
+      roleId: null,
       pageSize: 60,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -577,6 +622,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: 'amelie',
       status: 'all',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -592,6 +638,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'inactive',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -611,6 +658,7 @@ describe('OrganizationMembersPage', () => {
       page: 1,
       search: '',
       status: 'all',
+      roleId: null,
       pageSize: 30,
       sort: { field: 'joinedAt', direction: 'asc' },
     });
@@ -627,5 +675,63 @@ describe('OrganizationMembersPage', () => {
     expect(tiles.find((tile) => tile.id === 'active')?.value).toBe(9);
     expect(tiles.find((tile) => tile.id === 'pending-invitations')?.value).toBe(1);
     expect(tiles.find((tile) => tile.id === 'seats-used')?.value).toBe('—');
+  });
+
+  describe('tab gating', () => {
+    it('should fall back to the first permitted tab for an unauthorized ?tab=', async () => {
+      permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
+      tabParam = 'roles';
+      await createPage();
+
+      expect(fixture.componentInstance['activeTab']()).toBe('members');
+    });
+
+    it('should fall back to the first permitted tab for an unrecognized ?tab=', async () => {
+      tabParam = 'not-a-real-tab';
+      await createPage();
+
+      expect(fixture.componentInstance['activeTab']()).toBe('members');
+    });
+
+    it('should not render a tab trigger for a tab the member holds no permission for', async () => {
+      permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
+      await createPage();
+
+      expect(byTestId('organization-members-tab-roles')).toBeNull();
+      expect(byTestId('organization-members-tab-teams')).toBeNull();
+    });
+
+    it('should keep the roles tab for a member holding a roles permission', async () => {
+      await createPage();
+
+      expect(byTestId('organization-members-tab-roles')).not.toBeNull();
+    });
+
+    it('should drop the ?tab= query parameter when switching back to the default members tab', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTabActivated']('roles'); // never rendered, so the roles tab's own child tree is not this spec's concern
+      fixture.componentInstance['onTabActivated']('members');
+
+      expect(navigate).toHaveBeenCalledWith([], {
+        relativeTo: TestBed.inject(ActivatedRoute),
+        queryParams: { tab: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
+
+    it('should write the ?tab= query parameter when switching to a non-default tab', async () => {
+      await createPage();
+
+      fixture.componentInstance['onTabActivated']('roles');
+
+      expect(navigate).toHaveBeenCalledWith([], {
+        relativeTo: TestBed.inject(ActivatedRoute),
+        queryParams: { tab: 'roles' },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    });
   });
 });

@@ -14,11 +14,6 @@
     @for (item of items(); track $index) {
       <li hlmBreadcrumbSeparator></li>
 
-      <!--
-        `min-w-0` on the item is what lets the label inside it ellipsise: a flex
-        item defaults to `min-width: auto`, which refuses to shrink below its
-        content and would push the tool cluster off the card instead.
-      -->
       <li hlmBreadcrumbItem class="min-w-0">
         @if (item.current || !item.routerLink) {
           <span

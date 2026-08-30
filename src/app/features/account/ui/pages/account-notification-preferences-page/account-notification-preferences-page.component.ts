@@ -21,6 +21,7 @@ import {
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -44,7 +45,14 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-account-notification-preferences-page',
-  imports: [AccountNotificationPreferencesForm, EmptyState, ErrorState, HlmButton, HlmSkeleton],
+  imports: [
+    HlmCardTitle,
+    AccountNotificationPreferencesForm,
+    EmptyState,
+    ErrorState,
+    HlmButton,
+    HlmSkeleton,
+  ],
   providers: [
     AccountNotificationPreferencesStore,
     provideIcons({ lucideBellOff, lucideTriangleAlert }),

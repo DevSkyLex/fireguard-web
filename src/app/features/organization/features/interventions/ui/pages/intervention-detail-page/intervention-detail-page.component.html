@@ -1,4 +1,4 @@
-<div id="intervention-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+<div id="intervention-detail" class="flex w-full flex-col gap-4 p-4 max-sm:pb-32 md:p-6">
   @if (store.loading() && !store.intervention()) {
     <div
       class="flex flex-col gap-4"
@@ -12,6 +12,33 @@
       <hlm-skeleton class="h-64 w-full" />
     </div>
   } @else if (store.intervention(); as intervention) {
+    @if (store.servedFromLocalCache()) {
+      <div
+        class="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3 py-2.5"
+        role="status"
+        data-testid="intervention-detail-offline-notice"
+      >
+        <ng-icon
+          name="lucideCloudOff"
+          class="mt-0.5 shrink-0 text-base text-foreground"
+          aria-hidden="true"
+        />
+        <p class="text-sm text-foreground" i18n="@@intervention.detail.offlineNotice">
+          You're offline. This is the copy saved on this device — it may be out of date, and any
+          action that looks refused may simply be un-checkable from here.
+        </p>
+      </div>
+    }
+
+    @if (blockedSyncOperations().length > 0) {
+      <app-intervention-sync-blocked-alert
+        [operations]="blockedSyncOperations()"
+        [reason]="syncProblem()"
+        [retrying]="syncRetrying()"
+        (retryRequested)="retryBlockedSync()"
+      />
+    }
+
     <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
       {{ metaLine() }}
     </p>
@@ -23,10 +50,25 @@
       [busy]="store.saving()"
       [blockersCount]="blockerIssues().length"
       [revision]="intervention.revision"
-      [reviewNote]="intervention.reviewNote"
+      [secondaryAction]="secondaryCommandAction()"
       (invoked)="invokeCommandAction()"
+      (secondaryInvoked)="requestChangesVisible.set(true)"
       (blockersRequested)="revealBlockers()"
     />
+
+    @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
+      <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
+        <ng-icon name="lucideMessageSquareQuote" class="text-muted-foreground" aria-hidden="true" />
+        <p
+          hlmAlertTitle
+          class="text-sm text-foreground"
+          i18n="@@intervention.detail.changesRequestedBanner"
+        >
+          Changes requested by the reviewer
+        </p>
+        <p hlmAlertDescription class="text-sm text-foreground">{{ intervention.reviewNote }}</p>
+      </div>
+    }
 
     @if (pageError(); as message) {
       <div
@@ -232,6 +274,7 @@
               <div class="border-t border-border pt-4">
                 <app-intervention-comment-form
                   [pending]="commentPending()"
+                  [online]="online()"
                   [serverError]="commentError()"
                   [members]="planningOptions.members()"
                   (submitted)="postComment($event)"
@@ -321,8 +364,9 @@
             data-testid="intervention-detail-about"
           >
             <h2
+              hlmCardTitle
               id="intervention-detail-about-title"
-              class="px-2 text-base font-semibold"
+              class="px-2"
               i18n="@@intervention.detail.aboutTitle"
             >
               About
@@ -346,8 +390,9 @@
             data-testid="intervention-detail-properties"
           >
             <h2
+              hlmCardTitle
               id="intervention-detail-properties-title"
-              class="px-2 text-base font-semibold"
+              class="px-2"
               i18n="@@intervention.sidebar.title"
             >
               Properties
@@ -399,14 +444,14 @@
           class="max-sm:min-h-11"
           data-testid="intervention-detail-prev"
           [disabled]="prevInterventionId() === null"
-          title="Previous intervention (K)"
-          i18n-title="@@intervention.detail.prevShortcut"
+          aria-keyshortcuts="K"
           aria-label="Previous intervention"
           i18n-aria-label="@@intervention.detail.prev"
           (click)="navigatePrev()"
         >
           <ng-icon name="lucideChevronLeft" aria-hidden="true" />
           <span i18n="@@intervention.detail.prev">Previous intervention</span>
+          <kbd hlmKbd class="max-md:hidden">K</kbd>
         </button>
         <button
           hlmBtn
@@ -416,12 +461,12 @@
           class="max-sm:min-h-11"
           data-testid="intervention-detail-next"
           [disabled]="nextInterventionId() === null"
-          title="Next intervention (J)"
-          i18n-title="@@intervention.detail.nextShortcut"
+          aria-keyshortcuts="J"
           aria-label="Next intervention"
           i18n-aria-label="@@intervention.detail.next"
           (click)="navigateNext()"
         >
+          <kbd hlmKbd class="max-md:hidden">J</kbd>
           <span i18n="@@intervention.detail.next">Next intervention</span>
           <ng-icon name="lucideChevronRight" aria-hidden="true" />
         </button>
@@ -505,6 +550,13 @@
     (visibleChange)="discussionSheetVisible.set($event)"
   />
 }
+
+<app-intervention-abandon-dialog
+  [request]="pendingAbandon()"
+  [pending]="abandonPending()"
+  (confirmed)="onAbandonConfirmed()"
+  (dismissed)="onAbandonDismissed()"
+/>
 
 <app-intervention-confirm-dialog
   [request]="pendingConfirm()"

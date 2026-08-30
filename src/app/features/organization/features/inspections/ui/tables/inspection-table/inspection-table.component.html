@@ -1,126 +1,125 @@
-<div class="h-full w-full overflow-hidden rounded-md border border-border">
-  <div
-    hlmTableContainer
-    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-    tabindex="0"
-    role="region"
-    aria-labelledby="inspection-table-caption"
-  >
-    <table hlmTable data-testid="inspection-table">
-      <caption
-        hlmTableCaption
-        id="inspection-table-caption"
-        class="sr-only"
-        i18n="@@inspection.table.title"
+<app-collection-surface
+  caption="Inspections"
+  i18n-caption="@@inspection.table.title"
+  testId="inspection-table"
+  [loading]="loading()"
+  [rowCount]="items().length"
+  [columnCount]="columnCount()"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('performedAt')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="inspection-table-sort-performed-at"
+          (click)="sortChanged.emit('performedAt')"
+        >
+          <span i18n="@@inspection.table.colPerformedAt">Performed on</span>
+          <ng-icon [name]="sortIcon('performedAt')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('result')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="inspection-table-sort-result"
+          (click)="sortChanged.emit('result')"
+        >
+          <span i18n="@@inspection.table.colResult">Result</span>
+          <ng-icon [name]="sortIcon('result')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="inspection-table-sort-status"
+          (click)="sortChanged.emit('status')"
+        >
+          <span i18n="@@inspection.table.colStatus">Status</span>
+          <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
+    </tr>
+  </ng-container>
+
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="inspection-table-row">
+        <td hlmTableCell class="whitespace-normal">
+          <a
+            class="rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+            >{{ item.performedAt.slice(0, 10) }}</a
+          >
+        </td>
+
+        <td hlmTableCell class="whitespace-normal text-muted-foreground">
+          @if (item.inspector; as inspector) {
+            {{ inspector.displayName }}
+          } @else {
+            <span i18n="@@inspection.notSpecified">Not specified</span>
+          }
+        </td>
+
+        <td hlmTableCell>
+          <app-inspection-status-tag kind="result" [value]="item.result" />
+        </td>
+
+        <td hlmTableCell>
+          <app-inspection-status-tag kind="status" [value]="item.status" />
+        </td>
+
+        <td hlmTableCell class="text-muted-foreground tabular-nums">
+          {{ item.nonConformitiesCount }}
+        </td>
+      </tr>
+    }
+  </ng-container>
+
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        data-testid="inspection-table-card"
       >
-        Inspections
-      </caption>
+        <a
+          class="line-clamp-2 rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          [routerLink]="[...detailRouteBase(), item.id]"
+          >{{ item.performedAt.slice(0, 10) }}</a
+        >
 
-      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-        <tr hlmTableRow>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('performedAt')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="inspection-table-sort-performed-at"
-              (click)="sortChanged.emit('performedAt')"
-            >
-              <span i18n="@@inspection.table.colPerformedAt">Performed on</span>
-              <ng-icon [name]="sortIcon('performedAt')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('result')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="inspection-table-sort-result"
-              (click)="sortChanged.emit('result')"
-            >
-              <span i18n="@@inspection.table.colResult">Result</span>
-              <ng-icon [name]="sortIcon('result')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="inspection-table-sort-status"
-              (click)="sortChanged.emit('status')"
-            >
-              <span i18n="@@inspection.table.colStatus">Status</span>
-              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
-        </tr>
-      </thead>
+        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+          <app-inspection-status-tag kind="result" [value]="item.result" />
+          <app-inspection-status-tag kind="status" [value]="item.status" />
 
-      <tbody hlmTableBody>
-        @if (loading() && items().length === 0) {
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-8" /></td>
-            </tr>
-          }
-        } @else {
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="inspection-table-row">
-              <td hlmTableCell class="whitespace-normal">
-                <a
-                  class="rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  [routerLink]="[...detailRouteBase(), item.id]"
-                  >{{ item.performedAt.slice(0, 10) }}</a
-                >
-              </td>
+          <span class="truncate tabular-nums">
+            <span i18n="@@inspection.table.colNonConformities">Non-conformities</span>:
+            {{ item.nonConformitiesCount }}
+          </span>
+        </div>
+      </div>
+    }
+  </ng-container>
 
-              <td hlmTableCell class="whitespace-normal text-muted-foreground">
-                @if (item.inspector; as inspector) {
-                  {{ inspector.displayName }}
-                } @else {
-                  <span i18n="@@inspection.notSpecified">Not specified</span>
-                }
-              </td>
-
-              <td hlmTableCell>
-                <app-inspection-status-tag kind="result" [value]="item.result" />
-              </td>
-
-              <td hlmTableCell>
-                <app-inspection-status-tag kind="status" [value]="item.status" />
-              </td>
-
-              <td hlmTableCell class="text-muted-foreground tabular-nums">
-                {{ item.nonConformitiesCount }}
-              </td>
-            </tr>
-          } @empty {
-            <tr hlmTableRow>
-              <td
-                hlmTableCell
-                class="h-24 text-center text-muted-foreground"
-                [attr.colspan]="columnCount()"
-                i18n="@@inspection.table.noResults"
-              >
-                No results.
-              </td>
-            </tr>
-          }
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
+  <p
+    surfaceEmpty
+    class="p-6 text-center text-sm text-muted-foreground"
+    i18n="@@inspection.table.noResults"
+  >
+    No results.
+  </p>
+</app-collection-surface>

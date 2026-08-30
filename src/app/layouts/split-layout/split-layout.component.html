@@ -1,10 +1,4 @@
 <div id="split-layout" class="flex min-h-dvh bg-background text-foreground">
-  @if (showcase(); as contribution) {
-    <aside id="split-layout-showcase" class="hidden bg-muted text-foreground lg:grid lg:w-1/2">
-      <ng-container *ngComponentOutlet="contribution.component" />
-    </aside>
-  }
-
   <div id="split-layout-column" [class]="columnClass()">
     @if (header.length > 0) {
       <header
@@ -26,4 +20,13 @@
       </footer>
     }
   </div>
+
+  @if (showcase(); as contribution) {
+    <aside
+      id="split-layout-showcase"
+      class="hidden bg-muted text-foreground lg:order-first lg:grid lg:w-1/2"
+    >
+      <ng-container *ngComponentOutlet="contribution.component" />
+    </aside>
+  }
 </div>

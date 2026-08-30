@@ -10,7 +10,7 @@
               [routerLink]="link.route"
               routerLinkActive
               #active="routerLinkActive"
-              [routerLinkActiveOptions]="{ exact: link.id === 'today' }"
+              [routerLinkActiveOptions]="{ exact: link.exact }"
               [attr.data-active]="active.isActive ? 'true' : null"
               [attr.aria-current]="active.isActive ? 'page' : null"
               [tooltip]="link.label"

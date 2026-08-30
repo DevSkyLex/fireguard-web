@@ -1,22 +1,13 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import type { ApiError } from '@core/api/models';
-import {
-  idleCallState,
-  pendingCallState,
-  successCallState,
-  toStoreError,
-  type CallState,
-  type StoreError,
-} from '@core/request-state';
-import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationPermissionService } from '@features/organization/access';
+import { ORGANIZATION_PERMISSION, type OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
-import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { OrganizationStore } from '@features/organization/state';
 import { OrganizationSwitcher } from '../organization-switcher.component';
 
 function organization(
@@ -47,11 +38,10 @@ interface StoreStub {
   loadOrganizations: () => void;
 }
 
-interface SettingsStoreStub {
-  readonly isLeaving: WritableSignal<boolean>;
-  readonly leaveError: WritableSignal<StoreError | null>;
-  readonly leaveCallState: WritableSignal<CallState<void>>;
-  leave: (params: { organizationId: string }) => void;
+async function openMenu(fixture: ComponentFixture<OrganizationSwitcher>): Promise<void> {
+  (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
+  fixture.detectChanges();
+  await fixture.whenStable();
 }
 
 describe('OrganizationSwitcher', () => {
@@ -60,9 +50,8 @@ describe('OrganizationSwitcher', () => {
   let loadingContext: WritableSignal<boolean>;
   let store: StoreStub;
   let loadCalls: number;
-  let settingsStore: SettingsStoreStub;
-  let leaveCalls: ReadonlyArray<{ organizationId: string }>;
-  let clearActiveOrganization: ReturnType<typeof vi.fn>;
+  let hasAnyPermission: ReturnType<typeof vi.fn>;
+  let hasAllPermissions: ReturnType<typeof vi.fn>;
 
   async function render(): Promise<ComponentFixture<OrganizationSwitcher>> {
     const context: OrganizationContextPort = {
@@ -76,17 +65,15 @@ describe('OrganizationSwitcher', () => {
       providers: [
         provideRouter([]),
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: context },
-        { provide: ActiveOrganizationStore, useValue: { clear: clearActiveOrganization } },
+        {
+          provide: OrganizationPermissionService,
+          useValue: { hasAnyPermission, hasAllPermissions },
+        },
       ],
     })
       .overrideComponent(OrganizationSwitcher, {
-        remove: { providers: [OrganizationStore, OrganizationSettingsStore] },
-        add: {
-          providers: [
-            { provide: OrganizationStore, useValue: store },
-            { provide: OrganizationSettingsStore, useValue: settingsStore },
-          ],
-        },
+        remove: { providers: [OrganizationStore] },
+        add: { providers: [{ provide: OrganizationStore, useValue: store }] },
       })
       .compileComponents();
 
@@ -112,16 +99,8 @@ describe('OrganizationSwitcher', () => {
         loadCalls += 1;
       },
     };
-    leaveCalls = [];
-    clearActiveOrganization = vi.fn();
-    settingsStore = {
-      isLeaving: signal<boolean>(false),
-      leaveError: signal<StoreError | null>(null),
-      leaveCallState: signal<CallState<void>>(idleCallState()),
-      leave: (params: { organizationId: string }): void => {
-        leaveCalls = [...leaveCalls, params];
-      },
-    };
+    hasAnyPermission = vi.fn().mockReturnValue(true);
+    hasAllPermissions = vi.fn().mockReturnValue(true);
   });
 
   it('renders the routed organization with the paired-chevrons affordance', async () => {
@@ -183,14 +162,13 @@ describe('OrganizationSwitcher', () => {
     expect(loadCalls).toBe(0);
   });
 
-  it('separates the list from the create action', async () => {
-    const withList = await render();
-    (withList.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    withList.detectChanges();
-    await withList.whenStable();
+  it('repeats the trigger identity in the menu header', async () => {
+    const fixture = await render();
+    await openMenu(fixture);
 
-    expect(document.querySelector('hlm-dropdown-menu-separator')).not.toBeNull();
-    expect(document.querySelector('hlm-dropdown-menu-label')).not.toBeNull();
+    const header: HTMLElement | null = document.querySelector('hlm-dropdown-menu > div');
+    expect(header?.textContent).toContain('Acme Inc');
+    expect(header?.textContent).toContain('Enterprise');
   });
 
   it('navigates to the picked organization and ignores the active one', async () => {
@@ -211,86 +189,100 @@ describe('OrganizationSwitcher', () => {
 
   it('marks the open organization in the menu', async () => {
     const fixture = await render();
-    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await openMenu(fixture);
 
     expect(document.querySelectorAll('[aria-current="true"]').length).toBe(1);
   });
 
-  it('offers Leave organization to a plain member holding no permission beyond membership', async () => {
+  it('renders all four admin shortcuts when every permission is granted', async () => {
     const fixture = await render();
-    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await openMenu(fixture);
 
-    const leaveItem: HTMLElement | null = document.querySelector(
-      '[data-testid="organization-switcher-leave"]',
+    const labels: ReadonlyArray<string> = Array.from(
+      document.querySelectorAll('a[hlmDropdownMenuItem]'),
+    ).map((element: Element): string => element.textContent?.trim() ?? '');
+
+    expect(labels).toEqual(['Settings', 'Billing', 'Members', 'Audit journal']);
+    const settingsLink: HTMLAnchorElement | null = document.querySelector('a[hlmDropdownMenuItem]');
+    expect(settingsLink?.getAttribute('href')).toBe('/organizations/org-1/settings');
+  });
+
+  it('points Billing at the settings route with the subscription tab query param', async () => {
+    const fixture = await render();
+    await openMenu(fixture);
+
+    const links: ReadonlyArray<HTMLAnchorElement> = Array.from(
+      document.querySelectorAll('a[hlmDropdownMenuItem]'),
+    );
+    const billingLink: HTMLAnchorElement | undefined = links.find(
+      (link) => link.textContent?.trim() === 'Billing',
     );
 
-    expect(leaveItem).not.toBeNull();
-    expect(leaveItem?.textContent).toContain('Leave organization');
-  });
-
-  it('opens the leave dialog for the open organization and confirms into a leave call', async () => {
-    const fixture = await render();
-    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    (document.querySelector('[data-testid="organization-switcher-leave"]') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    const confirmButton: HTMLElement | null = document.querySelector(
-      '[data-testid="organization-leave-confirm"]',
+    expect(billingLink?.getAttribute('href')).toBe(
+      '/organizations/org-1/settings?tab=subscription',
     );
-    expect(
-      confirmButton?.closest('[data-testid="organization-leave-dialog"]')?.textContent,
-    ).toContain('Acme Inc');
-
-    confirmButton?.click();
-
-    expect(leaveCalls).toEqual([{ organizationId: 'org-1' }]);
   });
 
-  it("surfaces the backend's owner-cannot-leave 409 detail inline on the dialog", async () => {
-    const apiError: ApiError = {
-      '@id': '',
-      '@type': 'Error',
-      status: 409,
-      type: 'about:blank',
-      title: 'Conflict',
-      detail: 'The organization owner cannot leave; transfer ownership to another member first.',
-    };
-    settingsStore.leaveError.set(toStoreError(apiError));
+  it('drops the Settings and Billing shortcuts for a member without SETTINGS_WRITE', async () => {
+    hasAllPermissions.mockImplementation(
+      (permissions: ReadonlyArray<string>): boolean =>
+        !permissions.includes(ORGANIZATION_PERMISSION.SETTINGS_WRITE),
+    );
 
     const fixture = await render();
-    (fixture.nativeElement.querySelector('#organization-switcher-trigger') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await openMenu(fixture);
 
-    (document.querySelector('[data-testid="organization-switcher-leave"]') as HTMLElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
+    const labels: ReadonlyArray<string> = Array.from(
+      document.querySelectorAll('a[hlmDropdownMenuItem]'),
+    ).map((element: Element): string => element.textContent?.trim() ?? '');
 
-    expect(
-      document.querySelector('[data-testid="organization-leave-error"]')?.textContent,
-    ).toContain('The organization owner cannot leave; transfer ownership to another member first.');
+    expect(labels).toEqual(['Members', 'Audit journal']);
   });
 
-  it('clears the active organization and returns to the redirector once leaving succeeds', async () => {
+  it('drops the Audit journal shortcut for a member without AUDIT_READ', async () => {
+    hasAllPermissions.mockImplementation(
+      (permissions: ReadonlyArray<string>): boolean =>
+        !permissions.includes(ORGANIZATION_PERMISSION.AUDIT_READ),
+    );
+
     const fixture = await render();
-    const router: Router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await openMenu(fixture);
 
-    settingsStore.leaveCallState.set(pendingCallState());
-    fixture.detectChanges();
-    settingsStore.leaveCallState.set(successCallState(undefined));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    const labels: ReadonlyArray<string> = Array.from(
+      document.querySelectorAll('a[hlmDropdownMenuItem]'),
+    ).map((element: Element): string => element.textContent?.trim() ?? '');
 
-    expect(clearActiveOrganization).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/organizations']);
+    expect(labels).toEqual(['Settings', 'Billing', 'Members']);
+  });
+
+  it('drops the whole admin block, separator included, when no permission is granted', async () => {
+    hasAnyPermission.mockReturnValue(false);
+    hasAllPermissions.mockReturnValue(false);
+
+    const fixture = await render();
+    await openMenu(fixture);
+
+    expect(document.querySelectorAll('a[hlmDropdownMenuItem]').length).toBe(0);
+    expect(document.querySelectorAll('hlm-dropdown-menu-separator').length).toBe(2);
+  });
+
+  it('caps the organization list panel to a bounded height and scrolls the rest', async () => {
+    store.organizations.set([
+      organization('org-1', 'Acme Inc'),
+      organization('org-2', 'Globex'),
+      organization('org-3', 'Initech'),
+      organization('org-4', 'Umbrella'),
+      organization('org-5', 'Soylent'),
+    ]);
+
+    const fixture = await render();
+    await openMenu(fixture);
+
+    const panel: HTMLElement | null = document.querySelector(
+      '[data-testid="organization-switcher-list"]',
+    );
+
+    expect(panel).not.toBeNull();
+    expect(panel?.querySelectorAll('button[hlmDropdownMenuItem]').length).toBe(5);
   });
 });

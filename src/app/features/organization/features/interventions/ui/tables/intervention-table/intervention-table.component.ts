@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -28,6 +29,8 @@ import {
   type InterventionSortField,
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
+import { CollectionSurface } from '@shared/collection-surface';
+import { GateReasonDirective } from '@shared/gate-reason';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -36,7 +39,6 @@ import {
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionListItemViewModel } from '../../pages/interventions-page/models';
@@ -47,8 +49,6 @@ import {
 } from './models';
 
 /** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
-
 /**
  * Component InterventionTable
  * @class InterventionTable
@@ -91,12 +91,14 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 @Component({
   selector: 'app-intervention-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
+    CollectionSurface,
     NgIcon,
     HlmButton,
     HlmCheckbox,
-    HlmSkeleton,
+    GateReasonDirective,
     InterventionTag,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
@@ -194,6 +196,24 @@ export class InterventionTable {
    *
    * @type {InputSignal<boolean>}
    */
+  /**
+   * Property selectionMode
+   * @readonly
+   *
+   * @description
+   * Whether the card layout offers its selection checkbox. Below the surface's
+   * compact breakpoint a permanent checkbox column would cost an eighth of a
+   * 375px screen for an action the field scene never performs, so selection is
+   * a mode the page turns on rather than a column that is always there. The
+   * table layout is unaffected — its checkbox column is unconditional, as before.
+   *
+   * @access public
+   * @since 7.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly selectionMode: InputSignal<boolean> = input<boolean>(false);
+
   public readonly canTransition: InputSignal<boolean> = input<boolean>(false);
 
   /**
@@ -425,7 +445,36 @@ export class InterventionTable {
   protected readonly column: typeof INTERVENTION_TABLE_COLUMN = INTERVENTION_TABLE_COLUMN;
 
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared
+   * surface's skeleton rows. Literal strings because Tailwind scans source
+   * text, and column-aware because a skeleton whose blocks do not line up with
+   * the header it replaces reads as a broken table rather than a loading one.
+   *
+   * @access protected
+   * @since 7.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const widths: string[] = ['size-4', 'h-4 w-14', 'h-4 w-56 max-w-full'];
+
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.STATUS)) widths.push('h-4 w-24');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.PRIORITY)) widths.push('h-4 w-20');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.TYPE)) widths.push('h-4 w-28');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.SITE)) widths.push('h-4 w-32');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.DUE)) widths.push('ms-auto h-4 w-20');
+
+      widths.push('ms-auto size-6');
+
+      return widths;
+    },
+  );
   //#endregion
 
   //#region Methods

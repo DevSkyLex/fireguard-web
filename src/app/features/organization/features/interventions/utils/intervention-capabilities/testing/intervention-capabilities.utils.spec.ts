@@ -114,19 +114,28 @@ describe('createInterventionCapabilities', () => {
     expect(capabilities.canReview()).toBe(true);
   });
 
+  /*
+   * `allowedTransitions` is supplied per row, mirroring what the API returns for
+   * that status: the command target is derived from the workflow policy, not
+   * from the phase, so a fixture that leaves it at the builder's default would
+   * be asserting against a card the server would never send.
+   */
   it.each([
-    ['draft', 'prepare', 'planned'],
-    ['planned', 'execute', 'submitted'],
-    ['in_progress', 'execute', 'submitted'],
-    ['changes_requested', 'execute', 'submitted'],
-    ['submitted', 'review', null],
-    ['published', 'review', null],
-    ['abandoned', 'prepare', 'planned'],
+    ['draft', ['planned', 'abandoned'], 'prepare', 'planned'],
+    ['planned', ['in_progress', 'abandoned'], 'execute', 'in_progress'],
+    ['in_progress', ['submitted', 'abandoned'], 'execute', 'submitted'],
+    ['changes_requested', ['in_progress', 'submitted', 'abandoned'], 'execute', 'submitted'],
+    ['submitted', ['changes_requested', 'in_progress'], 'review', null],
+    ['published', [], 'review', null],
+    ['abandoned', [], 'prepare', null],
   ] as const)(
     'should derive phase and command target for %s',
-    (status, expectedPhase, expectedTarget) => {
+    (status, allowedTransitions, expectedPhase, expectedTarget) => {
       const { capabilities } = buildHarness(
-        buildIntervention({ status: status as InterventionStatus }),
+        buildIntervention({
+          status: status as InterventionStatus,
+          allowedTransitions: [...allowedTransitions],
+        }),
       );
 
       expect(capabilities.phase()).toBe(expectedPhase);

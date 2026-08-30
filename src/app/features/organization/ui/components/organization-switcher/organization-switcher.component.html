@@ -9,16 +9,12 @@
         [side]="menuSide()"
         align="start"
       >
-        <hlm-avatar class="size-8 shrink-0 rounded-lg">
-          @if (organization.logoUrl; as logoUrl) {
-            <img hlmAvatarImage [src]="logoUrl" [alt]="organization.name" />
-          }
-          <span
-            hlmAvatarFallback
-            class="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
-            >{{ organization.initials }}</span
-          >
-        </hlm-avatar>
+        <app-organization-avatar
+          size="sm"
+          [name]="organization.name"
+          [logoUrl]="organization.logoUrl"
+          [initials]="organization.initials"
+        />
 
         <div class="grid flex-1 text-left text-sm leading-tight">
           <span class="truncate font-medium">{{ organization.name }}</span>
@@ -33,61 +29,73 @@
   </ul>
 
   <ng-template #menu>
-    <hlm-dropdown-menu class="min-w-60 rounded-lg">
-      <hlm-dropdown-menu-label i18n="@@org.switcher.heading">Organizations</hlm-dropdown-menu-label>
-
-      @for (option of options(); track option.id) {
-        <button
-          hlmDropdownMenuItem
-          class="gap-2"
-          [attr.aria-current]="option.active ? 'true' : null"
-          (click)="select(option)"
-        >
-          <hlm-avatar class="size-6 shrink-0 rounded-md">
-            @if (option.logoUrl; as logoUrl) {
-              <img hlmAvatarImage [src]="logoUrl" [alt]="option.name" />
-            }
-            <span hlmAvatarFallback class="rounded-md text-[0.625rem] font-semibold">{{
-              option.initials
-            }}</span>
-          </hlm-avatar>
-          <span class="truncate">{{ option.name }}</span>
-          @if (option.active) {
-            <ng-icon name="lucideCheck" class="ml-auto text-sm" aria-hidden="true" />
+    <hlm-dropdown-menu class="flex max-h-[calc(100svh-2rem)] min-w-64 flex-col rounded-lg">
+      <div class="flex items-center gap-2 px-2 py-1.5">
+        <app-organization-avatar
+          size="sm"
+          [name]="organization.name"
+          [logoUrl]="organization.logoUrl"
+          [initials]="organization.initials"
+        />
+        <div class="grid flex-1 text-left text-sm leading-tight">
+          <span class="truncate font-medium">{{ organization.name }}</span>
+          @if (organization.planName; as planName) {
+            <span class="truncate text-xs text-muted-foreground">{{ planName }}</span>
           }
-        </button>
+        </div>
+      </div>
+
+      @if (quickLinks().length > 0) {
+        <hlm-dropdown-menu-separator />
+
+        @for (link of quickLinks(); track link.id) {
+          <a
+            hlmDropdownMenuItem
+            class="gap-2 max-sm:min-h-11"
+            [routerLink]="link.route"
+            [queryParams]="link.queryParams"
+          >
+            <ng-icon [name]="link.icon" class="text-sm" aria-hidden="true" />
+            <span>{{ link.label }}</span>
+          </a>
+        }
       }
 
       <hlm-dropdown-menu-separator />
 
-      <button hlmDropdownMenuItem class="gap-2" (click)="createOrganization()">
-        <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
-        <span i18n="@@org.switcher.create">Create organization</span>
-      </button>
+      <div
+        class="max-h-[7.5rem] overflow-y-auto overscroll-contain"
+        data-testid="organization-switcher-list"
+      >
+        @for (option of options(); track option.id) {
+          <button
+            hlmDropdownMenuItem
+            class="min-h-10 gap-2 max-sm:min-h-11"
+            [attr.aria-current]="option.active ? 'true' : null"
+            (click)="select(option)"
+          >
+            <app-organization-avatar
+              size="xs"
+              [name]="option.name"
+              [logoUrl]="option.logoUrl"
+              [initials]="option.initials"
+            />
+            <span class="truncate">{{ option.name }}</span>
+            @if (option.active) {
+              <ng-icon name="lucideCheck" class="ml-auto text-sm" aria-hidden="true" />
+            }
+          </button>
+        }
+      </div>
 
       <hlm-dropdown-menu-separator />
 
-      <button
-        hlmDropdownMenuItem
-        variant="destructive"
-        class="gap-2"
-        data-testid="organization-switcher-leave"
-        (click)="openLeaveDialog()"
-      >
-        <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
-        <span i18n="@@org.switcher.leave">Leave organization…</span>
+      <button hlmDropdownMenuItem class="gap-2 max-sm:min-h-11" (click)="createOrganization()">
+        <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
+        <span i18n="@@org.switcher.create">Create organization</span>
       </button>
     </hlm-dropdown-menu>
   </ng-template>
-
-  <app-organization-leave-dialog
-    [visible]="confirmingLeave()"
-    [organizationName]="organization.name"
-    [pending]="settingsStore.isLeaving()"
-    [error]="settingsStore.leaveError()?.message ?? null"
-    (visibleChange)="confirmingLeave.set($event)"
-    (confirmed)="leaveOrganization()"
-  />
 } @else {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>

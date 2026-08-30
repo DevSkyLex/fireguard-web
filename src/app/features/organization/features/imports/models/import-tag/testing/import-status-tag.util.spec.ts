@@ -19,8 +19,8 @@ describe('resolveImportStatusTag', () => {
     expect(resolveImportStatusTag('failed').severity).toBe('danger');
   });
 
-  it('should mark processing as info and pending as neutral', () => {
-    expect(resolveImportStatusTag('processing').severity).toBe('info');
+  it('should keep every non-terminal state neutral', () => {
+    expect(resolveImportStatusTag('processing').severity).toBe('neutral');
     expect(resolveImportStatusTag('pending').severity).toBe('neutral');
   });
 

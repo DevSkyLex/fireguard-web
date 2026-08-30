@@ -285,3 +285,73 @@ export function interventionIssueOutput(
     ...overrides,
   };
 }
+
+export interface InterventionSiteStatisticFixture {
+  readonly siteId: string;
+  readonly siteName: string | null;
+  readonly count: number;
+}
+
+export interface InterventionResponsibleStatisticFixture {
+  readonly memberId: string;
+  readonly displayName: string | null;
+  readonly count: number;
+}
+
+export interface InterventionStatisticsOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly total: number;
+  readonly byStatus: Readonly<Record<string, number>>;
+  readonly byPriority: Readonly<Record<string, number>>;
+  readonly overdue: number;
+  readonly dueSoon: number;
+  readonly bySite: readonly InterventionSiteStatisticFixture[];
+  readonly byResponsible: readonly InterventionResponsibleStatisticFixture[];
+  readonly averagePublicationDays: number | null;
+}
+
+/**
+ * The whole-organization statistics snapshot `InterventionStatisticsStore`
+ * reads once per organization, backing the interventions list KPI strip.
+ *
+ * The defaults are internally consistent, which matters because the strip
+ * derives from them rather than reading a field per tile: `total` is the sum
+ * of `byStatus`, so the "Open" tile's share badge (open ÷ total) reads as a
+ * real percentage instead of an impossible one. "Open" is
+ * `in_progress + planned + changes_requested` (9 of 20 → 45%), and awaiting
+ * review is `byStatus.submitted`.
+ *
+ * `bySite`, `byResponsible` and `averagePublicationDays` are populated even
+ * though no mounted surface reads them today — they are what
+ * `InterventionStatisticsAnalysis` renders, and a spec that mounts it needs
+ * them here rather than inventing a second fixture.
+ */
+export function interventionStatisticsOutput(
+  overrides: Partial<InterventionStatisticsOutputFixture> = {},
+): InterventionStatisticsOutputFixture {
+  return {
+    '@id': '/api/interventions/statistics',
+    '@type': 'InterventionStatistics',
+    total: 20,
+    byStatus: {
+      draft: 2,
+      planned: 5,
+      in_progress: 3,
+      submitted: 2,
+      changes_requested: 1,
+      published: 6,
+      abandoned: 1,
+    },
+    byPriority: { low: 4, normal: 9, high: 5, urgent: 2 },
+    overdue: 4,
+    dueSoon: 3,
+    bySite: [
+      { siteId: 'e2e-facility-1', siteName: 'North depot', count: 7 },
+      { siteId: 'e2e-facility-2', siteName: 'South workshop', count: 4 },
+    ],
+    byResponsible: [{ memberId: E2E_MEMBER_ID, displayName: 'Ada Lovelace', count: 6 }],
+    averagePublicationDays: 4.5,
+    ...overrides,
+  };
+}

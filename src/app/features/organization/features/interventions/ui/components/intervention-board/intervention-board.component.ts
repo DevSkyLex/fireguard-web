@@ -5,17 +5,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   inject,
   Injector,
   input,
   output,
   signal,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
 import {
   resolveInterventionTag,
   type InterventionOutput,
@@ -27,6 +31,7 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
 import type { InterventionTransitionRequest } from '../../tables/intervention-table';
 import { InterventionBoardCard } from '../intervention-board-card';
 import { INTERVENTION_BOARD_COLUMNS } from './constants';
@@ -64,7 +69,8 @@ import type { InterventionBoardCardViewModel } from './models';
  */
 @Component({
   selector: 'app-intervention-board',
-  imports: [CdkDropListDirective, InterventionBoardCard, HlmBadge],
+  imports: [CdkDropListDirective, InterventionBoardCard, HlmBadge, HlmButton, NgIcon],
+  providers: [provideIcons({ lucideChevronLeft, lucideChevronRight })],
   templateUrl: './intervention-board.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,6 +109,40 @@ export class InterventionBoard {
   /** Anchors the {@link requestMove} post-render focus restoration outside the injection context. */
   private readonly injector: Injector = inject(Injector);
 
+  /** Disconnects the horizontal-overflow `ResizeObserver` on teardown. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /**
+   * Property scroller
+   * @readonly
+   * @description The horizontal scroll track holding the seven fixed columns — queried so the scroll-affordance state and the prev/next buttons can read and drive its `scrollLeft`.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  protected readonly scroller: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('scroller');
+
+  /**
+   * Property canScrollLeft
+   * @readonly
+   * @description Whether hidden columns sit to the left of the current scroll position — gates the left fade and its button. The column count is fixed at seven, so only the viewport width and the scroll offset change what is hidden.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly canScrollLeft: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property canScrollRight
+   * @readonly
+   * @description Whether hidden columns sit to the right — gates the right fade and its button.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly canScrollRight: WritableSignal<boolean> = signal<boolean>(false);
+
   /** The board's fixed column order. */
   protected readonly columns: readonly InterventionStatus[] = INTERVENTION_BOARD_COLUMNS;
 
@@ -130,7 +170,87 @@ export class InterventionBoard {
   protected readonly liveMessage: WritableSignal<string> = signal<string>('');
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Once the track is in the DOM (browser-only — `afterNextRender` never runs
+   * on the server), reads the initial overflow state and observes the track
+   * for width changes (a collapsing sidebar or a resized window changes what
+   * is hidden). Scroll-offset changes come through the template's `(scroll)`
+   * handler instead.
+   *
+   * @access public
+   * @since 2.0.0
+   */
+  public constructor() {
+    afterNextRender(
+      (): void => {
+        const element: HTMLElement | undefined = this.scroller()?.nativeElement;
+        if (!element) return;
+
+        this.updateScrollAffordance();
+        const observer: ResizeObserver = new ResizeObserver((): void =>
+          this.updateScrollAffordance(),
+        );
+        observer.observe(element);
+        this.destroyRef.onDestroy((): void => observer.disconnect());
+      },
+      { injector: this.injector },
+    );
+  }
+  //#endregion
+
   //#region Methods
+  /**
+   * Method onScroll
+   * @description Recomputes the scroll affordance as the track scrolls horizontally.
+   * @access protected
+   * @since 2.0.0
+   * @returns {void}
+   */
+  protected onScroll(): void {
+    this.updateScrollAffordance();
+  }
+
+  /**
+   * Method scrollColumns
+   * @method scrollColumns
+   * @description Scrolls the track by roughly one viewport of columns, so a keyboard or pointer user reaches the hidden columns without a horizontal wheel.
+   * @access protected
+   * @since 2.0.0
+   * @param {-1 | 1} direction - Left (`-1`) or right (`1`).
+   * @returns {void}
+   */
+  protected scrollColumns(direction: -1 | 1): void {
+    const element: HTMLElement | undefined = this.scroller()?.nativeElement;
+    if (!element) return;
+
+    const reduceMotion: boolean = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    element.scrollBy({
+      left: direction * element.clientWidth * 0.8,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  }
+
+  /**
+   * Method updateScrollAffordance
+   * @description Reads the track's scroll geometry into {@link canScrollLeft} / {@link canScrollRight}. The 1px slack absorbs sub-pixel rounding so the far ends resolve to a clean disabled state.
+   * @access private
+   * @since 2.0.0
+   * @returns {void}
+   */
+  private updateScrollAffordance(): void {
+    const element: HTMLElement | undefined = this.scroller()?.nativeElement;
+    if (!element) return;
+
+    const maxScroll: number = element.scrollWidth - element.clientWidth;
+    this.canScrollLeft.set(element.scrollLeft > 1);
+    this.canScrollRight.set(element.scrollLeft < maxScroll - 1);
+  }
+
   /** The `cdkDropList` id for a status column. */
   protected dropListId(status: InterventionStatus): string {
     return `intervention-board-column-${status}`;

@@ -1,3 +1,5 @@
+export { OrganizationAvatar } from './organization-avatar';
+export type { OrganizationAvatarSize } from './organization-avatar';
 export { OrganizationGlobalSearch } from './organization-global-search';
 export { OrganizationNav } from './organization-nav';
 export { OrganizationTodayQueue } from './organization-today-queue';

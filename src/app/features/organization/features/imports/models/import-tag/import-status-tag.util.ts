@@ -12,7 +12,7 @@ const IMPORT_STATUS: Record<ImportJobStatus, ImportStatusTagDescriptor> = {
   },
   processing: {
     label: $localize`:@@imports.status.processing:Processing`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideLoaderCircle',
   },
   completed: {

@@ -79,6 +79,7 @@ describe('ApprovalsPage', () => {
             totalRequests: signal(1),
             isLoading: signal(false),
             hasListError: signal(false),
+            isListForbidden: signal(false),
             isDeciding: signal(false),
             decideErrorText: signal(null),
             actionTypes: signal([]),

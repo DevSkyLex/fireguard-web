@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  afterNextRender,
   computed,
   inject,
   signal,
@@ -30,6 +31,7 @@ import {
 } from '@features/organization/state/organization-search';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCommandImports } from '@shared/ui/command';
+import { HlmKbd } from '@shared/ui/kbd';
 import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
@@ -106,7 +108,7 @@ type OrganizationSearchGroupVm = {
  */
 @Component({
   selector: 'app-organization-global-search',
-  imports: [NgIcon, HlmButton, HlmCommandImports, HlmSpinner],
+  imports: [NgIcon, HlmButton, HlmCommandImports, HlmKbd, HlmSpinner],
   providers: [
     OrganizationSearchStore,
     provideIcons({
@@ -165,6 +167,22 @@ export class OrganizationGlobalSearch {
 
   /** The raw, un-debounced term currently typed — drives the "keep typing" hint. */
   protected readonly term: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property shortcutModifier
+   * @readonly
+   *
+   * @description
+   * The modifier key named on the trigger's visible hint. Starts at the
+   * non-Apple label so the server and the first client render agree, then
+   * corrects to the command glyph on Apple platforms after hydration.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly shortcutModifier: WritableSignal<string> = signal<string>('Ctrl');
 
   /** The header trigger button, focused back explicitly when the palette closes. */
   private readonly trigger: Signal<ElementRef<HTMLButtonElement> | undefined> =
@@ -237,6 +255,29 @@ export class OrganizationGlobalSearch {
     inspection: 'lucideClipboardList',
     non_conformity: 'lucideTriangleAlert',
   };
+  //#endregion
+
+  //#region Lifecycle
+  /**
+   * Method constructor
+   * @method constructor
+   *
+   * @description
+   * Resolves the platform-specific modifier for the trigger's visible
+   * shortcut hint. Deferred through `afterNextRender` rather than read at
+   * construction because the app renders on the server, where the label
+   * would otherwise disagree with the hydrated one.
+   *
+   * @access public
+   * @since 1.1.0
+   */
+  constructor() {
+    afterNextRender(() => {
+      if (/Mac|iPhone|iPad|iPod/i.test(globalThis.navigator.userAgent)) {
+        this.shortcutModifier.set('⌘');
+      }
+    });
+  }
   //#endregion
 
   //#region Methods

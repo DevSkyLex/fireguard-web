@@ -24,7 +24,14 @@
       [targetOptions]="targetOptions()"
       [memberOptions]="memberOptions()"
       (submitted)="submitted.emit($event)"
-      (cancelled)="visibleChange.emit(false)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
     />
   </hlm-sheet-content>
 </hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

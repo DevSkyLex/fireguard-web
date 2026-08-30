@@ -94,56 +94,65 @@ const STATUS: Record<InterventionStatus, InterventionTagDescriptor> = {
 /**
  * Intervention objective descriptors.
  *
- * Each objective gets its own colour, not the shared `info` blue: the three
- * read as distinct categories rather than shades of one workflow state.
+ * A category, not a state: all three stay neutral and the glyph alone tells
+ * them apart, so chroma keeps meaning "something needs attention".
  */
 const TYPE: Record<InterventionType, InterventionTagDescriptor> = {
   site_setup: {
     label: $localize`:@@intervention.action.siteSetup:Site setup`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideMapPin',
   },
   inventory: {
     label: $localize`:@@intervention.action.inventory:Inventory`,
-    severity: 'success',
+    severity: 'neutral',
     icon: 'lucidePackage',
   },
   inspection_campaign: {
     label: $localize`:@@intervention.type.inspectionCampaign:Inspection campaign`,
-    severity: 'warning',
+    severity: 'neutral',
     icon: 'lucideClipboardCheck',
   },
 };
 
-/** Work item action descriptors. */
+/**
+ * Work item action descriptors.
+ *
+ * A category like the objective above — neutral, told apart by its glyph.
+ */
 const WORK_ITEM_ACTION: Record<InterventionWorkItemAction, InterventionTagDescriptor> = {
   site_setup: {
     label: $localize`:@@intervention.action.siteSetup:Site setup`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideNetwork',
   },
   inventory: {
     label: $localize`:@@intervention.action.inventory:Inventory`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucidePackage',
   },
   inspection: {
     label: $localize`:@@intervention.action.inspection:Inspection`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideBadgeCheck',
   },
 };
 
-/** Work item status descriptors. */
+/**
+ * Work item status descriptors.
+ *
+ * Only the completed end carries colour; `skipped` is terminal but not an
+ * outcome, and the two in-between steps stay neutral.
+ */
 const WORK_ITEM_STATUS: Record<InterventionWorkItemStatus, InterventionTagDescriptor> = {
   planned: {
     label: $localize`:@@workItemStatus.planned:Planned`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideCalendar',
   },
   in_progress: {
     label: $localize`:@@workItemStatus.inProgress:In progress`,
-    severity: 'warning',
+    severity: 'neutral',
     icon: 'lucideHourglass',
   },
   completed: {
@@ -177,11 +186,16 @@ const ISSUE_SEVERITY: Record<InterventionIssueSeverity, InterventionTagDescripto
   },
 };
 
-/** Proposed change status descriptors. */
+/**
+ * Proposed change status descriptors.
+ *
+ * Only the two terminal states carry colour; a proposal awaiting review is
+ * neutral.
+ */
 const CHANGE_STATUS: Record<InterventionChangeStatus, InterventionTagDescriptor> = {
   proposed: {
     label: $localize`:@@changeStatus.proposed:Proposed`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideClock',
   },
   rejected: {

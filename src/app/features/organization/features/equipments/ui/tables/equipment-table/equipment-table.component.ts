@@ -16,20 +16,17 @@ import type {
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import { CollectionSurface } from '@shared/collection-surface';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component EquipmentTable
  * @class EquipmentTable
  *
  * @description
- * The equipment grid: `hlmTable` inside a bordered, scrollable shell, one
+ * The equipment grid: `hlmTable` inside the shared collection surface, one
  * row per equipment, no per-row menu — lifecycle actions live on the detail
  * record, not the list (`FEATURE.md` "Deletion (data-access only, no
  * duplicate UI)"), so the only interactive element per row is the type cell's
@@ -37,20 +34,29 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; this
- * component only renders the page it is handed. Type, Brand and Status are
+ * component only renders the page it is handed. The bordered, scrollable
+ * shell, the first-load skeleton and the below-`2xl` card fallback all come
+ * from the shared `CollectionSurface`. Type, Brand and Status are
  * the columns the backend's own sort whitelist (`ListEquipmentsProvider`)
  * covers that this table also renders — "Model" and the two timestamp
  * fields have no dedicated column, so they carry no sortable head. Each head
  * is a ghost button carrying the direction glyph, mirroring
  * `InterventionTable`'s sortable-head pattern.
  *
- * @version 1.2.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-table',
-  imports: [RouterLink, NgIcon, EquipmentStatusTag, HlmButton, HlmSkeleton, ...HlmTableImports],
+  imports: [
+    RouterLink,
+    NgIcon,
+    CollectionSurface,
+    EquipmentStatusTag,
+    HlmButton,
+    ...HlmTableImports,
+  ],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './equipment-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
@@ -114,8 +120,21 @@ export class EquipmentTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. Literal strings because Tailwind scans source text, and column-aware because a skeleton whose blocks do not line up with the header it replaces reads as a broken table rather than a loading one.
+   * @access protected
+   * @since 2.0.0
+   * @type {readonly string[]}
+   */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'w-32',
+    'w-24',
+    'w-20',
+    'w-20',
+    'w-24',
+  ];
   //#endregion
 
   //#region Methods

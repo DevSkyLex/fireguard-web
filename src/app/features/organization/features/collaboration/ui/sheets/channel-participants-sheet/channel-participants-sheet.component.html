@@ -38,7 +38,7 @@
                 @if (participant.avatarUrl; as avatarUrl) {
                   <img hlmAvatarImage [src]="avatarUrl" alt="" />
                 }
-                <span hlmAvatarFallback class="text-[11px]">
+                <span hlmAvatarFallback class="text-[10px]">
                   {{ initialsOf(participant.displayName) }}
                 </span>
               </hlm-avatar>
@@ -52,7 +52,7 @@
                   {{ participant.displayName }}
                 </span>
                 @if (participant.role; as role) {
-                  <span class="truncate text-[11px] text-muted-foreground">{{ role }}</span>
+                  <span class="truncate text-xs text-muted-foreground">{{ role }}</span>
                 }
               </span>
 

@@ -10,7 +10,7 @@ import type { ApprovalTagDescriptor } from './approval-tag-descriptor.interface'
 const APPROVAL_STATUS: Record<ApprovalStatus, ApprovalTagDescriptor> = {
   pending: {
     label: $localize`:@@approvals.status.pending:Pending`,
-    severity: 'warning',
+    severity: 'neutral',
     icon: 'lucideClock',
   },
   approved: {

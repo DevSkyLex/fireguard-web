@@ -14,16 +14,7 @@
     <div hlmCard [attr.data-testid]="testId">
       <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
         @if (avatarName) {
-          <hlm-avatar class="size-14 shrink-0 rounded-lg">
-            @if (avatarLogoUrl) {
-              <img hlmAvatarImage [src]="avatarLogoUrl" [alt]="avatarName" />
-            }
-            <span
-              hlmAvatarFallback
-              class="rounded-lg bg-muted text-base font-semibold text-foreground"
-              >{{ organizationInitials(avatarName) }}</span
-            >
-          </hlm-avatar>
+          <app-organization-avatar size="lg" [name]="avatarName" [logoUrl]="avatarLogoUrl" />
         } @else {
           <div
             class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
@@ -31,7 +22,7 @@
             <ng-icon [name]="icon" class="text-2xl" aria-hidden="true" />
           </div>
         }
-        <h1 hlmCardTitle>{{ title }}</h1>
+        <app-page-heading [heading]="title" />
         @if (badge) {
           <ng-container *ngTemplateOutlet="badge" />
         }
@@ -94,16 +85,11 @@
     <div hlmCard data-testid="organization-invitation-accept-success">
       <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
         @if (store.preview(); as accepted) {
-          <hlm-avatar class="size-14 shrink-0 rounded-lg">
-            @if (accepted.organizationLogoUrl; as logoUrl) {
-              <img hlmAvatarImage [src]="logoUrl" [alt]="accepted.organizationName" />
-            }
-            <span
-              hlmAvatarFallback
-              class="rounded-lg bg-muted text-base font-semibold text-foreground"
-              >{{ organizationInitials(accepted.organizationName) }}</span
-            >
-          </hlm-avatar>
+          <app-organization-avatar
+            size="lg"
+            [name]="accepted.organizationName"
+            [logoUrl]="accepted.organizationLogoUrl"
+          />
         } @else {
           <div
             class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
@@ -111,7 +97,7 @@
             <ng-icon name="lucideCircleCheck" class="text-2xl" aria-hidden="true" />
           </div>
         }
-        <h1 hlmCardTitle i18n="@@org.invitationAccept.acceptedTitle">You're in</h1>
+        <app-page-heading heading="You're in" i18n-heading="@@org.invitationAccept.acceptedTitle" />
         <p hlmCardDescription i18n="@@org.invitationAccept.accepted">
           You have joined the organization.
         </p>
@@ -137,19 +123,17 @@
     @if (preview.status === 'pending') {
       <div hlmCard data-testid="organization-invitation-accept-card">
         <div hlmCardHeader class="flex flex-col items-center gap-3 text-center">
-          <hlm-avatar class="size-14 shrink-0 rounded-lg">
-            @if (preview.organizationLogoUrl; as logoUrl) {
-              <img hlmAvatarImage [src]="logoUrl" [alt]="preview.organizationName" />
-            }
-            <span
-              hlmAvatarFallback
-              class="rounded-lg bg-muted text-base font-semibold text-foreground"
-              >{{ organizationInitials(preview.organizationName) }}</span
-            >
-          </hlm-avatar>
+          <app-organization-avatar
+            size="lg"
+            [name]="preview.organizationName"
+            [logoUrl]="preview.organizationLogoUrl"
+          />
 
           <div class="flex flex-col gap-1">
-            <h1 hlmCardTitle i18n="@@org.invitationAccept.title">You've been invited</h1>
+            <app-page-heading
+              heading="You've been invited"
+              i18n-heading="@@org.invitationAccept.title"
+            />
             <p hlmCardDescription>
               <span i18n="@@org.invitationAccept.invitedBy">Invited by</span>&ngsp;
               <span class="font-medium text-foreground">{{ preview.inviterDisplayName }}</span

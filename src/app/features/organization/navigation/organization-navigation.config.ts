@@ -35,7 +35,7 @@ export type OrganizationNavigationCounterKey = 'submittedInterventions';
  *
  * @since 1.1.0
  */
-export type OrganizationNavigationGroupId = 'operations' | 'assets' | 'administration';
+export type OrganizationNavigationGroupId = 'operations' | 'assets';
 
 /**
  * Interface OrganizationNavigationGroup
@@ -68,6 +68,7 @@ export interface OrganizationNavigationItem {
   readonly permissions: ReadonlyArray<OrganizationPermissionName>;
   readonly match?: OrganizationNavigationMatch;
   readonly counterKey?: OrganizationNavigationCounterKey;
+  readonly exact?: boolean;
 }
 
 /**
@@ -85,6 +86,7 @@ export interface OrganizationNavigationLink {
   readonly icon: string;
   readonly route: string;
   readonly counterKey?: OrganizationNavigationCounterKey;
+  readonly exact: boolean;
 }
 
 /**
@@ -106,8 +108,15 @@ export interface OrganizationNavigationSection {
  *
  * @description
  * Canonical ordered list of organization destinations gated by organization-member
- * RBAC. The sidebar navigation and the landing guard both consume this list, so
- * route visibility and fallback behavior cannot diverge.
+ * RBAC. Only the sidebar navigation consumes it — an earlier revision of this
+ * doc claimed the landing guard did too, which was never true and is worth not
+ * believing: guard and navigation are gated independently.
+ *
+ * `exact` marks the one entry whose `path` is empty, so `routerLinkActive`
+ * matches the workspace root exactly instead of as a prefix of every sibling
+ * route. Declaring it here rather than inferring it from an id is what stops a
+ * rename from silently marking that row active on every page — which is
+ * precisely what happened when `today` became `dashboard`.
  *
  * @since 1.0.0
  */
@@ -131,6 +140,7 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
       ORGANIZATION_PERMISSION.DASHBOARD_READ,
     ],
     match: 'any',
+    exact: true,
   },
   {
     id: 'interventions',
@@ -230,54 +240,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ, ORGANIZATION_PERMISSION.FACILITIES_READ],
     match: 'any',
   },
-  {
-    id: 'members',
-    label: $localize`:@@route.members:Members`,
-    icon: 'lucideUsers',
-    path: 'members',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.MEMBERS_READ, ORGANIZATION_PERMISSION.MEMBERS_MANAGE],
-    match: 'any',
-  },
-  {
-    id: 'team',
-    label: $localize`:@@route.team:Roles & permissions`,
-    icon: 'lucideIdCard',
-    path: 'team',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
-    match: 'any',
-  },
-  {
-    id: 'teams',
-    label: $localize`:@@route.teams:Teams`,
-    icon: 'lucideUsersRound',
-    path: 'teams',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.TEAMS_READ],
-  },
-  {
-    id: 'settings',
-    label: $localize`:@@route.settings:Settings`,
-    icon: 'lucideSettings',
-    path: 'settings',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.SETTINGS_WRITE],
-  },
-  {
-    /**
-     * The organization-scoped audit journal, over the backend's
-     * organization audit ledger. `organization.audit.read` is not in the
-     * default member role — admins hold it via the wildcard — so this row
-     * is absent for most members, matching the route's own guard.
-     */
-    id: 'audit',
-    label: $localize`:@@route.audit:Audit journal`,
-    icon: 'lucideHistory',
-    path: 'audit',
-    group: 'administration',
-    permissions: [ORGANIZATION_PERMISSION.AUDIT_READ],
-  },
 ];
 
 /**
@@ -291,7 +253,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
 export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigationGroup> = [
   { id: 'operations', label: $localize`:@@org.navGroup.operations:Operations` },
   { id: 'assets', label: $localize`:@@org.navGroup.assets:Assets` },
-  { id: 'administration', label: $localize`:@@org.navGroup.administration:Administration` },
 ];
 
 /**
@@ -383,6 +344,7 @@ export function buildOrganizationNavigation(
         icon: item.icon,
         route: item.path.length > 0 ? `${prefix}/${item.path}` : prefix,
         counterKey: item.counterKey,
+        exact: item.exact ?? false,
       })),
     }),
   ).filter((section: OrganizationNavigationSection): boolean => section.links.length > 0);

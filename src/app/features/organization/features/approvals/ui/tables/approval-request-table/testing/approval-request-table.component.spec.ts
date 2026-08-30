@@ -83,11 +83,15 @@ describe('ApprovalRequestTable', () => {
     fixture.componentRef.setInput('canDecide', true);
     await fixture.whenStable();
 
+    // Scoped to the table: the card layout renders the same row a second time,
+    // which is the point of the shared surface, not a duplicate to assert on.
     const element = fixture.nativeElement as HTMLElement;
     const approveButtons = element.querySelectorAll(
-      '[data-testid="approval-request-table-approve"]',
+      '[data-testid="approval-request-table"] [data-testid="approval-request-table-approve"]',
     );
-    const rejectButtons = element.querySelectorAll('[data-testid="approval-request-table-reject"]');
+    const rejectButtons = element.querySelectorAll(
+      '[data-testid="approval-request-table"] [data-testid="approval-request-table-reject"]',
+    );
 
     const firstApproveLabel = approveButtons[0].getAttribute('aria-label');
     const secondApproveLabel = approveButtons[1].getAttribute('aria-label');
@@ -97,6 +101,41 @@ describe('ApprovalRequestTable', () => {
     expect(secondApproveLabel).toContain('nc-1');
     expect(firstApproveLabel).not.toBe(secondApproveLabel);
     expect(firstApproveLabel).not.toBe(firstRejectLabel);
+  });
+
+  it('should draw placeholder rows on a first load, and no data rows', async () => {
+    fixture.componentRef.setInput('items', []);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="approval-request-table-row"]')).toBeNull();
+    expect(element.querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    fixture.componentRef.setInput('items', [request()]);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    // The shared surface's loading contract is "first load only": flashing the
+    // inbox to skeletons on page 2 loses the reader's place for nothing.
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="approval-request-table-row"]')).not.toBeNull();
+    expect(element.querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should render the same request a second time as a card, under the row testid plus -card', async () => {
+    fixture.componentRef.setInput('items', [request(), request({ id: 'request-2' })]);
+    await fixture.whenStable();
+
+    // Both layouts stay mounted — a container query, not an `@if`, picks the
+    // visible one — so a card is a second render of the same row.
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelectorAll('[data-testid="approval-request-table-row-card"]').length).toBe(
+      2,
+    );
+    expect(element.querySelectorAll('[data-testid="approval-request-table-row"]').length).toBe(2);
   });
 
   it('should link the subject for a known action type and render a bare reference otherwise', async () => {

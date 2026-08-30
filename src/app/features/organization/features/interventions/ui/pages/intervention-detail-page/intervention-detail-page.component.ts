@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   LOCALE_ID,
   signal,
   untracked,
@@ -18,17 +19,19 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
+  lucideCloudOff,
   lucideCompass,
   lucideCopy,
   lucideEllipsis,
   lucideFileDown,
+  lucideMessageSquareQuote,
   lucideMessagesSquare,
   lucideScanLine,
   lucideTrash2,
@@ -42,7 +45,10 @@ import { isCallError, isCallPending, type CallState, type StoreError } from '@co
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
-import { InterventionService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionOfflineService,
+  InterventionService,
+} from '@features/organization/features/interventions/data-access';
 import type {
   AssignInterventionTeamInput,
   CreateInterventionLabelInput,
@@ -56,6 +62,7 @@ import type {
   InterventionIssueOutput,
   InterventionIssueTarget,
   InterventionLinkedResourceTabId,
+  InterventionOutboxOperation,
   InterventionOutput,
   InterventionPhase,
   InterventionQueuedAttachment,
@@ -71,6 +78,7 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
+  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
@@ -122,7 +130,9 @@ import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmKbd } from '@shared/ui/kbd';
 import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -134,7 +144,9 @@ import { InterventionGettingStarted } from '../../components/intervention-gettin
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionStatusBand } from '../../components/intervention-status-band';
+import { InterventionSyncBlockedAlert } from '../../components/intervention-sync-blocked-alert';
 import { InterventionTag } from '../../components/intervention-tag';
+import { InterventionAbandonDialog } from '../../dialogs/intervention-abandon-dialog';
 import { InterventionAttachmentDeleteDialog } from '../../dialogs/intervention-attachment-delete-dialog';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
 import { InterventionLabelManageDialog } from '../../dialogs/intervention-label-manage-dialog';
@@ -154,6 +166,36 @@ import { InterventionEquipmentTable } from '../../tables/intervention-equipment-
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
+
+/** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
+const LINKED_RESOURCE_TAB_IDS: ReadonlySet<string> = new Set<string>([
+  'overview',
+  'changes',
+  'attachments',
+  'facilities',
+  'equipment',
+  'inspections',
+]);
+
+/**
+ * Function isInterventionLinkedResourceTabId
+ *
+ * @description
+ * Narrows an untrusted string — a query param, or `hlm-tabs`' plain-string
+ * `tabActivated` payload — to a rail tab id.
+ *
+ * @access private
+ * @since 5.3.0
+ *
+ * @param {string | undefined} value - The candidate tab id.
+ *
+ * @returns {boolean} Whether the value names one of the six rail tabs.
+ */
+function isInterventionLinkedResourceTabId(
+  value: string | undefined,
+): value is InterventionLinkedResourceTabId {
+  return value !== undefined && LINKED_RESOURCE_TAB_IDS.has(value);
+}
 
 /** The edit state before anything is open. */
 const IDLE_EDIT_STATE: InterventionEditState = {
@@ -224,6 +266,8 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    HlmCardTitle,
+    HlmKbd,
     NgIcon,
     NgTemplateOutlet,
     EmptyState,
@@ -238,12 +282,14 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionAttachmentDeleteDialog,
     InterventionAttachments,
     InterventionChangeList,
+    InterventionAbandonDialog,
     InterventionConfirmDialog,
     InterventionDiscussionSheet,
     InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
     InterventionStatusBand,
+    InterventionSyncBlockedAlert,
     InterventionTeamAssignDialog,
     InterventionCommentForm,
     InterventionGettingStarted,
@@ -269,10 +315,12 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
+      lucideCloudOff,
       lucideCompass,
       lucideCopy,
       lucideEllipsis,
       lucideFileDown,
+      lucideMessageSquareQuote,
       lucideMessagesSquare,
       lucideScanLine,
       lucideTrash2,
@@ -303,6 +351,23 @@ export class InterventionDetailPage {
    * @type {InputSignal<string>}
    */
   public readonly interventionId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property tab
+   * @readonly
+   *
+   * @description
+   * Which rail tab the URL asks for (`?tab=`), bound through
+   * `withComponentInputBinding()`. Absent or unknown means `overview`. It is
+   * what makes "look at the proposed changes on FG-142" a link, and what
+   * survives a reload on the page a reviewer spends the most time in.
+   *
+   * @access public
+   * @since 5.3.0
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Constructor
@@ -404,6 +469,42 @@ export class InterventionDetailPage {
   /** Whether the browser can reach the API, which gates publication. */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
 
+  /** The outbox replay coordinator, read for the on-page blocked-sync alert and its retry. */
+  private readonly sync: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
+  );
+
+  /** The outbox itself, read so the blocked-sync alert can name what failed on this intervention. */
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+
+  /**
+   * Property blockedSyncOperations
+   * @readonly
+   *
+   * @description
+   * The queued operations for *this* intervention that failed to replay,
+   * which {@link InterventionSyncBlockedAlert} names on the page. Read from
+   * the outbox rather than derived from the coordinator's device-global
+   * count: an agent standing on one intervention needs to know whether it is
+   * their own inspection that is stuck, not that three things somewhere are.
+   *
+   * Empty on the server — the outbox repository short-circuits without
+   * IndexedDB rather than throwing.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<readonly InterventionOutboxOperation[]>}
+   */
+  protected readonly blockedSyncOperations: WritableSignal<readonly InterventionOutboxOperation[]> =
+    signal<readonly InterventionOutboxOperation[]>([]);
+
+  /** Why the replay stopped, straight from the coordinator's last failure. */
+  protected readonly syncProblem: Signal<string | null> = this.sync.problem;
+
+  /** Whether a replay is in flight, so the alert's retry reads as busy rather than dead. */
+  protected readonly syncRetrying: Signal<boolean> = this.sync.syncing;
+
   /** Shrinks camera captures under the backend's 10 MiB attachment ceiling. */
   private readonly photoCompressor: InterventionPhotoCompressorService = inject(
     InterventionPhotoCompressorService,
@@ -445,6 +546,9 @@ export class InterventionDetailPage {
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
+
+  /** @access private @since 5.3.0 @type {ActivatedRoute} */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
   /** The application's language, used to phrase the meta line and the timeline. */
   private readonly locale: string = inject<string>(LOCALE_ID);
@@ -492,6 +596,13 @@ export class InterventionDetailPage {
         this.store.loadActivities(interventionId);
         this.store.loadAttachments(interventionId);
       });
+    });
+
+    effect((): void => {
+      const interventionId: string = this.interventionId();
+      const blockedTotal: number = this.sync.blockedOperations();
+
+      untracked((): void => void this.loadBlockedSyncOperations(interventionId, blockedTotal));
     });
 
     effect((): void => {
@@ -692,17 +803,23 @@ export class InterventionDetailPage {
    *
    * @description
    * Which of the left-hand rail's six tabs is showing — `overview` by
-   * default. Page-local UI state, not store-owned: the store only tracks
-   * whether each of the three lookup tabs has ever loaded, not which one is
-   * currently visible.
+   * default. Seeded from {@link tab} so the URL is the entry point, and
+   * writable so an in-page reveal can switch synchronously; every write goes
+   * through {@link setLinkedTab}, which mirrors it back to `?tab=`. Not
+   * store-owned: the store only tracks whether each of the three lookup tabs
+   * has ever loaded, not which one is currently visible.
    *
    * @access protected
-   * @since 4.5.0
+   * @since 5.3.0
    *
    * @type {WritableSignal<InterventionLinkedResourceTabId>}
    */
   protected readonly activeLinkedTab: WritableSignal<InterventionLinkedResourceTabId> =
-    signal<InterventionLinkedResourceTabId>('overview');
+    linkedSignal<string | undefined, InterventionLinkedResourceTabId>({
+      source: this.tab,
+      computation: (requested: string | undefined): InterventionLinkedResourceTabId =>
+        isInterventionLinkedResourceTabId(requested) ? requested : 'overview',
+    });
 
   /**
    * Property linkedTabsOrientation
@@ -755,6 +872,15 @@ export class InterventionDetailPage {
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
 
+  /** The intervention pending abandonment, if the abandon confirmation is open. */
+  protected readonly pendingAbandon: WritableSignal<InterventionOutput | null> =
+    signal<InterventionOutput | null>(null);
+
+  /** Whether the abandon transition is in flight, which locks its dialog open. */
+  protected readonly abandonPending: Signal<boolean> = computed<boolean>(
+    () => this.pendingAbandon() !== null && isCallPending(this.store.transitionCallState()),
+  );
+
   /**
    * Property confirmBusy
    * @readonly
@@ -775,8 +901,6 @@ export class InterventionDetailPage {
     if (request === null) return false;
 
     switch (request.kind) {
-      case 'abandon':
-        return isCallPending(this.store.transitionCallState());
       case 'deleteIntervention':
         return isCallPending(this.listStore.deleteCallState());
       case 'deleteWorkItem':
@@ -1470,6 +1594,15 @@ export class InterventionDetailPage {
       if (this.phase() === 'execute') {
         if (!this.canExecute()) return null;
 
+        if (this.commandTransitionTarget() === 'in_progress')
+          return {
+            label: $localize`:@@intervention.cta.startWork:Start field work`,
+            icon: 'lucidePlay',
+            disabled: false,
+            disabledReason: null,
+            loading: this.store.saving(),
+          };
+
         const total: number = this.store.workItems().length;
         const remaining: number = this.remainingWorkItems();
 
@@ -1522,6 +1655,37 @@ export class InterventionDetailPage {
               ? $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`
               : $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`,
         loading: this.store.saving() || this.publishing(),
+      };
+    });
+
+  /**
+   * Property secondaryCommandAction
+   * @readonly
+   *
+   * @description
+   * The reviewer's "send it back", named as a verb and rendered beside the
+   * primary. Shown to anyone who may review a submitted card — including the
+   * reviewer who cannot publish, for whom {@link commandAction} is `null` and
+   * the band was until now empty.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<InterventionCommandAction | null>}
+   */
+  protected readonly secondaryCommandAction: Signal<InterventionCommandAction | null> =
+    computed<InterventionCommandAction | null>(() => {
+      const intervention: InterventionOutput | null = this.store.intervention();
+      if (!intervention || intervention.status !== 'submitted' || !this.canReview()) return null;
+
+      return {
+        label: $localize`:@@intervention.cta.requestChanges:Send back for changes`,
+        icon: 'lucideMessageSquareQuote',
+        disabled: !this.online(),
+        disabledReason: this.online()
+          ? null
+          : $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,
+        loading: false,
       };
     });
 
@@ -1639,7 +1803,7 @@ export class InterventionDetailPage {
   protected onIssueActivated(target: InterventionIssueTarget): void {
     switch (target.kind) {
       case 'railTab':
-        this.activeLinkedTab.set(target.tab);
+        this.setLinkedTab(target.tab);
         break;
       case 'edit':
         this.onEditTargetChanged(target.target);
@@ -1998,7 +2162,7 @@ export class InterventionDetailPage {
     }
 
     if (
-      this.phase() === 'execute' &&
+      target === 'submitted' &&
       (this.store.workItems().length === 0 || this.remainingWorkItems() > 0)
     ) {
       this.revealFieldWork();
@@ -2149,9 +2313,32 @@ export class InterventionDetailPage {
     this.store.addComment({ interventionId: this.interventionId(), body });
   }
 
-  /** Asks to abandon. */
+  /** Asks to abandon, through the terminal transition's own confirmation. */
   protected requestAbandon(): void {
-    this.pendingConfirm.set({ kind: 'abandon' });
+    this.pendingAbandon.set(this.store.intervention());
+  }
+
+  /**
+   * Method onAbandonConfirmed
+   * @description Dispatches the terminal transition. The dialog stays open and locked until it settles.
+   * @access protected
+   * @since 5.3.0
+   * @returns {void}
+   */
+  protected onAbandonConfirmed(): void {
+    this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' });
+    this.pendingAbandon.set(null);
+  }
+
+  /**
+   * Method onAbandonDismissed
+   * @description Closes the abandon confirmation without transitioning.
+   * @access protected
+   * @since 5.3.0
+   * @returns {void}
+   */
+  protected onAbandonDismissed(): void {
+    this.pendingAbandon.set(null);
   }
 
   /**
@@ -2321,9 +2508,6 @@ export class InterventionDetailPage {
     if (intervention === null) return;
 
     switch (event.kind) {
-      case 'abandon':
-        this.store.transition({ interventionId: this.interventionId(), status: 'abandoned' });
-        break;
       case 'deleteIntervention':
         this.listStore.delete({
           interventionId: this.interventionId(),
@@ -2430,6 +2614,33 @@ export class InterventionDetailPage {
   }
 
   /**
+   * Method retryBlockedSync
+   * @method retryBlockedSync
+   *
+   * @description
+   * Replays the operations the outbox could not send, from the on-page
+   * alert rather than the shell popover. Refreshes {@link
+   * blockedSyncOperations} afterwards whatever the outcome: a retry that
+   * fails again leaves the same blocked count, so the effect watching that
+   * count would not re-run, and the per-operation errors would go stale.
+   *
+   * Discarding is deliberately not offered here — it is data loss, and stays
+   * confirm-gated in `app-intervention-sync-indicator`.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void}
+   */
+  protected retryBlockedSync(): void {
+    void this.sync
+      .retryBlocked()
+      .then((): Promise<void> =>
+        this.loadBlockedSyncOperations(this.interventionId(), this.sync.blockedOperations()),
+      );
+  }
+
+  /**
    * Method onLinkedTabActivated
    *
    * @description
@@ -2446,16 +2657,37 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected onLinkedTabActivated(tab: string): void {
-    if (
-      tab === 'overview' ||
-      tab === 'changes' ||
-      tab === 'attachments' ||
-      tab === 'facilities' ||
-      tab === 'equipment' ||
-      tab === 'inspections'
-    ) {
-      this.activeLinkedTab.set(tab);
-    }
+    if (isInterventionLinkedResourceTabId(tab)) this.setLinkedTab(tab);
+  }
+
+  /**
+   * Method setLinkedTab
+   *
+   * @description
+   * Switches the rail and mirrors the choice into `?tab=`, dropping the param
+   * on `overview` so the default stays a clean URL. The signal is written
+   * first, synchronously, because {@link revealFieldWork} and
+   * {@link revealBlockers} defer their scroll on exactly one tick and a
+   * navigation would not have flushed by then. `replaceUrl` matches
+   * `InterventionsPage.switchView`: the tab is addressable and survives a
+   * reload, without turning every rail click into a history entry.
+   *
+   * @access private
+   * @since 5.3.0
+   *
+   * @param {InterventionLinkedResourceTabId} tab - The tab to show.
+   *
+   * @returns {void}
+   */
+  private setLinkedTab(tab: InterventionLinkedResourceTabId): void {
+    this.activeLinkedTab.set(tab);
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'overview' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /** Walks to the previous intervention in the list's order. */
@@ -2586,7 +2818,7 @@ export class InterventionDetailPage {
    */
   private revealFieldWork(): void {
     const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
-    this.activeLinkedTab.set('overview');
+    this.setLinkedTab('overview');
 
     if (this.store.workItems().length === 0 && this.canAddWorkItem()) {
       this.workItemSheetVisible.set(true);
@@ -2618,7 +2850,7 @@ export class InterventionDetailPage {
    */
   protected revealBlockers(): void {
     const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
-    this.activeLinkedTab.set('overview');
+    this.setLinkedTab('overview');
 
     if (switchingTab) {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
@@ -2676,6 +2908,44 @@ export class InterventionDetailPage {
   }
 
   /** Navigates to a neighbour, if there is one. */
+  /**
+   * Method loadBlockedSyncOperations
+   * @method loadBlockedSyncOperations
+   *
+   * @description
+   * Reads this intervention's outbox and keeps the entries a replay left
+   * `failed` or `conflict`. Short-circuits to an empty list when the device
+   * has nothing blocked at all, so the common case never touches IndexedDB.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {string} interventionId - The intervention whose queue to read.
+   * @param {number} blockedTotal - The coordinator's device-global blocked count.
+   *
+   * @returns {Promise<void>} A promise resolving once the list is settled.
+   */
+  private async loadBlockedSyncOperations(
+    interventionId: string,
+    blockedTotal: number,
+  ): Promise<void> {
+    if (blockedTotal === 0) {
+      this.blockedSyncOperations.set([]);
+
+      return;
+    }
+
+    const queued: readonly InterventionOutboxOperation[] =
+      await this.offline.listOutbox(interventionId);
+
+    this.blockedSyncOperations.set(
+      queued.filter(
+        (operation: InterventionOutboxOperation): boolean =>
+          operation.status === 'failed' || operation.status === 'conflict',
+      ),
+    );
+  }
+
   private navigateToNeighbour(interventionId: string | null): void {
     if (interventionId === null) return;
 

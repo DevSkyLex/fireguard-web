@@ -5,15 +5,12 @@
 
   <div class="flex flex-col gap-2">
     <p class="font-mono text-sm text-muted-foreground">500</p>
-    <h1
-      class="text-2xl font-semibold tracking-tight text-foreground"
-      i18n="@@error.serverError.title"
-    >
-      Something went wrong on our side
-    </h1>
-    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.serverError.description">
-      Your workspace could not be reached. This is usually temporary — try again in a moment.
-    </p>
+    <app-page-heading
+      heading="Something went wrong on our side"
+      i18n-heading="@@error.serverError.title"
+      description="Your workspace could not be reached. This is usually temporary — try again in a moment."
+      i18n-description="@@error.serverError.description"
+    />
   </div>
 
   <div class="flex flex-wrap items-center justify-center gap-3">

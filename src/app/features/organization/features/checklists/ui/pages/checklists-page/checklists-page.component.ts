@@ -18,7 +18,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleDot, lucideListChecks, lucidePlus } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideCircleDot,
+  lucideListChecks,
+  lucideLock,
+  lucidePlus,
+} from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -118,7 +124,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
   ],
   providers: [
     ChecklistStore,
-    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideListChecks, lucidePlus }),
+    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideListChecks, lucideLock, lucidePlus }),
   ],
   templateUrl: './checklists-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -135,6 +141,11 @@ export class ChecklistsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.listCallState().error?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties

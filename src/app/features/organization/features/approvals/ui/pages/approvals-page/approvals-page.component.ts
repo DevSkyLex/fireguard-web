@@ -14,7 +14,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideCircleDot,
+  lucideLock,
+  lucideShieldCheck,
+  lucideTag,
+} from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -118,7 +124,9 @@ type ApprovalFilterKey = 'status' | 'actionType';
     HlmButton,
     ...HlmToggleGroupImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideCircleDot, lucideShieldCheck, lucideTag })],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideLock, lucideShieldCheck, lucideTag }),
+  ],
   templateUrl: './approvals-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,6 +142,11 @@ export class ApprovalsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
+    this.store.isListForbidden(),
+  );
+
   //#endregion
 
   //#region Properties

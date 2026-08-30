@@ -81,6 +81,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   workItems: [],
   changes: [],
   issues: [],
+  servedFromLocalCache: false,
   loadCallState: idleCallState(),
   transitionCallState: idleCallState(),
   updateDetailsCallState: idleCallState(),
@@ -377,6 +378,7 @@ export const InterventionWorkspaceStore = signalStore(
           changes: service.listAllChanges(interventionId),
           issues: service.listIssues(interventionId),
         }).pipe(
+          map((workspace) => ({ ...workspace, fromCache: false })),
           catchError((error: unknown) =>
             connectivity.isNetworkFailure(error)
               ? from(offline.getWorkspace(interventionId)).pipe(
@@ -387,6 +389,7 @@ export const InterventionWorkspaceStore = signalStore(
                       workItems: workspace.workItems,
                       changes: workspace.changes,
                       issues: { member: workspace.issues },
+                      fromCache: true,
                     };
                   }),
                 )
@@ -399,19 +402,23 @@ export const InterventionWorkspaceStore = signalStore(
         workItems,
         changes,
         issues,
+        fromCache,
       }: {
         intervention: InterventionOutput;
         workItems: readonly InterventionWorkItemOutput[];
         changes: readonly InterventionChangeOutput[];
         issues: { readonly member: readonly InterventionIssueOutput[] };
+        fromCache: boolean;
       }): void => {
         patchState(store, {
           intervention,
           workItems,
           changes,
           issues: issues.member,
+          servedFromLocalCache: fromCache,
           loadCallState: successCallState(null),
         });
+        if (fromCache) return; // Re-saving the snapshot we just read would only refresh its timestamp and lie about its age.
         void offline.saveWorkspace(intervention, workItems, changes, issues.member);
       };
 
@@ -434,6 +441,7 @@ export const InterventionWorkspaceStore = signalStore(
               workItems: [],
               changes: [],
               issues: [],
+              servedFromLocalCache: false,
               attachments: [],
               attachmentsCallState: idleCallState(),
               activities: [],

@@ -39,6 +39,31 @@
     </hlm-field>
 
     <hlm-field>
+      <label hlmFieldLabel for="equipment-create-facility" i18n="@@equipment.form.facility"
+        >Site</label
+      >
+      <hlm-select [itemToString]="facilityLabelOf" [formField]="createForm.facility">
+        <hlm-select-trigger
+          buttonId="equipment-create-facility"
+          class="w-full"
+          data-testid="equipment-create-facility"
+        >
+          <hlm-select-value
+            placeholder="Unassigned"
+            i18n-placeholder="@@equipment.form.facilityPlaceholder"
+          />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-group>
+            @for (option of facilityOptions(); track option.value) {
+              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    </hlm-field>
+
+    <hlm-field>
       <label hlmFieldLabel for="equipment-create-subtype" i18n="@@equipment.form.subtype"
         >Subtype</label
       >

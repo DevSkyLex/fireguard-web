@@ -5,16 +5,12 @@
 
   <div class="flex flex-col gap-2">
     <p class="font-mono text-sm text-muted-foreground">403</p>
-    <h1
-      class="text-2xl font-semibold tracking-tight text-foreground"
-      i18n="@@error.forbidden.title"
-    >
-      You cannot open this workspace
-    </h1>
-    <p class="text-sm text-pretty text-muted-foreground" i18n="@@error.forbidden.description">
-      None of your organizations is accessible with this account. Sign out and use another account,
-      or contact an administrator of your organization.
-    </p>
+    <app-page-heading
+      heading="You cannot open this workspace"
+      i18n-heading="@@error.forbidden.title"
+      description="None of your organizations is accessible with this account. Sign out and use another account, or contact an administrator of your organization."
+      i18n-description="@@error.forbidden.description"
+    />
   </div>
 
   <div class="flex flex-wrap items-center justify-center gap-3">

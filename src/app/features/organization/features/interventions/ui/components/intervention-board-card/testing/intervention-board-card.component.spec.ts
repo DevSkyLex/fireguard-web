@@ -110,7 +110,7 @@ describe('InterventionBoardCard', () => {
     expect(icon?.getAttribute('aria-label')).toBe('Overdue');
   });
 
-  it('should list the card as offering a status move, disabled with a title, when the move is server-illegal', async () => {
+  it('should offer a server-illegal move disabled, with its reason visible and linked', async () => {
     fixture.componentRef.setInput(
       'item',
       item({
@@ -129,7 +129,14 @@ describe('InterventionBoardCard', () => {
     );
 
     expect(gated?.disabled).toBe(true);
-    expect(gated?.getAttribute('title')).toBe('Only the responsible can withdraw this submission.');
+    expect(gated?.getAttribute('title'), 'a native title is invisible on touch').toBeNull();
+
+    const reasonId: string | null = gated?.getAttribute('aria-describedby') ?? null;
+    expect(reasonId).not.toBeNull();
+
+    const reason: HTMLElement | null = document.getElementById(reasonId as string);
+    expect(reason?.textContent).toContain('Only the responsible can withdraw this submission.');
+    expect(reason?.classList.contains('sr-only')).toBe(false);
   });
 
   it('should emit moveRequested only for a legal target', async () => {

@@ -1,139 +1,69 @@
-@if (loading() && items().length === 0) {
-  <span class="sr-only" role="status" i18n="@@intervention.linked.loading">Loading…</span>
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="overflow-y-auto">
-      <table hlmTable data-testid="intervention-inspections-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
-          The inspections linked to this intervention.
-        </caption>
+<app-collection-surface
+  caption="The inspections linked to this intervention."
+  i18n-caption="@@intervention.linked.inspections.caption"
+  testId="intervention-inspections-table"
+  density="compact"
+  [loading]="loading()"
+  [hasError]="error() !== null"
+  [rowCount]="items().length"
+  [columnCount]="4"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
+      <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
+      <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
+      <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
+    </tr>
+  </ng-container>
 
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">
-              Performed
-            </th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
-          </tr>
-        </thead>
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="intervention-inspections-table-row">
+        <td hlmTableCell>
+          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+        </td>
+        <td hlmTableCell>
+          <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+        </td>
+        <td hlmTableCell>
+          <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
+        </td>
+        <td hlmTableCell>
+          <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
+        </td>
+      </tr>
+    }
+  </ng-container>
 
-        <tbody hlmTableBody>
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-} @else if (error(); as message) {
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        data-testid="intervention-inspections-table-card"
+      >
+        <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+          <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
+        </div>
+      </div>
+    }
+  </ng-container>
+
   <app-error-state
+    surfaceError
     icon="lucideCircleAlert"
     title="Linked inspections could not be loaded"
     i18n-title="@@intervention.linked.inspections.errorTitle"
-    [description]="message"
+    [description]="error() ?? ''"
     data-testid="intervention-inspections-error"
   />
-} @else if (items().length > 0) {
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="overflow-y-auto">
-      <table hlmTable data-testid="intervention-inspections-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.linked.inspections.caption">
-          The inspections linked to this intervention.
-        </caption>
 
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">
-              Performed
-            </th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
-            <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
-          </tr>
-        </thead>
-
-        <tbody hlmTableBody>
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="intervention-inspections-table-row">
-              <td hlmTableCell>
-                @if (isDraftRecord(item)) {
-                  <span class="font-medium text-foreground">
-                    {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
-                  </span>
-                  <span
-                    hlmBadge
-                    variant="outline"
-                    class="ms-1.5 gap-1 align-middle text-muted-foreground"
-                    data-testid="intervention-inspections-draft-badge"
-                  >
-                    <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
-                    <span i18n="@@intervention.linked.inspections.draftBadge">Draft</span>
-                  </span>
-                } @else {
-                  <a
-                    class="font-medium text-foreground hover:underline"
-                    [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
-                    [attr.aria-label]="linkAriaLabelOf(item)"
-                  >
-                    {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
-                  </a>
-                }
-              </td>
-              <td hlmTableCell>
-                <app-intervention-tag kind="inspectionResult" [value]="item.result" />
-              </td>
-              <td hlmTableCell>
-                <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
-              </td>
-              <td hlmTableCell>
-                @if (item.inspector; as inspector) {
-                  <div class="flex items-center gap-2">
-                    <hlm-avatar size="sm" class="shrink-0">
-                      @if (inspector.avatarUrl; as avatarUrl) {
-                        <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                      }
-                      <span hlmAvatarFallback class="text-[10px]">{{
-                        inspectorInitialsOf(item)
-                      }}</span>
-                    </hlm-avatar>
-                    <span class="truncate text-foreground">{{ inspector.displayName }}</span>
-                  </div>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  @if (totalItems() > items().length) {
-    <div class="flex justify-center pt-4">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="intervention-inspections-load-more"
-        [disabled]="loadingMore()"
-        (click)="loadMoreRequested.emit()"
-      >
-        @if (loadingMore()) {
-          <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
-        } @else {
-          <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
-        }
-      </button>
-    </div>
-  }
-} @else {
   <app-empty-state
+    surfaceEmpty
     icon="lucideClipboardCheck"
     title="No linked inspections"
     i18n-title="@@intervention.linked.inspections.emptyTitle"
@@ -141,4 +71,63 @@
     i18n-description="@@intervention.linked.inspections.emptyDesc"
     data-testid="intervention-inspections-empty"
   />
+</app-collection-surface>
+
+@if (totalItems() > items().length) {
+  <div class="flex justify-center pt-4">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="intervention-inspections-load-more"
+      [disabled]="loadingMore()"
+      (click)="loadMoreRequested.emit()"
+    >
+      @if (loadingMore()) {
+        <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
+      } @else {
+        <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
+      }
+    </button>
+  </div>
 }
+
+<ng-template #identity let-item="item">
+  @if (isDraftRecord(item)) {
+    <span class="font-medium text-foreground">
+      {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
+    </span>
+    <span
+      hlmBadge
+      variant="outline"
+      class="ms-1.5 gap-1 align-middle text-muted-foreground"
+      data-testid="intervention-inspections-draft-badge"
+    >
+      <ng-icon name="lucideCircleDotDashed" size="12" aria-hidden="true" />
+      <span i18n="@@intervention.linked.inspections.draftBadge">Draft</span>
+    </span>
+  } @else {
+    <a
+      class="font-medium text-foreground hover:underline"
+      [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
+      [attr.aria-label]="linkAriaLabelOf(item)"
+    >
+      {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
+    </a>
+  }
+</ng-template>
+
+<ng-template #inspector let-item="item">
+  @if (item.inspector; as inspector) {
+    <div class="flex min-w-0 items-center gap-2">
+      <hlm-avatar size="sm" class="shrink-0">
+        @if (inspector.avatarUrl; as avatarUrl) {
+          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+        }
+        <span hlmAvatarFallback class="text-[10px]">{{ inspectorInitialsOf(item) }}</span>
+      </hlm-avatar>
+      <span class="truncate text-foreground">{{ inspector.displayName }}</span>
+    </div>
+  }
+</ng-template>

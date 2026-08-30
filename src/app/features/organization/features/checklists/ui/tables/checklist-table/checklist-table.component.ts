@@ -1,14 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArchive, lucideEllipsis, lucidePencil } from '@ng-icons/lucide';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -16,12 +20,8 @@ import {
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component ChecklistTable
@@ -34,24 +34,33 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * offering Edit and Archive — the two row actions this list-scoped feature
  * owns, since there is no detail route (`FEATURE.md`).
  *
+ * Built on the shared `CollectionSurface`, which owns the bordered scroll
+ * shell, the first-load skeleton and the table/card switch. Below the
+ * surface's container breakpoint each checklist reads as a card: the name,
+ * then its status and item count — the count being what tells two
+ * similarly named templates apart. The `…` menu is the card's only
+ * affordance, and without {@link canWrite} the card carries none, since
+ * there is no record to open.
+ *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load and paginate; a menu choice only
  * asks for the action through an `output()`. Archive is offered only for an
  * `active` row — an archived checklist has no further row action, since the
  * backend exposes no restore endpoint.
  *
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-checklist-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
+    CollectionSurface,
     NgIcon,
     ChecklistStatusTag,
     HlmButton,
-    HlmSkeleton,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
@@ -128,8 +137,25 @@ export class ChecklistTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared
+   * surface's skeleton rows. Literal strings because Tailwind scans source
+   * text, and column-aware because a skeleton whose blocks do not line up
+   * with the header it replaces reads as a broken table rather than a
+   * loading one.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['w-40 max-w-full', 'w-20', 'ms-auto w-8', 'w-24', 'ms-auto w-6'],
+  );
   //#endregion
 
   //#region Methods

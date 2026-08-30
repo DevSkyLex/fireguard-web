@@ -21,7 +21,7 @@
     />
   } @else {
     <section class="flex flex-col gap-3">
-      <h2 class="text-base font-medium">{{ systemRolesHeading() }}</h2>
+      <h2 hlmCardTitle>{{ systemRolesHeading() }}</h2>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         @for (item of systemItems(); track item.id) {
           <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
@@ -32,7 +32,7 @@
     <hlm-separator />
 
     <section class="flex flex-col gap-3">
-      <h2 class="text-base font-medium">{{ customRolesHeading() }}</h2>
+      <h2 hlmCardTitle>{{ customRolesHeading() }}</h2>
       @if (customItems().length === 0) {
         @if (canManage()) {
           <app-empty-state
@@ -132,11 +132,21 @@
         }}</span>
         @if (memberCountLabelOf(item); as memberCount) {
           <span aria-hidden="true" class="text-sm text-muted-foreground">·</span>
-          <span
-            class="text-sm text-muted-foreground tabular-nums"
-            data-testid="organization-role-grid-card-member-count"
-            >{{ memberCount }}</span
-          >
+          @if (membersRouteBase().length > 0) {
+            <a
+              class="rounded-sm text-sm text-muted-foreground tabular-nums underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
+              data-testid="organization-role-grid-card-member-count"
+              [routerLink]="membersRouteBase()"
+              [queryParams]="{ roleId: item.id }"
+              >{{ memberCount }}</a
+            >
+          } @else {
+            <span
+              class="text-sm text-muted-foreground tabular-nums"
+              data-testid="organization-role-grid-card-member-count"
+              >{{ memberCount }}</span
+            >
+          }
         }
       </div>
     </div>

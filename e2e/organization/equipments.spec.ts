@@ -5,6 +5,7 @@ import {
   equipmentOutput,
   inStockEquipmentOutput,
 } from '../support/fixtures/equipment-fixtures';
+import { E2E_FACILITY_ID, facilityOutput } from '../support/fixtures/facility-fixtures';
 import {
   collectConsoleErrors,
   expectNoHorizontalOverflow,
@@ -125,6 +126,58 @@ test.describe('Equipment create', () => {
 });
 
 test.describe('Equipment detail', () => {
+  /*
+   * The other half of the scoped-creation contract: the explorer's link carries
+   * `?facility=`, and the form has to arrive already on that site. Without the
+   * field, creating an extinguisher in the site under the operator's eyes meant
+   * a form, a detail page, an assignment dialog and a combobox search.
+   */
+  test('preselects the site the creation link scoped it to', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+
+    await page.goto(
+      `/organizations/${E2E_ORGANIZATION_ID}/equipments/create?facility=${E2E_FACILITY_ID}`,
+    );
+
+    await expect(page.getByTestId('equipment-create-facility')).toContainText(
+      facilityOutput().name,
+    );
+  });
+
+  /*
+   * Decommissioning is terminal — `primaryAction()` resolves to `null`
+   * afterwards, so nothing puts the record back in service. It used to fire on
+   * a single click from the shell header, which `DESIGN.md` §Action Surfaces
+   * rule 5 forbids for an irreversible action.
+   */
+  test('confirms before decommissioning, and issues no write until confirmed', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput());
+    const equipments = new EquipmentsPage(page);
+
+    const writes: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() !== 'GET' && request.url().includes('/decommission')) {
+        writes.push(request.url());
+      }
+    });
+
+    await equipments.gotoDetail(E2E_ORGANIZATION_ID, E2E_EQUIPMENT_ID);
+    await equipments.decommissionAction.click();
+
+    const dialog = page.getByTestId('equipment-decommission-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(/decommission/i);
+    expect(writes, 'opening the confirmation writes nothing').toEqual([]);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    expect(writes, 'dismissing the confirmation writes nothing').toEqual([]);
+  });
+
   test('renders the status band with icon+label tags and the editable information panel', async ({
     page,
   }) => {

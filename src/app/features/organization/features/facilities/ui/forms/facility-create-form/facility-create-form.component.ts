@@ -145,6 +145,22 @@ export class FacilityCreateForm {
    * @since 1.0.0
    * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
    */
+  /**
+   * Property initialParentFacilityId
+   * @readonly
+   *
+   * @description
+   * The parent site the form starts under, seeded from the caller's `?parent=`.
+   * It is what carries the asset explorer's selected site into the form instead
+   * of making the operator find it again in the combobox.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly initialParentFacilityId: InputSignal<string | null> = input<string | null>(null);
+
   public readonly parentOptions: InputSignal<
     ReadonlyArray<{ readonly value: string; readonly label: string }>
   > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
@@ -372,6 +388,23 @@ export class FacilityCreateForm {
    * @since 1.1.0
    */
   public constructor() {
+    /*
+     * Seeds the parent once, from `?parent=`. It writes the model rather than
+     * the field so the form does not start dirty — arriving with a parent
+     * preselected is not an edit, and the unsaved-changes guard must not fire
+     * on a form nobody has touched.
+     */
+    effect((): void => {
+      const parentId: string | null = this.initialParentFacilityId();
+      if (!parentId) return;
+
+      untracked((): void => {
+        if (this.model().parentFacilityId === parentId) return;
+
+        this.model.update((draft) => ({ ...draft, parentFacilityId: parentId }));
+      });
+    });
+
     effect((): void => {
       const dirty: boolean = this.createForm().dirty();
 

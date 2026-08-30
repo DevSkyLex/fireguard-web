@@ -73,7 +73,6 @@ describe('OrganizationSettingsPage', () => {
   let deleteCallState: WritableSignal<CallState<void>>;
   let statusCallState: WritableSignal<CallState<OrganizationOutput>>;
   let transferOwnershipCallState: WritableSignal<CallState<OrganizationOutput>>;
-  let leaveCallState: WritableSignal<CallState<void>>;
   let cancelCallState: WritableSignal<CallState<unknown>>;
   let subscription: WritableSignal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
@@ -87,7 +86,6 @@ describe('OrganizationSettingsPage', () => {
   let suspend: ReturnType<typeof vi.fn>;
   let restore: ReturnType<typeof vi.fn>;
   let transferOwnership: ReturnType<typeof vi.fn>;
-  let leave: ReturnType<typeof vi.fn>;
 
   let loadSubscription: ReturnType<typeof vi.fn>;
   let loadPricing: ReturnType<typeof vi.fn>;
@@ -181,10 +179,6 @@ describe('OrganizationSettingsPage', () => {
               transferOwnershipError: signal<StoreError | null>(null),
               transferOwnershipCallState,
               transferOwnership,
-              isLeaving: signal(false),
-              leaveError: signal<StoreError | null>(null),
-              leaveCallState,
-              leave,
             },
           },
           {
@@ -249,7 +243,6 @@ describe('OrganizationSettingsPage', () => {
     deleteCallState = signal<CallState<void>>(idleCallState());
     statusCallState = signal<CallState<OrganizationOutput>>(idleCallState());
     transferOwnershipCallState = signal<CallState<OrganizationOutput>>(idleCallState());
-    leaveCallState = signal<CallState<void>>(idleCallState());
     cancelCallState = signal<CallState<unknown>>(idleCallState());
     subscription = signal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>(null);
     permissions = signal<ReadonlyArray<string>>([ORGANIZATION_PERMISSION.DELETE]);
@@ -269,7 +262,6 @@ describe('OrganizationSettingsPage', () => {
     suspend = vi.fn();
     restore = vi.fn();
     transferOwnership = vi.fn();
-    leave = vi.fn();
     loadSubscription = vi.fn();
     loadPricing = vi.fn();
     loadInvoices = vi.fn();
@@ -297,7 +289,7 @@ describe('OrganizationSettingsPage', () => {
     expect(fixture.componentInstance['activeTab']()).toBe('general');
   });
 
-  it('should fall back from the danger tab when the member cannot delete', async () => {
+  it('should fall back from the danger tab when the member holds no delete permission', async () => {
     permissions.set([]);
     await createPage('danger');
 
@@ -661,19 +653,17 @@ describe('OrganizationSettingsPage', () => {
     expect(restore).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
-  it('should hide ownership transfer and show the leave control for a non-owner member', async () => {
+  it('should hide ownership transfer for a non-owner member', async () => {
     await createPage('danger');
 
     expect(byTestId('org-settings-danger-transfer-open')).toBeNull();
-    expect(byTestId('org-settings-danger-leave-open')).not.toBeNull();
   });
 
-  it('should offer ownership transfer and hide the leave control once the API declares the caller owner', async () => {
+  it('should offer ownership transfer once the API declares the caller owner', async () => {
     selectedOrganization.set(organization({ isOwner: true }));
     await createPage('danger');
 
     expect(byTestId('org-settings-danger-transfer-open')).not.toBeNull();
-    expect(byTestId('org-settings-danger-leave-open')).toBeNull();
   });
 
   it('should not derive ownership from ownerUserId when the API declares the caller a plain member', async () => {
@@ -690,7 +680,6 @@ describe('OrganizationSettingsPage', () => {
     await createPage('danger');
 
     expect(byTestId('org-settings-danger-transfer-open')).toBeNull();
-    expect(byTestId('org-settings-danger-leave-open')).not.toBeNull();
   });
 
   it('should hide ownership transfer for an archived organization even for the owner', async () => {
@@ -742,23 +731,6 @@ describe('OrganizationSettingsPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['confirmingTransfer']()).toBe(false);
-  });
-
-  it('should leave the organization once confirmed, then clear context and navigate away', async () => {
-    await createPage('danger');
-
-    fixture.componentInstance['openLeaveDialog']();
-    fixture.componentInstance['leaveOrganization']();
-    expect(leave).toHaveBeenCalledWith({ organizationId: 'org-1' });
-
-    leaveCallState.set(pendingCallState());
-    await fixture.whenStable();
-    leaveCallState.set(successCallState(undefined));
-    await fixture.whenStable();
-
-    expect(clearActiveOrganization).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/organizations']);
-    expect(fixture.componentInstance['confirmingLeave']()).toBe(false);
   });
 
   it('should offer Cancel when a subscription renews normally', async () => {

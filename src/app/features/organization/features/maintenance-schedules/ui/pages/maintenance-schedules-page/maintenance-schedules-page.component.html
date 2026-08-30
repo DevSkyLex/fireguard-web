@@ -133,7 +133,15 @@
     />
   </ng-template>
 
-  @if (store.hasListError()) {
+  @if (listForbidden()) {
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@maintenance.list.forbiddenTitle"
+      description="Ask an organization admin to grant you read access to maintenance schedules."
+      i18n-description="@@maintenance.list.forbiddenDesc"
+    />
+  } @else if (store.hasListError()) {
     <app-error-state
       icon="lucideCircleAlert"
       title="Couldn't load maintenance schedules"

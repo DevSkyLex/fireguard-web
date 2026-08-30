@@ -105,7 +105,7 @@ const NON_CONFORMITY_STATUS: Record<NonConformityStatus, InspectionStatusTagDesc
   },
   in_progress: {
     label: $localize`:@@nonConformityStatus.inProgress:In progress`,
-    severity: 'info',
+    severity: 'neutral',
     icon: 'lucideCircleDotDashed',
   },
   done: {

@@ -78,9 +78,20 @@
   </div>
 
   <div hlmCardContent class="flex flex-col gap-3">
+    @if (!online()) {
+      <p
+        id="intervention-attachments-offline-reason"
+        class="text-xs text-muted-foreground"
+        data-testid="intervention-attachments-offline-reason"
+        i18n="@@intervention.attachments.actionOfflineReason"
+      >
+        Downloading and deleting files are unavailable until you reconnect.
+      </p>
+    }
+
     @if (!online() && canManage()) {
       <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offlineQueueHint">
-        You are offline — added files stay on this device and upload once the connection returns.
+        Files you add stay on this device and upload once the connection returns.
       </p>
     }
 
@@ -238,6 +249,9 @@
                 i18n-aria-label="@@intervention.attachments.download"
                 aria-label="Download this file"
                 [disabled]="!online() || isRowDownloading(attachment)"
+                [attr.aria-describedby]="
+                  online() ? null : 'intervention-attachments-offline-reason'
+                "
                 [attr.aria-busy]="isRowDownloading(attachment) ? 'true' : null"
                 (click)="downloadRequested.emit(attachment)"
               >
@@ -258,6 +272,9 @@
                   i18n-aria-label="@@intervention.attachments.delete"
                   aria-label="Delete this file"
                   [disabled]="!online() || isRowPending(attachment)"
+                  [attr.aria-describedby]="
+                    online() ? null : 'intervention-attachments-offline-reason'
+                  "
                   [attr.aria-busy]="isRowPending(attachment) ? 'true' : null"
                   (click)="deleteRequested.emit(attachment)"
                 >

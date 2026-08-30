@@ -82,6 +82,16 @@ export class FacilityCreatePage implements UnsavedChangesAware {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property parent
+   * @readonly
+   * @description The parent site the caller picked, bound from `?parent=`.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly parent: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties

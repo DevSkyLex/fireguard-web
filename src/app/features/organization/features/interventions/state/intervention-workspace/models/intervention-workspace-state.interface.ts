@@ -17,6 +17,23 @@ export interface InterventionWorkspaceState {
   readonly workItems: readonly InterventionWorkItemOutput[];
   readonly changes: readonly InterventionChangeOutput[];
   readonly issues: readonly InterventionIssueOutput[];
+
+  /**
+   * Property servedFromLocalCache
+   * @readonly
+   *
+   * @description
+   * Whether the workspace on screen came from the device's IndexedDB snapshot
+   * because the network was unreachable, rather than from the API. The fallback
+   * has always existed; nothing said so, and a snapshot taken before a
+   * permission change renders every gate as refused with no explanation.
+   *
+   * @access public
+   * @since 7.0.0
+   *
+   * @type {boolean}
+   */
+  readonly servedFromLocalCache: boolean;
   /**
    * Lifecycle of the workspace fetch that seeds this state.
    */

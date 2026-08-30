@@ -14,20 +14,17 @@ import type {
   InspectionOutput,
   InspectionSortField,
 } from '@features/organization/features/inspections/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component InspectionTable
  * @class InspectionTable
  *
  * @description
- * The inspection grid: `hlmTable` inside a bordered, scrollable shell, one
+ * The inspection grid: `hlmTable` inside the shared collection surface, one
  * row per inspection, no per-row menu — every property is edited on the
  * detail record, not the list (`FEATURE.md` "The record is the edit
  * surface"), so the only interactive element per row is the date cell's
@@ -43,15 +40,24 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter, sort and paginate;
  * this component only renders the page it is handed and emits
- * {@link sortChanged} when a head is activated.
+ * {@link sortChanged} when a head is activated. The bordered, scrollable
+ * shell, the first-load skeleton and the below-`2xl` card fallback all come
+ * from the shared `CollectionSurface`.
  *
- * @version 1.2.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inspection-table',
-  imports: [RouterLink, NgIcon, HlmButton, InspectionStatusTag, HlmSkeleton, ...HlmTableImports],
+  imports: [
+    RouterLink,
+    NgIcon,
+    CollectionSurface,
+    HlmButton,
+    InspectionStatusTag,
+    ...HlmTableImports,
+  ],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './inspection-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
@@ -126,8 +132,29 @@ export class InspectionTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared
+   * surface's skeleton rows. Literal strings because Tailwind scans source
+   * text, and column-aware because a skeleton whose blocks do not line up
+   * with the header it replaces reads as a broken table rather than a
+   * loading one.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {readonly string[]}
+   */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'w-24',
+    'w-32',
+    'w-20',
+    'w-20',
+    'w-8',
+  ];
   //#endregion
 
   //#region Methods

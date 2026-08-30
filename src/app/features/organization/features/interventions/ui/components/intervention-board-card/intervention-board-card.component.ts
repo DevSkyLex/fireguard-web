@@ -18,6 +18,7 @@ import {
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
 import { isInterventionBoardMoveAllowed } from '@features/organization/features/interventions/utils';
+import { GateReasonDirective } from '@shared/gate-reason';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -63,6 +64,7 @@ import { InterventionTag } from '../intervention-tag';
 @Component({
   selector: 'app-intervention-board-card',
   imports: [
+    GateReasonDirective,
     CdkDrag,
     OrgDatePipe,
     RouterLink,

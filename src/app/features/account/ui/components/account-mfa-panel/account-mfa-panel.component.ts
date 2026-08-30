@@ -23,6 +23,7 @@ import type { SetupTotpOutput } from '@features/account/models';
 import { AccountOtpCodeForm } from '@features/account/ui/forms';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
 
 /**
  * Constant QR_PIXEL_SIZE
@@ -80,7 +81,7 @@ const SECRET_GROUP_SIZE: number = 4;
  */
 @Component({
   selector: 'app-account-mfa-panel',
-  imports: [NgIcon, AccountOtpCodeForm, HlmBadge, HlmButton],
+  imports: [HlmCardTitle, NgIcon, AccountOtpCodeForm, HlmBadge, HlmButton],
   providers: [provideIcons({ lucideCheck, lucideCopy, lucideShieldCheck, lucideSmartphone })],
   templateUrl: './account-mfa-panel.component.html',
   host: { class: 'block' },

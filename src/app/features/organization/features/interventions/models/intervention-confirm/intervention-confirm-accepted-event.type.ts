@@ -7,7 +7,6 @@ import type { InterventionWorkItemOutput } from '../intervention-work-item/inter
  * request it was opened from never held.
  */
 export type InterventionConfirmAcceptedEvent =
-  | { readonly kind: 'abandon' }
   | { readonly kind: 'deleteIntervention' }
   | { readonly kind: 'deleteWorkItem'; readonly workItem: InterventionWorkItemOutput }
   | {

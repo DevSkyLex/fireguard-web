@@ -1,0 +1,12 @@
+<hlm-avatar class="shrink-0" [class]="sizeClasses().root">
+  @if (logoUrl(); as url) {
+    <img hlmAvatarImage [src]="url" [alt]="name()" [class]="sizeClasses().media" />
+  }
+
+  <span
+    hlmAvatarFallback
+    class="font-semibold"
+    [class]="sizeClasses().fallback + ' ' + toneClasses()"
+    >{{ resolvedInitials() }}</span
+  >
+</hlm-avatar>

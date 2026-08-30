@@ -65,7 +65,7 @@
 
         @for (group of renderGroups(); track trackGroup(group)) {
           @if (group.kind === 'day') {
-            <div hlmMarker variant="separator" class="py-3 text-[11px] font-medium">
+            <div hlmMarker variant="separator" class="py-3 text-xs font-medium">
               <span hlmMarkerContent>{{ formatDay(group.at) }}</span>
             </div>
           } @else {

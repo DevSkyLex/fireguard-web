@@ -220,6 +220,21 @@ export class InterventionCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes, so the hosting sheet
+   * can confirm before an Escape or a backdrop tap discards the draft.
+   *
+   * @access public
+   * @since 6.2.0
+   *
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Constructor
@@ -230,8 +245,9 @@ export class InterventionCreateForm {
    * @description
    * Re-seeds {@link model} whenever {@link prefill} changes: the duplicated
    * values merged onto a blank draft when set, and the blank draft again once
-   * it clears. Wrapped in `untracked` since the write must not re-trigger the
-   * effect it runs in.
+   * it clears — and relays the field tree's dirtiness through
+   * {@link dirtyChanged}. Both writes run `untracked` since neither must
+   * re-trigger the effect it runs in.
    *
    * @access public
    * @since 6.1.0
@@ -243,6 +259,12 @@ export class InterventionCreateForm {
       untracked((): void => {
         this.model.set(prefill ? { ...EMPTY_VALUES, ...prefill } : EMPTY_VALUES);
       });
+    });
+
+    effect((): void => {
+      const dirty: boolean = this.createForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
     });
   }
   //#endregion

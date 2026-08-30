@@ -8,12 +8,12 @@ import {
   inject,
   input,
   signal,
-  untracked,
-  viewChild,
   type InputSignal,
   type Signal,
   type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,6 +22,7 @@ import {
   lucideCircleAlert,
   lucideCircleDot,
   lucideDownload,
+  lucideLock,
   lucidePackage,
   lucidePlus,
   lucideQrCode,
@@ -133,6 +134,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   ],
   providers: [
     provideIcons({
+      lucideLock,
       lucideCircleAlert,
       lucideCircleDot,
       lucideDownload,
@@ -168,6 +170,11 @@ export class EquipmentsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.listCallState().error?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties

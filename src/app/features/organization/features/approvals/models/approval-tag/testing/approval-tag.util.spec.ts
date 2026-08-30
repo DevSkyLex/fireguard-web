@@ -25,8 +25,8 @@ describe('resolveApprovalTag', () => {
     expect(resolveApprovalTag('approved').severity).toBe('success');
   });
 
-  it('should mark pending as warning, and cancelled/expired as neutral', () => {
-    expect(resolveApprovalTag('pending').severity).toBe('warning');
+  it('should keep every non-terminal state neutral', () => {
+    expect(resolveApprovalTag('pending').severity).toBe('neutral');
     expect(resolveApprovalTag('cancelled').severity).toBe('neutral');
     expect(resolveApprovalTag('expired').severity).toBe('neutral');
   });

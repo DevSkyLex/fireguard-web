@@ -176,6 +176,7 @@ describe('InterventionsPage', () => {
   let listError: WritableSignal<unknown>;
   let pendingDuplicatePrefill: WritableSignal<unknown>;
   let totalInterventions: WritableSignal<number>;
+  let servedFromLocalCache: WritableSignal<boolean>;
   let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
@@ -212,6 +213,7 @@ describe('InterventionsPage', () => {
     listError = signal<unknown>(null);
     pendingDuplicatePrefill = signal<unknown>(null);
     totalInterventions = signal<number>(0);
+    servedFromLocalCache = signal<boolean>(false);
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
@@ -248,6 +250,7 @@ describe('InterventionsPage', () => {
             listError,
             pendingDuplicatePrefill,
             totalInterventions,
+            servedFromLocalCache,
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),

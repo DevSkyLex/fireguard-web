@@ -32,6 +32,7 @@ import { MessageThreadStore } from '@features/organization/features/collaboratio
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
 import {
   InterventionLabelService,
+  InterventionOfflineService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
 import type {
@@ -47,9 +48,11 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
+  InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { allowedTransitions } from '@features/organization/features/interventions/utils';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -105,7 +108,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     name: 'Quarterly sweep',
     description: null,
     status: 'draft',
-    allowedTransitions: ['planned', 'abandoned'],
+    allowedTransitions: allowedTransitions(overrides.status ?? 'draft'),
     allowedActions: actionsFor(overrides.status ?? 'draft'),
     site: '/api/facilities/facility-1',
     responsible: MEMBER_IRI,
@@ -237,6 +240,7 @@ describe('InterventionDetailPage', () => {
   let current: WritableSignal<InterventionOutput | null>;
   let workItems: WritableSignal<readonly InterventionWorkItemOutput[]>;
   let issues: WritableSignal<readonly InterventionIssueOutput[]>;
+  let servedFromLocalCache: WritableSignal<boolean>;
   let activities: WritableSignal<readonly InterventionActivityOutput[]>;
   let attachments: WritableSignal<readonly InterventionAttachmentOutput[]>;
   let changes: WritableSignal<readonly InterventionChangeOutput[]>;
@@ -248,6 +252,11 @@ describe('InterventionDetailPage', () => {
   let blockerCount: WritableSignal<number>;
   let orderedIds: WritableSignal<readonly string[]>;
   let online: WritableSignal<boolean>;
+  let syncing: WritableSignal<boolean>;
+  let syncBlockedCount: WritableSignal<number>;
+  let syncProblem: WritableSignal<string | null>;
+  let retryBlocked: ReturnType<typeof vi.fn>;
+  let listOutbox: ReturnType<typeof vi.fn>;
 
   let load: ReturnType<typeof vi.fn>;
   let reload: ReturnType<typeof vi.fn>;
@@ -280,6 +289,7 @@ describe('InterventionDetailPage', () => {
     current = signal<InterventionOutput | null>(intervention());
     workItems = signal<readonly InterventionWorkItemOutput[]>([]);
     issues = signal<readonly InterventionIssueOutput[]>([]);
+    servedFromLocalCache = signal<boolean>(false);
     activities = signal<readonly InterventionActivityOutput[]>([]);
     attachments = signal<readonly InterventionAttachmentOutput[]>([]);
     changes = signal<readonly InterventionChangeOutput[]>([]);
@@ -291,6 +301,11 @@ describe('InterventionDetailPage', () => {
     blockerCount = signal(0);
     orderedIds = signal<readonly string[]>([]);
     online = signal(true);
+    syncing = signal(false);
+    syncBlockedCount = signal(0);
+    syncProblem = signal<string | null>(null);
+    retryBlocked = vi.fn().mockResolvedValue(undefined);
+    listOutbox = vi.fn().mockResolvedValue([]);
     permitted = new Set<string>([
       'organization.interventions.plan',
       'organization.interventions.execute',
@@ -361,6 +376,16 @@ describe('InterventionDetailPage', () => {
           },
         },
         { provide: ConnectivityService, useValue: { online } },
+        {
+          provide: InterventionSyncCoordinatorService,
+          useValue: {
+            syncing,
+            blockedOperations: syncBlockedCount,
+            problem: syncProblem,
+            retryBlocked,
+          },
+        },
+        { provide: InterventionOfflineService, useValue: { listOutbox } },
         { provide: InterventionService, useValue: { downloadAttachment, exportReport } },
         {
           provide: TeamService,
@@ -444,6 +469,7 @@ describe('InterventionDetailPage', () => {
               workItems,
               changes,
               issues,
+              servedFromLocalCache,
               activities,
               activityCallState: signal(idleCallState()),
               activityOldestPage: signal(null),
@@ -659,7 +685,7 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('the status band', () => {
-    it("should render the page's status, phase, action, blockers and review note as the band's own inputs", async () => {
+    it("should render the page's status, phase, action and blockers as the band's own inputs", async () => {
       current.set(
         intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
       );
@@ -681,9 +707,6 @@ describe('InterventionDetailPage', () => {
       expect(band.textContent).toContain('Field work');
       expect(byTestId('intervention-detail-command').textContent).toContain('Record field work');
       expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
-      expect(byTestId('intervention-detail-review-note').textContent).toContain(
-        'Re-check the third floor.',
-      );
     });
 
     it("should dispatch the page's own transition when the band's action is invoked", async () => {
@@ -919,15 +942,83 @@ describe('InterventionDetailPage', () => {
       expect(load).toHaveBeenCalledTimes(2);
     });
 
-    it('should show the reviewer note as a strip inside the status band', async () => {
+    it('should render the reviewer note in the page content, not inside the fixed bottom bar', async () => {
       current.set(
         intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
       );
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-review-note').textContent).toContain(
-        'Re-check the third floor.',
-      );
+      const note: HTMLElement = byTestId('intervention-detail-review-note');
+
+      expect(note.textContent).toContain('Re-check the third floor.');
+      // The band is a fixed thumb-zone bar on mobile; an unbounded note there
+      // overran the work surface, so it lives in scrollable page flow now.
+      expect(byTestId('intervention-detail-status-band').contains(note)).toBe(false);
+    });
+  });
+
+  describe('blocked synchronization', () => {
+    it('should show nothing while the device has nothing blocked', async () => {
+      fixture = await createPage();
+
+      expect(root().querySelector('[data-testid="intervention-sync-blocked-alert"]')).toBeNull();
+      expect(listOutbox).not.toHaveBeenCalled();
+    });
+
+    it('should surface the blocked operations of THIS intervention on the page', async () => {
+      syncBlockedCount.set(2);
+      syncProblem.set('Replay stopped after a conflict.');
+      listOutbox.mockResolvedValue([
+        {
+          id: 'op-1',
+          interventionId: 'intervention-1',
+          type: 'comment.create',
+          payload: { body: 'Riser valve replaced.' },
+          createdAt: '2026-08-28T09:00:00.000Z',
+          status: 'failed',
+          error: 'The server refused the comment.',
+        },
+        {
+          id: 'op-2',
+          interventionId: 'intervention-1',
+          type: 'work-item.create',
+          payload: { action: 'inspect' },
+          createdAt: '2026-08-28T09:01:00.000Z',
+          status: 'pending',
+        },
+      ]);
+      fixture = await createPage();
+
+      expect(listOutbox).toHaveBeenCalledWith('intervention-1');
+
+      const alert: HTMLElement = byTestId('intervention-sync-blocked-alert');
+
+      expect(alert).not.toBeNull();
+      expect(alert.getAttribute('role')).toBe('alert');
+      expect(alert.textContent).toContain('New comment');
+      expect(alert.textContent).toContain('The server refused the comment.');
+      expect(alert.textContent).toContain('Replay stopped after a conflict.');
+      expect(alert.textContent).not.toContain('New work item');
+    });
+
+    it('should replay the queue from the page instead of sending the agent to the header', async () => {
+      syncBlockedCount.set(1);
+      listOutbox.mockResolvedValue([
+        {
+          id: 'op-1',
+          interventionId: 'intervention-1',
+          type: 'work-item.update',
+          payload: { workItemId: 'wi-1', status: 'completed' },
+          createdAt: '2026-08-28T09:00:00.000Z',
+          status: 'conflict',
+          error: null,
+        },
+      ]);
+      fixture = await createPage();
+
+      byTestId('intervention-sync-blocked-alert-retry').click();
+
+      expect(retryBlocked).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1132,8 +1223,56 @@ describe('InterventionDetailPage', () => {
     });
   });
 
+  describe('the rail tab in the URL', () => {
+    it('should default to overview when the URL asks for nothing', async () => {
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['activeLinkedTab']()).toBe('overview');
+    });
+
+    it('should open the tab the URL names', async () => {
+      fixture = await createPage();
+      fixture.componentRef.setInput('tab', 'changes');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['activeLinkedTab']()).toBe('changes');
+    });
+
+    it('should fall back to overview on an unknown tab id', async () => {
+      fixture = await createPage();
+      fixture.componentRef.setInput('tab', 'not-a-tab');
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['activeLinkedTab']()).toBe('overview');
+    });
+
+    it('should mirror an activated tab into ?tab= and drop the param on overview', async () => {
+      fixture = await createPage();
+      navigate.mockClear();
+
+      fixture.componentInstance['onLinkedTabActivated']('changes');
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: { tab: 'changes' },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        }),
+      );
+
+      navigate.mockClear();
+      fixture.componentInstance['onLinkedTabActivated']('overview');
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { tab: null } }),
+      );
+    });
+  });
+
   describe('confirmations', () => {
-    it('should abandon only after the confirmation is accepted', async () => {
+    it('should abandon only after its own confirmation is accepted', async () => {
       fixture = await createPage();
 
       byPageActionsTestId('intervention-detail-menu')?.click();
@@ -1142,8 +1281,9 @@ describe('InterventionDetailPage', () => {
       await fixture.whenStable();
 
       expect(transition).not.toHaveBeenCalled();
+      expect(document.querySelector('[data-testid="intervention-abandon-dialog"]')).not.toBeNull();
 
-      (inBody('intervention-detail-confirm-accept') as HTMLButtonElement).click();
+      (inBody('intervention-abandon-confirm') as HTMLButtonElement).click();
 
       expect(transition).toHaveBeenCalledWith({
         interventionId: 'intervention-1',

@@ -1,5 +1,9 @@
 <hlm-alert-dialog [state]="state()" [disableClose]="true" (stateChanged)="onStateChanged($event)">
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="unsaved-changes-dialog">
+  <hlm-alert-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    *hlmAlertDialogPortal
+    data-testid="unsaved-changes-dialog"
+  >
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@shared.unsavedChanges.title">Discard unsaved changes?</h2>
       <p hlmAlertDialogDescription i18n="@@shared.unsavedChanges.description">

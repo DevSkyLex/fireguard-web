@@ -1,5 +1,9 @@
 <hlm-dialog [state]="visible() ? 'open' : 'closed'" (stateChanged)="onDialogStateChanged($event)">
-  <hlm-dialog-content class="sm:max-w-sm" data-testid="facility-qr-dialog" *hlmDialogPortal>
+  <hlm-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-sm"
+    data-testid="facility-qr-dialog"
+    *hlmDialogPortal
+  >
     <hlm-dialog-header class="print:hidden">
       <h3 hlmDialogTitle i18n="@@facility.qr.title">Facility QR code</h3>
       <p hlmDialogDescription i18n="@@facility.qr.description">

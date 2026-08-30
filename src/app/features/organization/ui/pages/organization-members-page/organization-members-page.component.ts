@@ -6,19 +6,22 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
-  untracked,
-  viewChild,
   type InputSignal,
   type Signal,
   type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
   lucideGauge,
+  lucideLock,
   lucideMailPlus,
   lucideMailQuestion,
   lucideSearch,
@@ -69,6 +72,9 @@ import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
+import { HlmSelectImports } from '@shared/ui/select';
+import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationInvitationRevokeDialog } from '../../dialogs/organization-invitation-revoke-dialog';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
@@ -79,9 +85,44 @@ import {
 } from '../../dialogs/organization-member-roles-dialog';
 import { OrganizationInvitationTable } from '../../tables/organization-invitation-table';
 import { OrganizationMemberTable } from '../../tables/organization-member-table';
+import { OrganizationTeamPage } from '../organization-team-page/organization-team-page.component';
+import { OrganizationTeamsPage } from '../organization-teams-page/organization-teams-page.component';
 
 /** How long typing settles before the roster search reaches the wire. */
 const SEARCH_DEBOUNCE_MS: number = 300;
+
+/**
+ * Type OrganizationMembersTabId
+ *
+ * @description
+ * The three tabs `OrganizationMembersPage` hosts: the roster itself, the
+ * absorbed "Roles & permissions" (`OrganizationTeamPage`) and "Teams"
+ * (`OrganizationTeamsPage`) surfaces.
+ *
+ * @since 2.0.0
+ */
+type OrganizationMembersTabId = 'members' | 'roles' | 'teams';
+
+/** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
+const MEMBERS_TAB_IDS: ReadonlySet<string> = new Set<string>(['members', 'roles', 'teams']);
+
+/**
+ * Function isOrganizationMembersTabId
+ *
+ * @description
+ * Narrows an untrusted string — a query param, or `hlm-tabs`' plain-string
+ * `tabActivated` payload — to a known tab id.
+ *
+ * @access private
+ * @since 2.0.0
+ *
+ * @param {string | undefined} value - The candidate tab id.
+ *
+ * @returns {boolean} Whether the value names one of the three tabs.
+ */
+function isOrganizationMembersTabId(value: string | undefined): value is OrganizationMembersTabId {
+  return value !== undefined && MEMBERS_TAB_IDS.has(value);
+}
 
 /**
  * Type OrganizationMembersKpiTile
@@ -105,12 +146,32 @@ type OrganizationMembersKpiTile = {
  * @class OrganizationMembersPage
  *
  * @description
- * Route entry page for `/organizations/:organizationId/members`: a KPI row,
- * then two stacked sections built like this codebase's other
- * permission-aware list pages (`InterventionsPage`) — the members grid with
- * search, a status filter, bulk selection and a confirm-gated remove, and
- * the pending-invitations grid underneath, both fed by one
- * component-scoped `OrganizationMembersStore`.
+ * Route entry page for `/organizations/:organizationId/members`, now the
+ * single people-management surface: three tabs, `?tab=`-addressable
+ * (`members` default, `roles`, `teams`), following the same
+ * `linkedSignal`-seeded, param-mirroring pattern as
+ * `InterventionDetailPage`'s rail. The absorbed `OrganizationTeamPage`
+ * ("Roles & permissions", the retired `/team`) and `OrganizationTeamsPage`
+ * ("Teams", the retired `/teams`) are mounted as-is inside
+ * `hlmTabsContentLazy` panels rather than inlined — each keeps its own
+ * component-scoped store and page actions (`ARCHITECTURE.md` §10.2's
+ * "smallest useful shape"; this page does not absorb their business logic).
+ *
+ * **Per-tab permissions.** The `members` route now opens on the union of
+ * every tab's read permission (`match: 'any'` over `members.read`,
+ * `members.manage`, `roles.read`, `roles.manage`, `teams.read`) rather than
+ * `members.*` alone — a member who can reach the page at all might hold
+ * only one of the three tabs' permissions. {@link canViewMembersTab},
+ * {@link canViewRolesTab} and {@link canViewTeamsTab} gate each trigger and
+ * panel individually, and {@link activeTab} never resolves to a tab the
+ * acting member cannot see: an unauthorized or unrecognized `?tab=` falls
+ * back to the first permitted tab in `members` → `roles` → `teams` order.
+ *
+ * The `members` tab itself renders a KPI row, then two stacked sections
+ * built like this codebase's other permission-aware list pages
+ * (`InterventionsPage`) — the members grid with search, a status filter,
+ * bulk selection and a confirm-gated remove, and the pending-invitations
+ * grid underneath, both fed by one component-scoped `OrganizationMembersStore`.
  *
  * It owns what its tables must not — which resources load
  * (`OrganizationMembersLoadOptions` is built from four independent backend
@@ -140,21 +201,26 @@ type OrganizationMembersKpiTile = {
  * renders no title band of its own. `app-organization-page-header` is
  * retired — {@link subtitle}'s member count stays as a lead line at content
  * top, and "Invite member" registers on the shell header through
- * `PageActionsService`.
+ * `PageActionsService`, gated to the `members` tab being active — the
+ * absorbed pages' own action buttons (New role, New team) take over the
+ * slot the same way while their tab is active, since `hlmTabsContentLazy`
+ * keeps all three mounted after their first activation.
  *
- * @version 1.7.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-members-page',
   imports: [
+    HlmCardTitle,
     NgIcon,
     EmptyState,
     ErrorState,
     HlmButton,
     CollectionPagination,
     CollectionSearchBox,
+    ...HlmSelectImports,
     CollectionToolbar,
     OrganizationInvitationRevokeDialog,
     OrganizationInvitationTable,
@@ -162,13 +228,17 @@ type OrganizationMembersKpiTile = {
     OrganizationMemberRemoveDialog,
     OrganizationMemberRolesDialog,
     OrganizationMemberTable,
+    OrganizationTeamPage,
+    OrganizationTeamsPage,
     StatTile,
     ...HlmAlertImports,
+    ...HlmTabsImports,
     ...HlmToggleGroupImports,
   ],
   providers: [
     OrganizationMembersStore,
     provideIcons({
+      lucideLock,
       lucideCircleAlert,
       lucideGauge,
       lucideMailPlus,
@@ -195,6 +265,42 @@ export class OrganizationMembersPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property roleIdParam
+   * @readonly
+   *
+   * @description
+   * The `?roleId=` the URL arrived with. It is what makes "who holds this role"
+   * answerable: the backend has always served the filter, and until now no
+   * caller sent it, so a role card in `/team` led nowhere and the roster could
+   * not be narrowed to one role at all.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly roleIdParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'roleId' },
+  );
+
+  /**
+   * Property tab
+   * @readonly
+   * @description Which tab the URL asks for (`?tab=`), bound through `withComponentInputBinding()`. `undefined` and any unrecognized or unauthorized value resolve to {@link activeTab}'s fallback.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.loadCallState().error?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties
@@ -259,12 +365,31 @@ export class OrganizationMembersPage {
   /** How many roster rows a page holds, from the pagination band's rows-per-page select. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(MEMBERS_PAGE_SIZE);
 
+  /** Writes the role narrowing back into the URL. */
+  private readonly router: Router = inject<Router>(Router);
+
+  /** The route the role narrowing is written relative to. */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
   /** What the roster search box holds; debounced before it reaches the wire. */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
   /** The roster's active status filter. */
   protected readonly statusFilter: WritableSignal<OrganizationMemberStatusFilter> =
     signal<OrganizationMemberStatusFilter>('all');
+
+  /**
+   * Property selectionMode
+   * @readonly
+   * @description Whether the compact card layout offers its selection checkboxes — a mode below `sm`, never a permanent column.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly selectionMode: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The role the roster is narrowed to, or `null` for everyone. */
+  protected readonly roleFilter: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
    * Property sortOrder
@@ -376,6 +501,46 @@ export class OrganizationMembersPage {
   protected readonly canManageRoles: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.ROLES_MANAGE),
   );
+
+  /** Whether the `members` tab may render — `organization.members.read` or `.manage`. */
+  protected readonly canViewMembersTab: Signal<boolean> = computed<boolean>(
+    () => this.canReadMembers() || this.canManageMembers(),
+  );
+
+  /** Whether the `roles` tab (the absorbed `OrganizationTeamPage`) may render — `organization.roles.read` or `.manage`. */
+  protected readonly canViewRolesTab: Signal<boolean> = computed<boolean>(
+    () => this.canReadRoles() || this.canManageRoles(),
+  );
+
+  /** Whether the `teams` tab (the absorbed `OrganizationTeamsPage`) may render — `organization.teams.read`. */
+  protected readonly canViewTeamsTab: Signal<boolean> = computed<boolean>(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.TEAMS_READ),
+  );
+
+  /**
+   * Property activeTab
+   * @readonly
+   *
+   * @description
+   * The showing tab, seeded from {@link tab} so the URL is the entry point.
+   * An unrecognized or unauthorized request falls back to
+   * {@link firstPermittedTab}, so `?tab=roles` sent to a member without
+   * `organization.roles.*` never renders an empty panel. Writable so a
+   * trigger click switches synchronously; every write goes through
+   * {@link setActiveTab}, which mirrors it back to `?tab=`.
+   *
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<OrganizationMembersTabId>}
+   */
+  protected readonly activeTab: WritableSignal<OrganizationMembersTabId> =
+    linkedSignal<OrganizationMembersTabId>((): OrganizationMembersTabId => {
+      const requested: string | undefined = this.tab();
+
+      return isOrganizationMembersTabId(requested) && this.isTabPermitted(requested)
+        ? requested
+        : this.firstPermittedTab();
+    });
 
   /**
    * Property membersPageCount
@@ -532,7 +697,10 @@ export class OrganizationMembersPage {
    * @type {Signal<boolean>}
    */
   protected readonly hasRosterFilters: Signal<boolean> = computed<boolean>(
-    () => this.searchTerm().trim() !== '' || this.statusFilter() !== 'all',
+    () =>
+      this.searchTerm().trim() !== '' ||
+      this.statusFilter() !== 'all' ||
+      this.roleFilter() !== null,
   );
 
   /** Fallback text for the action-error banner when the backend sent no message. */
@@ -613,6 +781,16 @@ export class OrganizationMembersPage {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
 
     effect((): void => {
+      const isActive: boolean = this.activeTab() === 'members';
+      const template: TemplateRef<unknown> | undefined = this.pageActions();
+
+      untracked((): void => {
+        if (isActive && template) this.pageActionsService.register(template);
+        else if (!isActive) this.pageActionsService.clear(template);
+      });
+    });
+
+    effect((): void => {
       const organizationId: string = this.organizationId();
       const includeMembers: boolean = this.canReadMembers();
       const includeInvitations: boolean = this.canManageMembers();
@@ -625,12 +803,17 @@ export class OrganizationMembersPage {
         this.searchTerm.set('');
         this.statusFilter.set('all');
         this.invitationsPage.set(1);
+
+        const roleId: string | null = this.roleIdParam() ?? null;
+        this.roleFilter.set(roleId);
+
         this.store.load({
           organizationId,
           includeMembers,
           includeInvitations,
           includeRoles,
           sort: this.sortOrder(),
+          roleId,
         });
       });
     });
@@ -726,6 +909,34 @@ export class OrganizationMembersPage {
   }
 
   /**
+   * Method onRoleFilterChanged
+   * @description Narrows the roster to one role, or widens it back to everyone, and records the choice in the URL.
+   * @access protected
+   * @since 2.0.0
+   * @param {string | null | undefined} value - The chosen role id, or `all`.
+   * @returns {void}
+   */
+  /**
+   * Method toggleSelectionMode
+   * @description Enters or leaves the compact selection mode, clearing the selection on the way out.
+   * @access protected
+   * @since 2.0.0
+   * @returns {void}
+   */
+  protected toggleSelectionMode(): void {
+    const next: boolean = !this.selectionMode();
+    this.selectionMode.set(next);
+
+    if (!next) this.selectedIds.set(new Set<string>());
+  }
+
+  protected onRoleFilterChanged(value: string | null | undefined): void {
+    this.roleFilter.set(value === 'all' || !value ? null : value);
+    this.writeRoleParam();
+    this.queryMembers(1);
+  }
+
+  /**
    * Method clearRosterFilters
    * @description Drops the search term and returns the status filter to `all`.
    * @access protected
@@ -735,7 +946,37 @@ export class OrganizationMembersPage {
   protected clearRosterFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('all');
+    this.roleFilter.set(null);
+    this.writeRoleParam();
     this.queryMembers(1);
+  }
+
+  /**
+   * Method onTabActivated
+   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}, ignoring a request for a tab the acting member cannot see.
+   * @access protected
+   * @since 2.0.0
+   * @param {string} tabId - The `hlm-tabs` id that just activated.
+   * @returns {void}
+   */
+  protected onTabActivated(tabId: string): void {
+    if (isOrganizationMembersTabId(tabId) && this.isTabPermitted(tabId)) this.setActiveTab(tabId);
+  }
+
+  /**
+   * Method writeRoleParam
+   * @description Mirrors the role narrowing into `?roleId=`, so the narrowed roster survives a reload and can be sent to a colleague.
+   * @access private
+   * @since 2.0.0
+   * @returns {void}
+   */
+  private writeRoleParam(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { roleId: this.roleFilter() },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /**
@@ -1067,6 +1308,63 @@ export class OrganizationMembersPage {
 
   //#region Internals
   /**
+   * Method setActiveTab
+   *
+   * @description
+   * Switches the active tab and mirrors the choice into `?tab=`, dropping
+   * the param on `members` so the default stays a clean URL — the same
+   * `InterventionDetailPage.setLinkedTab` shape: `replaceUrl` keeps the tab
+   * addressable and reload-safe without turning every trigger click into a
+   * history entry.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @param {OrganizationMembersTabId} tab - The tab to show.
+   *
+   * @returns {void}
+   */
+  private setActiveTab(tab: OrganizationMembersTabId): void {
+    this.activeTab.set(tab);
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'members' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /**
+   * Method isTabPermitted
+   * @description Whether the acting member holds the permission the given tab requires.
+   * @access private
+   * @since 2.0.0
+   * @param {OrganizationMembersTabId} tab - The tab to check.
+   * @returns {boolean}
+   */
+  private isTabPermitted(tab: OrganizationMembersTabId): boolean {
+    if (tab === 'roles') return this.canViewRolesTab();
+    if (tab === 'teams') return this.canViewTeamsTab();
+
+    return this.canViewMembersTab();
+  }
+
+  /**
+   * Method firstPermittedTab
+   * @description The first tab, in `members` → `roles` → `teams` order, the acting member may see — the route guard's `match: 'any'` over the three tabs' permissions guarantees at least one.
+   * @access private
+   * @since 2.0.0
+   * @returns {OrganizationMembersTabId}
+   */
+  private firstPermittedTab(): OrganizationMembersTabId {
+    if (this.canViewMembersTab()) return 'members';
+    if (this.canViewRolesTab()) return 'roles';
+
+    return 'teams';
+  }
+
+  /**
    * Method queryMembers
    *
    * @description
@@ -1091,6 +1389,7 @@ export class OrganizationMembersPage {
       page,
       search: this.searchTerm().trim(),
       status: this.statusFilter(),
+      roleId: this.roleFilter(),
       pageSize: this.pageSize(),
       sort: this.sortOrder(),
     });

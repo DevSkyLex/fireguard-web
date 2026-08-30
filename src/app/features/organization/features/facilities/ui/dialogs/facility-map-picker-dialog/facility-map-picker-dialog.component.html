@@ -1,6 +1,6 @@
 <hlm-dialog [state]="dialogState()" (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content
-    class="sm:max-w-2xl"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-2xl"
     data-testid="facility-map-picker-dialog"
     *hlmDialogPortal
   >

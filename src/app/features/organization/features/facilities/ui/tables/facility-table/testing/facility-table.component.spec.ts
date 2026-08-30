@@ -37,7 +37,11 @@ describe('FacilityTable', () => {
   };
 
   const openRowMenu = async (): Promise<void> => {
-    root().querySelector<HTMLButtonElement>('[data-testid="facility-table-row-menu"]')?.click();
+    root()
+      .querySelector<HTMLButtonElement>(
+        '[data-testid="facility-table"] [data-testid="facility-table-row-menu"]',
+      )
+      ?.click();
     await fixture.whenStable();
   };
 
@@ -64,7 +68,7 @@ describe('FacilityTable', () => {
   it('should link the name cell to the facility record', async () => {
     await render([facility()]);
 
-    const link: HTMLAnchorElement | null = root().querySelector('a');
+    const link: HTMLAnchorElement | null = root().querySelector('[data-testid="facility-table"] a');
 
     expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
   });
@@ -80,14 +84,26 @@ describe('FacilityTable', () => {
     expect(rows[1].querySelector('[aria-label="Has sub-facilities"]')).toBeNull();
   });
 
-  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+  it('should render one card per facility, each carrying its own row menu', async () => {
+    await render([facility(), facility({ id: 'facility-2', code: 'HQ-02' })]);
+
+    const cards: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="facility-table-card"]',
+    );
+
+    expect(cards.length).toBe(2);
+    expect(cards[1].textContent).toContain('HQ-02');
+    expect(cards[0].querySelector('[data-testid="facility-table-row-menu"]')).not.toBeNull();
+  });
+
+  it('should draw placeholder rows on a first load, and no data rows', async () => {
     await render([], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
     expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(0);
   });
 
-  it('should keep the rows already on screen rather than swap them for skeletons on a refetch', async () => {
+  it('should keep the rows on screen while a later page loads', async () => {
     await render([facility()], true);
 
     expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(1);

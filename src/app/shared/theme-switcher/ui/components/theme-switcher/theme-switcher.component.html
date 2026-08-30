@@ -2,12 +2,13 @@
   hlmBtn
   variant="ghost"
   size="icon-sm"
+  class="max-sm:size-11"
   id="theme-switcher-trigger"
   [attr.aria-label]="triggerLabel()"
   [hlmDropdownMenuTrigger]="menu"
   align="end"
 >
-  <ng-icon [name]="triggerIcon()" />
+  <ng-icon [name]="triggerIcon()" aria-hidden="true" />
 </button>
 
 <ng-template #menu>
@@ -21,9 +22,6 @@
       >
         <ng-icon [name]="option.icon" class="text-sm" aria-hidden="true" />
         <span>{{ option.label }}</span>
-        <!--
-          The selected mode is marked with a glyph, not with colour alone.
-        -->
         @if (option.mode === selected()) {
           <ng-icon name="lucideCheck" class="ml-auto text-sm" aria-hidden="true" />
         }

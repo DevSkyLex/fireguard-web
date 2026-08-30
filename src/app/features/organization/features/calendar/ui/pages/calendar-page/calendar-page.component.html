@@ -79,36 +79,17 @@
           <span i18n="@@calendar.granularity.day">Day</span>
         </button>
       </hlm-tabs-list>
-
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="ml-auto max-sm:min-h-11"
-        data-testid="calendar-subscribe"
-        (click)="feedSubscribeDialogVisible.set(true)"
-      >
-        <ng-icon name="lucideRss" aria-hidden="true" />
-        <span i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
-      </button>
-
-      @if (canWriteEvents()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="calendar-new-event"
-          (click)="openCreateDialog()"
-        >
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@calendar.newEvent">New event</span>
-        </button>
-      }
     </div>
 
-    @if (loadFailed()) {
+    @if (listForbidden()) {
+      <app-empty-state
+        icon="lucideLock"
+        title="Not available with your permissions"
+        i18n-title="@@calendar.forbiddenTitle"
+        description="Ask an organization admin to grant you read access to the calendar."
+        i18n-description="@@calendar.forbiddenDesc"
+      />
+    } @else if (loadFailed()) {
       <app-error-state
         icon="lucideCircleAlert"
         title="Couldn't load the calendar"
@@ -184,7 +165,7 @@
                     class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
                     data-testid="calendar-agenda-group"
                   >
-                    <h2 class="text-sm font-semibold text-foreground">{{ group.label }}</h2>
+                    <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
                     <app-calendar-entry-list
                       [items]="group.items"
                       [organizationId]="organizationId()"
@@ -213,7 +194,7 @@
                   data-testid="calendar-week-day"
                 >
                   <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-semibold text-foreground">{{ group.label }}</h2>
+                    <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
                     @if (canWriteEvents()) {
                       <button
                         hlmBtn
@@ -319,3 +300,30 @@
     (visibleChange)="feedSubscribeDialogVisible.set($event)"
   />
 </div>
+
+<ng-template #pageActions>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="min-w-0 shrink max-sm:min-h-11"
+    data-testid="calendar-subscribe"
+    (click)="feedSubscribeDialogVisible.set(true)"
+  >
+    <ng-icon name="lucideRss" aria-hidden="true" />
+    <span class="truncate" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
+  </button>
+
+  @if (canWriteEvents()) {
+    <button
+      hlmBtn
+      type="button"
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="calendar-new-event"
+      (click)="openCreateDialog()"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate" i18n="@@calendar.newEvent">New event</span>
+    </button>
+  }
+</ng-template>

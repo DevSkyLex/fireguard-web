@@ -119,7 +119,16 @@
       </ul>
     }
 
-    <div class="flex justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+      @if (!online() && !pending()) {
+        <p
+          class="text-xs text-muted-foreground"
+          data-testid="intervention-comment-offline-hint"
+          i18n="@@intervention.comment.offlineHint"
+        >
+          You're offline — this comment is queued and sent when you reconnect.
+        </p>
+      }
       <button
         hlmBtn
         type="submit"
@@ -127,8 +136,16 @@
         class="max-sm:min-h-11"
         data-testid="intervention-comment-submit"
         [disabled]="pending() || disabled()"
+        [attr.aria-busy]="pending() ? 'true' : null"
       >
-        <span i18n="@@intervention.comment.submit">Comment</span>
+        @if (pending()) {
+          <hlm-spinner class="size-4" aria-hidden="true" />
+          <span i18n="@@intervention.comment.submitPending">Posting…</span>
+        } @else if (!online()) {
+          <span i18n="@@intervention.comment.submitQueue">Queue comment</span>
+        } @else {
+          <span i18n="@@intervention.comment.submit">Comment</span>
+        }
       </button>
     </div>
   </hlm-field-group>

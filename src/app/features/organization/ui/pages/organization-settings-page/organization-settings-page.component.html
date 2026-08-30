@@ -128,7 +128,7 @@
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
               <h2
-                class="text-sm font-semibold tracking-tight text-foreground"
+                class="text-sm font-medium text-muted-foreground"
                 i18n="@@org.settings.legal.sectionTitle"
               >
                 Legal information
@@ -260,7 +260,7 @@
 
             <section class="flex flex-col gap-3">
               <h2
-                class="text-sm font-semibold tracking-tight text-foreground"
+                class="text-sm font-medium text-muted-foreground"
                 i18n="@@org.settings.subscription.plansTitle"
               >
                 Plans
@@ -275,7 +275,7 @@
 
             <section class="flex flex-col gap-3">
               <h2
-                class="text-sm font-semibold tracking-tight text-foreground"
+                class="text-sm font-medium text-muted-foreground"
                 i18n="@@org.settings.subscription.invoicesTitle"
               >
                 Invoices
@@ -397,7 +397,7 @@
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
               <h2
-                class="text-sm font-semibold tracking-tight text-foreground"
+                class="text-sm font-medium text-muted-foreground"
                 i18n="@@org.settings.compliance.automationTitle"
               >
                 Automation
@@ -411,7 +411,7 @@
 
             <section class="flex flex-col gap-3 border-t border-border pt-6">
               <h2
-                class="text-sm font-semibold tracking-tight text-foreground"
+                class="text-sm font-medium text-muted-foreground"
                 i18n="@@org.settings.approval.sectionTitle"
               >
                 Four-eyes approval policy
@@ -554,46 +554,6 @@
                   [error]="settingsStore.transferOwnershipError()?.message ?? null"
                   (visibleChange)="confirmingTransfer.set($event)"
                   (confirmed)="transferOwnership($event)"
-                />
-              }
-
-              @if (canLeave()) {
-                <div hlmCard>
-                  <div hlmCardHeader>
-                    <h2 hlmCardTitle class="flex items-center gap-2">
-                      <ng-icon
-                        name="lucideLogOut"
-                        class="shrink-0 text-destructive"
-                        aria-hidden="true"
-                      />
-                      <span i18n="@@org.settings.danger.leaveTitle">Leave this organization</span>
-                    </h2>
-                    <p hlmCardDescription i18n="@@org.settings.danger.leaveDescription">
-                      Removes your own membership. Another member will need to invite you back.
-                    </p>
-                  </div>
-                  <div hlmCardContent>
-                    <button
-                      hlmBtn
-                      type="button"
-                      variant="destructive"
-                      class="w-fit gap-2 max-sm:min-h-11"
-                      data-testid="org-settings-danger-leave-open"
-                      (click)="openLeaveDialog()"
-                    >
-                      <ng-icon name="lucideLogOut" aria-hidden="true" />
-                      <span i18n="@@org.settings.danger.leaveOpen">Leave organization</span>
-                    </button>
-                  </div>
-                </div>
-
-                <app-organization-leave-dialog
-                  [visible]="confirmingLeave()"
-                  [organizationName]="organization()?.name ?? ''"
-                  [pending]="settingsStore.isLeaving()"
-                  [error]="settingsStore.leaveError()?.message ?? null"
-                  (visibleChange)="confirmingLeave.set($event)"
-                  (confirmed)="leaveOrganization()"
                 />
               }
 

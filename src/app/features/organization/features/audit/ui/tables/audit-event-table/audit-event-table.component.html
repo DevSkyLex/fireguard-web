@@ -1,148 +1,171 @@
-<div class="h-full w-full overflow-hidden rounded-md border border-border">
-  <div
-    hlmTableContainer
-    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-    tabindex="0"
-    role="region"
-    aria-labelledby="audit-event-table-caption"
-  >
-    <table hlmTable data-testid="audit-event-table">
-      <caption
-        hlmTableCaption
-        id="audit-event-table-caption"
-        class="sr-only"
-        i18n="@@audit.table.title"
-      >
-        Audit journal
-      </caption>
+<app-collection-surface
+  caption="Audit journal"
+  i18n-caption="@@audit.table.title"
+  testId="audit-event-table"
+  [loading]="loading()"
+  [rowCount]="items().length"
+  [columnCount]="columnCount"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead class="w-px">
+        <span class="sr-only" i18n="@@common.actions">Actions</span>
+      </th>
+      <th hlmTableHead i18n="@@audit.table.colTimestamp">Occurred at</th>
+      <th hlmTableHead i18n="@@audit.table.colActor">Actor</th>
+      <th hlmTableHead i18n="@@audit.table.colAction">Action</th>
+      <th hlmTableHead i18n="@@audit.table.colSubject">Subject</th>
+    </tr>
+  </ng-container>
 
-      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-        <tr hlmTableRow>
-          <th hlmTableHead class="w-px">
-            <span class="sr-only" i18n="@@common.actions">Actions</span>
-          </th>
-          <th hlmTableHead i18n="@@audit.table.colTimestamp">Occurred at</th>
-          <th hlmTableHead i18n="@@audit.table.colActor">Actor</th>
-          <th hlmTableHead i18n="@@audit.table.colAction">Action</th>
-          <th hlmTableHead i18n="@@audit.table.colSubject">Subject</th>
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="audit-event-table-row">
+        <td hlmTableCell>
+          <ng-container
+            [ngTemplateOutlet]="expandToggle"
+            [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-' + item.id }"
+          />
+        </td>
+
+        <td
+          hlmTableCell
+          class="whitespace-normal"
+          [attr.title]="
+            item.recordedAt !== item.occurredAt
+              ? (item.recordedAt | appOrgDate: 'datetime' : regionalFormatting())
+              : null
+          "
+        >
+          {{ item.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
+        </td>
+
+        <td hlmTableCell class="whitespace-normal text-foreground">
+          {{ actorLabelOf(item) }}
+        </td>
+
+        <td hlmTableCell class="whitespace-normal">
+          <ng-container [ngTemplateOutlet]="actionLabel" [ngTemplateOutletContext]="{ item }" />
+        </td>
+
+        <td hlmTableCell class="whitespace-normal">
+          @if (subjectRouteOf(item); as route) {
+            <a
+              class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              [routerLink]="route"
+              >{{ item.subjectType }}</a
+            >
+          } @else if (item.subjectType) {
+            <span class="text-muted-foreground">{{ item.subjectType }}</span>
+          } @else {
+            <span class="text-muted-foreground" aria-hidden="true">—</span>
+          }
+        </td>
+      </tr>
+
+      @if (isExpanded(item.id)) {
+        <tr hlmTableRow [id]="'audit-event-metadata-' + item.id">
+          <td hlmTableCell colspan="1"></td>
+          <td hlmTableCell [attr.colspan]="columnCount - 1" class="bg-muted/40">
+            <ng-container [ngTemplateOutlet]="metadataPanel" [ngTemplateOutletContext]="{ item }" />
+          </td>
         </tr>
-      </thead>
+      }
+    }
+  </ng-container>
 
-      <tbody hlmTableBody>
-        @if (loading() && items().length === 0) {
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="size-6" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-28" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-36" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            </tr>
-          }
-        } @else {
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="audit-event-table-row">
-              <td hlmTableCell>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="max-sm:min-h-11"
-                  data-testid="audit-event-table-expand"
-                  [attr.aria-expanded]="isExpanded(item.id)"
-                  [attr.aria-controls]="'audit-event-metadata-' + item.id"
-                  [attr.aria-label]="expandAriaLabelOf(item)"
-                  (click)="toggleExpanded(item.id)"
-                >
-                  <ng-icon
-                    name="lucideChevronDown"
-                    aria-hidden="true"
-                    class="transition-transform"
-                    [class.rotate-180]="isExpanded(item.id)"
-                  />
-                </button>
-              </td>
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1.5 rounded-md border border-border p-3"
+        data-testid="audit-event-table-row-card"
+      >
+        <div class="flex items-start gap-2">
+          <span class="min-w-0 flex-1">
+            <ng-container [ngTemplateOutlet]="actionLabel" [ngTemplateOutletContext]="{ item }" />
+          </span>
 
-              <td
-                hlmTableCell
-                class="whitespace-normal"
-                [attr.title]="
-                  item.recordedAt !== item.occurredAt
-                    ? (item.recordedAt | appOrgDate: 'datetime' : regionalFormatting())
-                    : null
-                "
-              >
-                {{ item.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
-              </td>
+          <ng-container
+            [ngTemplateOutlet]="expandToggle"
+            [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-card-' + item.id }"
+          />
+        </div>
 
-              <td hlmTableCell class="whitespace-normal text-foreground">
-                {{ actorLabelOf(item) }}
-              </td>
+        <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
+          <span class="truncate">{{ actorLabelOf(item) }}</span>
 
-              <td hlmTableCell class="whitespace-normal">
-                <span class="inline-flex items-center gap-1.5">
-                  <ng-icon
-                    [name]="actionTagOf(item).icon"
-                    aria-hidden="true"
-                    class="shrink-0 text-muted-foreground"
-                  />
-                  <span class="font-medium text-foreground">{{ actionTagOf(item).label }}</span>
-                </span>
-              </td>
+          <span class="truncate tabular-nums">
+            {{ item.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </span>
+        </div>
 
-              <td hlmTableCell class="whitespace-normal">
-                @if (subjectRouteOf(item); as route) {
-                  <a
-                    class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    [routerLink]="route"
-                    >{{ item.subjectType }}</a
-                  >
-                } @else if (item.subjectType) {
-                  <span class="text-muted-foreground">{{ item.subjectType }}</span>
-                } @else {
-                  <span class="text-muted-foreground" aria-hidden="true">—</span>
-                }
-              </td>
-            </tr>
-
-            @if (isExpanded(item.id)) {
-              <tr hlmTableRow [id]="'audit-event-metadata-' + item.id">
-                <td hlmTableCell colspan="1"></td>
-                <td hlmTableCell [attr.colspan]="columnCount - 1" class="bg-muted/40">
-                  @if (metadataEntriesOf(item).length === 0) {
-                    <app-empty-state
-                      icon="lucideFileText"
-                      title="No additional details."
-                      i18n-title="@@audit.table.metadataEmpty"
-                    />
-                  } @else {
-                    <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
-                      @for (entry of metadataEntriesOf(item); track entry[0]) {
-                        <div class="flex flex-col">
-                          <dt class="text-xs text-muted-foreground">{{ entry[0] }}</dt>
-                          <dd class="text-foreground">{{ entry[1] }}</dd>
-                        </div>
-                      }
-                    </dl>
-                  }
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr hlmTableRow>
-              <td
-                hlmTableCell
-                class="h-24 text-center text-muted-foreground"
-                [attr.colspan]="columnCount"
-                i18n="@@audit.table.noResults"
-              >
-                No results.
-              </td>
-            </tr>
-          }
+        @if (isExpanded(item.id)) {
+          <div [id]="'audit-event-metadata-card-' + item.id" class="rounded-md bg-muted/40 p-2">
+            <ng-container [ngTemplateOutlet]="metadataPanel" [ngTemplateOutletContext]="{ item }" />
+          </div>
         }
-      </tbody>
-    </table>
-  </div>
-</div>
+      </div>
+    }
+  </ng-container>
+
+  <p
+    surfaceEmpty
+    class="p-6 text-center text-sm text-muted-foreground"
+    i18n="@@audit.table.noResults"
+  >
+    No results.
+  </p>
+</app-collection-surface>
+
+<ng-template #actionLabel let-item="item">
+  <span class="inline-flex items-center gap-1.5">
+    <ng-icon
+      [name]="actionTagOf(item).icon"
+      aria-hidden="true"
+      class="shrink-0 text-muted-foreground"
+    />
+    <span class="font-medium text-foreground">{{ actionTagOf(item).label }}</span>
+  </span>
+</ng-template>
+
+<ng-template #expandToggle let-item="item" let-controls="controls">
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="max-sm:min-h-11"
+    data-testid="audit-event-table-expand"
+    [attr.aria-expanded]="isExpanded(item.id)"
+    [attr.aria-controls]="controls"
+    [attr.aria-label]="expandAriaLabelOf(item)"
+    (click)="toggleExpanded(item.id)"
+  >
+    <ng-icon
+      name="lucideChevronDown"
+      aria-hidden="true"
+      class="transition-transform"
+      [class.rotate-180]="isExpanded(item.id)"
+    />
+  </button>
+</ng-template>
+
+<ng-template #metadataPanel let-item="item">
+  @if (metadataEntriesOf(item).length === 0) {
+    <app-empty-state
+      icon="lucideFileText"
+      title="No additional details."
+      i18n-title="@@audit.table.metadataEmpty"
+    />
+  } @else {
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+      @for (entry of metadataEntriesOf(item); track entry[0]) {
+        <div class="flex flex-col">
+          <dt class="text-xs text-muted-foreground">{{ entry[0] }}</dt>
+          <dd class="text-foreground">{{ entry[1] }}</dd>
+        </div>
+      }
+    </dl>
+  }
+</ng-template>

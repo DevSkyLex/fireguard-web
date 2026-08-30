@@ -2,31 +2,32 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
-  signal,
-  untracked,
-  type EffectRef,
   type OnInit,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronsUpDown, lucideLogOut, lucidePlus } from '@ng-icons/lucide';
+import {
+  lucideCheck,
+  lucideChevronsUpDown,
+  lucideCreditCard,
+  lucideHistory,
+  lucidePlus,
+  lucideSettings,
+  lucideUsers,
+} from '@ng-icons/lucide';
+import { OrganizationPermissionService } from '@features/organization/access';
 import type { OrganizationOutput } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { ActiveOrganizationStore, OrganizationStore } from '@features/organization/state';
-import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { OrganizationStore } from '@features/organization/state';
 import { getOrganizationInitials } from '@features/organization/utils';
-import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuItem,
-  HlmDropdownMenuLabel,
   HlmDropdownMenuSeparator,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
@@ -37,8 +38,9 @@ import {
   HlmSidebarService,
 } from '@shared/ui/sidebar';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { OrganizationLeaveDialog } from '../../dialogs/organization-leave-dialog';
-import type { OrganizationSwitcherOption } from './models';
+import { OrganizationAvatar } from '../organization-avatar';
+import { ORGANIZATION_SWITCHER_QUICK_LINKS } from './constants/organization-switcher-quick-link.constants';
+import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from './models';
 
 /**
  * Component OrganizationSwitcher
@@ -59,20 +61,20 @@ import type { OrganizationSwitcherOption } from './models';
  * the shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
  * through `withOrganizationSwitcher()`.
  *
- * The menu's own "Leave organization…" entry is the only reachable path a
- * rank-and-file member has to leave the open organization — the settings
- * danger tab that already offers it is gated behind `organization.delete`,
- * which most members never hold. It renders unconditionally for every
- * member, including the owner: the backend's self-service
- * `LeaveOrganizationProcessor` checks nothing beyond active membership, and
- * its owner/last-administrator refusals surface as {@link OrganizationLeaveDialog}'s
- * inline error rather than being re-derived client-side here. Provides its
- * own {@link OrganizationSettingsStore} instance to reuse
- * {@link OrganizationSettingsStore.leave} rather than re-implement the call —
- * the store is designed for component-level provisioning, and this menu
- * needs only that one method of its wider mutation surface.
+ * The menu header repeats the trigger's identity (logo, name, plan) so the
+ * open panel still names the workspace once the trigger itself is covered.
+ * Below it, four admin shortcuts (Settings, Billing, Members, Audit journal)
+ * are filtered through {@link OrganizationPermissionService} and rendered as
+ * real `routerLink`s — the same permission mechanism
+ * `organization-navigation.config.ts` uses for the sidebar, reused rather
+ * than re-implemented. The organization list panel below that caps itself to
+ * three visible rows and scrolls for the rest.
  *
- * @version 2.0.0
+ * "Leave organization…" is not offered here — it moved to the settings
+ * danger zone, reachable by whoever this menu's own Settings shortcut
+ * reaches.
+ *
+ * @version 3.0.0
  *
  * @example
  * ```html
@@ -84,25 +86,29 @@ import type { OrganizationSwitcherOption } from './models';
 @Component({
   selector: 'app-organization-switcher',
   imports: [
+    OrganizationAvatar,
     NgIcon,
-    HlmAvatar,
-    HlmAvatarFallback,
-    HlmAvatarImage,
+    RouterLink,
     HlmDropdownMenu,
     HlmDropdownMenuItem,
-    HlmDropdownMenuLabel,
     HlmDropdownMenuSeparator,
     HlmDropdownMenuTrigger,
     HlmSidebarMenu,
     HlmSidebarMenuButton,
     HlmSidebarMenuItem,
     HlmSkeleton,
-    OrganizationLeaveDialog,
   ],
   providers: [
     OrganizationStore,
-    OrganizationSettingsStore,
-    provideIcons({ lucideCheck, lucideChevronsUpDown, lucideLogOut, lucidePlus }),
+    provideIcons({
+      lucideCheck,
+      lucideChevronsUpDown,
+      lucideCreditCard,
+      lucideHistory,
+      lucidePlus,
+      lucideSettings,
+      lucideUsers,
+    }),
   ],
   templateUrl: './organization-switcher.component.html',
   host: { class: 'block min-w-0' },
@@ -126,39 +132,21 @@ export class OrganizationSwitcher implements OnInit {
     inject<OrganizationStore>(OrganizationStore);
 
   /**
-   * Property settingsStore
+   * Property permissions
    * @readonly
    *
    * @description
-   * Component-scoped instance of the same store the settings danger tab
-   * uses, provided fresh here so the menu's "Leave organization…" entry
-   * reuses {@link OrganizationSettingsStore.leave} instead of duplicating
-   * the call.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {OrganizationSettingsStore}
-   */
-  protected readonly settingsStore: OrganizationSettingsStore =
-    inject<OrganizationSettingsStore>(OrganizationSettingsStore);
-
-  /**
-   * Property activeOrganizationStore
-   * @readonly
-   *
-   * @description
-   * Root-provided active-organization context, cleared once leaving
-   * succeeds — mirroring `OrganizationSettingsPage`'s own post-leave
-   * cleanup.
+   * Feature-owned permission checks, reused to gate the menu's admin
+   * shortcuts with the same mechanism `organization-navigation.config.ts`
+   * uses for the sidebar.
    *
    * @access private
-   * @since 2.0.0
+   * @since 3.0.0
    *
-   * @type {ActiveOrganizationStore}
+   * @type {OrganizationPermissionService}
    */
-  private readonly activeOrganizationStore: ActiveOrganizationStore =
-    inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+  private readonly permissions: OrganizationPermissionService =
+    inject<OrganizationPermissionService>(OrganizationPermissionService);
 
   /**
    * Property organizationContext
@@ -277,59 +265,41 @@ export class OrganizationSwitcher implements OnInit {
   );
 
   /**
-   * Property confirmingLeave
+   * Property quickLinks
    * @readonly
    *
    * @description
-   * Whether the "Leave organization…" confirmation dialog is open.
+   * The menu's admin shortcuts the active member may actually reach, routes
+   * already prefixed by the open organization. Empty before an organization
+   * has resolved, or once none of the four permissions is granted — the
+   * template drops the whole block, separator included, in that case.
    *
    * @access protected
-   * @since 2.0.0
+   * @since 3.0.0
    *
-   * @type {WritableSignal<boolean>}
+   * @type {Signal<ReadonlyArray<OrganizationSwitcherQuickLink>>}
    */
-  protected readonly confirmingLeave: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly quickLinks: Signal<ReadonlyArray<OrganizationSwitcherQuickLink>> = computed(
+    (): ReadonlyArray<OrganizationSwitcherQuickLink> => {
+      const organizationId: string | undefined = this.active()?.id;
+      if (organizationId === undefined) return [];
 
-  /**
-   * Property previousLeaveStatus
-   *
-   * @description
-   * The leave call state as of the last time {@link navigateAwayOnLeave} ran,
-   * so it can spot the transition into success rather than the state of
-   * being in it.
-   *
-   * @access private
-   * @since 2.0.0
-   *
-   * @type {string}
-   */
-  private previousLeaveStatus: string = 'idle';
+      const prefix = `/organizations/${organizationId}`;
 
-  /**
-   * Property navigateAwayOnLeave
-   * @readonly
-   *
-   * @description
-   * Once leaving succeeds, closes the dialog, clears the active organization
-   * context and returns to the organization redirector — mirroring
-   * `OrganizationSettingsPage`'s own `navigateAwayOnLeave`.
-   *
-   * @access private
-   * @since 2.0.0
-   */
-  private readonly navigateAwayOnLeave: EffectRef = effect((): void => {
-    const status: string = this.settingsStore.leaveCallState().status;
-    const previous: string = this.previousLeaveStatus;
-    this.previousLeaveStatus = status;
+      return ORGANIZATION_SWITCHER_QUICK_LINKS.filter((definition): boolean =>
+        definition.match === 'any'
+          ? this.permissions.hasAnyPermission(definition.permissions)
+          : this.permissions.hasAllPermissions(definition.permissions),
+      ).map((definition): OrganizationSwitcherQuickLink => ({
+        id: definition.id,
+        label: definition.label,
+        icon: definition.icon,
+        route: `${prefix}/${definition.path}`,
+        queryParams: definition.queryParams,
+      }));
+    },
+  );
 
-    if (previous !== 'pending' || status !== 'success') return;
-
-    untracked((): void => {
-      this.confirmingLeave.set(false);
-      this.activeOrganizationStore.clear();
-      void this.router.navigate(['/organizations']);
-    });
-  });
   //#endregion
 
   //#region Lifecycle
@@ -397,45 +367,6 @@ export class OrganizationSwitcher implements OnInit {
     void this.router.navigate(['/onboarding']);
   }
 
-  /**
-   * Method openLeaveDialog
-   * @method openLeaveDialog
-   *
-   * @description
-   * Opens the "Leave organization…" confirmation for the open organization.
-   * Rendered for every member regardless of role — the backend's own
-   * owner/last-administrator refusals are what gate the actual departure.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
-   */
-  protected openLeaveDialog(): void {
-    if (this.active() === null) return;
-
-    this.confirmingLeave.set(true);
-  }
-
-  /**
-   * Method leaveOrganization
-   * @method leaveOrganization
-   *
-   * @description
-   * Deactivates the acting member's own membership in the open organization
-   * once the dialog is confirmed.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
-   */
-  protected leaveOrganization(): void {
-    const organizationId: string | undefined = this.active()?.id;
-    if (organizationId === undefined) return;
-
-    this.settingsStore.leave({ organizationId });
-  }
   //#endregion
 
   //#region Internals

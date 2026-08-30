@@ -35,7 +35,15 @@ export interface InterventionLabelCreateSubmittedEvent {
   readonly color: string;
 }
 
-/** The default swatch offered to a brand-new label. */
+/**
+ * The swatch a brand-new label starts on.
+ *
+ * A literal hex because a label's colour is the operator's data, not a theme
+ * token: the API stores whatever they pick and the picker is a native
+ * `<input type="color">`, which cannot be seeded from a CSS variable. It is
+ * therefore not a chromatic accent re-entering the interface, and it is not a
+ * chart slot being borrowed — it is a starting value the operator overwrites.
+ */
 const DEFAULT_LABEL_COLOR = '#3b82f6';
 
 /**

@@ -26,12 +26,13 @@ import {
   type RegionalFormattingPort,
 } from '@features/organization/ports';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
+import { OrganizationAvatar } from '@features/organization/ui/components';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from '@features/organization/ui/tables/organization-invitation-table/constants/organization-invitation-status-tag-severity.constants';
 import { resolveOrganizationInvitationStatusTag } from '@features/organization/ui/tables/organization-invitation-table/models';
 import { getOrganizationInitials } from '@features/organization/utils';
+import { PageHeading } from '@shared/page-heading';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -72,9 +73,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
     NgTemplateOutlet,
     RouterLink,
     NgIcon,
-    HlmAvatar,
-    HlmAvatarFallback,
-    HlmAvatarImage,
+    PageHeading,
+    OrganizationAvatar,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

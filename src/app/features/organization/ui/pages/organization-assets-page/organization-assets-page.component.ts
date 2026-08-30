@@ -17,10 +17,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArchive,
+  lucideArrowLeft,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideCircleHelp,
@@ -157,6 +158,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideCircleHelp,
       lucideClipboardList,
       lucideArchive,
+      lucideArrowLeft,
       lucideCopy,
       lucideDownload,
       lucideEllipsis,
@@ -252,6 +254,42 @@ export class OrganizationAssetsPage {
   /** Organization permission checks gating the creation actions and the equipment pane. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
+  );
+
+  //#region Routing
+  /** Writes the explorer's own state into the URL, so a view can be shared and restored. */
+  private readonly router: Router = inject(Router);
+
+  /** The activated route the query params are written relative to. */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+  //#endregion
+
+  /**
+   * Property axisParam
+   * @readonly
+   * @description The `?axis=` the URL arrived with, restoring the active axis on reload.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly axisParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    {
+      alias: 'axis',
+    },
+  );
+
+  /**
+   * Property facilityParam
+   * @readonly
+   * @description The `?facility=` the URL arrived with, restoring the selected site on reload.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly facilityParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'facility' },
   );
 
   /** Which first-level axis is active. */
@@ -406,6 +444,38 @@ export class OrganizationAssetsPage {
    * @since 1.0.0
    */
   public constructor() {
+    /*
+     * Restores the axis and the selected site from the URL on arrival, so a
+     * reload or a shared link lands where it was sent rather than on the
+     * default "By site" axis with nothing selected. It runs on every change of
+     * the bound params, which also makes the back button clear a selection
+     * instead of leaving the page.
+     */
+    effect((): void => {
+      const axis: string | undefined = this.axisParam();
+      const facilityId: string | undefined = this.facilityParam();
+
+      untracked((): void => {
+        const restored: OrganizationAssetsAxis =
+          axis === 'everything' || axis === 'compliance' ? axis : 'site';
+
+        if (this.axis() !== restored) {
+          this.axis.set(restored);
+
+          if (restored === 'compliance' && !this.hasRequestedComplianceTree()) {
+            this.hasRequestedComplianceTree.set(true);
+            this.compliance.loadTree(this.organizationId());
+            if (this.canExportCompliance()) this.compliance.loadSnapshots(this.organizationId());
+          }
+        }
+
+        const selected: string | null = facilityId ?? null;
+        if (restored === 'site' && this.selectedFacilityId() !== selected) {
+          this.selectedFacilityId.set(selected);
+        }
+      });
+    });
+
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
@@ -534,6 +604,7 @@ export class OrganizationAssetsPage {
     const axis: OrganizationAssetsAxis =
       tab === 'everything' ? 'everything' : tab === 'compliance' ? 'compliance' : 'site';
     this.axis.set(axis);
+    this.writeUrlState();
 
     if (axis === 'compliance' && !this.hasRequestedComplianceTree()) {
       this.hasRequestedComplianceTree.set(true);
@@ -552,6 +623,7 @@ export class OrganizationAssetsPage {
    */
   protected onComplianceNodeSelected(node: TreeNode<ComplianceFacilityTreeNodeOutput>): void {
     this.selectedComplianceFacilityId.set(node.id);
+    this.writeUrlState();
     this.compliance.loadSummary({ organizationId: this.organizationId(), facilityId: node.id });
   }
 
@@ -723,6 +795,84 @@ export class OrganizationAssetsPage {
    */
   protected onNodeSelected(node: TreeNode<FacilityOutput>): void {
     this.selectedFacilityId.set(node.id);
+    this.writeUrlState();
+  }
+
+  /**
+   * Method clearFacilitySelection
+   *
+   * @description
+   * Drops the selection, which below `lg` is what returns the operator from
+   * the panes to the hierarchy: the two share one column at that width, and
+   * the selection decides which of them is shown. From `lg` up they sit side
+   * by side and the control that calls this is hidden.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @returns {void}
+   */
+  protected clearFacilitySelection(): void {
+    this.selectedFacilityId.set(null);
+    this.writeUrlState();
+  }
+
+  /**
+   * Method createScopeParams
+   * @method createScopeParams
+   *
+   * @description
+   * The query params a creation link carries so the new record lands in the
+   * site the operator is looking at. Empty when nothing is selected, which
+   * keeps the unscoped link exactly as it was.
+   *
+   * The two creation forms name the site differently — equipment owns a
+   * `facility`, a site owns a `parent` — so the caller states which key it
+   * needs rather than the explorer guessing from the button.
+   *
+   * @access protected
+   * @since 2.0.0
+   * @param {'facility' | 'parent'} key - The param name the target form reads.
+   * @returns {Record<string, string>} The params, or an empty object.
+   */
+  protected createScopeParams(key: 'facility' | 'parent'): Record<string, string> {
+    const facilityId: string | null = this.selectedFacilityId();
+
+    return facilityId && this.axis() === 'site' ? { [key]: facilityId } : {};
+  }
+
+  /**
+   * Method writeUrlState
+   * @method writeUrlState
+   *
+   * @description
+   * Mirrors the axis and the selected site into the query string.
+   *
+   * The explorer replaced two routed list pages that both wrote their own
+   * state to the URL, and inherited neither: a reload came back on "By site"
+   * with nothing selected, the back button left the page instead of clearing
+   * the selection, and "the equipment of Bâtiment C" could not be sent to a
+   * colleague. `replaceUrl` keeps browsing the tree from filling the history
+   * with one entry per click — the shareable address is the point, not a
+   * navigation trail.
+   *
+   * @access private
+   * @since 2.0.0
+   * @returns {void}
+   */
+  private writeUrlState(): void {
+    const axis: OrganizationAssetsAxis = this.axis();
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        axis: axis === 'site' ? null : axis,
+        facility: axis === 'site' ? this.selectedFacilityId() : null,
+        compliance: axis === 'compliance' ? this.selectedComplianceFacilityId() : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /**

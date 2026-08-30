@@ -1,18 +1,22 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEye } from '@ng-icons/lucide';
+import { lucideCircleCheck, lucideCircleX, lucideEye } from '@ng-icons/lucide';
 import type {
   ImportJobKind,
   ImportJobOutput,
 } from '@features/organization/features/imports/models';
 import { ImportStatusTag } from '@features/organization/features/imports/ui/components/import-status-tag';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -20,11 +24,7 @@ import {
 } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /** Human labels for the job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
 const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
@@ -49,22 +49,35 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
  * no service; the page owns loading and polling, this component only
  * renders the rows it is handed and emits {@link selected}.
  *
- * @version 1.0.0
+ * Built on the shared `CollectionSurface`, which owns the bordered scroll
+ * shell, the first-load skeleton and the table/card switch. Below the
+ * surface's container breakpoint a job reads as a card: the filename (dry-run
+ * badge kept), then its status and result counts, then "View report" as an
+ * explicitly labelled footer action rather than the row's bare icon.
+ *
+ * The result counts pair each number with a glyph (`DESIGN.md`'s Glyph Rule):
+ * a green `45` and a red `5` carried status by colour alone, which neither a
+ * colour-blind operator nor a screen reader could read — hence the
+ * check/cross icons and the visually hidden "rows imported"/"rows failed"
+ * labels.
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-import-job-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
+    CollectionSurface,
     NgIcon,
     ImportStatusTag,
     HlmBadge,
     HlmButton,
-    HlmSkeleton,
     ...HlmTableImports,
   ],
-  providers: [provideIcons({ lucideEye })],
+  providers: [provideIcons({ lucideCircleCheck, lucideCircleX, lucideEye })],
   templateUrl: './import-job-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -117,11 +130,39 @@ export class ImportJobTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared
+   * surface's skeleton rows. Literal strings because Tailwind scans source
+   * text, and column-aware because a skeleton whose blocks do not line up
+   * with the header it replaces reads as a broken table rather than a
+   * loading one.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['w-32', 'w-20', 'w-20', 'w-24', 'w-24', 'w-8'],
+  );
   //#endregion
 
   //#region Methods
+  /**
+   * Method columnCount
+   * @description How many cells a row has, so a full-width message can span them.
+   * @access protected
+   * @since 2.0.0
+   * @returns {number} The rendered column count.
+   */
+  protected columnCount(): number {
+    return 6;
+  }
+
   /**
    * Method kindLabelOf
    * @description Names a job's kind for the kind column.

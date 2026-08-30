@@ -32,6 +32,7 @@ import {
   type InterventionWorkItemOutput,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
@@ -39,7 +40,6 @@ import { HlmButtonImports } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmProgressImports } from '@shared/ui/progress';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmToggle } from '@shared/ui/toggle';
@@ -53,8 +53,6 @@ import type { InterventionWorkItemFilter } from './models/intervention-work-item
 import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-item-view/intervention-work-item-view.utils';
 
 /** Placeholder rows drawn while the intervention's own fetch is in flight. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
-
 /**
  * Component InterventionWorkItemTable
  * @class InterventionWorkItemTable
@@ -80,10 +78,10 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 @Component({
   selector: 'app-intervention-work-item-table',
   imports: [
+    CollectionSurface,
     NgIcon,
     EmptyState,
     HlmBadge,
-    HlmSkeleton,
     HlmToggle,
     InterventionTag,
     ...HlmAvatarImports,
@@ -428,7 +426,16 @@ export class InterventionWorkItemTable {
 
   //#region Properties
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'size-11 rounded-full',
+    'h-4 w-40 max-w-full',
+    'h-4 w-24',
+    'h-4 w-28',
+    'h-4 w-20',
+    'h-4 w-16',
+    'ms-auto size-6',
+  ];
 
   /**
    * Property filterCounts
@@ -763,7 +770,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method toggleLabelOf
-   * @description The toggle's accessible name, which states what it will do.
+   * @description The toggle's accessible name. For an actionable row it states what the press does; for a `skipped` row the control is disabled, so the name states the state instead of promising a "Complete" that will never fire.
    * @access protected
    * @since 1.0.0
    * @param {InterventionWorkItemOutput} item - The item being rendered.
@@ -774,6 +781,10 @@ export class InterventionWorkItemTable {
     const label: string = target
       ? `${this.actionLabelOf(item)} · ${target}`
       : this.actionLabelOf(item);
+
+    if (item.status === 'skipped') {
+      return $localize`:@@intervention.wit.skippedLabel:Skipped: ${label}:item:`;
+    }
 
     return item.status === 'completed'
       ? $localize`:@@intervention.wit.reopen:Reopen ${label}:item:`

@@ -47,6 +47,12 @@ interface ShowcaseProofPoint {
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * The decorative layer is `aria-hidden`: two soft pools of light that keep the
+ * slab from reading as a flat rectangle, built from `currentColor` so they
+ * follow the inverted foreground in either theme instead of hard-coding a hue.
+ * `overflow-hidden` clips them and `isolate` gives them a stacking context, so
+ * they cannot escape over the form column.
  */
 @Component({
   selector: 'app-split-layout-showcase',

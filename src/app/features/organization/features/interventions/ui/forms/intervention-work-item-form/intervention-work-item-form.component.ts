@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -154,6 +156,42 @@ export class InterventionWorkItemForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes, so the hosting sheet
+   * can confirm before an Escape or a backdrop tap discards the draft.
+   *
+   * @access public
+   * @since 7.1.0
+   *
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Relays the field tree's dirtiness through {@link dirtyChanged}, run
+   * `untracked` so the emit does not re-trigger the effect it runs in.
+   *
+   * @access public
+   * @since 7.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const dirty: boolean = this.workItemForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+  }
   //#endregion
 
   //#region Properties

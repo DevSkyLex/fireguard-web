@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -34,6 +35,7 @@ import {
   resolveAuditActorLabel,
   resolveAuditSubjectRoute,
 } from '@features/organization/features/audit/utils';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -41,14 +43,13 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
-
-/** How many columns a summary row carries — the empty and skeleton rows span this. */
+/** How many columns a summary row carries — the expanded metadata row spans this. */
 const COLUMN_COUNT: number = 5;
+
+/** One literal Tailwind width per rendered column, for the shared surface's first-load skeleton. */
+const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28', 'w-36', 'w-24'];
 
 /**
  * Component AuditEventTable
@@ -69,19 +70,20 @@ const COLUMN_COUNT: number = 5;
  * expanded is local, ephemeral UI state, not fetched data, so it stays in
  * this component rather than round-tripping through the page.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-audit-event-table',
   imports: [
+    NgTemplateOutlet,
     EmptyState,
     OrgDatePipe,
+    CollectionSurface,
     RouterLink,
     NgIcon,
     HlmButton,
-    HlmSkeleton,
     ...HlmTableImports,
   ],
   providers: [
@@ -153,11 +155,11 @@ export class AuditEventTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
-
-  /** How many cells a summary row has, so the empty state can span the full width. */
+  /** How many cells a summary row has, so the expanded metadata row can span the rest of it. */
   protected readonly columnCount: number = COLUMN_COUNT;
+
+  /** One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: ReadonlyArray<string> = SKELETON_COLUMN_WIDTHS;
 
   /** Ids of the rows currently showing their metadata. */
   private readonly expandedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(

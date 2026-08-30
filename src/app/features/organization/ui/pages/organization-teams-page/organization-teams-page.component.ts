@@ -49,8 +49,10 @@ import { OrganizationTeamTable } from '../../tables/organization-team-table';
  * @class OrganizationTeamsPage
  *
  * @description
- * Route entry page for `/organizations/:organizationId/teams` (gated by
- * `organization.teams.read`): the team grid (`OrganizationTeamTable`) with
+ * Mounted as the "Teams" tab of `OrganizationMembersPage`
+ * (`/organizations/:organizationId/members?tab=teams`, gated by
+ * `organization.teams.read`; the retired `/teams` route redirects here):
+ * the team grid (`OrganizationTeamTable`) with
  * create/edit/delete and a per-team member roster panel
  * (`OrganizationTeamMembersSheet`). Distinct from `OrganizationTeamPage`
  * (`/team`, RBAC roles) — see the naming disambiguation in `FEATURE.md`.
@@ -67,9 +69,13 @@ import { OrganizationTeamTable } from '../../tables/organization-team-table';
  *
  * "New team" registers on the shell header through `PageActionsService`,
  * matching `OrganizationTeamPage`/`OrganizationMembersPage` — this page
- * renders no title band of its own.
+ * renders no title band of its own. Registration is gated by {@link active}:
+ * the host tabs component keeps this page mounted (`hlmTabsContentLazy`)
+ * once its tab has activated once, so leaving the tab does not destroy it
+ * and the plain `registerPageActions` dance alone would leave a stale "New
+ * team" button registered after switching to a sibling tab.
  *
- * @since 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -105,6 +111,21 @@ export class OrganizationTeamsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property active
+   * @readonly
+   *
+   * @description
+   * Whether this page's tab is the one currently showing, defaulting to
+   * `true` for a standalone mount. Drives whether {@link pageActions} owns
+   * the shell header's action slot — see the class `@description`.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly active: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Properties
@@ -230,6 +251,16 @@ export class OrganizationTeamsPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
+    effect((): void => {
+      const isActive: boolean = this.active();
+      const template: TemplateRef<unknown> | undefined = this.pageActions();
+
+      untracked((): void => {
+        if (isActive && template) this.pageActionsService.register(template);
+        else if (!isActive) this.pageActionsService.clear(template);
+      });
+    });
 
     effect((): void => {
       const organizationId: string = this.organizationId();

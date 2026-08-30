@@ -1,4 +1,5 @@
 import { formatDate } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +15,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDotDashed, lucideClipboardCheck } from '@ng-icons/lucide';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { resolveInterventionTag } from '@features/organization/features/interventions/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import {
@@ -24,13 +26,10 @@ import {
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
 /** Placeholder rows drawn while the tab's own fetch is in flight. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
-
 /**
  * Component InterventionInspectionsTable
  * @class InterventionInspectionsTable
@@ -53,6 +52,8 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 @Component({
   selector: 'app-intervention-inspections-table',
   imports: [
+    NgTemplateOutlet,
+    CollectionSurface,
     OrgDatePipe,
     NgIcon,
     RouterLink,
@@ -60,7 +61,6 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
     ErrorState,
     HlmBadge,
     HlmButton,
-    HlmSkeleton,
     InterventionTag,
     ...HlmAvatarImports,
     ...HlmTableImports,
@@ -158,7 +158,13 @@ export class InterventionInspectionsTable {
 
   //#region Properties
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'h-4 w-24',
+    'h-4 w-20',
+    'h-4 w-20',
+    'h-4 w-32',
+  ];
 
   /** The active locale, for formatting the link accessible name's date. */
   private readonly locale: string = inject(LOCALE_ID);

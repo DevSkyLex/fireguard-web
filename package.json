@@ -20,6 +20,7 @@
     "e2e:ui": "playwright test --ui",
     "e2e:debug": "playwright test --project=chromium --debug",
     "e2e:report": "playwright show-report",
+    "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "lint": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore",
     "lint:fix": "oxlint -c .oxlintrc.json . --tsconfig tsconfig.json --ignore-path .gitignore --fix",
     "format": "oxfmt -c .oxfmtrc.json .",

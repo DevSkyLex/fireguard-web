@@ -1,189 +1,200 @@
-<div class="h-full w-full overflow-hidden rounded-md border border-border">
-  <div
-    hlmTableContainer
-    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-    tabindex="0"
-    role="region"
-    aria-labelledby="facility-table-caption"
-  >
-    <table hlmTable data-testid="facility-table">
-      <caption
-        hlmTableCaption
-        id="facility-table-caption"
-        class="sr-only"
-        i18n="@@facility.list.tableCaption"
+<app-collection-surface
+  caption="The organization's root facilities."
+  i18n-caption="@@facility.list.tableCaption"
+  testId="facility-table"
+  [loading]="loading()"
+  [rowCount]="items().length"
+  [columnCount]="columnCount()"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('name')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="facility-table-sort-name"
+          (click)="sortChanged.emit('name')"
+        >
+          <span i18n="@@facility.list.columnName">Name</span>
+          <ng-icon [name]="sortIcon('name')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="facility-table-sort-type"
+          (click)="sortChanged.emit('type')"
+        >
+          <span i18n="@@facility.list.columnType">Type</span>
+          <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('code')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="facility-table-sort-code"
+          (click)="sortChanged.emit('code')"
+        >
+          <span i18n="@@facility.list.columnCode">Code</span>
+          <ng-icon [name]="sortIcon('code')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="facility-table-sort-status"
+          (click)="sortChanged.emit('status')"
+        >
+          <span i18n="@@facility.list.columnStatus">Status</span>
+          <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead class="w-[52px]">
+        <span class="sr-only" i18n="@@facility.list.columnActions">Actions</span>
+      </th>
+    </tr>
+  </ng-container>
+
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="facility-table-row">
+        <td hlmTableCell>
+          <a
+            class="inline-flex max-w-56 items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+          >
+            <span class="truncate">{{ item.name }}</span>
+            @if (item.hasChildren) {
+              <ng-icon
+                name="lucideNetwork"
+                class="shrink-0 text-muted-foreground"
+                i18n-aria-label="@@facility.list.hasChildrenLabel"
+                aria-label="Has sub-facilities"
+              />
+            }
+          </a>
+        </td>
+
+        <td hlmTableCell class="text-muted-foreground">{{ typeLabelOf(item.type) }}</td>
+
+        <td hlmTableCell class="tabular-nums">
+          {{ item.code }}
+        </td>
+
+        <td hlmTableCell>
+          <app-facility-status-tag [value]="item.status" />
+        </td>
+
+        <td hlmTableCell class="text-right">
+          <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
+        </td>
+      </tr>
+    }
+  </ng-container>
+
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        data-testid="facility-table-card"
       >
-        The organization's root facilities.
-      </caption>
+        <div class="flex items-start gap-2">
+          <a
+            class="flex min-w-0 flex-1 items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+          >
+            <span class="line-clamp-2">{{ item.name }}</span>
+            @if (item.hasChildren) {
+              <ng-icon
+                name="lucideNetwork"
+                class="mt-0.5 shrink-0 text-muted-foreground"
+                i18n-aria-label="@@facility.list.hasChildrenLabel"
+                aria-label="Has sub-facilities"
+              />
+            }
+          </a>
 
-      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-        <tr hlmTableRow>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('name')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="facility-table-sort-name"
-              (click)="sortChanged.emit('name')"
-            >
-              <span i18n="@@facility.list.columnName">Name</span>
-              <ng-icon [name]="sortIcon('name')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="facility-table-sort-type"
-              (click)="sortChanged.emit('type')"
-            >
-              <span i18n="@@facility.list.columnType">Type</span>
-              <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('code')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="facility-table-sort-code"
-              (click)="sortChanged.emit('code')"
-            >
-              <span i18n="@@facility.list.columnCode">Code</span>
-              <ng-icon [name]="sortIcon('code')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="facility-table-sort-status"
-              (click)="sortChanged.emit('status')"
-            >
-              <span i18n="@@facility.list.columnStatus">Status</span>
-              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead class="w-[52px]">
-            <span class="sr-only" i18n="@@facility.list.columnActions">Actions</span>
-          </th>
-        </tr>
-      </thead>
+          <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
+        </div>
 
-      <tbody hlmTableBody>
-        @if (loading() && items().length === 0) {
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-40 max-w-full" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-16" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="ms-auto size-6" /></td>
-            </tr>
-          }
-        } @else {
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="facility-table-row">
-              <td hlmTableCell>
-                <a
-                  class="inline-flex max-w-56 items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  [routerLink]="[...detailRouteBase(), item.id]"
-                >
-                  <span class="truncate">{{ item.name }}</span>
-                  @if (item.hasChildren) {
-                    <ng-icon
-                      name="lucideNetwork"
-                      class="shrink-0 text-muted-foreground"
-                      i18n-aria-label="@@facility.list.hasChildrenLabel"
-                      aria-label="Has sub-facilities"
-                    />
-                  }
-                </a>
-              </td>
+        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+          <app-facility-status-tag [value]="item.status" />
+          <span class="truncate tabular-nums">{{ item.code }}</span>
+        </div>
+      </div>
+    }
+  </ng-container>
 
-              <td hlmTableCell class="text-muted-foreground">{{ typeLabelOf(item.type) }}</td>
+  <p
+    surfaceEmpty
+    class="p-6 text-center text-sm text-muted-foreground"
+    i18n="@@facility.list.noResults"
+  >
+    No results.
+  </p>
+</app-collection-surface>
 
-              <td hlmTableCell class="tabular-nums">
-                {{ item.code }}
-              </td>
+<ng-template #rowActions let-item="item">
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    align="end"
+    class="max-sm:size-11"
+    data-testid="facility-table-row-menu"
+    [hlmDropdownMenuTrigger]="rowMenu"
+  >
+    <ng-icon name="lucideEllipsis" aria-hidden="true" />
+    <span class="sr-only" i18n="@@facility.list.rowMenu">Open menu</span>
+  </button>
 
-              <td hlmTableCell>
-                <app-facility-status-tag [value]="item.status" />
-              </td>
+  <ng-template #rowMenu>
+    <hlm-dropdown-menu class="w-52">
+      <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item.id]">
+        <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
+        <span i18n="@@facility.list.rowOpen">Open</span>
+      </a>
 
-              <td hlmTableCell class="text-right">
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  align="end"
-                  class="max-sm:size-11"
-                  data-testid="facility-table-row-menu"
-                  [hlmDropdownMenuTrigger]="rowMenu"
-                >
-                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
-                  <span class="sr-only" i18n="@@facility.list.rowMenu">Open menu</span>
-                </button>
+      @if (canWrite() && item.status === 'active') {
+        <hlm-dropdown-menu-separator />
+        <button
+          hlmDropdownMenuItem
+          data-testid="facility-table-row-archive"
+          (click)="archiveRequested.emit(item)"
+        >
+          <ng-icon name="lucideArchive" aria-hidden="true" />
+          <span i18n="@@facility.list.rowArchive">Archive</span>
+        </button>
+      }
 
-                <ng-template #rowMenu>
-                  <hlm-dropdown-menu class="w-52">
-                    <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item.id]">
-                      <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
-                      <span i18n="@@facility.list.rowOpen">Open</span>
-                    </a>
-
-                    @if (canWrite() && item.status === 'active') {
-                      <hlm-dropdown-menu-separator />
-                      <button
-                        hlmDropdownMenuItem
-                        data-testid="facility-table-row-archive"
-                        (click)="archiveRequested.emit(item)"
-                      >
-                        <ng-icon name="lucideArchive" aria-hidden="true" />
-                        <span i18n="@@facility.list.rowArchive">Archive</span>
-                      </button>
-                    }
-
-                    @if (canWrite() && item.status === 'archived') {
-                      <hlm-dropdown-menu-separator />
-                      <button
-                        hlmDropdownMenuItem
-                        data-testid="facility-table-row-restore"
-                        (click)="restoreRequested.emit(item)"
-                      >
-                        <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
-                        <span i18n="@@facility.list.rowRestore">Restore</span>
-                      </button>
-                    }
-                  </hlm-dropdown-menu>
-                </ng-template>
-              </td>
-            </tr>
-          } @empty {
-            <tr hlmTableRow>
-              <td
-                hlmTableCell
-                class="h-24 text-center text-muted-foreground"
-                [attr.colspan]="columnCount()"
-                i18n="@@facility.list.noResults"
-              >
-                No results.
-              </td>
-            </tr>
-          }
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
+      @if (canWrite() && item.status === 'archived') {
+        <hlm-dropdown-menu-separator />
+        <button
+          hlmDropdownMenuItem
+          data-testid="facility-table-row-restore"
+          (click)="restoreRequested.emit(item)"
+        >
+          <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
+          <span i18n="@@facility.list.rowRestore">Restore</span>
+        </button>
+      }
+    </hlm-dropdown-menu>
+  </ng-template>
+</ng-template>

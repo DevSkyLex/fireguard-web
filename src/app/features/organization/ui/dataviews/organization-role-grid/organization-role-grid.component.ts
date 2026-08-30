@@ -9,6 +9,7 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideEllipsis,
@@ -157,6 +158,7 @@ function permissionGroupLabelOf(group: string): string {
   imports: [
     NgIcon,
     NgTemplateOutlet,
+    RouterLink,
     EmptyState,
     HlmBadge,
     HlmButton,
@@ -210,6 +212,24 @@ export class OrganizationRoleGrid {
    * @type {InputSignal<boolean>}
    */
   public readonly canManage: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property membersRouteBase
+   * @readonly
+   *
+   * @description
+   * Where a role's member count links to, as route segments supplied by the
+   * page — the grid stays route-agnostic. Empty by default, which renders the
+   * count as plain text: the count existed here long before anything could act
+   * on it, and `/team` and `/members` were two orthogonal cuts of the same
+   * population with no bridge between them.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<readonly string[]>}
+   */
+  public readonly membersRouteBase: InputSignal<readonly string[]> = input<readonly string[]>([]);
   //#endregion
 
   //#region Outputs

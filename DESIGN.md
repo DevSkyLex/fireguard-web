@@ -17,14 +17,20 @@ colors:
   destructive: 'oklch(0.577 0.245 27.325)'
   border: 'oklch(0.922 0 0)'
   input: 'oklch(0.922 0 0)'
-  ring: 'oklch(0.708 0 0)'
+  ring: 'oklch(0.64 0 0)'
   sidebar: 'oklch(0.985 0 0)'
   sidebar-border: 'oklch(0.922 0 0)'
+  success: 'oklch(0.723 0.219 149.579)'
   glyph-neutral: 'oklch(55.6% 0 none)'
   glyph-info: 'oklch(62.3% 0.214 259.815)'
-  glyph-success: 'oklch(72.3% 0.219 149.579)'
   glyph-warning: 'oklch(76.9% 0.188 70.08)'
   glyph-danger: 'oklch(63.7% 0.237 25.331)'
+  chart-1: 'oklch(0.53 0.20 272)'
+  chart-2: 'oklch(0.67 0.19 41)'
+  chart-3: 'oklch(0.67 0.14 162)'
+  chart-4: 'oklch(0.76 0.155 75)'
+  chart-5: 'oklch(0.70 0.17 357)'
+  chart-6: 'oklch(0.55 0.17 142)'
   background-dark: 'oklch(0.145 0 0)'
   foreground-dark: 'oklch(0.985 0 0)'
   card-dark: 'oklch(0.205 0 0)'
@@ -33,9 +39,27 @@ colors:
   muted-dark: 'oklch(0.269 0 0)'
   muted-foreground-dark: 'oklch(0.708 0 0)'
   destructive-dark: 'oklch(0.704 0.191 22.216)'
+  success-dark: 'oklch(0.792 0.209 151.711)'
   border-dark: 'oklch(1 0 0 / 10%)'
+  input-dark: 'oklch(1 0 0 / 15%)'
   ring-dark: 'oklch(0.556 0 0)'
+  glyph-neutral-dark: 'oklch(70.8% 0 none)'
+  glyph-info-dark: 'oklch(70.7% 0.165 254.624)'
+  glyph-warning-dark: 'oklch(82.8% 0.189 84.429)'
+  glyph-danger-dark: 'oklch(70.4% 0.191 22.216)'
+  chart-1-dark: 'oklch(0.62 0.18 272)'
+  chart-2-dark: 'oklch(0.62 0.17 41)'
+  chart-3-dark: 'oklch(0.62 0.13 162)'
+  chart-4-dark: 'oklch(0.665 0.135 75)'
+  chart-5-dark: 'oklch(0.62 0.16 357)'
+  chart-6-dark: 'oklch(0.55 0.17 142)'
 typography:
+  subhead:
+    fontFamily: 'Geist Variable, ui-sans-serif, system-ui, sans-serif'
+    fontSize: '1.125rem'
+    fontWeight: 600
+    lineHeight: 1.5556
+    letterSpacing: 'normal'
   headline:
     fontFamily: 'Geist Variable, ui-sans-serif, system-ui, sans-serif'
     fontSize: '1.5rem'
@@ -144,9 +168,15 @@ not a page they visit.
 The system is **achromatic by decision**. Surfaces, text, borders and controls
 are pure zero-chroma neutral — genuinely neither warm nor cool. Colour is not a
 decorative resource here; it is a scarce, load-bearing signal, and it is spent
-in exactly one place: the glyph of a status indicator. That single constraint is
+in one place: the glyph of a status indicator. That single constraint is
 what makes a dense table readable. When nothing else is coloured, a red chevron
 at 12px is impossible to miss.
+
+There is one named exception, and naming it is what keeps it from spreading: a
+chart has no glyph to tint, so `shared/chart` carries its own six-slot ordinal
+palette. It is admitted on the same terms the glyph rule sets — a series is
+never told apart by hue alone, because the legend and the tooltip always name
+it — and it never leaves the plot.
 
 Density is the second half of the identity. The largest type in the entire
 application is 24px, and 86% of sized text is 14px or 12px. Controls are 32px
@@ -155,7 +185,7 @@ one viewport, and the interface stops competing with the data it carries.
 
 **Key Characteristics:**
 
-- Achromatic neutral palette; chroma confined to status glyphs
+- Achromatic neutral palette; chroma confined to status glyphs and chart series
 - Compressed scale — a hard 24px type ceiling, 32px controls
 - Flat in-page surfaces; a hairline ring instead of shadows or borders
 - Compact and mechanical controls with a 1px press displacement
@@ -190,7 +220,10 @@ saturated hues that are permitted **only** on a status glyph.
 - **Hairline** (`oklch(0.922 0 0)`): borders and input strokes. In dark mode it
   becomes translucent white at 10%, so dividers dissolve into the surface they
   sit on rather than glowing against it.
-- **Halo** (`oklch(0.708 0 0)`): the focus ring, and nothing else.
+- **Halo** (`oklch(0.64 0 0)`, `oklch(0.556 0 0)` in dark): the focus ring, and
+  nothing else. The light value was darkened from `0.708` because the ring is
+  drawn at 50% opacity: at `0.708` the composited outline measured 2.51:1
+  against Paper, under the 3:1 required of a non-text indicator.
 
 ### Tertiary — the glyph palette
 
@@ -201,13 +234,41 @@ never fill a shape, tint a surface, or colour a word.
   enough in value to the label beside it to read as absence rather than as a
   sixth state.
 - **Info glyph** (`oklch(62.3% 0.214 259.815)`): the baseline or expected state.
-- **Success glyph** (`oklch(72.3% 0.219 149.579)`): the positive terminal state.
+- **Success glyph** (`oklch(0.723 0.219 149.579)`): the positive terminal state.
+  The only one of the five promoted to a theme token — `--success`, exposed as
+  `text-success` — so it flips with the appearance instead of needing a
+  `dark:` twin at every call site. The other four are Tailwind's `500` rung
+  paired with an explicit `dark:` `400` rung.
 - **Warning glyph** (`oklch(76.9% 0.188 70.08)`): elevated but not failing.
 - **Danger glyph** (`oklch(63.7% 0.237 25.331)`): the destructive terminal state,
   and the tint behind destructive actions.
 
 Each lightens one step in dark mode (the `400` rung) so it holds its position
 against a dark ground instead of going muddy.
+
+### Data Visualization — the tolerated exception
+
+A chart cannot obey the glyph rule: a line has no icon to tint. `shared/chart`
+therefore carries its own six-slot ordinal palette, resolved from
+`core/theme`'s `resolvedTheme` rather than read off the DOM — Chart.js draws
+to a canvas, and a canvas 2D context never resolves `var()`.
+
+Light, in series order: `oklch(0.53 0.20 272)` indigo, `oklch(0.67 0.19 41)`
+orange, `oklch(0.67 0.14 162)` teal, `oklch(0.76 0.155 75)` amber,
+`oklch(0.70 0.17 357)` magenta, `oklch(0.55 0.17 142)` green. The dark twin
+re-steps the same six hues into the `L 0.48–0.67` band rather than lifting the
+light values uniformly.
+
+Slot 1 is indigo at hue ≈272 on purpose: it echoes the `#4f46e5` brand mark,
+which is the only other place the retired chromatic accent still lives. Chart
+chrome stays achromatic — gridlines at 60% Hairline (8% white in dark), ticks
+in Slate, and a tooltip on the card ground rather than Chart.js' default black
+box.
+
+Three light slots (teal, amber, magenta) sit under the 3:1 relief floor
+against Paper. That is legal only because `line-chart` always renders a text
+legend with a swatch and a value tooltip, so a series is never told apart by
+hue alone — the same redundancy the glyph rule buys with its label.
 
 ### Named Rules
 
@@ -220,6 +281,12 @@ into a row of coloured pills and destroys the one signal that should stand out.
 colour: success for the positive end, danger for the destructive one. Every
 intermediate step is neutral. Colour therefore reads as "this is finished",
 not as a heat map of progress.
+
+**The Chart-Only Chroma Rule.** The chart palette is the one place chroma is
+spent on a filled shape, and it never leaves `shared/chart`. Do not sample a
+chart slot for a badge, a button, a tag or a surface: outside a plot those six
+hues have no legend to disambiguate them, which is the entire basis on which
+they are allowed.
 
 **The Tint, Never Fill Rule.** Destructive actions are a 10% destructive ground
 with destructive text — never a solid red fill. A filled red button reads as the
@@ -244,9 +311,18 @@ character alignment matters more than reading rhythm.
 
 ### Hierarchy
 
-- **Headline** (600, 1.5rem/2rem, `-0.025em`): the page title, and the only
-  element at this size. Always paired with `tracking-tight`; at 24px the default
-  tracking reads loose.
+- **Headline** (600, 1.5rem/2rem, `-0.025em`): the `<h1>` of every page that
+  sits _outside_ the dashboard shell — auth, onboarding, invitation accept,
+  the error and maintenance pages — through `app-page-heading`. Always paired
+  with `tracking-tight`; at 24px the default tracking reads loose. Inside the
+  shell it survives in one other role only: the figure of a stat tile
+  (`text-2xl font-semibold tabular-nums`), where the number is the content.
+- **Subhead** (600, 1.125rem/1.75rem): the dashboard shell's own `<h1>` — the
+  activated route's title in `DashboardPageHeader`. It reads one step below
+  the out-of-shell headline on purpose: the shell already frames the page with
+  a breadcrumb and a sidebar, so the title does not have to establish the page
+  by itself. The wordmark on the two showcase panels takes the same size with
+  `tracking-tight` added.
 - **Title** (500, 1rem/1.5rem): section and card headings. The step down from
   headline is deliberately large — there is no 20px rung in normal use. The
   weight is `hlmCardTitle`'s own, and section titles are `hlmCardTitle`, so the
@@ -265,17 +341,24 @@ existed; a rule no code follows is not a rule.
 
 ### Named Rules
 
-**The 24px Ceiling.** Nothing in the application renders larger than 1.5rem.
-There is no display size and no hero type. A screen that needs more presence
-earns it through spacing and position, not through scale.
+**The 24px Ceiling.** Nothing in the operator's console renders larger than
+1.5rem. There is no display size and no hero type. A screen that needs more
+presence earns it through spacing and position, not through scale.
+
+The ceiling has exactly one exception, and it is not a console screen: the
+split-layout showcase panel — the marketing half of the unauthenticated auth
+pages — sets its promise at `text-3xl xl:text-4xl` (30px stepping to 36px).
+That surface is persuading a visitor, not serving an operator, and it is
+outside the shell. The exception does not travel: no authenticated page, and
+no component reachable from one, may cite it.
 
 **The One Title Rule.** A page carries exactly one headline. Sections step
 straight down to title (1rem); a second 24px heading on the same screen means
 the page is really two pages.
 
-**The Sentence Case Rule.** Labels are sentence case. Uppercase with widened
-tracking is not part of this system — it appears three times in the entire
-feature tree and should not spread.
+**The Sentence Case Rule.** Labels are sentence case. Uppercase is not part of
+this system — it survives twice in the entire feature tree, both on the
+channel-info sheet's `<h4>` group labels, and should not spread.
 
 ## Layout
 
@@ -330,15 +413,24 @@ overlay primitives; feature templates do not add them.
 surface needs to separate further, change its tone — do not add a shadow.
 
 **The Overlay-Only Shadow Rule.** A shadow means "this is floating above the
-page and will be dismissed". Four shadow utilities exist across the entire
-feature and layout tree; that number should not grow.
+page and will be dismissed". **Zero** `shadow-*` utilities remain across the
+feature, layout, core and shared-behaviour trees — every shadow in the running
+application comes from an overlay primitive. The rule is no longer a budget to
+hold under; it is an invariant, and the next `shadow-*` in a feature template
+is the one that breaks it.
 
 ## Shapes
 
 The corner language is soft but tight, anchored on a 0.625rem (10px) base radius
-that scales into a six-step ramp. Controls take the base radius (10px), cards
-step up to 14px, and small controls step _down_ — a 24px button clamps to 10px,
-a 28px button to 12px — so the corner never overwhelms a short edge.
+that scales into a six-step ramp — 6, 8, 10, 14, 18 and 26px. Controls take the
+base radius (10px), cards step up to 14px, and small controls step _down_ so the
+corner never overwhelms a short edge.
+
+That step-down is written as `rounded-[min(var(--radius-md),10px)]` on the 24px
+rung and `min(var(--radius-md),12px)` on the 28px one, but at this base radius
+`--radius-md` is 8px, so **both resolve to 8px**. The two caps are headroom for
+a larger base radius, not two distinct corners; do not read them as a 10/12px
+pair, and do not add a third cap expecting a third corner.
 
 Status badges take a 26px radius against a 20px height, which resolves to a
 true pill. This is the one fully-round shape in the system, and it marks
@@ -359,8 +451,9 @@ one that was never filled.
 
 ### Buttons
 
-- **Shape:** Softly rounded (10px), clamping down to 8–10px at the extra-small
-  and small sizes so short edges stay proportionate.
+- **Shape:** Softly rounded (10px), clamping to 8px at the extra-small and
+  small sizes so short edges stay proportionate. See Shapes for why the two
+  `min()` caps both land on 8px.
 - **Size:** Compact by default — 32px tall with 10px horizontal padding, 14px
   medium-weight text. A 24px and a 28px rung exist for toolbars and inline
   actions; 36px is the largest.
@@ -369,9 +462,22 @@ one that was never filled.
 - **Outline:** Page ground with a hairline border — the workhorse secondary.
   Hovers to Wash.
 - **Ghost:** No ground at rest, Wash on hover. For row menus and dense toolbars
-  where a border per action would build a grid of boxes.
-- **Destructive:** A 10% destructive ground with destructive text. Tinted, never
-  filled.
+  where a border per action would build a grid of boxes. 123 call sites, second
+  only to outline.
+- **Destructive:** A 10% destructive ground with destructive text (20% in dark).
+  Tinted, never filled.
+- **Secondary and Link:** Present in the primitive and used sparingly — 17 and 3
+  call sites. Secondary is a filled Wash ground for a paired action that must
+  not read as either the committed action or a bordered box; link is a bare
+  underlined-on-hover text button. Neither is a general-purpose alternative to
+  outline, which carries 247 of the tree's call sites and is the actual
+  workhorse.
+- **Expanded:** A trigger holding an open menu or popover keeps its hover ground
+  (`aria-expanded:bg-muted`), so the anchor stays visibly bound to the surface
+  it opened.
+- **Invalid:** A control the brain marks `data-matches-spartan-invalid` takes a
+  destructive border and a 3px destructive ring, matching the input's own
+  invalid treatment.
 - **Press:** A 1px downward displacement on `:active`, suppressed on menu
   triggers so a popover anchor does not shift under an opening panel. This is
   the system's one piece of physical feedback and it is worth preserving.
@@ -396,8 +502,9 @@ one that was never filled.
 - **Sizing:** 16px text below `md`, 14px above. The larger mobile size is not a
   style choice — it is what stops iOS Safari zooming the viewport on focus.
 - **Focus:** Border shifts to Halo, plus a 3px ring at 50% Halo.
-- **Error:** Border and ring go destructive, driven by the `aria-invalid` state
-  rather than a class the template sets.
+- **Error:** Border and ring go destructive, driven by the brain's
+  `data-matches-spartan-invalid` attribute rather than a class the template
+  sets. (Badges still gate on `aria-invalid`; controls the brain owns do not.)
 - **Disabled:** 50% opacity with a filled ground and `not-allowed` cursor.
 
 ### Navigation
@@ -434,6 +541,51 @@ states are the same composition with a destructive tint and `role="alert"`.
 Neither is bespoke markup — they exist to make three inputs stand in for a
 six-element composition, and to guarantee a failure announces itself.
 
+### Charts
+
+The one surface that draws with chroma, and the only one whose colour is
+resolved in TypeScript rather than declared in a class. `shared/chart`'s
+`line-chart` is a typed wrapper over Chart.js: no caller touches `ChartData`
+or `ChartOptions`, and no caller names a colour.
+
+- **Palette:** the six ordinal slots from Colors, picked by `resolvedTheme`.
+  A live appearance switch recolours an already-drawn chart, because both the
+  dataset palette and the grid chrome are computed signals over that signal —
+  not values read off the DOM, which a canvas cannot do anyway.
+- **Chrome:** gridlines on the horizontal axis only, at 60% Hairline (8% white
+  in dark). Ticks in Slate. The tooltip is a themed rounded card on the card
+  ground, replacing Chart.js' default black box.
+- **Points:** hidden at rest, revealed on hover with an enlarged hit radius —
+  the line is the value, the point is the interaction.
+- **Legend:** compact centred pills with small circular swatches, below the
+  plot. It is not optional decoration: it is what makes the three
+  low-relief light slots legal.
+- **States:** a height-matched `hlm-skeleton` holds the layout on the server
+  and while loading — the canvas mounts only once `isPlatformBrowser` is true,
+  so hydration causes no shift. Empty is `<app-empty-state>` with
+  `lucideChartLine`, at the same height.
+- **Accessibility:** the plot wrapper is `role="img"` with a summarizing
+  `aria-label`; the canvas itself is `aria-hidden`.
+
+### Global Search Palette
+
+The shell's one command surface. A ghost `icon-sm` trigger in the header,
+announcing its own shortcut through `aria-keyshortcuts="Control+K Meta+K"`,
+opens an `hlm-command-dialog` at `sm:max-w-xl` with the list bounded to
+`max-h-[70vh]`.
+
+Results group by entity type — equipments, facilities, interventions,
+inspections, non-conformities — each group labelled with its own icon. A hit
+is a two-line button: title, then an optional muted 12px subtitle, with an
+optional 12px qualifier pushed to the inline end.
+
+Every state is a sentence in the list rather than a chrome change: below the
+two-character threshold it says so, loading is a 16px spinner beside
+"Searching…", a failed query says "Type again to retry" instead of offering a
+button the palette has no room for, and no results says so plainly. Result
+counts are announced through a visually hidden `role="status"` live region,
+because the list updating is silent to a screen reader otherwise.
+
 ## Page Grammar
 
 How a page is assembled. The visual system above says what things look like;
@@ -443,13 +595,28 @@ vocabulary.
 
 ### The shell contract (DashboardLayout pages)
 
-The page's `<h1>` is the shell breadcrumb's current crumb — a page never
-renders its own title band (`organization-today-page` is the single sanctioned
-exception). Page-level actions are contributed through
-`<ng-template #pageActions>` + `registerPageActions()` and render in the shell
-header. Split/Focused pages (auth, onboarding, 404, invitation accept) sit
-outside the shell and own their in-page `<h1>` through the shared
-`app-page-heading` primitive.
+**The shell owns the title, and it is a band, not a crumb.** This reverses the
+earlier contract, under which the breadcrumb's current crumb _was_ the `<h1>`.
+It reads better as two bands: the 48px header is sized to the 32px control
+rhythm and holds navigation, the breadcrumb, search and header actions; a
+second band beneath it — `DashboardPageHeader` — carries the activated route's
+title as the document's one `<h1>` (Subhead, 18px, truncating) alongside the
+page's own actions. The crumb is no longer a heading, because it would
+otherwise repeat the same words in the same viewport, and a page still never
+renders its own title band.
+
+Inside the shell there is therefore **exactly one `<h1>` in the whole
+application**, and no feature template contains it. Page-level actions are
+still contributed through `<ng-template #pageActions>` + `registerPageActions()`
+— they now land in that title band rather than in the header row.
+
+Split/Focused pages (auth, onboarding, 404, maintenance, invitation accept)
+sit outside the shell and own their in-page `<h1>` through the shared
+`app-page-heading` primitive, at the full 24px Headline.
+
+The routed content column carries no `container mx-auto`: a page's own density
+utilities (`p-4 md:p-6`) own its horizontal rhythm, and a page that wants the
+shell's full width takes it.
 
 ### Three root wrappers — chosen by page kind, never freely
 
@@ -562,6 +729,31 @@ confirm.
 
 Cross-cutting rules:
 
+- **A dialog bounds its own height.** `hlm-dialog-content` and
+  `hlm-alert-dialog-content` ship with neither a `max-h` nor an `overflow`, and
+  the brain centres them with a blocking scroll strategy: an unbounded dialog
+  taller than the viewport is clipped at both ends with the page frozen behind
+  it, so its primary action becomes unreachable rather than merely
+  out of sight. Every call site therefore carries
+  `max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain` on the
+  content element — `svh` because a mobile URL bar moves `vh`,
+  `overscroll-contain` so the scroll does not leak to the frozen page behind.
+  The bound lives at the call site rather than in the vendored primitive, which
+  makes it a rule the next contributor has to remember; `npm run guard:dialogs`
+  is what remembers instead, and CI runs it.
+  Bounding makes the action **reachable by scrolling**, not visible — a footer
+  that must stay on screen is a sticky footer, which is the form's business,
+  not the dialog's. And a surface whose height is driven by data (a permission
+  matrix, a growing item list) is not a dialog at all: it is a sheet or a page.
+- **Closed gates speak.** A control disabled for a reason the operator could
+  act on carries that reason twice: as visible text beside it, and as
+  `aria-describedby` for assistive tech. `[appGateReason]`
+  (`@shared/gate-reason`) owns the linking — it generates the id, appends to
+  any `aria-describedby` the host already has rather than replacing it, and
+  exposes `reasonId` for the call site to render the text where its own layout
+  allows. A native `title` is not a reason: invisible on touch, delayed on
+  pointer, unstylable, and outside the i18n pipeline. A control disabled only
+  because a request is in flight is exempt — `aria-busy` already says that.
 - An overlay that carries a form delegates to a `*-form` component; only a
   page (or a documented container component) hosts an overlay and talks to a
   store.
@@ -611,9 +803,13 @@ Cross-cutting rules:
   distinguish states, reach for icon, weight, position and tone first.
 - **Do** pair every severity colour with a label and an icon, and give the icon
   `aria-hidden` so the label is the accessible name.
-- **Do** keep a page's largest text at 1.5rem, `font-semibold`,
-  `tracking-tight` — the canonical page title is one exact class string, and
-  reusing it verbatim is how the ceiling stays intact.
+- **Do** let the shell own the page title. Inside `DashboardLayout` no feature
+  template carries an `<h1>`; outside it, `app-page-heading` sets the one
+  exact class string (`text-2xl font-semibold tracking-tight`), and reusing it
+  verbatim is how the ceiling stays intact.
+- **Do** draw a chart from `shared/chart`, which resolves its palette from the
+  theme signal. A colour written by hand into a chart config will not follow
+  an appearance switch, because a canvas never resolves `var()`.
 - **Do** separate in-page surfaces with `ring-1` at 10% foreground, or with one
   tonal step to Wash.
 - **Do** use the 32px control height as the default rhythm; step to 24px or
@@ -627,18 +823,25 @@ Cross-cutting rules:
 ### Don't:
 
 - **Don't** reintroduce a chromatic brand accent. The interface is achromatic by
-  decision; indigo lives on the mark and in browser chrome only.
+  decision; indigo lives on the mark, in browser chrome, and as the first chart
+  slot — nowhere else.
+- **Don't** borrow a chart slot for a badge, a tag, a button or a surface.
+  Outside a plot those six hues have no legend, which is the only reason they
+  are allowed at all.
 - **Don't** fill a status badge with its severity colour, and don't colour the
   label. The ground stays transparent and the text stays muted.
 - **Don't** colour intermediate workflow states. Only the two terminal ends
   carry tone.
 - **Don't** render a destructive action as a solid red button. Tint the ground
   and colour the text.
-- **Don't** introduce type above 1.5rem, or a display typeface. There is one
-  family at four sizes.
+- **Don't** introduce type above 1.5rem on any surface an authenticated
+  operator can reach, and never a display typeface. There is one family at
+  five sizes; the split-layout showcase's 30/36px promise is the single
+  exception, and it lives outside the shell.
 - **Don't** set uppercase with widened tracking as a section eyebrow.
 - **Don't** add a shadow to an in-page surface. Shadow means "floating and
-  dismissable".
+  dismissable", and the feature tree currently holds zero `shadow-*` utilities
+  — the next one is a regression, not a rounding error.
 - **Don't** nest a card inside a card, or reach for a second card family. One
   section is one `hlmCard`; inside it, hierarchy comes from the header, the
   spacing and divider lists — from rhythm rather than from more boxes.

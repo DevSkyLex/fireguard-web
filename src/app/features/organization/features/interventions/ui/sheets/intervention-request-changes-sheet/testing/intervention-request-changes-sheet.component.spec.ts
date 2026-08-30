@@ -6,6 +6,13 @@ const content = (): HTMLElement =>
   document.querySelector('[data-testid="intervention-request-changes-sheet"]') as HTMLElement;
 const inSheet = (selector: string): HTMLElement => content().querySelector(selector) as HTMLElement;
 
+const unsavedChangesDialog = (): HTMLElement | null =>
+  document.querySelector('[data-testid="unsaved-changes-dialog"]');
+
+const pressEscape = (): void => {
+  content()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+};
+
 describe('InterventionRequestChangesSheet', () => {
   let fixture: ComponentFixture<InterventionRequestChangesSheet>;
   let visibility: boolean[];
@@ -72,5 +79,80 @@ describe('InterventionRequestChangesSheet', () => {
     (inSheet('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
     expect(submissions).toEqual([{ note: 'Re-check the third floor.' }]);
+  });
+
+  it('should confirm before an Escape throws away a typed note', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    const note: HTMLTextAreaElement = inSheet(
+      '[data-testid="intervention-request-changes-note"]',
+    ) as HTMLTextAreaElement;
+    note.value = 'Re-check the third floor.';
+    note.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+    expect(content()).not.toBeNull();
+  });
+
+  it('should confirm before Cancel throws away a typed note', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    const note: HTMLTextAreaElement = inSheet(
+      '[data-testid="intervention-request-changes-note"]',
+    ) as HTMLTextAreaElement;
+    note.value = 'Re-check the third floor.';
+    note.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    (inSheet('[data-testid="intervention-request-changes-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+  });
+
+  it('should close once the reviewer confirms the discard', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    const note: HTMLTextAreaElement = inSheet(
+      '[data-testid="intervention-request-changes-note"]',
+    ) as HTMLTextAreaElement;
+    note.value = 'Re-check the third floor.';
+    note.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([false]);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+  });
+
+  it('should keep the note when the reviewer dismisses the confirmation', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    const note: HTMLTextAreaElement = inSheet(
+      '[data-testid="intervention-request-changes-note"]',
+    ) as HTMLTextAreaElement;
+    note.value = 'Re-check the third floor.';
+    note.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesDismissed']();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(content()).not.toBeNull();
   });
 });

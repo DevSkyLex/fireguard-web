@@ -8,12 +8,12 @@ import {
   inject,
   input,
   signal,
-  untracked,
-  viewChild,
   type InputSignal,
   type Signal,
   type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -26,6 +26,7 @@ import {
   lucideDownload,
   lucideGauge,
   lucideListFilter,
+  lucideLock,
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
@@ -136,6 +137,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   ],
   providers: [
     provideIcons({
+      lucideLock,
       lucideChartColumn,
       lucideCircleAlert,
       lucideCircleDot,
@@ -182,6 +184,11 @@ export class InspectionsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly page: InputSignal<string | undefined> = input<string | undefined>(undefined);
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.listCallState().error?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties

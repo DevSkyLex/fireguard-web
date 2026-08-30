@@ -60,6 +60,34 @@ describe('InterventionCommentForm', () => {
     expect(root().textContent).toContain('Write a comment first.');
   });
 
+  it('should read as busy with a progressive label while a post is in flight', async () => {
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    expect(submitButton().getAttribute('aria-busy')).toBe('true');
+    expect(submitButton().disabled).toBe(true);
+    expect(submitButton().textContent).toContain('Posting…');
+  });
+
+  it('should tell the agent an offline comment is queued, not lost, and relabel the action', async () => {
+    fixture.componentRef.setInput('online', false);
+    await fixture.whenStable();
+
+    expect(submitButton().textContent).toContain('Queue comment');
+    expect(
+      root().querySelector('[data-testid="intervention-comment-offline-hint"]')?.textContent,
+    ).toContain('queued and sent when you reconnect');
+  });
+
+  it('should still submit while offline — the queue is the post path, not a dead end', async () => {
+    fixture.componentRef.setInput('online', false);
+    await fixture.whenStable();
+    await type('Riser valve replaced.');
+    await submit();
+
+    expect(submissions).toEqual(['Riser valve replaced.']);
+  });
+
   it('should emit the comment, trimmed, then clear the draft', async () => {
     await type('  Checked the panel.  ');
     await submit();

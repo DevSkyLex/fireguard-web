@@ -63,12 +63,20 @@ describe('InterventionConfirmDialog', () => {
     expect(content()).toBeNull();
   });
 
-  it('should render the abandon copy', async () => {
-    await setRequest({ kind: 'abandon' });
+  it('should not know about abandoning, which has its own dialog', async () => {
+    await setRequest({ kind: 'deleteIntervention' });
 
-    expect(content().textContent).toContain('Abandon intervention');
-    expect(content().textContent).toContain('cannot be resumed');
-    expect(acceptButton().textContent).toContain('Abandon');
+    expect(content().textContent).not.toContain('Abandon');
+  });
+
+  it('should tint the accept button destructive except when skipping', async () => {
+    await setRequest({ kind: 'deleteIntervention' });
+
+    expect(acceptButton().className).toContain('text-destructive');
+
+    await setRequest({ kind: 'skipWorkItem', workItem });
+
+    expect(acceptButton().className).not.toContain('text-destructive');
   });
 
   it('should render the delete-intervention copy', async () => {
@@ -119,7 +127,7 @@ describe('InterventionConfirmDialog', () => {
   });
 
   it('should disable accepting while busy', async () => {
-    await setRequest({ kind: 'abandon' });
+    await setRequest({ kind: 'deleteIntervention' });
     fixture.componentRef.setInput('busy', true);
     await fixture.whenStable();
 
@@ -148,7 +156,7 @@ describe('InterventionConfirmDialog', () => {
   });
 
   it('should emit dismissed on Cancel without emitting accepted', async () => {
-    await setRequest({ kind: 'abandon' });
+    await setRequest({ kind: 'deleteIntervention' });
 
     (inDialog('[hlmAlertDialogCancel]') as HTMLButtonElement).click();
 

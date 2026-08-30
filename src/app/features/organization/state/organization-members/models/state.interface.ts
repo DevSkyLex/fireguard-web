@@ -24,6 +24,12 @@ export interface OrganizationMembersLoadOptions {
    * `DEFAULT_MEMBERS_SORT` when omitted.
    */
   readonly sort?: OrganizationMemberListSort;
+  /**
+   * Narrows the first roster page to the holders of one role, so a deep link
+   * from a role card lands on an already-filtered roster instead of paying a
+   * second round trip to narrow one it just fetched.
+   */
+  readonly roleId?: string | null;
 }
 
 /**
@@ -45,6 +51,12 @@ export interface OrganizationMembersState {
   readonly membersSearch: string;
   /** Active server-side member status filter. */
   readonly membersStatus: OrganizationMemberStatusFilter;
+  /**
+   * Active server-side role narrowing, or `null` for the whole roster. The
+   * backend has always served `roleId`; nothing ever sent it, so "who holds
+   * this role" had no answer anywhere in the administration surfaces.
+   */
+  readonly membersRoleId: string | null;
   /** Active server-side member ordering. */
   readonly membersSort: OrganizationMemberListSort;
   /**

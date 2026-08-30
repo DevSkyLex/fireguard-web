@@ -14,7 +14,9 @@ This feature is responsible for:
 - notification center state and UI,
 - shell-facing user identity, access, and notification contracts,
 - current-user global permission helpers built on the account-owned access contract,
-- account-specific pages under `/account`.
+- account-specific pages under `/account`, including the caller's own organization membership
+  list and self-service "leave" at `/account/organizations` — the ability itself is
+  organization-owned (see Cross-Feature Dependencies).
 
 This feature does not own authentication, session restoration, or auth transport concerns. Those
 belong to `features/auth` — including **active sessions and trusted devices**, whose stores and
@@ -39,6 +41,10 @@ stores.
 - `/account/security` — authenticator app (TOTP), the sign-in email address (current address +
   the change-email dialog), the two-step password change, active sessions, trusted devices, and
   the danger zone carrying self-service account deactivation
+- `/account/organizations` — the organizations the caller is a member of, each with its logo, name,
+  and (for a non-owner) a "Leave" control; the active workspace is marked. Data and the leave
+  mutation come from `features/organization`'s `MY_ORGANIZATIONS_PORT` — see Cross-Feature
+  Dependencies
 - `/account/notifications` — the notification feed, filtered by category and paged on demand
 - `/account/notifications/preferences` — the per-category delivery matrix (email / in-app), each
   switch its own commit
@@ -180,6 +186,14 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   `AccountSecurityPage`, scoped to that page. Recorded in auth's `FEATURE.md`.
 - **Consumes `features/auth`'s `AUTH_SESSION_PORT`** in `AccountSecurityPage` to purge the local
   session after a successful account deactivation — the same `clearSession()` the 401 path uses.
+- **Consumes `features/organization`'s `MY_ORGANIZATIONS_PORT`** in `AccountOrganizationsPage` —
+  the caller's own organization memberships and the ability to leave one, entirely through the
+  port; this feature imports no organization store, service, or dialog directly. Recorded in
+  organization's `FEATURE.md`. The page's own destructive confirmation
+  (`AccountLeaveOrganizationDialog`, `ui/dialogs/`) is a **local** component rather than a
+  cross-boundary import of `OrganizationLeaveDialog`, per `DESIGN.md` Action Surfaces rule 5 — each
+  destructive confirmation is a per-case local component, and account may not import
+  organization-owned UI regardless.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
   features to gate routes or UI on a global permission.
@@ -203,6 +217,11 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 - User profile remains account-owned even when auth bootstrap triggers its loading.
 - Shell-level user identity and notification behavior must cross feature boundaries through ports.
+- **Leaving the organization currently open in the workspace navigates to `/organizations`**,
+  which re-resolves the next accessible workspace or onboarding. Leaving any other organization
+  only removes its row from `/account/organizations` — no navigation. This mirrors
+  `OrganizationSettingsPage`'s retired `navigateAwayOnLeave` and must be preserved if the leave
+  surface ever moves again.
 - Account pages orchestrate account stores and render account-owned UI components; the panels and
   forms take `input()`s and emit `output()`s and inject nothing.
 - **`UserProfileOutput.totpEnabled` (from `/api/me`) is the only authoritative source for whether
@@ -224,5 +243,14 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Not Built Yet
 
-Nothing pending. The sign-in email change (formerly listed here) shipped: request/cancel on
-`/account/security`, public confirmation on auth's `/auth/email-change/confirm`.
+- `AccountOrganizationsPage`, `AccountLeaveOrganizationDialog`, and `MyOrganizationsStore`
+  (organization-owned, backing `MY_ORGANIZATIONS_PORT`) ship without unit specs or an e2e spec —
+  scaffolded together with the port for `fg-web-test-writer` and `fg-e2e` to cover.
+- The "last organization" case for leave is deliberately undefined here: leaving a member's only
+  remaining organization succeeds against the backend (nothing blocks it beyond
+  owner/last-administrator) and the page navigates to `/organizations` exactly as for any other
+  active-organization leave; whether that should route to onboarding instead, or read
+  differently on this page, has not been decided — flag before shipping broadly.
+
+The sign-in email change (formerly listed here) shipped: request/cancel on `/account/security`,
+public confirmation on auth's `/auth/email-change/confirm`.

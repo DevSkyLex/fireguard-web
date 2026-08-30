@@ -1,15 +1,4 @@
-import {
-  DestroyRef,
-  inject,
-  Service,
-  signal,
-  type Signal,
-  type TemplateRef,
-  type WritableSignal,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationStart, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import { Service, signal, type Signal, type TemplateRef, type WritableSignal } from '@angular/core';
 
 /**
  * Service PageActionsService
@@ -21,50 +10,29 @@ import { filter } from 'rxjs';
  * component or a plain template string because an embedded view renders
  * with the *declaring page's* injector and change-detection context: the
  * page's own signals and click handlers work inside the projected markup
- * with zero injector plumbing between the page and the shell. Every
- * `NavigationStart` clears the current registration before the next route
- * takes over, so a page can never leak its action buttons onto a route it
- * no longer owns — a page that forgets to call {@link clear} on destroy is
- * still covered.
+ * with zero injector plumbing between the page and the shell.
  *
- * @version 1.0.0
+ * Ownership transfers on **destruction, not navigation**: a page clears its
+ * own registration from `registerPageActions`'s `destroyRef.onDestroy`
+ * hook, which fires while the outgoing route is deactivated — strictly
+ * before the next route's component is created — so a page can never leak
+ * its action buttons onto a route it no longer owns. An earlier revision
+ * cleared eagerly on every `Router` `NavigationStart` instead; that clears
+ * a page's own registration on a same-route, query-params-only navigation
+ * too (any `router.navigate` call, including one the still-active page
+ * issues itself), and nothing re-registers it afterward, since a page's
+ * `viewChild('pageActions')` template reference does not change unless the
+ * page's own view is torn down. Destruction is the only signal this service
+ * needs: a page that never triggers a real route change keeps its
+ * registration, and one that does clears it exactly when it stops owning
+ * the route.
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
 export class PageActionsService {
-  //#region Dependencies
-  /**
-   * Property router
-   * @readonly
-   *
-   * @description
-   * Angular Router instance whose navigation events drive the
-   * auto-clear guarantee.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Router}
-   */
-  private readonly router: Router = inject<Router>(Router);
-
-  /**
-   * Property destroyRef
-   * @readonly
-   *
-   * @description
-   * Destroy reference passed to `takeUntilDestroyed` to release the
-   * router event subscription when the service is destroyed.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {DestroyRef}
-   */
-  private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
-  //#endregion
-
   //#region State
   /**
    * Property actionsState
@@ -98,17 +66,6 @@ export class PageActionsService {
   public readonly actions: Signal<TemplateRef<unknown> | null> = this.actionsState.asReadonly();
   //#endregion
 
-  //#region Constructor
-  public constructor() {
-    this.router.events
-      .pipe(
-        filter((event): event is NavigationStart => event instanceof NavigationStart),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((): void => this.clear());
-  }
-  //#endregion
-
   //#region Public Methods
   /**
    * Method register
@@ -139,8 +96,7 @@ export class PageActionsService {
    * clears only if that template is still the registered one — this
    * protects against a late `ngOnDestroy` from a page already navigated
    * away from clearing a page that navigated in after it. Called with no
-   * argument, it clears unconditionally, which is what the `NavigationStart`
-   * guard above relies on.
+   * argument, it clears unconditionally.
    *
    * @access public
    * @since 1.0.0

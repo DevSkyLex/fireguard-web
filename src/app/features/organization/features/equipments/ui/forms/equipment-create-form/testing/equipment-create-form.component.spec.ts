@@ -64,6 +64,7 @@ describe('EquipmentCreateForm', () => {
       model: '',
       serialNumber: '',
       locationLabel: '',
+      facility: '',
     });
     await fixture.whenStable();
 

@@ -1,4 +1,6 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import type { RedirectFunction, Routes } from '@angular/router';
+import { Router } from '@angular/router';
 import { FacilityTreeStore } from './features/facilities/state';
 import {
   organizationAccessGuard,
@@ -9,6 +11,33 @@ import { organizationResolver, organizationTitleResolver } from './http/resolver
 import { ORGANIZATION_PERMISSION } from './models';
 import { ComplianceExplorerStore } from './state/compliance-explorer';
 import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
+
+/**
+ * Function redirectToOrganizationMembersTab
+ *
+ * @description
+ * Builds the `redirectTo` for the retired `/team` and `/teams` segments,
+ * absorbed as `OrganizationMembersPage` tabs: `/members?tab=roles|teams`,
+ * preserving every other query param the incoming URL carried — the same
+ * merge-preserving shape as `redirectToInterventionView`
+ * (`interventions.routes.ts`).
+ *
+ * @since 3.0.0
+ *
+ * @param {'roles' | 'teams'} tab - Which absorbed tab the retired segment maps to.
+ *
+ * @returns {RedirectFunction} A redirect resolving to the merged `UrlTree`.
+ */
+function redirectToOrganizationMembersTab(tab: 'roles' | 'teams'): RedirectFunction {
+  return (redirectData) => {
+    const router: Router = inject(Router);
+    const organizationId: string | null = redirectData.paramMap.get('organizationId');
+
+    return router.createUrlTree(['/organizations', organizationId, 'members'], {
+      queryParams: { ...redirectData.queryParams, tab },
+    });
+  };
+}
 
 /**
  * Constant ORGANIZATION_ROUTES
@@ -32,9 +61,16 @@ import { OrganizationAssetsPaneStore } from './state/organization-assets-pane';
  * explorer (`assets`), the maintenance schedule board (`maintenance`), the
  * four-eyes approvals inbox (`approvals`), the checklist template library
  * (`checklists`), the bulk CSV import surface (`imports`), the audit journal
- * (`audit`), the administration pages (members, team, settings) and a
- * member's profile are mounted today. `statistics` is a permanent redirect
- * to the landing page for old bookmarks and deep links.
+ * (`audit`), the administration pages (members, settings) and a member's
+ * profile are mounted today. `statistics` is a permanent redirect to the
+ * landing page for old bookmarks and deep links.
+ *
+ * `members` now also carries what used to be the `team` (roles &
+ * permissions) and `teams` routes, absorbed as `OrganizationMembersPage`
+ * tabs (`?tab=roles`, `?tab=teams`) — see the page's own `@description` for
+ * the per-tab permission story. `/team` and `/teams` stay addressable as
+ * functional redirects ({@link redirectToOrganizationMembersTab}) so
+ * existing links and bookmarks keep working.
  *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
@@ -157,6 +193,9 @@ export const ORGANIZATION_ROUTES: Routes = [
             permissions: [
               ORGANIZATION_PERMISSION.MEMBERS_READ,
               ORGANIZATION_PERMISSION.MEMBERS_MANAGE,
+              ORGANIZATION_PERMISSION.ROLES_READ,
+              ORGANIZATION_PERMISSION.ROLES_MANAGE,
+              ORGANIZATION_PERMISSION.TEAMS_READ,
             ],
             match: 'any',
           }),
@@ -170,32 +209,11 @@ export const ORGANIZATION_ROUTES: Routes = [
       },
       {
         path: 'team',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.ROLES_READ, ORGANIZATION_PERMISSION.ROLES_MANAGE],
-            match: 'any',
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-team-page/organization-team-page.component').then(
-            (m) => m.OrganizationTeamPage,
-          ),
-        title: $localize`:@@route.team:Team`,
-        data: { breadcrumb: $localize`:@@route.team:Team` },
+        redirectTo: redirectToOrganizationMembersTab('roles'),
       },
       {
         path: 'teams',
-        canActivate: [
-          organizationPermissionGuard({
-            permissions: [ORGANIZATION_PERMISSION.TEAMS_READ],
-          }),
-        ],
-        loadComponent: () =>
-          import('./ui/pages/organization-teams-page/organization-teams-page.component').then(
-            (m) => m.OrganizationTeamsPage,
-          ),
-        title: $localize`:@@route.teams:Teams`,
-        data: { breadcrumb: $localize`:@@route.teams:Teams` },
+        redirectTo: redirectToOrganizationMembersTab('teams'),
       },
       {
         path: 'settings',

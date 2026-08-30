@@ -1,9 +1,11 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import type {
   InterventionTemplateInstantiateRequest,
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
+import { InterventionCreateForm } from '../../../forms/intervention-create-form';
 import { InterventionCreateSheet } from '../intervention-create-sheet.component';
 
 const panel = (): HTMLElement | null =>
@@ -19,6 +21,9 @@ const templates: readonly InterventionTemplateOutput[] = [
 const pressEscape = (): void => {
   panel()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 };
+
+const unsavedChangesDialog = (): HTMLElement | null =>
+  document.querySelector('[data-testid="unsaved-changes-dialog"]');
 
 describe('InterventionCreateSheet', () => {
   let fixture: ComponentFixture<InterventionCreateSheet>;
@@ -201,5 +206,90 @@ describe('InterventionCreateSheet', () => {
     );
 
     expect(nameInput?.value).toBe('Roof round (copy)');
+  });
+
+  it('should confirm before an Escape throws away a drafted override', async () => {
+    const emitted: boolean[] = [];
+    fixture.componentInstance.visibleChange.subscribe((open: boolean): void => {
+      emitted.push(open);
+    });
+
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('templates', templates);
+    await fixture.whenStable();
+
+    fixture.componentInstance['selectedTemplateId'].set('template-1');
+    fixture.componentInstance['overrideName'].set('Riser round — north wing');
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+    expect(panel()).not.toBeNull();
+  });
+
+  it('should treat a bare template pick as nothing to lose, since re-picking is one click', async () => {
+    const emitted: boolean[] = [];
+    fixture.componentInstance.visibleChange.subscribe((open: boolean): void => {
+      emitted.push(open);
+    });
+
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('templates', templates);
+    await fixture.whenStable();
+
+    fixture.componentInstance['selectedTemplateId'].set('template-1');
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([false]);
+    expect(unsavedChangesDialog()).toBeNull();
+  });
+
+  it('should confirm before Cancel throws away a started form', async () => {
+    const emitted: boolean[] = [];
+    fixture.componentInstance.visibleChange.subscribe((open: boolean): void => {
+      emitted.push(open);
+    });
+
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    fixture.debugElement
+      .query(By.directive(InterventionCreateForm))
+      .componentInstance.dirtyChanged.emit(true);
+    await fixture.whenStable();
+
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-create-cancel"]')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+  });
+
+  it('should close once the planner confirms the discard', async () => {
+    const emitted: boolean[] = [];
+    fixture.componentInstance.visibleChange.subscribe((open: boolean): void => {
+      emitted.push(open);
+    });
+
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    fixture.componentInstance['overrideName'].set('Riser round — north wing');
+    await fixture.whenStable();
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+    await fixture.whenStable();
+
+    expect(emitted).toEqual([false]);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
   });
 });

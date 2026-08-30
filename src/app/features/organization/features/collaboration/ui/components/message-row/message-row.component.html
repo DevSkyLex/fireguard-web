@@ -14,7 +14,7 @@
           @if (entry.authorAvatarUrl; as avatarUrl) {
             <img hlmAvatarImage [src]="avatarUrl" alt="" />
           }
-          <span hlmAvatarFallback class="text-[11px]">{{ initials() }}</span>
+          <span hlmAvatarFallback class="text-[10px]">{{ initials() }}</span>
         </hlm-avatar>
       }
     </div>
@@ -174,7 +174,7 @@
         type="button"
         variant="ghost"
         size="sm"
-        class="h-6 w-fit gap-1 px-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+        class="h-6 w-fit gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground"
         [class.self-end]="entry.isOwn"
         data-testid="message-row-replies"
         (click)="threadRequested.emit(entry.id)"
@@ -203,7 +203,7 @@
           variant="ghost"
           size="sm"
           type="button"
-          class="h-6 gap-1 px-1.5 text-[11px]"
+          class="h-6 gap-1 px-1.5 text-xs"
           data-testid="message-row-retry"
           (click)="retried.emit(entry.id)"
         >

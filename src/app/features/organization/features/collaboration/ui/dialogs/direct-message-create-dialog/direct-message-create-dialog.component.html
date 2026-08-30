@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-dialog-content
-    class="sm:max-w-md"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-md"
     data-testid="direct-message-create-dialog"
     *hlmDialogPortal
   >
@@ -56,7 +56,7 @@
                   @if (member.avatarUrl; as avatarUrl) {
                     <img hlmAvatarImage [src]="avatarUrl" alt="" />
                   }
-                  <span hlmAvatarFallback class="text-[11px]">
+                  <span hlmAvatarFallback class="text-[10px]">
                     {{ initialsOf(member.displayName) }}
                   </span>
                 </hlm-avatar>
@@ -66,7 +66,7 @@
                     {{ member.displayName }}
                   </span>
                   @if (member.roleNames.length > 0) {
-                    <span class="truncate text-[11px] text-muted-foreground">
+                    <span class="truncate text-xs text-muted-foreground">
                       {{ member.roleNames.join(', ') }}
                     </span>
                   }

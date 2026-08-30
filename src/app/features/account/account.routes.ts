@@ -34,6 +34,15 @@ export const ACCOUNT_ROUTES: Routes = [
     data: { breadcrumb: $localize`:@@route.accountSecurity:Security` },
   },
   {
+    path: 'organizations',
+    loadComponent: () =>
+      import('./ui/pages/account-organizations-page/account-organizations-page.component').then(
+        (m) => m.AccountOrganizationsPage,
+      ),
+    title: $localize`:@@route.accountOrganizations:Your organizations`,
+    data: { breadcrumb: $localize`:@@route.accountOrganizations:Your organizations` },
+  },
+  {
     path: 'notifications/preferences',
     loadComponent: () =>
       import('./ui/pages/account-notification-preferences-page/account-notification-preferences-page.component').then(

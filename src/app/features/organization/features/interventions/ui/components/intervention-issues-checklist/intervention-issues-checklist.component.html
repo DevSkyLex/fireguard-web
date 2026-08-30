@@ -6,7 +6,9 @@
     data-testid="intervention-issues-checklist"
   >
     @if (blockers().length > 0 || secondaryIssues().length > 0) {
-      <h3 class="text-sm font-semibold" i18n="@@intervention.issues.title">Publication issues</h3>
+      <h3 class="text-sm font-medium text-muted-foreground" i18n="@@intervention.issues.title">
+        Publication issues
+      </h3>
     }
 
     @if (blockers().length > 0) {

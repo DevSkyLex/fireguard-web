@@ -10,7 +10,18 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  exhaustMap,
+  from,
+  map,
+  mergeMap,
+  pipe,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
+import { ConnectivityService } from '@core/connectivity';
 import {
   errorCallState,
   idleCallState,
@@ -26,6 +37,7 @@ import {
   InterventionService,
   InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionDuplicatePrefill,
   InterventionOutput,
@@ -169,6 +181,7 @@ function instantiateFailureMessage(error: StoreError): string {
 const INITIAL_INTERVENTION_STATE: InterventionState = {
   totalInterventions: 0,
   listCallState: idleCallState(),
+  servedFromLocalCache: false,
   createCallState: idleCallState<InterventionOutput>(),
   transitionCallState: idleCallState<InterventionOutput>(),
   transitioningInterventionIds: [],
@@ -362,6 +375,8 @@ export const InterventionStore = signalStore(
       dispatcher = inject<Dispatcher>(Dispatcher),
       interventionService = inject<InterventionService>(InterventionService),
       templateService = inject<InterventionTemplateService>(InterventionTemplateService),
+      connectivity = inject<ConnectivityService>(ConnectivityService),
+      offline = inject<InterventionOfflineService>(InterventionOfflineService),
     ) => {
       /**
        * Pre-transition entity snapshots keyed by intervention id, kept only
@@ -401,20 +416,51 @@ export const InterventionStore = signalStore(
               interventionService
                 .list(organizationId, { order: { createdAt: 'desc' }, ...options })
                 .pipe(
+                  map((collection) => ({ collection, fromCache: false })),
+                  /*
+                   * A lost connection falls back to this device's own snapshot
+                   * rather than to an error state. The detail workspace has
+                   * always been offline-first; the list had not, which made the
+                   * workspace unreachable by navigation the moment the network
+                   * dropped. Only a genuine network failure takes this branch —
+                   * a 4xx/5xx still surfaces as an error, since retrying local
+                   * data would hide a real refusal.
+                   */
+                  catchError((error: unknown) =>
+                    connectivity.isNetworkFailure(error)
+                      ? from(offline.listInterventions(organizationId)).pipe(
+                          map((interventions) => {
+                            if (interventions.length === 0) throw error;
+
+                            return {
+                              collection: {
+                                member: interventions,
+                                totalItems: interventions.length,
+                              },
+                              fromCache: true,
+                            };
+                          }),
+                        )
+                      : throwError(() => error),
+                  ),
                   tapResponse({
-                    next: (collection) => {
+                    next: ({ collection, fromCache }) => {
                       patchState(
                         store,
                         setAllEntities([...collection.member], { collection: 'intervention' }),
                         {
                           totalInterventions: collection.totalItems,
                           listCallState: successCallState(null),
+                          servedFromLocalCache: fromCache,
                         },
                       );
                     },
                     error: (error: unknown) => {
                       const storeError = toStoreError(error);
-                      patchState(store, { listCallState: errorCallState(storeError) });
+                      patchState(store, {
+                        listCallState: errorCallState(storeError),
+                        servedFromLocalCache: false,
+                      });
                       dispatcher.dispatch(
                         interventionStoreEvents.listFailed(
                           toStoreFailureEventPayload(storeError, 'Failed to load interventions'),

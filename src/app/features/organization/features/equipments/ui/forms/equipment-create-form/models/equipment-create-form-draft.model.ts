@@ -29,4 +29,7 @@ export interface EquipmentCreateFormDraft {
 
   /** Human-readable location inside the facility. */
   readonly locationLabel: string;
+
+  /** The owning facility's id, or `''` when the equipment starts unassigned. */
+  readonly facility: string;
 }

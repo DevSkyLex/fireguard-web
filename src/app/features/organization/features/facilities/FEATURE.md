@@ -13,6 +13,11 @@ This subfeature is responsible for:
 
 This subfeature does not own top-level organization selection. That remains in `features/organization`.
 
+**Creation is parent-scoped.** `FacilityCreatePage` binds `?parent=` and seeds
+the create form's parent combobox from it, so "New facility" from the asset
+explorer's selected site opens already nested under it. The seed writes the
+model, not the field, so the form does not start dirty.
+
 ## Entry Points
 
 - Routes: `facilities.routes.ts`

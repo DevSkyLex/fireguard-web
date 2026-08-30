@@ -1,0 +1,48 @@
+<hlm-alert-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-alert-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    *hlmAlertDialogPortal
+    data-testid="intervention-abandon-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@intervention.abandon.title">Abandon this intervention?</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.abandon.lead">
+        <span class="font-mono tabular-nums">FG-{{ request()?.number }}</span> leaves the workflow
+        for good. This cannot be undone.
+      </p>
+    </hlm-alert-dialog-header>
+
+    <ul class="flex flex-col divide-y divide-border text-sm text-muted-foreground">
+      <li class="py-2" i18n="@@intervention.abandon.consequenceReadOnly">
+        The record becomes read-only — no further edits, comments or field work.
+      </li>
+      <li class="py-2" i18n="@@intervention.abandon.consequenceNoPublish">
+        It can never be published, so nothing on it reaches the compliance record.
+      </li>
+      <li class="py-2" i18n="@@intervention.abandon.consequenceNoResume">
+        There is no way back: an abandoned intervention cannot be resumed or reopened.
+      </li>
+    </ul>
+
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="intervention-abandon-confirm"
+        [disabled]="pending()"
+        (click)="confirm()"
+      >
+        @if (pending()) {
+          <span i18n="@@intervention.abandon.pending">Abandoning…</span>
+        } @else {
+          <span i18n="@@intervention.abandon.accept">Abandon intervention</span>
+        }
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

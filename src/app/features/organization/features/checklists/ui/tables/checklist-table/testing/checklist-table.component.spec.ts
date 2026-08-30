@@ -60,11 +60,32 @@ describe('ChecklistTable', () => {
     expect(rows[0].textContent).toContain('1');
   });
 
-  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+  it('should draw skeleton rows on a first load, and no data rows', async () => {
     await render([], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
     expect(root().querySelectorAll('[data-testid="checklist-table-row"]').length).toBe(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    // The shared surface's loading contract is "first load only": flashing the
+    // table to skeletons on page 2 loses the operator's place for nothing.
+    await render([checklist()], true);
+
+    expect(root().querySelectorAll('[data-testid="checklist-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should mirror every row as a card, so the compact layout carries the same data', async () => {
+    await render([checklist(), checklist({ id: 'checklist-2', name: 'Fire drill' })]);
+
+    const cards: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="checklist-table-card"]',
+    );
+
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Fire Safety Inspection');
+    expect(cards[0].textContent).toContain('items');
   });
 
   it('should say so plainly when a page holds no rows', async () => {

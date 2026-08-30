@@ -1,12 +1,6 @@
 import { Component, viewChild, type Signal, type TemplateRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router, type Routes } from '@angular/router';
 import { PageActionsService } from '../page-actions.service';
-
-@Component({
-  template: '',
-})
-class TestPage {}
 
 @Component({
   imports: [],
@@ -22,27 +16,18 @@ class TemplatesHost {
     viewChild<TemplateRef<unknown>>('second');
 }
 
-const TEST_ROUTES: Routes = [
-  { path: '', component: TestPage },
-  { path: 'other', component: TestPage },
-];
-
 describe('PageActionsService', () => {
   let service: PageActionsService;
-  let router: Router;
   let templatesFixture: ComponentFixture<TemplatesHost>;
   let first: TemplateRef<unknown>;
   let second: TemplateRef<unknown>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PageActionsService, provideRouter(TEST_ROUTES)],
+      providers: [PageActionsService],
     });
 
     service = TestBed.inject(PageActionsService);
-    router = TestBed.inject(Router);
-
-    await router.navigateByUrl('/');
 
     templatesFixture = TestBed.createComponent(TemplatesHost);
     templatesFixture.detectChanges();
@@ -104,11 +89,10 @@ describe('PageActionsService', () => {
     expect(service.actions()).toBeNull();
   });
 
-  it('should clear the registered template on navigation start', async () => {
+  it('should keep the registered template across repeated registrations, unaware of navigation', () => {
+    service.register(first);
     service.register(first);
 
-    await router.navigateByUrl('/other');
-
-    expect(service.actions()).toBeNull();
+    expect(service.actions()).toBe(first);
   });
 });

@@ -74,7 +74,7 @@
       <div hlmInputGroupAddon align="block-end" class="justify-between">
         @if (remaining() !== null) {
           <span
-            class="text-[11px] tabular-nums"
+            class="text-xs tabular-nums"
             data-testid="message-composer-counter"
             [class.text-muted-foreground]="(remaining() ?? 0) >= 0"
             [class.text-destructive]="(remaining() ?? 0) < 0"
@@ -82,7 +82,7 @@
             {{ remaining() }}
           </span>
         } @else {
-          <span class="hidden items-center gap-1 text-[11px] text-muted-foreground sm:inline-flex">
+          <span class="hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
             <kbd hlmKbd>Enter</kbd>
             <span i18n="@@messages.composer.enterHint">to send</span>
           </span>

@@ -49,6 +49,12 @@ import {
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * `hlm-input-group` is spartan's own answer to "a control inside a field": it
+ * owns the border, the focus ring and the spacing, and the addon reserves real
+ * layout space rather than floating over the text. Positioning a button
+ * absolutely on top of a bare input looked identical until a long value
+ * scrolled under it.
  */
 @Component({
   selector: 'app-password-input',

@@ -119,7 +119,11 @@ describe('AuditEventTable', () => {
     ]);
     await fixture.whenStable();
 
-    const toggles = root().querySelectorAll('[data-testid="audit-event-table-expand"]');
+    // Scoped to the table: the card layout renders the same toggle a second
+    // time, which is the point of the shared surface, not a duplicate.
+    const toggles = root().querySelectorAll(
+      '[data-testid="audit-event-table"] [data-testid="audit-event-table-expand"]',
+    );
     const firstLabel = toggles[0].getAttribute('aria-label');
     const secondLabel = toggles[1].getAttribute('aria-label');
 
@@ -134,12 +138,45 @@ describe('AuditEventTable', () => {
     expect(root().textContent).toContain('No results.');
   });
 
-  it('should render skeleton rows while loading with no items yet', async () => {
+  it('should render skeleton rows on a first load, with no items yet', async () => {
     fixture.componentRef.setInput('items', []);
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
     expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    fixture.componentRef.setInput('items', [event()]);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    // The shared surface's loading contract is "first load only": flashing the
+    // journal to skeletons on page 2 loses the reader's place for nothing.
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should render the same event a second time as a card, under the row testid plus -card', async () => {
+    fixture.componentRef.setInput('items', [event(), event({ id: 'event-2' })]);
+    await fixture.whenStable();
+
+    // Both layouts stay mounted — a container query, not an `@if`, picks the
+    // visible one — so a card is a second render of the same row.
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row-card"]').length).toBe(2);
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(2);
+  });
+
+  it('should point the row toggle and the card toggle at two distinct metadata panels', async () => {
+    fixture.componentRef.setInput('items', [event()]);
+    await fixture.whenStable();
+
+    const toggles = root().querySelectorAll('[data-testid="audit-event-table-expand"]');
+    const controlled: readonly (string | null)[] = [...toggles].map((toggle) =>
+      toggle.getAttribute('aria-controls'),
+    );
+
+    expect(new Set(controlled).size).toBe(controlled.length);
   });
 });

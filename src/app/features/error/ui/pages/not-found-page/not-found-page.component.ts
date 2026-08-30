@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideCompass } from '@ng-icons/lucide';
+import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
 
 /**
@@ -23,7 +24,7 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-not-found-page',
-  imports: [RouterLink, NgIcon, HlmButton],
+  imports: [RouterLink, NgIcon, PageHeading, HlmButton],
   providers: [provideIcons({ lucideArrowLeft, lucideCompass })],
   templateUrl: './not-found-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,18 +2,18 @@ import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
   signal,
-  untracked,
-  viewChild,
   type InputSignal,
   type Signal,
   type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -23,6 +23,7 @@ import {
   lucideCircleAlert,
   lucideClock,
   lucideDownload,
+  lucideLock,
   lucideMapPin,
   lucidePackage,
   lucideSparkles,
@@ -171,6 +172,7 @@ interface MaintenanceScheduleFilters {
   ],
   providers: [
     provideIcons({
+      lucideLock,
       lucideCalendar,
       lucideCircleAlert,
       lucideClock,
@@ -196,6 +198,11 @@ export class MaintenanceSchedulesPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
+    this.store.isListForbidden(),
+  );
+
   //#endregion
 
   //#region Properties

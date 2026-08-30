@@ -1,27 +1,37 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideX } from '@ng-icons/lucide';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { ApprovalStatusTag } from '../../components/approval-status-tag';
 
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
+/** One literal Tailwind width per always-rendered column, for the shared surface's first-load skeleton. */
+const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
+  'w-32',
+  'w-24',
+  'w-24',
+  'w-20',
+  'w-20',
+  'w-16',
+];
 
 /** Action types that link their subject to a known detail route; every other type renders the bare reference. */
 const SUBJECT_ROUTE_BUILDERS: Readonly<
@@ -58,19 +68,20 @@ const SUBJECT_ROUTE_BUILDERS: Readonly<
  * {@link rejectAriaLabelOf}) rather than a static "Approve request" label
  * repeated on every row.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-approval-request-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
+    CollectionSurface,
     NgIcon,
     ApprovalStatusTag,
     HlmButton,
-    HlmSkeleton,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucideCheck, lucideX })],
@@ -170,8 +181,17 @@ export class ApprovalRequestTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. The trailing decide column only joins when {@link canDecide} renders it.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => (this.canDecide() ? [...SKELETON_COLUMN_WIDTHS, 'ms-auto w-16'] : SKELETON_COLUMN_WIDTHS),
+  );
   //#endregion
 
   //#region Methods

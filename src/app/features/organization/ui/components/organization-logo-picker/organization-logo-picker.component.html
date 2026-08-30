@@ -1,10 +1,10 @@
 <div class="flex items-center gap-4">
-  <hlm-avatar class="size-14 shrink-0 rounded-lg">
-    @if (logoUrl(); as url) {
-      <img hlmAvatarImage [src]="url" [alt]="organizationName()" />
-    }
-    <span hlmAvatarFallback class="rounded-lg text-sm font-semibold">{{ initials() }}</span>
-  </hlm-avatar>
+  <app-organization-avatar
+    size="lg"
+    [name]="organizationName()"
+    [logoUrl]="logoUrl()"
+    [initials]="initials()"
+  />
 
   <div class="flex flex-col gap-1.5">
     <div class="flex flex-wrap items-center gap-2">

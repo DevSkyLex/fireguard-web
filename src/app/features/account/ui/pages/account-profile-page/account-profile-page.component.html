@@ -50,12 +50,12 @@
 
       <section class="flex flex-col gap-3 border-t border-border pt-5">
         <header class="flex items-center justify-between gap-2">
-          <h3
-            class="text-sm font-semibold tracking-tight text-foreground"
+          <h2
+            class="text-sm font-medium text-muted-foreground"
             i18n="@@account.profile.detailsTitle"
           >
             Details
-          </h3>
+          </h2>
 
           @if (!editing()) {
             <button
@@ -110,12 +110,9 @@
       </section>
 
       <section class="flex flex-col gap-3 border-t border-border pt-5">
-        <h3
-          class="text-sm font-semibold tracking-tight text-foreground"
-          i18n="@@account.profile.accountTitle"
-        >
+        <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.profile.accountTitle">
           Account
-        </h3>
+        </h2>
 
         <dl class="flex flex-col gap-3 text-sm">
           <div class="flex flex-col gap-0.5">

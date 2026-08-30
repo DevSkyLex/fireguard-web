@@ -55,6 +55,7 @@ import { BrowserDownloadService } from '@features/organization/services/browser-
 import { resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -64,6 +65,7 @@ import { EquipmentMaintenanceHistory } from '../../components/equipment-maintena
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTags } from '../../components/equipment-tags';
 import { EquipmentAssignFacilityDialog } from '../../dialogs/equipment-assign-facility-dialog';
+import { EquipmentDecommissionDialog } from '../../dialogs/equipment-decommission-dialog';
 import type { EquipmentDetailTabId } from './models';
 
 /** How many facilities the assignment picker fetches — organizations rarely exceed this. */
@@ -135,10 +137,12 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
 @Component({
   selector: 'app-equipment-detail-page',
   imports: [
+    HlmCardTitle,
     NgIcon,
     RouterLink,
     EquipmentAssignFacilityDialog,
     EquipmentAttachments,
+    EquipmentDecommissionDialog,
     EquipmentInformationPanel,
     EquipmentMaintenanceHistory,
     EquipmentStatusTag,
@@ -260,6 +264,9 @@ export class EquipmentDetailPage {
 
   /** Whether the facility assignment dialog is open. */
   protected readonly assignFacilityDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Whether the decommission confirmation is open. */
+  protected readonly decommissionDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property canWrite
@@ -487,12 +494,30 @@ export class EquipmentDetailPage {
 
   /**
    * Method onDecommission
-   * @description Runs the secondary Decommission action, refusing it while another lifecycle write is in flight.
+   * @description
+   * Opens the Decommission confirmation rather than acting: the move is
+   * terminal — `primaryAction()` resolves to `null` afterwards, so nothing
+   * puts the record back in service — and `DESIGN.md` §Action Surfaces rule 5
+   * requires every irreversible action to confirm.
    * @access protected
-   * @since 1.0.0
+   * @since 2.0.0
    * @returns {void}
    */
   protected onDecommission(): void {
+    if (this.store.isChangingLifecycle()) return;
+
+    this.decommissionDialogVisible.set(true);
+  }
+
+  /**
+   * Method confirmDecommission
+   * @description Runs the confirmed Decommission, refusing it while another lifecycle write is in flight.
+   * @access protected
+   * @since 2.0.0
+   * @returns {void}
+   */
+  protected confirmDecommission(): void {
+    this.decommissionDialogVisible.set(false);
     this.runLifecycle(() => this.store.decommission(this.lifecycleArgs()));
   }
 

@@ -71,6 +71,15 @@ import {
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * Two things about the skip link. It precedes the sidebar because reaching the
+ * page from the keyboard would otherwise mean passing every navigation row on
+ * every navigation; its `href` keeps link semantics but its default is
+ * prevented, since `<base href="/">` makes a bare fragment resolve against the
+ * base and hard-navigate to the app root. And its padding sits behind
+ * `focus:` on purpose — `not-sr-only` resets `padding` and `margin` to 0 and
+ * outranks a bare `px-3`, which left the revealed link as bare text with the
+ * background hugging the glyphs.
  */
 @Component({
   selector: 'app-dashboard-layout',

@@ -38,6 +38,7 @@
         <div
           class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)]"
           data-testid="assets-tree-panel"
+          [class]="selectedFacilityId() === null ? '' : 'max-lg:hidden'"
         >
           <app-tree
             ariaLabel="Facility hierarchy"
@@ -56,7 +57,11 @@
           />
         </div>
 
-        <div class="min-h-0 flex-1">
+        <div
+          class="flex min-h-0 flex-1 flex-col gap-3"
+          data-testid="assets-detail-panel"
+          [class]="selectedFacilityId() === null ? 'max-lg:hidden' : ''"
+        >
           @if (selectedFacilityId() === null) {
             <app-empty-state
               icon="lucideNetwork"
@@ -66,6 +71,19 @@
               i18n-description="@@org.assets.selectPrompt.desc"
             />
           } @else {
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="w-fit gap-1.5 max-sm:min-h-11 lg:hidden"
+              data-testid="assets-back-to-tree"
+              (click)="clearFacilitySelection()"
+            >
+              <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+              <span i18n="@@org.assets.backToTree">Back to the hierarchy</span>
+            </button>
+
             <ng-container *ngTemplateOutlet="assetPanes" />
           }
         </div>
@@ -205,7 +223,7 @@
     @if (canReadEquipment()) {
       <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
         <div class="mb-2 flex items-center justify-between gap-2">
-          <h2 id="assets-equipment-title" class="text-sm font-medium text-foreground">
+          <h2 id="assets-equipment-title" class="text-sm font-medium text-muted-foreground">
             <ng-icon name="lucideWrench" class="me-1 align-text-bottom" aria-hidden="true" />
             <span i18n="@@org.assets.equipment.title">Equipment</span>
             <span class="text-muted-foreground tabular-nums">({{ pane.equipment().length }})</span>
@@ -291,7 +309,7 @@
 
     @if (canReadInspections()) {
       <section aria-labelledby="assets-inspections-title" data-testid="assets-inspections-pane">
-        <h2 id="assets-inspections-title" class="mb-2 text-sm font-medium text-foreground">
+        <h2 id="assets-inspections-title" class="mb-2 text-sm font-medium text-muted-foreground">
           <ng-icon name="lucideClipboardList" class="me-1 align-text-bottom" aria-hidden="true" />
           <span i18n="@@org.assets.inspections.title">Inspections</span>
           <span class="text-muted-foreground tabular-nums">({{ pane.inspections().length }})</span>
@@ -387,7 +405,7 @@
     class="flex flex-col gap-4"
     data-testid="assets-compliance-summary-pane"
   >
-    <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-foreground">
+    <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-muted-foreground">
       <ng-icon name="lucideShieldCheck" class="me-1 align-text-bottom" aria-hidden="true" />
       <span i18n="@@org.assets.compliance.summaryTitle">Compliance summary</span>
     </h2>
@@ -587,7 +605,7 @@
     class="flex flex-col gap-2"
     data-testid="assets-compliance-snapshots"
   >
-    <h2 id="assets-compliance-snapshots-title" class="text-sm font-medium text-foreground">
+    <h2 id="assets-compliance-snapshots-title" class="text-sm font-medium text-muted-foreground">
       <ng-icon name="lucideArchive" class="me-1 align-text-bottom" aria-hidden="true" />
       <span i18n="@@org.assets.compliance.snapshotsTitle">Archived registers</span>
     </h2>
@@ -702,6 +720,7 @@
       i18n-aria-label="@@facility.newButton"
       aria-label="New facility"
       [routerLink]="['/organizations', organizationId(), 'facilities', 'create']"
+      [queryParams]="createScopeParams('parent')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@facility.newButton">New facility</span>
@@ -716,6 +735,7 @@
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
       [routerLink]="['/organizations', organizationId(), 'equipments', 'create']"
+      [queryParams]="createScopeParams('facility')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>

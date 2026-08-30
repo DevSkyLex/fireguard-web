@@ -33,7 +33,13 @@ const EMPTY_VALUES: EquipmentCreateFormDraft = {
   model: '',
   serialNumber: '',
   locationLabel: '',
+  facility: '',
 };
+
+/** Builds the flat facility IRI the API validates (`^/api/facilities/{uuid}$`). */
+function facilityIri(facilityId: string): string {
+  return `/api/facilities/${facilityId}`;
+}
 
 /** Trims a free-text field, sending `undefined` rather than an empty string. */
 function trimmed(value: string): string | undefined {
@@ -93,6 +99,34 @@ export class EquipmentCreateForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property facilityOptions
+   * @readonly
+   * @description
+   * The organization's facilities, offered as the owning site. Empty while the
+   * page is still loading them, which simply leaves the field with only its
+   * "unassigned" choice rather than blocking the form.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   */
+  public readonly facilityOptions: InputSignal<
+    ReadonlyArray<{ readonly value: string; readonly label: string }>
+  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+
+  /**
+   * Property initialFacilityId
+   * @readonly
+   * @description
+   * The site the equipment starts in, seeded from the caller's `?facility=`.
+   * This is what lets "New equipment" from a selected site produce an assigned
+   * record instead of an orphan the operator must then assign by hand.
+   * @access public
+   * @since 2.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly initialFacilityId: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs
@@ -182,6 +216,10 @@ export class EquipmentCreateForm {
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
+
+  /** Names the picked site on the closed select trigger. */
+  protected readonly facilityLabelOf: (value: string) => string = (value) =>
+    this.facilityOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
   //#region Constructor
@@ -197,6 +235,23 @@ export class EquipmentCreateForm {
       const dirty: boolean = this.createForm().dirty();
 
       untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+
+    /*
+     * Seeds the site once, from the caller's `?facility=`. It writes the model
+     * rather than the field so the form does not start dirty: arriving with a
+     * site preselected is not an edit, and the unsaved-changes guard must not
+     * fire on a form nobody has touched.
+     */
+    effect((): void => {
+      const facilityId: string | null = this.initialFacilityId();
+      if (!facilityId) return;
+
+      untracked((): void => {
+        if (this.model().facility === facilityId) return;
+
+        this.model.update((draft) => ({ ...draft, facility: facilityId }));
+      });
     });
   }
   //#endregion
@@ -234,6 +289,7 @@ export class EquipmentCreateForm {
       model: trimmed(draft.model),
       serialNumber: trimmed(draft.serialNumber),
       locationLabel: trimmed(draft.locationLabel),
+      facility: draft.facility === '' ? undefined : facilityIri(draft.facility),
     });
   }
   //#endregion

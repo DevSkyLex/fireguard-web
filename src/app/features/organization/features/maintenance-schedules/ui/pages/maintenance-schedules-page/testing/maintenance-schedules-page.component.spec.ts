@@ -117,6 +117,7 @@ describe('MaintenanceSchedulesPage', () => {
             totalSchedules,
             isLoading: signal(false),
             hasListError: signal(false),
+            isListForbidden: signal(false),
             isOverriding: signal(false),
             isGeneratingCampaign: signal(false),
             campaignError: signal(null),

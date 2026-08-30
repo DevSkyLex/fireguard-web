@@ -1,0 +1,7 @@
+@for (row of rowIndexes(); track row) {
+  <tr hlmTableRow aria-hidden="true">
+    @for (width of effectiveColumns(); track $index) {
+      <td hlmTableCell><hlm-skeleton [class]="'h-4 ' + width" /></td>
+    }
+  </tr>
+}

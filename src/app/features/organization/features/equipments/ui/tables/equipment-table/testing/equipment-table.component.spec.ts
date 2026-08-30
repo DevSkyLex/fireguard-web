@@ -64,7 +64,9 @@ describe('EquipmentTable', () => {
   it('should link the type cell to the equipment record', async () => {
     await render([equipment()]);
 
-    const link: HTMLAnchorElement | null = root().querySelector('a');
+    const link: HTMLAnchorElement | null = root().querySelector(
+      '[data-testid="equipment-table"] a',
+    );
 
     expect(link?.getAttribute('href')).toBe('/organizations/org-1/equipments/equipment-1');
   });
@@ -84,7 +86,18 @@ describe('EquipmentTable', () => {
     expect(root().textContent).toContain('Unassigned');
   });
 
-  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+  it('should render one card per equipment alongside the table', async () => {
+    await render([equipment(), equipment({ id: 'equipment-2', type: 'smoke_detector' })]);
+
+    const cards: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="equipment-table-card"]',
+    );
+
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('SN-1');
+  });
+
+  it('should draw placeholder rows on a first load, and no data rows', async () => {
     await render([], true);
 
     const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
@@ -94,6 +107,13 @@ describe('EquipmentTable', () => {
     expect(
       [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
     ).toBe(true);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    await render([equipment()], true);
+
+    expect(root().querySelectorAll('[data-testid="equipment-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   it('should say so plainly when there is nothing to show', async () => {

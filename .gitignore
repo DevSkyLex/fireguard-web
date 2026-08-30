@@ -65,3 +65,6 @@ __pycache__/
 
 # Playwright MCP (traces de debug, machine-local)
 /.playwright-mcp/
+
+# Playwright visual-proof output, produced on demand and never committed.
+e2e-artifacts/

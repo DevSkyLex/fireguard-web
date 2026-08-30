@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +15,7 @@ import type {
   OrganizationInvitationOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -22,7 +24,6 @@ import {
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICONS } from './constants/organization-invitation-status-tag-icons.constants';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from './constants/organization-invitation-status-tag-severity.constants';
@@ -31,8 +32,15 @@ import {
   type OrganizationInvitationTableRow,
 } from './models';
 
-/** Placeholder rows drawn while the collection loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
+/** One literal Tailwind width per rendered column, for the shared surface's first-load skeleton. */
+const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
+  'w-40',
+  'w-24',
+  'w-20',
+  'w-20',
+  'w-20',
+  'ms-auto size-6',
+];
 
 /**
  * Component OrganizationInvitationTable
@@ -51,18 +59,19 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * page's single `mutationCallState` is in flight, since the store carries no
  * per-invitation request state.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-invitation-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
+    CollectionSurface,
     NgIcon,
     HlmBadge,
     HlmButton,
-    HlmSkeleton,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
@@ -193,8 +202,8 @@ export class OrganizationInvitationTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: ReadonlyArray<string> = SKELETON_COLUMN_WIDTHS;
 
   /** Role names keyed by id, for the role-column lookup. */
   private readonly roleNameById: Signal<ReadonlyMap<string, string>> = computed(

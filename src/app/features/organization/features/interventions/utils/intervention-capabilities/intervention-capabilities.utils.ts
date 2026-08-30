@@ -9,6 +9,7 @@ import type {
   InterventionTransitionCapability,
 } from '@features/organization/features/interventions/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { resolveCommandTransitionTarget } from '../intervention-command-target/intervention-command-target.utils';
 import {
   capabilityForTransition,
   resolveAllowedTransitions,
@@ -69,12 +70,9 @@ export function createInterventionCapabilities(
 
   const commandTransitionTarget: Signal<InterventionStatus | null> =
     computed<InterventionStatus | null>(() => {
-      const current: InterventionPhase = phase();
+      const intervention = deps.intervention();
 
-      if (current === 'prepare') return 'planned';
-      if (current === 'execute') return 'submitted';
-
-      return null;
+      return intervention ? resolveCommandTransitionTarget(intervention) : null;
     });
 
   const canSubmit: Signal<boolean> = computed<boolean>(() => actions()?.canSubmit === true);

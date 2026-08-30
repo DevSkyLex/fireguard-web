@@ -192,9 +192,10 @@ describe('OrganizationMemberTable', () => {
       expect(headerCheckbox?.getAttribute('aria-checked')).toBe('mixed');
     });
 
-    it('should leave the header checkbox unchecked and non-indeterminate when there are no rows', async () => {
+    it('should leave the header checkbox unchecked and non-indeterminate on a first load, before any row exists', async () => {
       await createTable([]);
       fixture.componentRef.setInput('canRemove', true);
+      fixture.componentRef.setInput('loading', true);
       await fixture.whenStable();
 
       const headerCheckbox: Element | null = root().querySelector(
@@ -202,6 +203,16 @@ describe('OrganizationMemberTable', () => {
       );
 
       expect(headerCheckbox?.getAttribute('aria-checked')).toBe('false');
+    });
+
+    it('should render no header checkbox at all once the surface has swapped the table for its empty slot', async () => {
+      await createTable([]);
+      fixture.componentRef.setInput('canRemove', true);
+      await fixture.whenStable();
+
+      expect(
+        root().querySelector('[data-testid="organization-member-table-select-all"]'),
+      ).toBeNull();
     });
   });
 
@@ -245,27 +256,39 @@ describe('OrganizationMemberTable', () => {
     });
   });
 
+  describe('cards', () => {
+    it('should render the same member a second time as a card, under the row testid plus -card', async () => {
+      await createTable([member({ id: 'a' }), member({ id: 'b' })]);
+
+      // Both layouts stay mounted — a container query, not an `@if`, picks the
+      // visible one — so the card is a second render of the same row, never a
+      // duplicate to assert row counts against.
+      expect(
+        root().querySelectorAll('[data-testid="organization-member-table-row-card"]'),
+      ).toHaveLength(2);
+      expect(root().querySelectorAll('[data-testid="organization-member-table-row"]')).toHaveLength(
+        2,
+      );
+    });
+  });
+
   describe('empty', () => {
-    it('should say so plainly, spanning every rendered column, without the checkbox column', async () => {
+    it('should replace the table with a plain message once loaded with no members', async () => {
       await createTable([]);
       fixture.componentRef.setInput('canRemove', false);
       await fixture.whenStable();
 
-      const cell: HTMLTableCellElement | null = root().querySelector('tbody td');
-
       expect(root().textContent).toContain('No results.');
-      expect(cell?.getAttribute('colspan')).toBe('6');
+      expect(root().querySelector('[data-testid="organization-member-table"]')).toBeNull();
     });
 
-    it('should span the checkbox column too once canRemove is granted', async () => {
+    it('should say the same with the checkbox column granted', async () => {
       await createTable([]);
       fixture.componentRef.setInput('canRemove', true);
       await fixture.whenStable();
 
-      const cell: HTMLTableCellElement | null = root().querySelector('tbody td');
-
       expect(root().textContent).toContain('No results.');
-      expect(cell?.getAttribute('colspan')).toBe('7');
+      expect(root().querySelector('[data-testid="organization-member-table"]')).toBeNull();
     });
 
     it('should never render the empty message while loading', async () => {

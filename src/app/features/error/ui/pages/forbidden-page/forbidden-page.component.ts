@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLogOut, lucideShieldX } from '@ng-icons/lucide';
 import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth/ports';
+import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
 
 /**
@@ -22,7 +23,7 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-forbidden-page',
-  imports: [RouterLink, NgIcon, HlmButton],
+  imports: [RouterLink, NgIcon, PageHeading, HlmButton],
   providers: [provideIcons({ lucideLogOut, lucideShieldX })],
   templateUrl: './forbidden-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

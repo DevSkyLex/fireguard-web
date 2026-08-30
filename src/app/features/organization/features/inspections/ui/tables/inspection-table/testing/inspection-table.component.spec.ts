@@ -73,7 +73,9 @@ describe('InspectionTable', () => {
   it('should link the date cell to the inspection record', async () => {
     await render([inspection()]);
 
-    const link: HTMLAnchorElement | null = root().querySelector('a');
+    const link: HTMLAnchorElement | null = root().querySelector(
+      '[data-testid="inspection-table"] a',
+    );
 
     expect(link?.getAttribute('href')).toBe('/organizations/org-1/inspections/inspection-1');
   });
@@ -92,7 +94,19 @@ describe('InspectionTable', () => {
     expect(row?.textContent).toContain('3');
   });
 
-  it('should draw skeleton rows while loading with nothing loaded yet', async () => {
+  it('should render one card per inspection alongside the table', async () => {
+    await render([inspection(), inspection({ id: 'inspection-2', result: 'fail' })]);
+
+    const cards: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="inspection-table-card"]',
+    );
+
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Pass');
+    expect(cards[1].textContent).toContain('Fail');
+  });
+
+  it('should draw placeholder rows on a first load, and no data rows', async () => {
     await render([], true);
 
     const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
@@ -102,6 +116,13 @@ describe('InspectionTable', () => {
     expect(
       [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
     ).toBe(true);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    await render([inspection()], true);
+
+    expect(root().querySelectorAll('[data-testid="inspection-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   it('should say so plainly when there is nothing to show', async () => {

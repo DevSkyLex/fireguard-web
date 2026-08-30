@@ -36,23 +36,19 @@
         <p id="intervention-command-reason" class="text-xs text-muted-foreground">{{ reason }}</p>
       }
     }
+
+    @if (secondaryAction(); as secondary) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11"
+        data-testid="intervention-command-secondary"
+        [disabled]="secondary.disabled || busy()"
+        (click)="secondaryInvoked.emit()"
+      >
+        {{ secondary.label }}
+      </button>
+    }
   </div>
 </div>
-
-@if (showReviewNote()) {
-  <div
-    hlmAlert
-    class="border-destructive/30 bg-destructive/10"
-    data-testid="intervention-detail-review-note"
-  >
-    <ng-icon name="lucideMessageSquareQuote" class="text-destructive" aria-hidden="true" />
-    <p
-      hlmAlertTitle
-      class="text-sm text-destructive"
-      i18n="@@intervention.detail.changesRequestedBanner"
-    >
-      Changes requested by the reviewer
-    </p>
-    <p hlmAlertDescription class="text-sm text-foreground">{{ reviewNote() }}</p>
-  </div>
-}

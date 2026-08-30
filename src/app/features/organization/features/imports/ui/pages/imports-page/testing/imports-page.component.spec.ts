@@ -66,6 +66,7 @@ describe('ImportsPage', () => {
             totalJobs: signal(1),
             isLoading: signal(false),
             hasListError: signal(false),
+            isListForbidden: signal(false),
             isCreating: signal(false),
             createError: signal<string | null>(null),
           },

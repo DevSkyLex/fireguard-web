@@ -141,7 +141,7 @@
             class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
             data-testid="intervention-calendar-agenda-group"
           >
-            <h2 class="text-sm font-semibold text-foreground">{{ group.label }}</h2>
+            <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
             <app-intervention-calendar-entry-list
               [items]="group.items"
               [organizationId]="organizationId()"

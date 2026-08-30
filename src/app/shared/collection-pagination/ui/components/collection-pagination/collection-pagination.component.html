@@ -1,5 +1,5 @@
 <div
-  class="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+  class="relative z-10 flex shrink-0 flex-col gap-2 bg-background pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
 >
   <span
     class="text-sm text-muted-foreground"
@@ -15,7 +15,7 @@
       <hlm-select class="inline-block" [value]="pageSize()" (valueChange)="changePageSize($event)">
         <hlm-select-trigger
           [buttonId]="testId('page-size')"
-          class="me-1 inline-flex h-8 w-20 max-sm:h-11"
+          class="me-1 inline-flex h-8 w-20 max-sm:h-11 max-sm:data-[size=default]:h-11"
           [attr.data-testid]="testId('page-size')"
         >
           <hlm-select-value />

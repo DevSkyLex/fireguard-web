@@ -26,27 +26,64 @@ e2e/
     fixtures/inspection-fixtures.ts   # InspectionOutput factories
     mocks/api-mock.ts                 # ApiMock — page.route() wrapper, one method per endpoint
     pages/*.page.ts                   # page objects — selectors + user-intent methods
-    helpers/appearance.ts             # dark-theme cookie, overflow assertion, console-error collector
-  organization/                       # /organizations/:id/{equipments,facilities,inspections} specs
+    helpers/appearance.ts             # dark-theme cookie, the two overflow assertions, console-error collector
+    helpers/offline.ts                # perceived-connectivity toggle + IndexedDB outbox read/seed
+  maintenance/                        # /maintenance + 503 interceptor specs
   onboarding/                         # /onboarding wizard + guard-chain specs
+  organization/                       # every /organizations/:id/... spec
 ```
 
 ## Coverage scope
 
-Covered: the equipments/facilities/inspections list, create and detail
-routes (search/filters/pagination, required-field validation, status-tag
-icon+label rendering, in-place edit panels, the facility hierarchy chart,
-`/edit` redirects), and the onboarding wizard's first step plus the
+27 specs, listed by what they drive rather than summarised — the previous
+version of this section claimed auth, dashboard, account and interventions were
+uncovered, which stopped being true several passes ago.
+
+Covered: the organization dashboard; the interventions list, board, calendar,
+recurrences, tabs, bulk transitions, discussion and detail issues/checklist; the
+equipments, facilities (+ map), inspections, checklists, approvals, audit,
+imports and maintenance-schedules collections; the assets explorer; members,
+team (roles), settings and the organization switcher; channels; invitation
+accept; the maintenance route; and the onboarding wizard's first step plus the
 `onboardingGuard` / `onboardingRequiredGuard` mutual gate.
 
-**This harness was rebuilt from a clean slate.** The previous suite (session
-mocks, page objects, auth/dashboard/interventions specs) was deleted wholesale
-in `3fc4e588` (the spartan/ui migration) and never restored. Only the pieces
-this pass needed were rebuilt; auth, dashboard, account, organization-access
-and interventions coverage — and the `support/helpers/offline.ts` +
-IndexedDB-outbox machinery the old interventions suite depended on — do not
-exist here and should be treated as a separate restoration task before this
-suite is considered at parity with what shipped before.
+Not covered, and worth stating plainly: **`auth` (8 pages), `account` (4 pages)
+and `error` (3 pages) have no spec at all**; onboarding stops at step 1 of 5;
+`approvals`, `audit`, `checklists`, `imports` and `maintenance-schedules` have a
+filter-bar spec only — no table body, row actions, create/edit, empty or error
+state; and `calendar-page`, `inspection-analytics-page`,
+`organization-teams-page`, `organization-member-profile-page`,
+`direct-messages-page`, `direct-conversation-page` and `saved-messages-page`
+have none.
+
+`support/helpers/offline.ts` was deleted wholesale in `3fc4e588` (the spartan/ui
+migration) along with the rest of the old suite, and has now been restored from
+that commit's parent after checking it still matches the app: same database
+names (`fireguard-field-interventions`, `fireguard-messaging`), same seven
+object stores, and `ConnectivityService` still deriving from `navigator.onLine`
+plus the `online`/`offline` events. The offline **specs** it served were not
+restored — the helper is the tool, not the coverage.
+
+## Responsive and touch
+
+Two different questions, two different tools; using the wrong one is how a
+suite goes green on an unusable screen.
+
+- **Viewport** — `page.setViewportSize({ width: 375, height: 800 })` inside a
+  desktop project. Twelve specs already do this. It resizes and nothing else.
+- **Device** — a spec named `*.mobile.spec.ts` runs under the `Mobile Chrome`
+  and `Mobile Safari` projects, and **only** under them: the desktop projects
+  ignore that suffix. Those projects bring what a viewport call cannot —
+  `hasTouch`, `isMobile`, `pointer: coarse` and a mobile user agent — so any
+  assertion about tap targets, touch-only affordances or hover-gated UI belongs
+  in one.
+
+`expectNoHorizontalOverflow(page)` proves the _document_ does not scroll
+sideways. It cannot see a table scrolling inside its own `overflow-x-auto`
+container, so it passes on a collection the operator cannot read. Pair it with
+`expectNoInternalOverflow(locator)` pointed at the element that owns the
+overflow — for a spartan table that is `[data-slot="table-container"]`, not the
+page wrapper around it.
 
 ## Adding a test for a new page
 

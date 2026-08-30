@@ -327,6 +327,31 @@ export class InterventionOutboxRepository {
   }
 
   /**
+   * Method listAllOutbox
+   * @method listAllOutbox
+   *
+   * @description
+   * Lists every queued operation on the device, newest last, whatever the
+   * intervention it belongs to. The outbox is device-global, so a queue the
+   * user can read has to be too — {@link listOutbox} answers per intervention
+   * and cannot show a field agent everything that is still waiting.
+   *
+   * @access public
+   * @since 7.0.0
+   *
+   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every queued operation.
+   */
+  public async listAllOutbox(): Promise<readonly InterventionOutboxOperation[]> {
+    if (!this.database.browser) return [];
+    await this.database.ensureOwnerBound();
+    const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    return operations.toSorted(
+      (left, right) =>
+        left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
+    );
+  }
+
+  /**
    * Method attachmentQueueUsage
    * @method attachmentQueueUsage
    *

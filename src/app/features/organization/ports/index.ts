@@ -6,3 +6,5 @@ export { MEMBER_DIRECTORY_PORT } from './member-directory';
 export type { MemberDirectoryPort } from './member-directory';
 export { REGIONAL_FORMATTING_PORT } from './regional-formatting';
 export type { RegionalFormattingPort } from './regional-formatting';
+export { MY_ORGANIZATIONS_PORT } from './my-organizations';
+export type { MyOrganizationsPort } from './my-organizations';

@@ -6,6 +6,8 @@
   <div hlmCard class="max-w-xl">
     <div hlmCardContent>
       <app-equipment-create-form
+        [facilityOptions]="facilityOptions()"
+        [initialFacilityId]="facility() ?? null"
         [pending]="store.isCreating()"
         [serverError]="store.createError()"
         (submitted)="onSubmitted($event)"

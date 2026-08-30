@@ -1,5 +1,9 @@
 <hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
-  <hlm-dialog-content class="sm:max-w-md" data-testid="intervention-assign-dialog" *hlmDialogPortal>
+  <hlm-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-md"
+    data-testid="intervention-assign-dialog"
+    *hlmDialogPortal
+  >
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@intervention.assign.header">Assign a responsible</h3>
       <p hlmDialogDescription>{{ description() }}</p>

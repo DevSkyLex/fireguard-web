@@ -1,141 +1,147 @@
-<div class="h-full w-full overflow-hidden rounded-md border border-border">
-  <div
-    hlmTableContainer
-    class="h-full overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-    tabindex="0"
-    role="region"
-    aria-labelledby="equipment-table-caption"
-  >
-    <table hlmTable data-testid="equipment-table">
-      <caption
-        hlmTableCaption
-        id="equipment-table-caption"
-        class="sr-only"
-        i18n="@@equipment.table.title"
+<app-collection-surface
+  caption="Equipments"
+  i18n-caption="@@equipment.table.title"
+  testId="equipment-table"
+  [loading]="loading()"
+  [rowCount]="items().length"
+  [columnCount]="columnCount()"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="equipment-table-sort-type"
+          (click)="sortChanged.emit('type')"
+        >
+          <span i18n="@@equipment.table.colEquipment">Equipment</span>
+          <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('brand')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="equipment-table-sort-brand"
+          (click)="sortChanged.emit('brand')"
+        >
+          <span i18n="@@equipment.table.colBrandModel">Brand / model</span>
+          <ng-icon [name]="sortIcon('brand')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          data-testid="equipment-table-sort-status"
+          (click)="sortChanged.emit('status')"
+        >
+          <span i18n="@@equipment.table.colStatus">Status</span>
+          <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
+        </button>
+      </th>
+      <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
+      <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
+    </tr>
+  </ng-container>
+
+  <ng-container surfaceRows>
+    @for (item of items(); track item.id) {
+      <tr hlmTableRow data-testid="equipment-table-row">
+        <td hlmTableCell class="whitespace-normal">
+          <a
+            class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+            >{{ typeLabelOf(item.type) }}</a
+          >
+          @if (item.serialNumber) {
+            <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
+          }
+        </td>
+
+        <td hlmTableCell class="whitespace-normal text-muted-foreground">
+          {{ brandModelOf(item) }}
+        </td>
+
+        <td hlmTableCell>
+          <app-equipment-status-tag kind="status" [value]="item.status" />
+        </td>
+
+        <td hlmTableCell>
+          <app-equipment-status-tag
+            kind="maintenanceDueStatus"
+            [value]="item.maintenanceDueStatus"
+          />
+        </td>
+
+        <td hlmTableCell class="whitespace-normal">
+          @if (item.facilityName; as facility) {
+            <span class="font-medium text-foreground">{{ facility }}</span>
+            @if (item.locationLabel) {
+              <span class="block text-sm text-muted-foreground">{{ item.locationLabel }}</span>
+            }
+          } @else if (item.locationLabel) {
+            <span class="text-muted-foreground">{{ item.locationLabel }}</span>
+          } @else {
+            <span class="text-muted-foreground" i18n="@@equipment.unassigned">Unassigned</span>
+          }
+        </td>
+      </tr>
+    }
+  </ng-container>
+
+  <ng-container surfaceCards>
+    @for (item of items(); track item.id) {
+      <div
+        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        data-testid="equipment-table-card"
       >
-        Equipments
-      </caption>
-
-      <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-        <tr hlmTableRow>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="equipment-table-sort-type"
-              (click)="sortChanged.emit('type')"
-            >
-              <span i18n="@@equipment.table.colEquipment">Equipment</span>
-              <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('brand')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="equipment-table-sort-brand"
-              (click)="sortChanged.emit('brand')"
-            >
-              <span i18n="@@equipment.table.colBrandModel">Brand / model</span>
-              <ng-icon [name]="sortIcon('brand')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="-ms-2 h-8 px-2 max-sm:min-h-11"
-              data-testid="equipment-table-sort-status"
-              (click)="sortChanged.emit('status')"
-            >
-              <span i18n="@@equipment.table.colStatus">Status</span>
-              <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
-            </button>
-          </th>
-          <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
-          <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
-        </tr>
-      </thead>
-
-      <tbody hlmTableBody>
-        @if (loading() && items().length === 0) {
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-32" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-20" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-            </tr>
+        <div class="flex min-w-0 flex-col">
+          <a
+            class="line-clamp-2 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+            >{{ typeLabelOf(item.type) }}</a
+          >
+          @if (item.serialNumber) {
+            <span class="text-xs text-muted-foreground">{{ item.serialNumber }}</span>
           }
-        } @else {
-          @for (item of items(); track item.id) {
-            <tr hlmTableRow data-testid="equipment-table-row">
-              <td hlmTableCell class="whitespace-normal">
-                <a
-                  class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  [routerLink]="[...detailRouteBase(), item.id]"
-                  >{{ typeLabelOf(item.type) }}</a
-                >
-                @if (item.serialNumber) {
-                  <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
-                }
-              </td>
+        </div>
 
-              <td hlmTableCell class="whitespace-normal text-muted-foreground">
-                {{ brandModelOf(item) }}
-              </td>
+        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+          <app-equipment-status-tag kind="status" [value]="item.status" />
+          <app-equipment-status-tag
+            kind="maintenanceDueStatus"
+            [value]="item.maintenanceDueStatus"
+          />
 
-              <td hlmTableCell>
-                <app-equipment-status-tag kind="status" [value]="item.status" />
-              </td>
+          <span class="truncate">
+            @if (item.facilityName ?? item.locationLabel; as location) {
+              {{ location }}
+            } @else {
+              <span i18n="@@equipment.unassigned">Unassigned</span>
+            }
+          </span>
+        </div>
+      </div>
+    }
+  </ng-container>
 
-              <td hlmTableCell>
-                <app-equipment-status-tag
-                  kind="maintenanceDueStatus"
-                  [value]="item.maintenanceDueStatus"
-                />
-              </td>
-
-              <td hlmTableCell class="whitespace-normal">
-                @if (item.facilityName; as facility) {
-                  <span class="font-medium text-foreground">{{ facility }}</span>
-                  @if (item.locationLabel) {
-                    <span class="block text-sm text-muted-foreground">{{
-                      item.locationLabel
-                    }}</span>
-                  }
-                } @else if (item.locationLabel) {
-                  <span class="text-muted-foreground">{{ item.locationLabel }}</span>
-                } @else {
-                  <span class="text-muted-foreground" i18n="@@equipment.unassigned"
-                    >Unassigned</span
-                  >
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr hlmTableRow>
-              <td
-                hlmTableCell
-                class="h-24 text-center text-muted-foreground"
-                [attr.colspan]="columnCount()"
-                i18n="@@equipment.table.noResults"
-              >
-                No results.
-              </td>
-            </tr>
-          }
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
+  <p
+    surfaceEmpty
+    class="p-6 text-center text-sm text-muted-foreground"
+    i18n="@@equipment.table.noResults"
+  >
+    No results.
+  </p>
+</app-collection-surface>

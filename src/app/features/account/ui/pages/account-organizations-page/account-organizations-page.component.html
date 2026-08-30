@@ -1,0 +1,79 @@
+<div id="account-organizations" class="flex flex-col gap-4 p-4 md:p-6">
+  @if (myOrganizations.isLoadingOrganizations() && myOrganizations.organizations().length === 0) {
+    <div
+      class="flex max-w-2xl flex-col gap-3"
+      role="status"
+      aria-label="Loading your organizations"
+      i18n-aria-label="@@account.organizations.loadingAria"
+    >
+      <hlm-skeleton class="h-16 w-full" />
+      <hlm-skeleton class="h-16 w-full" />
+    </div>
+  } @else if (isEmpty()) {
+    <app-empty-state
+      icon="lucideBuilding2"
+      title="No organizations"
+      i18n-title="@@account.organizations.emptyTitle"
+      description="You are not a member of any organization yet."
+      i18n-description="@@account.organizations.emptyDescription"
+    />
+  } @else {
+    <ul hlmItemGroup class="max-w-2xl">
+      @for (organization of myOrganizations.organizations(); track organization.id) {
+        <li
+          hlmItem
+          variant="outline"
+          size="sm"
+          class="rounded-md"
+          data-testid="account-organizations-row"
+        >
+          <app-organization-avatar
+            size="sm"
+            [name]="organization.name"
+            [logoUrl]="organization.logoUrl"
+          />
+
+          <div hlmItemContent>
+            <span hlmItemTitle class="flex items-center gap-2">
+              {{ organization.name }}
+              @if (isActive(organization)) {
+                <span hlmBadge variant="outline" data-testid="account-organizations-active-badge">
+                  <span i18n="@@account.organizations.activeBadge">Currently open</span>
+                </span>
+              }
+            </span>
+          </div>
+
+          <div hlmItemActions>
+            @if (organization.isOwner) {
+              <span class="text-xs text-muted-foreground" i18n="@@account.organizations.ownerNote">
+                You own this organization
+              </span>
+            } @else {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="gap-2 max-sm:min-h-11"
+                data-testid="account-organizations-leave-open"
+                (click)="openLeaveDialog(organization.id)"
+              >
+                <span i18n="@@account.organizations.leaveOpen">Leave</span>
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <app-account-leave-organization-dialog
+    [visible]="confirmingLeaveId() !== null"
+    [organizationName]="leavingOrganizationName()"
+    [pending]="myOrganizations.isLeaving()"
+    [error]="myOrganizations.leaveError()?.message ?? null"
+    (visibleChange)="onLeaveDialogVisibleChange($event)"
+    (confirmed)="confirmLeave()"
+  />
+</div>

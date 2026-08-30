@@ -8,9 +8,10 @@ import type { EquipmentStatusTagSeverity } from '@features/organization/features
  * the pin itself stays a neutral `bg-background` disc, per `DESIGN.md`'s
  * glyph rule (status is never colour-only: the icon and the accessible name
  * both already carry the status). The same literal Tailwind palette pairs
- * `EQUIPMENT_STATUS_TAG_ICON_CLASS` (equipments feature) uses — the theme
- * carries no `--success`/`--warning` token, so a private literal pair is the
- * sanctioned exception (`ARCHITECTURE.md` §2.8).
+ * `EQUIPMENT_STATUS_TAG_ICON_CLASS` (equipments feature) uses — `success` is
+ * the one severity with a theme token (`--success`, so no `dark:` twin), and
+ * the literal pairs that remain are the sanctioned exception
+ * (`ARCHITECTURE.md` §2.8).
  *
  * @since 1.0.0
  *

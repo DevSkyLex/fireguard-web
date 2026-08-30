@@ -233,6 +233,28 @@ export interface OrganizationOutputFixture {
   readonly memberCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+
+  /*
+   * Optional on the wire, and optional here for the same reason: the API omits
+   * them on a bare organization read and fills them on the ones a settings or
+   * billing surface asks for. They are declared rather than left to the
+   * `Partial` override because a spec that passes `planName` is describing a
+   * real field of `OrganizationOutput`, not inventing one — until this list
+   * existed, `organizationOutput({ planName: 'Pro' })` was a type error whose
+   * payload nonetheless reached the app correctly through the object spread.
+   */
+  readonly description?: string | null;
+  readonly logoUrl?: string | null;
+  readonly settings?: Readonly<Record<string, unknown>> | null;
+  readonly planId?: string | null;
+  readonly planName?: string | null;
+  readonly country?: string | null;
+  readonly legalType?: string | null;
+  readonly legalName?: string | null;
+  readonly registrationNumber?: string | null;
+  readonly vatNumber?: string | null;
+  readonly isOwner?: boolean | null;
+  readonly roles?: ReadonlyArray<{ readonly id: string; readonly label: string }> | null;
 }
 
 export function organizationOutput(
@@ -348,10 +370,28 @@ export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = [
   'organization.delete',
 ];
 
+/**
+ * Overrides accepted by {@link currentOrganizationMemberProfileOutput} and by
+ * `ApiMock.mockOrganizationAccess`.
+ *
+ * `permissions` is deliberately NOT the shape the fixture carries: a spec
+ * names the permissions it grants (`'organization.members.read'`) and the
+ * factory expands each one into the `{ id, name }` object the transport uses.
+ * That is why the property has to be `Omit`-ted from the `Partial` before
+ * being redeclared — intersecting the two instead produced
+ * `readonly { id, name }[] & readonly string[]`, a type no caller can satisfy,
+ * which is exactly what nine specs were failing to typecheck against while
+ * running green.
+ */
+export type CurrentOrganizationMemberProfileOverrides = Omit<
+  Partial<CurrentOrganizationMemberProfileOutputFixture>,
+  'permissions'
+> & {
+  readonly permissions?: ReadonlyArray<string>;
+};
+
 export function currentOrganizationMemberProfileOutput(
-  overrides: Partial<CurrentOrganizationMemberProfileOutputFixture> & {
-    permissions?: ReadonlyArray<string>;
-  } = {},
+  overrides: CurrentOrganizationMemberProfileOverrides = {},
 ): CurrentOrganizationMemberProfileOutputFixture {
   const { permissions, ...rest } = overrides;
   const permissionNames: ReadonlyArray<string> = permissions ?? ALL_ORGANIZATION_PERMISSIONS;

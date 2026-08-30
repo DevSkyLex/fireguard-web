@@ -9,6 +9,8 @@ import {
   type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideLock } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
@@ -57,6 +59,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-organization-member-profile-page',
   imports: [RouterLink, EmptyState, IdentitySummary, HlmBadge, HlmSkeleton],
+  providers: [provideIcons({ lucideLock })],
   templateUrl: './organization-member-profile-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

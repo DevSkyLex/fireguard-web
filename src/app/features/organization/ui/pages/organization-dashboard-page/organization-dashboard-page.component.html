@@ -1,14 +1,7 @@
 <div id="organization-dashboard" class="flex h-full flex-col gap-6 p-4 md:p-6">
   <div class="flex items-center gap-3" data-testid="org-dashboard-identity">
     @if (organizationContext.selectedOrganization(); as org) {
-      <hlm-avatar class="size-9 shrink-0 rounded-lg">
-        @if (org.logoUrl; as logoUrl) {
-          <img hlmAvatarImage [src]="logoUrl" [alt]="org.name" />
-        }
-        <span hlmAvatarFallback class="rounded-lg text-xs font-semibold">{{
-          organizationInitials()
-        }}</span>
-      </hlm-avatar>
+      <app-organization-avatar size="md" [name]="org.name" [logoUrl]="org.logoUrl" />
 
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex flex-wrap items-center gap-2">
@@ -26,10 +19,17 @@
         }
       </div>
     } @else {
-      <hlm-skeleton class="size-9 shrink-0 rounded-lg" />
-      <div class="flex flex-col gap-1">
-        <hlm-skeleton class="h-3.5 w-28" />
-        <hlm-skeleton class="h-3.5 w-20" />
+      <div
+        class="flex items-center gap-3"
+        role="status"
+        i18n-aria-label="@@org.dashboard.identity.loading"
+        aria-label="Loading the organization"
+      >
+        <hlm-skeleton class="size-9 shrink-0 rounded-lg" />
+        <div class="flex flex-col gap-1">
+          <hlm-skeleton class="h-3.5 w-28" />
+          <hlm-skeleton class="h-3.5 w-20" />
+        </div>
       </div>
     }
   </div>
@@ -60,7 +60,7 @@
       </button>
     </app-error-state>
   } @else {
-    <section class="flex flex-wrap gap-4" data-testid="org-dashboard-kpis" aria-live="polite">
+    <section class="flex flex-wrap gap-4" data-testid="org-dashboard-kpis">
       @for (tile of kpiTiles(); track tile.id) {
         <div
           class="min-w-0 grow basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]"
@@ -128,7 +128,7 @@
           <div hlmCardHeader>
             <h2 hlmCardTitle i18n="@@org.today.queues.title">Your work queues</h2>
           </div>
-          <ul hlmCardContent class="divide-y divide-border" aria-live="polite">
+          <ul hlmCardContent class="divide-y divide-border">
             <li data-testid="org-today-queue-overdue">
               <a
                 [routerLink]="[
@@ -392,9 +392,7 @@
       class="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
-        <h2 class="text-base font-medium text-foreground" i18n="@@org.dashboard.trends.title">
-          Trends
-        </h2>
+        <h2 hlmCardTitle i18n="@@org.dashboard.trends.title">Trends</h2>
         <p class="text-sm text-muted-foreground" i18n="@@org.dashboard.trends.scopeNote">
           Applies to the charts and figures below, not the summary above
         </p>

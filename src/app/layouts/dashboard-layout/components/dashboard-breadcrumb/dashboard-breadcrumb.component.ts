@@ -37,6 +37,10 @@ import {
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * Layout note: the item carries `min-w-0` because a flex item defaults to
+ * `min-width: auto`, refuses to shrink below its content, and would push the
+ * tool cluster off the card instead of letting the label ellipsise.
  */
 @Component({
   selector: 'app-dashboard-breadcrumb',

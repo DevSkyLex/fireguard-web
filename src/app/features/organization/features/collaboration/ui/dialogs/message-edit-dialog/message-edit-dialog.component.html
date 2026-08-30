@@ -3,7 +3,11 @@
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
-  <hlm-dialog-content class="sm:max-w-lg" data-testid="message-edit-dialog" *hlmDialogPortal>
+  <hlm-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg"
+    data-testid="message-edit-dialog"
+    *hlmDialogPortal
+  >
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@messages.editDialog.title">Edit message</h3>
       <p hlmDialogDescription i18n="@@messages.editDialog.description">

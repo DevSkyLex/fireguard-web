@@ -25,18 +25,55 @@ This subfeature is responsible for:
 shell. **11.0 retired that routed shell** (`InterventionsShellPage`,
 `InterventionsBoardPage`, `InterventionsCalendarPage`, the pathless route that
 nested them, and the `InterventionToolbarActions` `TemplateRef` slot the List
-tab used to hand its own controls up to the shell's toolbar): one physical
-page builds the toolbar, the KPI strip and the eight-chip filter bar once, and
-the List tab's own Display/Export/bulk-actions controls render
-inline — `@if (activeView() === 'list')` — with no slot indirection, since
-they are no longer a different component from the toolbar that hosts them.
-The active tab is the `view` route-bound input (`?view=board|calendar|recurrences`,
-absent ⇒ `list`), read into `activeView` and written back by `switchView`
-with `queryParamsHandling: 'merge'`, so every other filter param survives a
-tab switch. `/interventions/board` and `/interventions/calendar` still exist
-as addressable, bookmarkable URLs: each is a functional `redirectTo`
-(`interventions.routes.ts`) onto `/interventions?view=board|calendar`,
-preserving every other query param the incoming URL carried.
+tab used to hand its own controls up to the shell's toolbar). **13.0 then made
+each tab genuinely independent**: the tab selector no longer sits inside the
+toolbar — it renders in the dashboard shell's own header, registered through
+`PageActionsService` alongside "New intervention" (one `#pageActions`
+`ng-template`, since the service holds a single `TemplateRef`). That template
+is declared as a **sibling of `<hlm-tabs>`, at the page root**, and the
+selector is a hand-rolled `role="tablist"`/`role="tab"` control, not
+`hlm-tabs-list`/`hlmTabsTrigger`. An earlier revision nested it inside
+`<hlm-tabs>` instead, reasoning that its trigger buttons needed to be
+`BrnTabs`' DI descendants — true, but irrelevant, since `<hlm-tabs>` is
+already driven from the outside via `[tab]="activeView()"` and never needed
+its own internal triggers to switch panels. That placement made the
+template's declaring view a descendant of `<hlm-tabs>`'s own subtree instead
+of the page root, and a route navigation that keeps `InterventionsPage`
+alive (any `?view=`/filter/search change) went through
+`PageActionsService`'s then-`NavigationStart`-triggered clear without ever
+re-registering, since the page's `viewChild('pageActions')` reference never
+changed — the header's tab selector and "New intervention" vanished after
+the very first click and stayed gone until a hard reload. **14.0 fixed
+both**: the template moved back to the page root, and `PageActionsService`
+now clears a registration only on the owning page's own destruction, not on
+every navigation event (`core/page-actions/FEATURE.md`-adjacent — see
+`page-actions.service.ts`'s own class doc). The selector's `id`/
+`aria-controls` pairs (`brn-tabs-label-<view>`/`brn-tabs-content-<view>`)
+reproduce the exact strings `BrnTabsContent` computes internally for the
+still-`hlm-tabs`-driven panels, so a real tablist keeps controlling real
+tabpanels without sharing an injector with them. The toolbar itself is now
+per-tab: List and Board render search + "My interventions" + a filter bar +
+(List only) Display/Export/bulk-actions; Calendar renders "My interventions" +
+a filter bar but no search box, since neither `InterventionCalendarStore` nor
+`InterventionCalendarFilters` accepts one; Recurrences renders no toolbar at
+all — `@if (activeView() !== 'recurrences')` gates the whole
+`app-collection-toolbar` block. The active tab is the `view` route-bound input
+(`?view=board|calendar|recurrences`, absent ⇒ `list`), read into `activeView`
+and written back by `switchView` with `queryParamsHandling: 'merge'`, so every
+other filter param survives a tab switch. `/interventions/board` and
+`/interventions/calendar` still exist as addressable, bookmarkable URLs: each
+is a functional `redirectTo` (`interventions.routes.ts`) onto
+`/interventions?view=board|calendar`, preserving every other query param the
+incoming URL carried.
+
+**The detail page's rail tab is addressable the same way.** `?tab=` binds to
+`InterventionDetailPage.tab`, seeds `activeLinkedTab` through a
+`linkedSignal`, and is written back by `setLinkedTab` with
+`queryParamsHandling: 'merge'` and `replaceUrl: true` — dropped entirely on
+`overview` so the default URL stays clean. It exists because the Changes tab is
+where a reviewer decides: without it, "look at the proposed changes on FG-142"
+was not a link and every reload threw the reviewer back to Overview. Like
+`?view=`, it is not a history entry.
 
 `InterventionBoard` and `InterventionCalendar` (`ui/components/`) are
 presentational components `InterventionsPage` feeds through inputs and reads
@@ -62,24 +99,25 @@ calendar's window.
 **Which of the filter bar's nine fields each tab actually applies** is no
 longer route `data` — with one page and no child routes to declare it on, it
 is `INTERVENTION_VIEW_HONOURED_FILTER_KEYS`, a `Record<InterventionView, …>`
-local to `InterventionsPage` (rule of three: two consumers, both on the
-page). **The "+ Filter" menu offers only the active tab's honoured fields**
-(`offeredFilterFields`) — the three tabs do not share one filter set. A field
-the active tab cannot apply is **listed disabled, with the reason beside it**
-(`CollectionFilterField.unavailableReason`) rather than hidden: dropping it
-left a reader on the Board hunting for a Status filter with nothing saying
-why it had gone, while an active unhonoured chip already explains itself.
-Such a chip renders disabled and visibly greyed
-(`opacity-60`, `[disabled]`), with an `hlmTooltip` naming the reason and the
-same reason appended to the chip's `sr-only` name
-(`InterventionsPage.chipAccessibleName`), since a tooltip is a hover and a
-screen reader does not hover. **Switching tabs never drops an unhonoured
-narrowing from the URL** — the inert chip is what tells the user it does not
-apply here, and the value is intact on the way back. Never silently dropped,
-never silently misapplied. The List honours all eight; the
+local to `InterventionsPage` (rule of three: three consumers, all on the
+page). **13.0 retired the "listed disabled, with the reason beside it" chip**
+(`CollectionFilterField.unavailableReason`, the `opacity-60`/`hlmTooltip`
+inert-chip treatment): each tab's own catalog (`offeredFilterFields`) now
+contains only its honoured fields — the "+ Filter" menu never lists an
+unhonoured one, and `honouredActiveFilterKeys` (not the wider
+`activeFilterKeys`) drives the bar's own `activeKeys` input, so a field the
+active tab does not honour renders no chip at all here, not even a disabled
+one. **Switching tabs never drops an unhonoured narrowing from the URL** —
+the value is neither applied (each tab's own query builder — `boardFilters`,
+`toCalendarFilters` — already reads only the fields it declares, independent
+of what the bar renders) nor lost: it is still in the URL and reappears the
+moment the operator returns to a tab that honours it. The "Filters" toggle's
+badge counts only `honouredActiveFilterKeys`, so it never announces a
+narrowing that is not in force here. The List honours all eight; the
 Board honours every field except `status` (its columns are the narrowing);
 the Calendar honours only `status`, `type`, `site` and `responsible`
-(`InterventionCalendarFilters`'s own `Pick`).
+(`InterventionCalendarFilters`'s own `Pick`); Recurrences honours none — it
+carries no filter bar, no toggle, and no toolbar at all.
 
 `dueWindow` is the ninth field, and it exists as a chip for a correctness
 reason rather than a cosmetic one: the KPI strip's tiles and the Today page
@@ -132,12 +170,14 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   same `applyFilter` path a chip's own select uses, so a view is a shortcut
   into the one filter contract, not a second state to keep in sync with it.
 
-  **The toolbar, the search box, the filter bar (6.5–8.3 below) and the tabs
-  all live on `InterventionsPage` itself (11.0).** Every mechanic this history
+  **The toolbar and the filter bar (6.5–8.3 below) live on `InterventionsPage`
+  itself (11.0); the tab selector renders in the dashboard shell's own header
+  instead (13.0 — see "Tab switch" below).** Every mechanic this history
   describes — the chip shell, the operator vocabulary, the "+ Filter" menu,
   `dueRange`/`plannedStartRange` — is unchanged by the retirement of the
-  routed shell that once carried them; only which tab renders below them
-  changed. Read "this page" throughout 6.3 through 8.3 as `InterventionsPage`.
+  routed shell that once carried them; only which tab renders below them, and
+  which toolbar controls that tab's own toolbar carries, changed. Read "this
+  page" throughout 6.3 through 8.3 as `InterventionsPage`.
   It additionally owns the table, its own Display popover (sort/columns),
   row/bulk actions, and the sheets/dialogs they open — all rendered inline,
   gated on `activeView() === 'list'`, with no `TemplateRef`-slot indirection
@@ -400,10 +440,15 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   the dataset. Same permission gate as the list (inherited from the outer
   pathless parent).
 
-  **Tab switch (11.0: `hlm-tabs`, not a routed shell).** A single
-  `hlm-tabs-list` with three `hlmTabsTrigger`s renders once, in
-  `InterventionsPage`'s own toolbar row. Switching tabs calls
-  `InterventionsPage.switchView`, which writes `?view=` with
+  **Tab switch (11.0: `hlm-tabs`, not a routed shell; 13.0: the selector moved
+  to the shell header; 14.0: the selector is hand-rolled, at the page root).**
+  A hand-rolled `role="tablist"`/`role="tab"` control, one button per tab,
+  renders once, registered through `PageActionsService` alongside "New
+  intervention" rather than inside `InterventionsPage`'s own toolbar row —
+  see "Routes" above for why one `#pageActions` template carries both, and
+  why it is no longer `hlm-tabs-list`/`hlmTabsTrigger`. Switching tabs calls
+  `InterventionsPage.switchView`, which writes `?view=`
+  with
   `queryParamsHandling: 'merge'` — every other filter param survives
   untouched, **except `status`**, dropped specifically when switching to the
   Board: the board's columns are the statuses, so a `status` narrowing
@@ -427,8 +472,31 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   (`status` excluded, via `boardFilters`) the incoming URL already carries,
   and shares the page's own eight-chip filter bar with the List and the
   Calendar — its entry in `INTERVENTION_VIEW_HONOURED_FILTER_KEYS` omits only
-  `status`, so a `status` chip left active from the List renders disabled and
-  greyed with a tooltip explaining the columns already narrow by status.
+  `status`, so the Board's own filter catalog never lists it and a `status`
+  narrowing left active from the List renders no chip here (13.0).
+
+  **Filling and scrolling (14.0).** The seven fixed columns are always wider
+  than the content column, so the board is a horizontal scroller. Its tab
+  content is a `flex flex-col` so the board stretches to the column height
+  (columns reach the track, not the top third); the KPI strip and the analysis
+  disclosure render **only** on the List tab (`@if (activeView() === 'list')`)
+  — they summarise the list, they are not the board's or the calendar's
+  business, and on a phone they used to push the whole board below the fold.
+  The scroll track is a plain block (`overflow-x-auto`) wrapping one
+  `flex w-max` row: `w-max` is load-bearing — without it the inner row shrinks
+  to the viewport and the browser reports overflow it will not let you reach.
+  Two edge fades (`from-background` gradients, opacity-toggled on
+  `canScrollLeft`/`canScrollRight`) hint at hidden columns, and a prev/next
+  control pair sits **above** the columns rather than floating over them — a
+  button centred over a tall column is unclickable, the card underneath wins
+  the hit test. `canScrollLeft`/`canScrollRight` are recomputed from the
+  track's geometry on `(scroll)` and by a `ResizeObserver` (the column count is
+  fixed, so only the viewport width and the offset change what is hidden); the
+  buttons scroll by 80% of the viewport, `behavior: 'smooth'` unless
+  `prefers-reduced-motion`. **The smoothness lives in JS, never the CSS
+  `scroll-smooth` class** — that class makes even a direct `scrollLeft`
+  assignment animate, and a read straight after returns the pre-animation `0`,
+  which silently breaks any code that seeks the track programmatically.
 
   **Drag-drop legality — one function, two call sites.**
   `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is a
@@ -522,9 +590,12 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `InterventionCalendarState`'s own doc already described before this
   component existed. `InterventionsPage`'s own
   `INTERVENTION_VIEW_HONOURED_FILTER_KEYS` entry for `calendar` declares
-  exactly the four fields above; the page renders `priority`, `label` and
-  both date-range chips as visibly inert — disabled, greyed, with a tooltip —
-  whenever one is left active from another tab.
+  exactly the four fields above; `priority`, `label` and both date-range
+  fields are simply absent from the Calendar's own filter catalog (13.0), so
+  neither the "+ Filter" menu nor an active chip left from another tab
+  renders for them here — the value stays in the URL, unapplied, and
+  reappears as a chip the moment the operator returns to a tab that honours
+  it.
 
   **Overflow.** The grid's own per-day chip cap never hides an entry from the
   reader: selecting a day always lists every one of its entries in the panel
@@ -717,6 +788,15 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   counter, and wiring it to every mutation would trade a simple,
   obviously-correct reload trigger for a fragile one covering a case the KPI
   strip's own purpose does not need.
+
+  **The same snapshot also backs `app-intervention-statistics-analysis`**
+  (`ui/components/`), a collapsed-by-default disclosure sitting directly under
+  the strip and rendering everything the four tiles do not: the priority
+  split, the top-ten sites and responsibles, and `averagePublicationDays`. It
+  had shipped complete and specced but **mounted nowhere** — its selector
+  appeared in no template in the repository — so a payload already fetched on
+  every organization switch went half-read. Mounting it costs no request.
+
 - `InterventionLabelStore` — component-scoped (provided in
   `InterventionDetailPage`); CRUD over the organization's intervention label
   catalog (`InterventionLabelService`) via `withEntities`, backing
@@ -774,6 +854,10 @@ Behavior coordinators (`services/`):
 
 - `InterventionSyncService` — outbox replay engine.
 - `InterventionSyncCoordinatorService` — replays the outbox when connectivity/visibility is regained.
+  Its `problem` signal carries the first blocked operation's own server error, and
+  `InterventionSyncIndicator` now renders it under the blocked count: the panel used to announce a
+  number with no cause, which `PRODUCT.md`'s second principle forbids. It stays silent when the
+  failure carried no message rather than inventing one.
 - `InterventionPwaUpdateService` — defers service-worker updates until the outbox is clean.
 - `InterventionPrefetchService` — warms offline workspaces for the current member.
 - `InterventionOfflineLifecycleService` — clears local data on logout.
@@ -936,8 +1020,7 @@ crossed:
 3. **The second grid track — unchanged, and tab-independent.** The
    properties card and, beneath it, the desktop issues checklist (`execute`
    and `review` phases only): `sticky` (`top-32`, tuned against the band's
-   measured worst case — 117px with the `changes_requested` review-note strip
-   showing) once the wrapper crosses 896px of container width
+   measured worst case) once the wrapper crosses 896px of container width
    (`@4xl/detail:sticky`), in normal document flow below. Nothing here
    reacts to which of the six tabs is active — see `### The rail is not the
 retired workspace tabs` for why that is the invariant that matters.
@@ -975,9 +1058,14 @@ composition (over `allowedTransitions`, with the withdraw move gated on
 `allowedActions.canWithdraw`), label management and QR scanning remain
 client-derived, since the backend does not advertise them. An intervention
 rehydrated from a pre-upgrade offline cache may lack the block; every
-server-advertised gate then degrades to denied until the next sync; the abandon/delete/skip confirmation is the presentational
+server-advertised gate then degrades to denied until the next sync; the delete/skip confirmation is the presentational
 `ui/dialogs/intervention-confirm-dialog/` (its request/accepted types in
-`models/intervention-confirm/`); publication state is
+`models/intervention-confirm/`), while **abandoning has its own
+`ui/dialogs/intervention-abandon-dialog/`** — it is the lifecycle's one
+terminal, read-only transition, and `DESIGN.md` rule 5 makes per-case wording
+the point. That dialog collects nothing: the workflow keeps a `reviewNote`
+only for `changes_requested`, so a reason field on an abandon would take text
+the backend discards; publication state is
 `InterventionPublicationStore` (above); QR-scan matching and upload preparation
 belong to `InterventionFieldExecutionService.scanToWorkItem` and
 `InterventionPhotoCompressorService.prepareAll`. The page keeps same-named
@@ -1029,11 +1117,13 @@ wrapper — a one-time layout adjustment on desktop loads.
    and falling back to `updatedAt` while the timeline is empty or still
    loading. Outside every section, so the last-touched summary needs no
    scroll to see.
-3. **Status band** (`app-intervention-status-band`) — sticky (`top-0`)
-   directly under the header, outside `<hlm-tabs>` and tab-independent, the
-   host for the current phase's forward action at **every** viewport. See
-   `### One address, one implementation, one host` for why the earlier
-   desktop-action-box/mobile-command-bar split is retired.
+3. **Status band** (`app-intervention-status-band`) — outside `<hlm-tabs>` and
+   tab-independent, the host for the forward action at **every** viewport.
+   Sticky at `top-0` from `sm` up; **fixed at `bottom-0` below it**, inside the
+   safe area, with the page reserving `pb-32` so nothing hides under it. One
+   implementation, one host, a position that follows the thumb — the invariant
+   is about the number of addresses, not about where the band sits. See
+   `### One address, one implementation, one host`.
 4. **Page error alert** — the store's last unattributed failure.
 5. **Overview tab** — `app-intervention-getting-started` (rendered only in
    `prepare`, while a prerequisite is still missing), the mobile issues
@@ -1069,9 +1159,8 @@ properties-grid` inside an `hlmCard`, always mounted, tab-independent.
    tab's mobile copy renders; each viewport sees exactly one of the two,
    picked by `propertiesRailVisible`. The second track as a whole —
    properties card and this checklist together — is what stays `sticky`
-   (`top-32`, tuned against the band's measured worst case — 117px with the
-   review-note strip showing) once the wrapper crosses 896px of container
-   width (`@4xl/detail:sticky`).
+   (`top-32`, tuned against the band's measured worst case) once the wrapper
+   crosses 896px of container width (`@4xl/detail:sticky`).
 10. **Prev/next footer** — unchanged.
 
 Activating the getting-started item for missing scope (`workItems`) switches
@@ -1143,9 +1232,28 @@ Overview if needed and focuses whichever of the two
 desktop, in the second grid track) the current viewport actually shows —
 the list itself never lived in the band.
 
-The band breaks out of the page padding (`-mx-4 md:-mx-6`) and blurs its
+The band breaks out of the page padding (`sm:-mx-4 md:-mx-6`) and blurs its
 background over whatever scrolls beneath it (`bg-background/95 backdrop-blur`),
 so it reads as a fixed toolbar rather than a floating card at any width.
+
+**The target comes from the workflow policy, not from the phase.**
+`resolveCommandTransitionTarget` (`utils/intervention-command-target/`) takes the
+nearest legal status strictly ahead of the current one, out of
+`resolveAllowedTransitions` — i.e. out of the API's own per-card
+`allowedTransitions`. Deriving it from the phase put `planned` in `execute` and
+therefore computed `submitted`, which the server refuses from `planned`: the
+band offered "Submit for review", and the only path to `in_progress` was three
+levels deep in the shell's overflow menu, rendered as a status tag rather than
+a verb. From `planned` the band now says **Start field work**.
+`changes_requested` shares `in_progress`'s rung on the forward line, so
+"resubmit" stays ahead of it and its command is still `submitted`.
+
+**The band carries a second action when there is one.** `secondaryAction` /
+`secondaryInvoked` render the reviewer's "Send back for changes" beside the
+primary, gated on `canReview()` and a `submitted` status — not on `canPublish`.
+A reviewer without publish rights used to get an empty band, which `PRODUCT.md`
+forbids: their action must be reachable there. It opens the same
+`app-intervention-request-changes-sheet` the overflow menu does.
 
 ### The forward move has one gate
 
@@ -1278,14 +1386,24 @@ explicit guard it would offer to plan something that left the workflow.
 
 Each condition renders **once, where it is relevant**, instead of a single
 ranked stack under the header: an unattributed store error is one alert above
-the content sections; a reviewer's note is a strip inside the status band,
-below the badge/phase/action row; a failed activity fetch is an alert with a
+the content sections; a reviewer's note (`changes_requested`) is a
+**neutral** alert in the page content flow below the band — **not** inside it,
+because the band is a fixed thumb-zone bar on mobile (`max-sm:fixed bottom-0`)
+and an unbounded-length note pinned there overran the work items. Neutral, not
+destructive: muted ground, a `lucideMessageSquareQuote` glyph in
+`text-muted-foreground`, title in `text-foreground` — `changes_requested` is
+an intermediate workflow state, and the Two Ends Rule spends colour only on the
+terminal ends, so requesting changes reads as review feedback, not a failure
+(the sheet's submit is the Ink default button for the same reason, never a
+destructive tint). a failed activity
+fetch is an alert with a
 retry inside the Activity section; the blocker count is the band's own
 control, and the blocking compliance issues it points at sit in the issues
 checklist; a publication failure is inline in the publish confirmation,
-which stays open so the operator can retry; and an unsynced outbox is the
-shell's own sync indicator rather than a dismissable page-level banner (see
-`### Offline`). A
+which stays open so the operator can retry; an unsynced outbox is the
+shell's own sync indicator rather than a dismissable page-level banner; and a
+**blocked** outbox — the one sync state where data is at risk — is
+additionally an on-page alert on the detail workspace (see `### Offline`). A
 field-level rejection is already shown by the field itself
 (`editState.failed`) and is excluded from the top-of-page alert so it never
 renders twice.
@@ -1333,6 +1451,42 @@ navigated to another page. The indicator is present on **every** dashboard
 page, not only the interventions ones: the outbox is device-global, not
 scoped to whichever intervention screen happens to be open.
 
+**`blocked` is the one state that also speaks on the page.** The indicator
+alone was the whole report, and at that size it is a 12px triangle on a 32px
+ghost button behind a popover — an agent whose field work failed to replay
+learned nothing on the very workspace holding the data at risk, while the
+popover's `role="alert"` live region told a screen-reader user. So
+`InterventionDetailPage` renders `app-intervention-sync-blocked-alert`
+(`ui/components/intervention-sync-blocked-alert/`) above the meta line
+whenever this intervention has queued operations left `failed` or `conflict`.
+It **names them** — `INTERVENTION_OUTBOX_LABEL` (lifted to the feature's
+`constants/`, the indicator being its other consumer) plus each operation's
+own server error — and offers **Retry blocked** only. Discard is data loss
+and stays confirm-gated in the indicator's panel; the popover remains the
+device-global drill-in.
+
+The page reads the list itself (`InterventionOfflineService.listOutbox`,
+filtered to `failed`/`conflict`), gated on
+`InterventionSyncCoordinatorService.blockedOperations()` so the common case
+never touches IndexedDB, and refreshes after every retry — a retry that fails
+again leaves the same blocked count, so watching that count alone would go
+stale. The coordinator's `problem` is `blocked[0]?.error`, which the list
+already prints, so the alert suppresses the reason line when a listed
+operation carries it verbatim.
+
+Its tone follows the Glyph Rule rather than the alert primitive's
+`destructive` variant: hairline `border-destructive/30` on `bg-destructive/5`,
+the triangle in `text-destructive`, and every word in the normal foreground.
+The destructive variant tints the title _and_ the description, which at 375px
+turns a five-line alert into a wall of red text — the same objection that
+retired the coloured reviewer note.
+
+**The two offline notices** (list and detail, `servedFromLocalCache()`) read
+at `text-sm` in the page foreground beside a `lucideCloudOff` glyph, not the
+`text-xs text-muted-foreground` they used to: `PRODUCT.md` principle 3 calls
+offline first-class, and the system's quietest register said the opposite.
+Their `role="status"` and their i18n ids are unchanged.
+
 Five mutually exclusive states, in priority order (a dropped connection
 outranks a blocked replay, which outranks one in flight, which outranks
 self-syncable work still queued): **offline** (muted glyph, popover explains
@@ -1348,6 +1502,30 @@ alongside the detail page's meta line and its activity thread). Resolves to
 `ConnectivityService.online` is optimistic-online there, and the coordinator
 and outbox signals default to their empty values before any IndexedDB access
 runs.
+
+The popover **lists the queue**, it does not only count it. Opening it reads
+`InterventionOfflineService.listAllOutbox()` — device-global, oldest first, and
+loaded on open rather than kept warm, so an agent who never opens the panel
+never pays the IndexedDB read. Each line names the operation through
+`INTERVENTION_OUTBOX_LABEL` (local to the indicator: one consumer), shows the
+server's own error when it carries one, and offers **Retry** and **Discard**
+per operation via `retryOutbox`/`removeOutbox`. The whole-queue Retry blocked /
+Discard blocked stay: they are the bulk verbs, and discarding everything is
+still confirm-gated. A pending operation that will sync on its own gets no
+per-operation action — there is nothing to decide about it.
+`InterventionSyncCoordinatorService.problem` is rendered under the blocked
+count, so the panel names the cause instead of a bare number.
+
+**The list is offline-first, like the workspace.** `InterventionStore.load`
+falls back to `InterventionOfflineService.listInterventions(organizationId)` on
+a network failure, and only on a network failure — a 4xx/5xx still surfaces as
+an error, which matters because the list store also feeds the board. An empty
+snapshot rethrows rather than rendering a false empty. The fallback sets
+`servedFromLocalCache`, which the page turns into a `role="status"` banner and
+into a **closed export gate with a reason** (`[appGateReason]`): export needs
+the server. `InterventionWorkspaceStore` carries the same flag for the detail
+page's own banner, and skips re-saving a snapshot it just read — rewriting it
+would only refresh its timestamp and lie about its age.
 
 Being a shell widget, `InterventionSyncIndicator` is — unlike every other
 component in this feature — allowed to inject `InterventionSyncCoordinatorService`,
@@ -1392,7 +1570,11 @@ message composer, because the backend notifies (in-app + email,
 `app-intervention-activity-thread` resolves the same tokens client-side to
 render a name; both share `utils/intervention-mentions/`. See both
 components' own docs for the mirrored-vs-shared reasoning against the
-collaboration feature's caret-query machinery.
+collaboration feature's caret-query machinery. Offline, the composer relabels
+its action to "Queue comment" and carries a hint that the comment is queued
+and sent on reconnect, not lost — the same offline-queue policy the store
+applies (`PRODUCT.md`: an offline comment is a queued action, never a
+failure); a post in flight reads as `aria-busy` with a "Posting…" label.
 
 ### Attachments and field capture
 
@@ -1422,7 +1604,13 @@ reads the bearer-authenticated `GET /api/intervention-attachments/{id}/download`
 route as a `Blob` (a bare `<a href>` cannot carry the auth header) and the
 detail page hands it to the feature's `BrowserDownloadService` — the same
 service the list page's CSV export uses, lifted there once the attachment
-download became its second consumer. Plain uploads **queue offline**: when the
+download became its second consumer. Offline, download **and** delete are
+disabled with the reason stated once at the card head
+(`#intervention-attachments-offline-reason`) and wired to both buttons through
+`aria-describedby` — a greyed control that cannot say why is a dead end
+(`DESIGN.md` "Closed gates speak"); the reason is shared rather than repeated
+per row because the gate is one global connectivity condition, not a
+per-file one. Plain uploads **queue offline**: when the
 device is offline or the request fails on a network error (the comment
 policy), the compressed file is stored as an `attachment.upload` outbox
 operation — Blob plus metadata in IndexedDB — replayed with the other
@@ -1665,6 +1853,22 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
+- **Every sheet that carries a form confirms before it discards one.** The
+  five form-bearing sheets — create, work item, request changes, recurrence,
+  discussion — all take their form's `dirtyChanged`, hold it in a local
+  `dirty` signal, and route Escape, the backdrop and the form's own Cancel
+  through `requestClose()`, which raises `@shared/unsaved-changes` instead of
+  closing. `onStateChanged` reopens the panel through the queried `HlmSheet`
+  before raising the confirmation, because the underlying dialog ref has
+  already begun closing by the time the handler runs. `[disableClose]` stays
+  bound to `pending()` only: it guards a write in flight, not a draft.
+  `InterventionCreateSheet` additionally counts its own **template override
+  drafts** as dirty — they are the sheet's state, not the form's — while a
+  bare template _selection_ is not, since re-picking it is one click.
+  Sheets whose panel state is derived from a `visible` input clear `dirty`
+  when it goes false, so an abandoned draft cannot make the next opening
+  confirm over nothing.
+
 - **Changing a chip's operator never costs the chip, and never costs a value
   the new operator can hold.** `onFilterOperatorChanged` marks the field
   pending, so the chip survives the value drop that a shape change forces —
@@ -1687,19 +1891,19 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   explicit pick wins; the shape decides only for a field untouched this
   session.
 
-- **A filter chip the active tab does not honour is never silently applied
-  and never silently absent.** `InterventionsPage.isFieldIgnored` reads
-  `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]` and renders an
-  active-but-unhonoured chip disabled and greyed, with an `hlmTooltip` naming
-  why and that same reason inside its accessible name — the "+ Filter" menu
-  lists it disabled with its reason — `offeredFilterFields` annotates rather
-  than narrows — the "Filters" badge does not count it
-  (`honouredActiveFilterKeys`), since it narrows nothing here, and
-  `switchView` merges it forward instead of deleting it. The bar still opens
-  on any active key, so the inert chip is what carries its visibility, not the
-  badge. Adding a tenth
-  filter field, or changing which fields a tab honours, means updating that
-  `Record`'s entry in the same change, or the new field silently reads as
+- **A filter the active tab does not honour is never silently applied and
+  never silently lost (13.0).** `InterventionsPage.honouredFilterKeys` reads
+  `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]`; `offeredFilterFields`
+  narrows the "+ Filter" menu's own catalog to it, and `honouredActiveFilterKeys`
+  narrows both the bar's `activeKeys` input and the "Filters" badge count the
+  same way — an unhonoured field renders no chip here at all, active or not,
+  and the badge never counts it, since it narrows nothing on this tab. Nothing
+  is dropped from the URL: `switchView` merges every param forward regardless,
+  and each tab's own query builder (`boardFilters`, `toCalendarFilters`)
+  already reads only the fields it declares, so the value is inert here and
+  reapplies the moment the operator switches to a tab that honours it. Adding
+  a tenth filter field, or changing which fields a tab honours, means updating
+  that `Record`'s entry in the same change, or the new field silently reads as
   honoured everywhere.
 - **`InterventionBoard` and `InterventionCalendar` inject no store and call no
   service (11.0, `ARCHITECTURE.md` §10.3).** Only `InterventionsPage` may —

@@ -11,8 +11,8 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTrash2, lucideUpload } from '@ng-icons/lucide';
 import { getOrganizationInitials } from '@features/organization/utils';
-import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { OrganizationAvatar } from '../organization-avatar';
 
 /**
  * Component OrganizationLogoPicker
@@ -45,7 +45,7 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-organization-logo-picker',
-  imports: [NgIcon, HlmButton, ...HlmAvatarImports],
+  imports: [NgIcon, HlmButton, OrganizationAvatar],
   providers: [provideIcons({ lucideTrash2, lucideUpload })],
   templateUrl: './organization-logo-picker.component.html',
   host: { class: 'block' },

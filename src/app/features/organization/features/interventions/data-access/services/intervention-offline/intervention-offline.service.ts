@@ -286,6 +286,23 @@ export class InterventionOfflineService {
   }
 
   /**
+   * Method listAllOutbox
+   * @method listAllOutbox
+   *
+   * @description
+   * Every queued operation on the device, oldest first — what the sync popover
+   * reads to name what is waiting instead of showing a bare count.
+   *
+   * @access public
+   * @since 7.0.0
+   *
+   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every queued operation.
+   */
+  public listAllOutbox(): Promise<readonly InterventionOutboxOperation[]> {
+    return this.outbox.listAllOutbox();
+  }
+
+  /**
    * Method attachmentQueueUsage
    * @method attachmentQueueUsage
    *

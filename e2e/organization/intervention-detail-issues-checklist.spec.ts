@@ -79,11 +79,7 @@ test.describe('Intervention detail — blocker checklist through to the submit g
 
     await detail.toggleWorkItem('Site setup');
 
-    await expect(
-      detail.workItemRows
-        .filter({ hasText: 'Site setup' })
-        .getByTestId('intervention-work-item-toggle'),
-    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(detail.workItemToggle('Site setup')).toHaveAttribute('aria-pressed', 'true');
 
     await expect(detail.commandButton).toContainText('Submit for review');
     await expect(detail.commandButton).toBeEnabled();

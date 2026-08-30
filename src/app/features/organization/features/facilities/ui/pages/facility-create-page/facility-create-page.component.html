@@ -9,6 +9,7 @@
         [pending]="store.isCreating()"
         [serverError]="store.createError()"
         [parentOptions]="parentOptions()"
+        [initialParentFacilityId]="parent() ?? null"
         [mapCenter]="mapCenter()"
         [geocodePending]="geocodePending()"
         [geocodeResult]="geocodeResult()"

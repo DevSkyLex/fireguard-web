@@ -3,7 +3,11 @@
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
-  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="message-delete-dialog">
+  <hlm-alert-dialog-content
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    *hlmAlertDialogPortal
+    data-testid="message-delete-dialog"
+  >
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle i18n="@@messages.delete.confirmTitle">Delete this message?</h2>
       <p hlmAlertDialogDescription i18n="@@messages.delete.confirmDescription">

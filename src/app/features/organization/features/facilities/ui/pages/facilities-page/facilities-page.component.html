@@ -125,7 +125,15 @@
     </div>
   </ng-template>
 
-  @if (store.rootListCallState().status === 'error') {
+  @if (listForbidden()) {
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@facility.list.forbiddenTitle"
+      description="Ask an organization admin to grant you read access to facilities."
+      i18n-description="@@facility.list.forbiddenDesc"
+    />
+  } @else if (store.rootListCallState().status === 'error') {
     <app-error-state
       icon="lucideCircleAlert"
       title="Couldn't load facilities"
@@ -158,18 +166,16 @@
     </app-empty-state>
   } @else {
     @if (layout() === 'list') {
-      <div class="min-h-0 flex-1 overflow-hidden">
-        <app-facility-table
-          [items]="items()"
-          [loading]="store.isLoadingRootFacilities() && items().length === 0"
-          [canWrite]="canWrite()"
-          [detailRouteBase]="listRouteBase()"
-          [sortOrder]="sortOrder()"
-          (sortChanged)="applySortField($event)"
-          (archiveRequested)="onArchiveRequested($event)"
-          (restoreRequested)="onRestoreRequested($event)"
-        />
-      </div>
+      <app-facility-table
+        [items]="items()"
+        [loading]="store.isLoadingRootFacilities()"
+        [canWrite]="canWrite()"
+        [detailRouteBase]="listRouteBase()"
+        [sortOrder]="sortOrder()"
+        (sortChanged)="applySortField($event)"
+        (archiveRequested)="onArchiveRequested($event)"
+        (restoreRequested)="onRestoreRequested($event)"
+      />
     } @else {
       <div
         class="min-h-0 flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"

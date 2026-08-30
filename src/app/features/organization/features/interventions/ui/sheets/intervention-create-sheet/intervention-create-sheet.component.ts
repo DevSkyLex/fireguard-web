@@ -7,6 +7,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -27,7 +28,8 @@ import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
-import { HlmSheetImports } from '@shared/ui/sheet';
+import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import {
   InterventionCreateForm,
   type InterventionCreateFormValues,
@@ -47,8 +49,13 @@ import {
  * drift.
  *
  * Dismissal is blocked while a creation request is in flight — `disableClose`
- * covers Escape and the backdrop alike. Cancel always closes: the guard is
- * against losing work by accident, never against leaving deliberately.
+ * covers Escape and the backdrop alike. Beyond that, Escape, the backdrop and
+ * the form's own Cancel all route through {@link requestClose}: a draft that
+ * would be lost raises the shared {@link UnsavedChangesDialog} instead of
+ * closing outright. {@link dirty} covers the form *and* the template override
+ * drafts, which live on this component rather than in the form — picking a
+ * template alone does not count, because that is one click to redo, but a
+ * typed or picked override is work.
  *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
@@ -61,6 +68,7 @@ import {
   selector: 'app-intervention-create-sheet',
   imports: [
     InterventionCreateForm,
+    UnsavedChangesDialog,
     HlmButton,
     HlmInput,
     ...HlmComboboxImports,
@@ -318,6 +326,69 @@ export class InterventionCreateSheet {
   protected readonly memberLabelOf: (value: string) => string = (value: string): string =>
     this.memberOptions().find((option: MemberSelectOption): boolean => option.value === value)
       ?.label ?? '';
+
+  /**
+   * Property formDirty
+   * @readonly
+   * @description The hosted form's own dirtiness, set from {@link InterventionCreateForm.dirtyChanged}.
+   * @access protected
+   * @since 7.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly formDirty: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property dirty
+   * @readonly
+   *
+   * @description
+   * Whether closing right now would lose something. The form is only half of
+   * it: the template override drafts are this component's own state, and a
+   * half-filled override panel disappearing on a backdrop tap is the same
+   * loss. A bare template selection is excluded on purpose — re-picking it is
+   * one click.
+   *
+   * @access protected
+   * @since 7.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly dirty: Signal<boolean> = computed<boolean>(
+    () =>
+      this.formDirty() ||
+      this.overrideName().trim() !== '' ||
+      this.overrideSite() !== null ||
+      this.overrideResponsible() !== null ||
+      this.overridePlannedStartAt() !== null,
+  );
+
+  /**
+   * Property unsavedChangesDialogState
+   * @readonly
+   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   * @access protected
+   * @since 7.1.0
+   * @type {WritableSignal<BrnDialogState>}
+   */
+  protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
+    signal<BrnDialogState>('closed');
+
+  /**
+   * Property sheetRef
+   * @readonly
+   *
+   * @description
+   * The panel directive itself, queried only so {@link onStateChanged} can
+   * call `.open()` — which resolves to `reopen()` on a dialog ref still
+   * mid-close — to undo an Escape/outside-click attempt made while
+   * {@link dirty}.
+   *
+   * @access protected
+   * @since 7.1.0
+   *
+   * @type {Signal<HlmSheet | undefined>}
+   */
+  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Constructor
@@ -339,6 +410,7 @@ export class InterventionCreateSheet {
       untracked((): void => {
         if (isVisible) return;
 
+        this.formDirty.set(false);
         this.selectedTemplateId.set(null);
         this.overrideName.set('');
         this.overrideSite.set(null);
@@ -356,6 +428,9 @@ export class InterventionCreateSheet {
    *
    * @description
    * Relays a dismissal, ignoring the echo of a change the page already made.
+   * An Escape or outside-click attempt reaching here while {@link dirty} is
+   * undone through {@link sheetRef} and redirected to the same confirmation
+   * {@link requestClose} raises.
    *
    * @access protected
    * @since 1.0.0
@@ -369,7 +444,64 @@ export class InterventionCreateSheet {
 
     if (isOpen === this.visible()) return;
 
+    if (!isOpen && this.dirty()) {
+      this.sheetRef()?.open();
+      this.unsavedChangesDialogState.set('open');
+
+      return;
+    }
+
     this.visibleChange.emit(isOpen);
+  }
+
+  /**
+   * Method requestClose
+   * @method requestClose
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes
+   * right away when nothing would be lost; otherwise opens
+   * {@link UnsavedChangesDialog} and defers to
+   * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   *
+   * @access protected
+   * @since 7.1.0
+   *
+   * @returns {void}
+   */
+  protected requestClose(): void {
+    if (this.dirty()) {
+      this.unsavedChangesDialogState.set('open');
+
+      return;
+    }
+
+    this.visibleChange.emit(false);
+  }
+
+  /**
+   * Method onUnsavedChangesConfirmed
+   * @method onUnsavedChangesConfirmed
+   * @description The operator chose to discard the draft — closes both the confirmation and the panel itself.
+   * @access protected
+   * @since 7.1.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesConfirmed(): void {
+    this.unsavedChangesDialogState.set('closed');
+    this.visibleChange.emit(false);
+  }
+
+  /**
+   * Method onUnsavedChangesDismissed
+   * @method onUnsavedChangesDismissed
+   * @description The operator chose to keep editing — closes the confirmation only, the panel stays open.
+   * @access protected
+   * @since 7.1.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesDismissed(): void {
+    this.unsavedChangesDialogState.set('closed');
   }
 
   /**

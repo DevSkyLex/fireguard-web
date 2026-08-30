@@ -20,3 +20,6 @@ export { OrganizationQuotaStore } from './organization-quota';
 export type { OrganizationQuotaStoreType } from './organization-quota';
 export { OrganizationNavigationCountersStore } from './organization-navigation-counters';
 export type { OrganizationNavigationCountersStoreType } from './organization-navigation-counters';
+export { MyOrganizationsStore } from './my-organizations';
+export type { MyOrganizationsState } from './my-organizations';
+export { myOrganizationsStoreEvents } from './my-organizations';

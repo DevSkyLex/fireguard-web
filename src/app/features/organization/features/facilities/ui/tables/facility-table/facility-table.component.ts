@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -25,46 +26,47 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import { CollectionSurface } from '@shared/collection-surface';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component FacilityTable
  * @class FacilityTable
  *
  * @description
- * The root-facility list view: `hlmTable` inside a bordered, scrollable
- * shell, one row per facility, and a trailing `…` menu offering the row
+ * The root-facility list view: `hlmTable` inside the shared collection
+ * surface, one row per facility, and a trailing `…` menu offering the row
  * actions this list still owns — Archive and Restore — since the record
  * itself is where every other property is edited (`FEATURE.md` "The record
  * is the edit surface").
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; a menu
- * choice only asks for the write through an `output()`. Name, Type, Status
+ * choice only asks for the write through an `output()`. The bordered,
+ * scrollable shell, the first-load skeleton and the below-`2xl` card
+ * fallback all come from the shared `CollectionSurface`, and the row menu is
+ * declared once as a template both the row and the card project. Name, Type, Status
  * and Code are the four columns the backend's own sort whitelist
  * (`ListFacilitiesProvider`) covers that this table also renders — each
  * head is a ghost button carrying the direction glyph, mirroring
  * `InterventionTable`'s sortable-head pattern.
  *
- * @version 1.2.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-facility-table',
   imports: [
+    NgTemplateOutlet,
     RouterLink,
     NgIcon,
+    CollectionSurface,
     FacilityStatusTag,
     HlmButton,
-    HlmSkeleton,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
@@ -172,8 +174,21 @@ export class FacilityTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. Literal strings because Tailwind scans source text, and column-aware because a skeleton whose blocks do not line up with the header it replaces reads as a broken table rather than a loading one.
+   * @access protected
+   * @since 2.0.0
+   * @type {readonly string[]}
+   */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'w-40 max-w-full',
+    'w-24',
+    'w-16',
+    'w-20',
+    'ms-auto size-6',
+  ];
   //#endregion
 
   //#region Methods

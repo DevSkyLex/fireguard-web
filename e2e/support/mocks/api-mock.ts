@@ -9,7 +9,7 @@ import {
   optionOutput,
   mercureSubscriptionOutput,
   userProfileOutput,
-  type CurrentOrganizationMemberProfileOutputFixture,
+  type CurrentOrganizationMemberProfileOverrides,
   type LoginOutputFixture,
   type OnboardingOutputFixture,
   type OptionFixture,
@@ -60,6 +60,7 @@ import type {
   InterventionLabelOutputFixture,
   InterventionOutputFixture,
   InterventionRecurrenceOutputFixture,
+  InterventionStatisticsOutputFixture,
   InterventionTemplateOutputFixture,
   InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
@@ -271,9 +272,7 @@ export class ApiMock {
    */
   public async mockOrganizationAccess(
     organizationId: string,
-    overrides: Partial<CurrentOrganizationMemberProfileOutputFixture> & {
-      permissions?: ReadonlyArray<string>;
-    } = {},
+    overrides: CurrentOrganizationMemberProfileOverrides = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
@@ -1582,6 +1581,27 @@ export class ApiMock {
       });
 
       await fulfillJson(route, 200, hydraCollection(filtered));
+    });
+  }
+
+  /**
+   * Mocks `GET /api/interventions/statistics` — the whole-organization
+   * snapshot `InterventionStatisticsStore` reads once per organization to back
+   * the interventions list KPI strip.
+   *
+   * Registered separately from {@link mockInterventionList} because the two
+   * are different endpoints: the list route matches `/api/interventions`
+   * followed by an optional query string and nothing else, so it never sees
+   * `/api/interventions/statistics`. Without this mock the safety net answers
+   * the request with a 404 and every tile of the strip renders zero — which is
+   * what the existing interventions specs have been asserting against.
+   */
+  public async mockInterventionStatistics(
+    statistics: InterventionStatisticsOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/interventions/statistics(\\?.*)?$'), async (route) => {
+      await fulfillJson(route, 200, statistics);
     });
   }
 

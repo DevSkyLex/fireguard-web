@@ -6,7 +6,7 @@
   [attr.data-intervention-id]="item().intervention.id"
   [attr.aria-busy]="locked() ? 'true' : null"
   [class.opacity-60]="locked()"
-  class="flex flex-col gap-2 rounded-md border border-border bg-card p-3 shadow-sm focus-within:ring-2 focus-within:ring-ring motion-reduce:transition-none"
+  class="flex flex-col gap-2 rounded-md border border-border bg-card p-3 focus-within:ring-2 focus-within:ring-ring motion-reduce:transition-none"
 >
   <div class="flex items-start justify-between gap-2">
     <a
@@ -54,20 +54,20 @@
               data-testid="intervention-board-card-move"
               [attr.data-status]="target"
               [disabled]="isMoveGated(target)"
-              [attr.aria-describedby]="
-                isMoveGated(target)
-                  ? 'intervention-board-move-gate-' + item().intervention.id
-                  : null
-              "
-              [attr.title]="isMoveGated(target) ? withdrawOnlyReason : null"
+              [appGateReason]="isMoveGated(target) ? withdrawOnlyReason : null"
+              #moveGate="appGateReason"
               (click)="requestMove(target)"
             >
-              {{ statusLabelOf(target) }}
+              <span class="flex flex-col items-start gap-0.5">
+                <span>{{ statusLabelOf(target) }}</span>
+                @if (moveGate.reasonId(); as reasonId) {
+                  <span [id]="reasonId" class="text-xs text-muted-foreground">
+                    {{ withdrawOnlyReason }}
+                  </span>
+                }
+              </span>
             </button>
           }
-          <span class="sr-only" [id]="'intervention-board-move-gate-' + item().intervention.id">{{
-            withdrawOnlyReason
-          }}</span>
         }
       </hlm-dropdown-menu>
     </ng-template>

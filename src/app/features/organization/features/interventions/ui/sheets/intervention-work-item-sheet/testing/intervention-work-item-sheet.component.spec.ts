@@ -1,16 +1,33 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { InterventionWorkItemFormValues } from '../../../forms/intervention-work-item-form';
+import { By } from '@angular/platform-browser';
+import {
+  InterventionWorkItemForm,
+  type InterventionWorkItemFormValues,
+} from '../../../forms/intervention-work-item-form';
 import { InterventionWorkItemSheet } from '../intervention-work-item-sheet.component';
 
 const content = (): HTMLElement =>
   document.querySelector('[data-testid="intervention-work-item-sheet"]') as HTMLElement;
 const inSheet = (selector: string): HTMLElement => content().querySelector(selector) as HTMLElement;
 
+const unsavedChangesDialog = (): HTMLElement | null =>
+  document.querySelector('[data-testid="unsaved-changes-dialog"]');
+
+const pressEscape = (): void => {
+  content()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+};
+
 describe('InterventionWorkItemSheet', () => {
   let fixture: ComponentFixture<InterventionWorkItemSheet>;
   let visibility: boolean[];
   let submissions: InterventionWorkItemFormValues[];
+
+  const dirtyTheForm = (): void => {
+    fixture.debugElement
+      .query(By.directive(InterventionWorkItemForm))
+      .componentInstance.dirtyChanged.emit(true);
+  };
 
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
@@ -84,5 +101,62 @@ describe('InterventionWorkItemSheet', () => {
     expect(
       (inSheet('[data-testid="intervention-work-item-submit"]') as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+
+  it('should confirm before an Escape throws away a started item', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    dirtyTheForm();
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+    expect(content()).not.toBeNull();
+  });
+
+  it('should confirm before Cancel throws away a started item', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    dirtyTheForm();
+    await fixture.whenStable();
+
+    (inSheet('[data-testid="intervention-work-item-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(unsavedChangesDialog()).not.toBeNull();
+  });
+
+  it('should close once the planner confirms the discard', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    dirtyTheForm();
+    await fixture.whenStable();
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([false]);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+  });
+
+  it('should forget a stale draft once the panel has closed', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    dirtyTheForm();
+    await fixture.whenStable();
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 });

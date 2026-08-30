@@ -7,9 +7,9 @@ import type { OnboardingStepStatusTagSeverity } from '@features/onboarding/model
  * The colour each severity puts on the rail's step **glyph**, and on nothing
  * else — the row itself stays neutral text, per `DESIGN.md`'s glyph rule.
  * Values are the same literal Tailwind palette pairs every other status tag
- * in this codebase uses; the theme carries no `--success`/`--danger` token,
- * so a private literal pair is the sanctioned exception (`ARCHITECTURE.md`
- * §2.8).
+ * in this codebase uses; `success` is the one severity with a theme token
+ * (`--success`, so no `dark:` twin), and the literal pairs that remain are
+ * the sanctioned exception (`ARCHITECTURE.md` §2.8).
  *
  * @since 1.0.0
  *

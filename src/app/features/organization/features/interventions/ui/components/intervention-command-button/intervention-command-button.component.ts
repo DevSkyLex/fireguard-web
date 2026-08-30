@@ -14,6 +14,7 @@ import {
   lucideCalendarCheck,
   lucideCircleCheckBig,
   lucideListChecks,
+  lucidePlay,
   lucideSend,
 } from '@ng-icons/lucide';
 import type { InterventionCommandAction } from '@features/organization/features/interventions/models';
@@ -54,6 +55,7 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
       lucideCalendarCheck,
       lucideCircleCheckBig,
       lucideListChecks,
+      lucidePlay,
       lucideSend,
     }),
   ],

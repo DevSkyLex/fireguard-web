@@ -1,7 +1,12 @@
 @if (isLoading()) {
   <ul hlmSidebarMenu>
     <li hlmSidebarMenuItem>
-      <div class="flex h-12 items-center gap-2 p-2">
+      <div
+        class="flex h-12 items-center gap-2 p-2"
+        role="status"
+        i18n-aria-label="@@account.menu.loading"
+        aria-label="Loading your account"
+      >
         <hlm-skeleton class="size-8 shrink-0 rounded-lg" />
         <div class="grid flex-1 gap-1.5">
           <hlm-skeleton class="h-3.5 w-24" />
@@ -77,6 +82,10 @@
         <button hlmDropdownMenuItem class="gap-2" (click)="goToSecurity()">
           <ng-icon name="lucideShieldCheck" class="text-sm" aria-hidden="true" />
           <span i18n="@@account.menu.security">Security</span>
+        </button>
+        <button hlmDropdownMenuItem class="gap-2" (click)="goToOrganizations()">
+          <ng-icon name="lucideBuilding2" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.menu.organizations">Your organizations</span>
         </button>
         <button hlmDropdownMenuItem class="gap-2" (click)="goToNotifications()">
           <ng-icon name="lucideBell" class="text-sm" aria-hidden="true" />

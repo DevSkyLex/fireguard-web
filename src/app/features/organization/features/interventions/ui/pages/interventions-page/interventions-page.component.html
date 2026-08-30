@@ -1,10 +1,42 @@
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  <app-intervention-kpi-strip
-    class="shrink-0"
-    [statistics]="statisticsStore.queryData()"
-    [loading]="statisticsStore.isQueryLoading()"
-    [baseRoute]="detailRouteBase()"
-  />
+  @if (
+    activeView() === 'list' &&
+    (statisticsStore.queryData() !== null || statisticsStore.isQueryLoading())
+  ) {
+    <app-intervention-kpi-strip
+      class="shrink-0"
+      [statistics]="statisticsStore.queryData()"
+      [loading]="statisticsStore.isQueryLoading()"
+      [baseRoute]="detailRouteBase()"
+    />
+  }
+
+  @if (store.servedFromLocalCache()) {
+    <div
+      class="flex shrink-0 items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3 py-2.5"
+      role="status"
+      data-testid="interventions-offline-notice"
+    >
+      <ng-icon
+        name="lucideCloudOff"
+        class="mt-0.5 shrink-0 text-base text-foreground"
+        aria-hidden="true"
+      />
+      <p class="text-sm text-foreground" i18n="@@intervention.list.offlineNotice">
+        You're offline. These {{ store.totalInterventions() }} intervention(s) are the copy saved on
+        this device; anything created since is not here, and the key figures are unavailable until
+        you reconnect.
+      </p>
+    </div>
+  }
+
+  @if (activeView() === 'list' && statisticsStore.queryData() !== null) {
+    <app-intervention-statistics-analysis
+      class="shrink-0"
+      [statistics]="statisticsStore.queryData()"
+      [organizationId]="organizationId()"
+    />
+  }
 
   <ng-template #pageActions>
     <div
@@ -24,7 +56,6 @@
         class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
         [class.bg-background]="activeView() === 'list'"
         [class.text-foreground]="activeView() === 'list'"
-        [class.shadow-sm]="activeView() === 'list'"
         [class.text-muted-foreground]="activeView() !== 'list'"
         data-testid="intervention-view-toggle-list"
         (click)="switchView('list')"
@@ -41,7 +72,6 @@
         class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
         [class.bg-background]="activeView() === 'board'"
         [class.text-foreground]="activeView() === 'board'"
-        [class.shadow-sm]="activeView() === 'board'"
         [class.text-muted-foreground]="activeView() !== 'board'"
         data-testid="intervention-view-toggle-board"
         (click)="switchView('board')"
@@ -58,7 +88,6 @@
         class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
         [class.bg-background]="activeView() === 'calendar'"
         [class.text-foreground]="activeView() === 'calendar'"
-        [class.shadow-sm]="activeView() === 'calendar'"
         [class.text-muted-foreground]="activeView() !== 'calendar'"
         data-testid="intervention-view-toggle-calendar"
         (click)="switchView('calendar')"
@@ -76,7 +105,6 @@
           class="relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap transition-all hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring max-sm:min-h-11 dark:hover:text-foreground"
           [class.bg-background]="activeView() === 'recurrences'"
           [class.text-foreground]="activeView() === 'recurrences'"
-          [class.shadow-sm]="activeView() === 'recurrences'"
           [class.text-muted-foreground]="activeView() !== 'recurrences'"
           data-testid="interventions-tab-recurrences"
           (click)="switchView('recurrences')"
@@ -135,6 +163,21 @@
         </div>
 
         <div toolbarEnd class="flex flex-wrap items-center gap-2">
+          @if (activeView() === 'list' && (canTransition() || canAssign() || canDelete())) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11 max-sm:grow sm:hidden"
+              data-testid="interventions-selection-mode"
+              [attr.aria-pressed]="selectionMode()"
+              (click)="toggleSelectionMode()"
+            >
+              <span i18n="@@intervention.list.selectRows">Select</span>
+            </button>
+          }
+
           @if (activeView() === 'list') {
             @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
               <button
@@ -295,7 +338,9 @@
               size="sm"
               class="max-sm:min-h-11 max-sm:grow"
               data-testid="interventions-export"
+              #exportGate="appGateReason"
               [disabled]="exportDisabled()"
+              [appGateReason]="exportGateReason()"
               [attr.aria-busy]="exportBusy() ? 'true' : null"
               (click)="exportCsv()"
             >
@@ -306,6 +351,14 @@
               }
               <span i18n="@@intervention.list.exportButton">Export</span>
             </button>
+            @if (exportGateReason(); as reason) {
+              <span
+                class="text-xs text-muted-foreground"
+                data-testid="interventions-export-reason"
+                [id]="exportGate.reasonId()"
+                >{{ reason }}</span
+              >
+            }
             @if (exportBusy()) {
               <span
                 class="sr-only"
@@ -710,8 +763,16 @@
       />
     </ng-template>
 
-    <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4">
-      @if (hasError()) {
+    <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4 max-sm:flex-none">
+      @if (listForbidden()) {
+        <app-empty-state
+          icon="lucideLock"
+          title="Not available with your permissions"
+          i18n-title="@@intervention.list.forbiddenTitle"
+          description="Ask an organization admin to grant you read access to interventions."
+          i18n-description="@@intervention.list.forbiddenDesc"
+        />
+      } @else if (hasError()) {
         <app-error-state
           icon="lucideCircleAlert"
           title="Couldn't load the interventions"
@@ -754,7 +815,8 @@
         <app-intervention-table
           [regionalFormatting]="regionalFormatting()"
           [items]="items()"
-          [loading]="store.isLoadingInterventions() && items().length === 0"
+          [loading]="store.isLoadingInterventions()"
+          [selectionMode]="selectionMode()"
           [sortOrder]="sortOrder()"
           [hiddenColumns]="hiddenColumns()"
           [canTransition]="canTransition()"
@@ -786,7 +848,7 @@
       }
     </div>
 
-    <div hlmTabsContent="board" class="min-h-0 flex-1">
+    <div hlmTabsContent="board" class="flex min-h-0 flex-1 flex-col">
       <ng-template hlmTabsContentLazy>
         <app-intervention-board
           [regionalFormatting]="regionalFormatting()"

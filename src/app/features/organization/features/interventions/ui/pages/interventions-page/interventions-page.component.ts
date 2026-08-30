@@ -11,12 +11,12 @@ import {
   input,
   linkedSignal,
   signal,
-  untracked,
-  viewChild,
   type InputSignal,
   type Signal,
   type TemplateRef,
   type WritableSignal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -30,18 +30,20 @@ import {
   lucideCircleAlert,
   lucideCircleDot,
   lucideClipboardList,
+  lucideCloudOff,
   lucideDownload,
   lucideFlag,
+  lucideLock,
   lucideMapPin,
   lucidePlus,
   lucideSearch,
   lucideSlidersHorizontal,
   lucideTag,
+  lucideTimer,
   lucideTrash2,
   lucideUser,
   lucideUserCog,
   lucideWrench,
-  lucideTimer,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
@@ -129,6 +131,7 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
+import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -160,6 +163,7 @@ import { InterventionBoard } from '../../components/intervention-board';
 import type { InterventionBoardCardViewModel } from '../../components/intervention-board/models';
 import { InterventionCalendar } from '../../components/intervention-calendar';
 import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
+import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
@@ -385,6 +389,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    GateReasonDirective,
     NgIcon,
     EmptyState,
     ErrorState,
@@ -398,6 +403,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     InterventionCalendar,
     InterventionCreateSheet,
     InterventionKpiStrip,
+    InterventionStatisticsAnalysis,
     InterventionRecurrenceDeleteDialog,
     InterventionRecurrenceSheet,
     InterventionRecurrenceTable,
@@ -423,6 +429,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     InterventionCalendarStore,
     InterventionRecurrenceStore,
     provideIcons({
+      lucideLock,
       lucideArrowDown,
       lucideArrowUp,
       lucideCalendarClock,
@@ -431,6 +438,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
       lucideCircleAlert,
       lucideCircleDot,
       lucideClipboardList,
+      lucideCloudOff,
       lucideDownload,
       lucideFlag,
       lucideMapPin,
@@ -504,6 +512,11 @@ export class InterventionsPage {
   public readonly plannedStartBefore: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(
+    () => this.store.listError()?.code === 403,
+  );
+
   //#endregion
 
   //#region Properties
@@ -531,6 +544,24 @@ export class InterventionsPage {
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
   /** The KPI strip's organization-wide snapshot. Reloaded only on an organization switch — the figures describe the collection, not one tab's rendering of it. */
+  /**
+   * Property selectionMode
+   * @readonly
+   *
+   * @description
+   * Whether the compact card layout offers its selection checkboxes. A
+   * permanent checkbox column costs an eighth of a 375px screen for an action
+   * the field scene never performs, so below `sm` selection is a mode the
+   * operator enters rather than a column that is always there. The table
+   * layout above `sm` is unaffected.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly selectionMode: WritableSignal<boolean> = signal<boolean>(false);
+
   protected readonly statisticsStore: InterventionStatisticsStoreType =
     inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
@@ -822,7 +853,30 @@ export class InterventionsPage {
     (): boolean =>
       this.store.isLoadingInterventions() ||
       this.exportBusy() ||
+      this.store.servedFromLocalCache() ||
       this.store.totalInterventions() === 0,
+  );
+
+  /**
+   * Property exportGateReason
+   * @readonly
+   *
+   * @description
+   * Why Export is closed, when the reason is one the operator can act on. The
+   * export is a server-side CSV, so it cannot answer from the device's own
+   * snapshot — and a silently inert button is exactly what `PRODUCT.md`'s
+   * second principle forbids. `null` when the button is simply busy or when
+   * there is nothing to export, which `aria-busy` and the empty state already say.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly exportGateReason: Signal<string | null> = computed<string | null>(() =>
+    this.store.servedFromLocalCache()
+      ? $localize`:@@intervention.list.exportOfflineReason:Export needs the server; you're seeing this device's saved copy.`
+      : null,
   );
 
   /** Where a row's link points, on every tab. */
@@ -2622,5 +2676,20 @@ export class InterventionsPage {
       responsible: options.responsible,
     };
   }
+  /**
+   * Method toggleSelectionMode
+   * @method toggleSelectionMode
+   * @description Enters or leaves the compact layout's selection mode, clearing the selection on the way out.
+   * @access protected
+   * @since 15.0.0
+   * @returns {void}
+   */
+  protected toggleSelectionMode(): void {
+    const next: boolean = !this.selectionMode();
+    this.selectionMode.set(next);
+
+    if (!next) this.selectedIds.set(new Set<string>());
+  }
+
   //#endregion
 }

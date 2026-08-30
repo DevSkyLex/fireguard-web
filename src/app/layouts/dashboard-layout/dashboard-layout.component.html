@@ -1,22 +1,4 @@
-<!--
-  `hlmSidebarWrapper` brings the sidebar CSS variables and the flex frame, plus
-  the `bg-sidebar` canvas the inset variant paints itself against. The height and
-  clipping are ours, because each column scrolls on its own rather than the page
-  scrolling as a whole.
--->
 <div hlmSidebarWrapper id="dashboard-layout" class="relative h-svh overflow-hidden">
-  <!--
-    The sidebar sits ahead of the routed column in the tab order, so reaching the
-    page from the keyboard means passing every navigation row — on each
-    navigation. The href keeps the link semantics but its default is prevented:
-    `<base href="/">` makes a bare fragment resolve against the base and
-    hard-navigate to the app root instead of jumping within the page.
-  -->
-  <!--
-    The padding is behind `focus:` on purpose. `not-sr-only` resets `padding` and
-    `margin` to 0, and at `(0,2,0)` it outranks a bare `px-3` — the link revealed
-    itself as bare text with the background hugging the glyphs.
-  -->
   <a
     class="sr-only rounded-md bg-background text-sm font-semibold text-foreground shadow-lg outline-2 outline-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2"
     href="#dashboard-content"
@@ -81,7 +63,7 @@
   @if (panel(); as contribution) {
     <aside
       id="dashboard-panel"
-      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:my-2 lg:me-2 lg:max-w-none lg:shadow-sm"
+      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:my-2 lg:me-2 lg:max-w-none lg:shadow-none lg:ring-1 lg:ring-foreground/10"
       i18n-aria-label="@@dashboard.panel.aria"
       aria-label="Contextual panel"
     >

@@ -227,6 +227,45 @@ describe('InterventionAttachments', () => {
     expect(add?.disabled).toBe(false);
   });
 
+  it('should say why download and delete are disabled offline, and wire both to that reason', async () => {
+    await create(2);
+    fixture.componentRef.setInput('online', false);
+    await fixture.whenStable();
+
+    const reason = root().querySelector<HTMLElement>(
+      '[data-testid="intervention-attachments-offline-reason"]',
+    );
+
+    expect(reason?.textContent).toContain('unavailable until you reconnect');
+    expect(reason?.id).toBe('intervention-attachments-offline-reason');
+
+    const download = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
+    const del = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-delete"]',
+    );
+
+    expect(download?.disabled).toBe(true);
+    expect(download?.getAttribute('aria-describedby')).toBe(
+      'intervention-attachments-offline-reason',
+    );
+    expect(del?.getAttribute('aria-describedby')).toBe('intervention-attachments-offline-reason');
+  });
+
+  it('should carry no dangling reason reference once back online', async () => {
+    await create(2);
+
+    const download = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-download"]',
+    );
+
+    expect(
+      root().querySelector('[data-testid="intervention-attachments-offline-reason"]'),
+    ).toBeNull();
+    expect(download?.getAttribute('aria-describedby')).toBeNull();
+  });
+
   it('should disable the pickers while an upload is in flight', async () => {
     await create(3);
     fixture.componentRef.setInput('uploading', true);

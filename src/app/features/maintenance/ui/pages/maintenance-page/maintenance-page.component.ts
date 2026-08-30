@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideRotateCcw, lucideWrench } from '@ng-icons/lucide';
+import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
 import { MaintenanceStore } from '../../../state';
 
@@ -25,7 +26,7 @@ import { MaintenanceStore } from '../../../state';
  */
 @Component({
   selector: 'app-maintenance-page',
-  imports: [NgIcon, HlmButton],
+  imports: [NgIcon, PageHeading, HlmButton],
   providers: [provideIcons({ lucideRotateCcw, lucideWrench })],
   templateUrl: './maintenance-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

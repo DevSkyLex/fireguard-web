@@ -13,6 +13,7 @@ import {
   type WritableSignal,
   type TemplateRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -25,6 +26,7 @@ import {
   EquipmentStore,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { UnsavedChangesDialog, type UnsavedChangesAware } from '@shared/unsaved-changes';
@@ -55,6 +57,9 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
+/** One page is enough to offer every site of a normal organization. */
+const FACILITY_OPTIONS_PAGE_SIZE = 200;
+
 @Component({
   selector: 'app-equipment-create-page',
   imports: [RouterLink, EquipmentCreateForm, UnsavedChangesDialog, HlmButton, ...HlmCardImports],
@@ -73,6 +78,28 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property facility
+   * @readonly
+   *
+   * @description
+   * The site the caller wants this equipment in, bound from `?facility=`. It is
+   * what carries context from the asset explorer's selected site into the form:
+   * without it, "New equipment" on a selected site produced an unassigned
+   * record the operator then had to assign by hand from the detail page.
+   *
+   * @access public
+   * @since 2.0.0
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly facility: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /** The organization's sites, offered by the form's Site field. */
+  protected readonly facilityOptions: WritableSignal<
+    ReadonlyArray<{ readonly value: string; readonly label: string }>
+  > = signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
   //#endregion
 
   //#region Properties
@@ -81,6 +108,10 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
 
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
+
+  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /** Whether {@link EquipmentCreateForm}'s field tree currently holds unsaved work. */
   protected readonly formDirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -110,6 +141,21 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
+    effect((): void => {
+      const organizationId: string = this.organizationId();
+
+      untracked((): void => {
+        this.facilityService
+          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((response) => {
+            this.facilityOptions.set(
+              response.member.map((facility) => ({ label: facility.name, value: facility.id })),
+            );
+          });
+      });
+    });
 
     effect((): void => {
       const state: CallState<EquipmentOutput | null> = this.store.createCallState();

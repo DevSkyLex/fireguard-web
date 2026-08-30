@@ -20,7 +20,7 @@
     @if (counterpartAvatarUrl(); as avatarUrl) {
       <img hlmAvatarImage [src]="avatarUrl" alt="" />
     }
-    <span hlmAvatarFallback class="text-[11px]">
+    <span hlmAvatarFallback class="text-[10px]">
       {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
     </span>
   </hlm-avatar>

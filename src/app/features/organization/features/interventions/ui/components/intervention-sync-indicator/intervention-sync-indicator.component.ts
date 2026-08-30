@@ -17,7 +17,12 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { ConnectivityService } from '@core/connectivity';
+import { INTERVENTION_OUTBOX_LABEL } from '@features/organization/features/interventions/constants';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import type {
+  InterventionOutboxOperation,
+  InterventionOutboxType,
+} from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { formatInterventionRelativeTime } from '@features/organization/features/interventions/utils';
 import { HlmBadge } from '@shared/ui/badge';
@@ -201,6 +206,21 @@ export class InterventionSyncIndicator {
   protected readonly blockedCount: Signal<number> = this.sync.blockedOperations;
 
   /**
+   * Property blockedReason
+   * @readonly
+   * @description
+   * Why the replay stopped, straight from the first blocked operation's own
+   * server error. The coordinator has always computed it; until now nothing
+   * rendered it, so the panel announced a count with no cause — which
+   * `PRODUCT.md`'s second principle forbids: when a gate is closed, say why.
+   * `null` while nothing is blocked, or when the failure carried no message.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly blockedReason: Signal<string | null> = this.sync.problem;
+
+  /**
    * Property triggerAriaLabel
    * @readonly
    *
@@ -274,6 +294,34 @@ export class InterventionSyncIndicator {
    * @type {WritableSignal<boolean>}
    */
   protected readonly discardConfirmVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property queue
+   * @readonly
+   *
+   * @description
+   * Every operation still waiting on this device, oldest first, loaded when the
+   * panel opens rather than kept warm — an agent who never opens it never pays
+   * the IndexedDB read. Empty until then, and empty on the server.
+   *
+   * @access protected
+   * @since 7.0.0
+   *
+   * @type {WritableSignal<readonly InterventionOutboxOperation[]>}
+   */
+  protected readonly queue: WritableSignal<readonly InterventionOutboxOperation[]> = signal<
+    readonly InterventionOutboxOperation[]
+  >([]);
+
+  /**
+   * Property queueLoading
+   * @readonly
+   * @description Whether the queue read is in flight.
+   * @access protected
+   * @since 7.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly queueLoading: WritableSignal<boolean> = signal<boolean>(false);
   //#endregion
 
   //#region Methods
@@ -309,6 +357,98 @@ export class InterventionSyncIndicator {
   protected confirmDiscard(): void {
     this.discardConfirmVisible.set(false);
     void this.sync.discardBlocked();
+  }
+
+  /**
+   * Method operationLabel
+   * @description Names a queued operation for the panel's list.
+   * @access protected
+   * @since 7.0.0
+   * @param {InterventionOutboxType} type - The queued operation's type.
+   * @returns {string} The localized label.
+   */
+  protected operationLabel(type: InterventionOutboxType): string {
+    return INTERVENTION_OUTBOX_LABEL[type];
+  }
+
+  /**
+   * Method retryLabel
+   * @description Names which queued operation a Retry button acts on, so the list does not read as "Retry, Retry, Retry".
+   * @access protected
+   * @since 7.0.0
+   * @param {InterventionOutboxType} type - The queued operation's type.
+   * @returns {string} The localized accessible label.
+   */
+  protected retryLabel(type: InterventionOutboxType): string {
+    return $localize`:@@intervention.sync.queueRetryAria:Retry ${INTERVENTION_OUTBOX_LABEL[type]}:operation:`;
+  }
+
+  /**
+   * Method discardLabel
+   * @description Names which queued operation a Discard button drops permanently.
+   * @access protected
+   * @since 7.0.0
+   * @param {InterventionOutboxType} type - The queued operation's type.
+   * @returns {string} The localized accessible label.
+   */
+  protected discardLabel(type: InterventionOutboxType): string {
+    return $localize`:@@intervention.sync.queueDiscardAria:Discard ${INTERVENTION_OUTBOX_LABEL[type]}:operation:`;
+  }
+
+  /**
+   * Method onPanelState
+   * @description Loads the queue when the panel opens, and drops it when it closes.
+   * @access protected
+   * @since 7.0.0
+   * @param {'closed' | 'open'} state - The panel's new state.
+   * @returns {void}
+   */
+  protected onPanelState(state: 'closed' | 'open'): void {
+    if (state !== 'open') {
+      this.queue.set([]);
+      return;
+    }
+    void this.loadQueue();
+  }
+
+  /**
+   * Method retryOperation
+   * @description Retries one blocked operation, leaving the rest of the queue alone.
+   * @access protected
+   * @since 7.0.0
+   * @param {string} id - The operation identifier.
+   * @returns {void}
+   */
+  protected retryOperation(id: string): void {
+    void this.offline.retryOutbox(id).then(() => this.loadQueue());
+  }
+
+  /**
+   * Method discardOperation
+   * @description Drops one queued operation permanently.
+   * @access protected
+   * @since 7.0.0
+   * @param {string} id - The operation identifier.
+   * @returns {void}
+   */
+  protected discardOperation(id: string): void {
+    void this.offline.removeOutbox(id).then(() => this.loadQueue());
+  }
+
+  /**
+   * Method loadQueue
+   * @description Reads the device-global outbox into {@link queue}.
+   * @access private
+   * @since 7.0.0
+   * @returns {Promise<void>} A promise resolving once the queue is read.
+   */
+  private async loadQueue(): Promise<void> {
+    this.queueLoading.set(true);
+    try {
+      this.queue.set(await this.offline.listAllOutbox());
+    } finally {
+      this.queueLoading.set(false);
+    }
   }
   //#endregion
 }

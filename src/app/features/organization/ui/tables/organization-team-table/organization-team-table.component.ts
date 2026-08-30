@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +10,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideEllipsis, lucidePencil, lucideTrash2, lucideUsersRound } from '@ng-icons/lucide';
 import type { TeamOutput } from '@features/organization/models';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -16,11 +18,19 @@ import {
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 
-/** Placeholder rows drawn while the first load is pending. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
+/** How many cells a row carries, so the shared surface can size its first-load skeleton. */
+const COLUMN_COUNT: number = 5;
+
+/** One literal Tailwind width per rendered column, for the shared surface's first-load skeleton. */
+const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
+  'w-32',
+  'w-48',
+  'w-16',
+  'w-20',
+  'ms-auto size-6',
+];
 
 /**
  * Component OrganizationTeamTable
@@ -44,10 +54,11 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 @Component({
   selector: 'app-organization-team-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
+    CollectionSurface,
     NgIcon,
     HlmButton,
-    HlmSkeleton,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
   ],
@@ -144,8 +155,11 @@ export class OrganizationTeamTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** How many cells a row carries, handed to the shared surface. */
+  protected readonly columnCount: number = COLUMN_COUNT;
+
+  /** One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: ReadonlyArray<string> = SKELETON_COLUMN_WIDTHS;
   //#endregion
 
   //#region Methods

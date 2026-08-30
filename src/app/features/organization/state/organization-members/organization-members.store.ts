@@ -90,6 +90,7 @@ const INITIAL_STATE: OrganizationMembersState = {
   membersPageSize: MEMBERS_PAGE_SIZE,
   membersSearch: '',
   membersStatus: 'all',
+  membersRoleId: null,
   membersSort: DEFAULT_MEMBERS_SORT,
   membersActiveTotal: 0,
   invitationLinks: {},
@@ -221,6 +222,7 @@ export const OrganizationMembersStore = signalStore(
               includeInvitations,
               includeRoles,
               sort = DEFAULT_MEMBERS_SORT,
+              roleId = null,
             }) =>
               forkJoin({
                 members: includeMembers
@@ -228,7 +230,11 @@ export const OrganizationMembersStore = signalStore(
                       .list(
                         organizationId,
                         { page: 1, itemsPerPage: MEMBERS_PAGE_SIZE },
-                        { sortBy: sort.field, sortDirection: sort.direction },
+                        {
+                          sortBy: sort.field,
+                          sortDirection: sort.direction,
+                          roleId: roleId ?? undefined,
+                        },
                       )
                       .pipe(
                         map((response) => ({
@@ -268,6 +274,7 @@ export const OrganizationMembersStore = signalStore(
                         membersPageSize: MEMBERS_PAGE_SIZE,
                         membersSearch: '',
                         membersStatus: 'all',
+                        membersRoleId: roleId,
                         membersSort: sort,
                         invitationsTotal: invitations.total,
                         invitationsPage: 1,
@@ -293,6 +300,7 @@ export const OrganizationMembersStore = signalStore(
         page: number;
         search: string;
         status: OrganizationMemberStatusFilter;
+        roleId?: string | null;
         pageSize?: number;
         sort?: OrganizationMemberListSort;
       }>(
@@ -304,6 +312,7 @@ export const OrganizationMembersStore = signalStore(
               page,
               search,
               status,
+              roleId = null,
               pageSize = MEMBERS_PAGE_SIZE,
               sort = DEFAULT_MEMBERS_SORT,
             }) =>
@@ -314,6 +323,7 @@ export const OrganizationMembersStore = signalStore(
                   {
                     search: search || undefined,
                     status: status === 'all' ? undefined : status,
+                    roleId: roleId ?? undefined,
                     sortBy: sort.field,
                     sortDirection: sort.direction,
                   },
@@ -330,6 +340,7 @@ export const OrganizationMembersStore = signalStore(
                           membersPageSize: pageSize,
                           membersSearch: search,
                           membersStatus: status,
+                          membersRoleId: roleId,
                           membersSort: sort,
                           loadCallState: successCallState(null),
                         },

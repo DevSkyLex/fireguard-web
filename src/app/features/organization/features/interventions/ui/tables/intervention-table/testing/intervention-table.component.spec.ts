@@ -111,7 +111,11 @@ describe('InterventionTable', () => {
   });
 
   it('should render the status, the priority and the type through the tag registry', () => {
-    expect(element.querySelectorAll('app-intervention-tag').length).toBe(3);
+    // Scoped to the table: the card layout renders the same row a second time,
+    // which is the point of the shared surface, not a duplicate to assert on.
+    expect(
+      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag').length,
+    ).toBe(3);
     expect(element.textContent).toContain('Planned');
     expect(element.textContent).toContain('High');
     expect(element.textContent).toContain('Inventory');
@@ -153,7 +157,9 @@ describe('InterventionTable', () => {
 
     expect(element.querySelectorAll('thead th').length).toBe(before - 2);
     expect(element.textContent).not.toContain('Warehouse B');
-    expect(element.querySelectorAll('app-intervention-tag').length).toBe(2);
+    expect(
+      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag').length,
+    ).toBe(2);
   });
 
   it('should mark an overdue deadline with an icon, never with red text', async () => {
@@ -271,12 +277,23 @@ describe('InterventionTable', () => {
     expect(caption?.id).toBeTruthy();
   });
 
-  it('should draw placeholder rows while loading, and no data rows', async () => {
+  it('should draw placeholder rows on a first load, and no data rows', async () => {
+    fixture.componentRef.setInput('items', []);
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
     expect(element.querySelector('[data-testid="intervention-table-row"]')).toBeNull();
     expect(element.querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    // The shared surface's loading contract is "first load only": flashing the
+    // table to skeletons on page 2 loses the operator's place for nothing.
+    expect(element.querySelector('[data-testid="intervention-table-row"]')).not.toBeNull();
+    expect(element.querySelectorAll('hlm-skeleton').length).toBe(0);
   });
 
   describe('selection', () => {
@@ -522,10 +539,17 @@ describe('InterventionTable', () => {
       );
 
       expect(target?.disabled).toBe(true);
-      expect(target?.getAttribute('aria-describedby')).toBe('intervention-transition-gate-a1b2');
-      expect(document.getElementById('intervention-transition-gate-a1b2')?.textContent).toContain(
-        'Only the responsible can do this.',
-      );
+
+      // The reason is linked by `[appGateReason]` and rendered visibly beside
+      // the label — it used to be sr-only, readable only through a native
+      // `title` that touch never shows.
+      const reasonId: string | null = target?.getAttribute('aria-describedby') ?? null;
+      expect(reasonId).not.toBeNull();
+
+      const reason: HTMLElement | null = document.getElementById(reasonId as string);
+      expect(reason?.textContent).toContain('Only the responsible can do this.');
+      expect(reason?.classList.contains('sr-only')).toBe(false);
+      expect(target?.getAttribute('title')).toBeNull();
 
       const emitted: InterventionTransitionRequest[] = [];
       fixture.componentInstance.transitionRequested.subscribe(

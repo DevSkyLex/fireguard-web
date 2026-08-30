@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBell,
+  lucideBuilding2,
   lucideEllipsisVertical,
   lucideLogOut,
   lucideSettings2,
@@ -38,7 +39,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *
  * It is the **only** way into the account: the account is not a destination of
  * the sidebar's navigation, which lists the work rather than the reader, so the
- * menu carries all three of its sections.
+ * menu carries every one of its sections.
  *
  * Account-owned rather than layout-owned because it reads user identity; the
  * shell only lends it a slot (`ARCHITECTURE.md` §2.7). It is contributed
@@ -74,6 +75,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   providers: [
     provideIcons({
       lucideBell,
+      lucideBuilding2,
       lucideEllipsisVertical,
       lucideLogOut,
       lucideSettings2,
@@ -278,6 +280,22 @@ export class AccountMenu {
    */
   protected goToSecurity(): void {
     this.goToSection('security');
+  }
+
+  /**
+   * Method goToOrganizations
+   * @method goToOrganizations
+   *
+   * @description
+   * Opens the account workspace on the caller's own organization list.
+   *
+   * @access protected
+   * @since 3.1.0
+   *
+   * @returns {void}
+   */
+  protected goToOrganizations(): void {
+    this.goToSection('organizations');
   }
 
   /**

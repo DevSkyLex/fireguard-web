@@ -172,6 +172,13 @@ describe('InterventionWorkItemTable', () => {
     expect(changes).toEqual([]);
   });
 
+  it("should name a skipped item's disabled toggle by its state, never promising a Complete it will not do", () => {
+    const label: string | null = toggles()[2]?.getAttribute('aria-label');
+
+    expect(label).toContain('Skipped');
+    expect(label).not.toContain('Complete');
+  });
+
   it('should lock only the row whose own write is in flight', async () => {
     fixture.componentRef.setInput('pendingItemIds', new Set(['wi-2']));
     await fixture.whenStable();
@@ -236,7 +243,11 @@ describe('InterventionWorkItemTable', () => {
     await fixture.whenStable();
 
     // Only the planned and in-progress rows carry a menu.
-    expect(root().querySelectorAll('[data-testid="intervention-work-item-menu"]')).toHaveLength(2);
+    expect(
+      root().querySelectorAll(
+        '[data-testid="intervention-work-item-table"] [data-testid="intervention-work-item-menu"]',
+      ),
+    ).toHaveLength(2);
   });
 
   it('should offer a removal only for planned work, never for a field discovery', async () => {
@@ -247,7 +258,11 @@ describe('InterventionWorkItemTable', () => {
     fixture.componentRef.setInput('canDelete', true);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('[data-testid="intervention-work-item-menu"]')).toHaveLength(1);
+    expect(
+      root().querySelectorAll(
+        '[data-testid="intervention-work-item-table"] [data-testid="intervention-work-item-menu"]',
+      ),
+    ).toHaveLength(1);
   });
 
   it('should draw skeleton rows while loading with nothing loaded yet', async () => {

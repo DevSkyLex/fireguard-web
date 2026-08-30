@@ -96,11 +96,46 @@ describe('ImportJobTable', () => {
     expect(root().textContent).toContain('No results.');
   });
 
-  it('should render skeleton rows while loading with no items yet', async () => {
+  it('should render skeleton rows on a first load, and no data rows', async () => {
     fixture.componentRef.setInput('items', []);
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
+    expect(root().querySelectorAll('[data-testid="import-job-table-row"]').length).toBe(0);
+  });
+
+  it('should keep the rows on screen while a later page loads', async () => {
+    // The shared surface's loading contract is "first load only": flashing the
+    // table to skeletons on page 2 loses the operator's place for nothing.
+    fixture.componentRef.setInput('items', [job()]);
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    expect(root().querySelectorAll('[data-testid="import-job-table-row"]').length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should pair each result count with a glyph, never colour alone', async () => {
+    fixture.componentRef.setInput('items', [job()]);
+    await fixture.whenStable();
+
+    const row = byTestId('import-job-table-row');
+
+    expect(row?.querySelector('ng-icon[name="lucideCircleCheck"]')).not.toBeNull();
+    expect(row?.querySelector('ng-icon[name="lucideCircleX"]')).not.toBeNull();
+    expect(row?.textContent).toContain('rows imported');
+    expect(row?.textContent).toContain('rows failed');
+  });
+
+  it('should mirror every row as a card carrying an explicitly labelled report action', async () => {
+    fixture.componentRef.setInput('items', [job()]);
+    await fixture.whenStable();
+
+    const cards = root().querySelectorAll('[data-testid="import-job-table-card"]');
+
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('equipment.csv');
+    expect(cards[0].textContent).toContain('View report');
   });
 });

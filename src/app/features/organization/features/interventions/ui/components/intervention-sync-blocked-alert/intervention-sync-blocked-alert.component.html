@@ -1,0 +1,53 @@
+<div
+  hlmAlert
+  class="border-destructive/30 bg-destructive/5"
+  data-testid="intervention-sync-blocked-alert"
+>
+  <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+
+  <p hlmAlertTitle class="text-sm font-medium text-foreground">{{ title() }}</p>
+
+  <div hlmAlertDescription class="flex flex-col gap-3">
+    <span class="block" i18n="@@intervention.sync.blockedAlert.lead">
+      They are still saved on this device. Nothing is lost — but until they are sent, this
+      intervention is not up to date for anyone else.
+    </span>
+
+    <ul class="flex flex-col gap-1" data-testid="intervention-sync-blocked-alert-list">
+      @for (operation of operations(); track operation.id) {
+        <li class="flex flex-wrap items-baseline gap-x-2">
+          <span class="font-medium text-foreground">{{ operationLabel(operation.type) }}</span>
+          @if (operation.error) {
+            <span class="text-xs">{{ operation.error }}</span>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (unlistedReason(); as text) {
+      <span class="block text-xs" data-testid="intervention-sync-blocked-alert-reason">{{
+        text
+      }}</span>
+    }
+
+    <div>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="max-sm:min-h-11 max-sm:w-full"
+        data-testid="intervention-sync-blocked-alert-retry"
+        [disabled]="retrying()"
+        [attr.aria-busy]="retrying() ? 'true' : null"
+        (click)="retryRequested.emit()"
+      >
+        <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+        @if (retrying()) {
+          <span i18n="@@intervention.sync.blockedAlert.retrying">Sending…</span>
+        } @else {
+          <span i18n="@@intervention.sync.blockedAlert.retry">Retry blocked</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>

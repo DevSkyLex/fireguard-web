@@ -67,9 +67,10 @@ type OrganizationTeamKpiTile = {
  * @class OrganizationTeamPage
  *
  * @description
- * Route entry page for the organization's roles and permissions
- * (`/organizations/:organizationId/team`, gated by `organization.roles.*`).
- * A KPI row (total, custom and catalog counts) sits above
+ * Mounted as the "Roles & permissions" tab of `OrganizationMembersPage`
+ * (`/organizations/:organizationId/members?tab=roles`, gated by
+ * `organization.roles.*`; the retired `/team` route redirects here). A KPI
+ * row (total, custom and catalog counts) sits above
  * {@link OrganizationRoleGrid}, which itself splits the one loaded role list
  * into a System roles and a Custom roles section — so the custom-roles empty
  * state can never stack above a grid still full of system roles; a member
@@ -90,13 +91,17 @@ type OrganizationTeamKpiTile = {
  * renders no title band of its own. `app-organization-page-header` is
  * retired — the org identity it used to carry stays local to the dashboard
  * page. "New role" registers on the shell header through
- * `PageActionsService`.
+ * `PageActionsService`, gated by {@link active}: the host tabs component
+ * keeps this page mounted (`hlmTabsContentLazy`) once its tab has activated
+ * once, so leaving the tab does not destroy it and the plain
+ * `registerPageActions` dance alone would leave a stale "New role" button
+ * registered after switching to a sibling tab.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @example
  * ```typescript
- * { path: 'team', component: OrganizationTeamPage }
+ * <app-organization-team-page [organizationId]="organizationId()" [active]="activeTab() === 'roles'" />
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -132,6 +137,26 @@ export class OrganizationTeamPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property active
+   * @readonly
+   *
+   * @description
+   * Whether this page's tab is the one currently showing, defaulting to
+   * `true` for a standalone mount. Drives whether {@link pageActions} owns
+   * the shell header's action slot — see the class `@description`.
+   *
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly active: InputSignal<boolean> = input<boolean>(true);
+
+  /** Where a role card's member count links, so "who holds this role" has an answer. */
+  protected readonly membersRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['/organizations', this.organizationId(), 'members'],
+  );
   //#endregion
 
   //#region Properties
@@ -281,6 +306,16 @@ export class OrganizationTeamPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
+    effect((): void => {
+      const isActive: boolean = this.active();
+      const template: TemplateRef<unknown> | undefined = this.pageActions();
+
+      untracked((): void => {
+        if (isActive && template) this.pageActionsService.register(template);
+        else if (!isActive) this.pageActionsService.clear(template);
+      });
+    });
 
     effect((): void => {
       const organizationId: string = this.organizationId();

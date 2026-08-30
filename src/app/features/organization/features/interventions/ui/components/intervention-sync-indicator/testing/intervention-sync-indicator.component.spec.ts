@@ -11,16 +11,23 @@ const trigger = (): HTMLElement | null =>
 const liveRegion = (): HTMLElement | null =>
   document.querySelector('[data-testid="intervention-sync-live"]');
 
+const queueItems = (): readonly Element[] =>
+  Array.from(document.querySelectorAll('[data-testid="intervention-sync-queue-item"]'));
+
 describe('InterventionSyncIndicator', () => {
   let fixture: ComponentFixture<InterventionSyncIndicator>;
   let online: WritableSignal<boolean>;
   let syncing: WritableSignal<boolean>;
   let blockedOperations: WritableSignal<number>;
+  let problem: WritableSignal<string | null>;
   let lastSyncedAt: WritableSignal<Date | null>;
   let pendingCount: WritableSignal<number>;
   let syncAll: ReturnType<typeof vi.fn>;
   let retryBlocked: ReturnType<typeof vi.fn>;
   let discardBlocked: ReturnType<typeof vi.fn>;
+  let listAllOutbox: ReturnType<typeof vi.fn>;
+  let retryOutbox: ReturnType<typeof vi.fn>;
+  let removeOutbox: ReturnType<typeof vi.fn>;
 
   const open = async (): Promise<void> => {
     (trigger() as HTMLButtonElement).click();
@@ -31,11 +38,15 @@ describe('InterventionSyncIndicator', () => {
     online = signal(true);
     syncing = signal(false);
     blockedOperations = signal(0);
+    problem = signal<string | null>(null);
     lastSyncedAt = signal<Date | null>(null);
     pendingCount = signal(0);
     syncAll = vi.fn();
     retryBlocked = vi.fn();
     discardBlocked = vi.fn();
+    listAllOutbox = vi.fn().mockResolvedValue([]);
+    retryOutbox = vi.fn().mockResolvedValue(undefined);
+    removeOutbox = vi.fn().mockResolvedValue(undefined);
 
     TestBed.configureTestingModule({
       providers: [
@@ -46,14 +57,17 @@ describe('InterventionSyncIndicator', () => {
           useValue: {
             syncing,
             blockedOperations,
-            problem: signal(null),
+            problem,
             lastSyncedAt,
             syncAll,
             retryBlocked,
             discardBlocked,
           },
         },
-        { provide: InterventionOfflineService, useValue: { pendingCount } },
+        {
+          provide: InterventionOfflineService,
+          useValue: { pendingCount, listAllOutbox, retryOutbox, removeOutbox },
+        },
       ],
     });
 
@@ -84,6 +98,25 @@ describe('InterventionSyncIndicator', () => {
     expect(
       trigger()?.querySelector('[data-testid="intervention-sync-blocked-count"]')?.textContent,
     ).toContain('2');
+  });
+
+  it('should state why the replay is blocked, not just how many failed', async () => {
+    blockedOperations.set(2);
+    problem.set('The intervention changed on the server while you were offline.');
+    await fixture.whenStable();
+    await open();
+
+    expect(
+      document.querySelector('[data-testid="intervention-sync-problem"]')?.textContent,
+    ).toContain('changed on the server');
+  });
+
+  it('should say nothing extra when the failure carried no message', async () => {
+    blockedOperations.set(2);
+    await fixture.whenStable();
+    await open();
+
+    expect(document.querySelector('[data-testid="intervention-sync-problem"]')).toBeNull();
   });
 
   it('should read as syncing while a replay is in flight', async () => {
@@ -191,5 +224,94 @@ describe('InterventionSyncIndicator', () => {
 
     expect(liveRegion()?.getAttribute('role')).toBe('status');
     expect(liveRegion()?.getAttribute('aria-busy')).toBe('true');
+  });
+
+  describe('the readable queue', () => {
+    it('should name every queued operation instead of showing a bare count', async () => {
+      listAllOutbox.mockResolvedValue([
+        { id: 'a', interventionId: 'i-1', type: 'comment.create', payload: {}, createdAt: '1' },
+        { id: 'b', interventionId: 'i-2', type: 'work-item.update', payload: {}, createdAt: '2' },
+      ]);
+      pendingCount.set(2);
+      await fixture.whenStable();
+
+      await open();
+      await fixture.whenStable();
+
+      expect(listAllOutbox).toHaveBeenCalledTimes(1);
+      expect(queueItems()).toHaveLength(2);
+      expect(queueItems()[0]?.textContent).toContain('New comment');
+      expect(queueItems()[1]?.textContent).toContain('Work item update');
+    });
+
+    it('should surface the failure of a blocked operation and let it be retried alone', async () => {
+      listAllOutbox.mockResolvedValue([
+        {
+          id: 'a',
+          interventionId: 'i-1',
+          type: 'comment.create',
+          payload: {},
+          createdAt: '1',
+          status: 'failed',
+          error: 'Comment rejected by the server',
+        },
+      ]);
+      blockedOperations.set(1);
+      await fixture.whenStable();
+
+      await open();
+      await fixture.whenStable();
+
+      expect(queueItems()[0]?.textContent).toContain('Comment rejected by the server');
+
+      const retryOne = document.querySelector<HTMLButtonElement>(
+        '[data-testid="intervention-sync-queue-retry"]',
+      );
+      retryOne?.click();
+      await fixture.whenStable();
+
+      expect(retryOutbox).toHaveBeenCalledWith('a');
+      expect(retryBlocked).not.toHaveBeenCalled();
+    });
+
+    it('should discard one operation without touching the rest of the queue', async () => {
+      listAllOutbox.mockResolvedValue([
+        {
+          id: 'a',
+          interventionId: 'i-1',
+          type: 'media.create',
+          payload: {},
+          createdAt: '1',
+          status: 'conflict',
+        },
+      ]);
+      blockedOperations.set(1);
+      await fixture.whenStable();
+
+      await open();
+      await fixture.whenStable();
+
+      document
+        .querySelector<HTMLButtonElement>('[data-testid="intervention-sync-queue-discard"]')
+        ?.click();
+      await fixture.whenStable();
+
+      expect(removeOutbox).toHaveBeenCalledWith('a');
+      expect(discardBlocked).not.toHaveBeenCalled();
+    });
+
+    it('should offer no per-operation action on work that will sync on its own', async () => {
+      listAllOutbox.mockResolvedValue([
+        { id: 'a', interventionId: 'i-1', type: 'comment.create', payload: {}, createdAt: '1' },
+      ]);
+      pendingCount.set(1);
+      await fixture.whenStable();
+
+      await open();
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-testid="intervention-sync-queue-retry"]')).toBeNull();
+      expect(document.querySelector('[data-testid="intervention-sync-queue-discard"]')).toBeNull();
+    });
   });
 });

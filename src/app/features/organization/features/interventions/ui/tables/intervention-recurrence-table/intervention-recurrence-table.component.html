@@ -1,161 +1,118 @@
-@if (loading() && recurrences().length === 0) {
-  <span class="sr-only" role="status" i18n="@@intervention.recurrences.loading"
-    >Loading recurrences…</span
-  >
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="max-h-[50vh] overflow-y-auto">
-      <table hlmTable data-testid="intervention-recurrences-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.recurrences.caption">
-          The organization's recurring intervention schedules.
-        </caption>
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.recurrences.nameLabel">Name</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.templateLabel">Template</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.nextOccurrenceColumn">
-              Next occurrence
-            </th>
-            <th
-              hlmTableHead
-              class="w-[90px] text-center"
-              i18n="@@intervention.recurrences.activeColumn"
-            >
-              Active
-            </th>
-            <th hlmTableHead class="w-[170px]">
-              <span class="sr-only" i18n="@@intervention.recurrences.columnActions">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody hlmTableBody>
-          @for (row of skeletonRows; track row) {
-            <tr hlmTableRow aria-hidden="true">
-              <td hlmTableCell><hlm-skeleton class="h-4 w-32 max-w-full" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-28 max-w-full" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell><hlm-skeleton class="h-4 w-24" /></td>
-              <td hlmTableCell class="text-center"><hlm-skeleton class="mx-auto h-5 w-9" /></td>
-              <td hlmTableCell><hlm-skeleton class="ms-auto h-4 w-20" /></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-} @else if (error(); as message) {
+<app-collection-surface
+  maxHeight="max-h-[50vh]"
+  caption="The organization's recurring intervention schedules."
+  i18n-caption="@@intervention.recurrences.caption"
+  testId="intervention-recurrences-table"
+  [loading]="loading()"
+  [hasError]="error() !== null"
+  [rowCount]="recurrences().length"
+  [columnCount]="6"
+  [skeletonColumns]="skeletonColumnWidths"
+>
+  <ng-container surfaceHead>
+    <tr hlmTableRow>
+      <th hlmTableHead i18n="@@intervention.recurrences.nameLabel">Name</th>
+      <th hlmTableHead i18n="@@intervention.recurrences.templateLabel">Template</th>
+      <th hlmTableHead i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
+      <th hlmTableHead i18n="@@intervention.recurrences.nextOccurrenceColumn">Next occurrence</th>
+      <th hlmTableHead class="w-[90px] text-center" i18n="@@intervention.recurrences.activeColumn">
+        Active
+      </th>
+      <th hlmTableHead class="w-[170px]">
+        <span class="sr-only" i18n="@@intervention.recurrences.columnActions">Actions</span>
+      </th>
+    </tr>
+  </ng-container>
+
+  <ng-container surfaceRows>
+    @for (recurrence of recurrences(); track recurrence.id) {
+      <tr hlmTableRow [attr.data-testid]="'intervention-recurrence-row-' + recurrence.id">
+        <td
+          hlmTableCell
+          class="max-w-[320px] truncate font-medium text-foreground"
+          [title]="recurrence.name"
+        >
+          {{ recurrence.name }}
+        </td>
+        <td
+          hlmTableCell
+          class="max-w-[280px] truncate text-muted-foreground"
+          [title]="templateNameOf(recurrence.template)"
+        >
+          {{ templateNameOf(recurrence.template) }}
+        </td>
+        <td hlmTableCell>
+          {{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}
+        </td>
+        <td hlmTableCell [attr.data-testid]="'intervention-recurrence-next-' + recurrence.id">
+          {{ recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting() }}
+        </td>
+        <td hlmTableCell class="text-center">
+          <ng-container
+            [ngTemplateOutlet]="activeToggle"
+            [ngTemplateOutletContext]="{ recurrence, suffix: '' }"
+          />
+        </td>
+        <td hlmTableCell>
+          <span class="flex justify-end gap-1">
+            <ng-container
+              [ngTemplateOutlet]="rowActions"
+              [ngTemplateOutletContext]="{ recurrence, suffix: '' }"
+            />
+          </span>
+        </td>
+      </tr>
+    }
+  </ng-container>
+
+  <ng-container surfaceCards>
+    @for (recurrence of recurrences(); track recurrence.id) {
+      <div
+        class="flex flex-col gap-2 rounded-md border border-border p-3"
+        [attr.data-testid]="'intervention-recurrence-card-' + recurrence.id"
+      >
+        <div class="flex items-start gap-2">
+          <span class="line-clamp-2 flex-1 font-medium text-foreground">{{ recurrence.name }}</span>
+          <ng-container
+            [ngTemplateOutlet]="activeToggle"
+            [ngTemplateOutletContext]="{ recurrence, suffix: '-card' }"
+          />
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <span class="truncate"
+            >{{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}</span
+          >
+          <span class="truncate">{{
+            recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting()
+          }}</span>
+        </div>
+
+        <span class="truncate text-xs text-muted-foreground">{{
+          templateNameOf(recurrence.template)
+        }}</span>
+
+        <span class="flex gap-1">
+          <ng-container
+            [ngTemplateOutlet]="rowActions"
+            [ngTemplateOutletContext]="{ recurrence, suffix: '-card' }"
+          />
+        </span>
+      </div>
+    }
+  </ng-container>
+
   <app-error-state
+    surfaceError
     icon="lucideCircleAlert"
     title="Recurrences could not be loaded"
     i18n-title="@@intervention.recurrences.errorTitle"
-    [description]="message"
+    [description]="error() ?? ''"
     data-testid="intervention-recurrences-error"
   />
-} @else if (recurrences().length > 0) {
-  <div class="w-full overflow-hidden rounded-md border border-border">
-    <div hlmTableContainer class="max-h-[50vh] overflow-y-auto">
-      <table hlmTable data-testid="intervention-recurrences-table">
-        <caption hlmTableCaption class="sr-only" i18n="@@intervention.recurrences.caption">
-          The organization's recurring intervention schedules.
-        </caption>
-        <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
-          <tr hlmTableRow>
-            <th hlmTableHead i18n="@@intervention.recurrences.nameLabel">Name</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.templateLabel">Template</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
-            <th hlmTableHead i18n="@@intervention.recurrences.nextOccurrenceColumn">
-              Next occurrence
-            </th>
-            <th
-              hlmTableHead
-              class="w-[90px] text-center"
-              i18n="@@intervention.recurrences.activeColumn"
-            >
-              Active
-            </th>
-            <th hlmTableHead class="w-[170px]">
-              <span class="sr-only" i18n="@@intervention.recurrences.columnActions">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody hlmTableBody>
-          @for (recurrence of recurrences(); track recurrence.id) {
-            <tr hlmTableRow [attr.data-testid]="'intervention-recurrence-row-' + recurrence.id">
-              <td
-                hlmTableCell
-                class="max-w-[320px] truncate font-medium text-foreground"
-                [title]="recurrence.name"
-              >
-                {{ recurrence.name }}
-              </td>
-              <td
-                hlmTableCell
-                class="max-w-[280px] truncate text-muted-foreground"
-                [title]="templateNameOf(recurrence.template)"
-              >
-                {{ templateNameOf(recurrence.template) }}
-              </td>
-              <td hlmTableCell>
-                {{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}
-              </td>
-              <td hlmTableCell [attr.data-testid]="'intervention-recurrence-next-' + recurrence.id">
-                {{ recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting() }}
-              </td>
-              <td hlmTableCell class="text-center">
-                <span class="inline-flex min-h-11 min-w-11 items-center justify-center">
-                  <hlm-switch
-                    [checked]="recurrence.isActive"
-                    [disabled]="!canWrite() || savingId() === recurrence.id"
-                    [attr.aria-label]="
-                      rowAriaLabelOf(
-                        recurrence.isActive ? 'deactivate' : 'activate',
-                        recurrence.name
-                      )
-                    "
-                    [attr.data-testid]="'intervention-recurrence-toggle-' + recurrence.id"
-                    (checkedChange)="toggleActive(recurrence.id, $event)"
-                  />
-                </span>
-              </td>
-              <td hlmTableCell>
-                @if (canWrite()) {
-                  <span class="flex justify-end gap-1">
-                    <button
-                      hlmBtn
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      class="max-sm:min-h-11"
-                      [attr.aria-label]="rowAriaLabelOf('edit', recurrence.name)"
-                      [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id"
-                      (click)="editRequested.emit(recurrence)"
-                    >
-                      <span i18n="@@common.edit">Edit</span>
-                    </button>
-                    <button
-                      hlmBtn
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      class="max-sm:min-h-11"
-                      [attr.aria-label]="rowAriaLabelOf('remove', recurrence.name)"
-                      [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id"
-                      [disabled]="removingId() === recurrence.id"
-                      (click)="removed.emit(recurrence)"
-                    >
-                      <span i18n="@@common.delete">Delete</span>
-                    </button>
-                  </span>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-} @else {
+
   <app-empty-state
+    surfaceEmpty
     icon="lucideCalendarClock"
     title="No recurrences yet."
     i18n-title="@@intervention.recurrences.empty"
@@ -163,4 +120,48 @@
     i18n-description="@@intervention.recurrences.emptyDesc"
     data-testid="intervention-recurrences-empty"
   />
-}
+</app-collection-surface>
+
+<ng-template #activeToggle let-recurrence="recurrence" let-suffix="suffix">
+  <span class="inline-flex min-h-11 min-w-11 items-center justify-center">
+    <hlm-switch
+      [checked]="recurrence.isActive"
+      [disabled]="!canWrite() || savingId() === recurrence.id"
+      [attr.aria-label]="
+        rowAriaLabelOf(recurrence.isActive ? 'deactivate' : 'activate', recurrence.name)
+      "
+      [attr.data-testid]="'intervention-recurrence-toggle-' + recurrence.id + suffix"
+      (checkedChange)="toggleActive(recurrence.id, $event)"
+    />
+  </span>
+</ng-template>
+
+<ng-template #rowActions let-recurrence="recurrence" let-suffix="suffix">
+  @if (canWrite()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="sm"
+      class="max-sm:min-h-11"
+      [attr.aria-label]="rowAriaLabelOf('edit', recurrence.name)"
+      [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id + suffix"
+      (click)="editRequested.emit(recurrence)"
+    >
+      <span i18n="@@common.edit">Edit</span>
+    </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="sm"
+      class="max-sm:min-h-11"
+      [attr.aria-label]="rowAriaLabelOf('remove', recurrence.name)"
+      [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id + suffix"
+      [disabled]="removingId() === recurrence.id"
+      (click)="removed.emit(recurrence)"
+    >
+      <span i18n="@@common.delete">Delete</span>
+    </button>
+  }
+</ng-template>

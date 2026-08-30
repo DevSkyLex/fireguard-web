@@ -1,10 +1,13 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -13,18 +16,15 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
 import type { MaintenanceScheduleOutput } from '@features/organization/features/maintenance-schedules/models';
 import { MAINTENANCE_OVERRIDE_DURATION_OPTIONS } from '@features/organization/features/maintenance-schedules/options';
 import { iriId } from '@features/organization/features/maintenance-schedules/utils';
+import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
-
-/** Placeholder rows drawn while the first page loads. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
 
 /**
  * Component MaintenanceScheduleTable
@@ -50,19 +50,27 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5];
  * distinguishable rather than an identical "Fire extinguisher" /
  * "View facility" pair pointing at different records.
  *
- * @version 1.1.0
+ * Built on the shared `CollectionSurface`, which owns the bordered scroll
+ * shell, the first-load skeleton and the table/card switch. Below the
+ * surface's container breakpoint a schedule reads as a card: the equipment
+ * link as the identity, next-due and due status beneath it, and the facility
+ * demoted to a third line — two links of equal weight on one card would read
+ * as two records rather than one.
+ *
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-maintenance-schedule-table',
   imports: [
+    NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
+    CollectionSurface,
     NgIcon,
     MaintenanceDueStatusTag,
     HlmButton,
-    HlmSkeleton,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucidePencil })],
@@ -171,8 +179,30 @@ export class MaintenanceScheduleTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared
+   * surface's skeleton rows. Literal strings because Tailwind scans source
+   * text, and column-aware — the trailing actions width only joins the list
+   * when {@link canManage} renders that column at all.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => {
+      const widths: string[] = ['w-32', 'w-24', 'w-20', 'w-20', 'w-24'];
+
+      if (this.canManage()) widths.push('w-8');
+
+      return widths;
+    },
+  );
   //#endregion
 
   //#region Methods
@@ -275,13 +305,13 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method columnCount
-   * @description How many cells a row has, so the empty-state message can span the full width.
+   * @description How many cells a row has, so a full-width message can span them. The actions column only exists with {@link canManage}.
    * @access protected
    * @since 1.0.0
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return 6;
+    return this.canManage() ? 6 : 5;
   }
   //#endregion
 }

@@ -124,8 +124,9 @@
           data-testid="equipment-detail-info"
         >
           <h2
+            hlmCardTitle
             id="equipment-detail-info-title"
-            class="px-2 text-base font-semibold"
+            class="px-2"
             i18n="@@equipment.info.title"
           >
             Equipment information
@@ -217,6 +218,14 @@
   (visibleChange)="assignFacilityDialogVisible.set($event)"
   (assigned)="onFacilityAssigned($event)"
   (unassigned)="onFacilityUnassigned()"
+/>
+
+<app-equipment-decommission-dialog
+  [visible]="decommissionDialogVisible()"
+  [pending]="store.isChangingLifecycle()"
+  [equipmentName]="title()"
+  (visibleChange)="decommissionDialogVisible.set($event)"
+  (confirmed)="confirmDecommission()"
 />
 
 <ng-template #pageActions>

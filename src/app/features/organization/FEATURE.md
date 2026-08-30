@@ -45,8 +45,11 @@ This feature does not own generic shell composition or account-level user identi
 > Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
 > `inspections`, `maintenance`, `approvals`, `checklists`, `imports`, `audit`, `calendar`,
 > `statistics` (a permanent redirect to the landing page, kept for old bookmarks and deep links —
-> see Dashboard below), `members`, `members/:memberId`, `team`, `settings`, and
-> `/organizations/invitations/accept` (mounted at the app root, outside this subtree — see below).
+> see Dashboard below), `members` (now tabbed: roster, roles & permissions, teams —
+> see below), `members/:memberId`, `settings`, and `/organizations/invitations/accept`
+> (mounted at the app root, outside this subtree — see below). `team` and `teams` are
+> retired as mounted routes and now redirect functionally onto `members?tab=roles` /
+> `members?tab=teams`.
 > `assets` (the estate explorer) is now the sidebar's single navigation entry for the
 > estate, gated on `FACILITIES_READ`; `facilities` and `equipments` stay mounted and gated on their
 > own read permissions so records, creation forms and deep links keep resolving, but neither is
@@ -107,7 +110,19 @@ This feature does not own generic shell composition or account-level user identi
   secondary-UI loading rule. It is now the single navigation entry for the
   estate, replacing the "Facilities" and "Equipments" pair below; both route
   trees stay mounted regardless so records, creation forms and deep links
-  keep resolving. Operators holding
+  keep resolving.
+
+  **The explorer's own state is in the URL** (`?axis=`, `?facility=`,
+  `?compliance=`), written with `replaceUrl` so browsing the tree does not fill
+  the history with one entry per click, and restored from route-bound inputs on
+  arrival. It replaced two routed list pages that both did this and inherited
+  neither: a reload came back on "By site" with nothing selected, the back
+  button left the page instead of clearing the selection, and "the equipment of
+  Bâtiment C" could not be sent to a colleague. **The creation buttons carry the
+  selection too** — `?facility=` for equipment, `?parent=` for a site — so
+  "New equipment" on a selected site produces a record already assigned rather
+  than an orphan the operator then assigns by hand through the detail page's
+  dialog. Operators holding
   `FACILITIES_WRITE` can re-parent a site by dragging it onto another —
   `Tree`'s optional pointer drag-drop, calling `FacilityTreeStore.move`. The
   tree row menu's "Move to…" action opens `FacilityMoveDialog` for the same
@@ -116,6 +131,7 @@ This feature does not own generic shell composition or account-level user identi
   "Duplicate" action, gated identically, calls `FacilityTreeStore.duplicate`
   directly with no confirmation dialog — the backend defaults the copy's name
   and parent, and duplicating is not destructive
+
 - `/organizations/:organizationId/messages` — the direct-messages workspace, owned by the
   `collaboration` subfeature, gated by `organization.messaging.read`. `messages/:conversationId`
   opens one. Reached from the shell's bottom navigation, not from the organization sections
@@ -143,17 +159,29 @@ This feature does not own generic shell composition or account-level user identi
   `checklists` subfeature, gated by `organization.inspection.read`. Write actions (create, edit,
   archive) are additionally gated by `organization.inspection.write`. Checklists are consumed as
   inspection templates by the `inspections` subfeature's create flow
-- `/organizations/:organizationId/members` (members + invitations; gated by `organization.members.*`)
+- `/organizations/:organizationId/members` — the single people-management surface, tabbed via
+  `?tab=` (`members` default, `roles`, `teams`), `?tab=`-addressable the same way as
+  `organization-settings-page` and `intervention-detail-page`'s rail. The route itself opens on
+  the **union** of every tab's read permission (`organizationPermissionGuard`, `match: 'any'`
+  over `organization.members.read`, `.manage`, `organization.roles.read`, `.manage`,
+  `organization.teams.read`) — reaching the route at all does not imply seeing every tab.
+  `OrganizationMembersPage` gates each trigger and panel individually
+  (`canViewMembersTab`/`canViewRolesTab`/`canViewTeamsTab`) and never resolves `activeTab` to a
+  tab the acting member cannot see: an unauthorized or unrecognized `?tab=` falls back to the
+  first permitted tab in `members` → `roles` → `teams` order.
+  - **`members` tab** (members + invitations; `organization.members.*`) — the page's own KPI row,
+    roster and pending-invitations sections, fed by the component-scoped `OrganizationMembersStore`.
+  - **`roles` tab** (RBAC roles; `organization.roles.*`) — `OrganizationTeamPage` mounted as-is
+    inside a lazy tab panel (`hlmTabsContentLazy`), so its component-scoped `OrganizationTeamStore`
+    and "New role" page action only activate once the tab is first opened.
+  - **`teams` tab** (named member groups; `organization.teams.read`) — `OrganizationTeamsPage`
+    mounted the same way, with its own `OrganizationTeamsStore`. See the naming disambiguation in
+    **Invariants** — `roles`/`OrganizationTeamPage` and `teams`/`OrganizationTeamsPage` are
+    unrelated concepts sharing this one host page.
+  - The retired `/team` and `/teams` routes are functional `redirectTo`s
+    (`redirectToOrganizationMembersTab`, `organization.routes.ts`) preserving every incoming
+    query param, mirroring `interventions.routes.ts`'s `redirectToInterventionView`.
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
-- `/organizations/:organizationId/team` (roles & permissions only; gated by `organization.roles.*`)
-- `/organizations/:organizationId/teams` — named member groups used to scope intervention
-  assignment (`ui/pages/organization-teams-page`, `OrganizationTeamsPage`); gated by
-  `organization.teams.read`. See the naming disambiguation in **Invariants** — this is
-  distinct from `/team` above. `TeamService` and `OrganizationTeamsStore`
-  (`state/organization-teams`, component-scoped, provided on `OrganizationTeamsPage`) back the
-  full list/create/edit/delete + member roster panel surface (`OrganizationTeamTable`, the
-  create/edit/delete dialogs, `OrganizationTeamMembersSheet`) — see **Not Built Yet** for the
-  one thing still owed (real specs).
 - `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, compliance, assistant, danger zone; gated by `organization.settings.write`)
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
@@ -164,7 +192,26 @@ The `:organizationId` parent route resolves organization context before child pa
 Organization navigation and routes are filtered by the active member permissions. Subscription
 plans cap resource quantities (see Subscription quotas below); they do not gate routes.
 
-The settings page's danger-zone tab is additionally gated by the `organization.delete` permission.
+**The sidebar's "Administration" group is retired.** `members`, `team`, `teams`, `settings` and
+`audit` no longer appear in `ORGANIZATION_NAVIGATION_ITEMS` / `ORGANIZATION_NAVIGATION_GROUPS`
+(`navigation/organization-navigation.config.ts`) — `OrganizationNavigationGroupId` now carries
+only `'operations' | 'assets'`. Their routes stay mounted and permission-guarded exactly as
+before; only the sidebar entry point moved. The five destinations' new entry point is
+`OrganizationSwitcher`'s dropdown, which becomes the organization's administration menu:
+organization identity header, then Settings / Billing (`settings?tab=subscription`, no new
+route) / Members / Audit journal as `routerLink`s reusing the same
+`hasOrganizationNavigationAccess`/`matchesOrganizationPermission` gate the sidebar used, then the
+existing organization-switching panel and "Create organization" action. "Leave organization…" is
+not offered from this menu, nor from the settings danger zone — it lives at
+`/account/organizations` (`features/account/FEATURE.md`), reachable by every signed-in member
+regardless of organization permission (see below).
+**The companion move of `OrganizationTeamPage`/`OrganizationTeamsPage`'s content into
+`roles`/`teams` tabs of `OrganizationMembersPage` is done** — see the `members` route entry
+above. The switcher-side menu rebuild itself (identity header, Settings/Billing/Members/Audit
+`routerLink`s) remains follow-up work — see **Not Built Yet**.
+
+The settings page's danger-zone tab is gated on `organization.delete` as a whole — a member
+holding none of it falls back to the General tab. Leave no longer lives on this tab (see below).
 
 **"Delete" is an archive, and it is reversible.** `DELETE /api/organizations/{id}` soft-deletes:
 the owned facilities, equipment, inspections and interventions are preserved, and
@@ -189,11 +236,8 @@ implied by the route guard on `/settings`. Transfer ownership (`app-organization
 — an `hlm-combobox` member picker mirroring `FacilityMoveDialog`, plus the typed-organization-name
 confirm gate `OrganizationDeleteDialog` uses) renders only for the current owner on a non-archived
 organization; its candidate list is `OrganizationMemberService.listAll`, loaded once the owner opens
-the tab, narrowed to active, non-owner members. Leave (`app-organization-leave-dialog`, self-removal
-via `DELETE /members/me`) renders for every member but the owner — the backend's own last-administrator
-lockout surfaces as the dialog's inline error rather than being re-derived client-side. The whole tab
-stays gated on `organization.delete`, unchanged. This danger-tab entry is additive: it is not a
-rank-and-file member's only path to leave — see `OrganizationSwitcher` below for the one that is.
+the tab, narrowed to active, non-owner members. Leave is no longer offered from this tab — see
+below.
 
 **`OrganizationOutput.isOwner` is authoritative.** Since backend 1.5.0 the API projects `isOwner`
 (and the caller's `roles`) through one shared caller-membership port on the user's organization list,
@@ -320,6 +364,8 @@ the data is.
 - `MemberDirectoryPort`
 - `REGIONAL_FORMATTING_PORT`
 - `RegionalFormattingPort`
+- `MY_ORGANIZATIONS_PORT`
+- `MyOrganizationsPort`
 - `organization/setup`
 - `OrganizationSetupService`
 - `organization/services`
@@ -337,6 +383,10 @@ These contracts are the stable boundaries for approved consumers:
   one port in this set whose approved consumer is `shared` markup rather than a sibling feature:
   the pipe never injects the port itself (dependency direction), callers pass the port's signal
   value as the pipe's explicit settings argument,
+- `features/account`'s `/account/organizations` page lists the caller's own memberships and lets
+  them leave one, through `MY_ORGANIZATIONS_PORT` — the one port in this set built for a consumer
+  holding no organization permission at all, backed by the root-provided `MyOrganizationsStore`
+  (`state/my-organizations/`) rather than any component-scoped organization store,
 - onboarding consumes organization-owned setup workflows through `organization/setup`,
 - this feature's own pages, and its nested subfeatures, build a surface's claim on a store that
   multiplexes several mutations through one shared `mutationCallState` with
@@ -391,20 +441,27 @@ only ever renders inside a layout: it reads organization state, and rendering lo
 transfer ownership (`ARCHITECTURE.md` §2.7). It provides `OrganizationStore` itself, because that
 store is not root-provided.
 
-**Leaving an organization is self-service, and every member can always reach it.** The backend's
-`LeaveOrganizationProcessor` checks nothing beyond active membership — the owner-cannot-leave and
-last-administrator guards are both 409s the caller resolves by acting differently, not permission
-failures — but until now the only UI path to it sat behind the settings danger tab, gated on both
-`organization.settings.write` (the route) and `organization.delete` (the tab), which a
-rank-and-file member never holds. `OrganizationSwitcher`'s menu now carries its own
-"Leave organization…" entry, gated on nothing but there being an open organization to leave: it
-renders for every member, owner included, and provides its own `OrganizationSettingsStore`
-instance — mirroring how it already provides `OrganizationStore` — to reuse
-`OrganizationSettingsStore.leave` rather than duplicate the call. A 409 renders inline on
-`OrganizationLeaveDialog` exactly as it does from the danger tab, since both call sites read the
-same `toStoreError`-normalized `leaveError`. On success the switcher clears
-`ActiveOrganizationStore` and navigates to `/organizations`, matching
-`OrganizationSettingsPage`'s own post-leave cleanup.
+**Leaving an organization is self-service on the backend, and it is reachable by every member,
+independent of any organization permission.** `LeaveOrganizationProcessor` checks nothing beyond
+active membership — the owner-cannot-leave and last-administrator guards are both 409s the caller
+resolves by acting differently, not permission failures. The settings danger-zone tab used to carry
+Leave, but that tab sits behind `/settings`'s `organization.settings.write` guard
+(`OrganizationSystemRoleCatalog::MEMBER` never holds it), so a rank-and-file member could never
+reach it — a known gap in an earlier revision of this document. **Leave now lives at
+`/account/organizations`** (`features/account/FEATURE.md`), a page reachable from the account menu
+with no organization permission of any kind. `MyOrganizationsStore` (root-provided,
+`state/my-organizations/`) backs `MY_ORGANIZATIONS_PORT`, which the account page consumes instead
+of any organization-owned store; its `leave` method wraps
+`OrganizationMemberService.leave` directly, and a 409 refusal renders inline through the same
+`toStoreError`-normalized error account's own dialog surfaces. Leaving the organization currently
+open in the workspace navigates the caller to `/organizations`, which re-resolves the next
+accessible workspace (or onboarding) through the existing guard chain — it does not explicitly
+clear `ActiveOrganizationStore`, since `MY_ORGANIZATIONS_PORT` is deliberately read-only-plus-leave
+and exposes no such write; `organizationGuard`'s own cookie validation covers the stale reference.
+Leaving any other organization only removes its row. `OrganizationLeaveDialog` and
+`OrganizationSettingsStore.leave`/`leaveCallState` remain in this feature but are currently unused
+by any UI surface — kept rather than deleted since another settings-scoped consumer may still want
+them; flagged here so a future reviewer does not read them as dead code by accident.
 
 **The URL chooses the organization; the workspace outlives the route.** The dashboard shell serves
 global pages too — `/account` first among them — and those name no organization of their own.
@@ -674,6 +731,8 @@ weight.
   tab's approval-policy form. Read-only — the parent takes no approval
   decision and owns no `ApprovalRequestOutput` state.
 - May expose organization context to shell composition through ports.
+- May expose the caller's own organization memberships and the ability to leave one to
+  `features/account` through `MY_ORGANIZATIONS_PORT`.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
 - May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
@@ -691,17 +750,31 @@ weight.
   `OrganizationApprovalForm` is the only writer of `UpdateOrganizationInput.approval`, section-scoped
   through `OrganizationSettingsStore.save`, matching every other settings section.
 - **`organization-team-*` and `organization-teams-*` name two unrelated concepts — never
-  merge, rename across, or copy between them.** `OrganizationTeamStore` (`state/organization-team`),
-  `OrganizationTeamPage` (`ui/pages/organization-team-page`) and the `/team` route manage **RBAC
-  roles** (`organization.roles.*`). `OrganizationTeamsStore` (`state/organization-teams`,
-  component-scoped, provided on `OrganizationTeamsPage`), `OrganizationTeamsPage`
-  (`ui/pages/organization-teams-page`) and the `/teams` route
+  merge, rename across, or copy between them.** `OrganizationTeamStore` (`state/organization-team`)
+  and `OrganizationTeamPage` (`ui/pages/organization-team-page`, the `members` page's `roles` tab)
+  manage **RBAC roles** (`organization.roles.*`). `OrganizationTeamsStore`
+  (`state/organization-teams`, component-scoped, provided on `OrganizationTeamsPage`) and
+  `OrganizationTeamsPage` (`ui/pages/organization-teams-page`, the `members` page's `teams` tab)
   manage **teams** — named groups of members over `POST/GET/PATCH/DELETE
 /organizations/{organizationId}/teams` and its `/members` sub-resource, gated by
   `organization.teams.{read,write,manage}`. The singular/plural distinction is the only thing that
-  tells them apart; do not rely on it disambiguating itself in a diff.
+  tells them apart; do not rely on it disambiguating itself in a diff. Both pages stay mounted as
+  their own `ui/pages/` units — `ARCHITECTURE.md` §10.2's route-entry naming and shape — even
+  though `OrganizationMembersPage` now mounts them as tab content rather than a router outlet;
+  their own component-scoped stores and page actions work unchanged nested this way, and each
+  keeps a `[active]` input so its page action only owns the shell header's action slot while its
+  own tab is showing (`hlmTabsContentLazy` keeps a tab's content mounted after its first
+  activation, so a plain "register once" page action would otherwise go stale on tab switch).
 
 ## Not Built Yet
+
+- **`OrganizationSwitcher` as the organization's administration menu** — the dropdown must gain
+  an identity header, Settings / Billing / Members / Audit journal `routerLink`s (permission-gated
+  through `navigation/organization-navigation.config.ts`'s existing helpers, not a second
+  permission check), a height-bounded (3 rows, internal scroll) organization panel, and the
+  existing organization-switching panel and "Create organization" action, in the order above — see
+  Routes above for the exact target shape. The five nav items were already pulled out of the
+  sidebar; only the switcher-side UI remains (`fg-spartan-ui` / `fg-component-builder`).
 
 Backend endpoints exist for these; no frontend model, service method or store does:
 
@@ -719,8 +792,8 @@ Backend endpoints exist for these; no frontend model, service method or store do
   (secret shown once, rotation, delivery-failure triage). Build it when integrations are a product
   goal; until then this line is the record that the backend is ready and the frontend is not.
 
-- **Teams management real specs** — the whole `Team` slice behind the `/teams` route (see Routes
-  and Invariants above) is now built end to end: `TeamOutput`, `TeamMemberOutput`,
+- **Teams management real specs** — the whole `Team` slice behind the `members` page's `teams` tab
+  (see Routes and Invariants above) is now built end to end: `TeamOutput`, `TeamMemberOutput`,
   `CreateTeamInput`, `UpdateTeamInput`, `AddTeamMemberInput` (`models/team/`), `TeamService`
   (`data-access/services/team/team.service.ts`), `OrganizationTeamsStore`
   (`state/organization-teams`), and the UI: `OrganizationTeamsPage`

@@ -9,13 +9,12 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleCheckBig, lucideLock, lucideMessageSquareQuote } from '@ng-icons/lucide';
+import { lucideCircleCheckBig, lucideLock } from '@ng-icons/lucide';
 import type {
   InterventionCommandAction,
   InterventionPhase,
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
-import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { InterventionCommandButton } from '../intervention-command-button';
 import { InterventionTag } from '../intervention-tag';
@@ -57,7 +56,6 @@ const PHASE_LABEL: Readonly<Record<InterventionPhase, string>> = {
  *   [busy]="store.saving()"
  *   [blockersCount]="blockerIssues().length"
  *   [revision]="intervention.revision"
- *   [reviewNote]="intervention.reviewNote"
  *   (invoked)="invokeCommandAction()"
  *   (blockersRequested)="revealBlockers()"
  * />
@@ -67,11 +65,11 @@ const PHASE_LABEL: Readonly<Record<InterventionPhase, string>> = {
  */
 @Component({
   selector: 'app-intervention-status-band',
-  imports: [NgIcon, HlmButton, InterventionCommandButton, InterventionTag, ...HlmAlertImports],
-  providers: [provideIcons({ lucideCircleCheckBig, lucideLock, lucideMessageSquareQuote })],
+  imports: [NgIcon, HlmButton, InterventionCommandButton, InterventionTag],
+  providers: [provideIcons({ lucideCircleCheckBig, lucideLock })],
   host: {
     class:
-      'sticky top-0 z-10 -mx-4 flex flex-col gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6',
+      'z-30 flex flex-col gap-2 border-border bg-background/95 backdrop-blur max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:border-t max-sm:px-4 max-sm:pt-2 max-sm:pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:sticky sm:top-0 sm:-mx-4 sm:border-b sm:px-4 sm:py-2 md:-mx-6 md:px-6',
     'data-testid': 'intervention-detail-status-band',
   },
   templateUrl: './intervention-status-band.component.html',
@@ -141,14 +139,24 @@ export class InterventionStatusBand {
   public readonly revision: InputSignal<number> = input<number>(0);
 
   /**
-   * Property reviewNote
+   * Property secondaryAction
    * @readonly
-   * @description The reviewer's note, shown only alongside a `changes_requested` status.
+   *
+   * @description
+   * The other action available on this card, when one is — today only the
+   * reviewer's "send it back". It exists because gating the band on
+   * `canPublish` left a reviewer without publish rights looking at an empty
+   * band, while `PRODUCT.md` requires that they still reach their action here;
+   * the alternative address was three levels down the shell's overflow menu,
+   * rendered as a status tag rather than a verb.
+   *
    * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string | null>}
+   * @since 2.0.0
+   *
+   * @type {InputSignal<InterventionCommandAction | null>}
    */
-  public readonly reviewNote: InputSignal<string | null> = input<string | null>(null);
+  public readonly secondaryAction: InputSignal<InterventionCommandAction | null> =
+    input<InterventionCommandAction | null>(null);
   //#endregion
 
   //#region Outputs
@@ -171,6 +179,16 @@ export class InterventionStatusBand {
    * @type {OutputEmitterRef<void>}
    */
   public readonly blockersRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property secondaryInvoked
+   * @readonly
+   * @description The operator activated {@link secondaryAction}.
+   * @access public
+   * @since 2.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly secondaryInvoked: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Computed
@@ -184,16 +202,5 @@ export class InterventionStatusBand {
    */
   protected readonly phaseLabel: Signal<string> = computed<string>(() => PHASE_LABEL[this.phase()]);
 
-  /**
-   * Property showReviewNote
-   * @readonly
-   * @description Whether the reviewer's note strip should render.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<boolean>}
-   */
-  protected readonly showReviewNote: Signal<boolean> = computed<boolean>(
-    () => this.status() === 'changes_requested' && this.reviewNote() !== null,
-  );
   //#endregion
 }

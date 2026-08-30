@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +15,7 @@ import type {
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
+import { CollectionSurface } from '@shared/collection-surface';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import {
@@ -22,13 +24,10 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTableImports } from '@shared/ui/table';
 
 /** Placeholder rows drawn while the recurrence list's own fetch is in flight. */
-const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
-
 /**
  * Component InterventionRecurrenceTable
  * @class InterventionRecurrenceTable
@@ -52,11 +51,12 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 @Component({
   selector: 'app-intervention-recurrence-table',
   imports: [
+    NgTemplateOutlet,
+    CollectionSurface,
     OrgDatePipe,
     EmptyState,
     ErrorState,
     HlmButton,
-    HlmSkeleton,
     HlmSwitch,
     ...HlmTableImports,
   ],
@@ -190,7 +190,15 @@ export class InterventionRecurrenceTable {
 
   //#region Properties
   /** Placeholder rows for the loading render. */
-  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
+  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'h-4 w-32 max-w-full',
+    'h-4 w-28 max-w-full',
+    'h-4 w-24',
+    'h-4 w-24',
+    'mx-auto h-5 w-9',
+    'ms-auto h-4 w-20',
+  ];
   //#endregion
 
   //#region Methods

@@ -143,7 +143,15 @@
     </ng-template>
   </ng-template>
 
-  @if (store.listCallState().status === 'error') {
+  @if (listForbidden()) {
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@equipment.list.forbiddenTitle"
+      description="Ask an organization admin to grant you read access to equipment."
+      i18n-description="@@equipment.list.forbiddenDesc"
+    />
+  } @else if (store.listCallState().status === 'error') {
     <app-error-state
       icon="lucideCircleAlert"
       title="Couldn't load equipment"
@@ -177,7 +185,7 @@
   } @else {
     <app-equipment-table
       [items]="items()"
-      [loading]="store.isLoadingEquipment() && items().length === 0"
+      [loading]="store.isLoadingEquipment()"
       [detailRouteBase]="listRouteBase()"
       [sortOrder]="sortOrder()"
       (sortChanged)="applySortField($event)"

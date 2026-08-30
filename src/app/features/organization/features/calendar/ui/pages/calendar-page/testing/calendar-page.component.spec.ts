@@ -1,7 +1,17 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input as inputSignal,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { PageActionsService } from '@core/page-actions';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
@@ -24,6 +34,34 @@ function feedItem(overrides: Partial<CalendarFeedItemOutput> = {}): CalendarFeed
     ...overrides,
   };
 }
+
+/**
+ * Stands in for the shell's `DashboardPageActions`. "Subscribe (iCal)" and
+ * "New event" are registered as a `TemplateRef` on the real
+ * `PageActionsService` rather than rendered in the page's own template, so a
+ * spec that needs to interact with either renders the currently registered
+ * template through this outlet, the same way the shell does.
+ */
+@Component({
+  selector: 'app-page-actions-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageActionsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    inputSignal<TemplateRef<unknown> | null>(null);
+}
+
+const renderPageActions = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const byPageActionsTestId = (id: string): HTMLElement | null =>
+  renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 describe('CalendarPage', () => {
   let fixture: ComponentFixture<CalendarPage>;
@@ -207,13 +245,14 @@ describe('CalendarPage', () => {
   it('hides "New event" when the member lacks organization.events.write', async () => {
     await render(false);
 
-    expect(root().querySelector('[data-testid="calendar-new-event"]')).toBeNull();
+    expect(byPageActionsTestId('calendar-new-event')).toBeNull();
+    expect(byPageActionsTestId('calendar-subscribe')).not.toBeNull();
   });
 
   it('opens the create dialog from "New event" and sends the create write on submit', async () => {
     await render(true);
 
-    root().querySelector<HTMLButtonElement>('[data-testid="calendar-new-event"]')?.click();
+    (byPageActionsTestId('calendar-new-event') as HTMLButtonElement).click();
     await fixture.whenStable();
 
     expect(document.querySelector('[data-testid="calendar-event-dialog"]')?.textContent).toContain(

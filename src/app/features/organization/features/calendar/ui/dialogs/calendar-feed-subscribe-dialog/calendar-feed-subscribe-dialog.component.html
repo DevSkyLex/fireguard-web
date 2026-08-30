@@ -1,6 +1,6 @@
 <hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content
-    class="sm:max-w-lg"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg"
     data-testid="calendar-feed-subscribe-dialog"
     *hlmDialogPortal
   >

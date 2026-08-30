@@ -106,8 +106,7 @@ describe('OrganizationNav', () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    // Only Operations earns its place; Assets and Administration would render
-    // as empty headings.
+    // Only Operations earns its place; Assets would render as an empty heading.
     expect(sections()).toEqual(['Operations']);
   });
 
@@ -115,7 +114,7 @@ describe('OrganizationNav', () => {
     permissions.set(['organization.*']);
     await fixture.whenStable();
 
-    expect(sections()).toEqual(['Operations', 'Assets', 'Administration']);
+    expect(sections()).toEqual(['Operations', 'Assets']);
   });
 
   it('should expose the landing entry to whoever can read only the dashboard', async () => {

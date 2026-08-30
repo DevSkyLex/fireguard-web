@@ -25,11 +25,13 @@ import { HlmTextareaImports } from '@shared/ui/textarea';
  * @class InterventionConfirmDialog
  *
  * @description
- * The text confirmation for the detail page's four destructive-or-noted
- * actions — abandon, delete the intervention, delete a prepared work item,
- * skip a work item — as one `hlm-alert-dialog` rather than four. `skipWorkItem`
- * is the only variant that collects anything, so the reason draft is this
- * dialog's own state; it resets whenever {@link request} changes.
+ * The text confirmation for the detail page's three remaining confirmed
+ * actions — delete the intervention, delete a prepared work item, skip a work
+ * item — as one `hlm-alert-dialog` rather than three. `skipWorkItem` is the
+ * only variant that collects anything, so the reason draft is this dialog's
+ * own state; it resets whenever {@link request} changes. Skipping is also the
+ * one variant that is not destructive, which is why the accept button's
+ * variant is bound rather than fixed.
  *
  * Purely presentational (`ARCHITECTURE.md` §10.5): it owns no store and takes
  * its open state from {@link request} being non-null. The caller keeps every
@@ -116,8 +118,6 @@ export class InterventionConfirmDialog {
   /** The confirmation's heading. */
   protected readonly title: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.header:Abandon intervention`;
       case 'deleteIntervention':
         return $localize`:@@intervention.delete.header:Delete intervention`;
       case 'deleteWorkItem':
@@ -130,8 +130,6 @@ export class InterventionConfirmDialog {
   /** The confirmation's body. */
   protected readonly description: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.message:Abandon this intervention? It leaves the active workflow and cannot be resumed.`;
       case 'deleteIntervention':
         return $localize`:@@intervention.delete.message:Delete this intervention? This cannot be undone.`;
       case 'deleteWorkItem':
@@ -144,8 +142,6 @@ export class InterventionConfirmDialog {
   /** The accept button's label. */
   protected readonly acceptLabel: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
-      case 'abandon':
-        return $localize`:@@intervention.abandon.accept:Abandon`;
       case 'deleteWorkItem':
       case 'deleteIntervention':
         return $localize`:@@common.delete:Delete`;
@@ -153,6 +149,11 @@ export class InterventionConfirmDialog {
         return $localize`:@@intervention.wit.skip:Skip`;
     }
   });
+
+  /** The accept button's variant: skipping a work item is a field decision, not a destructive act. */
+  protected readonly acceptVariant: Signal<'default' | 'destructive'> = computed<
+    'default' | 'destructive'
+  >(() => (this.request()?.kind === 'skipWorkItem' ? 'default' : 'destructive'));
 
   /** Whether the confirmation may be accepted. */
   protected readonly canAccept: Signal<boolean> = computed<boolean>(

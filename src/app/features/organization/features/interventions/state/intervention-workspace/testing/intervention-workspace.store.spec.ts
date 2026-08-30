@@ -337,6 +337,27 @@ describe('InterventionWorkspaceStore offline field work', () => {
     expect(store.error()).toBe('Only draft or abandoned interventions can be deleted.');
   });
 
+  it('flags a workspace served from the device snapshot, and does not re-save it', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+    mockService.get.mockReturnValue(throwError(() => new ProgressEvent('error')));
+    mockOffline.getWorkspace.mockResolvedValue({
+      intervention,
+      workItems: [workItem],
+      changes: [],
+      issues: [],
+    });
+    mockOffline.saveWorkspace.mockClear();
+
+    store.load(intervention.id);
+
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    expect(store.servedFromLocalCache()).toBe(true);
+    expect(store.intervention()?.id).toBe(intervention.id);
+    expect(mockOffline.saveWorkspace).not.toHaveBeenCalled();
+  });
+
   it('does not expose cached intervention data after an authorization failure', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     window.dispatchEvent(new Event('online'));

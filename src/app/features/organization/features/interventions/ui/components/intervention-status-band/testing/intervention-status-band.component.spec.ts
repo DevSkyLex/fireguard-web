@@ -89,24 +89,11 @@ describe('InterventionStatusBand', () => {
     expect(byTestId('intervention-detail-command')).toBeNull();
   });
 
-  it('should hide the review-note strip outside changes_requested', async () => {
+  it('should not render a review note — it moved to the detail page content, out of the fixed bottom bar', async () => {
     await create();
-    fixture.componentRef.setInput('reviewNote', 'Please redo the sign-off.');
+    fixture.componentRef.setInput('status', 'changes_requested');
     await fixture.whenStable();
 
     expect(byTestId('intervention-detail-review-note')).toBeNull();
-  });
-
-  it('should show the review-note strip with its destructive tint when changes are requested', async () => {
-    await create();
-    fixture.componentRef.setInput('status', 'changes_requested');
-    fixture.componentRef.setInput('reviewNote', 'Please redo the sign-off.');
-    await fixture.whenStable();
-
-    const note: HTMLElement | null = byTestId('intervention-detail-review-note');
-
-    expect(note?.textContent).toContain('Please redo the sign-off.');
-    expect(note?.className).toContain('border-destructive/30');
-    expect(note?.className).toContain('bg-destructive/10');
   });
 });

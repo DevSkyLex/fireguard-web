@@ -28,6 +28,7 @@
       [items]="store.roles()"
       [loading]="store.isLoading()"
       [canManage]="canManage()"
+      [membersRouteBase]="membersRouteBase()"
       (editPermissionsRequested)="openPermissionsEditor($event)"
       (deleteRequested)="requestDelete($event)"
     />

@@ -46,6 +46,24 @@ export interface InterventionState {
   readonly listCallState: CallState;
 
   /**
+   * Property servedFromLocalCache
+   * @readonly
+   *
+   * @description
+   * Whether the interventions on screen came from this device's IndexedDB
+   * snapshot rather than from the API, because the network failed. The list is
+   * the entry point to everything else the field agent does, so answering a
+   * lost connection with an error state made the offline-first detail page
+   * unreachable by navigation — the contradiction `PRODUCT.md`'s third
+   * principle exists to prevent.
+   *
+   * @since 6.0.0
+   *
+   * @type {boolean}
+   */
+  readonly servedFromLocalCache: boolean;
+
+  /**
    * Property createCallState
    * @readonly
    *

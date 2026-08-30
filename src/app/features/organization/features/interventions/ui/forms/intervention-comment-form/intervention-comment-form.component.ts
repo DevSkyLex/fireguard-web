@@ -33,6 +33,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { COMMENT_MENTION_SUGGESTION_LIMIT } from './constants/intervention-comment-mention.constants';
 import type { InterventionCommentFormValues } from './models';
 
@@ -81,6 +82,7 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
     FormField,
     NgIcon,
     HlmButton,
+    ...HlmSpinnerImports,
     ...HlmFieldImports,
     ...HlmInputGroupImports,
     ...HlmItemImports,
@@ -112,6 +114,16 @@ export class InterventionCommentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property online
+   * @readonly
+   * @description Whether the network is reachable. When `false`, the form tells the agent their comment will be queued and sent on reconnect rather than posting now — `PRODUCT.md` makes an offline comment a queued action, not a failure.
+   * @access public
+   * @since 3.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly online: InputSignal<boolean> = input<boolean>(true);
 
   /**
    * Property serverError

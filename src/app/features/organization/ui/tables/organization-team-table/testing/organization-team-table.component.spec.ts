@@ -76,7 +76,21 @@ describe('OrganizationTeamTable', () => {
   it('should render existing rows even while a background load is in flight', async () => {
     await create({ items: [TEAM], loading: true });
 
+    // The shared surface's loading contract is "first load only": a later page
+    // fetch leaves the rows already on screen alone.
     expect(rows().length).toBe(1);
+    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('should render the same team a second time as a card, under the row testid plus -card', async () => {
+    await create({ items: [TEAM, { ...TEAM, id: 'team-2' }] });
+
+    // Both layouts stay mounted — a container query, not an `@if`, picks the
+    // visible one — so a card is a second render of the same row.
+    expect(root().querySelectorAll('[data-testid="organization-team-table-row-card"]').length).toBe(
+      2,
+    );
+    expect(rows().length).toBe(2);
   });
 
   it('should render the empty-results row once loaded with no teams', async () => {

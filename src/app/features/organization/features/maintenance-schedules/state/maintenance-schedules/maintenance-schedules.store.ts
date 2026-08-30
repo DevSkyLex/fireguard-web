@@ -90,6 +90,9 @@ export const MaintenanceSchedulesStore = signalStore(
     /** True when the last list request failed. */
     hasListError: computed<boolean>(() => store.listCallState().status === 'error'),
 
+    /** True when the last list request was refused for lack of permission, which a retry cannot fix. */
+    isListForbidden: computed<boolean>(() => store.listCallState().error?.code === 403),
+
     /** True while an interval-override request is in flight. */
     isOverriding: computed<boolean>(() => store.overrideCallState().status === 'pending'),
 

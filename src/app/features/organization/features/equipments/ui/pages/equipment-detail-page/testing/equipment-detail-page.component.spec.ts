@@ -331,7 +331,7 @@ describe('EquipmentDetailPage', () => {
     });
   });
 
-  it('should call decommission when the secondary action is taken', async () => {
+  it('should confirm before decommissioning, not act on the first click', async () => {
     await createPage();
 
     (
@@ -339,6 +339,16 @@ describe('EquipmentDetailPage', () => {
         '[data-testid="equipment-decommission"]',
       ) as HTMLButtonElement
     ).click();
+    await fixture.whenStable();
+
+    expect(decommission).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['decommissionDialogVisible']()).toBe(true);
+  });
+
+  it('should call decommission once the confirmation is accepted', async () => {
+    await createPage();
+
+    fixture.componentInstance['confirmDecommission']();
 
     expect(decommission).toHaveBeenCalledWith({
       organizationId: 'org-1',

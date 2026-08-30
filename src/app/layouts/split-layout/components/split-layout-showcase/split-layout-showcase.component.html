@@ -1,15 +1,6 @@
-<!--
-  `overflow-hidden` clips the glow below; `isolate` gives it a stacking context
-  so the decorative layer cannot escape over the form column.
--->
 <div
   class="relative isolate flex h-full flex-col justify-between overflow-hidden bg-primary px-10 py-12 text-primary-foreground xl:px-14"
 >
-  <!--
-    Decorative only, hence `aria-hidden`: two soft pools of light that keep the
-    slab from reading as a flat rectangle. Built from `currentColor` so they
-    follow the inverted foreground in either theme instead of hard-coding a hue.
-  -->
   <div
     class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07]"
     aria-hidden="true"
@@ -20,7 +11,6 @@
     "
   ></div>
 
-  <!-- Brand lockup -->
   <div class="flex items-center gap-3">
     <div
       class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15"
@@ -30,7 +20,6 @@
     <span class="text-lg font-semibold tracking-tight">FireGuard</span>
   </div>
 
-  <!-- The promise, then what backs it -->
   <div class="flex max-w-lg flex-col gap-10 py-10">
     <div class="flex flex-col gap-4">
       <h2

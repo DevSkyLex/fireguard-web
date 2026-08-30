@@ -98,6 +98,26 @@ This subfeature does not own top-level organization context or inspection workfl
   handler accepts either non-decommissioned status and always lands on
   `operational`.
 
+  **Decommission confirms; the forward transitions do not.** It is the one
+  terminal move — `primaryAction()` resolves to `null` on a `decommissioned`
+  record, so nothing puts the equipment back in service afterwards — which is
+  exactly the case `DESIGN.md` §Action Surfaces rule 5 reserves a confirmation
+  for. It opens `ui/dialogs/equipment-decommission-dialog/`, a feature-local
+  alert-dialog on the `organization-delete-dialog` model: presentational, it
+  emits `confirmed` and never calls the store. Until 2026-08-28 the action
+  fired on a single click from the shell header, with no way back.
+
+**Creation is site-scoped.** `EquipmentCreatePage` binds `?facility=` and the
+create form carries a **Site** field, so a link from the asset explorer's
+selected site lands on a form already assigned. `CreateEquipmentInput.facility`
+had always accepted it — the backend validates a flat
+`^/api/facilities/{uuid}$` IRI — but no frontend surface ever sent one, so the
+only path was: create unassigned → detail page → assignment dialog → search the
+site in a combobox. The form maps the picked id onto that IRI itself; the
+`?facility=` seed writes the model rather than the field, so arriving
+preselected does not start the form dirty and does not trip the
+unsaved-changes guard.
+
 **The record is the edit surface.** Every property `UpdateEquipmentInput`
 accepts (`type`, `subType`, `brand`, `model`, `serialNumber`, `locationLabel`)
 opens where it is displayed, through `@shared/inplace-field`

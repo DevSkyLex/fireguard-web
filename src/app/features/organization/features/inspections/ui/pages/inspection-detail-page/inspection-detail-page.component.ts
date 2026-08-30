@@ -49,6 +49,7 @@ import { BrowserDownloadService } from '@features/organization/services/browser-
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardTitle } from '@shared/ui/card';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InspectionInformationPanel } from '../../components/inspection-information-panel';
@@ -125,6 +126,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
 @Component({
   selector: 'app-inspection-detail-page',
   imports: [
+    HlmCardTitle,
     NgIcon,
     RouterLink,
     InspectionCancelDialog,

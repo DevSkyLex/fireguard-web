@@ -58,6 +58,54 @@
         <source>Security</source>
         <target>Seguridad</target>
       </trans-unit>
+      <trans-unit id="account.menu.organizations" datatype="html">
+        <source>Your organizations</source>
+        <target>Tus organizaciones</target>
+      </trans-unit>
+      <trans-unit id="route.accountOrganizations" datatype="html">
+        <source>Your organizations</source>
+        <target>Tus organizaciones</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.loadingAria" datatype="html">
+        <source>Loading your organizations</source>
+        <target>Cargando tus organizaciones</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.emptyTitle" datatype="html">
+        <source>No organizations</source>
+        <target>Ninguna organización</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.emptyDescription" datatype="html">
+        <source>You are not a member of any organization yet.</source>
+        <target>Todavía no eres miembro de ninguna organización.</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.activeBadge" datatype="html">
+        <source>Currently open</source>
+        <target>Actualmente abierta</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.ownerNote" datatype="html">
+        <source> You own this organization </source>
+        <target>Eres propietario de esta organización</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveOpen" datatype="html">
+        <source>Leave</source>
+        <target>Salir</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmTitle" datatype="html">
+        <source>Leave this organization?</source>
+        <target>¿Salir de esta organización?</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmText" datatype="html">
+        <source>You will lose access to <x id="organizationName" equiv-text="name"/> and everything in it. You can only rejoin if another member invites you back.</source>
+        <target>Perderás el acceso a <x id="organizationName"/> y a todo su contenido. Solo podrás volver a unirte si otro miembro te invita de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaveConfirmAction" datatype="html">
+        <source>Leave organization</source>
+        <target>Salir de la organización</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leaving" datatype="html">
+        <source>Leaving…</source>
+        <target>Saliendo…</target>
+      </trans-unit>
       <trans-unit id="account.avatar.hint" datatype="html">
         <source> JPEG, PNG, WebP or GIF — 5 MB max. </source>
         <target>JPEG, PNG, WebP o GIF — 5 MB máx.</target>
@@ -2676,6 +2724,78 @@
         <source>Last synced <x id="when" equiv-text="relative"/></source>
         <target>Última sincronización <x id="when" equiv-text="relative"/></target>
       </trans-unit>
+      <trans-unit id="intervention.sync.op.facilityCreate" datatype="html">
+        <source>New facility</source>
+        <target>Nueva instalación</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.equipmentCreate" datatype="html">
+        <source>New equipment</source>
+        <target>Nuevo equipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.inspectionCreate" datatype="html">
+        <source>New inspection</source>
+        <target>Nueva inspección</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.mediaCreate" datatype="html">
+        <source>New photo</source>
+        <target>Nueva foto</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.attachmentUpload" datatype="html">
+        <source>File upload</source>
+        <target>Subida de archivo</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.commentCreate" datatype="html">
+        <source>New comment</source>
+        <target>Nuevo comentario</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.interventionUpdate" datatype="html">
+        <source>Intervention edit</source>
+        <target>Edición de la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.workItemCreate" datatype="html">
+        <source>New work item</source>
+        <target>Nueva tarea</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.workItemUpdate" datatype="html">
+        <source>Work item update</source>
+        <target>Actualización de tarea</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.changeCreate" datatype="html">
+        <source>Proposed change</source>
+        <target>Cambio propuesto</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.changeUpdate" datatype="html">
+        <source>Change decision</source>
+        <target>Decisión sobre el cambio</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blockedAlert.titleOne" datatype="html">
+        <source>1 change could not be sent</source>
+        <target>No se pudo enviar 1 cambio</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blockedAlert.titleMany" datatype="html">
+        <source><x id="count" equiv-text="count"/> changes could not be sent</source>
+        <target>No se pudieron enviar <x id="count" equiv-text="count"/> cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blockedAlert.lead" datatype="html">
+        <source> They are still saved on this device. Nothing is lost — but until they are sent, this intervention is not up to date for anyone else. </source>
+        <target> Siguen guardados en este dispositivo. No se pierde nada, pero hasta que se envíen, esta intervención no está actualizada para los demás. </target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blockedAlert.retrying" datatype="html">
+        <source>Sending…</source>
+        <target>Enviando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.blockedAlert.retry" datatype="html">
+        <source>Retry blocked</source>
+        <target>Reintentar los envíos bloqueados</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.offlineNotice" datatype="html">
+        <source> You're offline. These <x id="INTERPOLATION" equiv-text="{{ store.totalInterventions() }}"/> intervention(s) are the copy saved on this device; anything created since is not here, and the key figures are unavailable until you reconnect. </source>
+        <target> Estás sin conexión. Estas <x id="INTERPOLATION" equiv-text="{{ store.totalInterventions() }}"/> intervención(es) son la copia guardada en este dispositivo; lo creado desde entonces no aparece aquí, y las cifras clave no están disponibles hasta que te reconectes. </target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.offlineNotice" datatype="html">
+        <source> You're offline. This is the copy saved on this device — it may be out of date, and any action that looks refused may simply be un-checkable from here. </source>
+        <target> Estás sin conexión. Esta es la copia guardada en este dispositivo: puede estar desactualizada, y cualquier acción que parezca rechazada puede simplemente no ser verificable desde aquí. </target>
+      </trans-unit>
       <trans-unit id="intervention.sync.discardConfirm" datatype="html">
         <source> Discard </source>
         <target> Descartar </target>
@@ -2713,8 +2833,12 @@
         <target>Tomar una foto</target>
       </trans-unit>
       <trans-unit id="intervention.attachments.offlineQueueHint" datatype="html">
-        <source> You are offline — added files stay on this device and upload once the connection returns. </source>
-        <target> Está sin conexión — los archivos añadidos permanecen en este dispositivo y se subirán cuando vuelva la conexión. </target>
+        <source> Files you add stay on this device and upload once the connection returns. </source>
+        <target> Los archivos que añadas permanecen en este dispositivo y se subirán cuando vuelva la conexión. </target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.actionOfflineReason" datatype="html">
+        <source> Downloading and deleting files are unavailable until you reconnect. </source>
+        <target> La descarga y la eliminación de archivos no están disponibles hasta que te reconectes. </target>
       </trans-unit>
       <trans-unit id="intervention.attachments.pendingSync" datatype="html">
         <source>Pending sync</source>
@@ -4248,6 +4372,22 @@
         <source>Your work queues</source>
         <target>Tus colas de trabajo</target>
       </trans-unit>
+      <trans-unit id="org.switcher.settings" datatype="html">
+        <source>Settings</source>
+        <target>Configuración</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.billing" datatype="html">
+        <source>Billing</source>
+        <target>Facturación</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.members" datatype="html">
+        <source>Members</source>
+        <target>Miembros</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.audit" datatype="html">
+        <source>Audit journal</source>
+        <target>Registro de auditoría</target>
+      </trans-unit>
       <trans-unit id="org.today.queueAllClear" datatype="html">
         <source>0 — All clear</source>
         <target>0 — Sin pendientes</target>
@@ -4746,6 +4886,14 @@
         <source> No interventions. </source>
         <target> Sin intervenciones. </target>
       </trans-unit>
+      <trans-unit id="intervention.board.scrollLeft" datatype="html">
+        <source>Show earlier columns</source>
+        <target>Mostrar las columnas anteriores</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.scrollRight" datatype="html">
+        <source>Show later columns</source>
+        <target>Mostrar las columnas siguientes</target>
+      </trans-unit>
       <trans-unit id="intervention.board.moved" datatype="html">
         <source>Moved <x id="name" equiv-text="intervention.name"/> to <x id="status" equiv-text="this.statusLabelOf(target)"/>.</source>
         <target>Se movió <x id="name" equiv-text="intervention.name"/> a <x id="status" equiv-text="this.statusLabelOf(target)"/>.</target>
@@ -4837,6 +4985,10 @@
       <trans-unit id="intervention.wit.complete" datatype="html">
         <source>Complete <x id="item" equiv-text="this.labelOf(item)"/></source>
         <target>Completar <x id="item" equiv-text="this.labelOf(item)"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.skippedLabel" datatype="html">
+        <source>Skipped: <x id="item" equiv-text="label"/></source>
+        <target>Omitido: <x id="item" equiv-text="label"/></target>
       </trans-unit>
       <trans-unit id="intervention.wit.progressLabel" datatype="html">
         <source>Progress</source>
@@ -5069,6 +5221,18 @@
       <trans-unit id="intervention.comment.submit" datatype="html">
         <source>Comment</source>
         <target>Comentar</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.submitPending" datatype="html">
+        <source>Posting…</source>
+        <target>Publicando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.submitQueue" datatype="html">
+        <source>Queue comment</source>
+        <target>Poner el comentario en cola</target>
+      </trans-unit>
+      <trans-unit id="intervention.comment.offlineHint" datatype="html">
+        <source> You're offline — this comment is queued and sent when you reconnect. </source>
+        <target> Estás sin conexión: este comentario se pone en cola y se envía cuando te reconectes. </target>
       </trans-unit>
       <trans-unit id="intervention.comment.required" datatype="html">
         <source>Write a comment first.</source>
@@ -5949,6 +6113,22 @@
       <trans-unit id="org.members.table.rowSelectLabel" datatype="html">
         <source>Select <x id="name" equiv-text="name"/></source>
         <target>Seleccionar a <x id="name" equiv-text="name"/></target>
+      </trans-unit>
+      <trans-unit id="org.members.tabsAriaLabel" datatype="html">
+        <source>Members sections</source>
+        <target>Secciones de miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.tab.members" datatype="html">
+        <source> Members </source>
+        <target> Miembros </target>
+      </trans-unit>
+      <trans-unit id="org.members.tab.roles" datatype="html">
+        <source> Roles &amp; permissions </source>
+        <target> Roles y permisos </target>
+      </trans-unit>
+      <trans-unit id="org.members.tab.teams" datatype="html">
+        <source> Teams </source>
+        <target> Equipos </target>
       </trans-unit>
       <trans-unit id="org.members.table.caption" datatype="html">
         <source>Organization members</source>
@@ -7445,6 +7625,10 @@
       <trans-unit id="shared.collectionFilters.operatorIsNoneOf" datatype="html">
         <source>is none of</source>
         <target>no es ninguno de</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSurface.loading" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
       </trans-unit>
       <trans-unit id="intervention.list.filterDateRangeAfter" datatype="html">
         <source>after</source>

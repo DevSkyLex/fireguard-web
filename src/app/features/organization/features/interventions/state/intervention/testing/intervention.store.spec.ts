@@ -2,10 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { NEVER, of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
+import { ConnectivityService } from '@core/connectivity';
 import {
   InterventionService,
   InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '../intervention.store';
 
@@ -26,6 +28,9 @@ const pageOf = (page: number, totalItems: number): HydraCollection<InterventionO
     (_, index) => ({ id: `i-${(page - 1) * 100 + index}` }) as InterventionOutput,
   ),
 });
+
+let isNetworkFailureMock: ReturnType<typeof vi.fn>;
+let listLocalMock: ReturnType<typeof vi.fn>;
 
 describe('InterventionStore', () => {
   let store: InstanceType<typeof InterventionStore>;
@@ -50,12 +55,17 @@ describe('InterventionStore', () => {
     };
     dispatch = vi.fn();
 
+    isNetworkFailureMock = vi.fn().mockReturnValue(false);
+    listLocalMock = vi.fn().mockResolvedValue([]);
+
     TestBed.configureTestingModule({
       providers: [
         InterventionStore,
         { provide: Dispatcher, useValue: { dispatch } },
         { provide: InterventionService, useValue: mockInterventionService },
         { provide: InterventionTemplateService, useValue: mockInterventionTemplateService },
+        { provide: ConnectivityService, useValue: { isNetworkFailure: isNetworkFailureMock } },
+        { provide: InterventionOfflineService, useValue: { listInterventions: listLocalMock } },
       ],
     });
 
@@ -72,6 +82,51 @@ describe('InterventionStore', () => {
     expect(store.totalInterventions()).toBe(1);
     expect(store.isLoadingInterventions()).toBe(false);
     expect(store.isEmpty()).toBe(false);
+  });
+
+  describe('offline fallback', () => {
+    /*
+     * The detail workspace has always been offline-first; the list had not,
+     * so a lost connection answered with an error state and made the workspace
+     * unreachable by navigation — the contradiction PRODUCT.md's third
+     * principle exists to prevent.
+     */
+    it('should serve the local snapshot when the network fails', async () => {
+      mockInterventionService.list.mockReturnValue(throwError(() => new Error('offline')));
+      isNetworkFailureMock.mockReturnValue(true);
+      listLocalMock.mockResolvedValue([intervention]);
+
+      store.load({ organizationId: 'org-1' });
+      await Promise.resolve();
+
+      expect(listLocalMock).toHaveBeenCalledWith('org-1');
+      expect(store.interventionList()).toEqual([intervention]);
+      expect(store.servedFromLocalCache()).toBe(true);
+      expect(store.listCallState().status).toBe('success');
+    });
+
+    it('should still fail when the network fails and nothing is cached', async () => {
+      mockInterventionService.list.mockReturnValue(throwError(() => new Error('offline')));
+      isNetworkFailureMock.mockReturnValue(true);
+      listLocalMock.mockResolvedValue([]);
+
+      store.load({ organizationId: 'org-1' });
+      await Promise.resolve();
+
+      expect(store.listCallState().status).toBe('error');
+      expect(store.servedFromLocalCache()).toBe(false);
+    });
+
+    it('should not hide a server refusal behind the local snapshot', async () => {
+      mockInterventionService.list.mockReturnValue(throwError(() => new Error('403')));
+      isNetworkFailureMock.mockReturnValue(false);
+
+      store.load({ organizationId: 'org-1' });
+      await Promise.resolve();
+
+      expect(listLocalMock).not.toHaveBeenCalled();
+      expect(store.listCallState().status).toBe('error');
+    });
   });
 
   it('should fetch exactly the requested server page and keep the server total', () => {

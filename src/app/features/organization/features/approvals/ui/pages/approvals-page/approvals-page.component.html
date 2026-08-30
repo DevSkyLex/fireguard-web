@@ -66,7 +66,15 @@
     />
   </ng-template>
 
-  @if (store.hasListError()) {
+  @if (listForbidden()) {
+    <app-empty-state
+      icon="lucideLock"
+      title="Not available with your permissions"
+      i18n-title="@@approvals.list.forbiddenTitle"
+      description="Ask an organization admin to grant you read access to approval requests."
+      i18n-description="@@approvals.list.forbiddenDesc"
+    />
+  } @else if (store.hasListError()) {
     <app-error-state
       icon="lucideCircleAlert"
       title="Couldn't load approval requests"

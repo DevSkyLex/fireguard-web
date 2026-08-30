@@ -51,7 +51,7 @@
 } @else if (loading() || interventions().length > 0) {
   <section class="flex flex-col gap-2">
     <div class="flex items-center gap-2">
-      <h2 class="text-sm font-semibold text-foreground">{{ label() }}</h2>
+      <h2 class="text-sm font-medium text-muted-foreground">{{ label() }}</h2>
       <span class="text-sm text-muted-foreground tabular-nums">{{ total() }}</span>
 
       @if (actionLabel(); as action) {

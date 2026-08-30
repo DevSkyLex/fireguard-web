@@ -14,7 +14,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideSearch, lucideTag, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideLock,
+  lucideSearch,
+  lucideTag,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -116,7 +122,9 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
     HlmButton,
     ...HlmCardImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideSearch, lucideTag, lucideUpload })],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideLock, lucideSearch, lucideTag, lucideUpload }),
+  ],
   templateUrl: './imports-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,6 +140,11 @@ export class ImportsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
+    this.store.isListForbidden(),
+  );
+
   //#endregion
 
   //#region Properties

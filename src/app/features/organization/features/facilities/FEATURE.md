@@ -101,8 +101,13 @@ a tap is disambiguated from an `OrbitControls` drag by travel distance alone
 (`TAP_THRESHOLD_PX`, duplicated locally from `FacilityPlanEditor`'s own
 constant — only two call sites so far), so a tablet with no hover still
 selects directly on tap. The canvas carries `role="img"` and an `aria-label`
-naming the building and its floor count; keyboard navigation (a floor
-navigator, a room list) is deferred to P2.
+naming the building and its floor count.
+
+Selection is never colour-only (`PRODUCT.md`): alongside the `roomSelected`
+fill tint, `applySelection` builds an `EdgesGeometry` outline — in a new
+`selectionOutline` palette token sourced from `--ring` — as a sibling of the
+selected room mesh or floor slab, so the same geometry it already builds for
+a floor's edges also carries the selected state without depending on hue.
 
 The scene is not tested in render (jsdom has no WebGL) — its own
 `testing/` spec covers the skeleton-before-mount branch, the
@@ -111,6 +116,64 @@ The scene is not tested in render (jsdom has no WebGL) — its own
 input-driven `aria-label` plumbing. A page-level spec exercising the ready
 branch fakes `three`/`OrbitControls` at the module level instead, since a
 real mount attempt in jsdom has no working WebGL.
+
+### Room selection and its keyboard-accessible surface (P2)
+
+The canvas is structurally unreachable from a keyboard — `role="img"`, no
+`tabindex`, no key handler — and the only way to select a room is the
+scene's pointer-only `roomActivated`. A panel gated on **room** selection
+would therefore have had no keyboard entry path at all (WCAG 2.1.1). P2's
+surface is instead gated on **floor** selection, and
+`FacilityBuilding3dStore.loadModel` selects the model's first floor
+(server order) by default whenever nothing is selected yet — so the panel
+below is always mounted, with no prior pointer interaction required:
+
+- **`ui/components/facility-building-3d-room-panel`**
+  (`FacilityBuilding3dRoomPanel`) mounts as soon as a floor is selected and
+  always renders a floor selector (`role="group"`, one button per floor,
+  `aria-current` on the active one — same pattern as `organization-nav`'s
+  active link) and the floor's room roster. The room **detail** block —
+  name, type (`FACILITY_TYPE_OPTIONS`, the same catalog the create form's
+  type picker draws from), status through the feature's own
+  `facility-status-tag` registry, a "View on 2D plan" action, and its own
+  close control — renders only once a room is actually selected; closing it
+  deselects the room alone (`store.selectRoom(null)`), leaving the floor
+  selection — and this panel — untouched. `card` at and above `sm`,
+  `hlm-sheet` (bottom side, `disableClose`) below it, switching on
+  `@shared/breakpoint`'s own `isCompact`. `disableClose` matters: were the
+  sheet dismissible (`Escape`, backdrop, swipe), dismissing it would remove
+  this feature's only keyboard-reachable surface with no way back except a
+  pointer tap on the canvas. Presentational, inputs/outputs only
+  (`ARCHITECTURE.md` §10.3); the page owns every store call its outputs
+  trigger.
+- **`ui/components/facility-building-3d-room-panel/components/facility-building-3d-room-list`**
+  (`FacilityBuilding3dRoomList`) is the roster's actual accessible payload:
+  a hand-built `role="listbox"` over a real, focus-moving roving tabindex
+  (`FocusKeyManager` from `@angular/cdk/a11y`) rather than the spartan
+  `command` combobox — `command`'s arrow-key navigation only wires up while
+  its search input holds focus, and its `Enter`-only activation swallows
+  `Space` as a filter character, neither fitting a plain browse-and-pick
+  list. Browsing (arrow keys, Home/End) and selecting (`Enter`/`Space`, or a
+  click — real DOM focus needs no extra activation wiring) are deliberately
+  distinct: the roving position follows the selection whenever it changes
+  from outside, but moves freely under browsing until committed. The
+  selected row itself carries a leading check glyph beside its background
+  tint — the same non-colour-only rule as the canvas.
+- `FacilityBuilding3dPage` owns focus management around the room **detail**
+  block: selecting a room captures `document.activeElement` and moves focus
+  onto the detail's close control once it renders; deselecting it (that
+  control, `backgroundActivated`, or `Escape` — none of which touch the
+  floor selection) restores focus to whatever was captured, or the page's
+  own root (`#pageRoot`, named via `aria-label` so a focus landing there on
+  this last-resort path is never silent) when that element is gone — never
+  left to fall back to `body`.
+- A `sr-only`, `aria-live="polite"` region announces the room and floor
+  names on every selection change — what makes the scene followable without
+  seeing it.
+- The scene's existing `roomHovered` output now also feeds a discreet,
+  `aria-hidden` hover-preview label on the page (never announced — the
+  keyboard-accessible list already covers browsing for anyone not using a
+  pointer). Nothing on the tap-only tablet path assumes a prior hover.
 
 The route reuses `facilityResolver` and `facilityTitleResolver` unchanged and
 additionally provides `FacilityStore` and `FacilityBuilding3dStore`.

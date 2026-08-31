@@ -1,8 +1,17 @@
 <div
+  #pageRoot
   id="facility-building-3d"
   data-testid="facility-3d-page"
-  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6"
+  tabindex="-1"
+  role="group"
+  [attr.aria-label]="pageRootLabel"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 focus-visible:ring-2 focus-visible:ring-ring md:p-6"
+  (keydown.escape)="onEscapePressed()"
 >
+  <div class="sr-only" aria-live="polite" data-testid="facility-3d-selection-announcement">
+    {{ selectionAnnouncement() }}
+  </div>
+
   @if (!store.isQueryLoaded() && !store.queryHasError()) {
     <div
       class="flex min-h-0 flex-1 flex-col gap-3"
@@ -99,6 +108,21 @@
           <ng-icon name="lucideLayers" aria-hidden="true" />
           <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
         </button>
+
+        @if (isCompact() && !roomPanelOpen()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-expanded="false"
+            data-testid="facility-3d-open-room-panel"
+            (click)="roomPanelOpen.set(true)"
+          >
+            <ng-icon name="lucideList" aria-hidden="true" />
+            <span i18n="@@facility.building3d.openRoomPanel">Floors and rooms</span>
+          </button>
+        }
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
@@ -130,19 +154,47 @@
       </div>
     </div>
 
-    <app-facility-building-3d-scene
-      class="min-h-0 flex-1"
-      [model]="store.queryData()!"
-      [selectedRoomId]="store.selectedRoomId()"
-      [selectedFloorId]="store.selectedFloorId()"
-      [isolatedFloorId]="store.isolatedFloorId()"
-      [exploded]="store.exploded()"
-      [cameraResetToken]="store.cameraResetToken()"
-      (roomActivated)="store.selectRoom($event)"
-      (floorActivated)="store.selectFloor($event)"
-      (roomHovered)="hoveredRoomId.set($event)"
-      (backgroundActivated)="store.clearSelection()"
-      (renderingUnavailable)="onRenderingUnavailable()"
-    />
+    <div class="flex min-h-0 flex-1 gap-4">
+      <div class="relative min-h-0 flex-1">
+        <app-facility-building-3d-scene
+          class="min-h-0 flex-1"
+          [model]="store.queryData()!"
+          [selectedRoomId]="store.selectedRoomId()"
+          [selectedFloorId]="store.selectedFloorId()"
+          [isolatedFloorId]="store.isolatedFloorId()"
+          [exploded]="store.exploded()"
+          [cameraResetToken]="store.cameraResetToken()"
+          (roomActivated)="store.selectRoom($event)"
+          (floorActivated)="store.selectFloor($event)"
+          (roomHovered)="hoveredRoomId.set($event)"
+          (backgroundActivated)="store.selectRoom(null)"
+          (renderingUnavailable)="onRenderingUnavailable()"
+        />
+
+        @if (hoveredRoomName(); as hoveredName) {
+          <div
+            aria-hidden="true"
+            data-testid="facility-3d-hover-label"
+            class="pointer-events-none absolute bottom-3 left-3 max-w-[70%] truncate rounded-md border border-border bg-popover/90 px-2 py-1 text-xs text-popover-foreground shadow-sm"
+          >
+            {{ hoveredName }}
+          </div>
+        }
+      </div>
+
+      @if (store.selectedFloorId(); as selectedFloorId) {
+        <app-facility-building-3d-room-panel
+          [floors]="store.floors()"
+          [selectedFloorId]="selectedFloorId"
+          [room]="store.selectedRoom()"
+          [compactVisible]="roomPanelOpen()"
+          (compactDismissed)="roomPanelOpen.set(false)"
+          (floorActivated)="store.selectFloor($event)"
+          (roomActivated)="store.selectRoom($event)"
+          (roomClosed)="store.selectRoom(null)"
+          (plan2dRequested)="onPlan2dRequested()"
+        />
+      }
+    </div>
   }
 </div>

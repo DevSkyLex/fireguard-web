@@ -30,6 +30,7 @@ export function readScenePalette(
     roomSelected: resolveThemeColor(THREE, hostElement, '--primary', '#18181b'),
     floorSlab: resolveThemeColor(THREE, hostElement, '--muted', '#e4e4e7'),
     edges: resolveThemeColor(THREE, hostElement, '--border', '#d4d4d8'),
+    selectionOutline: resolveThemeColor(THREE, hostElement, '--ring', '#3f3f46'),
   };
 }
 

@@ -47,6 +47,7 @@ type ThreeMesh = InstanceType<ThreeModule['Mesh']>;
 type ThreeColorMaterial = InstanceType<ThreeModule['MeshLambertMaterial']>;
 type ThreeRaycaster = InstanceType<ThreeModule['Raycaster']>;
 type ThreeVector2 = InstanceType<ThreeModule['Vector2']>;
+type ThreeLineSegments = InstanceType<ThreeModule['LineSegments']>;
 
 /**
  * Constant TAP_THRESHOLD_PX
@@ -112,7 +113,12 @@ const TAP_THRESHOLD_PX = 6;
  * `ROOM_TYPE_HUE_OFFSET`, a hue rotation of the theme's own resolved
  * `roomFill`, so it distinguishes {@link FacilityType} at a glance without
  * ever standing in for `status` — `PRODUCT.md` reserves status for the P2
- * detail panel, never scene colour alone.
+ * detail panel, never scene colour alone. Selection itself follows the same
+ * rule (`applySelection`): the selected room/floor's fill tints to
+ * `roomSelected`, but that tint is never the only cue — an `EdgesGeometry`
+ * outline in `selectionOutline`'s colour (`--ring`) is added as a sibling
+ * of the selected mesh, a non-chromatic redundancy that survives a
+ * colour-blind or greyscale render.
  *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3) — `FacilityBuilding3dPage` owns every store
@@ -317,6 +323,18 @@ export class FacilityBuilding3dScene {
 
   /** Every floor's slab mesh, keyed by the floor's facility id. */
   private readonly slabMeshes = new Map<string, ThreeMesh>();
+
+  /**
+   * The selected room's `EdgesGeometry` outline, added as a sibling of its
+   * mesh so it inherits the same floor group's transform (including the
+   * exploded-layout tween) — the non-chromatic redundancy `PRODUCT.md`
+   * requires alongside `roomSelected`'s fill tint. `null` when no room is
+   * selected.
+   */
+  private selectedRoomOutline: ThreeLineSegments | null = null;
+
+  /** The selected floor slab's own outline, built the same way as {@link selectedRoomOutline}. */
+  private selectedFloorOutline: ThreeLineSegments | null = null;
 
   /** Every floor's group and stack ordinal, keyed by the floor's facility id — read by `animateExploded`. */
   private readonly floorGroups = new Map<
@@ -562,6 +580,8 @@ export class FacilityBuilding3dScene {
     this.roomBaseColors.clear();
     this.slabMeshes.clear();
     this.floorGroups.clear();
+    this.selectedRoomOutline = null;
+    this.selectedFloorOutline = null;
 
     this.renderer?.dispose();
     this.renderer = null;
@@ -702,6 +722,8 @@ export class FacilityBuilding3dScene {
     this.roomBaseColors.clear();
     this.slabMeshes.clear();
     this.floorGroups.clear();
+    this.selectedRoomOutline = null;
+    this.selectedFloorOutline = null;
 
     const palette: ScenePalette = this.palette ?? readScenePalette(THREE, container);
     this.palette = palette;
@@ -802,7 +824,17 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method applySelection
-   * @description Recolours every room/slab mesh: the selected one to `roomSelected`, every other back to its own base colour.
+   *
+   * @description
+   * Recolours every room/slab mesh: the selected one to `roomSelected`,
+   * every other back to its own base colour. Also rebuilds
+   * {@link selectedRoomOutline} and {@link selectedFloorOutline} — an
+   * `EdgesGeometry` outline in `selectionOutline`'s colour, added as a
+   * sibling of the selected mesh so it inherits the same transform. Colour
+   * alone never carries the selected state (`PRODUCT.md`); the outline is
+   * the redundant, non-chromatic channel a colour-blind or greyscale
+   * viewing still reads.
+   *
    * @access private
    * @since 1.0.0
    * @param {string | null} selectedRoomId - The selected room's facility id, or `null`.
@@ -821,13 +853,71 @@ export class FacilityBuilding3dScene {
       );
     }
 
-    for (const [floorId, mesh] of this.slabMeshes) {
-      (mesh.material as ThreeColorMaterial).color.copy(
-        floorId === selectedFloorId ? palette.roomSelected : palette.floorSlab,
-      );
+    // A slab keeps its own colour whatever is selected. Tinting it the way a
+    // room is tinted repaints the entire floor in `--primary`, which reads as
+    // a rendering fault rather than a selection — and a floor is selected by
+    // default on arrival, so it was the first thing anyone saw. The outline
+    // below carries the state on its own, and it is the non-chromatic cue
+    // PRODUCT.md asks for anyway.
+    for (const mesh of this.slabMeshes.values()) {
+      (mesh.material as ThreeColorMaterial).color.copy(palette.floorSlab);
     }
 
+    this.disposeOutline(this.selectedRoomOutline);
+    this.selectedRoomOutline =
+      selectedRoomId !== null
+        ? this.buildSelectionOutline(this.roomMeshes.get(selectedRoomId))
+        : null;
+
+    this.disposeOutline(this.selectedFloorOutline);
+    this.selectedFloorOutline =
+      selectedFloorId !== null
+        ? this.buildSelectionOutline(this.slabMeshes.get(selectedFloorId))
+        : null;
+
     this.invalidate();
+  }
+
+  /**
+   * Method buildSelectionOutline
+   * @description Builds one `EdgesGeometry` outline over `mesh`'s own geometry and adds it as a sibling of `mesh`, so it renders at the exact same transform.
+   * @access private
+   * @since 1.0.0
+   * @param {ThreeMesh | undefined} mesh - The mesh to outline, or `undefined` when its id resolved to nothing (a stale selection against a rebuilt model).
+   * @returns {ThreeLineSegments | null} The outline, or `null` when `mesh` is absent or the three.js module/palette are not ready.
+   */
+  private buildSelectionOutline(mesh: ThreeMesh | undefined): ThreeLineSegments | null {
+    const THREE: ThreeModule | null = this.threeModule;
+    const palette: ScenePalette | null = this.palette;
+    if (!THREE || !palette || !mesh || !mesh.parent) return null;
+
+    const edgesGeometry: InstanceType<ThreeModule['EdgesGeometry']> = new THREE.EdgesGeometry(
+      mesh.geometry,
+    );
+    const outline: ThreeLineSegments = new THREE.LineSegments(
+      edgesGeometry,
+      new THREE.LineBasicMaterial({ color: palette.selectionOutline, depthTest: false }),
+    );
+    outline.renderOrder = 1;
+    mesh.parent.add(outline);
+
+    return outline;
+  }
+
+  /**
+   * Method disposeOutline
+   * @description Removes `outline` from its parent and disposes its geometry and material — a no-op for `null`.
+   * @access private
+   * @since 1.0.0
+   * @param {ThreeLineSegments | null} outline - The outline to dispose, or `null`.
+   * @returns {void}
+   */
+  private disposeOutline(outline: ThreeLineSegments | null): void {
+    if (!outline) return;
+
+    outline.parent?.remove(outline);
+    outline.geometry.dispose();
+    (outline.material as InstanceType<ThreeModule['LineBasicMaterial']>).dispose();
   }
 
   /**

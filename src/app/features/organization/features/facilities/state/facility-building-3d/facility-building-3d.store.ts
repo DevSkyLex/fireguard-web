@@ -60,6 +60,12 @@ const INITIAL_STATE: FacilityBuilding3dState = {
  * page, the same convention `FacilityDetailPage`'s Plans tab follows, so
  * SSR renders a pure skeleton for this view with no server-side fetch.
  *
+ * `loadModel`'s success handler also selects the model's first floor
+ * (server order) whenever nothing is selected yet — the only way a room can
+ * be selected is `selectRoom`, called from the scene's pointer-only
+ * `roomActivated`, so without this default a keyboard/screen-reader user
+ * would have no path at all into `FacilityBuilding3dRoomPanel` (WCAG 2.1.1).
+ *
  * @since 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -150,6 +156,10 @@ export const FacilityBuilding3dStore = signalStore(
               tapResponse({
                 next: (model: FacilityBuildingModelOutput): void => {
                   patchState(store, setSuccessQuery(model));
+
+                  if (store.selectedFloorId() === null && model.floors.length > 0) {
+                    patchState(store, { selectedFloorId: model.floors[0].facilityId });
+                  }
                 },
                 error: (error: unknown): void => {
                   const storeError: StoreError = toStoreError(error);

@@ -50,6 +50,7 @@ describe('readScenePalette', () => {
     expect(palette.roomSelected.getHexString()).toBe('123456');
     expect(palette.floorSlab.getHexString()).toBe('123456');
     expect(palette.edges.getHexString()).toBe('123456');
+    expect(palette.selectionOutline.getHexString()).toBe('123456');
   });
 
   it('falls back to the default colour where no 2D canvas exists', () => {

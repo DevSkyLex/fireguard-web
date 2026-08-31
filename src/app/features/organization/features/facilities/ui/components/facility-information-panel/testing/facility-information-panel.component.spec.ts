@@ -316,6 +316,36 @@ describe('FacilityInformationPanel', () => {
       expect(saveButton()?.hasAttribute('disabled')).toBe(true);
     });
 
+    it('should say why, instead of only greying out Save', async () => {
+      // The rule was enforced silently before: a latitude without a longitude
+      // just disabled the button, leaving the user to work out that half a
+      // pair is not half a location.
+      await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
+
+      const [latitude] = coordinateInputs();
+      latitude.value = '10';
+      latitude.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      const error = byTestId('facility-coordinates-error');
+      expect(error).not.toBeNull();
+      expect(error?.getAttribute('role')).toBe('alert');
+      expect(latitude.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('should clear the explanation once the pair is complete', async () => {
+      await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
+
+      const [latitude, longitude] = coordinateInputs();
+      latitude.value = '10';
+      latitude.dispatchEvent(new Event('input'));
+      longitude.value = '20';
+      longitude.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-coordinates-error')).toBeNull();
+    });
+
     it('should refuse an out-of-range coordinate', async () => {
       await openCoordinatesOn({ ...FACILITY, latitude: null, longitude: null });
 

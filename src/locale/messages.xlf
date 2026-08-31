@@ -825,7 +825,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">245,247</context>
+          <context context-type="linenumber">248,250</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
@@ -5028,7 +5028,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">706,708</context>
+          <context context-type="linenumber">711,713</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/pages/inspection-detail-page/inspection-detail-page.component.html</context>
@@ -8515,33 +8515,33 @@
           <context context-type="linenumber">202,203</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="facility.map.pickOnMap" datatype="html">
+        <source>Pick on map</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
+          <context context-type="linenumber">233,235</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
+          <context context-type="linenumber">194,196</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.form.locateAddress" datatype="html">
         <source>Locate address</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">236,239</context>
+          <context context-type="linenumber">247,250</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
           <context context-type="linenumber">162,165</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="facility.map.pickOnMap" datatype="html">
-        <source>Pick on map</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">247,249</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">194,198</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="facility.form.locatingAddress" datatype="html">
         <source>Locating address…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">253,255</context>
+          <context context-type="linenumber">254,256</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
@@ -8552,48 +8552,69 @@
         <source>Address not found — you can still enter the coordinates yourself.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">257,259</context>
+          <context context-type="linenumber">258,260</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
           <context context-type="linenumber">177,179</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="facility.info.coordinatesManualHint" datatype="html">
+        <source> Or type them, if you already know the figures. Both are needed — a latitude alone is not half a location. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
+          <context context-type="linenumber">265,268</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.info.latitude" datatype="html">
         <source>Latitude</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">269,271</context>
+          <context context-type="linenumber">274,276</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">278,279</context>
+          <context context-type="linenumber">283,284</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">201,204</context>
+          <context context-type="linenumber">204,207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.info.longitude" datatype="html">
         <source>Longitude</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">290,292</context>
+          <context context-type="linenumber">296,298</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.html</context>
-          <context context-type="linenumber">299,300</context>
+          <context context-type="linenumber">305,306</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">219,222</context>
+          <context context-type="linenumber">222,225</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.info.coordinatesIncomplete" datatype="html">
+        <source>Enter both latitude and longitude, or leave both empty.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.ts</context>
+          <context context-type="linenumber">321</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.info.coordinatesRange" datatype="html">
+        <source>Latitude runs from -90 to 90, longitude from -180 to 180.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.ts</context>
+          <context context-type="linenumber">337</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.info.levelIndexRange" datatype="html">
         <source>Enter a whole number between -100 and 200.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-information-panel/facility-information-panel.component.ts</context>
-          <context context-type="linenumber">320</context>
+          <context context-type="linenumber">368</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.listTitle" datatype="html">
@@ -8667,17 +8688,17 @@
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.equipmentAria" datatype="html">
-        <source><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></source>
+        <source><x id="name" equiv-text="equipmentPlanLabel(item)"/> — <x id="status" equiv-text="descriptor.label"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-overlay/facility-plan-overlay.component.ts</context>
-          <context context-type="linenumber">181</context>
+          <context context-type="linenumber">182</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.zoneAria" datatype="html">
         <source>Zone <x id="name" equiv-text="name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-overlay/facility-plan-overlay.component.ts</context>
-          <context context-type="linenumber">218</context>
+          <context context-type="linenumber">219</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.list.rowMenu" datatype="html">
@@ -9123,71 +9144,78 @@
           <context context-type="linenumber">146,147</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="facility.form.coordinatesPickHint" datatype="html">
+        <source> Placing the pin fills both figures below — typing them is the fallback, not the way in. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
+          <context context-type="linenumber">197,201</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.cf.submitting" datatype="html">
         <source>Creating…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">257,259</context>
+          <context context-type="linenumber">260,262</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.submit" datatype="html">
         <source>Create facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.html</context>
-          <context context-type="linenumber">259,262</context>
+          <context context-type="linenumber">262,265</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.typeRequired" datatype="html">
         <source>Facility type is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">297</context>
+          <context context-type="linenumber">301</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.nameRequired" datatype="html">
         <source>Name is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">300</context>
+          <context context-type="linenumber">304</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.coordinatesIncomplete" datatype="html">
         <source>Enter both latitude and longitude, or leave both empty.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">311</context>
+          <context context-type="linenumber">315</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">330</context>
+          <context context-type="linenumber">334</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.latitudeRange" datatype="html">
         <source>Enter a latitude between -90 and 90.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">319</context>
+          <context context-type="linenumber">323</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.longitudeRange" datatype="html">
         <source>Enter a longitude between -180 and 180.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">338</context>
+          <context context-type="linenumber">342</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.levelIndexRange" datatype="html">
         <source>Enter a whole number between -100 and 200.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">346</context>
+          <context context-type="linenumber">350</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.cf.createFailed" datatype="html">
         <source>The facility could not be created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">380</context>
+          <context context-type="linenumber">384</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.list.searchPlaceholder" datatype="html">
@@ -9510,7 +9538,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1069</context>
+          <context context-type="linenumber">1088</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.ancestorsAriaLabel" datatype="html">
@@ -9797,84 +9825,84 @@
         <source> Edit position </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">653,654</context>
+          <context context-type="linenumber">658,659</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.removeFromPlan" datatype="html">
         <source> Remove from plan </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">665,666</context>
+          <context context-type="linenumber">670,671</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.loadingAria" datatype="html">
         <source>Loading facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">681,682</context>
+          <context context-type="linenumber">686,687</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.loadFailedTitle" datatype="html">
         <source>This facility could not be opened</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">693,694</context>
+          <context context-type="linenumber">698,699</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.qr" datatype="html">
         <source>QR code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">757,759</context>
+          <context context-type="linenumber">762,764</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.delete" datatype="html">
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">769,772</context>
+          <context context-type="linenumber">774,777</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.metaUpdated" datatype="html">
         <source>Updated <x id="when" equiv-text="when"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">460</context>
+          <context context-type="linenumber">479</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.status.drawZone" datatype="html">
         <source>Click the plan to add a vertex (<x id="count" equiv-text="count"/> placed)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">483</context>
+          <context context-type="linenumber">502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.status.placePin" datatype="html">
         <source>Click the plan to place the equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">486</context>
+          <context context-type="linenumber">505</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.pass" datatype="html">
         <source>Pass</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1164</context>
+          <context context-type="linenumber">1183</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.fail" datatype="html">
         <source>Fail</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1166</context>
+          <context context-type="linenumber">1185</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.partial" datatype="html">
         <source>Partial</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1168</context>
+          <context context-type="linenumber">1187</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.compliance.toggleLabel" datatype="html">

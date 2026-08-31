@@ -221,7 +221,17 @@
       }
 
       <div fieldEditor class="flex flex-col gap-2">
-        <div class="flex justify-end gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            hlmBtn
+            type="button"
+            size="sm"
+            data-testid="facility-pick-on-map"
+            (click)="mapPickerVisible.set(true)"
+          >
+            <ng-icon name="lucideMapPin" aria-hidden="true" />
+            <span i18n="@@facility.map.pickOnMap">Pick on map</span>
+          </button>
           @if (facility().address) {
             <button
               hlmBtn
@@ -233,19 +243,10 @@
               [attr.aria-busy]="geocodePending() ? 'true' : null"
               (click)="locateAddress()"
             >
+              <ng-icon name="lucideLocateFixed" aria-hidden="true" />
               <span i18n="@@facility.form.locateAddress">Locate address</span>
             </button>
           }
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            data-testid="facility-pick-on-map"
-            (click)="mapPickerVisible.set(true)"
-          >
-            <span i18n="@@facility.map.pickOnMap">Pick on map</span>
-          </button>
         </div>
         <p role="status" aria-live="polite" class="text-xs" data-testid="facility-geocode-status">
           @if (geocodePending()) {
@@ -259,6 +260,10 @@
           } @else if (geocodeResult(); as match) {
             <span class="text-muted-foreground">{{ match.displayName }}</span>
           }
+        </p>
+        <p class="text-xs text-muted-foreground" i18n="@@facility.info.coordinatesManualHint">
+          Or type them, if you already know the figures. Both are needed — a latitude alone is not
+          half a location.
         </p>
         <div class="flex gap-2">
           <div class="flex-1">
@@ -278,6 +283,7 @@
               placeholder="Latitude"
               i18n-placeholder="@@facility.info.latitude"
               [id]="coordinatesField.editorId + '-lat'"
+              [attr.aria-invalid]="coordinatesError() !== null"
               [value]="latitudeDraft()"
               (input)="latitudeDraft.set($any($event.target).value)"
             />
@@ -299,11 +305,18 @@
               placeholder="Longitude"
               i18n-placeholder="@@facility.info.longitude"
               [id]="coordinatesField.editorId + '-lng'"
+              [attr.aria-invalid]="coordinatesError() !== null"
               [value]="longitudeDraft()"
               (input)="longitudeDraft.set($any($event.target).value)"
             />
           </div>
         </div>
+
+        @if (coordinatesError(); as coordinateError) {
+          <p role="alert" class="text-xs text-destructive" data-testid="facility-coordinates-error">
+            {{ coordinateError }}
+          </p>
+        }
       </div>
     </app-inplace-field>
   </div>

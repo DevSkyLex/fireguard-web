@@ -1960,6 +1960,22 @@
         <source>Enter a whole number between -100 and 200.</source>
         <target>Introduzca un número entero entre -100 y 200.</target>
       </trans-unit>
+      <trans-unit id="facility.info.coordinatesIncomplete" datatype="html">
+        <source>Enter both latitude and longitude, or leave both empty.</source>
+        <target>Introduzca la latitud y la longitud, o deje ambas vacías.</target>
+      </trans-unit>
+      <trans-unit id="facility.info.coordinatesRange" datatype="html">
+        <source>Latitude runs from -90 to 90, longitude from -180 to 180.</source>
+        <target>La latitud va de -90 a 90, la longitud de -180 a 180.</target>
+      </trans-unit>
+      <trans-unit id="facility.info.coordinatesManualHint" datatype="html">
+        <source> Or type them, if you already know the figures. Both are needed — a latitude alone is not half a location. </source>
+        <target>O escríbalas, si ya conoce las cifras. Hacen falta las dos: una latitud sola no es media ubicación.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.coordinatesPickHint" datatype="html">
+        <source> Placing the pin fills both figures below — typing them is the fallback, not the way in. </source>
+        <target>Colocar el marcador rellena las dos cifras de abajo; escribirlas es el recurso, no el camino habitual.</target>
+      </trans-unit>
       <trans-unit id="facility.cf.submitting" datatype="html">
         <source>Creating…</source>
         <target>Creando…</target>

@@ -20,6 +20,8 @@ import {
   type FieldTree,
   type ValidationError,
 } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMapPin } from '@ng-icons/lucide';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   CreateFacilityInput,
@@ -133,12 +135,14 @@ function parsedLevelIndex(value: string): number | undefined {
   imports: [
     FormField,
     FacilityMapPickerDialog,
+    NgIcon,
     HlmButton,
     HlmInput,
     ...HlmComboboxImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
   ],
+  providers: [provideIcons({ lucideMapPin })],
   templateUrl: './facility-create-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

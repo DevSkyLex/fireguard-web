@@ -638,7 +638,12 @@
                   </h3>
                   @for (pin of plans.overlay()?.equipment ?? []; track pin.equipmentId) {
                     <div class="flex items-center justify-between gap-2 text-sm">
-                      <span>{{ pin.name }}</span>
+                      <span class="flex min-w-0 flex-col">
+                        <span class="truncate">{{ equipmentLabelOf(pin) }}</span>
+                        @if (equipmentDetailOf(pin); as detail) {
+                          <span class="truncate text-xs text-muted-foreground">{{ detail }}</span>
+                        }
+                      </span>
                       <div class="flex items-center gap-2">
                         <button
                           hlmBtn

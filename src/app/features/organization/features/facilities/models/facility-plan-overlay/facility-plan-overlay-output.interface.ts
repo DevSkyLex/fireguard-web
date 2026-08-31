@@ -1,4 +1,7 @@
-import type { EquipmentStatus } from '@features/organization/features/equipments/models';
+import type {
+  EquipmentStatus,
+  EquipmentType,
+} from '@features/organization/features/equipments/models';
 import type { FacilityStatus, FacilityType } from '../facility/facility-output.interface';
 
 /**
@@ -43,8 +46,22 @@ export interface FacilityPlanOverlayEquipment {
   /** The pinned equipment's id — activating it navigates to this record. */
   readonly equipmentId: string;
 
-  /** The equipment's display name. */
-  readonly name: string;
+  /**
+   * The equipment's type, as the backend's raw enum value.
+   *
+   * Equipment has no name field, so this endpoint once sent a label the
+   * server had composed — `"gas_detector (SEED-GAS-003)"`, an untranslated
+   * enum a client could only print verbatim. The identity now travels in
+   * parts and the label is built here, against the translated
+   * `EQUIPMENT_TYPE_OPTIONS` catalogue.
+   */
+  readonly type: EquipmentType;
+
+  /** The equipment's serial number, when it carries one. */
+  readonly serialNumber: string | null;
+
+  /** Where the item sits, in the operator's own words — the most human of the three. */
+  readonly locationLabel: string | null;
 
   /** The equipment's lifecycle status. */
   readonly status: EquipmentStatus;

@@ -182,17 +182,20 @@
       </p>
     </hlm-field>
 
-    <div class="flex justify-end">
+    <div class="flex flex-wrap items-center gap-2">
       <button
         hlmBtn
         type="button"
-        variant="outline"
         size="sm"
         data-testid="facility-create-pick-on-map"
         (click)="mapPickerVisible.set(true)"
       >
+        <ng-icon name="lucideMapPin" aria-hidden="true" />
         <span i18n="@@facility.map.pickOnMap">Pick on map</span>
       </button>
+      <span class="text-xs text-muted-foreground" i18n="@@facility.form.coordinatesPickHint">
+        Placing the pin fills both figures below — typing them is the fallback, not the way in.
+      </span>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">

@@ -399,7 +399,9 @@ describe('FacilityPlansStore', () => {
         equipment: [
           {
             equipmentId: 'equipment-1',
-            name: 'Extinguisher',
+            type: 'fire_extinguisher',
+            serialNumber: 'SN-1',
+            locationLabel: 'Extinguisher',
             status: 'operational',
             x: 0.5,
             y: 0.5,

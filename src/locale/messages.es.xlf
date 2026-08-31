@@ -7654,6 +7654,14 @@
         <source>Plans</source>
         <target>Planos</target>
       </trans-unit>
+      <trans-unit id="facility.plans.pickerLabel" datatype="html">
+        <source>Floor plans</source>
+        <target>Planos de planta</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.pickerEmpty" datatype="html">
+        <source>Choose a plan</source>
+        <target>Elegir un plano</target>
+      </trans-unit>
       <trans-unit id="facility.plans.emptyTitle" datatype="html">
         <source>No floor plan yet</source>
         <target>Aún no hay ningún plano</target>

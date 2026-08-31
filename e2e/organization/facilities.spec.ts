@@ -380,9 +380,12 @@ test.describe('Facility Plans tab', () => {
       buffer: TINY_PNG_BUFFER,
     });
 
-    await expect(facilities.planRows).toHaveCount(1);
-    await expect(page.getByText('new-plan.png')).toBeVisible();
+    // The upload replaces the empty state with the normal layout, where the
+    // list lives behind the toolbar's picker.
     await expect(facilities.planViewer).toBeVisible();
+    await facilities.openPlanPicker();
+    await expect(facilities.planRows).toHaveCount(1);
+    await expect(facilities.planRows).toContainText('new-plan.png');
   });
 
   test('moves the primary badge to the plan set as primary', async ({ page }) => {
@@ -409,6 +412,7 @@ test.describe('Facility Plans tab', () => {
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
+    await facilities.openPlanPicker();
     await expect(facilities.planRows).toHaveCount(2);
     await expect(facilities.planPrimaryBadge).toHaveCount(1);
 
@@ -416,7 +420,7 @@ test.describe('Facility Plans tab', () => {
     await facilities.planSetPrimary.click();
 
     await expect(facilities.planPrimaryBadge).toHaveCount(1);
-    await expect(page.getByText('level-2.png').locator('..')).toContainText('Primary');
+    await expect(facilities.planRows.filter({ hasText: 'level-2.png' })).toContainText('Primary');
   });
 
   test('deletes a floor plan after confirmation', async ({ page }) => {
@@ -430,6 +434,7 @@ test.describe('Facility Plans tab', () => {
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
+    await facilities.openPlanPicker();
     await expect(facilities.planRows).toHaveCount(1);
 
     await facilities.planMenuTrigger.click();
@@ -900,7 +905,12 @@ test.describe('Facility Plan Editor', () => {
     await facilities.plansTab.click();
     await expect(facilities.overlayZones).toHaveCount(2);
 
-    await expect(facilities.editorToolbar).toHaveCount(0);
+    // The toolbar itself stays: it carries the plan picker, the overlay
+    // toggles and the 3D link, all of which a reader uses. Only the drawing
+    // affordances inside it are withheld.
+    await expect(facilities.editorToolbar).toHaveCount(1);
+    await expect(facilities.drawZonePicker).toHaveCount(0);
+    await expect(facilities.placePinPicker).toHaveCount(0);
     // A reader can still browse and select — only the detail block's own
     // actions are withheld.
     await facilities.selectZone();

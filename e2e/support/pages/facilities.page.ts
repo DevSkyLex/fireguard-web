@@ -71,6 +71,9 @@ export class FacilitiesPage {
   public readonly plansEmpty: Locator = this.page.getByTestId('facility-plans-empty');
   public readonly plansUpload: Locator = this.page.getByTestId('facility-plans-upload');
   public readonly planViewer: Locator = this.page.getByTestId('facility-plan-viewer');
+  public readonly planPickerTrigger: Locator = this.page.getByTestId(
+    'facility-plan-picker-trigger',
+  );
   public readonly planRows: Locator = this.page.getByTestId('facility-plan-row');
   public readonly planPrimaryBadge: Locator = this.page.getByTestId('facility-plan-primary-badge');
   public readonly planMenuTrigger: Locator = this.page.getByTestId('facility-plan-menu-trigger');
@@ -206,8 +209,37 @@ export class FacilitiesPage {
     await this.hierarchyToggles.first().click();
   }
 
-  /** Sets a file on the Plans tab's hidden upload input, bypassing the picker dialog. */
+  /**
+   * Opens the toolbar's plan picker, which holds the plan list.
+   *
+   * The list stopped being a column of its own: it left the plan itself
+   * 281 px wide at a 1280 px viewport, so it moved behind this trigger.
+   * Idempotent — a picker already open is left alone.
+   */
+  public async openPlanPicker(): Promise<void> {
+    if ((await this.planPickerTrigger.getAttribute('aria-expanded')) === 'true') return;
+
+    await this.planPickerTrigger.click();
+    await this.page.getByTestId('facility-plan-list').waitFor({ state: 'visible' });
+  }
+
+  /** Closes the toolbar's plan picker, so the plan underneath it is reachable again. */
+  public async closePlanPicker(): Promise<void> {
+    if ((await this.planPickerTrigger.getAttribute('aria-expanded')) !== 'true') return;
+
+    await this.page.keyboard.press('Escape');
+    await this.page.getByTestId('facility-plan-list').waitFor({ state: 'hidden' });
+  }
+
+  /**
+   * Sets a file on the Plans tab's hidden upload input, bypassing the picker dialog.
+   *
+   * The list lives behind the toolbar's picker once a plan exists, and
+   * directly inside the empty state before that — so the picker is opened
+   * only when there is one to open.
+   */
   public async uploadPlan(file: { name: string; mimeType: string; buffer: Buffer }): Promise<void> {
+    if (await this.planPickerTrigger.isVisible()) await this.openPlanPicker();
     await this.page
       .locator('[data-testid="facility-plan-list"] input[type="file"]')
       .setInputFiles(file);

@@ -749,7 +749,7 @@ describe('FacilityDetailPage', () => {
       expect(byTestId('facility-plans-upload')).toBeNull();
     });
 
-    it('should show the plan viewer and the plan list once a plan exists', async () => {
+    it('should show the plan viewer, and the plan list behind the toolbar picker, once a plan exists', async () => {
       orderedPlans.set([plan({ isPrimaryPlan: true })]);
       selectedPlan.set(plan({ isPrimaryPlan: true }));
       planImageUrl.set('blob:test-plan');
@@ -759,7 +759,11 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       expect(byTestId('facility-plan-viewer')).not.toBeNull();
-      expect(root().querySelector('app-facility-plan-list')).not.toBeNull();
+      // The list left the row — it would have squeezed the plan to 281 px at a
+      // 1280 px viewport — and now sits inside the toolbar's picker popover,
+      // which renders its content only once opened.
+      expect(byTestId('facility-plan-picker-trigger')).not.toBeNull();
+      expect(root().querySelector('app-facility-plan-list')).toBeNull();
     });
 
     it('should route the picked file to the store as an upload', async () => {

@@ -2,8 +2,11 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
+  afterNextRender,
   computed,
+  inject,
   input,
   signal,
   viewChild,
@@ -239,6 +242,17 @@ export class PlanViewer {
   /** The scale that fits the whole plan in the viewport, restored by {@link resetView}. */
   private fitScale = 1;
 
+  /**
+   * Whether the user has panned or zoomed since the last fit.
+   *
+   * It gates {@link refitToViewport}: a container that changes size re-fits
+   * only while the view is still the one the component chose. Re-fitting under
+   * someone who had zoomed in on a corner would throw their work away — and
+   * the container does change size in ordinary use, when the detail panel
+   * beside the plan opens or closes.
+   */
+  private hasUserTransform = false;
+
   /** The stage's CSS transform, or `null` before the image has loaded. */
   protected readonly stageTransform: Signal<string | null> = computed<string | null>(() => {
     if (this.status() !== 'loaded') return null;
@@ -250,6 +264,31 @@ export class PlanViewer {
   /** The context handed to the projected overlay template. */
   protected readonly overlayContext: Signal<PlanViewerOverlayContext> =
     computed<PlanViewerOverlayContext>(() => ({ scale: this.transform().scale }));
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Watches the inner frame's size and re-fits the plan when it changes.
+   *
+   * Browser-only by construction — `afterNextRender` never runs on the server,
+   * and `ResizeObserver` does not exist there. Without this the fit computed
+   * on image load survives every later layout change, which is how the plan
+   * ended up rendered larger than the column holding it.
+   *
+   * @since 1.13.0
+   */
+  public constructor() {
+    const destroyRef: DestroyRef = inject(DestroyRef);
+
+    afterNextRender(() => {
+      const frame: HTMLDivElement | undefined = this.frameRef()?.nativeElement;
+      if (!frame || typeof ResizeObserver !== 'function') return;
+
+      const observer = new ResizeObserver(() => this.refitToViewport());
+      observer.observe(frame);
+      destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
   //#endregion
 
   //#region Methods
@@ -274,16 +313,8 @@ export class PlanViewer {
     };
     this.contentSize.set(content);
 
-    const viewport: PlanViewportSize = this.currentViewportSize();
-    this.fitScale =
-      content.width > 0 && content.height > 0 && viewport.width > 0 && viewport.height > 0
-        ? clampPlanZoom(
-            Math.min(viewport.width / content.width, viewport.height / content.height),
-            this.minZoom(),
-            this.maxZoom(),
-          )
-        : 1;
-
+    this.fitScale = this.computeFitScale(content);
+    this.hasUserTransform = false;
     this.transform.set({ x: 0, y: 0, scale: this.fitScale });
     this.status.set('loaded');
   }
@@ -384,7 +415,7 @@ export class PlanViewer {
           origin.midpoint,
           this.currentViewportSize(),
           factor,
-          this.minZoom(),
+          this.effectiveMinZoom(),
           this.maxZoom(),
         ),
       );
@@ -486,6 +517,7 @@ export class PlanViewer {
    */
   protected resetView(): void {
     this.applyTransform({ x: 0, y: 0, scale: this.fitScale });
+    this.hasUserTransform = false;
   }
 
   /**
@@ -504,7 +536,7 @@ export class PlanViewer {
         pointer,
         this.currentViewportSize(),
         factor,
-        this.minZoom(),
+        this.effectiveMinZoom(),
         this.maxZoom(),
       ),
     );
@@ -536,7 +568,67 @@ export class PlanViewer {
     const content: PlanViewportSize | null = this.contentSize();
     if (!content) return;
 
+    this.hasUserTransform = true;
     this.transform.set(clampPlanPan(next, this.currentViewportSize(), content, MIN_VISIBLE_PX));
+  }
+
+  /**
+   * Method computeFitScale
+   *
+   * @description
+   * The scale at which the whole plan fits the current viewport.
+   *
+   * Capped by {@link maxZoom} but deliberately **not** floored by
+   * {@link minZoom}: `minZoom` bounds how far a user may zoom *out*, while the
+   * fit is by definition the point where the plan is fully visible. Flooring
+   * it made a plan larger than its container — a 2400x1600 plan in a 601 px
+   * column needs 0.25, below the 0.5 default — render at 0.5 and overflow,
+   * with the overflowing part unreachable to both pointer and test.
+   *
+   * @access private
+   * @since 1.13.0
+   * @param {PlanViewportSize} content - The plan's natural pixel size.
+   * @returns {number} The fitting scale, or `1` when either box is empty.
+   */
+  private computeFitScale(content: PlanViewportSize): number {
+    const viewport: PlanViewportSize = this.currentViewportSize();
+    if (content.width <= 0 || content.height <= 0) return 1;
+    if (viewport.width <= 0 || viewport.height <= 0) return 1;
+
+    const raw: number = Math.min(viewport.width / content.width, viewport.height / content.height);
+
+    return clampPlanZoom(raw, Math.min(this.minZoom(), raw), this.maxZoom());
+  }
+
+  /**
+   * Method effectiveMinZoom
+   * @description The lowest scale a user may zoom out to — never above the fit, so the whole plan stays reachable.
+   * @access private
+   * @since 1.13.0
+   * @returns {number} The effective lower zoom bound.
+   */
+  private effectiveMinZoom(): number {
+    return Math.min(this.minZoom(), this.fitScale);
+  }
+
+  /**
+   * Method refitToViewport
+   * @description Recomputes the fit after the container changed size, and re-applies it unless the user has since panned or zoomed.
+   * @access private
+   * @since 1.13.0
+   * @returns {void}
+   */
+  private refitToViewport(): void {
+    const content: PlanViewportSize | null = this.contentSize();
+    if (!content || this.status() !== 'loaded') return;
+
+    const next: number = this.computeFitScale(content);
+    if (next === this.fitScale) return;
+
+    this.fitScale = next;
+    if (this.hasUserTransform) return;
+
+    this.transform.set({ x: 0, y: 0, scale: next });
   }
 
   /**

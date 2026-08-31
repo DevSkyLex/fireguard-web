@@ -24,7 +24,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideLayers,
+  lucideMap,
+  lucideQrCode,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
@@ -67,6 +73,7 @@ import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-forma
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -193,6 +200,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityPlanDeleteDialog,
     FacilityPlanEditor,
     FacilityPlanList,
+    ...HlmPopoverImports,
     FacilityPlanPanel,
     FacilityPlanPinPositionDialog,
     FacilityPlanToolbar,
@@ -211,7 +219,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
-    provideIcons({ lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
+    provideIcons({ lucideCircleAlert, lucideLayers, lucideMap, lucideQrCode, lucideTrash2 }),
   ],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -345,6 +353,20 @@ export class FacilityDetailPage {
 
   /** Whether the QR code dialog is open. */
   protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * The plan picker popover's accessible name.
+   *
+   * The plan list used to be a 320 px column of its own. Measured at a
+   * 1280 px viewport, that column plus the detail panel left the plan itself
+   * 281 px wide — narrower than either of them. The list is the surface a
+   * reader consults least once a plan is chosen, so it moved behind this
+   * trigger and the plan took the width back.
+   */
+  protected readonly planPickerLabel: string = $localize`:@@facility.plans.pickerLabel:Floor plans`;
+
+  /** The picker trigger's label while no plan is selected yet. */
+  protected readonly planPickerFallbackLabel: string = $localize`:@@facility.plans.pickerEmpty:Choose a plan`;
 
   /** Whether the viewport is narrow enough that {@link FacilityPlanPanel} renders as a dismissible sheet — mirrors `FacilityBuilding3dPage`'s own `isCompact`. */
   protected readonly isCompactPanel: Signal<boolean> = isCompact();

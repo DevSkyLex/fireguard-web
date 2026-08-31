@@ -1,5 +1,7 @@
 <div class="flex flex-wrap items-center justify-between gap-2" data-testid="facility-plan-toolbar">
   <div class="flex flex-wrap items-center gap-3">
+    <ng-content select="[planPicker]" />
+
     @if (overlayHasContent()) {
       <label class="flex items-center gap-2 text-sm">
         <hlm-switch

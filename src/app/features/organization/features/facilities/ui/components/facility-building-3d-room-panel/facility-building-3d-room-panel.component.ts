@@ -25,7 +25,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { FacilityStatusTag } from '../facility-status-tag';
-import { FacilityBuilding3dRoomList } from './components/facility-building-3d-room-list';
+import { FacilityZoneList } from '../facility-zone-list';
 
 /**
  * Component FacilityBuilding3dRoomPanel
@@ -43,8 +43,12 @@ import { FacilityBuilding3dRoomList } from './components/facility-building-3d-ro
  *
  * Always renders: a floor selector (`role="group"`, one button per
  * {@link floors}, `aria-current` on {@link selectedFloorId}) and
- * `app-facility-building-3d-room-list` for that floor's rooms — the actual
- * accessible equivalent of the canvas' pointer browsing. The room *detail*
+ * `app-facility-zone-list` for that floor's rooms — the actual accessible
+ * equivalent of the canvas' pointer browsing. `FacilityZoneList` was
+ * extracted from this component's own former private `facility-building-3d-room-list`
+ * once the 2D Plans tab's own panel needed the identical list over the same
+ * `FacilityPlanOverlayZone` type — see its own `@description` and this
+ * feature's `FEATURE.md`. The room *detail*
  * block (name, type, status through the feature's own `facility-status-tag`
  * registry, a "View on 2D plan" action, and its own close control) renders
  * only once {@link room} is non-`null`; closing it deselects the room
@@ -71,7 +75,7 @@ import { FacilityBuilding3dRoomList } from './components/facility-building-3d-ro
     NgTemplateOutlet,
     NgIcon,
     FacilityStatusTag,
-    FacilityBuilding3dRoomList,
+    FacilityZoneList,
     HlmButton,
     ...HlmCardImports,
     ...HlmSheetImports,

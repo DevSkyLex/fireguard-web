@@ -95,10 +95,10 @@
     >
       Rooms on this floor
     </h4>
-    <app-facility-building-3d-room-list
-      [rooms]="floorRooms()"
-      [selectedRoomId]="room()?.facilityId ?? null"
-      (roomActivated)="roomActivated.emit($event)"
+    <app-facility-zone-list
+      [zones]="floorRooms()"
+      [selectedZoneId]="room()?.facilityId ?? null"
+      (zoneActivated)="roomActivated.emit($event)"
     />
   </section>
 </ng-template>

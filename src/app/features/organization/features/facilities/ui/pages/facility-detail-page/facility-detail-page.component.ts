@@ -21,13 +21,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideBoxes,
-  lucideCircleAlert,
-  lucideMap,
-  lucideQrCode,
-  lucideTrash2,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
@@ -62,6 +56,7 @@ import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { isCompact } from '@shared/breakpoint';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
@@ -69,16 +64,16 @@ import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-forma
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
-import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTabsImports } from '@shared/ui/tabs';
-import { equipmentPlanDetail, equipmentPlanLabel } from '../../../utils';
+import { equipmentPlanLabel } from '../../../utils';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
 import { FacilityPlanEditor } from '../../components/facility-plan-editor';
 import { FacilityPlanList } from '../../components/facility-plan-list';
+import { FacilityPlanPanel } from '../../components/facility-plan-panel';
+import { FacilityPlanToolbar } from '../../components/facility-plan-toolbar';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 import { FacilityDeleteDialog } from '../../dialogs/facility-delete-dialog';
 import { FacilityPlanDeleteDialog } from '../../dialogs/facility-plan-delete-dialog';
@@ -112,17 +107,28 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * list page already parses; **Information** renders
  * {@link FacilityInformationPanel}, the in-place edit surface for every
  * writable property (`FEATURE.md` "The record is the edit surface" — there
- * is no separate edit page); **Plans** renders {@link FacilityPlanList} and
- * `PlanViewer` over {@link FacilityPlansStore}, loaded browser-only on first
- * activation since it is secondary content (`ARCHITECTURE.md` §12.4). The
- * selected plan's zone/equipment overlay renders through
- * `FacilityPlanEditor`, projected into `PlanViewer`'s `overlayTemplate`; a
- * zone or equipment pin activation navigates to that record, and this page
- * owns both that navigation and every editor write (draw/clear a zone
+ * is no separate edit page); **Plans** renders {@link FacilityPlanList},
+ * `PlanViewer`, `app-facility-plan-toolbar` and `app-facility-plan-panel`
+ * over {@link FacilityPlansStore}, loaded browser-only on first activation
+ * since it is secondary content (`ARCHITECTURE.md` §12.4). The selected
+ * plan's zone/equipment overlay renders through `FacilityPlanEditor`,
+ * projected into `PlanViewer`'s `overlayTemplate`; activating a zone or
+ * equipment pin — from the plan itself or the panel's own zone/equipment
+ * rosters — **selects** it ({@link onZoneSelected}/{@link onEquipmentSelected}),
+ * never navigates: the panel's detail block shows what was picked, with an
+ * explicit "View record" action ({@link onZoneRecordRequested}/
+ * {@link onEquipmentRecordRequested}) for the member who actually wants to
+ * leave the tab, and — permission-gated exactly as before — an "Edit
+ * coordinates"/"Edit position"/"Remove from plan" action
+ * ({@link onZoneEditRequested}/{@link onEquipmentEditRequested}/
+ * {@link onEquipmentRemoveRequested}). These editor actions used to live in a
+ * second, standing "Zones/Equipment on this plan" roster beneath the viewer;
+ * consolidated into the detail block so the same list is not rendered twice.
+ * This page owns that navigation and every editor write (draw/clear a zone
  * outline, place/move/remove an equipment pin) — `FacilityPlanEditor` only
  * emits, `FacilityPlansStore` (tab-scoped) owns the mode/draft state and the
  * two save rxMethods. Editor entry (the "Draw zone"/"Place equipment"
- * pickers, each zone/pin row's dialog triggers) is gated on `canWrite`
+ * pickers, the detail block's own action) is gated on `canWrite`
  * (`FACILITIES_WRITE`) for zones and `canEditEquipment`
  * (`EQUIPMENT_WRITE`) for equipment. Each active mode also offers a
  * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
@@ -179,7 +185,9 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityPlanDeleteDialog,
     FacilityPlanEditor,
     FacilityPlanList,
+    FacilityPlanPanel,
     FacilityPlanPinPositionDialog,
+    FacilityPlanToolbar,
     FacilityPlanZoneGeometryDialog,
     FacilityQrDialog,
     FacilityStatusTag,
@@ -187,9 +195,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     PlanViewer,
     HlmButton,
     HlmSkeleton,
-    HlmSwitch,
     ...HlmBreadcrumbImports,
-    ...HlmSelectImports,
     ...HlmSpinnerImports,
     ...HlmCardImports,
     ...HlmTabsImports,
@@ -197,10 +203,10 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
-    provideIcons({ lucideBoxes, lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
+    provideIcons({ lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
   ],
   templateUrl: './facility-detail-page.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityDetailPage {
@@ -332,6 +338,113 @@ export class FacilityDetailPage {
   /** Whether the QR code dialog is open. */
   protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /** Whether the viewport is narrow enough that {@link FacilityPlanPanel} renders as a dismissible sheet — mirrors `FacilityBuilding3dPage`'s own `isCompact`. */
+  protected readonly isCompactPanel: Signal<boolean> = isCompact();
+
+  /**
+   * Property planPanelOpen
+   * @readonly
+   *
+   * @description
+   * Whether the compact-viewport plan panel sheet is showing. Owned here
+   * rather than by the panel, exactly like `FacilityBuilding3dPage`'s own
+   * `roomPanelOpen`: the toolbar control that brings a dismissed sheet back
+   * lives here, and it starts closed so a small screen is not immediately
+   * covered by the very plan it describes.
+   *
+   * @access protected
+   * @since 1.11.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly planPanelOpen: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property selectedZoneId
+   * @readonly
+   * @description The plan overlay zone currently selected on this tab; `null` while nothing, or an equipment pin, is selected. Activating a zone (plan tap or the panel's own zone list) selects it here instead of navigating — see {@link onZoneSelected}.
+   * @access protected
+   * @since 1.11.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly selectedZoneId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property selectedEquipmentId
+   * @readonly
+   * @description The plan overlay equipment pin currently selected on this tab; `null` while nothing, or a zone, is selected.
+   * @access protected
+   * @since 1.11.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly selectedEquipmentId: WritableSignal<string | null> = signal<string | null>(
+    null,
+  );
+
+  /**
+   * Property selectedOverlayZone
+   * @readonly
+   * @description {@link selectedZoneId} resolved against the loaded overlay — `null` while unselected or the id matches no zone in the current overlay (e.g. after switching plans).
+   * @access protected
+   * @since 1.11.0
+   * @type {Signal<FacilityPlanOverlayZone | null>}
+   */
+  protected readonly selectedOverlayZone: Signal<FacilityPlanOverlayZone | null> = computed(() => {
+    const facilityId: string | null = this.selectedZoneId();
+    if (!facilityId) return null;
+
+    return this.plans.overlay()?.zones.find((zone) => zone.facilityId === facilityId) ?? null;
+  });
+
+  /**
+   * Property selectedOverlayEquipment
+   * @readonly
+   * @description {@link selectedEquipmentId} resolved against the loaded overlay — `null` while unselected or the id matches no pin in the current overlay.
+   * @access protected
+   * @since 1.11.0
+   * @type {Signal<FacilityPlanOverlayEquipment | null>}
+   */
+  protected readonly selectedOverlayEquipment: Signal<FacilityPlanOverlayEquipment | null> =
+    computed(() => {
+      const equipmentId: string | null = this.selectedEquipmentId();
+      if (!equipmentId) return null;
+
+      return this.plans.overlay()?.equipment.find((pin) => pin.equipmentId === equipmentId) ?? null;
+    });
+
+  /**
+   * Property planHasNoContent
+   * @readonly
+   * @description Whether the selected plan's overlay has loaded successfully and carries neither a zone nor an equipment pin — gates {@link FacilityPlanPanel}'s "nothing drawn yet" empty state.
+   * @access protected
+   * @since 1.11.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly planHasNoContent: Signal<boolean> = computed<boolean>(
+    () => this.plans.overlayCallState().status === 'success' && !this.plans.overlayHasContent(),
+  );
+
+  /**
+   * Property planSelectionAnnouncement
+   * @readonly
+   * @description The Plans tab's `sr-only`, `aria-live="polite"` region text — the selected zone or equipment's name, or the empty string once nothing is selected. Mirrors `FacilityBuilding3dPage.selectionAnnouncement`.
+   * @access protected
+   * @since 1.11.0
+   * @type {Signal<string>}
+   */
+  protected readonly planSelectionAnnouncement: Signal<string> = computed<string>(() => {
+    const zone: FacilityPlanOverlayZone | null = this.selectedOverlayZone();
+    if (zone) {
+      return $localize`:@@facility.plans.panel.zoneSelectionAnnouncement:Selected zone ${zone.name}:name:`;
+    }
+
+    const pin: FacilityPlanOverlayEquipment | null = this.selectedOverlayEquipment();
+    if (pin) {
+      return $localize`:@@facility.plans.panel.equipmentSelectionAnnouncement:Selected equipment ${equipmentPlanLabel(pin)}:name:`;
+    }
+
+    return '';
+  });
+
   /**
    * Property canWrite
    * @readonly
@@ -395,18 +508,6 @@ export class FacilityDetailPage {
       return this.plans.overlay()?.equipment.find((pin) => pin.equipmentId === equipmentId) ?? null;
     },
   );
-
-  /**
-   * Names a pinned equipment item the way an operator would — its location
-   * when recorded, else its translated type. Never the raw enum the API
-   * carries.
-   */
-  protected readonly equipmentLabelOf: (pin: FacilityPlanOverlayEquipment) => string = (pin) =>
-    equipmentPlanLabel(pin);
-
-  /** The secondary line under {@link equipmentLabelOf} — type and serial, or nothing. */
-  protected readonly equipmentDetailOf: (pin: FacilityPlanOverlayEquipment) => string = (pin) =>
-    equipmentPlanDetail(pin);
 
   /**
    * Property zoneGeometryDialogName
@@ -602,7 +703,7 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanSelected
-   * @description Shows the given plan in the viewer.
+   * @description Shows the given plan in the viewer, clearing any zone/equipment selection from the previously shown plan.
    * @access protected
    * @since 1.1.0
    * @param {string} planId - The plan to show.
@@ -610,6 +711,19 @@ export class FacilityDetailPage {
    */
   protected onPlanSelected(planId: string): void {
     this.plans.selectPlan(planId);
+    this.selectedZoneId.set(null);
+    this.selectedEquipmentId.set(null);
+  }
+
+  /**
+   * Method retryPlansLoad
+   * @description The plan-list-failed state's retry — re-runs {@link FacilityPlansStoreType.load}.
+   * @access protected
+   * @since 1.11.0
+   * @returns {void}
+   */
+  protected retryPlansLoad(): void {
+    this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
   }
 
   /**
@@ -675,27 +789,112 @@ export class FacilityDetailPage {
   }
 
   /**
-   * Method onPlanZoneActivated
-   * @description A plan overlay zone was activated; navigates to that facility's record.
+   * Method onZoneSelected
+   * @description A plan overlay zone was activated — from a tap on the plan or the panel's own zone list — and becomes the selection, deselecting any equipment pin. Never navigates: browsing several zones costs nothing, see {@link onZoneRecordRequested} for the explicit action that does.
    * @access protected
-   * @since 1.3.0
+   * @since 1.11.0
    * @param {string} facilityId - The activated zone's facility id.
    * @returns {void}
    */
-  protected onPlanZoneActivated(facilityId: string): void {
+  protected onZoneSelected(facilityId: string): void {
+    this.selectedEquipmentId.set(null);
+    this.selectedZoneId.set(facilityId);
+  }
+
+  /**
+   * Method onEquipmentSelected
+   * @description A plan overlay equipment pin was activated and becomes the selection, deselecting any zone. Never navigates — see {@link onEquipmentRecordRequested}.
+   * @access protected
+   * @since 1.11.0
+   * @param {string} equipmentId - The activated pin's equipment id.
+   * @returns {void}
+   */
+  protected onEquipmentSelected(equipmentId: string): void {
+    this.selectedZoneId.set(null);
+    this.selectedEquipmentId.set(equipmentId);
+  }
+
+  /**
+   * Method onPlanDetailClosed
+   * @description The panel's zone/equipment detail close control was activated — clears whichever is currently selected.
+   * @access protected
+   * @since 1.11.0
+   * @returns {void}
+   */
+  protected onPlanDetailClosed(): void {
+    this.selectedZoneId.set(null);
+    this.selectedEquipmentId.set(null);
+  }
+
+  /**
+   * Method onZoneRecordRequested
+   * @description The panel's explicit "View facility record" action for {@link selectedOverlayZone} — the only path off this tab a zone selection now takes.
+   * @access protected
+   * @since 1.11.0
+   * @returns {void}
+   */
+  protected onZoneRecordRequested(): void {
+    const facilityId: string | undefined = this.selectedOverlayZone()?.facilityId;
+    if (!facilityId) return;
+
     void this.router.navigate(['/organizations', this.organizationId(), 'facilities', facilityId]);
   }
 
   /**
-   * Method onPlanEquipmentActivated
-   * @description A plan overlay equipment pin was activated; navigates to that equipment's record.
+   * Method onEquipmentRecordRequested
+   * @description The panel's explicit "View equipment record" action for {@link selectedOverlayEquipment}.
    * @access protected
-   * @since 1.3.0
-   * @param {string} equipmentId - The activated pin's equipment id.
+   * @since 1.11.0
    * @returns {void}
    */
-  protected onPlanEquipmentActivated(equipmentId: string): void {
+  protected onEquipmentRecordRequested(): void {
+    const equipmentId: string | undefined = this.selectedOverlayEquipment()?.equipmentId;
+    if (!equipmentId) return;
+
     void this.router.navigate(['/organizations', this.organizationId(), 'equipments', equipmentId]);
+  }
+
+  /**
+   * Method onZoneEditRequested
+   * @description The panel detail block's "Edit coordinates" action for {@link selectedOverlayZone} — opens {@link FacilityPlanZoneGeometryDialog} exactly as the removed management roster's own row button did.
+   * @access protected
+   * @since 1.12.0
+   * @returns {void}
+   */
+  protected onZoneEditRequested(): void {
+    const facilityId: string | undefined = this.selectedOverlayZone()?.facilityId;
+    if (!facilityId) return;
+
+    this.openZoneGeometryDialog(facilityId);
+  }
+
+  /**
+   * Method onEquipmentEditRequested
+   * @description The panel detail block's "Edit position" action for {@link selectedOverlayEquipment} — opens {@link FacilityPlanPinPositionDialog} exactly as the removed management roster's own row button did.
+   * @access protected
+   * @since 1.12.0
+   * @returns {void}
+   */
+  protected onEquipmentEditRequested(): void {
+    const equipmentId: string | undefined = this.selectedOverlayEquipment()?.equipmentId;
+    if (!equipmentId) return;
+
+    this.openPinPositionDialog(equipmentId);
+  }
+
+  /**
+   * Method onEquipmentRemoveRequested
+   * @description The panel detail block's "Remove from plan" action for {@link selectedOverlayEquipment} — routes to {@link onPinPositionRemoved} and clears the selection immediately, since the removed pin will otherwise still show as selected until the overlay reload lands.
+   * @access protected
+   * @since 1.12.0
+   * @returns {void}
+   */
+  protected onEquipmentRemoveRequested(): void {
+    const equipmentId: string | undefined = this.selectedOverlayEquipment()?.equipmentId;
+    if (!equipmentId) return;
+
+    this.onPinPositionRemoved(equipmentId);
+    this.selectedEquipmentId.set(null);
   }
 
   /**
@@ -1194,9 +1393,9 @@ export class FacilityDetailPage {
    * @description
    * The single path that opens a tab, whether requested by the `?tab=` query
    * parameter or a direct click: writes {@link activeTab}, cancels any active
-   * Plans editor mode when leaving that tab, and requests the Plans tab's
-   * floor plans once, on its first activation. A no-op when the tab is
-   * already the active one.
+   * Plans editor mode and clears any zone/equipment selection when leaving
+   * that tab, and requests the Plans tab's floor plans once, on its first
+   * activation. A no-op when the tab is already the active one.
    *
    * @access private
    * @since 1.10.0
@@ -1207,8 +1406,10 @@ export class FacilityDetailPage {
     if (this.activeTab() === target) return;
 
     this.activeTab.set(target);
-    if (target !== 'plans' && this.plans.editMode() !== 'none') {
-      this.plans.cancelEditing();
+    if (target !== 'plans') {
+      if (this.plans.editMode() !== 'none') this.plans.cancelEditing();
+      this.selectedZoneId.set(null);
+      this.selectedEquipmentId.set(null);
     }
     if (target === 'plans' && this.isBrowser && !this.plansLoadRequested) {
       this.plansLoadRequested = true;

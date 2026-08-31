@@ -1,0 +1,38 @@
+<div
+  role="listbox"
+  [attr.aria-label]="listLabel()"
+  [attr.data-testid]="testId()"
+  class="flex flex-col gap-1"
+  (keydown)="onKeydown($event)"
+>
+  @for (option of items(); track option.id; let i = $index) {
+    <button
+      #itemOption
+      type="button"
+      role="option"
+      hlmItem
+      variant="outline"
+      size="sm"
+      [attr.aria-selected]="option.id === selectedId()"
+      [attr.tabindex]="i === activeIndex() ? 0 : -1"
+      [attr.data-testid]="optionTestId()"
+      [class.bg-accent]="option.id === selectedId()"
+      [class.border-primary]="option.id === selectedId()"
+      (click)="activate(option.id)"
+    >
+      <hlm-item-content>
+        <span hlmItemTitle>
+          @if (option.id === selectedId()) {
+            <ng-icon name="lucideCheck" class="shrink-0 text-primary" aria-hidden="true" />
+          }
+          <span class="truncate">{{ option.label }}</span>
+        </span>
+      </hlm-item-content>
+      @if (decorator(); as tpl) {
+        <ng-container *ngTemplateOutlet="tpl; context: { $implicit: option.data }" />
+      }
+    </button>
+  } @empty {
+    <p class="px-2 py-1.5 text-sm text-muted-foreground">{{ emptyMessage() }}</p>
+  }
+</div>

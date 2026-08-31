@@ -104,6 +104,12 @@ export class FacilityPlanEditor {
   /** Whether the equipment-pin layer renders. */
   public readonly showEquipment: InputSignal<boolean> = input<boolean>(true);
 
+  /** The currently selected zone's facility id, or `null` — forwarded verbatim to the wrapped read overlay. */
+  public readonly selectedZoneId: InputSignal<string | null> = input<string | null>(null);
+
+  /** The currently selected equipment pin's id, or `null` — forwarded verbatim to the wrapped read overlay. */
+  public readonly selectedEquipmentId: InputSignal<string | null> = input<string | null>(null);
+
   /** The tab's current pointer-editing mode. */
   public readonly editMode: InputSignal<FacilityPlanEditMode> = input<FacilityPlanEditMode>('none');
 

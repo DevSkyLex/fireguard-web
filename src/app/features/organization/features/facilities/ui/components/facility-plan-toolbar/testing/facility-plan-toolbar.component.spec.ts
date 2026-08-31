@@ -17,6 +17,24 @@ describe('FacilityPlanToolbar', () => {
     await fixture.whenStable();
   });
 
+  it('names each layer switch by its visible label alone, carrying no separate aria-label', async () => {
+    fixture.componentRef.setInput('overlayHasContent', true);
+    await fixture.whenStable();
+
+    const zonesSwitch = byTestId('facility-plan-toggle-zones')?.querySelector('[role="switch"]');
+    const equipmentSwitch = byTestId('facility-plan-toggle-equipment')?.querySelector(
+      '[role="switch"]',
+    );
+    expect(zonesSwitch?.getAttribute('aria-label')).toBeNull();
+    expect(equipmentSwitch?.getAttribute('aria-label')).toBeNull();
+    expect(byTestId('facility-plan-toggle-zones')?.closest('label')?.textContent).toContain(
+      'Zones',
+    );
+    expect(byTestId('facility-plan-toggle-equipment')?.closest('label')?.textContent).toContain(
+      'Equipment',
+    );
+  });
+
   it('hides the 3D link for a non-building facility', () => {
     fixture.componentRef.setInput('is3dLinkVisible', false);
     fixture.detectChanges();

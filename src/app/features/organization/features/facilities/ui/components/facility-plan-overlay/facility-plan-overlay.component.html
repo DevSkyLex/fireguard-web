@@ -26,7 +26,8 @@
           tabindex="0"
           role="button"
           class="pointer-events-auto cursor-pointer outline-offset-2 focus-visible:outline-2 focus-visible:outline-ring"
-          [attr.aria-label]="zoneAriaLabel(zone.name)"
+          [attr.aria-label]="zone.ariaLabel"
+          [attr.aria-pressed]="zone.facilityId === selectedZoneId()"
           data-testid="facility-plan-overlay-zone"
           (click)="onZoneActivate(zone.facilityId)"
           (keydown)="onZoneKeydown($event, zone.facilityId)"
@@ -35,7 +36,7 @@
             [attr.points]="zone.pointsAttr"
             [attr.fill]="'url(#' + hatchPatternId + ')'"
             class="stroke-foreground/70"
-            stroke-width="2"
+            [attr.stroke-width]="zone.facilityId === selectedZoneId() ? 4 : 2"
           />
           <text
             [attr.x]="zone.label.x"
@@ -60,11 +61,15 @@
         [style.top.px]="pin.position.y"
         [style.transform]="'translate(-50%, -100%) scale(' + pinScale() + ')'"
         [attr.aria-label]="pin.ariaLabel"
+        [attr.aria-pressed]="pin.equipmentId === selectedEquipmentId()"
         data-testid="facility-plan-overlay-equipment"
         (click)="onEquipmentActivate(pin.equipmentId)"
       >
         <span
           class="flex size-7 items-center justify-center rounded-full border-2 border-background bg-background shadow group-focus-visible:ring-2 group-focus-visible:ring-ring"
+          [class.ring-2]="pin.equipmentId === selectedEquipmentId()"
+          [class.ring-offset-2]="pin.equipmentId === selectedEquipmentId()"
+          [class.ring-primary]="pin.equipmentId === selectedEquipmentId()"
         >
           <ng-icon [name]="pin.descriptor.icon" [class]="pin.iconClass" aria-hidden="true" />
         </span>

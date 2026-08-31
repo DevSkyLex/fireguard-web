@@ -23,4 +23,7 @@ export interface FacilityPlanOverlayZoneView {
 
   /** The polygon's centroid, in image-pixel coordinates, where the name label is anchored. */
   readonly label: PlanPoint;
+
+  /** Localized "Zone {name} — {status}", the zone control's `aria-label` — the status a keyboard/screen-reader user exploring the SVG would otherwise only see through the panel's own detail block. */
+  readonly ariaLabel: string;
 }

@@ -24,8 +24,8 @@ import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSheetImports } from '@shared/ui/sheet';
+import { FacilityPlanItemList, type PlanItemListOption } from '../facility-plan-item-list';
 import { FacilityStatusTag } from '../facility-status-tag';
-import { FacilityZoneList } from '../facility-zone-list';
 
 /**
  * Component FacilityBuilding3dRoomPanel
@@ -43,12 +43,14 @@ import { FacilityZoneList } from '../facility-zone-list';
  *
  * Always renders: a floor selector (`role="group"`, one button per
  * {@link floors}, `aria-current` on {@link selectedFloorId}) and
- * `app-facility-zone-list` for that floor's rooms — the actual accessible
- * equivalent of the canvas' pointer browsing. `FacilityZoneList` was
- * extracted from this component's own former private `facility-building-3d-room-list`
- * once the 2D Plans tab's own panel needed the identical list over the same
- * `FacilityPlanOverlayZone` type — see its own `@description` and this
- * feature's `FEATURE.md`. The room *detail*
+ * `app-facility-plan-item-list` for that floor's rooms — the actual
+ * accessible equivalent of the canvas' pointer browsing, its status
+ * decorator projected through `app-facility-status-tag`.
+ * `FacilityPlanItemList` was generalized from this component's own former
+ * private `facility-building-3d-room-list` once the 2D Plans tab's own
+ * panel needed the identical roving-tabindex list over the same
+ * `FacilityPlanOverlayZone` type, then again over its equipment pins — see
+ * its own `@description` and this feature's `FEATURE.md`. The room *detail*
  * block (name, type, status through the feature's own `facility-status-tag`
  * registry, a "View on 2D plan" action, and its own close control) renders
  * only once {@link room} is non-`null`; closing it deselects the room
@@ -74,8 +76,8 @@ import { FacilityZoneList } from '../facility-zone-list';
   imports: [
     NgTemplateOutlet,
     NgIcon,
+    FacilityPlanItemList,
     FacilityStatusTag,
-    FacilityZoneList,
     HlmButton,
     ...HlmCardImports,
     ...HlmSheetImports,
@@ -209,6 +211,20 @@ export class FacilityBuilding3dRoomPanel {
     ReadonlyArray<FacilityPlanOverlayZone>
   >(() => this.selectedFloor()?.rooms ?? []);
 
+  /**
+   * Property roomOptions
+   * @readonly
+   * @description {@link floorRooms} adapted into `FacilityPlanItemList`'s generic row shape.
+   * @access protected
+   * @since 1.13.0
+   * @type {Signal<ReadonlyArray<PlanItemListOption<FacilityPlanOverlayZone>>>}
+   */
+  protected readonly roomOptions: Signal<
+    ReadonlyArray<PlanItemListOption<FacilityPlanOverlayZone>>
+  > = computed(() =>
+    this.floorRooms().map((room) => ({ id: room.facilityId, label: room.name, data: room })),
+  );
+
   /** The rendered room-detail close button — {@link focus}'s target, present only once {@link room} is non-`null`. */
   private readonly closeButtonRef: Signal<ElementRef<HTMLButtonElement> | undefined> =
     viewChild<ElementRef<HTMLButtonElement>>('closeButton');
@@ -224,6 +240,12 @@ export class FacilityBuilding3dRoomPanel {
 
   /** The "View on 2D plan" action's label. */
   protected readonly plan2dLabel: string = $localize`:@@facility.building3d.roomPanel.plan2dAction:View on 2D plan`;
+
+  /** The room list's accessible name — reuses an id left orphaned by the earlier `FacilityZoneList` extraction. */
+  protected readonly roomListLabel: string = $localize`:@@facility.building3d.roomPanel.roomListLabel:Rooms on this floor`;
+
+  /** The room list's empty-state message — same reused id as {@link roomListLabel}. */
+  protected readonly roomListEmpty: string = $localize`:@@facility.building3d.roomPanel.roomListEmpty:This floor has no rooms yet.`;
   //#endregion
 
   //#region Methods

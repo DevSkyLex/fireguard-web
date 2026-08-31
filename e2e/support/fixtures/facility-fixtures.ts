@@ -221,7 +221,12 @@ export interface FacilityPlanOverlayOutputFixture {
   }>;
   readonly equipment: ReadonlyArray<{
     readonly equipmentId: string;
-    readonly name: string;
+    // The API sends the identity in parts, never a composed label: a raw enum
+    // is untranslatable once it reaches a client. The mock must match, or the
+    // pins render nameless.
+    readonly type: string;
+    readonly serialNumber: string | null;
+    readonly locationLabel: string | null;
     readonly status: string;
     readonly x: number;
     readonly y: number;
@@ -268,14 +273,18 @@ export function facilityPlanOverlayOutput(
     equipment: [
       {
         equipmentId: E2E_FACILITY_PLAN_EQUIPMENT_ID,
-        name: 'Extinguisher A',
+        type: 'fire_extinguisher',
+        serialNumber: 'SN-A',
+        locationLabel: 'Extinguisher A',
         status: 'operational',
         x: 0.2,
         y: 0.2,
       },
       {
         equipmentId: 'e2e-facility-plan-equipment-2',
-        name: 'Extinguisher B',
+        type: 'fire_extinguisher',
+        serialNumber: 'SN-B',
+        locationLabel: 'Extinguisher B',
         status: 'under_maintenance',
         x: 0.6,
         y: 0.6,

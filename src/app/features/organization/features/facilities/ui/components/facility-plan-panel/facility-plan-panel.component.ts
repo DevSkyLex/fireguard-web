@@ -3,8 +3,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   input,
   output,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -30,11 +32,10 @@ import { isCompact } from '@shared/breakpoint';
 import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmItemImports } from '@shared/ui/item';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { equipmentPlanDetail, equipmentPlanLabel } from '../../../utils';
+import { FacilityPlanItemList, type PlanItemListOption } from '../facility-plan-item-list';
 import { FacilityStatusTag } from '../facility-status-tag';
-import { FacilityZoneList } from '../facility-zone-list';
 
 /**
  * Component FacilityPlanPanel
@@ -42,17 +43,21 @@ import { FacilityZoneList } from '../facility-zone-list';
  *
  * @description
  * The 2D Plans tab's browsing/detail side panel — the same role
- * `FacilityBuilding3dRoomPanel` plays in the 3D view, and the reason
- * {@link FacilityZoneList} was extracted rather than duplicated (see its own
+ * `FacilityBuilding3dRoomPanel` plays in the 3D view, and one of the two
+ * consumers `FacilityPlanItemList` was generalized for (see its own
  * `@description`).
  *
- * Always renders `app-facility-zone-list` over every zone on the selected
- * plan — the accessible equivalent of tapping a zone polygon on the SVG,
- * since a plain browse-and-pick roster is easier to traverse without a
- * pointer than aiming at a shape — and a second, plain roster over
- * {@link equipment}, since equipment items have no simpler surface of their
- * own beyond the pins on the plan itself. Activating a zone or an equipment
- * pin, from either list or directly on the plan, is reported by the page as
+ * Always renders `app-facility-plan-item-list` twice — once over every zone
+ * on the selected plan, once over {@link equipment} — the accessible
+ * equivalent of tapping a zone polygon or an equipment pin on the SVG, since
+ * a plain browse-and-pick roster is easier to traverse without a pointer
+ * than aiming at a shape. The equipment roster used to be a second,
+ * hand-rolled `<button>` loop with an invalid `aria-selected` and no
+ * `listbox`/`option` roles; generalizing `FacilityPlanItemList` to carry
+ * both rosters gave it the same keyboard model, the same non-colour-only
+ * check glyph, and a valid accessible name as the zone list, rather than
+ * duplicating the fix. Activating a zone or an equipment pin, from either
+ * list or directly on the plan, is reported by the page as
  * {@link selectedZone}/{@link selectedEquipment}: whichever is set renders a
  * **detail** block (name, type for a zone, status through this feature's own
  * registries) that never navigates by itself — the click that selects and
@@ -65,16 +70,22 @@ import { FacilityZoneList } from '../facility-zone-list';
  * selected equipment pin (behind {@link canEditEquipment}). These used to be
  * a second, standing "Zones/Equipment on this plan" management roster
  * beneath the viewer — the same list rendered twice on screen, once here to
- * browse and once there to edit. One list now carries both.
+ * browse and once there to edit. One list now carries both. The detail
+ * block's own close button is {@link focus}'s target: the page moves real
+ * focus onto it when a selection opens the block, and restores whatever held
+ * focus before once it closes, since the button is removed from the DOM on
+ * close and would otherwise drop focus to `body`.
  *
  * When the loaded overlay carries neither a zone nor a pin, the detail area
  * shows `app-empty-state` instead, explaining the plan has nothing drawn on
  * it yet — the state this tab had no name for before.
  *
- * Renders as an `hlm-card` at and above `sm`, an `hlm-sheet` (bottom side,
- * `disableClose`) beneath it, mirroring `FacilityBuilding3dRoomPanel`
- * exactly, for the same reason: a dismissible sheet would remove this tab's
- * only always-present keyboard-reachable browsing surface.
+ * Renders as an `hlm-card` at and above `sm`, an `hlm-sheet` (bottom side)
+ * beneath it, mirroring `FacilityBuilding3dRoomPanel`'s own breakpoint
+ * switch. Unlike that panel's `disableClose` sheet, this one is dismissible
+ * (`Escape`, backdrop, swipe) and carries its own visible close button — the
+ * toolbar's own "Zones on this plan" opener already reopens a dismissed
+ * sheet, so nothing here needs to be the tab's only way back in.
  *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3). The page owns every store call and dialog open
@@ -89,11 +100,10 @@ import { FacilityZoneList } from '../facility-zone-list';
     NgTemplateOutlet,
     NgIcon,
     EmptyState,
+    FacilityPlanItemList,
     FacilityStatusTag,
-    FacilityZoneList,
     HlmButton,
     ...HlmCardImports,
-    ...HlmItemImports,
     ...HlmSheetImports,
   ],
   providers: [
@@ -206,14 +216,59 @@ export class FacilityPlanPanel {
   /** "Remove from plan"'s label — reuses the id the removed management roster's own button carried. */
   protected readonly equipmentRemoveLabel: string = $localize`:@@facility.plans.editor.removeFromPlan:Remove from plan`;
 
-  /** The equipment roster's section heading — reuses the id the removed management roster's own heading carried. */
+  /** The equipment roster's section heading — reuses the id the removed management roster's own heading carried. Doubles as the roster's `listLabel`. */
   protected readonly equipmentListHeading: string = $localize`:@@facility.plans.editor.equipmentListTitle:Equipment on this plan`;
+
+  /** The zone roster's section heading. Doubles as the roster's `listLabel`. */
+  protected readonly zoneListHeading: string = $localize`:@@facility.plans.panel.zoneListHeading:Zones on this plan`;
+
+  /** The zone roster's empty-state message. */
+  protected readonly zoneListEmpty: string = $localize`:@@facility.plans.panel.zoneListEmpty:No zones on this plan.`;
+
+  /** The equipment roster's empty-state message — reuses the id the former hand-rolled loop's own `@empty` block carried. */
+  protected readonly equipmentListEmpty: string = $localize`:@@facility.plans.panel.equipmentListEmpty:No equipment on this plan yet.`;
 
   /** The "nothing drawn yet" empty state's title. */
   protected readonly noContentTitle: string = $localize`:@@facility.plans.panel.noContentTitle:Nothing drawn on this plan yet`;
 
   /** The "nothing drawn yet" empty state's description. */
   protected readonly noContentDescription: string = $localize`:@@facility.plans.panel.noContentDescription:Draw a zone outline or place equipment from the toolbar above to see it here.`;
+
+  /**
+   * Property zoneOptions
+   * @readonly
+   * @description {@link zones} adapted into `FacilityPlanItemList`'s generic row shape.
+   * @access protected
+   * @since 1.13.0
+   * @type {Signal<ReadonlyArray<PlanItemListOption<FacilityPlanOverlayZone>>>}
+   */
+  protected readonly zoneOptions: Signal<
+    ReadonlyArray<PlanItemListOption<FacilityPlanOverlayZone>>
+  > = computed(() =>
+    this.zones().map((zone) => ({ id: zone.facilityId, label: zone.name, data: zone })),
+  );
+
+  /**
+   * Property equipmentOptions
+   * @readonly
+   * @description {@link equipment} adapted into `FacilityPlanItemList`'s generic row shape.
+   * @access protected
+   * @since 1.13.0
+   * @type {Signal<ReadonlyArray<PlanItemListOption<FacilityPlanOverlayEquipment>>>}
+   */
+  protected readonly equipmentOptions: Signal<
+    ReadonlyArray<PlanItemListOption<FacilityPlanOverlayEquipment>>
+  > = computed(() =>
+    this.equipment().map((pin) => ({
+      id: pin.equipmentId,
+      label: this.equipmentLabel(pin),
+      data: pin,
+    })),
+  );
+
+  /** The rendered detail block's own close button — {@link focus}'s target, present only once {@link selectedZone} or {@link selectedEquipment} is non-`null`. */
+  private readonly closeButtonRef: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('closeButton');
   //#endregion
 
   //#region Methods
@@ -289,6 +344,17 @@ export class FacilityPlanPanel {
     if (state === 'open' || !this.compactVisible()) return;
 
     this.compactDismissed.emit();
+  }
+
+  /**
+   * Method focus
+   * @description Moves real DOM focus onto the detail block's own close button. A no-op while nothing is selected — the page only calls this on the selection's opening edge, when that button is guaranteed to have just rendered.
+   * @access public
+   * @since 1.13.0
+   * @returns {void}
+   */
+  public focus(): void {
+    this.closeButtonRef()?.nativeElement.focus();
   }
   //#endregion
 }

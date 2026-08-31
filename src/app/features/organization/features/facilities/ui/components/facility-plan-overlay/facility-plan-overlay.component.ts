@@ -12,6 +12,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBan, lucideCircleCheck, lucidePackage, lucideWrench } from '@ng-icons/lucide';
 import {
   resolveEquipmentStatusTag,
+  resolveFacilityStatusTag,
   type FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
 import type { PlanPoint } from '@shared/plan-viewer';
@@ -41,8 +42,16 @@ const HATCH_PATTERN_ID = 'facility-plan-overlay-hatch';
  * while the viewer zooms — `scale` comes from `PlanViewerOverlayContext`,
  * the same context the projecting `ng-template` receives.
  *
+ * {@link selectedZoneId}/{@link selectedEquipmentId} name whichever record
+ * the panel's own detail block currently shows: the matching control
+ * carries `aria-pressed="true"` and a non-chromatic visual cue of its own —
+ * a thicker polygon outline for a zone, an added ring for a pin — since a
+ * plain background-colour change on the plan itself would fail
+ * `PRODUCT.md`'s never-colour-alone rule, and would in any case be
+ * invisible to the same screen-reader user `aria-pressed` serves.
+ *
  * Presentational: it takes the overlay data and emits which record was
- * activated; the host page owns the navigation.
+ * activated; the host page owns the navigation and the selection state.
  *
  * @since 1.0.0
  *
@@ -98,6 +107,26 @@ export class FacilityPlanOverlay {
    * @type {InputSignal<boolean>}
    */
   public readonly showEquipment: InputSignal<boolean> = input<boolean>(true);
+
+  /**
+   * Property selectedZoneId
+   * @readonly
+   * @description The currently selected zone's facility id, or `null` — drives `aria-pressed` and the thicker outline on the matching polygon, the plan's own indication of what the panel's detail block is showing.
+   * @access public
+   * @since 1.13.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly selectedZoneId: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property selectedEquipmentId
+   * @readonly
+   * @description The currently selected equipment pin's id, or `null` — drives `aria-pressed` and the added ring on the matching pin.
+   * @access public
+   * @since 1.13.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly selectedEquipmentId: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs
@@ -144,12 +173,14 @@ export class FacilityPlanOverlay {
       const pixelPoints: PlanPoint[] = zone.points.map(([x, y]) =>
         normalizedPointToPixel({ x, y }, data.imageWidth, data.imageHeight),
       );
+      const statusLabel: string = resolveFacilityStatusTag(zone.status).label;
 
       return {
         facilityId: zone.facilityId,
         name: zone.name,
         pointsAttr: pixelPoints.map((point) => `${point.x},${point.y}`).join(' '),
         label: polygonCentroid(pixelPoints),
+        ariaLabel: $localize`:@@facility.plans.overlay.zoneAria:Zone ${zone.name}:name: — ${statusLabel}:status:`,
       };
     });
   });
@@ -207,18 +238,6 @@ export class FacilityPlanOverlay {
   //#endregion
 
   //#region Methods
-  /**
-   * Method zoneAriaLabel
-   * @description Localizes a zone's accessible name.
-   * @access protected
-   * @since 1.0.0
-   * @param {string} name - The zone's display name.
-   * @returns {string} "Zone {name}".
-   */
-  protected zoneAriaLabel(name: string): string {
-    return $localize`:@@facility.plans.overlay.zoneAria:Zone ${name}:name:`;
-  }
-
   /**
    * Method onZoneActivate
    * @description Emits the activated zone's facility id.

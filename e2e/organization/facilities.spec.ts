@@ -516,7 +516,7 @@ test.describe('Facility Plan Overlay', () => {
     await expect(facilities.overlayEquipment).toHaveCount(2);
   });
 
-  test('reaches a zone and a pin by keyboard, and activating either navigates to its record', async ({
+  test('reaches a zone and a pin by keyboard, selects either, and only the detail action navigates', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -534,7 +534,9 @@ test.describe('Facility Plan Overlay', () => {
         equipment: [
           {
             equipmentId: E2E_EQUIPMENT_ID,
-            name: 'Extinguisher A',
+            type: 'fire_extinguisher',
+            serialNumber: 'SN-A',
+            locationLabel: 'Extinguisher A',
             status: 'operational',
             x: 0.2,
             y: 0.2,
@@ -548,9 +550,18 @@ test.describe('Facility Plan Overlay', () => {
     await facilities.plansTab.click();
     await expect(facilities.overlayZones.first()).toBeVisible();
 
+    // Activating on the plan used to leave the page for the record. It now
+    // selects, so a plan can be read without a round trip per glance; leaving
+    // is an explicit action in the detail block.
+    const planUrl = page.url();
+
     await facilities.overlayZones.first().focus();
     await expect(facilities.overlayZones.first()).toBeFocused();
     await page.keyboard.press('Enter');
+    await expect(facilities.planDetail).toBeVisible();
+    await expect(page).toHaveURL(planUrl);
+
+    await facilities.planDetailViewRecord.click();
     await expect(page).toHaveURL(new RegExp(`/facilities/${E2E_FACILITY_CHILD_ID}$`));
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
@@ -558,6 +569,9 @@ test.describe('Facility Plan Overlay', () => {
     await facilities.overlayEquipment.first().focus();
     await expect(facilities.overlayEquipment.first()).toBeFocused();
     await page.keyboard.press('Enter');
+    await expect(facilities.planDetail).toBeVisible();
+
+    await facilities.planDetailViewRecord.click();
     await expect(page).toHaveURL(new RegExp(`/equipments/${E2E_EQUIPMENT_ID}$`));
   });
 
@@ -774,7 +788,8 @@ test.describe('Facility Plan Editor', () => {
     await facilities.plansTab.click();
     await expect(facilities.zoneList).toBeVisible();
 
-    await facilities.zoneEditButton.first().click();
+    await facilities.selectZone();
+    await facilities.zoneEditButton.click();
     await expect(facilities.zoneGeometryDialog).toBeVisible();
     await expect(facilities.zoneGeometryRows).toHaveCount(4);
 
@@ -796,7 +811,8 @@ test.describe('Facility Plan Editor', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
 
-    await facilities.zoneEditButton.first().click();
+    await facilities.selectZone();
+    await facilities.zoneEditButton.click();
     await facilities.zoneGeometryClear.click();
 
     await expect(facilities.zoneGeometryDialog).toBeHidden();
@@ -822,7 +838,8 @@ test.describe('Facility Plan Editor', () => {
     await facilities.plansTab.click();
     await expect(facilities.equipmentList).toBeVisible();
 
-    await facilities.pinEditButton.first().click();
+    await facilities.selectEquipment();
+    await facilities.pinEditButton.click();
     await expect(facilities.pinPositionDialog).toBeVisible();
     await expect(facilities.pinPositionX).toHaveValue('20.0');
 
@@ -848,7 +865,8 @@ test.describe('Facility Plan Editor', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
 
-    await facilities.pinRemoveButton.first().click();
+    await facilities.selectEquipment();
+    await facilities.pinRemoveButton.click();
 
     expect(requestBody).toEqual({ attachmentId: null, x: null, y: null });
   });
@@ -883,8 +901,10 @@ test.describe('Facility Plan Editor', () => {
     await expect(facilities.overlayZones).toHaveCount(2);
 
     await expect(facilities.editorToolbar).toHaveCount(0);
+    // A reader can still browse and select — only the detail block's own
+    // actions are withheld.
+    await facilities.selectZone();
     await expect(facilities.zoneEditButton).toHaveCount(0);
-    await expect(facilities.pinEditButton).toHaveCount(0);
     await expect(facilities.pinRemoveButton).toHaveCount(0);
   });
 });

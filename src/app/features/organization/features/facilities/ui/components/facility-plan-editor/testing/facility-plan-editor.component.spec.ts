@@ -78,6 +78,14 @@ describe('FacilityPlanEditor', () => {
     expect(activated).toEqual(['equipment-1']);
   });
 
+  it('forwards selectedEquipmentId to the wrapped overlay so the plan shows what is selected', async () => {
+    fixture.componentRef.setInput('overlay', overlay());
+    fixture.componentRef.setInput('selectedEquipmentId', 'equipment-1');
+    await fixture.whenStable();
+
+    expect(byTestId('facility-plan-overlay-equipment')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   describe('draw-zone mode', () => {
     beforeEach(async () => {
       fixture.componentRef.setInput('editMode', 'draw-zone');

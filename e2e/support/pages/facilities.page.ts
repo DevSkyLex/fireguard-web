@@ -80,19 +80,17 @@ export class FacilitiesPage {
     'facility-plan-delete-confirm',
   );
 
-  public readonly overlayToggles: Locator = this.page.getByTestId('facility-plan-overlay-toggles');
-  public readonly overlayToggleZones: Locator = this.page.getByTestId(
-    'facility-plan-overlay-toggle-zones',
-  );
+  public readonly overlayToggles: Locator = this.page.getByTestId('facility-plan-toolbar');
+  public readonly overlayToggleZones: Locator = this.page.getByTestId('facility-plan-toggle-zones');
   public readonly overlayToggleEquipment: Locator = this.page.getByTestId(
-    'facility-plan-overlay-toggle-equipment',
+    'facility-plan-toggle-equipment',
   );
   public readonly overlayZones: Locator = this.page.getByTestId('facility-plan-overlay-zone');
   public readonly overlayEquipment: Locator = this.page.getByTestId(
     'facility-plan-overlay-equipment',
   );
 
-  public readonly editorToolbar: Locator = this.page.getByTestId('facility-plan-editor-toolbar');
+  public readonly editorToolbar: Locator = this.page.getByTestId('facility-plan-toolbar');
   public readonly drawZonePicker: Locator = this.page.getByTestId(
     'facility-plan-editor-draw-zone-picker',
   );
@@ -112,11 +110,29 @@ export class FacilitiesPage {
     'facility-plan-editor-enter-position',
   );
   public readonly editorStage: Locator = this.page.getByTestId('facility-plan-editor-stage');
-  public readonly zoneList: Locator = this.page.getByTestId('facility-plan-zone-list');
-  public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-zone-edit');
+  public readonly zoneList: Locator = this.page.getByTestId('facility-zone-list');
+  public readonly zoneOptions: Locator = this.page.getByTestId('facility-zone-list-option');
   public readonly equipmentList: Locator = this.page.getByTestId('facility-plan-equipment-list');
-  public readonly pinEditButton: Locator = this.page.getByTestId('facility-plan-pin-edit');
-  public readonly pinRemoveButton: Locator = this.page.getByTestId('facility-plan-pin-remove');
+  public readonly equipmentOptions: Locator = this.page.getByTestId(
+    'facility-plan-equipment-list-option',
+  );
+
+  /**
+   * The selection detail block, and its actions.
+   *
+   * Editing is no longer offered from a standalone list: a zone or an
+   * equipment item is selected first, and its own detail block carries the
+   * actions. `selectZone`/`selectEquipment` below do that first step, so a
+   * spec reads the way a user works rather than reaching for a button that
+   * only exists once something is picked.
+   */
+  public readonly planDetail: Locator = this.page.getByTestId('facility-plan-detail');
+  public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-detail-edit');
+  public readonly pinEditButton: Locator = this.page.getByTestId('facility-plan-detail-edit');
+  public readonly pinRemoveButton: Locator = this.page.getByTestId('facility-plan-detail-remove');
+  public readonly planDetailViewRecord: Locator = this.page.getByTestId(
+    'facility-plan-detail-view-record',
+  );
 
   public readonly zoneGeometryDialog: Locator = this.page.getByTestId(
     'facility-plan-zone-geometry-dialog',
@@ -142,6 +158,27 @@ export class FacilitiesPage {
   public readonly pinPositionRemove: Locator = this.page.getByTestId(
     'facility-plan-pin-position-remove',
   );
+
+  /**
+   * Picks a zone in the panel's roster, which is what opens its detail block.
+   *
+   * @param index - Zero-based position in the roster.
+   */
+  public async selectZone(index = 0): Promise<void> {
+    await this.zoneOptions.nth(index).click();
+    await this.planDetail.waitFor({ state: 'visible' });
+  }
+
+  /**
+   * Picks an equipment item in the panel's roster. Same two-step as
+   * {@link selectZone}: nothing is editable until something is selected.
+   *
+   * @param index - Zero-based position in the roster.
+   */
+  public async selectEquipment(index = 0): Promise<void> {
+    await this.equipmentOptions.nth(index).click();
+    await this.planDetail.waitFor({ state: 'visible' });
+  }
 
   public async gotoList(organizationId: string, query = ''): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities${query}`);

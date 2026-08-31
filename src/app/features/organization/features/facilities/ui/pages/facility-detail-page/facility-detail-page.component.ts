@@ -1,12 +1,15 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   HostListener,
   computed,
   effect,
   inject,
+  Injector,
   input,
   LOCALE_ID,
   PLATFORM_ID,
@@ -133,7 +136,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * (`EQUIPMENT_WRITE`) for equipment. Each active mode also offers a
  * keyboard alternative to tapping the plan — "Enter coordinates" / "Enter
  * position" open the numeric dialogs for the picked target, making zone and
- * pin creation possible without a pointer. A
+ * pin creation possible without a pointer. {@link selectedZoneId}/
+ * {@link selectedEquipmentId} are forwarded to `FacilityPlanEditor` too, so
+ * the plan itself — not only the panel's roster — marks what is selected
+ * ({@link syncPlanSelectionFocus} then moves real focus onto the panel's
+ * detail-close control on the opening edge, and back on the closing one,
+ * mirroring `FacilityBuilding3dPage.syncSelectionFocus`). A
  * danger, confirm-gated **Delete** action ({@link FacilityDeleteDialog},
  * `DESIGN.md` § Action Surfaces rule 5) and a read-level **QR code**
  * action ({@link FacilityQrDialog}, `FEATURE.md` "Printable QR code")
@@ -167,7 +175,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * `facility.type === 'building'` (the endpoint's own 409 is the filet, this
  * gate is the real guard).
  *
- * @version 1.10.0
+ * @version 1.13.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -424,6 +432,26 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Property selectionAnnouncementNonce
+   * @readonly
+   *
+   * @description
+   * Bumped on every {@link onZoneSelected}/{@link onEquipmentSelected} call,
+   * whether or not the picked record is already the one selected.
+   * {@link planSelectionAnnouncement} folds its parity into a trailing
+   * zero-width space so re-picking the same zone or pin still changes the
+   * `aria-live` region's text content — writing the identical string again
+   * (`selectedZoneId.set` to an unchanged value) would otherwise recompute
+   * to the same announcement, and most screen readers only announce a
+   * region whose text actually changed (WCAG 4.1.3).
+   *
+   * @access private
+   * @since 1.13.0
+   * @type {WritableSignal<number>}
+   */
+  private readonly selectionAnnouncementNonce: WritableSignal<number> = signal<number>(0);
+
+  /**
    * Property planSelectionAnnouncement
    * @readonly
    * @description The Plans tab's `sr-only`, `aria-live="polite"` region text — the selected zone or equipment's name, or the empty string once nothing is selected. Mirrors `FacilityBuilding3dPage.selectionAnnouncement`.
@@ -432,14 +460,22 @@ export class FacilityDetailPage {
    * @type {Signal<string>}
    */
   protected readonly planSelectionAnnouncement: Signal<string> = computed<string>(() => {
+    const suffix: string = this.selectionAnnouncementNonce() % 2 === 1 ? '​' : '';
+
     const zone: FacilityPlanOverlayZone | null = this.selectedOverlayZone();
     if (zone) {
-      return $localize`:@@facility.plans.panel.zoneSelectionAnnouncement:Selected zone ${zone.name}:name:`;
+      return (
+        $localize`:@@facility.plans.panel.zoneSelectionAnnouncement:Selected zone ${zone.name}:name:` +
+        suffix
+      );
     }
 
     const pin: FacilityPlanOverlayEquipment | null = this.selectedOverlayEquipment();
     if (pin) {
-      return $localize`:@@facility.plans.panel.equipmentSelectionAnnouncement:Selected equipment ${equipmentPlanLabel(pin)}:name:`;
+      return (
+        $localize`:@@facility.plans.panel.equipmentSelectionAnnouncement:Selected equipment ${equipmentPlanLabel(pin)}:name:` +
+        suffix
+      );
     }
 
     return '';
@@ -608,6 +644,25 @@ export class FacilityDetailPage {
 
     return '';
   });
+
+  /** Injection context {@link syncPlanSelectionFocus} needs to schedule a post-render focus move. */
+  private readonly injector: Injector = inject(Injector);
+
+  /** The plan panel instance — {@link syncPlanSelectionFocus}'s open-side focus target. */
+  private readonly planPanel: Signal<FacilityPlanPanel | undefined> = viewChild(FacilityPlanPanel);
+
+  /** This page's own root — {@link syncPlanSelectionFocus}'s close-side fallback once the element focus started on is gone. */
+  private readonly pageRoot: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('pageRoot');
+
+  /** {@link pageRoot}'s accessible name — a focus landing on a last-resort fallback must still be named, not silent. */
+  protected readonly pageRootLabel: string = $localize`:@@facility.detail.pageRootLabel:Facility record`;
+
+  /** The element that held focus just before a plan selection opened the detail block, restored once it closes. */
+  private previouslyFocusedElement: HTMLElement | null = null;
+
+  /** Whether a plan selection, on the Plans tab, was present on the previous check — the edge {@link syncPlanSelectionFocus} reacts to. */
+  private wasPlanSelected = false;
   //#endregion
 
   //#region Constructor
@@ -669,6 +724,14 @@ export class FacilityDetailPage {
 
         void this.router.navigate(['/organizations', this.organizationId(), 'facilities']);
       });
+    });
+
+    effect((): void => {
+      const isPlansTab: boolean = this.activeTab() === 'plans';
+      const isSelected: boolean =
+        this.selectedZoneId() !== null || this.selectedEquipmentId() !== null;
+
+      untracked((): void => this.syncPlanSelectionFocus(isPlansTab, isSelected));
     });
   }
   //#endregion
@@ -799,6 +862,7 @@ export class FacilityDetailPage {
   protected onZoneSelected(facilityId: string): void {
     this.selectedEquipmentId.set(null);
     this.selectedZoneId.set(facilityId);
+    this.selectionAnnouncementNonce.update((nonce) => nonce + 1);
   }
 
   /**
@@ -812,6 +876,7 @@ export class FacilityDetailPage {
   protected onEquipmentSelected(equipmentId: string): void {
     this.selectedZoneId.set(null);
     this.selectedEquipmentId.set(equipmentId);
+    this.selectionAnnouncementNonce.update((nonce) => nonce + 1);
   }
 
   /**
@@ -1415,6 +1480,64 @@ export class FacilityDetailPage {
       this.plansLoadRequested = true;
       this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
     }
+  }
+
+  /**
+   * Method syncPlanSelectionFocus
+   *
+   * @description
+   * Moves real DOM focus on the Plans tab's zone/equipment selection edge,
+   * mirroring `FacilityBuilding3dPage.syncSelectionFocus`: opening it
+   * (`false → true`) captures `document.activeElement` and, once the
+   * detail block has rendered inside the (already-mounted) panel, moves
+   * focus onto its close control (`FacilityPlanPanel.focus`); closing it
+   * (`true → false`) restores focus to whatever was captured, or this
+   * page's own root when that element is no longer in the document — a
+   * lost focus falling back to `body` is the trap this guards against.
+   * Silently resets without moving focus while `isPlansTab` is `false`:
+   * {@link activateTab} already clears the selection when leaving the tab,
+   * and restoring a stale captured element then would fight whatever
+   * navigation (a tab click) is already moving focus on its own.
+   *
+   * @access private
+   * @since 1.13.0
+   * @param {boolean} isPlansTab - Whether the Plans tab is currently active.
+   * @param {boolean} isSelected - Whether a zone or equipment pin is currently selected.
+   * @returns {void}
+   */
+  private syncPlanSelectionFocus(isPlansTab: boolean, isSelected: boolean): void {
+    if (!isPlansTab) {
+      this.previouslyFocusedElement = null;
+      this.wasPlanSelected = false;
+
+      return;
+    }
+
+    if (isSelected && !this.wasPlanSelected) {
+      this.previouslyFocusedElement =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      afterNextRender(
+        { write: (): void => this.planPanel()?.focus() },
+        { injector: this.injector },
+      );
+    } else if (!isSelected && this.wasPlanSelected) {
+      const target: HTMLElement | null = this.previouslyFocusedElement;
+      this.previouslyFocusedElement = null;
+      afterNextRender(
+        {
+          write: (): void => {
+            if (target && document.contains(target)) {
+              target.focus();
+            } else {
+              this.pageRoot()?.nativeElement.focus();
+            }
+          },
+        },
+        { injector: this.injector },
+      );
+    }
+
+    this.wasPlanSelected = isSelected;
   }
 
   /**

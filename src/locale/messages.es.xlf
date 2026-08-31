@@ -7679,24 +7679,16 @@
         <target>Zonas del edificio</target>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.zoneAria" datatype="html">
-        <source>Zone <x id="name" equiv-text="name"/></source>
-        <target>Zona <x id="name" equiv-text="name"/></target>
+        <source>Zone <x id="name" equiv-text="zone.name"/> — <x id="status" equiv-text="statusLabel"/></source>
+        <target>Zona <x id="name" equiv-text="zone.name"/> — <x id="status" equiv-text="statusLabel"/></target>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.equipmentAria" datatype="html">
         <source><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></source>
         <target><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></target>
       </trans-unit>
-      <trans-unit id="facility.plans.overlay.toggleZonesAria" datatype="html">
-        <source>Show zones</source>
-        <target>Mostrar zonas</target>
-      </trans-unit>
       <trans-unit id="facility.plans.overlay.toggleZonesLabel" datatype="html">
         <source>Zones</source>
         <target>Zonas</target>
-      </trans-unit>
-      <trans-unit id="facility.plans.overlay.toggleEquipmentAria" datatype="html">
-        <source>Show equipment</source>
-        <target>Mostrar equipos</target>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.toggleEquipmentLabel" datatype="html">
         <source>Equipment</source>
@@ -7750,17 +7742,17 @@
         <source>Selected equipment <x id="name" equiv-text="equipmentPlanLabel(pin)"/></source>
         <target>Equipo seleccionado: <x id="name" equiv-text="equipmentPlanLabel(pin)"/></target>
       </trans-unit>
-      <trans-unit id="facility.zoneList.label" datatype="html">
-        <source>Zones</source>
-        <target>Zonas</target>
-      </trans-unit>
-      <trans-unit id="facility.zoneList.empty" datatype="html">
-        <source>No zones yet.</source>
-        <target>Todavía no hay zonas.</target>
+      <trans-unit id="facility.plans.panel.zoneListEmpty" datatype="html">
+        <source>No zones on this plan.</source>
+        <target>No hay zonas en este plano.</target>
       </trans-unit>
       <trans-unit id="facility.plans.panel.equipmentListEmpty" datatype="html">
         <source>No equipment on this plan yet.</source>
         <target>Todavía no hay equipos en este plano.</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.pageRootLabel" datatype="html">
+        <source>Facility record</source>
+        <target>Ficha de la instalación</target>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>

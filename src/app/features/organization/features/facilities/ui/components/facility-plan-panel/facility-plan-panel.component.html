@@ -2,7 +2,6 @@
   <hlm-sheet side="bottom" [state]="sheetState()" (stateChanged)="onSheetStateChanged($event)">
     <hlm-sheet-content
       *hlmSheetPortal
-      [showCloseButton]="false"
       role="region"
       [attr.aria-label]="panelLabel"
       class="flex max-h-[85svh] w-full! flex-col gap-4 overflow-y-auto"
@@ -55,6 +54,7 @@
             <p class="text-xs text-muted-foreground">{{ typeLabel(zone.type) }}</p>
           </div>
           <button
+            #closeButton
             hlmBtn
             type="button"
             variant="ghost"
@@ -108,6 +108,7 @@
             }
           </div>
           <button
+            #closeButton
             hlmBtn
             type="button"
             variant="ghost"
@@ -165,51 +166,38 @@
     }
 
     <section class="flex flex-col gap-2">
-      <h4
-        class="text-sm font-medium text-muted-foreground"
-        i18n="@@facility.plans.panel.zoneListHeading"
+      <h4 class="text-sm font-medium text-muted-foreground">{{ zoneListHeading }}</h4>
+      <app-facility-plan-item-list
+        [items]="zoneOptions()"
+        [selectedId]="selectedZone()?.facilityId ?? null"
+        [listLabel]="zoneListHeading"
+        [emptyMessage]="zoneListEmpty"
+        (itemActivated)="zoneActivated.emit($event)"
       >
-        Zones on this plan
-      </h4>
-      <app-facility-zone-list
-        [zones]="zones()"
-        [selectedZoneId]="selectedZone()?.facilityId ?? null"
-        (zoneActivated)="zoneActivated.emit($event)"
-      />
+        <ng-template let-zone>
+          <app-facility-status-tag [value]="zone.status" />
+        </ng-template>
+      </app-facility-plan-item-list>
     </section>
 
     <section class="flex flex-col gap-2">
       <h4 class="text-sm font-medium text-muted-foreground">{{ equipmentListHeading }}</h4>
-      <div class="flex flex-col gap-1" data-testid="facility-plan-equipment-list">
-        @for (pin of equipment(); track pin.equipmentId) {
-          <button
-            type="button"
-            hlmItem
-            variant="outline"
-            size="sm"
-            [attr.aria-selected]="pin.equipmentId === (selectedEquipment()?.equipmentId ?? null)"
-            [class.bg-accent]="pin.equipmentId === (selectedEquipment()?.equipmentId ?? null)"
-            [class.border-primary]="pin.equipmentId === (selectedEquipment()?.equipmentId ?? null)"
-            data-testid="facility-plan-equipment-list-option"
-            (click)="equipmentActivated.emit(pin.equipmentId)"
-          >
-            <hlm-item-content>
-              <span hlmItemTitle class="truncate">{{ equipmentLabel(pin) }}</span>
-            </hlm-item-content>
-            <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <ng-icon [name]="equipmentStatusIcon(pin)" aria-hidden="true" />
-              {{ equipmentStatusLabel(pin) }}
-            </span>
-          </button>
-        } @empty {
-          <p
-            class="px-2 py-1.5 text-sm text-muted-foreground"
-            i18n="@@facility.plans.panel.equipmentListEmpty"
-          >
-            No equipment on this plan yet.
-          </p>
-        }
-      </div>
+      <app-facility-plan-item-list
+        [items]="equipmentOptions()"
+        [selectedId]="selectedEquipment()?.equipmentId ?? null"
+        [listLabel]="equipmentListHeading"
+        [emptyMessage]="equipmentListEmpty"
+        testId="facility-plan-equipment-list"
+        optionTestId="facility-plan-equipment-list-option"
+        (itemActivated)="equipmentActivated.emit($event)"
+      >
+        <ng-template let-pin>
+          <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ng-icon [name]="equipmentStatusIcon(pin)" aria-hidden="true" />
+            {{ equipmentStatusLabel(pin) }}
+          </span>
+        </ng-template>
+      </app-facility-plan-item-list>
     </section>
   }
 </ng-template>

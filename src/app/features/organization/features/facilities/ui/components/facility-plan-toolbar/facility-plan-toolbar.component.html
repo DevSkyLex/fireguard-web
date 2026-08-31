@@ -5,8 +5,6 @@
         <hlm-switch
           [checked]="showZones()"
           (checkedChange)="showZonesChanged.emit($event)"
-          i18n-aria-label="@@facility.plans.overlay.toggleZonesAria"
-          aria-label="Show zones"
           data-testid="facility-plan-toggle-zones"
         />
         <span i18n="@@facility.plans.overlay.toggleZonesLabel">Zones</span>
@@ -15,8 +13,6 @@
         <hlm-switch
           [checked]="showEquipment()"
           (checkedChange)="showEquipmentChanged.emit($event)"
-          i18n-aria-label="@@facility.plans.overlay.toggleEquipmentAria"
-          aria-label="Show equipment"
           data-testid="facility-plan-toggle-equipment"
         />
         <span i18n="@@facility.plans.overlay.toggleEquipmentLabel">Equipment</span>

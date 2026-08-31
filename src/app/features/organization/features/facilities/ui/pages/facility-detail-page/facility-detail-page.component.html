@@ -1,4 +1,11 @@
-<div id="facility-detail" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+<div
+  #pageRoot
+  id="facility-detail"
+  tabindex="-1"
+  role="group"
+  [attr.aria-label]="pageRootLabel"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 focus-visible:ring-2 focus-visible:ring-ring md:p-6"
+>
   @if (activeFacilityStore.selectedFacility(); as facility) {
     @if (facility.path.length > 0) {
       <nav
@@ -447,6 +454,8 @@
                         [scale]="scale"
                         [showZones]="plans.showZones()"
                         [showEquipment]="plans.showEquipment()"
+                        [selectedZoneId]="selectedZoneId()"
+                        [selectedEquipmentId]="selectedEquipmentId()"
                         [editMode]="plans.editMode()"
                         [draftPoints]="plans.draftPoints()"
                         [canEditEquipment]="canEditEquipment()"

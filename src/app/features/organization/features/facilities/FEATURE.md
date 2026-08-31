@@ -146,12 +146,15 @@ below is always mounted, with no prior pointer interaction required:
   pointer tap on the canvas. Presentational, inputs/outputs only
   (`ARCHITECTURE.md` §10.3); the page owns every store call its outputs
   trigger.
-- **`ui/components/facility-zone-list`** (`FacilityZoneList`) is the roster's
-  actual accessible payload — extracted from this component's own former
-  private `facility-building-3d-room-list` once the 2D Plans tab needed the
-  identical list; see "Plans Tab Parity With The 3D View" below for why the
-  extraction happened at two consumers rather than three:
-  a hand-built `role="listbox"` over a real, focus-moving roving tabindex
+- **`ui/components/facility-plan-item-list`** (`FacilityPlanItemList`) is the
+  roster's actual accessible payload — extracted from this component's own
+  former private `facility-building-3d-room-list` once the 2D Plans tab
+  needed the identical list, then generalized a second time (from
+  zone-only `FacilityZoneList` to a generic `PlanItemListOption<T>` row)
+  once that tab's own equipment roster turned out to duplicate the same
+  `listbox`/`option` pattern by hand, badly, in the same panel; see "Plans
+  Tab Parity With The 3D View" below for both steps. A hand-built
+  `role="listbox"` over a real, focus-moving roving tabindex
   (`FocusKeyManager` from `@angular/cdk/a11y`) rather than the spartan
   `command` combobox — `command`'s arrow-key navigation only wires up while
   its search input holds focus, and its `Enter`-only activation swallows
@@ -448,21 +451,38 @@ stays a tab of `FacilityDetailPage`.
   which it filters itself before emitting.
 - **A side panel** (`ui/components/facility-plan-panel`, `FacilityPlanPanel`)
   is the tab's **only** browsing/editing surface for zones and equipment,
-  mirroring `FacilityBuilding3dRoomPanel`: `hlm-card` at and above `sm`,
-  `hlm-sheet` (bottom, `disableClose`) below it. It always renders two
-  rosters — every zone on the selected plan through `app-facility-zone-list`
-  (see extraction below), and every equipment pin through a second, local
-  roster of its own (`equipment` input) — and, once a zone or pin is
-  selected, a **detail** block: name, type for a zone, status through this
-  feature's own registries, an explicit "View facility record"/"View
-  equipment record" action, and — **the editor actions themselves**, gated
-  exactly as before — "Edit coordinates" on a zone (`canWrite`) or "Edit
-  position"/"Remove from plan" on a pin (`canEditEquipment`), disabled while
-  a `draw-zone`/`place-pin` mode is active (`editModeActive`). A first pass
-  at this consolidation kept a second, standing "Zones/Equipment on this
-  plan" management roster beneath the viewer for these same actions —
-  the same list rendered twice on screen, once to browse and once to edit —
-  and was corrected before shipping: one roster per kind now carries both.
+  mirroring `FacilityBuilding3dRoomPanel`'s `hlm-card`/`hlm-sheet` breakpoint
+  switch — unlike that panel's `disableClose` sheet, this one is dismissible
+  and carries its own visible close button, since the toolbar's own opener
+  already reopens a dismissed sheet. It always renders two rosters, both
+  `app-facility-plan-item-list` (see generalization below) — every zone on
+  the selected plan, and every equipment pin (`equipment` input) — and, once
+  a zone or pin is selected, a **detail** block: name, type for a zone,
+  status through this feature's own registries, an explicit "View facility
+  record"/"View equipment record" action, and — **the editor actions
+  themselves**, gated exactly as before — "Edit coordinates" on a zone
+  (`canWrite`) or "Edit position"/"Remove from plan" on a pin
+  (`canEditEquipment`), disabled while a `draw-zone`/`place-pin` mode is
+  active (`editModeActive`). A first pass at this consolidation kept a
+  second, standing "Zones/Equipment on this plan" management roster beneath
+  the viewer for these same actions — the same list rendered twice on
+  screen, once to browse and once to edit — and was corrected before
+  shipping: one roster per kind now carries both. The detail block's own
+  close button is `FacilityPlanPanel.focus`'s target: `FacilityDetailPage`
+  moves real focus onto it when a selection opens the block and restores
+  whatever held it before once the block closes, mirroring
+  `FacilityBuilding3dPage.syncSelectionFocus` — the button is removed from
+  the DOM on close and would otherwise drop focus to `body`.
+- **The plan itself marks what is selected, not only the panel's roster.**
+  `FacilityDetailPage.selectedZoneId`/`selectedEquipmentId` are forwarded
+  through `FacilityPlanEditor` to `FacilityPlanOverlay`: the matching zone
+  polygon or equipment pin carries `aria-pressed="true"` plus a
+  non-chromatic cue of its own (a thicker polygon outline, an added pin
+  ring) — before this, a member selecting zones in sequence from the SVG
+  itself had no way to tell, without opening the panel, which one had been
+  picked. A zone's own `aria-label` now also carries its status
+  (`resolveFacilityStatusTag`), matching the equipment pin's existing
+  name+status pattern — reachable by keyboard without opening the panel.
 - **Activating a zone or a pin now selects instead of navigating.**
   `FacilityDetailPage.onZoneSelected`/`onEquipmentSelected` — called from
   `FacilityPlanEditor`'s `zoneActivated`/`equipmentActivated` (a plan tap)
@@ -492,23 +512,43 @@ stays a tab of `FacilityDetailPage`.
 - **`aria-live="polite"`** (`facility-plan-selection-announcement`)
   announces the selected zone or equipment's name — `FacilityDetailPage
 .planSelectionAnnouncement`, mirroring `FacilityBuilding3dPage
-.selectionAnnouncement`.
-- **`ui/components/facility-zone-list` (`FacilityZoneList`) was extracted**
-  from `facility-building-3d-room-panel`'s own private
+.selectionAnnouncement`. Re-picking the **same** zone or pin still changes
+  the region's text: `planSelectionAnnouncement` folds the parity of a
+  private `selectionAnnouncementNonce` counter — bumped on every
+  `onZoneSelected`/`onEquipmentSelected` call regardless of whether the id
+  actually changed — into a trailing zero-width space, since a `WritableSignal`
+  set to its already-current value produces no new computed output on its
+  own, and most screen readers only announce a region whose text content
+  actually changed (WCAG 4.1.3).
+- **`ui/components/facility-plan-item-list` (`FacilityPlanItemList`) was
+  extracted, then generalized.** First extraction: from
+  `facility-building-3d-room-panel`'s own private
   `facility-building-3d-room-list` once this tab needed the identical
-  keyboard-navigable roster over the same `FacilityPlanOverlayZone` type.
-  The rule of three (`ARCHITECTURE.md` §2.9) normally waits for a third
-  consumer before extracting, but the two remaining options at two
-  consumers — importing into another component's private folder (banned,
-  §13.4) or duplicating the `FocusKeyManager` roving-tabindex
-  implementation — were both worse than an early extraction; this is a
-  deliberate, documented exception, not a precedent for extracting at two
-  consumers generally. Vocabulary was neutralized to "zone" (the shared
-  name), not "room" — a 2D zone and a 3D room are the same
-  `FacilityPlanOverlayZone`. `FacilityBuilding3dRoomPanel` itself is
-  otherwise untouched: it still speaks of "rooms" throughout its own API,
-  now rendering `app-facility-zone-list` internally instead of its former
-  private `app-facility-building-3d-room-list`.
+  keyboard-navigable roster over the same `FacilityPlanOverlayZone` type
+  (as `FacilityZoneList`). The rule of three (`ARCHITECTURE.md` §2.9)
+  normally waits for a third consumer before extracting, but the two
+  remaining options at two consumers — importing into another component's
+  private folder (banned, §13.4) or duplicating the `FocusKeyManager`
+  roving-tabindex implementation — were both worse than an early
+  extraction; a deliberate, documented exception, not a precedent for
+  extracting at two consumers generally. Second step, an a11y fix rather
+  than a new consumer: this panel's own equipment roster was a hand-rolled
+  `<button>` loop with no `listbox`/`option` roles and an invalid
+  `aria-selected` on a plain button — generalizing the zone-only list to a
+  `PlanItemListOption<T>` row (an id, a label, and the source record handed
+  back to a content-projected `ng-template` decorator) let the equipment
+  roster reuse the exact same roving-tabindex widget instead of a second,
+  independent fix. `FacilityBuilding3dRoomPanel` itself is otherwise
+  untouched: it still speaks of "rooms" throughout its own API, now
+  rendering `app-facility-plan-item-list` internally instead of
+  `app-facility-zone-list`.
+- **The layer switches' accessible name comes from their visible `<label>`
+  text alone.** `hlm-switch` renders a real `<button role="switch">`, a
+  labelable element, so wrapping it in a `<label>` already gives it an
+  implicit accessible name; the separate `aria-label`s
+  (`facility.plans.overlay.toggleZonesAria`/`toggleEquipmentAria`) silently
+  overrode that visible text with an equivalent-but-disconnected
+  translation and were removed.
 
 ## Plan Editor (Write Side)
 

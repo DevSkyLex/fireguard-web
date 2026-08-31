@@ -84,14 +84,45 @@ describe('FacilityPlanOverlay', () => {
     expect(pin.style.transform).toContain('scale(0.5)');
   });
 
-  it('gives the zone an accessible name and the equipment pin an accessible name carrying its status', async () => {
+  it('gives the zone and the equipment pin an accessible name carrying their status', async () => {
     fixture.componentRef.setInput('overlay', overlay());
     await fixture.whenStable();
 
-    expect(byTestId('facility-plan-overlay-zone')?.getAttribute('aria-label')).toBe('Zone Zone A');
+    expect(byTestId('facility-plan-overlay-zone')?.getAttribute('aria-label')).toBe(
+      'Zone Zone A — Active',
+    );
     expect(byTestId('facility-plan-overlay-equipment')?.getAttribute('aria-label')).toBe(
       'Extinguisher — Operational',
     );
+  });
+
+  it('marks the selected zone aria-pressed and with a thicker outline, and leaves the rest unmarked', async () => {
+    fixture.componentRef.setInput('overlay', overlay());
+    fixture.componentRef.setInput('selectedZoneId', 'facility-zone-1');
+    await fixture.whenStable();
+
+    const zone = byTestId('facility-plan-overlay-zone');
+    expect(zone?.getAttribute('aria-pressed')).toBe('true');
+    expect(zone?.querySelector('polygon')?.getAttribute('stroke-width')).toBe('4');
+  });
+
+  it('leaves an unselected zone aria-pressed false with the default outline', async () => {
+    fixture.componentRef.setInput('overlay', overlay());
+    await fixture.whenStable();
+
+    const zone = byTestId('facility-plan-overlay-zone');
+    expect(zone?.getAttribute('aria-pressed')).toBe('false');
+    expect(zone?.querySelector('polygon')?.getAttribute('stroke-width')).toBe('2');
+  });
+
+  it('marks the selected equipment pin aria-pressed and with an added ring', async () => {
+    fixture.componentRef.setInput('overlay', overlay());
+    fixture.componentRef.setInput('selectedEquipmentId', 'equipment-1');
+    await fixture.whenStable();
+
+    const pin = byTestId('facility-plan-overlay-equipment');
+    expect(pin?.getAttribute('aria-pressed')).toBe('true');
+    expect(pin?.querySelector('span')?.classList.contains('ring-2')).toBe(true);
   });
 
   it('emits zoneActivated when a zone is clicked', async () => {

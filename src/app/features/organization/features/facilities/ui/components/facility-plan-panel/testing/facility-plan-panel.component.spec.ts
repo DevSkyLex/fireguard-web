@@ -61,7 +61,7 @@ describe('FacilityPlanPanel', () => {
 
   it('renders the zone list with no detail block while nothing is selected', () => {
     expect(byTestId('facility-plan-panel')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-facility-zone-list')).not.toBeNull();
+    expect(byTestId('facility-zone-list')).not.toBeNull();
     expect(byTestId('facility-plan-detail')).toBeNull();
   });
 
@@ -70,7 +70,7 @@ describe('FacilityPlanPanel', () => {
     await fixture.whenStable();
 
     expect(byTestId('facility-plan-no-content')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-facility-zone-list')).toBeNull();
+    expect(byTestId('facility-zone-list')).toBeNull();
   });
 
   it('renders the zone detail block when a zone is selected, without navigating', async () => {
@@ -136,6 +136,32 @@ describe('FacilityPlanPanel', () => {
       .click();
 
     expect(activated).toHaveBeenCalledWith('equipment-2');
+  });
+
+  it('renders the equipment roster as a real listbox — role="option" and a valid aria-selected, not a plain button loop', async () => {
+    fixture.componentRef.setInput('selectedEquipment', EQUIPMENT);
+    await fixture.whenStable();
+
+    const list = byTestId('facility-plan-equipment-list');
+    expect(list?.getAttribute('role')).toBe('listbox');
+
+    const options = list?.querySelectorAll('[data-testid="facility-plan-equipment-list-option"]');
+    expect(options?.[0].getAttribute('role')).toBe('option');
+    expect(options?.[0].getAttribute('aria-selected')).toBe('true');
+    expect(options?.[1].getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('moves DOM focus onto the detail block close button when focus() is called', async () => {
+    fixture.componentRef.setInput('selectedZone', ZONES[0]);
+    await fixture.whenStable();
+
+    fixture.componentInstance.focus();
+
+    expect(document.activeElement).toBe(byTestId('facility-plan-detail-close'));
+  });
+
+  it('is a no-op when focus() is called with nothing selected', async () => {
+    expect(() => fixture.componentInstance.focus()).not.toThrow();
   });
 
   it('hides "Edit coordinates" on a selected zone without the write permission', async () => {

@@ -7286,6 +7286,10 @@
         <source>Exploded view</source>
         <target>Vue éclatée</target>
       </trans-unit>
+      <trans-unit id="facility.building3d.openRoomPanel" datatype="html">
+        <source>Floors and rooms</source>
+        <target>Étages et pièces</target>
+      </trans-unit>
       <trans-unit id="facility.building3d.planLink" datatype="html">
         <source>View 2D plan</source>
         <target>Voir le plan 2D</target>
@@ -7293,6 +7297,46 @@
       <trans-unit id="facility.building3d.backToDetail" datatype="html">
         <source>Back to facility</source>
         <target>Retour au site</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.selectionAnnouncement" datatype="html">
+        <source>Selected <x id="room" equiv-text="room.name"/> on <x id="floor" equiv-text="floor.name"/></source>
+        <target>Sélection : <x id="room" equiv-text="room.name"/>, étage <x id="floor" equiv-text="floor.name"/></target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.floorSelectionAnnouncement" datatype="html">
+        <source>Selected floor <x id="floor" equiv-text="floor.name"/></source>
+        <target>Étage sélectionné : <x id="floor" equiv-text="floor.name"/></target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.pageRootLabel" datatype="html">
+        <source>3D building view</source>
+        <target>Vue 3D du bâtiment</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.title" datatype="html">
+        <source>Building rooms</source>
+        <target>Pièces du bâtiment</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.floorSelectorLabel" datatype="html">
+        <source>Floors</source>
+        <target>Étages</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.close" datatype="html">
+        <source>Close</source>
+        <target>Fermer</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.plan2dAction" datatype="html">
+        <source>View on 2D plan</source>
+        <target>Voir sur le plan 2D</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListLabel" datatype="html">
+        <source>Rooms on this floor</source>
+        <target>Pièces de cet étage</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListHeading" datatype="html">
+        <source> Rooms on this floor </source>
+        <target> Pièces de cet étage </target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListEmpty" datatype="html">
+        <source> This floor has no rooms yet. </source>
+        <target> Cet étage ne comporte aucune pièce pour le moment. </target>
       </trans-unit>
       <trans-unit id="facility.building3dScene.ariaLabel" datatype="html">
         <source>3D view of <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> floor(s)</source>

@@ -24,4 +24,12 @@ export interface ScenePalette {
 
   /** A floor's `EdgesGeometry` line colour, from `--border`. */
   readonly edges: InstanceType<(typeof import('three'))['Color']>;
+
+  /**
+   * A selected room or floor's outline colour, from `--ring` — the same
+   * token a spartan focus ring draws with. Selection is never carried by
+   * fill colour alone (`PRODUCT.md`); this is the non-chromatic channel a
+   * selected mesh's `EdgesGeometry` outline draws in.
+   */
+  readonly selectionOutline: InstanceType<(typeof import('three'))['Color']>;
 }

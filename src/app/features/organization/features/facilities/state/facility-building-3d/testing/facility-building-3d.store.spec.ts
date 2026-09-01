@@ -130,6 +130,27 @@ describe('FacilityBuilding3dStore', () => {
     expect(serverStore.isQueryLoading()).toBe(false);
   });
 
+  it("should select the model's first floor by default once loaded, so the room panel is reachable without a prior pointer selection", async () => {
+    expect(store.selectedFloorId()).toBeNull();
+
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    await flushEffects();
+
+    expect(store.selectedFloorId()).toBe('floor-1');
+    expect(store.selectedRoomId()).toBeNull();
+  });
+
+  it('should not override an already-selected floor on a subsequent load', async () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    await flushEffects();
+
+    store.selectFloor('floor-2');
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    await flushEffects();
+
+    expect(store.selectedFloorId()).toBe('floor-2');
+  });
+
   it('should report isEmpty once loaded with no floors', async () => {
     mockFacilityService.getBuildingModel.mockReturnValue(
       of({ buildingId: 'building-2', buildingName: 'Empty', floors: [] }),

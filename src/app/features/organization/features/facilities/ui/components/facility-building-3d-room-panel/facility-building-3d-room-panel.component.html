@@ -1,0 +1,104 @@
+@if (isCompact()) {
+  <hlm-sheet side="bottom" [state]="sheetState()" (stateChanged)="onSheetStateChanged($event)">
+    <hlm-sheet-content
+      *hlmSheetPortal
+      [showCloseButton]="false"
+      role="region"
+      [attr.aria-label]="panelLabel"
+      class="flex max-h-[85svh] w-full! flex-col gap-4 overflow-y-auto"
+      data-testid="facility-3d-room-panel"
+    >
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle>{{ panelLabel }}</h3>
+        <p hlmSheetDescription>{{ selectedFloor()?.name }}</p>
+      </hlm-sheet-header>
+
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        <ng-container *ngTemplateOutlet="body" />
+      </div>
+    </hlm-sheet-content>
+  </hlm-sheet>
+} @else {
+  <div
+    hlmCard
+    role="region"
+    [attr.aria-label]="panelLabel"
+    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto sm:w-80"
+    data-testid="facility-3d-room-panel"
+  >
+    <div hlmCardHeader>
+      <h3 hlmCardTitle>{{ panelLabel }}</h3>
+    </div>
+
+    <div hlmCardContent class="flex flex-col gap-4">
+      <ng-container *ngTemplateOutlet="body" />
+    </div>
+  </div>
+}
+
+<ng-template #body>
+  <div
+    role="group"
+    [attr.aria-label]="floorSelectorLabel"
+    class="flex flex-wrap gap-1.5"
+    data-testid="facility-3d-floor-selector"
+  >
+    @for (floor of floors(); track floor.facilityId) {
+      <button
+        hlmBtn
+        type="button"
+        size="sm"
+        [variant]="floor.facilityId === selectedFloorId() ? 'secondary' : 'outline'"
+        [attr.aria-current]="floor.facilityId === selectedFloorId() ? 'true' : null"
+        data-testid="facility-3d-floor-selector-option"
+        (click)="floorActivated.emit(floor.facilityId)"
+      >
+        {{ floor.name }}
+      </button>
+    }
+  </div>
+
+  @if (room(); as selectedRoom) {
+    <div class="flex flex-col gap-3 rounded-lg border border-border p-3">
+      <div class="flex flex-row items-start justify-between gap-2">
+        <div class="flex flex-col gap-1">
+          <h4 class="text-sm font-semibold">{{ selectedRoom.name }}</h4>
+          <p class="text-xs text-muted-foreground">{{ typeLabel(selectedRoom.type) }}</p>
+        </div>
+        <button
+          #closeButton
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon"
+          [attr.aria-label]="closeLabel"
+          data-testid="facility-3d-room-panel-close"
+          (click)="roomClosed.emit()"
+        >
+          <ng-icon name="lucideX" aria-hidden="true" />
+        </button>
+      </div>
+
+      <app-facility-status-tag [value]="selectedRoom.status" />
+
+      <button hlmBtn type="button" variant="outline" size="sm" (click)="plan2dRequested.emit()">
+        <ng-icon name="lucideMap" aria-hidden="true" />
+        {{ plan2dLabel }}
+      </button>
+    </div>
+  }
+
+  <section class="flex flex-col gap-2">
+    <h4
+      class="text-sm font-medium text-muted-foreground"
+      i18n="@@facility.building3d.roomPanel.roomListHeading"
+    >
+      Rooms on this floor
+    </h4>
+    <app-facility-building-3d-room-list
+      [rooms]="floorRooms()"
+      [selectedRoomId]="room()?.facilityId ?? null"
+      (roomActivated)="roomActivated.emit($event)"
+    />
+  </section>
+</ng-template>

@@ -9,7 +9,11 @@ import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { FacilityBuildingModelOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityBuildingModelFloor,
+  FacilityBuildingModelOutput,
+  FacilityPlanOverlayZone,
+} from '@features/organization/features/facilities/models';
 import { FacilityBuilding3dStore } from '@features/organization/features/facilities/state';
 import { FacilityBuilding3dPage } from '../facility-building-3d-page.component';
 
@@ -106,6 +110,14 @@ vi.mock('three', () => {
   };
 });
 
+/** jsdom carries no `ResizeObserver` — the scene's mount observes the container with one. */
+class FakeResizeObserver {
+  public observe = vi.fn();
+  public unobserve = vi.fn();
+  public disconnect = vi.fn();
+}
+vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+
 vi.mock('three/examples/jsm/controls/OrbitControls.js', () => {
   class FakeOrbitControls {
     public enableDamping = false;
@@ -117,6 +129,32 @@ vi.mock('three/examples/jsm/controls/OrbitControls.js', () => {
   return { OrbitControls: FakeOrbitControls };
 });
 
+const ROOM: FacilityPlanOverlayZone = {
+  facilityId: 'room-1',
+  name: 'Server room',
+  type: 'zone',
+  status: 'active',
+  points: [],
+};
+
+const FLOOR: FacilityBuildingModelFloor = {
+  facilityId: 'floor-1',
+  name: 'Ground floor',
+  levelIndex: 0,
+  status: 'active',
+  plan: null,
+  outline: null,
+  rooms: [ROOM],
+};
+
+/**
+ * Carries no floors, unlike {@link FLOOR}/{@link ROOM} below: it is bound to
+ * the scene's own `model` input, and a floor with rooms would push
+ * `rebuildBuilding` into real geometry-building code this spec's minimal
+ * `three` fake does not cover. `store.floors`/`selectedRoom`/`selectedFloor`
+ * are separate, decoupled stubs — this page never derives them from
+ * `queryData` itself.
+ */
 const MODEL: FacilityBuildingModelOutput = {
   buildingId: 'building-1',
   buildingName: 'HQ Tower',
@@ -135,6 +173,9 @@ const createStoreStub = (): {
   selectedFloorId: WritableSignal<string | null>;
   isolatedFloorId: WritableSignal<string | null>;
   cameraResetToken: WritableSignal<number>;
+  floors: WritableSignal<ReadonlyArray<FacilityBuildingModelFloor>>;
+  selectedRoom: WritableSignal<FacilityPlanOverlayZone | null>;
+  selectedFloor: WritableSignal<FacilityBuildingModelFloor | null>;
   loadModel: ReturnType<typeof vi.fn>;
   resetCamera: ReturnType<typeof vi.fn>;
   toggleExploded: ReturnType<typeof vi.fn>;
@@ -153,6 +194,9 @@ const createStoreStub = (): {
   selectedFloorId: signal<string | null>(null),
   isolatedFloorId: signal<string | null>(null),
   cameraResetToken: signal<number>(0),
+  floors: signal<ReadonlyArray<FacilityBuildingModelFloor>>([FLOOR]),
+  selectedRoom: signal<FacilityPlanOverlayZone | null>(null),
+  selectedFloor: signal<FacilityBuildingModelFloor | null>(null),
   loadModel: vi.fn(),
   resetCamera: vi.fn(),
   toggleExploded: vi.fn(),
@@ -170,10 +214,31 @@ const createPage = async (): Promise<ComponentFixture<FacilityBuilding3dPage>> =
   return created;
 };
 
+function stubMatchMedia(matches: boolean): void {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  );
+}
+
 describe('FacilityBuilding3dPage', () => {
   let fixture: ComponentFixture<FacilityBuilding3dPage>;
   let store: ReturnType<typeof createStoreStub>;
   let hasPermission: ReturnType<typeof vi.fn>;
+
+  afterEach(() => {
+    // stubMatchMedia replaces a global; left in place it makes every later
+    // test in this file think it is running on a narrow viewport.
+    vi.unstubAllGlobals();
+    // That also clears the module-level ResizeObserver stub jsdom lacks and
+    // the scene's mount needs, so put it straight back.
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  });
 
   beforeEach(() => {
     store = createStoreStub();
@@ -253,6 +318,35 @@ describe('FacilityBuilding3dPage', () => {
     expect(emptyState.querySelector('a')).not.toBeNull();
   });
 
+  it('offers a toolbar control to bring the dismissed compact sheet back', async () => {
+    // On a narrow viewport the panel starts closed so the scene is visible on
+    // arrival — but the room list is the only keyboard path into the feature,
+    // so a real focusable control must lead back to it.
+    stubMatchMedia(true);
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue({} as RenderingContext);
+
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    getContextSpy.mockRestore();
+
+    expect(document.querySelector('hlm-sheet-content')).toBeNull();
+
+    const opener = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-open-room-panel"]',
+    ) as HTMLButtonElement;
+    expect(opener).not.toBeNull();
+
+    opener.click();
+    await fixture.whenStable();
+
+    expect(document.querySelector('hlm-sheet-content')).not.toBeNull();
+  });
+
   it('distinguishes a building whose floors carry no drawn plan from one with no floors', async () => {
     // A very ordinary state: floors are created long before anyone digitizes
     // a plan. Before this branch existed the scene simply rendered an empty
@@ -324,6 +418,171 @@ describe('FacilityBuilding3dPage', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="facility-3d-plan-2d-link"]'),
     ).not.toBeNull();
+  });
+
+  it('shows the room panel as soon as a floor is selected — reachable with no prior room selection', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="facility-3d-room-panel"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="facility-3d-floor-selector"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="facility-3d-room-list"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="facility-3d-room-panel-close"]')).toBeNull();
+  });
+
+  it('never shows the room panel while no floor is selected', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="facility-3d-room-panel"]'),
+    ).toBeNull();
+  });
+
+  it('forwards a floor pick from the panel selector to the store', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    store.floors.set([FLOOR, { ...FLOOR, facilityId: 'floor-2', name: 'First floor', rooms: [] }]);
+    await fixture.whenStable();
+
+    const options = fixture.nativeElement.querySelectorAll(
+      '[data-testid="facility-3d-floor-selector-option"]',
+    );
+    (options[1] as HTMLButtonElement).click();
+
+    expect(store.selectFloor).toHaveBeenCalledWith('floor-2');
+  });
+
+  it('deselects only the room on backgroundActivated, leaving the floor panel mounted', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    const scene = fixture.debugElement.query(
+      (debugElement) => debugElement.name === 'app-facility-building-3d-scene',
+    );
+    scene.componentInstance.backgroundActivated.emit();
+
+    expect(store.selectRoom).toHaveBeenCalledWith(null);
+    expect(store.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('closes the room detail block on its own close control, leaving the floor selection untouched', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    store.selectedRoomId.set('room-1');
+    store.selectedRoom.set(ROOM);
+    store.selectedFloor.set(FLOOR);
+    await fixture.whenStable();
+
+    const panelClose = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-room-panel-close"]',
+    ) as HTMLButtonElement;
+    panelClose.click();
+
+    expect(store.selectRoom).toHaveBeenCalledWith(null);
+    expect(store.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('announces the selected room and floor through the aria-live region', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    store.selectedRoomId.set('room-1');
+    store.selectedRoom.set(ROOM);
+    store.selectedFloor.set(FLOOR);
+    await fixture.whenStable();
+
+    const region = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-selection-announcement"]',
+    ) as HTMLElement;
+    expect(region.getAttribute('aria-live')).toBe('polite');
+    expect(region.textContent).toContain('Server room');
+    expect(region.textContent).toContain('Ground floor');
+  });
+
+  it('shows a discreet hover label mirroring the scene’s roomHovered output', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+
+    fixture.componentInstance['hoveredRoomId'].set('room-1');
+    await fixture.whenStable();
+
+    const label = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-hover-label"]',
+    ) as HTMLElement;
+    expect(label).not.toBeNull();
+    expect(label.getAttribute('aria-hidden')).toBe('true');
+    expect(label.textContent).toContain('Server room');
+  });
+
+  it('deselects the room on Escape only while a room is selected, never touching the floor', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement.querySelector('#facility-building-3d') as HTMLElement;
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(store.selectRoom).not.toHaveBeenCalled();
+
+    store.selectedRoomId.set('room-1');
+    await fixture.whenStable();
+
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(store.selectRoom).toHaveBeenCalledWith(null);
+    expect(store.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('moves focus into the room panel on open and restores it to the previously focused element on close', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    document.body.appendChild(fixture.nativeElement);
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-reset-camera"]',
+    ) as HTMLButtonElement;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    store.selectedRoomId.set('room-1');
+    store.selectedRoom.set(ROOM);
+    store.selectedFloor.set(FLOOR);
+    await fixture.whenStable();
+
+    const closeButton = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-room-panel-close"]',
+    );
+    expect(document.activeElement).toBe(closeButton);
+
+    store.selectedRoomId.set(null);
+    store.selectedRoom.set(null);
+    await fixture.whenStable();
+
+    expect(document.activeElement).toBe(trigger);
+
+    fixture.nativeElement.remove();
   });
 });
 

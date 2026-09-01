@@ -8327,11 +8327,60 @@
           <context context-type="linenumber">974</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListEmpty" datatype="html">
+        <source> This floor has no rooms yet. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/components/facility-building-3d-room-list/facility-building-3d-room-list.component.html</context>
+          <context context-type="linenumber">38,42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListLabel" datatype="html">
+        <source>Rooms on this floor</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/components/facility-building-3d-room-list/facility-building-3d-room-list.component.ts</context>
+          <context context-type="linenumber">141</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.roomListHeading" datatype="html">
+        <source> Rooms on this floor </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.html</context>
+          <context context-type="linenumber">96,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.title" datatype="html">
+        <source>Building rooms</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
+          <context context-type="linenumber">213</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.floorSelectorLabel" datatype="html">
+        <source>Floors</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
+          <context context-type="linenumber">216</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.close" datatype="html">
+        <source>Close</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
+          <context context-type="linenumber">219</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.roomPanel.plan2dAction" datatype="html">
+        <source>View on 2D plan</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
+          <context context-type="linenumber">222</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="facility.building3dScene.ariaLabel" datatype="html">
         <source>3D view of <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> floor(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-scene/facility-building-3d-scene.component.ts</context>
-          <context context-type="linenumber">293</context>
+          <context context-type="linenumber">299</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.compliance.worstSitesEmpty" datatype="html">
@@ -9303,112 +9352,140 @@
         <source>Loading the building model</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">10,11</context>
+          <context context-type="linenumber">19,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.errorTitle" datatype="html">
         <source>Couldn&apos;t load the building model</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">20,21</context>
+          <context context-type="linenumber">29,30</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.errorRetry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">26,28</context>
+          <context context-type="linenumber">35,37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.emptyTitle" datatype="html">
         <source>This building has no floors yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">33,34</context>
+          <context context-type="linenumber">42,43</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.emptyDesc" datatype="html">
         <source>Add a floor from the record&apos;s Plans tab to see it here.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">35,36</context>
+          <context context-type="linenumber">44,45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.emptyCta" datatype="html">
         <source>Go to Plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">41,44</context>
+          <context context-type="linenumber">50,53</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.noGeometryTitle" datatype="html">
         <source>No floor has a drawn plan yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">49,50</context>
+          <context context-type="linenumber">58,59</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.noGeometryDesc" datatype="html">
         <source>The 3D view is built from the outlines drawn on each floor&apos;s plan. Draw them from the record&apos;s Plans tab and they will appear here.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">51,52</context>
+          <context context-type="linenumber">60,61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.noGeometryCta" datatype="html">
         <source>Go to Plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">57,60</context>
+          <context context-type="linenumber">66,69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.unsupportedTitle" datatype="html">
         <source>This device can&apos;t render the 3D view</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">65,66</context>
+          <context context-type="linenumber">74,75</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.unsupportedDesc" datatype="html">
         <source>Your browser doesn&apos;t support WebGL. View the 2D floor plan instead.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">67,68</context>
+          <context context-type="linenumber">76,77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.unsupportedPlanLink" datatype="html">
         <source>View 2D plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">72,76</context>
+          <context context-type="linenumber">81,85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.resetCamera" datatype="html">
         <source>Reset camera</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">87,91</context>
+          <context context-type="linenumber">96,100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.explodeToggle" datatype="html">
         <source>Exploded view</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">100,104</context>
+          <context context-type="linenumber">109,112</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.openRoomPanel" datatype="html">
+        <source>Floors and rooms</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
+          <context context-type="linenumber">123,126</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.planLink" datatype="html">
         <source>View 2D plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">115,119</context>
+          <context context-type="linenumber">139,143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.backToDetail" datatype="html">
         <source>Back to facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
-          <context context-type="linenumber">128,133</context>
+          <context context-type="linenumber">152,157</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.selectionAnnouncement" datatype="html">
+        <source>Selected <x id="room" equiv-text="room.name"/> on <x id="floor" equiv-text="floor.name"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
+          <context context-type="linenumber">288</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.floorSelectionAnnouncement" datatype="html">
+        <source>Selected floor <x id="floor" equiv-text="floor.name"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
+          <context context-type="linenumber">291</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="facility.building3d.pageRootLabel" datatype="html">
+        <source>3D building view</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
+          <context context-type="linenumber">310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.create.description" datatype="html">

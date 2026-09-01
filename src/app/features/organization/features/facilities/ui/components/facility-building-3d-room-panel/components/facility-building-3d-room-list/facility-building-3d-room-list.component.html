@@ -1,0 +1,41 @@
+<div
+  role="listbox"
+  [attr.aria-label]="listLabel"
+  data-testid="facility-3d-room-list"
+  class="flex flex-col gap-1"
+  (keydown)="onKeydown($event)"
+>
+  @for (room of rooms(); track room.facilityId; let i = $index) {
+    <button
+      #roomOption
+      type="button"
+      role="option"
+      hlmItem
+      variant="outline"
+      size="sm"
+      [attr.aria-selected]="room.facilityId === selectedRoomId()"
+      [attr.tabindex]="i === activeIndex() ? 0 : -1"
+      [class.bg-accent]="room.facilityId === selectedRoomId()"
+      [class.border-primary]="room.facilityId === selectedRoomId()"
+      data-testid="facility-3d-room-list-option"
+      (click)="activate(room.facilityId)"
+    >
+      <hlm-item-content>
+        <span hlmItemTitle>
+          @if (room.facilityId === selectedRoomId()) {
+            <ng-icon name="lucideCheck" class="shrink-0 text-primary" aria-hidden="true" />
+          }
+          <span class="truncate">{{ room.name }}</span>
+        </span>
+      </hlm-item-content>
+      <app-facility-status-tag [value]="room.status" />
+    </button>
+  } @empty {
+    <p
+      class="px-2 py-1.5 text-sm text-muted-foreground"
+      i18n="@@facility.building3d.roomPanel.roomListEmpty"
+    >
+      This floor has no rooms yet.
+    </p>
+  }
+</div>

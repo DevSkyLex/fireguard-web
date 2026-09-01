@@ -5,23 +5,23 @@ import {
   organizationOutput,
 } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
-import { OrganizationDashboardPage } from '../support/pages/organization-dashboard.page';
-import { OrganizationSwitcherPage } from '../support/pages/organization-switcher.page';
+import { AccountOrganizationsPage } from '../support/pages/account-organizations.page';
 
 /**
  * Every catalog permission but `organization.settings.write` and
  * `organization.delete` — the two that gate the settings danger-tab route
  * and its tab. A rank-and-file member holding this set has no organization
  * permission left that would reach the danger tab, yet still owns an
- * active membership: the only floor `LeaveOrganizationProcessor` checks.
+ * active membership: the only floor `LeaveOrganizationProcessor` checks, and
+ * the one `/account/organizations` is built to be reachable regardless of.
  */
 const PLAIN_MEMBER_PERMISSIONS: ReadonlyArray<string> = ALL_ORGANIZATION_PERMISSIONS.filter(
   (permission) =>
     permission !== 'organization.settings.write' && permission !== 'organization.delete',
 );
 
-test.describe('Organization switcher — leave organization', () => {
-  test('lets a member without settings.write or delete reach and trigger Leave from the switcher menu', async ({
+test.describe('Account organizations — leave organization', () => {
+  test('lets a member without settings.write or delete leave from their own organizations list', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -34,22 +34,21 @@ test.describe('Organization switcher — leave organization', () => {
     });
     await api.mockOrganizationMemberLeave(E2E_ORGANIZATION_ID);
 
-    const dashboard = new OrganizationDashboardPage(page);
-    await dashboard.goto(E2E_ORGANIZATION_ID);
+    const accountOrganizations = new AccountOrganizationsPage(page);
+    await accountOrganizations.goto();
 
-    const switcher = new OrganizationSwitcherPage(page);
-    await switcher.startLeaving();
+    await accountOrganizations.startLeaving('E2E Organization');
 
-    await expect(switcher.leaveDialog).toBeVisible();
-    await expect(switcher.leaveDialog).toContainText('E2E Organization');
+    await expect(accountOrganizations.leaveDialog).toBeVisible();
+    await expect(accountOrganizations.leaveDialog).toContainText('E2E Organization');
 
     const leaveRequest = page.waitForRequest(
       (request) => request.method() === 'DELETE' && request.url().includes('/members/me'),
     );
-    await switcher.confirmLeave();
+    await accountOrganizations.confirmLeave();
     await leaveRequest;
 
-    await expect(switcher.leaveDialog).toBeHidden();
+    await expect(accountOrganizations.leaveDialog).toBeHidden();
   });
 
   test("surfaces the backend's last-administrator refusal inline instead of failing silently", async ({
@@ -67,16 +66,15 @@ test.describe('Organization switcher — leave organization', () => {
       detail: 'Cannot remove the last administrator of the organization.',
     });
 
-    const dashboard = new OrganizationDashboardPage(page);
-    await dashboard.goto(E2E_ORGANIZATION_ID);
+    const accountOrganizations = new AccountOrganizationsPage(page);
+    await accountOrganizations.goto();
 
-    const switcher = new OrganizationSwitcherPage(page);
-    await switcher.startLeaving();
-    await switcher.confirmLeave();
+    await accountOrganizations.startLeaving('E2E Organization');
+    await accountOrganizations.confirmLeave();
 
-    await expect(switcher.leaveErrorMessage).toHaveText(
+    await expect(accountOrganizations.leaveErrorMessage).toHaveText(
       'Cannot remove the last administrator of the organization.',
     );
-    await expect(switcher.leaveDialog).toBeVisible();
+    await expect(accountOrganizations.leaveDialog).toBeVisible();
   });
 });

@@ -120,6 +120,7 @@ vi.mock('maplibre-gl', () => ({
   Map: vi.fn(createFakeMap),
   Marker: FakeMarker,
   NavigationControl: vi.fn(),
+  setWorkerUrl: vi.fn(),
 }));
 
 const MARKERS: readonly MapMarker[] = [

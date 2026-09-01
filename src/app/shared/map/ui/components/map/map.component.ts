@@ -409,7 +409,15 @@ export class Map {
 
   /**
    * Method mount
-   * @description Dynamically imports MapLibre, creates the map, and wires the reactive effects.
+   *
+   * @description
+   * Dynamically imports MapLibre, creates the map, and wires the reactive
+   * effects. Points MapLibre at its clustering worker under the self-hosted
+   * `public/map/maplibre-gl-worker.mjs` (mirroring `ensureStylesheet`'s
+   * self-hosted CSS) rather than the library's default of resolving
+   * `maplibre-gl-worker.mjs` next to its own bundled module — a resolution
+   * Vite's dev-server pre-bundling 404s.
+   *
    * @access private
    * @since 1.0.0
    * @returns {Promise<void>}
@@ -420,6 +428,7 @@ export class Map {
 
     this.ensureStylesheet();
     const maplibregl = await import('maplibre-gl');
+    maplibregl.setWorkerUrl('/map/maplibre-gl-worker.mjs');
     const initialCenter: MapCoordinates = this.center() ?? DEFAULT_CENTER;
 
     const map: MapLibreMap = new maplibregl.Map({

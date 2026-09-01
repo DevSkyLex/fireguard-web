@@ -62,6 +62,7 @@ describe('InterventionFacilitySheet', () => {
     await fixture.whenStable();
 
     (inSheet('[data-testid="facility-create-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
 
     expect(visibility).toEqual([false]);
   });

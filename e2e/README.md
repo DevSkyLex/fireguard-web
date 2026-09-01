@@ -20,41 +20,50 @@ would hang waiting on a backend that isn't running.
 ```text
 e2e/
   support/
-    fixtures/api-fixtures.ts          # session/org/onboarding factory functions
+    fixtures/api-fixtures.ts          # session/org/onboarding/register factory functions
     fixtures/equipment-fixtures.ts    # EquipmentOutput factories
     fixtures/facility-fixtures.ts     # FacilityOutput factories
     fixtures/inspection-fixtures.ts   # InspectionOutput factories
+    fixtures/intervention-fixtures.ts # InterventionOutput factories
     mocks/api-mock.ts                 # ApiMock — page.route() wrapper, one method per endpoint
     pages/*.page.ts                   # page objects — selectors + user-intent methods
     helpers/appearance.ts             # dark-theme cookie, the two overflow assertions, console-error collector
     helpers/offline.ts                # perceived-connectivity toggle + IndexedDB outbox read/seed
+  auth/                               # /auth/login, /auth/register(/verify), /auth/mfa-verify specs
   maintenance/                        # /maintenance + 503 interceptor specs
-  onboarding/                         # /onboarding wizard + guard-chain specs
+  onboarding/                         # /onboarding wizard (first step, steps 2-5, guard-chain) specs
   organization/                       # every /organizations/:id/... spec
 ```
 
 ## Coverage scope
 
-27 specs, listed by what they drive rather than summarised — the previous
-version of this section claimed auth, dashboard, account and interventions were
-uncovered, which stopped being true several passes ago.
+40 specs, listed by what they drive rather than summarised — an exact count
+goes stale the moment a spec is added or split, so treat this as a shape, not
+an inventory.
 
-Covered: the organization dashboard; the interventions list, board, calendar,
-recurrences, tabs, bulk transitions, discussion and detail issues/checklist; the
-equipments, facilities (+ map), inspections, checklists, approvals, audit,
-imports and maintenance-schedules collections; the assets explorer; members,
-team (roles), settings and the organization switcher; channels; invitation
-accept; the maintenance route; and the onboarding wizard's first step plus the
-`onboardingGuard` / `onboardingRequiredGuard` mutual gate.
+Covered: sign-in, registration (draft → email verification → auto-login) and
+MFA verification, including the login page's plain-credentials, rejected-login
+and `mfa_required` hand-off cases; the organization dashboard; the
+interventions list, board, calendar, recurrences, tabs, bulk transitions,
+discussion, creation (from the list page's "New intervention" action through to
+the new record's detail page) and detail issues/checklist; the equipments,
+facilities (+ map), inspections, checklists, approvals, audit, imports and
+maintenance-schedules collections; the assets explorer; members, team (roles),
+settings and the organization switcher; channels; invitation accept; the
+maintenance route; and the onboarding wizard's first step, steps 2 through 5
+(plan and members skip, a facility staged explicitly via "Add facility", and
+equipment registration completing the flow), plus the `onboardingGuard` /
+`onboardingRequiredGuard` mutual gate.
 
-Not covered, and worth stating plainly: **`auth` (8 pages), `account` (4 pages)
-and `error` (3 pages) have no spec at all**; onboarding stops at step 1 of 5;
-`approvals`, `audit`, `checklists`, `imports` and `maintenance-schedules` have a
-filter-bar spec only — no table body, row actions, create/edit, empty or error
-state; and `calendar-page`, `inspection-analytics-page`,
-`organization-teams-page`, `organization-member-profile-page`,
-`direct-messages-page`, `direct-conversation-page` and `saved-messages-page`
-have none.
+Not covered, and worth stating plainly: `account` (4 pages) and `error` (3
+pages) have no spec at all; the intervention creation spec covers the "New
+intervention" button entry point only, not the `?create=1` query-param
+auto-open or the "start from a template" / "Duplicate" flows; `approvals`,
+`audit`, `checklists`, `imports` and `maintenance-schedules` have a filter-bar
+spec only — no table body, row actions, create/edit, empty or error state; and
+`calendar-page`, `inspection-analytics-page`, `organization-teams-page`,
+`organization-member-profile-page`, `direct-messages-page`,
+`direct-conversation-page` and `saved-messages-page` have none.
 
 `support/helpers/offline.ts` was deleted wholesale in `3fc4e588` (the spartan/ui
 migration) along with the rest of the old suite, and has now been restored from
@@ -115,6 +124,20 @@ page wrapper around it.
 - `mockEquipmentList` / `mockFacilityList` / `mockInspectionList` match the
   organization-scoped collection endpoint with a regex tolerant of query
   strings, so search/filter/page navigation never needs re-mocking.
+- A create endpoint that shares its path with a list endpoint —
+  `mockEquipmentCreate`, `mockFacilityCreate`, `mockOrganizationCreate`,
+  `mockInterventionCreate` — checks the request method and calls
+  `route.fallback()` on anything but `POST`, so it composes with the
+  corresponding `mock*List` registered earlier on the same pattern (Playwright
+  matches last-registered-first; the fallback reaches the earlier `GET`
+  handler). Register the create mock after the list mock in a spec that needs
+  both.
+- Auth mocks (`mockLogin`, `mockLoginError`, `mockMfaVerify`, `mockMfaResend`,
+  `mockRegister`, `mockRegisterVerify`, `mockRegisterResend`) and the
+  onboarding step mocks (`mockOnboardingStepExecute`, `mockOnboardingStepSkip`)
+  follow the same one-method-per-endpoint shape as everything else — no
+  special composition rule beyond registering them before the action that
+  triggers the request.
 
 ## Running
 

@@ -37,6 +37,36 @@ export function loginOutput(overrides: Partial<LoginOutputFixture> = {}): LoginO
   };
 }
 
+export interface RegisterOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly success: boolean;
+  readonly message: string;
+  readonly challengeToken: string | null;
+  readonly maskedRecipient: string | null;
+  readonly expiresAt: string | null;
+  readonly maxAttempts: number | null;
+  readonly canResendIn: number | null;
+}
+
+/** The registration request's response — carries the challenge token the verify step needs. */
+export function registerOutput(
+  overrides: Partial<RegisterOutputFixture> = {},
+): RegisterOutputFixture {
+  return {
+    '@id': '/api/.well-known/genid/e2e-register-1',
+    '@type': 'RegisterOutput',
+    success: true,
+    message: 'Your account has been created. Enter the verification code we sent to your email.',
+    challengeToken: 'e2e-register-challenge-token',
+    maskedRecipient: 'j***e@e****e.com',
+    expiresAt: '2026-02-03T12:00:00+00:00',
+    maxAttempts: 10,
+    canResendIn: 60,
+    ...overrides,
+  };
+}
+
 export interface UserProfileOutputFixture {
   readonly '@id': string;
   readonly '@type': string;

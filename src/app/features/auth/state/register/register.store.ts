@@ -301,6 +301,27 @@ export const RegisterStore = signalStore(
       ),
 
       /**
+       * Method setChallengeToken
+       *
+       * @description
+       * Rehydrates the challenge token, typically from the verify route's
+       * `token` query param after a reload wiped the in-memory state. The
+       * masked recipient cannot be recovered from the token alone, so it is
+       * left as-is — the verify screen degrades to its generic copy.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} token - Challenge token.
+       *
+       * @returns {void}
+       */
+      setChallengeToken: (token: string): void => {
+        patchState(store, {
+          challengeToken: token,
+        });
+      },
+
+      /**
        * Method clear
        *
        * @description

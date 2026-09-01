@@ -13,6 +13,7 @@ describe('RegisterPage', () => {
     isRegistering: WritableSignal<boolean>;
     registerError: WritableSignal<null>;
     hasChallenge: WritableSignal<boolean>;
+    challengeToken: WritableSignal<string | null>;
   };
   let navigate: MockInstance;
 
@@ -24,6 +25,7 @@ describe('RegisterPage', () => {
       isRegistering: signal(false),
       registerError: signal(null),
       hasChallenge,
+      challengeToken: signal<string | null>(null),
     };
 
     TestBed.configureTestingModule({
@@ -63,10 +65,13 @@ describe('RegisterPage', () => {
     });
   });
 
-  it('should hand over to verification once a challenge exists', async () => {
+  it('should hand over to verification with the challenge token once a challenge exists', async () => {
+    mockRegisterStore.challengeToken.set('challenge-token');
     hasChallenge.set(true);
     await fixture.whenStable();
 
-    expect(navigate).toHaveBeenCalledWith(['/auth/register/verify']);
+    expect(navigate).toHaveBeenCalledWith(['/auth/register/verify'], {
+      queryParams: { token: 'challenge-token' },
+    });
   });
 });

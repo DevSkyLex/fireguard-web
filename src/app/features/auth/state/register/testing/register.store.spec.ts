@@ -95,6 +95,15 @@ describe('RegisterStore', () => {
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
+  it('should rehydrate the challenge token without touching the rest of the state', () => {
+    store.setChallengeToken('rehydrated-token');
+
+    expect(store.challengeToken()).toBe('rehydrated-token');
+    expect(store.hasChallenge()).toBe(true);
+    expect(store.maskedRecipient()).toBeNull();
+    expect(store.requestCallState().status).toBe('idle');
+  });
+
   it('should fail verify immediately when no challenge is in progress', async () => {
     store.verify({ code: '123456' });
     await flushEffects();

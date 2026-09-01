@@ -885,6 +885,7 @@ describe('InterventionWorkspaceStore call state', () => {
     await vi.waitFor(() => expect(store.issues()).toEqual([blocker]));
 
     expect(mockService['listIssues']).toHaveBeenCalledTimes(2);
+    expect(store.blockerCount()).toBe(1);
   });
 
   it('refreshes the issues checklist after a work item status write', async () => {

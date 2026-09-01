@@ -1,6 +1,6 @@
 import type { Routes } from '@angular/router';
 import { withAccountMenu, withNotificationBell } from '@features/account';
-import { authGuard } from '@features/auth';
+import { authGuard, withLogoutControl } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingRequiredGuard } from '@features/onboarding/http/guards';
@@ -92,7 +92,7 @@ export const APP_ROUTES: Routes = [
     providers: [
       provideSplitLayoutSlots({
         showcase: [withSplitLayoutShowcase(), withOnboardingShowcase()],
-        header: [withThemeSwitcher()],
+        header: [withThemeSwitcher(), withLogoutControl()],
       }),
     ],
     loadChildren: () =>

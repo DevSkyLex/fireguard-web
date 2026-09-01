@@ -1,0 +1,14 @@
+<button
+  hlmBtn
+  type="button"
+  variant="ghost"
+  size="sm"
+  class="gap-2 max-sm:min-h-11"
+  data-testid="logout-control"
+  [disabled]="logoutPort.isLoggingOut()"
+  [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
+  (click)="logoutPort.logout()"
+>
+  <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+  <span i18n="@@auth.logout.signOut">Sign out</span>
+</button>

@@ -124,7 +124,10 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
   to the dashboard shell's root route (`DashboardLayout`), redirecting any
   non-completed (or missing) record to `/onboarding`. `onboardingGuard`, on
   the wizard's own route, keeps a completed user from re-opening it (redirects
-  to `/`). Together they form a mutual gate.
+  to `/`). Together they form a mutual gate. Because that gate deliberately
+  forbids navigating anywhere else, the `/onboarding` route's header slot
+  mounts auth's `withLogoutControl()` — signing out is the one exit the gate
+  must not close.
 - `OnboardingStore.ensureLoaded()` owns the SSR/`TransferState` handoff. It is
   the first thing both guards call, on both server and browser — which
   `initialize()` is not: the server filled the store, `initialize()` returned

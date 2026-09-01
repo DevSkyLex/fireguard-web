@@ -142,6 +142,10 @@
         <source>Sign-in failed. Check your credentials.</source>
         <target>Échec de la connexion. Vérifiez vos identifiants.</target>
       </trans-unit>
+      <trans-unit id="auth.logout.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>Se déconnecter</target>
+      </trans-unit>
       <trans-unit id="auth.register.failed" datatype="html">
         <source>The account could not be created.</source>
         <target>Le compte n'a pas pu être créé.</target>

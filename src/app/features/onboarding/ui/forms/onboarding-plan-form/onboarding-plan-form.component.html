@@ -31,9 +31,7 @@
           </label>
         }
       </hlm-radio-group>
-      @if (planForm.planKey().touched() && planForm.planKey().invalid()) {
-        <hlm-field-error>{{ planForm.planKey().errors()[0].message }}</hlm-field-error>
-      }
+      <hlm-field-error>{{ planForm.planKey().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
     <hlm-field orientation="horizontal" class="justify-end">

@@ -171,7 +171,7 @@ export class FacilityCreatePage implements UnsavedChangesAware {
   /**
    * Constructor
    * @constructor
-   * @description Loads the parent-facility candidates, navigates to the created record once the write settles successfully, and registers {@link pageActions}.
+   * @description Loads the parent-facility candidates, navigates to the created record once the write settles successfully (resetting the create operation only after the navigation resolves, so `unsavedChangesGuard` still sees the success), and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
@@ -191,13 +191,9 @@ export class FacilityCreatePage implements UnsavedChangesAware {
         if (state.status !== 'success' || !state.data) return;
 
         const created: FacilityOutput = state.data;
-        this.store.resetCreateOperation();
-        void this.router.navigate([
-          '/organizations',
-          this.organizationId(),
-          'facilities',
-          created.id,
-        ]);
+        void this.router
+          .navigate(['/organizations', this.organizationId(), 'facilities', created.id])
+          .then((): void => this.store.resetCreateOperation());
       });
     });
   }
@@ -206,13 +202,15 @@ export class FacilityCreatePage implements UnsavedChangesAware {
   //#region Methods
   /**
    * Method onSubmitted
-   * @description Sends the form's payload to the store.
+   * @description Sends the form's payload to the store, ignoring re-entries while a create is already in flight.
    * @access protected
    * @since 1.0.0
    * @param {CreateFacilityInput} payload - The validated payload.
    * @returns {void}
    */
   protected onSubmitted(payload: CreateFacilityInput): void {
+    if (this.store.isCreating()) return;
+
     this.store.create({ organizationId: this.organizationId(), input: payload });
   }
 

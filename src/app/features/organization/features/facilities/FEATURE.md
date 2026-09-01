@@ -880,6 +880,9 @@ organization-scoped read never carries `revision`, then sends the required
 - Active facility state belongs to this subfeature.
 - Archived facilities can be restored.
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.
+- A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
+- `FacilityCreatePage` resets the create operation only after the success navigation resolves, so `unsavedChangesGuard` still sees the settled success and never opens the discard dialog on the way to the new record.
+- The detail page's Hierarchy section offers "Add sub-facility" (create route with `?parent=`) only under `FACILITIES_WRITE`, whether or not the facility already has children.
 - At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
 - The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.
 - `FacilityPlanOverlay` stays read-only and presentational — it never gains a store, a service, or navigation of its own; every editor affordance lives in `FacilityPlanEditor` (which wraps it) and the page.

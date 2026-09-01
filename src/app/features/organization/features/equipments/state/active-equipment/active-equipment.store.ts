@@ -16,6 +16,7 @@ import {
 } from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { mergeEquipment } from '@features/organization/features/equipments/utils';
 import { activeEquipmentStoreEvents } from './events';
 import type { ActiveEquipmentState } from './models';
 
@@ -142,7 +143,9 @@ export const ActiveEquipmentStore = signalStore(
        *
        * @description
        * Directly sets the selected equipment (e.g., when a lifecycle or
-       * update write confirms the record's new state).
+       * update write confirms the record's new state). The payload is merged
+       * into the already-selected record when it is the same one, so fields a
+       * write response omits never erase known values.
        *
        * @since 1.0.0
        *
@@ -151,9 +154,11 @@ export const ActiveEquipmentStore = signalStore(
        * @returns {void} No return value.
        */
       setEquipment(equipment: EquipmentOutput): void {
+        const merged: EquipmentOutput = mergeEquipment(store.selectedEquipment(), equipment);
+
         patchState(store, {
-          selectedEquipment: equipment,
-          getCallState: successCallState(equipment),
+          selectedEquipment: merged,
+          getCallState: successCallState(merged),
         });
       },
 

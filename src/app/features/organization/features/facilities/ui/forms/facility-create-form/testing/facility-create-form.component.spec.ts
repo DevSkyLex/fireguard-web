@@ -224,8 +224,21 @@ describe('FacilityCreateForm', () => {
     );
   });
 
-  it('should fall back to a generic message when the rejection carries no violations', async () => {
-    fixture.componentRef.setInput('serverError', new Error('boom'));
+  it('should surface the normalized error message when the rejection carries no violations', async () => {
+    fixture.componentRef.setInput('serverError', {
+      message: 'You have reached the plan limit of 2 facilities.',
+      code: 409,
+      raw: null,
+    });
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-testid="facility-create-error"]')?.textContent).toContain(
+      'You have reached the plan limit of 2 facilities.',
+    );
+  });
+
+  it('should fall back to a generic message when the rejection carries no violations and no message', async () => {
+    fixture.componentRef.setInput('serverError', { message: null, code: 500, raw: null });
     await fixture.whenStable();
 
     expect(element.querySelector('[data-testid="facility-create-error"]')?.textContent).toContain(

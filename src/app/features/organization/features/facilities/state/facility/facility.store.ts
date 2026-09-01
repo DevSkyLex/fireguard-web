@@ -782,8 +782,7 @@ export const FacilityStore = signalStore(
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { createCallState: errorCallState(storeError) });
-                    // Quota (409) failures are surfaced by the page as an
-                    // actionable upgrade dialog, not as a generic error toast.
+                    // Quota (409) refusals render inline in the create form, not as a toast.
                     if (!isQuotaExceededError(storeError)) {
                       dispatcher.dispatch(
                         facilityStoreEvents.createFailed(

@@ -284,7 +284,11 @@ describe('EquipmentStore', () => {
         'equipment-1',
       );
       expect(store.unassignFromFacilityCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith({
+        ...equipment,
+        facilityId: null,
+        facilityName: null,
+      });
     });
 
     it('should set the error and dispatch unassignFromFacilityFailed on error', async () => {
@@ -298,6 +302,54 @@ describe('EquipmentStore', () => {
       expect(store.unassignFromFacilityCallState().status).toBe('error');
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: '[Equipment Store] unassignFromFacilityFailed' }),
+      );
+    });
+  });
+
+  describe('write responses merge into the known entity', () => {
+    const known = {
+      id: 'equipment-1',
+      facilityId: 'facility-1',
+      facilityName: 'Main building',
+      locationLabel: 'Hall east wall',
+      status: 'in_stock',
+    } as unknown as EquipmentOutput;
+
+    beforeEach(async () => {
+      mockEquipmentService.list.mockReturnValue(
+        of({ ...collection, member: [known], totalItems: 1 }),
+      );
+      store.load({ organizationId: 'org-1' });
+      await flushEffects();
+    });
+
+    it('should keep known fields a lifecycle response omits', async () => {
+      const response = { id: 'equipment-1', status: 'operational' } as unknown as EquipmentOutput;
+      mockEquipmentService.commission.mockReturnValue(of(response));
+
+      store.commission({ organizationId: 'org-1', equipmentId: 'equipment-1' });
+      await flushEffects();
+
+      const merged = expect.objectContaining({
+        id: 'equipment-1',
+        status: 'operational',
+        facilityId: 'facility-1',
+        facilityName: 'Main building',
+        locationLabel: 'Hall east wall',
+      });
+      expect(store.equipmentEntityMap()['equipment-1']).toEqual(merged);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(merged);
+    });
+
+    it('should clear the facility relation on unassign even when the response omits it', async () => {
+      const response = { id: 'equipment-1', status: 'in_stock' } as unknown as EquipmentOutput;
+      mockEquipmentService.unassignFromFacility.mockReturnValue(of(response));
+
+      store.unassignFromFacility({ organizationId: 'org-1', equipmentId: 'equipment-1' });
+      await flushEffects();
+
+      expect(store.equipmentEntityMap()['equipment-1']).toEqual(
+        expect.objectContaining({ facilityId: null, facilityName: null }),
       );
     });
   });

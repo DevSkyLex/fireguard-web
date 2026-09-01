@@ -51,6 +51,10 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
  * The renewal itself is shared by the session port, so a page firing several
  * requests at once refreshes once rather than racing a rotating token.
  *
+ * The replay is safe for non-idempotent methods too: it only ever fires for a
+ * request the server refused with 401 — one it never processed — and runs at
+ * most once, so a POST replayed here cannot duplicate a side effect.
+ *
  * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */

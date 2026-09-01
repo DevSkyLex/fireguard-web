@@ -28,6 +28,7 @@ import {
   lucideCircleAlert,
   lucideLayers,
   lucideMap,
+  lucidePlus,
   lucideQrCode,
   lucideTrash2,
 } from '@ng-icons/lucide';
@@ -219,7 +220,14 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
-    provideIcons({ lucideCircleAlert, lucideLayers, lucideMap, lucideQrCode, lucideTrash2 }),
+    provideIcons({
+      lucideCircleAlert,
+      lucideLayers,
+      lucideMap,
+      lucidePlus,
+      lucideQrCode,
+      lucideTrash2,
+    }),
   ],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

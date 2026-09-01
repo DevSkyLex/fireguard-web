@@ -41,6 +41,7 @@ describe('FacilityCreatePage', () => {
   let feedbackError: ReturnType<typeof vi.fn>;
   let facilities: WritableSignal<readonly FacilityOutput[]>;
   let createCallState: WritableSignal<CallState<FacilityOutput | null>>;
+  let isCreating: WritableSignal<boolean>;
 
   beforeEach(async () => {
     create = vi.fn();
@@ -50,6 +51,7 @@ describe('FacilityCreatePage', () => {
     feedbackError = vi.fn();
     facilities = signal<readonly FacilityOutput[]>([]);
     createCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
+    isCreating = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -64,7 +66,7 @@ describe('FacilityCreatePage', () => {
             ensureParentOptionsLoaded,
             resetCreateOperation,
             createCallState,
-            isCreating: signal(false),
+            isCreating,
             createError: signal(null),
             facilities,
           },
@@ -104,12 +106,40 @@ describe('FacilityCreatePage', () => {
     expect(create).toHaveBeenCalledWith({ organizationId: 'org-1', input: payload });
   });
 
+  it('should ignore a re-submission while a create is already in flight', () => {
+    isCreating.set(true);
+
+    fixture.componentInstance['onSubmitted']({ type: 'building', name: 'Warehouse B' });
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('should navigate to the created record and reset the create state once the write succeeds', async () => {
     createCallState.set(successCallState(facility()));
     await fixture.whenStable();
 
-    expect(resetCreateOperation).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities', 'facility-9']);
+    expect(resetCreateOperation).toHaveBeenCalled();
+  });
+
+  it('should reset the create state only after the success navigation resolves', async () => {
+    let resolveNavigation!: (confirmed: boolean) => void;
+    navigate.mockReturnValue(
+      new Promise<boolean>((resolve: (confirmed: boolean) => void): void => {
+        resolveNavigation = resolve;
+      }),
+    );
+
+    createCallState.set(successCallState(facility()));
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalled();
+    expect(resetCreateOperation).not.toHaveBeenCalled();
+
+    resolveNavigation(true);
+    await fixture.whenStable();
+
+    expect(resetCreateOperation).toHaveBeenCalledTimes(1);
   });
 
   describe('the "Locate address" lookup', () => {

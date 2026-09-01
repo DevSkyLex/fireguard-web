@@ -74,6 +74,37 @@ describe('ActiveEquipmentStore', () => {
     expect(dispatch).toHaveBeenCalled();
   });
 
+  it('should merge a write payload into the selected record instead of replacing it', () => {
+    const known = {
+      id: 'equipment-1',
+      facilityId: 'facility-1',
+      facilityName: 'Main building',
+      status: 'in_stock',
+    } as unknown as EquipmentOutput;
+    store.setEquipment(known);
+
+    store.setEquipment({ id: 'equipment-1', status: 'operational' } as unknown as EquipmentOutput);
+
+    expect(store.selectedEquipment()).toEqual(
+      expect.objectContaining({
+        id: 'equipment-1',
+        status: 'operational',
+        facilityId: 'facility-1',
+        facilityName: 'Main building',
+      }),
+    );
+    expect(store.getCallState().status).toBe('success');
+  });
+
+  it('should replace the selected record when the payload is a different equipment', () => {
+    store.setEquipment(equipment);
+
+    const other = { id: 'equipment-2', status: 'in_stock' } as unknown as EquipmentOutput;
+    store.setEquipment(other);
+
+    expect(store.selectedEquipment()).toEqual(other);
+  });
+
   it('should clear the selected equipment', () => {
     store.setEquipment(equipment);
     store.clear();

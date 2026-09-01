@@ -2076,6 +2076,10 @@
         <source>This facility has no sub-facilities.</source>
         <target>Cet établissement n'a pas de sous-établissements.</target>
       </trans-unit>
+      <trans-unit id="facility.detail.addSubFacility" datatype="html">
+        <source>Add sub-facility</source>
+        <target>Ajouter un sous-établissement</target>
+      </trans-unit>
       <trans-unit id="facility.metric.compliance.title" datatype="html">
         <source>Compliance rate</source>
         <target>Taux de conformité</target>

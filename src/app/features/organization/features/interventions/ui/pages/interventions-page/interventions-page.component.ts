@@ -1869,7 +1869,7 @@ export class InterventionsPage {
     this.assignRequest.set({
       interventionId: intervention.id,
       interventionName: intervention.name,
-      currentResponsible: intervention.responsible,
+      currentResponsible: intervention.responsible ?? null,
     });
   }
 

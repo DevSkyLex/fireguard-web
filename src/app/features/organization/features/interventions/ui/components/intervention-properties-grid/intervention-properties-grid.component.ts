@@ -382,9 +382,9 @@ export class InterventionPropertiesGrid {
    * @type {Signal<string | null>}
    */
   protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
-    const site: string | null = this.intervention().site;
+    const site: string | null | undefined = this.intervention().site;
 
-    return site === null
+    return site == null
       ? null
       : (this.siteOptions().find((option) => option.value === site)?.label ?? site);
   });
@@ -398,9 +398,9 @@ export class InterventionPropertiesGrid {
    * @type {Signal<string | null>}
    */
   protected readonly siteFacilityId: Signal<string | null> = computed<string | null>(() => {
-    const site: string | null = this.intervention().site;
+    const site: string | null | undefined = this.intervention().site;
 
-    return site === null ? null : site.slice(site.lastIndexOf('/') + 1);
+    return site == null ? null : site.slice(site.lastIndexOf('/') + 1);
   });
 
   /**
@@ -700,11 +700,11 @@ export class InterventionPropertiesGrid {
    * @description Resolves a member IRI against the loaded options.
    * @access private
    * @since 1.0.0
-   * @param {string | null} iri - The member IRI to resolve.
+   * @param {string | null | undefined} iri - The member IRI to resolve.
    * @returns {MemberSelectOption | null} The matching option, or null.
    */
-  private memberOf(iri: string | null): MemberSelectOption | null {
-    return iri === null
+  private memberOf(iri: string | null | undefined): MemberSelectOption | null {
+    return iri == null
       ? null
       : (this.memberOptions().find((option) => option.value === iri) ?? null);
   }

@@ -96,8 +96,8 @@ export class InterventionCalendarEntryList {
    * @returns {string} A short time label.
    */
   protected timeLabelOf(intervention: InterventionOutput): string {
-    const anchor: string | null = intervention.plannedStartAt ?? intervention.dueAt;
-    if (anchor === null) return '';
+    const anchor: string | null | undefined = intervention.plannedStartAt ?? intervention.dueAt;
+    if (anchor == null) return '';
 
     return new Intl.DateTimeFormat(this.locale, { timeStyle: 'short' }).format(new Date(anchor));
   }

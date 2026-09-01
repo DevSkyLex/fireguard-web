@@ -1184,7 +1184,7 @@ claiming the page has no tabs at all — it does, again, on direct
 instruction — so hold it to a sharper bar than "no tabs":
 
 **Nothing that gates publication readiness is visible only inside a tab
-panel.** `blockerIssues().length` and the phase's forward action both render
+panel.** `intervention.blockersCount` and the phase's forward action both render
 from `app-intervention-status-band`, sticky under the header, which does not
 belong to `<hlm-tabs>` and does not react to `activeLinkedTab`. An operator
 parked on the Facilities tab still sees the same blocker count and the exact
@@ -1979,12 +1979,23 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   the record. Older pages are prepended on demand
   (`hasOlderActivities` / `loadOlderActivities`); a partial window always says so.
 - **Nothing that gates publication readiness is visible only inside a
-  scrollable section.** `app-intervention-status-band` reads `blockerIssues().length`
-  directly from the page's own signal, not from the Changes tab or the issues
+  scrollable section.** `app-intervention-status-band` reads
+  `intervention.blockersCount` — the count the backend recomputes on every
+  write and returns with every PATCH — not from the Changes tab or the issues
   checklist it points at. This is the structural fix for the exact failure
   the 2.0 tabbed design was retired for (see `### Retired invariants`): a
   count that exists only inside a hidden panel is a count an operator can
   miss.
+- **The band's blocker count and the issues checklist have different
+  freshness sources, and both must stay live.** The count binds to
+  `intervention.blockersCount`, so it is exact the instant a write's response
+  lands. The issues _list_ only travels with the workspace fetch, so the
+  store re-reads it (`refreshIssues`, silent on failure) on the online success
+  path of every write that can create or resolve an issue — transitions,
+  planning updates, work-item create/status/delete, change rejection. Binding
+  the band to `issues().length`, or dropping one of those refresh calls,
+  reintroduces the frozen badge and the phantom "No explicit work item"
+  blocker this closed.
 - **Every page-level notice renders once, at the location it concerns, never
   as a ranked stack.** An unattributed store error is a single alert above the
   sections; every other condition (reviewer note, blockers, unsynced outbox,
@@ -2062,6 +2073,35 @@ client action`).
   `shared/tree` established: every board card carries a "Move to…" menu
   offering the identical set of legal moves, so the workflow is fully
   reachable by keyboard/AT with no pointer drag at all.
+- **Every nullable `InterventionOutput` field is optional on the wire.**
+  API Platform omits null fields, so `site`, `responsible`, `plannedStartAt`,
+  `dueAt`, `description` and `reviewNote` are typed `?: T | null` and arrive
+  as `undefined`, never `null`. Guard with `== null` / nullish coalescing —
+  a strict `=== null` compiles but silently misses the wire shape, and one
+  such check in a computed took down the whole properties grid for any
+  intervention without a site.
+- **A status transition is never cancelled client-side.** The workspace
+  store's `transition` runs through `exhaustMap`: a duplicate trigger while a
+  PATCH is in flight is dropped, not allowed to abort the first request after
+  the server already applied it (which lost the returned revision and 412'd
+  the duplicate). The page adds the complementary guard:
+  `onSignatureDismissed` is a no-op once the signature dialog is already
+  hidden, because Skip emits `dismissed` directly _and_ the closing dialog
+  echoes it through its own state-change notification.
+- **Date-only planning values are serialized at midnight UTC.** Date pickers
+  build local-midnight `Date`s; every write path (`pickSchedule`, the create
+  form's `plannedRange` split, the template override) re-anchors them with
+  `toUtcMidnight` (`utils/intervention-date-only/`) so the stored instant
+  names the picked calendar day in every timezone — the org-date pipe renders
+  in UTC by default and displayed J-1 otherwise. Fix the _write_ side only:
+  changing the pipe's default timezone would move the bug, not close it.
+  Instants persisted before this rule (local-midnight) keep their old drift
+  on display; that is accepted for existing test data.
+- **Query-param effects that rewrite the URL are browser-only.** The
+  `?create=1` effect (like the calendar-month sibling) guards on
+  `isPlatformBrowser` — run during SSR it strips the param server-side before
+  the browser can honour it, and no unit or e2e run exercises SSR, so only
+  the guard protects the `?create=1` contract the dashboard depends on.
 
 ### Retired invariants
 

@@ -86,6 +86,38 @@
       >
     </hlm-field>
 
+    @if (model().type === 'floor') {
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="facility-create-level-index"
+          i18n="@@facility.form.levelIndexLabel"
+          >Stacking order</label
+        >
+        <input
+          hlmInput
+          id="facility-create-level-index"
+          type="number"
+          step="1"
+          data-testid="facility-create-level-index"
+          [formField]="createForm.levelIndex"
+          [attr.aria-invalid]="
+            createForm.levelIndex().touched() && createForm.levelIndex().invalid()
+          "
+          aria-describedby="facility-create-level-index-hint"
+        />
+        <hlm-field-description
+          id="facility-create-level-index-hint"
+          i18n="@@facility.form.levelIndexHint"
+          >Where this floor stacks among its siblings — ground floor is 0, a basement level is
+          negative. Ties between floors are allowed.</hlm-field-description
+        >
+        @if (createForm.levelIndex().touched() && createForm.levelIndex().invalid()) {
+          <hlm-field-error>{{ createForm.levelIndex().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    }
+
     <hlm-field>
       <label hlmFieldLabel for="facility-create-code" i18n="@@facility.form.codeLabel">Code</label>
       <input

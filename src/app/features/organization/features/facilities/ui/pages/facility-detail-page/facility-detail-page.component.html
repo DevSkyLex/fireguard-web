@@ -319,6 +319,21 @@
       </div>
 
       <div hlmTabsContent="plans" class="flex flex-col gap-4">
+        @if (facility.type === 'building') {
+          <div class="flex justify-end">
+            <a
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="facility-detail-3d-view"
+              [routerLink]="['/organizations', organizationId(), 'facilities', facilityId(), '3d']"
+            >
+              <ng-icon name="lucideBoxes" aria-hidden="true" />
+              <span i18n="@@facility.detail.view3d">3D view</span>
+            </a>
+          </div>
+        }
         @if (plans.isLoading() && plans.orderedPlans().length === 0) {
           <div
             class="flex flex-col gap-4"

@@ -19,3 +19,7 @@ export type { FacilityPlansState, FacilityPlanEditMode } from './facility-plans'
 export { facilityPlansStoreEvents } from './facility-plans';
 export { FacilityPlansStore } from './facility-plans';
 export type { FacilityPlansStoreType } from './facility-plans';
+export type { FacilityBuilding3dState } from './facility-building-3d';
+export { facilityBuilding3dStoreEvents } from './facility-building-3d';
+export { FacilityBuilding3dStore } from './facility-building-3d';
+export type { FacilityBuilding3dStoreType } from './facility-building-3d';

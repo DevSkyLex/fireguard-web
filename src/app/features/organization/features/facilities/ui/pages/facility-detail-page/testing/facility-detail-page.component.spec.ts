@@ -466,6 +466,65 @@ describe('FacilityDetailPage', () => {
     );
   });
 
+  describe('the ?tab= query parameter', () => {
+    it('should open on the tab named by the query parameter', async () => {
+      fixture = TestBed.createComponent(FacilityDetailPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
+      fixture.componentRef.setInput('facilityId', 'facility-1');
+      fixture.componentRef.setInput('tab', 'plans');
+      await fixture.whenStable();
+
+      expect((root().querySelector('[hlmTabsContent="plans"]') as HTMLElement).hidden).toBe(false);
+    });
+
+    it('should fall back to Overview for an unrecognized value', async () => {
+      fixture = TestBed.createComponent(FacilityDetailPage);
+      fixture.componentRef.setInput('organizationId', 'org-1');
+      fixture.componentRef.setInput('facilityId', 'facility-1');
+      fixture.componentRef.setInput('tab', 'nonsense');
+      await fixture.whenStable();
+
+      expect((root().querySelector('[hlmTabsContent="overview"]') as HTMLElement).hidden).toBe(
+        false,
+      );
+    });
+
+    it('should fall back to Overview when the parameter is absent', async () => {
+      await createPage();
+
+      expect((root().querySelector('[hlmTabsContent="overview"]') as HTMLElement).hidden).toBe(
+        false,
+      );
+    });
+
+    it('should switch tab when the query parameter changes after activation', async () => {
+      await createPage();
+
+      fixture.componentRef.setInput('tab', 'information');
+      await fixture.whenStable();
+
+      expect((root().querySelector('[hlmTabsContent="information"]') as HTMLElement).hidden).toBe(
+        false,
+      );
+    });
+
+    it('should write the query parameter back with replaceUrl when a tab is clicked', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: { tab: 'plans' },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        }),
+      );
+    });
+  });
+
   it('should navigate to another facility when a hierarchy node is selected', async () => {
     await createPage();
 
@@ -718,6 +777,32 @@ describe('FacilityDetailPage', () => {
       fixture.componentInstance['onPlanSelected']('plan-2');
 
       expect(planSelectPlan).toHaveBeenCalledWith('plan-2');
+    });
+  });
+
+  describe('the "3D view" link', () => {
+    it('should show for a building facility', async () => {
+      selectedFacility.set(facility({ type: 'building' }));
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      const link: HTMLAnchorElement | null = byTestId(
+        'facility-detail-3d-view',
+      ) as HTMLAnchorElement | null;
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1/3d');
+    });
+
+    it('should hide for a non-building facility', async () => {
+      selectedFacility.set(facility({ type: 'floor' }));
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-detail-3d-view')).toBeNull();
     });
   });
 

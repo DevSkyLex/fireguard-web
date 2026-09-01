@@ -1944,6 +1944,22 @@
         <source>Leave empty to create a root facility.</source>
         <target>Déjelo vacío para crear una instalación raíz.</target>
       </trans-unit>
+      <trans-unit id="facility.form.levelIndexLabel" datatype="html">
+        <source>Stacking order</source>
+        <target>Orden de apilamiento</target>
+      </trans-unit>
+      <trans-unit id="facility.form.levelIndexHint" datatype="html">
+        <source>Where this floor stacks among its siblings — ground floor is 0, a basement level is negative. Ties between floors are allowed.</source>
+        <target>Dónde se sitúa esta planta entre sus plantas hermanas — la planta baja es 0, un nivel de sótano es negativo. Se permiten valores duplicados entre plantas.</target>
+      </trans-unit>
+      <trans-unit id="facility.form.levelIndexRange" datatype="html">
+        <source>Enter a whole number between -100 and 200.</source>
+        <target>Introduzca un número entero entre -100 y 200.</target>
+      </trans-unit>
+      <trans-unit id="facility.info.levelIndexRange" datatype="html">
+        <source>Enter a whole number between -100 and 200.</source>
+        <target>Introduzca un número entero entre -100 y 200.</target>
+      </trans-unit>
       <trans-unit id="facility.cf.submitting" datatype="html">
         <source>Creating…</source>
         <target>Creando…</target>
@@ -1951,6 +1967,10 @@
       <trans-unit id="facility.form.submit" datatype="html">
         <source>Create facility</source>
         <target>Crear instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.view3d" datatype="html">
+        <source>3D view</source>
+        <target>Vista 3D</target>
       </trans-unit>
       <trans-unit id="facility.detail.qr" datatype="html">
         <source>QR code</source>
@@ -2235,6 +2255,14 @@
       <trans-unit id="facility.info.address" datatype="html">
         <source> Address </source>
         <target>Dirección</target>
+      </trans-unit>
+      <trans-unit id="facility.info.levelIndex" datatype="html">
+        <source>Stacking order</source>
+        <target>Orden de apilamiento</target>
+      </trans-unit>
+      <trans-unit id="facility.info.levelIndexHint" datatype="html">
+        <source> Where this floor stacks among its siblings — ground floor is 0, a basement level is negative. Ties between floors are allowed. </source>
+        <target>Dónde se sitúa esta planta entre sus plantas hermanas — la planta baja es 0, un nivel de sótano es negativo. Se permiten valores duplicados entre plantas.</target>
       </trans-unit>
       <trans-unit id="inspectionResult.pass" datatype="html">
         <source>Pass</source>
@@ -7201,6 +7229,66 @@
       <trans-unit id="map.control.toggleAttribution" datatype="html">
         <source>Toggle attribution</source>
         <target>Mostrar u ocultar la atribución</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.loadingAria" datatype="html">
+        <source>Loading the building model</source>
+        <target>Cargando el modelo del edificio</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.errorTitle" datatype="html">
+        <source>Couldn&apos;t load the building model</source>
+        <target>No se pudo cargar el modelo del edificio</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.errorRetry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.emptyTitle" datatype="html">
+        <source>This building has no floors yet</source>
+        <target>Este edificio todavía no tiene plantas</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.emptyDesc" datatype="html">
+        <source>Add a floor from the record&apos;s Plans tab to see it here.</source>
+        <target>Añada una planta desde la pestaña Planos de la ficha para verla aquí.</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.emptyCta" datatype="html">
+        <source>Go to Plans</source>
+        <target>Ir a Planos</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.unsupportedTitle" datatype="html">
+        <source>This device can&apos;t render the 3D view</source>
+        <target>Este dispositivo no puede mostrar la vista 3D</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.unsupportedDesc" datatype="html">
+        <source>Your browser doesn&apos;t support WebGL. View the 2D floor plan instead.</source>
+        <target>Su navegador no admite WebGL. Consulte en su lugar el plano 2D.</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.unsupportedPlanLink" datatype="html">
+        <source>View 2D plan</source>
+        <target>Ver el plano 2D</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.resetCamera" datatype="html">
+        <source>Reset camera</source>
+        <target>Restablecer la cámara</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.explodeToggle" datatype="html">
+        <source>Exploded view</source>
+        <target>Vista despiezada</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.planLink" datatype="html">
+        <source>View 2D plan</source>
+        <target>Ver el plano 2D</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.backToDetail" datatype="html">
+        <source>Back to facility</source>
+        <target>Volver al sitio</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.readyPlaceholderTitle" datatype="html">
+        <source>The 3D scene is coming soon</source>
+        <target>La escena 3D llegará próximamente</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.readyPlaceholderDesc" datatype="html">
+        <source>This building&apos;s floors are loaded and ready — the interactive 3D scene ships in a later pass.</source>
+        <target>Las plantas de este edificio están cargadas y listas — la escena 3D interactiva llegará en una etapa posterior.</target>
       </trans-unit>
       <trans-unit id="facility.map.pickOnMap" datatype="html">
         <source>Pick on map</source>

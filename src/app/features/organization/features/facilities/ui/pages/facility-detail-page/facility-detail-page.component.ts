@@ -19,9 +19,15 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 } from '@ng-icons/lucide';
+import {
+  lucideBoxes,
+  lucideCircleAlert,
+  lucideMap,
+  lucideQrCode,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
@@ -144,7 +150,17 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * segment linking to that ancestor's own detail route; a root facility
  * (empty `path`) renders nothing.
  *
- * @version 1.9.0
+ * {@link activeTab} follows the `?tab=` query parameter (`tab` input, bound
+ * by `withComponentInputBinding()`) through {@link activateTab}: an absent
+ * or unrecognized value normalizes to `overview`, and a tab click writes the
+ * parameter back with `replaceUrl: true` so browsing tabs never grows
+ * history. This is what lets the building 3D route's "Back to facility" and
+ * "View 2D plan" links (`?tab=plans`) land on the Plans tab instead of
+ * Overview. The Plans tab additionally offers a **3D view** action, gated on
+ * `facility.type === 'building'` (the endpoint's own 409 is the filet, this
+ * gate is the real guard).
+ *
+ * @version 1.10.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -180,7 +196,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
-    provideIcons({ lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
+    provideIcons({ lucideBoxes, lucideCircleAlert, lucideMap, lucideQrCode, lucideTrash2 }),
   ],
   templateUrl: './facility-detail-page.component.html',
   host: { class: 'block' },
@@ -207,6 +223,22 @@ export class FacilityDetailPage {
    * @type {InputSignal<string>}
    */
   public readonly facilityId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property tab
+   * @readonly
+   *
+   * @description
+   * The requested tab, bound from the `?tab=` query parameter
+   * (`withComponentInputBinding()`). Any value other than `information` or
+   * `plans` — including an absent parameter — normalizes to `overview`; see
+   * {@link normalizeFacilityDetailTabId}.
+   *
+   * @access public
+   * @since 1.10.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties
@@ -255,6 +287,9 @@ export class FacilityDetailPage {
 
   /** Router used for hierarchy-node navigation, the post-delete return and the load-failure redirect. */
   private readonly router: Router = inject(Router);
+
+  /** This route, used to write the `?tab=` query parameter without disturbing the path. */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
   /** Transport used directly for the one-shot "Locate address" lookup — a helper, not list state. */
   private readonly facilityService: FacilityService = inject(FacilityService);
@@ -476,6 +511,12 @@ export class FacilityDetailPage {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
 
     effect((): void => {
+      const requested: FacilityDetailTabId = normalizeFacilityDetailTabId(this.tab());
+
+      untracked((): void => this.activateTab(requested));
+    });
+
+    effect((): void => {
       const callState: CallState<FacilityOutput | null> = this.store.updateCallState();
 
       untracked((): void => this.settleUpdateWrite(callState));
@@ -515,7 +556,13 @@ export class FacilityDetailPage {
   //#region Methods
   /**
    * Method onLinkedTabActivated
-   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}; leaving the Plans tab also cancels any active editor mode, so its global shortcuts cannot fire from another tab.
+   *
+   * @description
+   * Narrows `hlm-tabs`' plain-string `tabActivated` payload, applies it
+   * through {@link activateTab}, and writes it back to the `?tab=` query
+   * parameter with `replaceUrl: true` so switching tabs never grows the
+   * browser history — only the initial navigation to the record does.
+   *
    * @access protected
    * @since 1.0.0
    * @param {string} tab - The `hlm-tabs` id that just activated.
@@ -524,14 +571,14 @@ export class FacilityDetailPage {
   protected onLinkedTabActivated(tab: string): void {
     if (tab !== 'overview' && tab !== 'information' && tab !== 'plans') return;
 
-    this.activeTab.set(tab);
-    if (tab !== 'plans' && this.plans.editMode() !== 'none') {
-      this.plans.cancelEditing();
-    }
-    if (tab === 'plans' && this.isBrowser && !this.plansLoadRequested) {
-      this.plansLoadRequested = true;
-      this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
-    }
+    this.activateTab(tab);
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /**
@@ -1123,6 +1170,34 @@ export class FacilityDetailPage {
   }
 
   /**
+   * Method activateTab
+   *
+   * @description
+   * The single path that opens a tab, whether requested by the `?tab=` query
+   * parameter or a direct click: writes {@link activeTab}, cancels any active
+   * Plans editor mode when leaving that tab, and requests the Plans tab's
+   * floor plans once, on its first activation. A no-op when the tab is
+   * already the active one.
+   *
+   * @access private
+   * @since 1.10.0
+   * @param {FacilityDetailTabId} target - The tab to activate.
+   * @returns {void}
+   */
+  private activateTab(target: FacilityDetailTabId): void {
+    if (this.activeTab() === target) return;
+
+    this.activeTab.set(target);
+    if (target !== 'plans' && this.plans.editMode() !== 'none') {
+      this.plans.cancelEditing();
+    }
+    if (target === 'plans' && this.isBrowser && !this.plansLoadRequested) {
+      this.plansLoadRequested = true;
+      this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
+    }
+  }
+
+  /**
    * Method settleUpdateWrite
    * @description Closes the open field on a successful write, or attributes the rejection to it.
    * @access private
@@ -1146,6 +1221,17 @@ export class FacilityDetailPage {
     this.editState.set({ open: state.saving, saving: null, failed: state.saving, failure });
   }
   //#endregion
+}
+
+/**
+ * Function normalizeFacilityDetailTabId
+ * @access private
+ * @since 1.10.0
+ * @param {string | undefined} value - The raw `?tab=` query parameter value.
+ * @returns {FacilityDetailTabId} `value` narrowed to a known tab id, defaulting to `overview` for anything absent or unrecognized.
+ */
+function normalizeFacilityDetailTabId(value: string | undefined): FacilityDetailTabId {
+  return value === 'information' || value === 'plans' ? value : 'overview';
 }
 
 /**

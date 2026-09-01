@@ -1,0 +1,126 @@
+<div
+  id="facility-building-3d"
+  data-testid="facility-3d-page"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6"
+>
+  @if (!store.isQueryLoaded() && !store.queryHasError()) {
+    <div
+      class="flex min-h-0 flex-1 flex-col gap-3"
+      role="status"
+      aria-label="Loading the building model"
+      i18n-aria-label="@@facility.building3d.loadingAria"
+      data-testid="facility-3d-loading"
+    >
+      <hlm-skeleton class="h-full w-full flex-1" />
+    </div>
+  } @else if (store.queryHasError()) {
+    <app-error-state
+      class="flex flex-1 flex-col items-center justify-center"
+      icon="lucideTriangleAlert"
+      title="Couldn't load the building model"
+      i18n-title="@@facility.building3d.errorTitle"
+      [description]="store.queryError()?.message ?? null"
+      data-testid="facility-3d-error"
+    >
+      <button hlmBtn type="button" (click)="retryLoad()">
+        <span i18n="@@facility.building3d.errorRetry">Retry</span>
+      </button>
+    </app-error-state>
+  } @else if (store.isEmpty()) {
+    <app-empty-state
+      class="flex flex-1 flex-col items-center justify-center"
+      icon="lucideBoxes"
+      title="This building has no floors yet"
+      i18n-title="@@facility.building3d.emptyTitle"
+      description="Add a floor from the record's Plans tab to see it here."
+      i18n-description="@@facility.building3d.emptyDesc"
+      data-testid="facility-3d-empty"
+    >
+      @if (canWrite()) {
+        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+          <span i18n="@@facility.building3d.emptyCta">Go to Plans</span>
+        </a>
+      }
+    </app-empty-state>
+  } @else if (!webglSupported()) {
+    <app-empty-state
+      class="flex flex-1 flex-col items-center justify-center"
+      icon="lucideMonitorOff"
+      title="This device can't render the 3D view"
+      i18n-title="@@facility.building3d.unsupportedTitle"
+      description="Your browser doesn't support WebGL. View the 2D floor plan instead."
+      i18n-description="@@facility.building3d.unsupportedDesc"
+      data-testid="facility-3d-unsupported"
+    >
+      <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+        <span i18n="@@facility.building3d.unsupportedPlanLink">View 2D plan</span>
+      </a>
+    </app-empty-state>
+  } @else {
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-reset-camera"
+          (click)="store.resetCamera()"
+        >
+          <ng-icon name="lucideRotateCcw" aria-hidden="true" />
+          <span i18n="@@facility.building3d.resetCamera">Reset camera</span>
+        </button>
+
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          [attr.aria-pressed]="store.exploded()"
+          data-testid="facility-3d-explode-toggle"
+          (click)="store.toggleExploded()"
+        >
+          <ng-icon name="lucideLayers" aria-hidden="true" />
+          <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-plan-2d-link"
+          [routerLink]="plansTabRoute()"
+          [queryParams]="{ tab: 'plans' }"
+        >
+          <ng-icon name="lucideMap" aria-hidden="true" />
+          <span i18n="@@facility.building3d.planLink">View 2D plan</span>
+        </a>
+
+        <a
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-back-link"
+          [routerLink]="plansTabRoute()"
+          [queryParams]="{ tab: 'plans' }"
+        >
+          <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+          <span i18n="@@facility.building3d.backToDetail">Back to facility</span>
+        </a>
+      </div>
+    </div>
+
+    <app-empty-state
+      class="flex-1"
+      icon="lucideBoxes"
+      title="The 3D scene is coming soon"
+      i18n-title="@@facility.building3d.readyPlaceholderTitle"
+      description="This building's floors are loaded and ready — the interactive 3D scene ships in a later pass."
+      i18n-description="@@facility.building3d.readyPlaceholderDesc"
+    />
+  }
+</div>

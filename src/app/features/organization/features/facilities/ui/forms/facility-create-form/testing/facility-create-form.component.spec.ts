@@ -63,6 +63,7 @@ describe('FacilityCreateForm', () => {
       address: '',
       latitude: '',
       longitude: '',
+      levelIndex: '',
       ...draft,
     });
     await fixture.whenStable();
@@ -125,6 +126,7 @@ describe('FacilityCreateForm', () => {
         address: undefined,
         latitude: undefined,
         longitude: undefined,
+        levelIndex: undefined,
       },
     ]);
   });
@@ -291,6 +293,95 @@ describe('FacilityCreateForm', () => {
 
     expect(cancelIndex).toBeGreaterThanOrEqual(0);
     expect(cancelIndex).toBeLessThan(submitIndex);
+  });
+
+  describe('the level-index field', () => {
+    const levelIndexField = (): HTMLElement | null =>
+      element.querySelector('[data-testid="facility-create-level-index"]');
+
+    it('should stay hidden for a non-floor type', async () => {
+      await setModel({ type: 'building' });
+
+      expect(levelIndexField()).toBeNull();
+    });
+
+    it('should show once the picked type is floor', async () => {
+      await setModel({ type: 'floor' });
+
+      expect(levelIndexField()).not.toBeNull();
+    });
+
+    it('should send the parsed level index only when the type is floor', async () => {
+      const emitted: CreateFacilityInput[] = [];
+      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ type: 'floor' });
+      await fill('facility-create-name', 'Level 2');
+      await fill('facility-create-level-index', '2');
+      await submit();
+
+      expect(emitted).toEqual([expect.objectContaining({ levelIndex: 2 })]);
+    });
+
+    it('should send undefined for a blank level index', async () => {
+      const emitted: CreateFacilityInput[] = [];
+      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ type: 'floor' });
+      await fill('facility-create-name', 'Ground floor');
+      await submit();
+
+      expect(emitted).toEqual([expect.objectContaining({ levelIndex: undefined })]);
+    });
+
+    it('should refuse a level index below -100', async () => {
+      const emitted: CreateFacilityInput[] = [];
+      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ type: 'floor' });
+      await fill('facility-create-name', 'Deep basement');
+      await fill('facility-create-level-index', '-101');
+      await submit();
+
+      expect(emitted).toEqual([]);
+      expect(element.textContent).toContain('Enter a whole number between -100 and 200.');
+    });
+
+    it('should refuse a level index above 200', async () => {
+      const emitted: CreateFacilityInput[] = [];
+      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ type: 'floor' });
+      await fill('facility-create-name', 'Too high');
+      await fill('facility-create-level-index', '201');
+      await submit();
+
+      expect(emitted).toEqual([]);
+      expect(element.textContent).toContain('Enter a whole number between -100 and 200.');
+    });
+
+    it('should refuse a non-integer level index', async () => {
+      const emitted: CreateFacilityInput[] = [];
+      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
+        emitted.push(value);
+      });
+
+      await setModel({ type: 'floor' });
+      await fill('facility-create-name', 'Mezzanine');
+      await fill('facility-create-level-index', '1.5');
+      await submit();
+
+      expect(emitted).toEqual([]);
+      expect(element.textContent).toContain('Enter a whole number between -100 and 200.');
+    });
   });
 
   describe('the "Locate address" lookup', () => {

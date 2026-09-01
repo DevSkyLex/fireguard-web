@@ -30,9 +30,47 @@ model, not the field, so the form does not start dirty.
 - `/organizations/:organizationId/facilities/map`
 - `/organizations/:organizationId/facilities/create`
 - `/organizations/:organizationId/facilities/:facilityId`
+- `/organizations/:organizationId/facilities/:facilityId/3d`
 
 `map` is listed ahead of `:facilityId` in `FACILITY_ROUTES` so it is never
-swallowed as a facility id.
+swallowed as a facility id; `:facilityId/3d` needs no such care, being two
+segments against `:facilityId`'s one.
+
+## Building 3D View
+
+`/:facilityId/3d` (`ui/pages/facility-building-3d-page`, `FacilityBuilding3dPage`)
+is a dedicated, full-space route — not a tab of `FacilityDetailPage` — over
+`FacilityBuilding3dStore` (`state/facility-building-3d`) and
+`FacilityService.getBuildingModel`. This first pass (P0) ships no three.js
+scene: the page renders one of five states — a full-frame skeleton while the
+model is unresolved (also the exact SSR output, since the store's fetch is
+browser-only), `app-error-state` with a retry, `app-empty-state` when the
+building has no floors (a `FACILITIES_WRITE`-gated "Go to Plans" call to
+action), a dedicated incompatible-device state when this browser lacks
+WebGL (probed inline via `canvas.getContext('webgl2') ?? canvas.getContext('webgl')`,
+never a shared `utils/` helper for a three-line check), and — once a later
+pass adds the scene — an explicit placeholder, beside a toolbar already wired
+to the store (reset camera, toggle exploded layout, link to the 2D plan, back
+to the record).
+
+The route reuses `facilityResolver` and `facilityTitleResolver` unchanged and
+additionally provides `FacilityStore` and `FacilityBuilding3dStore`.
+
+`FacilityDetailPage.activeTab` follows the `?tab=` query parameter (bound
+through `withComponentInputBinding()`), normalizing any absent or
+unrecognized value to `overview`; a tab click writes the parameter back with
+`replaceUrl: true` so switching tabs never grows browser history. This is
+what lets this route's "Go to Plans"/"View 2D plan"/"Back to facility" links
+(`?tab=plans`) land on the Plans tab. The Plans tab itself offers a **3D
+view** action, shown only when `facility.type === 'building'` — the
+endpoint's own `409` on any other type is the filet, this client-side gate is
+the real guard.
+
+Floors carry an optional `levelIndex` (`number | null`, `[-100, 200]`,
+ground floor `0`, a basement level negative) — their stacking order for this
+view. It is editable only where it means something: the create form and
+`FacilityInformationPanel`'s in-place editor both show it only when `type`
+is `floor`. Siblings are not required to have distinct values.
 
 The list toolbar's **Export** button downloads a server-side CSV
 (`FacilityService.exportCsv`, `GET
@@ -496,6 +534,9 @@ Primary stores:
   `worstFacilities`) — see "Compliance Layer (Facility Map)" above.
 - `FacilityPlansStore` — tab-scoped, the Plans tab's floor plans (see
   "Facility Attachments and Floor Plans" above).
+- `FacilityBuilding3dStore` — route-scoped, the `/:facilityId/3d` building
+  model plus the view-local scene selection/isolation/exploded/camera-reset
+  state a later three.js pass renders against (see "Building 3D View" above).
 
 Primary services:
 
@@ -597,3 +638,4 @@ organization-scoped read never carries `revision`, then sends the required
 - Drawing a zone outline requires at least three vertices, mirrored client-side (`isClosablePolygon`) ahead of the backend's own check.
 - Every editor write is permission-gated: `FACILITIES_WRITE` for a zone outline, `EQUIPMENT_WRITE` for an equipment pin — never inferred from the other.
 - `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page navigates.
+- `/:facilityId/3d` is browser-only: `FacilityBuilding3dStore.loadModel` never fires on the server, and `FacilityBuilding3dPage` orchestrates it (route params, WebGL detection, the five states) — no child of that page ever injects a store or reads `window`/`document` outside `afterNextRender`.

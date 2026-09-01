@@ -18,4 +18,5 @@ export interface FacilityCreateFormDraft {
   readonly address: string;
   readonly latitude: string;
   readonly longitude: string;
+  readonly levelIndex: string;
 }

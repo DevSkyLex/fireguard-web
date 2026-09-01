@@ -45,6 +45,7 @@ const EMPTY_VALUES: FacilityCreateFormDraft = {
   address: '',
   latitude: '',
   longitude: '',
+  levelIndex: '',
 };
 
 /** Trims a free-text field, sending `undefined` rather than an empty string. */
@@ -75,6 +76,28 @@ function isCoordinateInRange(value: string, bounds: readonly [number, number]): 
   return Number.isFinite(parsed) && parsed >= bounds[0] && parsed <= bounds[1];
 }
 
+/** The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object. */
+const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
+
+/** Whether a level-index draft is either blank or a whole number within {@link LEVEL_INDEX_BOUNDS}. */
+function isLevelIndexInRange(value: string): boolean {
+  const trimmedValue: string = value.trim();
+  if (trimmedValue === '') return true;
+
+  const parsed: number = Number(trimmedValue);
+
+  return (
+    Number.isInteger(parsed) && parsed >= LEVEL_INDEX_BOUNDS[0] && parsed <= LEVEL_INDEX_BOUNDS[1]
+  );
+}
+
+/** Parses a level-index draft to an integer, or `undefined` for a blank string. */
+function parsedLevelIndex(value: string): number | undefined {
+  const trimmedValue: string = value.trim();
+
+  return trimmedValue === '' ? undefined : Number(trimmedValue);
+}
+
 /**
  * Component FacilityCreateForm
  * @class FacilityCreateForm
@@ -96,7 +119,12 @@ function isCoordinateInRange(value: string, bounds: readonly [number, number]): 
  * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
  * without owning the field tree itself.
  *
- * @version 1.2.0
+ * The stacking-order field (`levelIndex`) only shows once `type` is `floor`
+ * — it means nothing on any other type — and is optional, validated
+ * client-side as a whole number in `[-100, 200]` mirroring the backend's
+ * `FacilityLevelIndex` value object.
+ *
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -310,6 +338,14 @@ export class FacilityCreateForm {
             message: $localize`:@@facility.form.longitudeRange:Enter a longitude between -180 and 180.`,
           },
     );
+    validate(path.levelIndex, ({ value }): ValidationError | null =>
+      isLevelIndexInRange(value())
+        ? null
+        : {
+            kind: 'levelIndexRange',
+            message: $localize`:@@facility.form.levelIndexRange:Enter a whole number between -100 and 200.`,
+          },
+    );
   });
 
   /** The facility types offered. */
@@ -461,6 +497,7 @@ export class FacilityCreateForm {
       address: trimmed(draft.address),
       latitude: parsedCoordinate(draft.latitude),
       longitude: parsedCoordinate(draft.longitude),
+      levelIndex: draft.type === 'floor' ? parsedLevelIndex(draft.levelIndex) : undefined,
     });
   }
 

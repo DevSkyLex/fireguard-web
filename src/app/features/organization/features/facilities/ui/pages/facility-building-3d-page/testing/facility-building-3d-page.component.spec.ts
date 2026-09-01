@@ -7,28 +7,158 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type { FacilityBuildingModelOutput } from '@features/organization/features/facilities/models';
 import { FacilityBuilding3dStore } from '@features/organization/features/facilities/state';
 import { FacilityBuilding3dPage } from '../facility-building-3d-page.component';
+
+/**
+ * The page renders `app-facility-building-3d-scene` in its ready branch,
+ * which mounts a real `THREE.WebGLRenderer` — unavailable in jsdom. This
+ * page spec is not the scene's own boundary test (that lives in the
+ * scene's `testing/`), so `three` and `OrbitControls` are faked here just
+ * enough for a silent, no-op mount: the fixture's `queryData` stub carries
+ * no floors, so none of the geometry-building utils are ever invoked.
+ */
+vi.mock('three', () => {
+  class FakeColor {
+    public setStyle = vi.fn();
+    public clone = vi.fn(() => new FakeColor());
+    public copy = vi.fn();
+    public offsetHSL = vi.fn();
+  }
+  class FakeObject3D {
+    public position = { x: 0, y: 0, z: 0, set: vi.fn() };
+    public children: FakeObject3D[] = [];
+    public userData: Record<string, unknown> = {};
+    public add(...objects: FakeObject3D[]): void {
+      this.children.push(...objects);
+    }
+    public remove(...objects: FakeObject3D[]): void {
+      for (const object of objects) {
+        const index = this.children.indexOf(object);
+        if (index >= 0) this.children.splice(index, 1);
+      }
+    }
+    public traverse(callback: (object: FakeObject3D) => void): void {
+      callback(this);
+      for (const child of this.children) child.traverse(callback);
+    }
+    public clear(): void {
+      this.children = [];
+    }
+  }
+  class FakeGroup extends FakeObject3D {}
+  class FakeScene extends FakeObject3D {
+    public background: unknown;
+  }
+  class FakeCamera {
+    public aspect = 1;
+    public near = 0.1;
+    public far = 1000;
+    public position = { x: 0, y: 0, z: 0, set: vi.fn() };
+    public updateProjectionMatrix = vi.fn();
+  }
+  class FakeRenderer {
+    public setPixelRatio = vi.fn();
+    public setSize = vi.fn();
+    public render = vi.fn();
+    public dispose = vi.fn();
+  }
+  class FakeRaycaster {
+    public setFromCamera = vi.fn();
+    public intersectObjects = vi.fn(() => []);
+  }
+  class FakeVector2 {
+    public set = vi.fn();
+  }
+  class FakeVector3 {
+    public x = 0;
+    public y = 0;
+    public z = 0;
+  }
+  class FakeBox3 {
+    public setFromObject = vi.fn(function (this: FakeBox3): FakeBox3 {
+      return this;
+    });
+    public isEmpty = vi.fn(() => true);
+    public hasNoGeometry = vi.fn(() => false);
+    public getCenter = vi.fn((vector: FakeVector3) => vector);
+    public getSize = vi.fn((vector: FakeVector3) => vector);
+  }
+  class FakeLight {
+    public position = { set: vi.fn() };
+  }
+
+  return {
+    WebGLRenderer: FakeRenderer,
+    Scene: FakeScene,
+    Group: FakeGroup,
+    PerspectiveCamera: FakeCamera,
+    HemisphereLight: FakeLight,
+    DirectionalLight: FakeLight,
+    Raycaster: FakeRaycaster,
+    Vector2: FakeVector2,
+    Vector3: FakeVector3,
+    Box3: FakeBox3,
+    Color: FakeColor,
+  };
+});
+
+vi.mock('three/examples/jsm/controls/OrbitControls.js', () => {
+  class FakeOrbitControls {
+    public enableDamping = false;
+    public target = { copy: vi.fn() };
+    public addEventListener = vi.fn();
+    public update = vi.fn();
+    public dispose = vi.fn();
+  }
+  return { OrbitControls: FakeOrbitControls };
+});
+
+const MODEL: FacilityBuildingModelOutput = {
+  buildingId: 'building-1',
+  buildingName: 'HQ Tower',
+  floors: [],
+};
 
 const createStoreStub = (): {
   isQueryLoaded: WritableSignal<boolean>;
   queryHasError: WritableSignal<boolean>;
   queryError: WritableSignal<StoreError | null>;
+  queryData: WritableSignal<FacilityBuildingModelOutput | null>;
   isEmpty: WritableSignal<boolean>;
+  hasNoGeometry: WritableSignal<boolean>;
   exploded: WritableSignal<boolean>;
+  selectedRoomId: WritableSignal<string | null>;
+  selectedFloorId: WritableSignal<string | null>;
+  isolatedFloorId: WritableSignal<string | null>;
+  cameraResetToken: WritableSignal<number>;
   loadModel: ReturnType<typeof vi.fn>;
   resetCamera: ReturnType<typeof vi.fn>;
   toggleExploded: ReturnType<typeof vi.fn>;
+  selectRoom: ReturnType<typeof vi.fn>;
+  selectFloor: ReturnType<typeof vi.fn>;
+  clearSelection: ReturnType<typeof vi.fn>;
 } => ({
   isQueryLoaded: signal<boolean>(false),
   queryHasError: signal<boolean>(false),
   queryError: signal<StoreError | null>(null),
+  queryData: signal<FacilityBuildingModelOutput | null>(MODEL),
   isEmpty: signal<boolean>(false),
+  hasNoGeometry: signal<boolean>(false),
   exploded: signal<boolean>(false),
+  selectedRoomId: signal<string | null>(null),
+  selectedFloorId: signal<string | null>(null),
+  isolatedFloorId: signal<string | null>(null),
+  cameraResetToken: signal<number>(0),
   loadModel: vi.fn(),
   resetCamera: vi.fn(),
   toggleExploded: vi.fn(),
+  selectRoom: vi.fn(),
+  selectFloor: vi.fn(),
+  clearSelection: vi.fn(),
 });
 
 const createPage = async (): Promise<ComponentFixture<FacilityBuilding3dPage>> => {
@@ -55,6 +185,14 @@ describe('FacilityBuilding3dPage', () => {
         provideRouter([]),
         { provide: FacilityBuilding3dStore, useValue: store },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal<ThemeMode>('light'),
+            resolvedTheme: signal<'light' | 'dark'>('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
   });
@@ -113,6 +251,25 @@ describe('FacilityBuilding3dPage', () => {
     ) as HTMLElement;
     expect(emptyState).not.toBeNull();
     expect(emptyState.querySelector('a')).not.toBeNull();
+  });
+
+  it('distinguishes a building whose floors carry no drawn plan from one with no floors', async () => {
+    // A very ordinary state: floors are created long before anyone digitizes
+    // a plan. Before this branch existed the scene simply rendered an empty
+    // canvas with nothing to explain it.
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.isEmpty.set(false);
+    store.hasNoGeometry.set(true);
+    await fixture.whenStable();
+
+    const noGeometry = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-no-geometry"]',
+    ) as HTMLElement;
+    expect(noGeometry).not.toBeNull();
+    expect(noGeometry.querySelector('a')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="facility-3d-empty"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('canvas')).toBeNull();
   });
 
   it('hides the "Go to Plans" action from a read-only member', async () => {

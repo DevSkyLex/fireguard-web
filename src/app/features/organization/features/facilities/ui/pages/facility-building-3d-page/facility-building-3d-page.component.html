@@ -42,6 +42,22 @@
         </a>
       }
     </app-empty-state>
+  } @else if (store.hasNoGeometry()) {
+    <app-empty-state
+      class="flex flex-1 flex-col items-center justify-center"
+      icon="lucideBoxes"
+      title="No floor has a drawn plan yet"
+      i18n-title="@@facility.building3d.noGeometryTitle"
+      description="The 3D view is built from the outlines drawn on each floor's plan. Draw them from the record's Plans tab and they will appear here."
+      i18n-description="@@facility.building3d.noGeometryDesc"
+      data-testid="facility-3d-no-geometry"
+    >
+      @if (canWrite()) {
+        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+          <span i18n="@@facility.building3d.noGeometryCta">Go to Plans</span>
+        </a>
+      }
+    </app-empty-state>
   } @else if (!webglSupported()) {
     <app-empty-state
       class="flex flex-1 flex-col items-center justify-center"
@@ -114,13 +130,19 @@
       </div>
     </div>
 
-    <app-empty-state
-      class="flex-1"
-      icon="lucideBoxes"
-      title="The 3D scene is coming soon"
-      i18n-title="@@facility.building3d.readyPlaceholderTitle"
-      description="This building's floors are loaded and ready — the interactive 3D scene ships in a later pass."
-      i18n-description="@@facility.building3d.readyPlaceholderDesc"
+    <app-facility-building-3d-scene
+      class="min-h-0 flex-1"
+      [model]="store.queryData()!"
+      [selectedRoomId]="store.selectedRoomId()"
+      [selectedFloorId]="store.selectedFloorId()"
+      [isolatedFloorId]="store.isolatedFloorId()"
+      [exploded]="store.exploded()"
+      [cameraResetToken]="store.cameraResetToken()"
+      (roomActivated)="store.selectRoom($event)"
+      (floorActivated)="store.selectFloor($event)"
+      (roomHovered)="hoveredRoomId.set($event)"
+      (backgroundActivated)="store.clearSelection()"
+      (renderingUnavailable)="onRenderingUnavailable()"
     />
   }
 </div>

@@ -7254,6 +7254,18 @@
         <source>Go to Plans</source>
         <target>Ir a Planos</target>
       </trans-unit>
+      <trans-unit id="facility.building3d.noGeometryTitle" datatype="html">
+        <source>No floor has a drawn plan yet</source>
+        <target>Ninguna planta tiene todavía un plano dibujado</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.noGeometryDesc" datatype="html">
+        <source>The 3D view is built from the outlines drawn on each floor&apos;s plan. Draw them from the record&apos;s Plans tab and they will appear here.</source>
+        <target>La vista 3D se construye a partir de los contornos dibujados en el plano de cada planta. Dibújelos desde la pestaña Planos de la ficha y aparecerán aquí.</target>
+      </trans-unit>
+      <trans-unit id="facility.building3d.noGeometryCta" datatype="html">
+        <source>Go to Plans</source>
+        <target>Ir a los planos</target>
+      </trans-unit>
       <trans-unit id="facility.building3d.unsupportedTitle" datatype="html">
         <source>This device can&apos;t render the 3D view</source>
         <target>Este dispositivo no puede mostrar la vista 3D</target>
@@ -7282,13 +7294,9 @@
         <source>Back to facility</source>
         <target>Volver al sitio</target>
       </trans-unit>
-      <trans-unit id="facility.building3d.readyPlaceholderTitle" datatype="html">
-        <source>The 3D scene is coming soon</source>
-        <target>La escena 3D llegará próximamente</target>
-      </trans-unit>
-      <trans-unit id="facility.building3d.readyPlaceholderDesc" datatype="html">
-        <source>This building&apos;s floors are loaded and ready — the interactive 3D scene ships in a later pass.</source>
-        <target>Las plantas de este edificio están cargadas y listas — la escena 3D interactiva llegará en una etapa posterior.</target>
+      <trans-unit id="facility.building3dScene.ariaLabel" datatype="html">
+        <source>3D view of <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> floor(s)</source>
+        <target>Vista 3D de <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> planta(s)</target>
       </trans-unit>
       <trans-unit id="facility.map.pickOnMap" datatype="html">
         <source>Pick on map</source>

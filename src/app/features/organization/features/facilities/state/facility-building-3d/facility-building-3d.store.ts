@@ -103,6 +103,22 @@ export const FacilityBuilding3dStore = signalStore(
 
     /** True once the model has loaded and the building has no floors. */
     isEmpty: computed<boolean>(() => store.isQueryLoaded() && store.floors().length === 0),
+
+    /**
+     * True when the building has floors but not one of them carries geometry.
+     *
+     * A distinct state from {@link isEmpty}, and a common one: floors are
+     * created long before anyone digitizes a plan. Both would otherwise render
+     * an empty canvas with nothing to explain it — the scene has nothing to
+     * extrude, but the record is not empty either, and the remedy is different
+     * (digitize a plan, rather than add a floor).
+     */
+    hasNoGeometry: computed<boolean>(
+      () =>
+        store.isQueryLoaded() &&
+        store.floors().length > 0 &&
+        store.floors().every((floor) => floor.outline === null && floor.rooms.length === 0),
+    ),
   })),
 
   withMethods(

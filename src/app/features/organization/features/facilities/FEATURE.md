@@ -41,17 +41,76 @@ segments against `:facilityId`'s one.
 `/:facilityId/3d` (`ui/pages/facility-building-3d-page`, `FacilityBuilding3dPage`)
 is a dedicated, full-space route — not a tab of `FacilityDetailPage` — over
 `FacilityBuilding3dStore` (`state/facility-building-3d`) and
-`FacilityService.getBuildingModel`. This first pass (P0) ships no three.js
-scene: the page renders one of five states — a full-frame skeleton while the
-model is unresolved (also the exact SSR output, since the store's fetch is
-browser-only), `app-error-state` with a retry, `app-empty-state` when the
-building has no floors (a `FACILITIES_WRITE`-gated "Go to Plans" call to
-action), a dedicated incompatible-device state when this browser lacks
-WebGL (probed inline via `canvas.getContext('webgl2') ?? canvas.getContext('webgl')`,
-never a shared `utils/` helper for a three-line check), and — once a later
-pass adds the scene — an explicit placeholder, beside a toolbar already wired
-to the store (reset camera, toggle exploded layout, link to the 2D plan, back
-to the record).
+`FacilityService.getBuildingModel`. The page renders one of five states — a
+full-frame skeleton while the model is unresolved (also the exact SSR output,
+since the store's fetch is browser-only), `app-error-state` with a retry,
+`app-empty-state` when the building has no floors (a `FACILITIES_WRITE`-gated
+"Go to Plans" call to action), a dedicated incompatible-device state when this
+browser lacks WebGL (probed inline via
+`canvas.getContext('webgl2') ?? canvas.getContext('webgl')`, never a shared
+`utils/` helper for a three-line check), and — once loaded and WebGL-capable —
+`ui/components/facility-building-3d-scene` (`FacilityBuilding3dScene`, P1)
+beside a toolbar wired to the store (reset camera, toggle exploded layout,
+link to the 2D plan, back to the record). The scene is presentational
+(inputs/outputs only, `ARCHITECTURE.md` §10.3) — the page owns every store
+call its outputs trigger, and reacts to its `renderingUnavailable` output by
+falling back to the same incompatible-device state (a `getContext` failure
+the page's own inline probe did not catch, or a lost WebGL context later).
+
+### Scene rendering (P1)
+
+`FacilityBuilding3dScene` mounts `three` and `OrbitControls` through
+`await import()`, browser-only, so neither ships in this route's initial
+chunk (measured: `three` lands in its own ~726 KB lazy chunk, not the
+initial bundle). One `THREE.Group` per floor (`buildFloorGroup`) is lit by a
+`HemisphereLight` and a directional light over the geometry utils'
+`MeshStandardMaterial` — the utils are consumed as given, not rewritten, so
+"no PBR" is honoured in spirit (metalness defaults to `0`, lighting like a
+diffuse surface) rather than by material type. A room's tint comes from
+`ROOM_TYPE_HUE_OFFSET`, a hue rotation of the theme's resolved `roomFill` per
+`FacilityType`, so it distinguishes room types at a glance without ever
+standing in for `status` — reserved for the P2 detail panel, never scene
+colour alone (`PRODUCT.md`).
+
+**Lifecycle invariant.** A monotonic `generation` counter guards every
+asynchronous continuation (`await import('three')`, `await import(OrbitControls)`):
+a mount that resolves after the component already tore down checks its
+captured generation and aborts rather than attaching a live renderer to a
+dead scene. Teardown (the mount effect's cleanup, i.e. component destroy, and
+`webglcontextlost`) bumps the counter first, cancels every pending
+`requestAnimationFrame`, disconnects the `ResizeObserver`, removes every
+canvas listener, disposes `OrbitControls` and the renderer, and walks the
+building group exactly once (`disposeBuildingGroup`) disposing each distinct
+geometry and material a single time — the utils share materials across
+meshes, so a naive per-mesh `dispose()` would double-free some and miss
+others. Acceptance criterion: five route round-trips leave
+`WebGLRenderer.info.memory` back at its starting counters and no listener,
+observer, or RAF outstanding.
+
+**Rendering is on demand**, never a permanent `requestAnimationFrame` loop.
+`invalidate()` coalesces any number of triggers (an `OrbitControls` `change`
+event, a resize, a selection/isolation/theme change, a coalesced hover
+raycast) into at most one `renderer.render` per animation frame. The only
+bounded loop is the exploded-layout tween, which stops itself once its
+duration elapses and is skipped outright — jumping straight to the target —
+under `prefers-reduced-motion`. Isolation dims a non-isolated floor's
+materials rather than hiding the group; picking exclusion by floor is
+already `pickTarget`'s job. Hover is coalesced to at most one raycast per
+frame and never touches a store (`roomHovered` is the only trace it leaves);
+a tap is disambiguated from an `OrbitControls` drag by travel distance alone
+(`TAP_THRESHOLD_PX`, duplicated locally from `FacilityPlanEditor`'s own
+constant — only two call sites so far), so a tablet with no hover still
+selects directly on tap. The canvas carries `role="img"` and an `aria-label`
+naming the building and its floor count; keyboard navigation (a floor
+navigator, a room list) is deferred to P2.
+
+The scene is not tested in render (jsdom has no WebGL) — its own
+`testing/` spec covers the skeleton-before-mount branch, the
+`renderingUnavailable` branch (a `getContext` failure, which jsdom's default
+`canvas.getContext` already triggers for a real `THREE.WebGLRenderer`), and
+input-driven `aria-label` plumbing. A page-level spec exercising the ready
+branch fakes `three`/`OrbitControls` at the module level instead, since a
+real mount attempt in jsdom has no working WebGL.
 
 The route reuses `facilityResolver` and `facilityTitleResolver` unchanged and
 additionally provides `FacilityStore` and `FacilityBuilding3dStore`.
@@ -639,3 +698,4 @@ organization-scoped read never carries `revision`, then sends the required
 - Every editor write is permission-gated: `FACILITIES_WRITE` for a zone outline, `EQUIPMENT_WRITE` for an equipment pin — never inferred from the other.
 - `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page navigates.
 - `/:facilityId/3d` is browser-only: `FacilityBuilding3dStore.loadModel` never fires on the server, and `FacilityBuilding3dPage` orchestrates it (route params, WebGL detection, the five states) — no child of that page ever injects a store or reads `window`/`document` outside `afterNextRender`.
+- `FacilityBuilding3dScene` never injects a store or service and never navigates itself — it emits, the page acts. Its mount is guarded by a monotonic generation token so an async continuation that resolves after teardown never attaches a live renderer to a dead scene, and its teardown disposes every geometry and material in the building group exactly once, cancels every pending `requestAnimationFrame`, and disconnects its `ResizeObserver` — no permanent render loop ever runs; rendering is invalidate-on-demand.

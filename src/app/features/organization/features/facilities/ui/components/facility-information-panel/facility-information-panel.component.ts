@@ -16,6 +16,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideLocateFixed, lucideMapPin } from '@ng-icons/lucide';
 import type {
   FacilityEditState,
   FacilityEditTarget,
@@ -78,7 +80,8 @@ function parseLevelIndex(value: string): number | null {
  */
 @Component({
   selector: 'app-facility-information-panel',
-  imports: [RouterLink, InplaceField, FacilityMapPickerDialog, HlmButton, HlmInput],
+  imports: [RouterLink, InplaceField, FacilityMapPickerDialog, HlmButton, HlmInput, NgIcon],
+  providers: [provideIcons({ lucideLocateFixed, lucideMapPin })],
   templateUrl: './facility-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -290,6 +293,51 @@ export class FacilityInformationPanel {
     if (parsed < LEVEL_INDEX_BOUNDS[0] || parsed > LEVEL_INDEX_BOUNDS[1]) return false;
 
     return parsed !== stored;
+  });
+
+  /**
+   * Property coordinatesError
+   * @readonly
+   *
+   * @description
+   * Why a coordinate draft cannot be saved, or `null` when it is acceptable.
+   *
+   * The pair rule was enforced silently before: `canSaveCoordinates` returned
+   * `false` and the Save button simply greyed out, leaving the user to guess
+   * that a latitude without a longitude is not half a location. The create
+   * form has always said so out loud; this says the same thing.
+   *
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly coordinatesError: Signal<string | null> = computed<string | null>(() => {
+    const rawLatitude: string = this.latitudeDraft().trim();
+    const rawLongitude: string = this.longitudeDraft().trim();
+
+    if (rawLatitude === '' && rawLongitude === '') return null;
+
+    if (rawLatitude === '' || rawLongitude === '') {
+      return $localize`:@@facility.info.coordinatesIncomplete:Enter both latitude and longitude, or leave both empty.`;
+    }
+
+    const latitude: number | null = parseCoordinate(rawLatitude);
+    const longitude: number | null = parseCoordinate(rawLongitude);
+
+    if (
+      latitude === null ||
+      longitude === null ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return $localize`:@@facility.info.coordinatesRange:Latitude runs from -90 to 90, longitude from -180 to 180.`;
+    }
+
+    return null;
   });
 
   /**

@@ -23,7 +23,15 @@ const overlay = (
   imageHeight: 800,
   zones: [],
   equipment: [
-    { equipmentId: 'equipment-1', name: 'Extinguisher', status: 'operational', x: 0.5, y: 0.25 },
+    {
+      equipmentId: 'equipment-1',
+      type: 'fire_extinguisher',
+      serialNumber: 'SN-1',
+      locationLabel: 'Extinguisher',
+      status: 'operational',
+      x: 0.5,
+      y: 0.25,
+    },
   ],
   ...overrides,
 });

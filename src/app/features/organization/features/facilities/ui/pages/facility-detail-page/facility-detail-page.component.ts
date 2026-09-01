@@ -74,6 +74,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { equipmentPlanDetail, equipmentPlanLabel } from '../../../utils';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
 import { FacilityPlanEditor } from '../../components/facility-plan-editor';
@@ -396,6 +397,18 @@ export class FacilityDetailPage {
   );
 
   /**
+   * Names a pinned equipment item the way an operator would — its location
+   * when recorded, else its translated type. Never the raw enum the API
+   * carries.
+   */
+  protected readonly equipmentLabelOf: (pin: FacilityPlanOverlayEquipment) => string = (pin) =>
+    equipmentPlanLabel(pin);
+
+  /** The secondary line under {@link equipmentLabelOf} — type and serial, or nothing. */
+  protected readonly equipmentDetailOf: (pin: FacilityPlanOverlayEquipment) => string = (pin) =>
+    equipmentPlanDetail(pin);
+
+  /**
    * Property zoneGeometryDialogName
    * @readonly
    * @description The zone dialog's display name — the overlay zone's when it exists, else the picked draw candidate's (a zone with no geometry yet).
@@ -426,7 +439,7 @@ export class FacilityDetailPage {
    */
   protected readonly pinPositionDialogName: Signal<string> = computed<string>(() => {
     const existing: FacilityPlanOverlayEquipment | null = this.pinPositionDialogPin();
-    if (existing) return existing.name;
+    if (existing) return equipmentPlanLabel(existing);
 
     const equipmentId: string | null = this.pinPositionDialogEquipmentId();
     if (!equipmentId) return '';
@@ -435,7 +448,13 @@ export class FacilityDetailPage {
       .availableEquipmentCandidates()
       .find((item) => item.id === equipmentId);
 
-    return candidate ? (candidate.locationLabel ?? candidate.type) : '';
+    return candidate
+      ? equipmentPlanLabel({
+          type: candidate.type,
+          serialNumber: candidate.serialNumber ?? null,
+          locationLabel: candidate.locationLabel ?? null,
+        })
+      : '';
   });
 
   /**

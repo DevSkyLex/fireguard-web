@@ -15,6 +15,7 @@ import {
   type FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
 import type { PlanPoint } from '@shared/plan-viewer';
+import { equipmentPlanLabel } from '../../../utils';
 import { EQUIPMENT_PIN_SEVERITY_ICON_CLASS } from './constants/equipment-pin-severity-icon-class.constants';
 import type { FacilityPlanOverlayEquipmentView, FacilityPlanOverlayZoneView } from './models';
 import { normalizedPointToPixel, polygonCentroid } from './utils';
@@ -178,7 +179,7 @@ export class FacilityPlanOverlay {
           ),
           descriptor,
           iconClass: EQUIPMENT_PIN_SEVERITY_ICON_CLASS[descriptor.severity],
-          ariaLabel: $localize`:@@facility.plans.overlay.equipmentAria:${item.name}:name: — ${descriptor.label}:status:`,
+          ariaLabel: $localize`:@@facility.plans.overlay.equipmentAria:${equipmentPlanLabel(item)}:name: — ${descriptor.label}:status:`,
         };
       });
     });

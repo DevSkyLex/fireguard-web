@@ -361,7 +361,8 @@ export class FacilityCreateForm {
    *
    * @description
    * Everything the API said about the rejected request, as flat lines shown
-   * above the form.
+   * above the form. A refusal without violations (e.g. a 409 quota refusal)
+   * falls back to the normalized error's own message before the generic line.
    *
    * @access protected
    * @since 1.0.0
@@ -379,8 +380,12 @@ export class FacilityCreateForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const message: unknown = (error as { readonly message?: unknown }).message;
+
+    return typeof message === 'string' && message.length > 0
+      ? [message]
       : [$localize`:@@facility.cf.createFailed:The facility could not be created.`];
   });
 

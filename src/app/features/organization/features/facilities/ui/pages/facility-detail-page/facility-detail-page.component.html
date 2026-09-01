@@ -98,6 +98,20 @@
               This facility has no sub-facilities.
             </p>
           }
+          @if (canWrite()) {
+            <a
+              hlmBtn
+              variant="outline"
+              size="sm"
+              class="mx-2 mt-1 self-start max-sm:min-h-11"
+              data-testid="facility-detail-add-sub-facility"
+              [routerLink]="['/organizations', organizationId(), 'facilities', 'create']"
+              [queryParams]="{ parent: facilityId() }"
+            >
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              <span i18n="@@facility.detail.addSubFacility">Add sub-facility</span>
+            </a>
+          }
         </section>
 
         <div hlmCard>

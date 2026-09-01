@@ -83,6 +83,82 @@ describe('OtpForm', () => {
     expect(buttons.length).toBe(1);
   });
 
+  it('should render the server error message when verification failed', async () => {
+    fixture.componentRef.setInput('serverError', {
+      error: new Error('Invalid code.'),
+      message: 'Invalid code.',
+      code: 400,
+      retryable: false,
+      timestamp: Date.now(),
+    });
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector(
+      '[data-testid="otp-server-error"]',
+    ) as HTMLElement;
+
+    expect(alert).not.toBeNull();
+    expect(alert.getAttribute('role')).toBe('alert');
+    expect(alert.textContent).toContain('Invalid code.');
+  });
+
+  it('should render no server error region while nothing has failed', () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-server-error"]')).toBeNull();
+  });
+
+  it('should disable the resend control and name the wait during a cooldown', async () => {
+    fixture.componentRef.setInput('showResend', true);
+    fixture.componentRef.setInput('resendAvailableIn', 30);
+    await fixture.whenStable();
+
+    const resendButton = fixture.nativeElement.querySelector(
+      'button[type="button"]',
+    ) as HTMLButtonElement;
+    const cooldown = fixture.nativeElement.querySelector(
+      '[data-testid="otp-resend-cooldown"]',
+    ) as HTMLElement;
+
+    expect(resendButton.disabled).toBe(true);
+    expect(cooldown.textContent).toContain('Resend available in 30s');
+  });
+
+  it('should re-enable the resend control when the cooldown is reseeded to zero', async () => {
+    fixture.componentRef.setInput('showResend', true);
+    fixture.componentRef.setInput('resendAvailableIn', 30);
+    await fixture.whenStable();
+    fixture.componentRef.setInput('resendAvailableIn', 0);
+    await fixture.whenStable();
+
+    const resendButton = fixture.nativeElement.querySelector(
+      'button[type="button"]',
+    ) as HTMLButtonElement;
+
+    expect(resendButton.disabled).toBe(false);
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-resend-cooldown"]')).toBeNull();
+  });
+
+  it('should tick the cooldown down once per second', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      fixture.componentRef.setInput('showResend', true);
+      fixture.componentRef.setInput('resendAvailableIn', 2);
+      await fixture.whenStable();
+
+      vi.advanceTimersByTime(1000);
+      await fixture.whenStable();
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="otp-resend-cooldown"]') as HTMLElement)
+          .textContent,
+      ).toContain('Resend available in 1s');
+
+      vi.advanceTimersByTime(1000);
+      await fixture.whenStable();
+      expect(fixture.nativeElement.querySelector('[data-testid="otp-resend-cooldown"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('should emit a resend request when the control is shown and used', async () => {
     const resent = vi.fn();
     fixture.componentInstance.resent.subscribe(resent);

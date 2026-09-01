@@ -64,7 +64,9 @@ export class RegisterPage {
    * @description
    * Moves to verification as soon as a challenge exists. `hasChallenge` is the
    * same signal `registerVerifyGuard` reads, so the page cannot navigate
-   * somewhere the guard would bounce it back from.
+   * somewhere the guard would bounce it back from. The challenge token rides
+   * along as the `token` query param, which is what lets the verify step
+   * rehydrate after a reload instead of bouncing back here.
    *
    * @access private
    * @since 1.0.0
@@ -73,7 +75,9 @@ export class RegisterPage {
     if (!this.registerStore.hasChallenge()) return;
 
     untracked((): void => {
-      void this.router.navigate(['/auth/register/verify']);
+      void this.router.navigate(['/auth/register/verify'], {
+        queryParams: { token: this.registerStore.challengeToken() },
+      });
     });
   });
   //#endregion

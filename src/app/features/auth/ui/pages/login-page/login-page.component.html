@@ -6,7 +6,11 @@
     i18n-description="@@auth.login.subtitle"
   />
 
-  <app-login-form [pending]="authStore.isLoggingIn()" (submitted)="login($event)" />
+  <app-login-form
+    [pending]="authStore.isLoggingIn()"
+    [serverError]="authStore.loginError()"
+    (submitted)="login($event)"
+  />
 
   <p class="text-center text-sm text-muted-foreground">
     <span i18n="@@auth.login.noAccount">No account yet?</span>

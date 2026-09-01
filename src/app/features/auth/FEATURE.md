@@ -26,7 +26,10 @@ This feature does not own user profile presentation or notification UX. Those be
 
 - `/auth/login`
 - `/auth/register`
-- `/auth/register/verify`
+- `/auth/register/verify` — carries the challenge token as its `token` query param.
+  `registerVerifyGuard` rehydrates `RegisterStore` from it, so the step survives a reload,
+  a back navigation, or a direct link; the masked recipient is not recoverable from the
+  token alone, so the page keeps its generic copy. Twin of `/auth/password-reset/verify`.
 - `/auth/mfa-verify`
 - `/auth/password-reset/forgot`
 - `/auth/password-reset/verify`
@@ -49,14 +52,19 @@ component under `ui/forms/` (`ARCHITECTURE.md` §10.4) that owns its own model a
 `submitted` — no page builds a form, and no form calls a store.
 
 `ui/forms/otp-form/` is shared by the three verification screens (registration, MFA, password
-reset). Its `showResend` input exists because a TOTP challenge has no delivery to repeat.
+reset). Its `showResend` input exists because a TOTP challenge has no delivery to repeat. Its
+`serverError` and `resendAvailableIn` inputs render the failed verify/resend call and run the
+local resend-cooldown countdown; the owning stores keep the cooldown as an absolute
+`resendAvailableAt` timestamp fed by the API's `mfa_resend_in`/`canResendIn` on success and by
+the parsed 429 detail on a refused resend (`utils/resend-delay/` — parsing the detail was chosen
+over propagating the `Retry-After` header through `HydraApiService`, which no other call needs).
 
-**Backend submit failures surface as toasts, not as inline banners.** No auth page renders its
-store's error signal: the stores already dispatch their failures as `StoreFailureEventPayload`
-events, `provideFeedback()` forwards them to the app-wide queue, and the app shell drains it into
-spartan's `hlm-toaster`.
-Adding a banner would duplicate a message the user is already being shown. Field-level errors are
-the opposite case and stay in the form, next to the input that has to change.
+**Backend submit failures surface inline in the owning form.** Each auth form takes a
+`serverError` input (`StoreError | null`) bound by its page to the store's error signal and
+renders the message as a `role="alert"` banner above the fields. The stores still dispatch
+`StoreFailureEventPayload` events for the app-wide feedback queue, but the auth screens do not
+rely on it: a sign-in rejection must be visible exactly where the user is looking. Field-level
+errors stay next to the input that has to change.
 
 ## Password policy
 
@@ -119,6 +127,11 @@ every surface at once.
   `features/error`'s `ForbiddenPage` (the member has no organization they can
   open, so signing out is one of the only exits that does not loop). The
   invitation landing named here previously never consumed it.
+- **Publishes `withLogoutControl()`** (feature barrel), a header-slot contribution rendering
+  the auth-owned `LogoutControl`. `app.routes.ts` mounts it on `/onboarding`'s split shell so
+  the wizard — which renders no account menu and whose guards forbid leaving — still offers a
+  way out of the session. The control listens to `sessionEnded` (not the logout call's outcome,
+  since a failed logout still ends the local session) and then routes to `/auth/login`.
 
 ## SSR and Bootstrap Notes
 

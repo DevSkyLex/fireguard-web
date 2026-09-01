@@ -277,6 +277,69 @@ describe('AuthStore', () => {
     expect(store.challengeToken()).toBe('new-challenge-token');
   });
 
+  it('should memorize the resend cooldown announced by a successful resend', async () => {
+    const mfaResponse: LoginOutput = {
+      ...loginResponse,
+      access_token: '',
+      expires_in: 0,
+      mfa_required: true,
+      mfa_token: 'mfa-token',
+      mfa_resend_in: 60,
+    };
+    mockAuthService.login.mockReturnValue(of(mfaResponse));
+
+    store.login(credentials);
+    await flushEffects();
+
+    expect(store.mfaResendAvailableIn()).toBeGreaterThan(0);
+    expect(store.mfaResendAvailableIn()).toBeLessThanOrEqual(60);
+  });
+
+  it('should memorize the retry delay parsed from a 429 resend refusal', async () => {
+    const mfaResponse: LoginOutput = {
+      ...loginResponse,
+      access_token: '',
+      expires_in: 0,
+      mfa_required: true,
+      mfa_token: 'mfa-token',
+    };
+    mockAuthService.login.mockReturnValue(of(mfaResponse));
+    mockAuthService.mfaResend.mockReturnValue(
+      throwError(() => ({
+        '@type': 'hydra:Error',
+        status: 429,
+        detail: 'Please wait 42 seconds before resending.',
+      })),
+    );
+
+    store.login(credentials);
+    await flushEffects();
+    store.mfaResend();
+    await flushEffects();
+
+    expect(store.mfaResendCallState().status).toBe('error');
+    expect(store.mfaResendAvailableIn()).toBeGreaterThan(0);
+    expect(store.mfaResendAvailableIn()).toBeLessThanOrEqual(42);
+  });
+
+  it('should clear the resend cooldown with the MFA state', async () => {
+    const mfaResponse: LoginOutput = {
+      ...loginResponse,
+      access_token: '',
+      expires_in: 0,
+      mfa_required: true,
+      mfa_token: 'mfa-token',
+      mfa_resend_in: 60,
+    };
+    mockAuthService.login.mockReturnValue(of(mfaResponse));
+
+    store.login(credentials);
+    await flushEffects();
+    store.clearMfaState();
+
+    expect(store.mfaResendAvailableIn()).toBe(0);
+  });
+
   it('should dispatch an event on MFA verification error', async () => {
     const verifyInput: MfaVerifyInput = {
       preAuthToken: 'mfa-token',

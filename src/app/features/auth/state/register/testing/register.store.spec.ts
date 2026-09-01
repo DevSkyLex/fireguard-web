@@ -95,6 +95,47 @@ describe('RegisterStore', () => {
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
+  it('should memorize the resend cooldown announced by the registration response', async () => {
+    mockRegistrationService.register.mockReturnValue(of(registerResponse));
+
+    store.register(registerInput);
+    await flushEffects();
+
+    expect(store.resendAvailableIn()).toBeGreaterThan(0);
+    expect(store.resendAvailableIn()).toBeLessThanOrEqual(60);
+  });
+
+  it('should memorize the retry delay parsed from a 429 resend refusal', async () => {
+    mockRegistrationService.register.mockReturnValue(
+      of({ ...registerResponse, canResendIn: null }),
+    );
+    mockRegistrationService.resend.mockReturnValue(
+      throwError(() => ({
+        '@type': 'hydra:Error',
+        status: 429,
+        detail: 'Please wait 15 seconds before resending.',
+      })),
+    );
+
+    store.register(registerInput);
+    await flushEffects();
+    store.resend();
+    await flushEffects();
+
+    expect(store.resendCallState().status).toBe('error');
+    expect(store.resendAvailableIn()).toBeGreaterThan(0);
+    expect(store.resendAvailableIn()).toBeLessThanOrEqual(15);
+  });
+
+  it('should rehydrate the challenge token without touching the rest of the state', () => {
+    store.setChallengeToken('rehydrated-token');
+
+    expect(store.challengeToken()).toBe('rehydrated-token');
+    expect(store.hasChallenge()).toBe(true);
+    expect(store.maskedRecipient()).toBeNull();
+    expect(store.requestCallState().status).toBe('idle');
+  });
+
   it('should fail verify immediately when no challenge is in progress', async () => {
     store.verify({ code: '123456' });
     await flushEffects();

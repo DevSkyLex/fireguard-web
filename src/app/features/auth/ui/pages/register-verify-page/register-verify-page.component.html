@@ -10,6 +10,8 @@
     [pending]="registerStore.isVerifying()"
     [showResend]="true"
     [resending]="registerStore.isResending()"
+    [serverError]="registerStore.verifyError() ?? registerStore.resendError()"
+    [resendAvailableIn]="registerStore.resendAvailableIn()"
     (submitted)="verify($event)"
     (resent)="resend()"
   />

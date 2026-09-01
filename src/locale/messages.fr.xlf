@@ -138,6 +138,18 @@
         <source>Sign in</source>
         <target>Se connecter</target>
       </trans-unit>
+      <trans-unit id="auth.login.failed" datatype="html">
+        <source>Sign-in failed. Check your credentials.</source>
+        <target>Échec de la connexion. Vérifiez vos identifiants.</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>Se déconnecter</target>
+      </trans-unit>
+      <trans-unit id="auth.register.failed" datatype="html">
+        <source>The account could not be created.</source>
+        <target>Le compte n'a pas pu être créé.</target>
+      </trans-unit>
       <trans-unit id="auth.newPassword.label" datatype="html">
         <source>New Password</source>
         <target>Nouveau mot de passe</target>
@@ -165,6 +177,14 @@
       <trans-unit id="auth.otp.resend" datatype="html">
         <source>Didn&apos;t receive the code? Resend</source>
         <target>Vous n'avez pas reçu le code ? Renvoyer</target>
+      </trans-unit>
+      <trans-unit id="auth.otp.failed" datatype="html">
+        <source>Something went wrong. Try again.</source>
+        <target>Une erreur est survenue. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="auth.otp.resendIn" datatype="html">
+        <source>Resend available in <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</source>
+        <target>Renvoi possible dans <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</target>
       </trans-unit>
       <trans-unit id="auth.register.submit" datatype="html">
         <source>Create account</source>

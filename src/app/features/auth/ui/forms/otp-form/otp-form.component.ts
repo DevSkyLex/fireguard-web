@@ -1,9 +1,15 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  effect,
+  inject,
   input,
   output,
+  PLATFORM_ID,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type WritableSignal,
@@ -17,6 +23,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
+import type { StoreError } from '@core/request-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import {
@@ -136,6 +143,37 @@ export class OtpForm {
   public readonly resending: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property serverError
+   * @readonly
+   *
+   * @description
+   * Whatever the page's verify or resend call failed with, rendered above the
+   * code so a rejected attempt is never silent. `null` while nothing has
+   * failed.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
+
+  /**
+   * Property resendAvailableIn
+   * @readonly
+   *
+   * @description
+   * Seconds before a new code may be requested. Each change reseeds the local
+   * countdown, which disables the resend control and names the remaining wait.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly resendAvailableIn: InputSignal<number> = input<number>(0);
+
+  /**
    * Property length
    * @readonly
    *
@@ -197,6 +235,49 @@ export class OtpForm {
   protected readonly model: WritableSignal<OtpFormValues> = signal<OtpFormValues>({ code: '' });
 
   /**
+   * Property cooldownRemaining
+   * @readonly
+   *
+   * @description
+   * Seconds left on the local resend countdown, ticked once per second in the
+   * browser. Zero means the resend control is live again.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<number>}
+   */
+  protected readonly cooldownRemaining: WritableSignal<number> = signal<number>(0);
+
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Distinguishes browser from server: the ticking interval is browser-only,
+   * a server render just shows the seeded value once.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
+   * Property cooldownTimer
+   *
+   * @description
+   * Handle of the ticking interval, cleared on reseed and on destroy.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ReturnType<typeof setInterval> | null}
+   */
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
+
+  /**
    * Property otpForm
    * @readonly
    *
@@ -221,7 +302,78 @@ export class OtpForm {
   });
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Reseeds the resend countdown whenever the input changes, and stops the
+   * ticking interval with the component.
+   *
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const seconds: number = this.resendAvailableIn();
+
+      untracked((): void => this.restartCooldown(seconds));
+    });
+
+    inject(DestroyRef).onDestroy((): void => this.clearCooldownTimer());
+  }
+  //#endregion
+
   //#region Methods
+  /**
+   * Method restartCooldown
+   * @method restartCooldown
+   *
+   * @description
+   * Seeds the countdown with the given seconds and, in the browser, ticks it
+   * down once per second until it reaches zero.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @param {number} seconds - Seconds before resending becomes possible.
+   *
+   * @returns {void}
+   */
+  private restartCooldown(seconds: number): void {
+    this.clearCooldownTimer();
+    this.cooldownRemaining.set(Math.max(0, seconds));
+
+    if (seconds <= 0 || !isPlatformBrowser(this.platformId)) return;
+
+    this.cooldownTimer = setInterval((): void => {
+      const next: number = this.cooldownRemaining() - 1;
+      this.cooldownRemaining.set(Math.max(0, next));
+
+      if (next <= 0) this.clearCooldownTimer();
+    }, 1000);
+  }
+
+  /**
+   * Method clearCooldownTimer
+   * @method clearCooldownTimer
+   *
+   * @description
+   * Stops the ticking interval, if any.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @returns {void}
+   */
+  private clearCooldownTimer(): void {
+    if (this.cooldownTimer === null) return;
+
+    clearInterval(this.cooldownTimer);
+    this.cooldownTimer = null;
+  }
+
   /**
    * Method submit
    * @method submit

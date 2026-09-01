@@ -16,6 +16,8 @@
     [pending]="authStore.isVerifyingMfa()"
     [showResend]="canResend()"
     [resending]="authStore.isResendingMfa()"
+    [serverError]="authStore.mfaVerifyError() ?? authStore.mfaResendError()"
+    [resendAvailableIn]="authStore.mfaResendAvailableIn()"
     (submitted)="verify($event)"
     (resent)="resend()"
   />

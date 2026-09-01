@@ -105,6 +105,29 @@ describe('RegisterForm', () => {
     expect(submitted).toHaveBeenCalledWith(VALID);
   });
 
+  it('should render the server error message when account creation failed', async () => {
+    fixture.componentRef.setInput('serverError', {
+      error: new Error('Email already in use.'),
+      message: 'Email already in use.',
+      code: 422,
+      retryable: false,
+      timestamp: Date.now(),
+    });
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector(
+      '[data-testid="register-server-error"]',
+    ) as HTMLElement;
+
+    expect(alert).not.toBeNull();
+    expect(alert.getAttribute('role')).toBe('alert');
+    expect(alert.textContent).toContain('Email already in use.');
+  });
+
+  it('should render no server error region while nothing has failed', () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="register-server-error"]')).toBeNull();
+  });
+
   it('should mark the first name field aria-invalid once submission touches it empty', async () => {
     await submit(fixture);
 

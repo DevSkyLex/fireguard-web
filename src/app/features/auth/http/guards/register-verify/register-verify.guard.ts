@@ -6,17 +6,19 @@ import { RegisterStore } from '@features/auth/state';
  * Register Verify Guard
  *
  * @description
- * Ensures the registration verify route is only reachable when a registration is
- * actually in progress (a challenge token is held by the {@link RegisterStore}).
- * Otherwise redirects to the registration page.
+ * Ensures the registration verify route has a challenge token. Reads the token
+ * from the `token` query param — which is what lets the step survive a reload,
+ * a back navigation, or a direct link — and rehydrates the {@link RegisterStore}
+ * with it. Falls back to the token already held in memory. Redirects to the
+ * registration page when neither exists.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @returns {GuardResult} True when a challenge exists, otherwise a UrlTree
- * redirecting to the registration page.
+ * @returns {GuardResult} True when a challenge token is available, otherwise a
+ * UrlTree redirecting to the registration page.
  */
-export const registerVerifyGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const registerVerifyGuard: CanActivateFn = (route): MaybeAsync<GuardResult> => {
   /**
    * Constant registerStore
    * @const registerStore
@@ -39,9 +41,36 @@ export const registerVerifyGuard: CanActivateFn = (): MaybeAsync<GuardResult> =>
    */
   const router: Router = inject<Router>(Router);
 
-  if (registerStore.hasChallenge()) {
+  /**
+   * Constant routeToken
+   * @const routeToken
+   *
+   * @description
+   * Challenge token carried by the URL, put there by the registration page so
+   * the verify step owns its state across reloads.
+   *
+   * @var {string | null}
+   */
+  const routeToken: string | null = route.queryParamMap.get('token');
+
+  /**
+   * Constant storeToken
+   * @const storeToken
+   *
+   * @description
+   * Existing challenge token held by the {@link RegisterStore}, used as a
+   * fallback when the URL carries none.
+   *
+   * @var {string | null}
+   */
+  const storeToken: string | null = registerStore.challengeToken();
+
+  if (routeToken) {
+    if (routeToken !== storeToken) registerStore.setChallengeToken(routeToken);
     return true;
   }
+
+  if (storeToken) return true;
 
   return router.createUrlTree(['/auth/register']);
 };

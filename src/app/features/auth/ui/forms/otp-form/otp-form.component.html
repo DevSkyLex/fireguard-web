@@ -1,5 +1,17 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
+    @if (serverError(); as error) {
+      <div role="alert" data-testid="otp-server-error" class="text-sm text-destructive">
+        <p>
+          @if (error.message; as message) {
+            {{ message }}
+          } @else {
+            <span i18n="@@auth.otp.failed">Something went wrong. Try again.</span>
+          }
+        </p>
+      </div>
+    }
+
     <hlm-field class="items-center">
       <label hlmFieldLabel for="otp-code" class="self-start"
         ><span i18n="@@auth.otp.label">Verification code</span
@@ -61,11 +73,15 @@
         size="sm"
         class="w-full max-sm:min-h-11"
         data-testid="otp-resend"
-        [disabled]="resending()"
+        [disabled]="resending() || cooldownRemaining() > 0"
         (click)="resent.emit()"
       >
         @if (resending()) {
           <span i18n="@@auth.otp.resending">Sending a new code…</span>
+        } @else if (cooldownRemaining() > 0) {
+          <span data-testid="otp-resend-cooldown" i18n="@@auth.otp.resendIn"
+            >Resend available in {{ cooldownRemaining() }}s</span
+          >
         } @else {
           <span i18n="@@auth.otp.resend">Send a new code</span>
         }

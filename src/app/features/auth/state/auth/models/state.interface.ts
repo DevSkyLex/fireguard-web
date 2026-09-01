@@ -100,6 +100,21 @@ export interface AuthState {
   readonly challengeToken: string | null;
 
   /**
+   * Property mfaResendAvailableAt
+   * @readonly
+   *
+   * @description
+   * Epoch milliseconds when a new MFA code may be requested, from the API's
+   * `mfa_resend_in` on success or the parsed 429 detail on a refused resend.
+   * `null` when no cooldown applies.
+   *
+   * @since 1.1.0
+   *
+   * @type {number | null}
+   */
+  readonly mfaResendAvailableAt: number | null;
+
+  /**
    * Property loginCallState
    * @readonly
    *

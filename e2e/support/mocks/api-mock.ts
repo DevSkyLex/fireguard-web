@@ -2038,7 +2038,7 @@ export class ApiMock {
    * `FacilityService.createForIntervention` sends when the intervention
    * detail page's "Add facility" sheet submits without a `clientId`.
    */
-  public async mockFacilityCreate(facility: FacilityOutputFixture): Promise<void> {
+  public async mockInterventionFacilityCreate(facility: FacilityOutputFixture): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(`${API_BASE_URL}/api/facilities`, async (route) => {
       if (route.request().method() !== 'POST') {

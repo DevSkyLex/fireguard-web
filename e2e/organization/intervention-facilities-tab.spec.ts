@@ -75,7 +75,7 @@ test.describe('Intervention detail — Facilities tab', () => {
   }) => {
     const api = new ApiMock(page);
     await mockDetailPage(api);
-    await api.mockFacilityCreate(createdFacility);
+    await api.mockInterventionFacilityCreate(createdFacility);
     const detail = new InterventionDetailPage(page);
 
     await detail.goto(E2E_ORGANIZATION_ID, interventionId);

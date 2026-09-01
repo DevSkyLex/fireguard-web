@@ -58,6 +58,7 @@ describe('InterventionWorkItemSheet', () => {
     await fixture.whenStable();
 
     (inSheet('[data-testid="intervention-work-item-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
 
     expect(visibility).toEqual([false]);
   });

@@ -60,6 +60,7 @@ describe('InterventionRequestChangesSheet', () => {
     await fixture.whenStable();
 
     (inSheet('[data-testid="intervention-request-changes-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
 
     expect(visibility).toEqual([false]);
   });

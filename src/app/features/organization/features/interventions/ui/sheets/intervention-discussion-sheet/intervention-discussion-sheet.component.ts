@@ -1,8 +1,11 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  inject,
+  Injector,
   input,
   output,
   signal,
@@ -195,6 +198,16 @@ export class InterventionDiscussionSheet {
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
+
+  /**
+   * Property injector
+   * @readonly
+   * @description Hands {@link requestClose} its `afterNextRender` context, since the method runs outside construction.
+   * @access private
+   * @since 1.3.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
   //#endregion
 
   //#region Methods
@@ -229,9 +242,14 @@ export class InterventionDiscussionSheet {
    *
    * @description
    * The panel's single closing gate — reached from the plain close button
-   * and the local Escape binding alike. Closes right away when nothing would
-   * be lost; otherwise opens {@link UnsavedChangesDialog} and defers to
+   * and the local Escape binding alike. A dirty draft opens
+   * {@link UnsavedChangesDialog} and defers to
    * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   * A clean verdict is re-checked once after the next render before closing:
+   * {@link dirty} arrives through child `effect`s that flush in the very
+   * change-detection pass the closing keystroke schedules, so a keystroke
+   * landing right after typing would otherwise read a stale `false` and
+   * discard the draft it just created.
    *
    * @access protected
    * @since 1.2.0
@@ -245,7 +263,18 @@ export class InterventionDiscussionSheet {
       return;
     }
 
-    this.visibleChange.emit(false);
+    afterNextRender(
+      (): void => {
+        if (this.dirty()) {
+          this.unsavedChangesDialogState.set('open');
+
+          return;
+        }
+
+        this.visibleChange.emit(false);
+      },
+      { injector: this.injector },
+    );
   }
 
   /**

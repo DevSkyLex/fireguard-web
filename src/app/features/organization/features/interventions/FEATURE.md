@@ -1857,7 +1857,12 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   brn's own Escape/outside-click `dismiss()` is permanently a no-op, the
   vendored close button is replaced with a plain one wired to
   `requestClose()`, and a local `(keydown.escape)` binding on
-  `hlm-sheet-content` restores Escape through the same method. The earlier
+  `hlm-sheet-content` restores Escape through the same method. A clean
+  verdict is re-checked once after the next render before closing, because
+  `dirty` travels through child `effect`s that flush in the very
+  change-detection pass the closing keystroke schedules — an Escape landing
+  right after typing would otherwise read a stale `false` and discard the
+  draft it just created. The earlier
   `reopen()`-on-`stateChanged` workaround (undoing a `'closed'` state brn
   already emitted) is retired on those four — it raced with the overlay
   stack and flaked under WebKit. `InterventionCreateSheet` still carries the

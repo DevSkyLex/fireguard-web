@@ -1,8 +1,11 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  inject,
+  Injector,
   input,
   output,
   signal,
@@ -212,6 +215,16 @@ export class InterventionRequestChangesSheet {
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
+
+  /**
+   * Property injector
+   * @readonly
+   * @description Hands {@link requestClose} its `afterNextRender` context, since the method runs outside construction.
+   * @access private
+   * @since 7.2.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
   //#endregion
 
   //#region Methods
@@ -247,10 +260,14 @@ export class InterventionRequestChangesSheet {
    * @description
    * The panel's single closing gate — reached from the form's Cancel, the
    * plain close button, and the local Escape binding alike. A no-op while
-   * {@link pending} (a transition is in flight); otherwise closes right away
-   * when nothing would be lost, or opens {@link UnsavedChangesDialog} and
-   * defers to {@link onUnsavedChangesConfirmed} /
-   * {@link onUnsavedChangesDismissed}.
+   * {@link pending} (a transition is in flight); a dirty note opens
+   * {@link UnsavedChangesDialog} and defers to
+   * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   * A clean verdict is re-checked once after the next render before closing:
+   * {@link dirty} arrives through the form's `effect` that flushes in the
+   * very change-detection pass the closing keystroke schedules, so a
+   * keystroke landing right after typing would otherwise read a stale
+   * `false` and discard the note it just created.
    *
    * @access protected
    * @since 7.1.0
@@ -266,7 +283,20 @@ export class InterventionRequestChangesSheet {
       return;
     }
 
-    this.visibleChange.emit(false);
+    afterNextRender(
+      (): void => {
+        if (this.pending()) return;
+
+        if (this.dirty()) {
+          this.unsavedChangesDialogState.set('open');
+
+          return;
+        }
+
+        this.visibleChange.emit(false);
+      },
+      { injector: this.injector },
+    );
   }
 
   /**

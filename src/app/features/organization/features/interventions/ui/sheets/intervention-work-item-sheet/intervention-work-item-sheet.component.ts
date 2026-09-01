@@ -1,25 +1,30 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  inject,
+  Injector,
   input,
   output,
   signal,
   untracked,
-  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { sheetSide } from '@shared/sheet-side';
-import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmButton } from '@shared/ui/button';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import {
   InterventionWorkItemForm,
@@ -42,13 +47,26 @@ import {
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
  *
- * @version 1.1.0
+ * Closing goes exclusively through {@link requestClose}: `disableClose` is
+ * hard-`true` (never reactive) so brn's own Escape/outside-click `dismiss()`
+ * is permanently a no-op, the vendored close button is replaced with a plain
+ * one wired to {@link requestClose} (it otherwise calls the dialog ref's
+ * `close()` directly, bypassing any gate), and a local `(keydown.escape)`
+ * binding restores Escape by routing it through the same method. No
+ * `reopen()`-on-`stateChanged` workaround: the previous approach read
+ * whether a still-mid-close dialog ref could be resurrected, a comparison
+ * that raced with the overlay stack and flaked under WebKit — every close
+ * attempt landing on one gate before the dialog ref is ever touched removes
+ * that race entirely.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-work-item-sheet',
-  imports: [InterventionWorkItemForm, UnsavedChangesDialog, ...HlmSheetImports],
+  imports: [InterventionWorkItemForm, NgIcon, HlmButton, UnsavedChangesDialog, ...HlmSheetImports],
+  providers: [provideIcons({ lucideX })],
   templateUrl: './intervention-work-item-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -215,21 +233,14 @@ export class InterventionWorkItemSheet {
     signal<BrnDialogState>('closed');
 
   /**
-   * Property sheetRef
+   * Property injector
    * @readonly
-   *
-   * @description
-   * The panel directive itself, queried only so {@link onStateChanged} can
-   * call `.open()` — which resolves to `reopen()` on a dialog ref still
-   * mid-close — to undo an Escape/outside-click attempt made while
-   * {@link dirty}.
-   *
-   * @access protected
-   * @since 7.1.0
-   *
-   * @type {Signal<HlmSheet | undefined>}
+   * @description Hands {@link requestClose} its `afterNextRender` context, since the method runs outside construction.
+   * @access private
+   * @since 7.2.0
+   * @type {Injector}
    */
-  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
+  private readonly injector: Injector = inject(Injector);
   //#endregion
 
   //#region Methods
@@ -238,10 +249,10 @@ export class InterventionWorkItemSheet {
    * @method onStateChanged
    *
    * @description
-   * Relays a dismissal, ignoring the echo of a change the page already made.
-   * An Escape or outside-click attempt reaching here while {@link dirty} is
-   * undone through {@link sheetRef} and redirected to the same confirmation
-   * {@link requestClose} raises.
+   * Relays the panel's own state, ignoring the echo of a change the page
+   * already made. With `disableClose` hard-`true` and the vendored close
+   * button replaced, brn never drives an unrequested `'closed'` here on its
+   * own — every real closing attempt reaches {@link requestClose} first.
    *
    * @access protected
    * @since 1.0.0
@@ -255,13 +266,6 @@ export class InterventionWorkItemSheet {
 
     if (isOpen === this.visible()) return;
 
-    if (!isOpen && this.dirty()) {
-      this.sheetRef()?.open();
-      this.unsavedChangesDialogState.set('open');
-
-      return;
-    }
-
     this.visibleChange.emit(isOpen);
   }
 
@@ -270,10 +274,16 @@ export class InterventionWorkItemSheet {
    * @method requestClose
    *
    * @description
-   * The panel's own close action, reached from the form's Cancel. Closes
-   * right away when nothing would be lost; otherwise opens
+   * The panel's single closing gate — reached from the form's Cancel, the
+   * plain close button, and the local Escape binding alike. A no-op while
+   * {@link pending} (a request is in flight); a dirty draft opens
    * {@link UnsavedChangesDialog} and defers to
    * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   * A clean verdict is re-checked once after the next render before closing:
+   * {@link dirty} arrives through the form's `effect` that flushes in the
+   * very change-detection pass the closing keystroke schedules, so a
+   * keystroke landing right after typing would otherwise read a stale
+   * `false` and discard the draft it just created.
    *
    * @access protected
    * @since 7.1.0
@@ -281,13 +291,28 @@ export class InterventionWorkItemSheet {
    * @returns {void}
    */
   protected requestClose(): void {
+    if (this.pending()) return;
+
     if (this.dirty()) {
       this.unsavedChangesDialogState.set('open');
 
       return;
     }
 
-    this.visibleChange.emit(false);
+    afterNextRender(
+      (): void => {
+        if (this.pending()) return;
+
+        if (this.dirty()) {
+          this.unsavedChangesDialogState.set('open');
+
+          return;
+        }
+
+        this.visibleChange.emit(false);
+      },
+      { injector: this.injector },
+    );
   }
 
   /**

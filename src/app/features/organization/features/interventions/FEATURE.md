@@ -1832,19 +1832,12 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   `CanDeactivate` here, so `InterventionDiscussionSheet` hosts
   `app-unsaved-changes-dialog` itself and gates it on `SubjectDiscussion`'s
   own `dirtyChanged` (an unsent draft or a send still in flight — collaboration's
-  `FEATURE.md` documents that output). `[disableClose]` is bound to the same
-  signal, but cannot carry the guard alone: `BrnDialogRef` snapshots
-  `disableClose` once, at the moment the panel opens, and a draft is never
-  dirty at that exact instant — the composer has not been typed into yet.
-  The real enforcement is in `onStateChanged`: an Escape or outside-click
-  closing attempt that reaches it while dirty is undone through
-  `HlmSheet.open()` (the panel's own `viewChild`), which resolves to
-  `BrnDialogRef.reopen()` — a primitive the library exposes for exactly this
-  "undo an in-progress close" case — before the confirmation opens, so the
-  panel never actually disappears. The panel's vendored close button is
-  swapped for a plain one (`[showCloseButton]="false"` on
-  `hlm-sheet-content`) because it calls the dialog ref's `close()` directly
-  rather than through this same guarded path.
+  `FEATURE.md` documents that output). Enforcement is the single-gate
+  pattern the Invariants section below describes: `[disableClose]` is
+  hard-`true`, a local `(keydown.escape)` binding and a plain close button
+  (`[showCloseButton]="false"` on `hlm-sheet-content` — the vendored one
+  calls the dialog ref's `close()` directly, bypassing any gate) both route
+  through `requestClose()`.
 - **Work items filter client-side by design** (all/remaining/done/skipped,
   mine-first): the workspace drains every page via `listAllWorkItems` because
   the offline scene needs the complete checklist in IndexedDB regardless of
@@ -1853,21 +1846,33 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
 
 ## Invariants
 
-- **Every sheet that carries a form confirms before it discards one.** The
-  five form-bearing sheets — create, work item, request changes, recurrence,
-  discussion — all take their form's `dirtyChanged`, hold it in a local
-  `dirty` signal, and route Escape, the backdrop and the form's own Cancel
-  through `requestClose()`, which raises `@shared/unsaved-changes` instead of
-  closing. `onStateChanged` reopens the panel through the queried `HlmSheet`
-  before raising the confirmation, because the underlying dialog ref has
-  already begun closing by the time the handler runs. `[disableClose]` stays
-  bound to `pending()` only: it guards a write in flight, not a draft.
-  `InterventionCreateSheet` additionally counts its own **template override
-  drafts** as dirty — they are the sheet's state, not the form's — while a
-  bare template _selection_ is not, since re-picking it is one click.
-  Sheets whose panel state is derived from a `visible` input clear `dirty`
-  when it goes false, so an abandoned draft cannot make the next opening
-  confirm over nothing.
+- **Every sheet that carries a form confirms before it discards one, and
+  every closing gesture lands on one gate.** The five form-bearing sheets —
+  create, work item, request changes, recurrence, discussion — all take
+  their form's `dirtyChanged`, hold it in a local `dirty` signal, and route
+  every closing gesture through `requestClose()`, which is a no-op while
+  `pending()`, raises `@shared/unsaved-changes` while `dirty`, and closes
+  otherwise. On work item, request changes, recurrence and discussion the
+  gate is structural: `[disableClose]` is hard-`true` (never reactive) so
+  brn's own Escape/outside-click `dismiss()` is permanently a no-op, the
+  vendored close button is replaced with a plain one wired to
+  `requestClose()`, and a local `(keydown.escape)` binding on
+  `hlm-sheet-content` restores Escape through the same method. A clean
+  verdict is re-checked once after the next render before closing, because
+  `dirty` travels through child `effect`s that flush in the very
+  change-detection pass the closing keystroke schedules — an Escape landing
+  right after typing would otherwise read a stale `false` and discard the
+  draft it just created. The earlier
+  `reopen()`-on-`stateChanged` workaround (undoing a `'closed'` state brn
+  already emitted) is retired on those four — it raced with the overlay
+  stack and flaked under WebKit. `InterventionCreateSheet` still carries the
+  transitional reopen path and a reactive `[disableClose]`; migrate it to
+  the same shape when it is next touched, never copy it. Create additionally
+  counts its own **template override drafts** as dirty — they are the
+  sheet's state, not the form's — while a bare template _selection_ is not,
+  since re-picking it is one click. Every sheet clears `dirty` when its
+  panel closes, so an abandoned draft cannot make the next opening confirm
+  over nothing.
 
 - **Changing a chip's operator never costs the chip, and never costs a value
   the new operator can hold.** `onFilterOperatorChanged` marks the field

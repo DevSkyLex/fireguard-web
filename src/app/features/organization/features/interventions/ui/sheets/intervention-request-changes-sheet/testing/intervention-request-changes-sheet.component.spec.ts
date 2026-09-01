@@ -60,6 +60,7 @@ describe('InterventionRequestChangesSheet', () => {
     await fixture.whenStable();
 
     (inSheet('[data-testid="intervention-request-changes-cancel"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
 
     expect(visibility).toEqual([false]);
   });
@@ -79,6 +80,28 @@ describe('InterventionRequestChangesSheet', () => {
     (inSheet('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
     expect(submissions).toEqual([{ note: 'Re-check the third floor.' }]);
+  });
+
+  it('should close through Escape when nothing is dirty', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([false]);
+  });
+
+  it('should refuse to close while the transition is in flight', async () => {
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(content()).not.toBeNull();
   });
 
   it('should confirm before an Escape throws away a typed note', async () => {

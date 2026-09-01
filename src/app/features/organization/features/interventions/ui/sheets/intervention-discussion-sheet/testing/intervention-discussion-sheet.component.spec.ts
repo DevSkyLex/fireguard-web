@@ -148,7 +148,6 @@ describe('InterventionDiscussionSheet', () => {
 
     expect(visibility).toEqual([]);
     expect(content()).not.toBeNull();
-    // The intercepted Escape reopens the panel and redirects to the same confirmation as the close button.
     expect(unsavedChangesDialog()).not.toBeNull();
     expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
   });
@@ -176,6 +175,17 @@ describe('InterventionDiscussionSheet', () => {
 
     expect(visibility).toEqual([false]);
     expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+  });
+
+  it('should forget a stale draft once the panel has closed', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    await markDirty();
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 
   it('should stay open once the reader dismisses the unsaved changes dialog', async () => {

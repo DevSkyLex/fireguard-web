@@ -335,7 +335,7 @@ export class InterventionCalendar {
 
   /** The intervention's schedule anchor — `plannedStartAt`, falling back to `dueAt` — the same anchor the endpoint fetches by. */
   private anchorOf(intervention: InterventionOutput): string | null {
-    return intervention.plannedStartAt ?? intervention.dueAt;
+    return intervention.plannedStartAt ?? intervention.dueAt ?? null;
   }
   //#endregion
 }

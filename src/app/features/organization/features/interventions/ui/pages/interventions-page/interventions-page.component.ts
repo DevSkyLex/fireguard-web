@@ -1540,7 +1540,7 @@ export class InterventionsPage {
       const requested: boolean = this.create() === '1';
 
       untracked((): void => {
-        if (!requested) return;
+        if (!requested || !isPlatformBrowser(this.platformId)) return;
 
         this.createSheetVisible.set(true);
         this.navigateQuery({ create: null });
@@ -1869,7 +1869,7 @@ export class InterventionsPage {
     this.assignRequest.set({
       interventionId: intervention.id,
       interventionName: intervention.name,
-      currentResponsible: intervention.responsible,
+      currentResponsible: intervention.responsible ?? null,
     });
   }
 

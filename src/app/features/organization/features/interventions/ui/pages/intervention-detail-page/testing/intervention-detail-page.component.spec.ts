@@ -687,7 +687,11 @@ describe('InterventionDetailPage', () => {
   describe('the status band', () => {
     it("should render the page's status, phase, action and blockers as the band's own inputs", async () => {
       current.set(
-        intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
+        intervention({
+          status: 'changes_requested',
+          reviewNote: 'Re-check the third floor.',
+          blockersCount: 1,
+        }),
       );
       issues.set([
         {
@@ -699,6 +703,7 @@ describe('InterventionDetailPage', () => {
           message: 'Missing sign-off.',
         } as InterventionIssueOutput,
       ]);
+      blockerCount.set(1);
       fixture = await createPage();
 
       const band: HTMLElement = byTestId('intervention-detail-status-band');
@@ -707,6 +712,24 @@ describe('InterventionDetailPage', () => {
       expect(band.textContent).toContain('Field work');
       expect(byTestId('intervention-detail-command').textContent).toContain('Record field work');
       expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
+    });
+
+    it('should keep the blockers pill on the live issue count, not the stale intervention snapshot', async () => {
+      current.set(intervention({ status: 'submitted', blockersCount: 2 }));
+      blockerCount.set(2);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-blockers').textContent).toContain('2');
+
+      blockerCount.set(1);
+      await fixture.whenStable();
+
+      expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
+
+      blockerCount.set(0);
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="intervention-detail-blockers"]')).toBeNull();
     });
 
     it("should dispatch the page's own transition when the band's action is invoked", async () => {
@@ -722,7 +745,7 @@ describe('InterventionDetailPage', () => {
     });
 
     it('should scroll to and focus the issues checklist when the band asks to see the blockers', async () => {
-      current.set(intervention({ status: 'submitted' }));
+      current.set(intervention({ status: 'submitted', blockersCount: 1 }));
       issues.set([
         {
           '@id': '/api/issues/1',
@@ -733,6 +756,7 @@ describe('InterventionDetailPage', () => {
           message: 'Missing sign-off.',
         } as InterventionIssueOutput,
       ]);
+      blockerCount.set(1);
       fixture = await createPage();
       const originalScrollIntoView: (options?: boolean | ScrollIntoViewOptions) => void =
         HTMLElement.prototype.scrollIntoView;
@@ -789,6 +813,8 @@ describe('InterventionDetailPage', () => {
         interventionId: 'intervention-1',
         status: 'submitted',
       });
+      // Skip emits `dismissed` itself AND the closing dialog echoes it — one transition only.
+      expect(transition).toHaveBeenCalledTimes(1);
     });
 
     it('should upload the signature then submit only once the upload has landed', async () => {
@@ -877,7 +903,7 @@ describe('InterventionDetailPage', () => {
     });
 
     it('should count the blockers on the status band and list them in the issues checklist', async () => {
-      current.set(intervention({ status: 'submitted' }));
+      current.set(intervention({ status: 'submitted', blockersCount: 1 }));
       issues.set([
         {
           '@id': '/api/issues/1',
@@ -888,6 +914,7 @@ describe('InterventionDetailPage', () => {
           message: 'Missing sign-off.',
         } as InterventionIssueOutput,
       ]);
+      blockerCount.set(1);
       fixture = await createPage();
 
       expect(byTestId('intervention-detail-blockers').textContent).toContain('1');

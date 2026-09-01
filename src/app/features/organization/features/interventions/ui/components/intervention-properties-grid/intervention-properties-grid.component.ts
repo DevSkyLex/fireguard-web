@@ -28,6 +28,7 @@ import type {
   SelectOption,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
+import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -382,9 +383,9 @@ export class InterventionPropertiesGrid {
    * @type {Signal<string | null>}
    */
   protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
-    const site: string | null = this.intervention().site;
+    const site: string | null | undefined = this.intervention().site;
 
-    return site === null
+    return site == null
       ? null
       : (this.siteOptions().find((option) => option.value === site)?.label ?? site);
   });
@@ -398,9 +399,9 @@ export class InterventionPropertiesGrid {
    * @type {Signal<string | null>}
    */
   protected readonly siteFacilityId: Signal<string | null> = computed<string | null>(() => {
-    const site: string | null = this.intervention().site;
+    const site: string | null | undefined = this.intervention().site;
 
-    return site === null ? null : site.slice(site.lastIndexOf('/') + 1);
+    return site == null ? null : site.slice(site.lastIndexOf('/') + 1);
   });
 
   /**
@@ -643,7 +644,10 @@ export class InterventionPropertiesGrid {
    *
    * @description
    * Commits the planned window. The picker emits once both ends are chosen, so
-   * this never sends a half-open range.
+   * this never sends a half-open range. Each end is re-anchored to midnight
+   * UTC ({@link toUtcMidnight}): the picker builds local-midnight dates whose
+   * serialized instant would drift into the previous UTC day for any timezone
+   * ahead of UTC.
    *
    * @access protected
    * @since 1.0.0
@@ -653,18 +657,20 @@ export class InterventionPropertiesGrid {
    * @returns {void}
    */
   protected pickSchedule(range: [Date, Date] | null): void {
+    const normalized: [Date, Date] | null =
+      range === null ? null : [toUtcMidnight(range[0]), toUtcMidnight(range[1])];
     const current: [Date, Date] | null = this.scheduleRange();
     const unchanged: boolean =
-      range === null
+      normalized === null
         ? current === null
         : current !== null &&
-          range[0].getTime() === current[0].getTime() &&
-          range[1].getTime() === current[1].getTime();
+          normalized[0].getTime() === current[0].getTime() &&
+          normalized[1].getTime() === current[1].getTime();
     if (unchanged) return;
 
     this.detailsChanged.emit({
-      plannedStartAt: range?.[0] ?? null,
-      dueAt: range?.[1] ?? null,
+      plannedStartAt: normalized?.[0] ?? null,
+      dueAt: normalized?.[1] ?? null,
     });
   }
 
@@ -700,11 +706,11 @@ export class InterventionPropertiesGrid {
    * @description Resolves a member IRI against the loaded options.
    * @access private
    * @since 1.0.0
-   * @param {string | null} iri - The member IRI to resolve.
+   * @param {string | null | undefined} iri - The member IRI to resolve.
    * @returns {MemberSelectOption | null} The matching option, or null.
    */
-  private memberOf(iri: string | null): MemberSelectOption | null {
-    return iri === null
+  private memberOf(iri: string | null | undefined): MemberSelectOption | null {
+    return iri == null
       ? null
       : (this.memberOptions().find((option) => option.value === iri) ?? null);
   }

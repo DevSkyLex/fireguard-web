@@ -863,6 +863,79 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.error()).toBeNull();
   });
 
+  it('refreshes the issues checklist after a successful transition', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const blocker = {
+      severity: 'blocker',
+      message: 'No explicit work item',
+    } as InterventionIssueOutput;
+    mockService['listIssues'].mockReturnValue(
+      of({
+        '@id': '/api/interventions/intervention-1/issues',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [blocker],
+      }),
+    );
+    mockService['update'].mockReturnValue(of({ ...intervention, status: 'in_progress' }));
+
+    store.transition({ interventionId: 'intervention-1', status: 'in_progress' });
+    await vi.waitFor(() => expect(store.issues()).toEqual([blocker]));
+
+    expect(mockService['listIssues']).toHaveBeenCalledTimes(2);
+    expect(store.blockerCount()).toBe(1);
+  });
+
+  it('refreshes the issues checklist after a work item status write', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    mockService['listIssues'].mockClear();
+    mockService['listIssues'].mockReturnValue(
+      of({
+        '@id': '/api/interventions/intervention-1/issues',
+        '@type': 'Collection',
+        totalItems: 0,
+        member: [] as readonly InterventionIssueOutput[],
+      }),
+    );
+    mockService['updateWorkItem'].mockReturnValue(
+      of({ ...workItem, status: 'completed', revision: 2 }),
+    );
+
+    store.setWorkItemStatus({
+      interventionId: 'intervention-1',
+      workItemId: 'work-item-1',
+      status: 'completed',
+    });
+    await vi.waitFor(() => expect(store.pendingWorkItemIds().size).toBe(0));
+    await vi.waitFor(() =>
+      expect(mockService['listIssues']).toHaveBeenCalledWith('intervention-1'),
+    );
+  });
+
+  it('ignores a second transition while one is already in flight', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+    const firstPatch = new Subject<InterventionOutput>();
+    mockService['update'].mockReturnValue(firstPatch);
+
+    store.transition({ interventionId: 'intervention-1', status: 'submitted' });
+    store.transition({ interventionId: 'intervention-1', status: 'submitted' });
+
+    expect(mockService['update']).toHaveBeenCalledTimes(1);
+
+    firstPatch.next({ ...intervention, status: 'submitted', revision: 4 });
+    firstPatch.complete();
+    await vi.waitFor(() => expect(store.transitionCallState().status).toBe('success'));
+
+    expect(mockService['update']).toHaveBeenCalledTimes(1);
+    expect(store.intervention()?.revision).toBe(4);
+  });
+
   it('dispatches rejectChangeFailed and keeps the change proposed on a server rejection', async () => {
     mockService['listAllChanges'].mockReturnValue(of([proposedChange]));
     store.load('intervention-1');

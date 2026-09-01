@@ -75,11 +75,12 @@ export interface InterventionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Optional free-text intervention description.
+   * Optional free-text intervention description. API Platform omits null
+   * fields, so a cleared description arrives as `undefined`, never `null`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly description: string | null;
+  readonly description?: string | null;
 
   /**
    * Property status
@@ -128,22 +129,24 @@ export interface InterventionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Provides the site value.
+   * IRI of the intervention's site facility. API Platform omits null fields,
+   * so an intervention without a site arrives with the field `undefined`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly site: string | null;
+  readonly site?: string | null;
 
   /**
    * Property responsible
    * @readonly
    *
    * @description
-   * Provides the responsible value.
+   * IRI of the responsible member. API Platform omits null fields, so an
+   * unassigned intervention arrives with the field `undefined`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly responsible: string | null;
+  readonly responsible?: string | null;
 
   /**
    * Property participants
@@ -183,33 +186,36 @@ export interface InterventionOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Provides the planned start at value.
+   * ISO-8601 planned window start. API Platform omits null fields, so an
+   * unplanned intervention arrives with the field `undefined`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly plannedStartAt: string | null;
+  readonly plannedStartAt?: string | null;
 
   /**
    * Property dueAt
    * @readonly
    *
    * @description
-   * Provides the due at value.
+   * ISO-8601 planned window end. API Platform omits null fields, so an
+   * intervention without a due date arrives with the field `undefined`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly dueAt: string | null;
+  readonly dueAt?: string | null;
 
   /**
    * Property reviewNote
    * @readonly
    *
    * @description
-   * Provides the review note value.
+   * Reviewer's note attached on `changes_requested`. API Platform omits null
+   * fields, so an intervention without one arrives with the field `undefined`.
    *
-   * @type {string | null}
+   * @type {string | null | undefined}
    */
-  readonly reviewNote: string | null;
+  readonly reviewNote?: string | null;
 
   /**
    * Property revision

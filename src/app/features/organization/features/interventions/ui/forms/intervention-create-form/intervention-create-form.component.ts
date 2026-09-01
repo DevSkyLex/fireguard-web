@@ -29,6 +29,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -367,7 +368,9 @@ export class InterventionCreateForm {
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits when
    * the form is valid. Splits the picked `plannedRange` tuple back into the
-   * `plannedStartAt`/`dueAt` pair the store expects.
+   * `plannedStartAt`/`dueAt` pair the store expects, each end re-anchored to
+   * midnight UTC ({@link toUtcMidnight}) so the stored day does not drift with
+   * the picker's timezone.
    *
    * @access protected
    * @since 1.0.0
@@ -395,8 +398,8 @@ export class InterventionCreateForm {
       priority: draft.priority,
       site: draft.site,
       responsible: draft.responsible,
-      plannedStartAt,
-      dueAt,
+      plannedStartAt: plannedStartAt ? toUtcMidnight(plannedStartAt) : null,
+      dueAt: dueAt ? toUtcMidnight(dueAt) : null,
     });
   }
   //#endregion

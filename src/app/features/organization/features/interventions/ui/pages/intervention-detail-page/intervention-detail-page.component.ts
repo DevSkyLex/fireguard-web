@@ -59,7 +59,6 @@ import type {
   InterventionConfirmRequest,
   InterventionEditState,
   InterventionEditTarget,
-  InterventionIssueOutput,
   InterventionIssueTarget,
   InterventionLinkedResourceTabId,
   InterventionOutboxOperation,
@@ -1410,11 +1409,6 @@ export class InterventionDetailPage {
     () => this.store.transitionCallState().error,
   );
 
-  /** The blocking compliance issues, which stop publication. */
-  protected readonly blockerIssues: Signal<readonly InterventionIssueOutput[]> = computed<
-    readonly InterventionIssueOutput[]
-  >(() => this.store.issues().filter((issue) => issue.severity === 'blocker'));
-
   /** How many proposed changes publication would apply. */
   protected readonly pendingChangesCount: Signal<number> = computed<number>(
     () => this.store.changes().filter((change) => change.status === 'proposed').length,
@@ -2213,10 +2207,13 @@ export class InterventionDetailPage {
    * @description
    * The operator declined the nudge — Escape, the backdrop, or Skip — so the
    * transition proceeds unsigned; the backend does not require a signature to
-   * submit. A no-op while {@link signingSubmitPending} is set: closing the
-   * dialog programmatically from {@link onSignatureCaptured} also flows
-   * through the underlying `hlm-dialog`'s own close notification, and that
-   * closure already has its own chain running.
+   * submit. A no-op once the dialog is already hidden: Skip emits `dismissed`
+   * directly, closing the dialog then echoes it a second time through the
+   * underlying `hlm-dialog`'s own close notification, and dispatching the
+   * transition twice would cancel the first PATCH mid-flight and fail the
+   * echo on a stale revision. Also a no-op while {@link signingSubmitPending}
+   * is set: the programmatic close from {@link onSignatureCaptured} flows
+   * through the same notification while its own chain is already running.
    *
    * @access protected
    * @since 5.5.0
@@ -2224,6 +2221,8 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected onSignatureDismissed(): void {
+    if (!this.signatureDialogVisible()) return;
+
     this.signatureDialogVisible.set(false);
     if (this.signingSubmitPending()) return;
 

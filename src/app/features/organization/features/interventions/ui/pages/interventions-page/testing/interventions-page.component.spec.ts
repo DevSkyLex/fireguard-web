@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   input,
+  PLATFORM_ID,
   provideZonelessChangeDetection,
   signal,
   type InputSignal,
@@ -441,6 +442,17 @@ describe('InterventionsPage', () => {
   it('should not open the creation sheet without the param', async () => {
     fixture = await createPage();
 
+    expect(document.querySelector('[data-testid="intervention-create-sheet"]')).toBeNull();
+  });
+
+  it('should leave ?create=1 untouched on the server so the hydrated browser can honour it', async () => {
+    TestBed.overrideProvider(PLATFORM_ID, { useValue: 'server' });
+    fixture = await createPage({ create: '1' });
+
+    expect(navigate).not.toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null } }),
+    );
     expect(document.querySelector('[data-testid="intervention-create-sheet"]')).toBeNull();
   });
 

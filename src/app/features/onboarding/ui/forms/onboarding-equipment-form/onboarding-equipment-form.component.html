@@ -33,10 +33,39 @@
           </hlm-select-group>
         </hlm-select-content>
       </hlm-select>
-      @if (equipmentForm.type().touched() && equipmentForm.type().invalid()) {
-        <hlm-field-error>{{ equipmentForm.type().errors()[0].message }}</hlm-field-error>
-      }
+      <hlm-field-error>{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
+
+    @if (facilities().length > 1) {
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="onboarding-equipment-facility"
+          i18n="@@onboarding.equipmentForm.facility"
+        >
+          Facility
+        </label>
+        <hlm-select [itemToString]="facilityLabelOf" [formField]="equipmentForm.facilityId">
+          <hlm-select-trigger
+            buttonId="onboarding-equipment-facility"
+            class="w-full"
+            data-testid="onboarding-equipment-facility"
+          >
+            <hlm-select-value
+              placeholder="Select a facility"
+              i18n-placeholder="@@onboarding.equipmentForm.facilityPlaceholder"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (facility of facilities(); track facility.id) {
+                <hlm-select-item [value]="facility.id">{{ facility.name }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </hlm-field>
+    }
 
     <hlm-field>
       <label hlmFieldLabel for="onboarding-equipment-brand" i18n="@@onboarding.equipmentForm.brand">
@@ -50,7 +79,6 @@
         placeholder="Kidde"
         i18n-placeholder="@@onboarding.equipmentForm.brandPlaceholder"
         [formField]="equipmentForm.brand"
-        [attr.aria-invalid]="equipmentForm.brand().touched() && equipmentForm.brand().invalid()"
       />
     </hlm-field>
 
@@ -66,7 +94,6 @@
         placeholder="Pro 210"
         i18n-placeholder="@@onboarding.equipmentForm.modelPlaceholder"
         [formField]="equipmentForm.model"
-        [attr.aria-invalid]="equipmentForm.model().touched() && equipmentForm.model().invalid()"
       />
     </hlm-field>
 
@@ -86,9 +113,6 @@
         placeholder="SN-2024-001"
         i18n-placeholder="@@onboarding.equipmentForm.serialPlaceholder"
         [formField]="equipmentForm.serialNumber"
-        [attr.aria-invalid]="
-          equipmentForm.serialNumber().touched() && equipmentForm.serialNumber().invalid()
-        "
       />
     </hlm-field>
 

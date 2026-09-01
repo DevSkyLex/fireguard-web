@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
@@ -12,8 +13,9 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { storeErrorMessage } from '@features/onboarding/utils';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
-import type { SetupCreateEquipmentInput } from '@features/organization/setup';
+import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -26,6 +28,7 @@ const EMPTY_VALUES: OnboardingEquipmentFormDraft = {
   brand: '',
   model: '',
   serialNumber: '',
+  facilityId: '',
 };
 
 /** Trims a free-text field, sending `undefined` rather than an empty string. */
@@ -44,7 +47,9 @@ function trimmed(value: string): string | undefined {
  * enough to prove the workflow before the operator leaves the wizard. The
  * type catalog is the equipments subfeature's own canonical
  * `EQUIPMENT_TYPE_OPTIONS`, not a local copy (`FEATURE.md` "Cross-Feature
- * Dependencies").
+ * Dependencies"). The equipment is attached to a facility created earlier in
+ * the wizard: silently when there is exactly one, through a pre-selected
+ * facility select when there are several.
  *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the setup-boundary-shaped payload — the wizard page
@@ -78,6 +83,18 @@ export class OnboardingEquipmentForm {
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property facilities
+   * @readonly
+   * @description The facilities created earlier in the wizard. One pre-attaches silently; several offer a pre-selected choice.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<readonly SetupFacilitySummary[]>}
+   */
+  public readonly facilities: InputSignal<readonly SetupFacilitySummary[]> = input<
+    readonly SetupFacilitySummary[]
+  >([]);
 
   /**
    * Property serverError
@@ -148,8 +165,12 @@ export class OnboardingEquipmentForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const storeMessage: string | null = storeErrorMessage(error);
+
+    return storeMessage !== null
+      ? [storeMessage]
       : [
           $localize`:@@onboarding.equipmentForm.createFailed:The equipment could not be registered.`,
         ];
@@ -158,6 +179,25 @@ export class OnboardingEquipmentForm {
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
+
+  /** Names a facility on the closed select trigger. */
+  protected readonly facilityLabelOf: (value: string) => string = (value) =>
+    this.facilities().find((facility) => facility.id === value)?.name ?? '';
+  //#endregion
+
+  //#region Lifecycle
+  constructor() {
+    effect(() => {
+      const facilities: readonly SetupFacilitySummary[] = this.facilities();
+      if (facilities.length === 0) return;
+
+      const current: string = this.model().facilityId;
+      if (facilities.some((facility) => facility.id === current)) return;
+
+      const firstId: string = facilities[0].id;
+      this.model.update((draft) => ({ ...draft, facilityId: firstId }));
+    });
+  }
   //#endregion
 
   //#region Methods
@@ -190,6 +230,7 @@ export class OnboardingEquipmentForm {
       brand: trimmed(draft.brand),
       model: trimmed(draft.model),
       serialNumber: trimmed(draft.serialNumber),
+      facilityId: draft.facilityId === '' ? undefined : draft.facilityId,
     });
   }
   //#endregion

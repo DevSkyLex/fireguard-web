@@ -36,4 +36,7 @@ export interface OnboardingEquipmentFormDraft {
 
   /** Manufacturer serial number. */
   readonly serialNumber: string;
+
+  /** The target facility's id, or an empty string when none is attached. */
+  readonly facilityId: string;
 }

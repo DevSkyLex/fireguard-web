@@ -185,9 +185,9 @@ describe('OrganizationSetupService', () => {
     expect(equipmentService.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 100 });
   });
 
-  it('should create facilities and expose a void completion', () => {
+  it('should create facilities and return their setup summaries', () => {
     facilityService.create.mockImplementation((organizationId: string, input) =>
-      of({ id: `${organizationId}:${input.name}` }),
+      of({ id: `${organizationId}:${input.name}`, name: input.name, type: input.type }),
     );
 
     service
@@ -196,19 +196,37 @@ describe('OrganizationSetupService', () => {
         { type: 'building', name: 'Building A', address: '12 Main Street' },
       ])
       .subscribe((result) => {
-        expect(result).toBeUndefined();
+        expect(result).toEqual([
+          { id: 'org-1:HQ', name: 'HQ' },
+          { id: 'org-1:Building A', name: 'Building A' },
+        ]);
       });
 
     expect(facilityService.create).toHaveBeenCalledTimes(2);
   });
 
-  it('should complete facility creation immediately when there is nothing to create', () => {
+  it('should complete facility creation with an empty list when there is nothing to create', () => {
     const nextSpy = vi.fn();
 
     service.createFacilities('org-1', []).subscribe({ next: nextSpy });
 
-    expect(nextSpy).toHaveBeenCalledWith(undefined);
+    expect(nextSpy).toHaveBeenCalledWith([]);
     expect(facilityService.create).not.toHaveBeenCalled();
+  });
+
+  it('should map the equipment facilityId to the flat facility IRI', () => {
+    equipmentService.create.mockReturnValue(of({ id: 'equipment-1' }));
+
+    service
+      .createEquipment('org-1', { type: 'fire_extinguisher', facilityId: 'facility-1' })
+      .subscribe((result) => {
+        expect(result).toBeUndefined();
+      });
+
+    expect(equipmentService.create).toHaveBeenCalledWith('org-1', {
+      type: 'fire_extinguisher',
+      facility: '/api/facilities/facility-1',
+    });
   });
 
   it('should delegate equipment and inspection creation through the setup contract', () => {

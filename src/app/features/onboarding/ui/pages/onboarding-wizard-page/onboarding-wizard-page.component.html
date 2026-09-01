@@ -46,6 +46,7 @@
       }
       @case ('create_first_equipment') {
         <app-onboarding-equipment-form
+          [facilities]="createdFacilities()"
           [pending]="stepPending()"
           [serverError]="stepError()"
           (submitted)="submitEquipment($event)"

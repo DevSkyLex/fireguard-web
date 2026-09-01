@@ -7,6 +7,7 @@ import {
   catchError,
   concatMap,
   EMPTY,
+  exhaustMap,
   filter,
   finalize,
   forkJoin,
@@ -804,6 +805,12 @@ export const InterventionWorkspaceStore = signalStore(
          * invalid transition (422) — mirroring the list store's mapping, so a
          * 412 tells the user to refresh instead of retrying in a loop.
          *
+         * Requests flow through `exhaustMap`, not `switchMap`: a transition
+         * must never be cancelled by a duplicate trigger. Cancelling the
+         * client side of an already-sent PATCH loses the returned revision
+         * while the server has already moved on, so the duplicate then fails
+         * on a stale `If-Match` with a 412.
+         *
          * @access public
          * @since 1.0.0
          *
@@ -812,7 +819,7 @@ export const InterventionWorkspaceStore = signalStore(
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(
             tap(() => patchState(store, { transitionCallState: pendingCallState() })),
-            switchMap(({ interventionId, status, reviewNote }) => {
+            exhaustMap(({ interventionId, status, reviewNote }) => {
               const intervention = store.intervention();
 
               /**

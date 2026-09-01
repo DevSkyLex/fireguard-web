@@ -687,7 +687,11 @@ describe('InterventionDetailPage', () => {
   describe('the status band', () => {
     it("should render the page's status, phase, action and blockers as the band's own inputs", async () => {
       current.set(
-        intervention({ status: 'changes_requested', reviewNote: 'Re-check the third floor.' }),
+        intervention({
+          status: 'changes_requested',
+          reviewNote: 'Re-check the third floor.',
+          blockersCount: 1,
+        }),
       );
       issues.set([
         {
@@ -722,7 +726,7 @@ describe('InterventionDetailPage', () => {
     });
 
     it('should scroll to and focus the issues checklist when the band asks to see the blockers', async () => {
-      current.set(intervention({ status: 'submitted' }));
+      current.set(intervention({ status: 'submitted', blockersCount: 1 }));
       issues.set([
         {
           '@id': '/api/issues/1',
@@ -789,6 +793,8 @@ describe('InterventionDetailPage', () => {
         interventionId: 'intervention-1',
         status: 'submitted',
       });
+      // Skip emits `dismissed` itself AND the closing dialog echoes it — one transition only.
+      expect(transition).toHaveBeenCalledTimes(1);
     });
 
     it('should upload the signature then submit only once the upload has landed', async () => {
@@ -877,7 +883,7 @@ describe('InterventionDetailPage', () => {
     });
 
     it('should count the blockers on the status band and list them in the issues checklist', async () => {
-      current.set(intervention({ status: 'submitted' }));
+      current.set(intervention({ status: 'submitted', blockersCount: 1 }));
       issues.set([
         {
           '@id': '/api/issues/1',

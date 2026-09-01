@@ -113,6 +113,86 @@ describe('InterventionLinkedResourcesStore', () => {
       expect(store.facilitiesError()).not.toBeNull();
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
+
+    it('should forward an explicit recordStatus to the service', async () => {
+      store.ensureFacilitiesLoaded('int-1', 'published');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        recordStatus: 'published',
+      });
+    });
+
+    it('should refetch page 1 when recordStatus changes for the same intervention, e.g. the intervention just published', async () => {
+      store.ensureFacilitiesLoaded('int-1');
+      await flush();
+      facilityService.listByIntervention.mockClear();
+
+      const published = { id: 'f1', recordStatus: 'published' } as unknown as FacilityOutput;
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [published], totalItems: 1 }),
+      );
+      store.ensureFacilitiesLoaded('int-1', 'published');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        recordStatus: 'published',
+      });
+      expect(store.facilities()).toEqual([published]);
+    });
+
+    it('should still be a no-op for a second call with the same intervention id and the same recordStatus', async () => {
+      store.ensureFacilitiesLoaded('int-1', 'published');
+      await flush();
+      store.ensureFacilitiesLoaded('int-1', 'published');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('reloadFacilities', () => {
+    it('should refetch page 1 even though ensureFacilitiesLoaded already settled it', async () => {
+      store.ensureFacilitiesLoaded('int-1');
+      await flush();
+      facilityService.listByIntervention.mockClear();
+
+      const refreshedFacility = { id: 'f2' } as unknown as FacilityOutput;
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [refreshedFacility], totalItems: 1 }),
+      );
+      store.reloadFacilities('int-1');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+      });
+      expect(store.facilities()).toEqual([refreshedFacility]);
+    });
+
+    it('should refetch even from an idle state, unlike ensureFacilitiesLoaded on a second call', async () => {
+      store.reloadFacilities('int-1');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+      expect(store.facilities()).toEqual([facility]);
+    });
+
+    it('should forward an explicit recordStatus, e.g. after creating a facility once the intervention is published', async () => {
+      store.reloadFacilities('int-1', 'published');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        recordStatus: 'published',
+      });
+    });
   });
 
   describe('loadMoreFacilities', () => {
@@ -136,6 +216,27 @@ describe('InterventionLinkedResourcesStore', () => {
       });
       expect(store.facilities()).toEqual([facility, secondPageItem]);
       expect(store.facilitiesHasMore()).toBe(true);
+    });
+
+    it('should continue with the recordStatus the loaded page was fetched with', async () => {
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [facility], totalItems: 45 }),
+      );
+      store.ensureFacilitiesLoaded('int-1', 'published');
+      await flush();
+
+      const secondPageItem = { id: 'f2' } as unknown as FacilityOutput;
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [secondPageItem], totalItems: 45 }),
+      );
+      store.loadMoreFacilities('int-1');
+      await flush();
+
+      expect(facilityService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 2,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        recordStatus: 'published',
+      });
     });
 
     it('should be a no-op while a page is already in flight', async () => {

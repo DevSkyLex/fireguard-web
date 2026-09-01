@@ -45,6 +45,10 @@ import { isCallError, isCallPending, type CallState, type StoreError } from '@co
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
+import type {
+  CreateFacilityInput,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -159,6 +163,7 @@ import { InterventionTeamAssignDialog } from '../../dialogs/intervention-team-as
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
+import { InterventionFacilitySheet } from '../../sheets/intervention-facility-sheet';
 import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
@@ -284,6 +289,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionAbandonDialog,
     InterventionConfirmDialog,
     InterventionDiscussionSheet,
+    InterventionFacilitySheet,
     InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
@@ -614,9 +620,11 @@ export class InterventionDetailPage {
     effect((): void => {
       const tab: InterventionLinkedResourceTabId = this.activeLinkedTab();
       const interventionId: string = this.interventionId();
+      const facilitiesRecordStatus: FacilityOutput['recordStatus'] = this.facilitiesRecordStatus();
 
       untracked((): void => {
-        if (tab === 'facilities') this.linkedResources.ensureFacilitiesLoaded(interventionId);
+        if (tab === 'facilities')
+          this.linkedResources.ensureFacilitiesLoaded(interventionId, facilitiesRecordStatus);
         else if (tab === 'equipment') this.linkedResources.ensureEquipmentLoaded(interventionId);
         else if (tab === 'inspections')
           this.linkedResources.ensureInspectionsLoaded(interventionId);
@@ -658,6 +666,17 @@ export class InterventionDetailPage {
       if (this.store.assignTeamCallState().status !== 'success') return;
 
       untracked((): void => this.teamAssignVisible.set(false));
+    });
+
+    effect((): void => {
+      if (this.store.createFacilityCallState().status !== 'success') return;
+
+      const facilitiesRecordStatus: FacilityOutput['recordStatus'] = this.facilitiesRecordStatus();
+
+      untracked((): void => {
+        this.facilitySheetVisible.set(false);
+        this.linkedResources.reloadFacilities(this.interventionId(), facilitiesRecordStatus);
+      });
     });
 
     effect((): void => {
@@ -1049,6 +1068,9 @@ export class InterventionDetailPage {
   /** Whether the add-work-item panel is open. */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /** Whether the add-facility panel is open. */
+  protected readonly facilitySheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
   /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
   protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
@@ -1217,6 +1239,32 @@ export class InterventionDetailPage {
 
   /** Whether the scope may still grow. */
   protected readonly canAddWorkItem: Signal<boolean> = this.caps.canAddWorkItem;
+
+  /** Whether a facility may be attached to this intervention — the same mutable-window gate the backend enforces on `POST /api/facilities`. */
+  protected readonly canAddFacility: Signal<boolean> = this.caps.canAddFacility;
+
+  /**
+   * Property facilitiesRecordStatus
+   * @readonly
+   *
+   * @description
+   * The `recordStatus` to request when listing this intervention's linked
+   * facilities. `CanonicalFacilityProvider` defaults to `'draft'` server-side
+   * whenever the `intervention` filter is present, but
+   * `FacilityInterventionResourceAdapter::publishDrafts` flips those
+   * facilities to `'published'` the moment the intervention itself
+   * publishes — reading back with the provider's default afterward returns
+   * an empty collection. `undefined` before that point leaves the
+   * provider's own default in place.
+   *
+   * @access protected
+   * @since 8.1.0
+   *
+   * @type {Signal<FacilityOutput['recordStatus']>}
+   */
+  protected readonly facilitiesRecordStatus: Signal<FacilityOutput['recordStatus']> = computed<
+    FacilityOutput['recordStatus']
+  >(() => (this.store.intervention()?.status === 'published' ? 'published' : undefined));
 
   /** Whether an item may be skipped with a reason. */
   protected readonly canSkipWorkItem: Signal<boolean> = this.caps.canSkipWorkItem;
@@ -1397,6 +1445,16 @@ export class InterventionDetailPage {
   /** The add-work-item sheet's own write error, if any. */
   protected readonly workItemCreateError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.createWorkItemCallState().error,
+  );
+
+  /** Whether the add-facility sheet's own write is in flight. */
+  protected readonly facilityCreatePending: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.createFacilityCallState()),
+  );
+
+  /** The add-facility sheet's own write error, if any. */
+  protected readonly facilityCreateError: Signal<StoreError | null> = computed<StoreError | null>(
+    () => this.store.createFacilityCallState().error,
   );
 
   /** Whether the request-changes sheet's own transition is in flight. */
@@ -2298,6 +2356,30 @@ export class InterventionDetailPage {
       },
     });
     this.workItemSheetVisible.set(false);
+  }
+
+  /**
+   * Method createFacility
+   *
+   * @description
+   * Attaches a facility to this intervention. The form emits only the
+   * fields it owns; `FacilityService.createForIntervention` adds the
+   * organization and intervention IRIs, so `FacilityCreateForm` stays a
+   * general-purpose facility form with no intervention-specific branch.
+   *
+   * @access protected
+   * @since 8.0.0
+   *
+   * @param {CreateFacilityInput} values - The form's validated payload.
+   *
+   * @returns {void}
+   */
+  protected createFacility(values: CreateFacilityInput): void {
+    this.store.createFacility({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+      input: values,
+    });
   }
 
   /**

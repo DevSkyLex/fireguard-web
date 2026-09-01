@@ -1185,9 +1185,9 @@ export class ApiMock {
 
   /**
    * Mocks a successful `DELETE /api/organizations/{organizationId}/members/me`
-   * — the self-removal request `OrganizationSettingsStore.leave` sends from
-   * both the settings danger tab and the sidebar organization switcher's
-   * "Leave organization…" menu entry.
+   * — the self-removal request `MyOrganizationsStore.leave` sends, reached
+   * from `AccountOrganizationsPage`'s "Leave organization…" entry
+   * (`/account/organizations`, confirmed through `AccountLeaveOrganizationDialog`).
    */
   public async mockOrganizationMemberLeave(organizationId: string): Promise<void> {
     await this.installSafetyNet();
@@ -1206,8 +1206,8 @@ export class ApiMock {
   /**
    * Mocks a failing `DELETE /api/organizations/{organizationId}/members/me`
    * — the backend's owner-cannot-leave / last-administrator 409 refusals,
-   * surfaced inline on `OrganizationLeaveDialog` regardless of which call
-   * site opened it.
+   * surfaced inline on `AccountLeaveOrganizationDialog` as
+   * `MyOrganizationsStore.leaveError`.
    */
   public async mockOrganizationMemberLeaveError(
     organizationId: string,
@@ -2013,6 +2013,39 @@ export class ApiMock {
         return;
       }
       await fulfillJson(route, 200, intervention);
+    });
+  }
+
+  /**
+   * Mocks `GET /api/facilities?intervention=…` — the canonical collection
+   * `FacilityService.listByIntervention` queries, which
+   * `InterventionLinkedResourcesStore.loadFacilities` reads for the detail
+   * page's Facilities tab. Matches on the query string only, tolerant of
+   * either `HttpParams` encoding of the intervention IRI, so one matcher
+   * serves the tab's first load and any re-registration after a create.
+   */
+  public async mockInterventionFacilityList(
+    facilities: ReadonlyArray<FacilityOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/facilities\?.*intervention=/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(facilities));
+    });
+  }
+
+  /**
+   * Mocks a successful `POST /api/facilities` — the request
+   * `FacilityService.createForIntervention` sends when the intervention
+   * detail page's "Add facility" sheet submits without a `clientId`.
+   */
+  public async mockFacilityCreate(facility: FacilityOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/facilities`, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, facility);
     });
   }
 

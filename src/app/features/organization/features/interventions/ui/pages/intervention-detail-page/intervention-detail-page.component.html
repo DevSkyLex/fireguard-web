@@ -315,15 +315,33 @@
 
           <div hlmTabsContent="facilities" class="min-w-0">
             <ng-template hlmTabsContentLazy>
-              <app-intervention-facilities-table
-                [organizationId]="organizationId()"
-                [items]="linkedResources.facilities()"
-                [loading]="linkedResources.facilitiesLoading()"
-                [error]="linkedResources.facilitiesError()?.message ?? null"
-                [totalItems]="linkedResources.facilitiesTotalItems()"
-                [loadingMore]="linkedResources.facilitiesLoadingMore()"
-                (loadMoreRequested)="linkedResources.loadMoreFacilities(interventionId())"
-              />
+              <div class="flex flex-col gap-4">
+                @if (canAddFacility()) {
+                  <div class="flex justify-end">
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="max-sm:min-h-11"
+                      data-testid="intervention-add-facility"
+                      (click)="facilitySheetVisible.set(true)"
+                    >
+                      <span i18n="@@intervention.facility.addButton">Add facility</span>
+                    </button>
+                  </div>
+                }
+
+                <app-intervention-facilities-table
+                  [organizationId]="organizationId()"
+                  [items]="linkedResources.facilities()"
+                  [loading]="linkedResources.facilitiesLoading()"
+                  [error]="linkedResources.facilitiesError()?.message ?? null"
+                  [totalItems]="linkedResources.facilitiesTotalItems()"
+                  [loadingMore]="linkedResources.facilitiesLoadingMore()"
+                  (loadMoreRequested)="linkedResources.loadMoreFacilities(interventionId())"
+                />
+              </div>
             </ng-template>
           </div>
 
@@ -531,6 +549,14 @@
   [memberOptions]="planningOptions.members()"
   (visibleChange)="workItemSheetVisible.set($event)"
   (submitted)="createWorkItem($event)"
+/>
+
+<app-intervention-facility-sheet
+  [visible]="facilitySheetVisible()"
+  [pending]="facilityCreatePending()"
+  [serverError]="facilityCreateError()"
+  (visibleChange)="facilitySheetVisible.set($event)"
+  (submitted)="createFacility($event)"
 />
 
 <app-intervention-request-changes-sheet

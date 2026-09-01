@@ -3228,6 +3228,18 @@
         <source> Choose the operational objective first. The workspace will then guide scope preparation and assignment. </source>
         <target>Elige primero el objetivo operativo. El espacio de trabajo te guiará después en la preparación del alcance y la asignación.</target>
       </trans-unit>
+      <trans-unit id="intervention.facilitySheet.header" datatype="html">
+        <source>Add facility</source>
+        <target>Añadir instalación</target>
+      </trans-unit>
+      <trans-unit id="intervention.facilitySheet.hint" datatype="html">
+        <source> Attach a facility to this intervention. Only the type and name are required — the rest can be filled in later from the facility's own record. </source>
+        <target> Adjunte una instalación a esta intervención. Solo el tipo y el nombre son obligatorios; el resto se puede completar más tarde desde la ficha de la instalación. </target>
+      </trans-unit>
+      <trans-unit id="intervention.facility.addButton" datatype="html">
+        <source>Add facility</source>
+        <target>Añadir instalación</target>
+      </trans-unit>
       <trans-unit id="intervention.workItemDrawer.header" datatype="html">
         <source>Add work item</source>
         <target>Añadir elemento de trabajo</target>

@@ -1,3 +1,4 @@
+import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type {
   CreateInterventionWorkItemInput,
   InterventionAttachmentKind,
@@ -113,4 +114,20 @@ export interface InterventionAttachmentUploadCommand {
 export interface InterventionWorkItemDeleteCommand {
   readonly interventionId: string;
   readonly workItems: readonly InterventionWorkItemOutput[];
+}
+
+/**
+ * Interface InterventionFacilityCreateCommand
+ * @interface InterventionFacilityCreateCommand
+ *
+ * @description
+ * Command used to create a facility attached to this intervention, through
+ * `FacilityService.createForIntervention`.
+ *
+ * @since 1.0.0
+ */
+export interface InterventionFacilityCreateCommand {
+  readonly organizationId: string;
+  readonly interventionId: string;
+  readonly input: CreateFacilityInput;
 }

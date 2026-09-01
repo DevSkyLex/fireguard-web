@@ -45,6 +45,8 @@ export interface InterventionCapabilities {
   readonly canAssignTeam: Signal<boolean>;
   /** Whether the scope may still grow — server-advertised `canMutateWorkItems`. */
   readonly canAddWorkItem: Signal<boolean>;
+  /** Whether a facility may be attached to this intervention — server-advertised `canMutateWorkItems`, the same mutable-window gate the backend enforces on `POST /api/facilities`. */
+  readonly canAddFacility: Signal<boolean>;
   /** Whether an item may be skipped with a reason — server-advertised `canMutateWorkItems`, in the execute phase. */
   readonly canSkipWorkItem: Signal<boolean>;
   /** Whether the intervention may be abandoned from its current status. */

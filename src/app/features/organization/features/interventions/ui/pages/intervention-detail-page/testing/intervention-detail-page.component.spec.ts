@@ -21,6 +21,7 @@ import {
   errorCallState,
   idleCallState,
   pendingCallState,
+  successCallState,
   type CallState,
 } from '@core/request-state';
 import { TitleService } from '@core/title';
@@ -30,6 +31,8 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { FacilityCreateForm } from '@features/organization/features/facilities/ui/forms/facility-create-form';
 import {
   InterventionLabelService,
   InterventionOfflineService,
@@ -246,6 +249,7 @@ describe('InterventionDetailPage', () => {
   let changes: WritableSignal<readonly InterventionChangeOutput[]>;
   let saving: WritableSignal<boolean>;
   let updateDetailsCallState: WritableSignal<CallState>;
+  let createFacilityCallState: WritableSignal<CallState<FacilityOutput>>;
   let loadError: WritableSignal<string | null>;
   let loadFailed: WritableSignal<boolean>;
   let hasOlderActivities: WritableSignal<boolean>;
@@ -268,6 +272,9 @@ describe('InterventionDetailPage', () => {
   let setWorkItemStatus: ReturnType<typeof vi.fn>;
   let deleteWorkItems: ReturnType<typeof vi.fn>;
   let createWorkItem: ReturnType<typeof vi.fn>;
+  let createFacility: ReturnType<typeof vi.fn>;
+  let ensureFacilitiesLoaded: ReturnType<typeof vi.fn>;
+  let reloadFacilities: ReturnType<typeof vi.fn>;
   let workspaceDelete: ReturnType<typeof vi.fn>;
   let listDelete: ReturnType<typeof vi.fn>;
   let setPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
@@ -295,6 +302,7 @@ describe('InterventionDetailPage', () => {
     changes = signal<readonly InterventionChangeOutput[]>([]);
     saving = signal(false);
     updateDetailsCallState = signal<CallState>(idleCallState());
+    createFacilityCallState = signal<CallState<FacilityOutput>>(idleCallState());
     loadError = signal<string | null>(null);
     loadFailed = signal(false);
     hasOlderActivities = signal(false);
@@ -324,6 +332,9 @@ describe('InterventionDetailPage', () => {
     setWorkItemStatus = vi.fn();
     deleteWorkItems = vi.fn();
     createWorkItem = vi.fn();
+    createFacility = vi.fn();
+    ensureFacilitiesLoaded = vi.fn();
+    reloadFacilities = vi.fn();
     workspaceDelete = vi.fn();
     listDelete = vi.fn();
     setPendingDuplicatePrefill = vi.fn();
@@ -489,6 +500,8 @@ describe('InterventionDetailPage', () => {
               deleteCallState: signal(idleCallState()),
               assignTeamCallState: signal(idleCallState()),
               assignTeam: vi.fn(),
+              createFacilityCallState,
+              createFacility,
               addCommentCallState: signal(idleCallState()),
               attachments,
               queuedAttachments: signal([]),
@@ -532,13 +545,17 @@ describe('InterventionDetailPage', () => {
               facilities: signal([]),
               facilitiesLoading: signal(false),
               facilitiesError: signal(null),
+              facilitiesTotalItems: signal(0),
+              facilitiesLoadingMore: signal(false),
               equipment: signal([]),
               equipmentLoading: signal(false),
               equipmentError: signal(null),
               inspections: signal([]),
               inspectionsLoading: signal(false),
               inspectionsError: signal(null),
-              ensureFacilitiesLoaded: vi.fn(),
+              ensureFacilitiesLoaded,
+              loadMoreFacilities: vi.fn(),
+              reloadFacilities,
               ensureEquipmentLoaded: vi.fn(),
               ensureInspectionsLoaded: vi.fn(),
             },
@@ -1492,6 +1509,140 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect(root().querySelector('[data-testid="intervention-work-items-add"]')).toBeNull();
+    });
+  });
+
+  describe('adding a facility', () => {
+    it('should offer the affordance while the server advertises mutable work items', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="intervention-add-facility"]')).not.toBeNull();
+    });
+
+    it('should offer no add affordance once the server stops advertising mutable work items', async () => {
+      current.set(
+        intervention({
+          status: 'in_progress',
+          allowedActions: { ...actionsFor('in_progress'), canMutateWorkItems: false },
+        }),
+      );
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="intervention-add-facility"]')).toBeNull();
+    });
+
+    it('should open the sheet from the Facilities tab CTA', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-facility-sheet')).not.toBeNull();
+    });
+
+    it('should call the store with the organization and intervention IRIs on submit', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
+      facilityForm.model.set({
+        type: 'building',
+        name: 'Warehouse',
+        parentFacilityId: '',
+        code: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        levelIndex: '',
+      });
+      await fixture.whenStable();
+      (
+        inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+      ).dispatchEvent(new Event('submit'));
+
+      expect(createFacility).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: expect.objectContaining({ type: 'building', name: 'Warehouse' }),
+      });
+    });
+
+    it('should request the draft default recordStatus while the intervention is not published', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', undefined);
+    });
+
+    it('should request the published recordStatus once the intervention is published', async () => {
+      current.set(intervention({ status: 'published' }));
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', 'published');
+    });
+
+    it('should re-fetch with the published recordStatus when the intervention publishes while the tab is already open', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      ensureFacilitiesLoaded.mockClear();
+
+      current.set(intervention({ status: 'published' }));
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', 'published');
+    });
+
+    it('should reload the linked facilities with the current recordStatus once a facility is created', async () => {
+      fixture = await createPage();
+      createFacility.mockImplementation(() => {
+        createFacilityCallState.set(successCallState({ id: 'facility-new' } as FacilityOutput));
+      });
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
+      facilityForm.model.set({
+        type: 'building',
+        name: 'Warehouse',
+        parentFacilityId: '',
+        code: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        levelIndex: '',
+      });
+      await fixture.whenStable();
+      (
+        inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+      ).dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+
+      expect(reloadFacilities).toHaveBeenCalledWith('intervention-1', undefined);
+      expect(inBody('intervention-facility-sheet')).toBeNull();
     });
   });
 

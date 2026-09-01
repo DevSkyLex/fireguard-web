@@ -42,6 +42,7 @@ export const LINKED_RESOURCES_PAGE_SIZE = 30;
 const INITIAL_STATE: InterventionLinkedResourcesState = {
   loadedForInterventionId: null,
   facilitiesCallState: idleCallState(),
+  facilitiesRecordStatus: undefined,
   facilitiesPage: 0,
   facilitiesTotalItems: 0,
   facilitiesLoadingMore: false,
@@ -141,17 +142,28 @@ export const InterventionLinkedResourcesStore = signalStore(
       inspectionService = inject<InspectionService>(InspectionService),
       dispatcher = inject<Dispatcher>(Dispatcher),
     ) => {
-      const loadFacilities = rxMethod<{ readonly interventionId: string; readonly page: number }>(
+      const loadFacilities = rxMethod<{
+        readonly interventionId: string;
+        readonly page: number;
+        readonly recordStatus: FacilityOutput['recordStatus'];
+      }>(
         pipe(
-          tap(({ page }) => {
-            if (page === 1) patchState(store, { facilitiesCallState: pendingCallState() });
-            else patchState(store, { facilitiesLoadingMore: true });
+          tap(({ page, recordStatus }) => {
+            if (page === 1) {
+              patchState(store, {
+                facilitiesCallState: pendingCallState(),
+                facilitiesRecordStatus: recordStatus,
+              });
+            } else {
+              patchState(store, { facilitiesLoadingMore: true });
+            }
           }),
-          switchMap(({ interventionId, page }) =>
+          switchMap(({ interventionId, page, recordStatus }) =>
             facilityService
               .listByIntervention(interventionId, {
                 page,
                 itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+                recordStatus,
               })
               .pipe(
                 tapResponse({
@@ -287,6 +299,7 @@ export const InterventionLinkedResourcesStore = signalStore(
         patchState(store, {
           loadedForInterventionId: interventionId,
           facilitiesCallState: idleCallState(),
+          facilitiesRecordStatus: undefined,
           facilitiesPage: 0,
           facilitiesTotalItems: 0,
           facilitiesLoadingMore: false,
@@ -307,20 +320,32 @@ export const InterventionLinkedResourcesStore = signalStore(
          *
          * @description
          * Loads the intervention's linked facilities the first time the
-         * Facilities tab activates for it; a later call for the same
-         * intervention is a no-op once the fetch has settled.
+         * Facilities tab activates for it, or re-fetches from page 1 when
+         * the requested `recordStatus` differs from the one the cached page
+         * was loaded with — the case that matters is the intervention
+         * publishing (and its linked facilities flipping from `'draft'` to
+         * `'published'` server-side) while the tab is already open. A later
+         * call with an unchanged `recordStatus` is a no-op once the fetch
+         * has settled.
          *
          * @access public
          * @since 1.0.0
          *
          * @param {string} interventionId - The intervention shown on the page.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - The record status to request; omit to keep the canonical provider's own `'draft'` default.
          *
          * @returns {void}
          */
-        ensureFacilitiesLoaded(interventionId: string): void {
+        ensureFacilitiesLoaded(
+          interventionId: string,
+          recordStatus?: FacilityOutput['recordStatus'],
+        ): void {
           resetIfDifferentIntervention(interventionId);
-          if (store.facilitiesCallState().status === 'idle') {
-            loadFacilities({ interventionId, page: 1 });
+          if (
+            store.facilitiesCallState().status === 'idle' ||
+            store.facilitiesRecordStatus() !== recordStatus
+          ) {
+            loadFacilities({ interventionId, page: 1, recordStatus });
           }
         },
 
@@ -329,8 +354,9 @@ export const InterventionLinkedResourcesStore = signalStore(
          *
          * @description
          * Appends the next page of linked facilities onto the already-loaded
-         * rows. A no-op while a page is already in flight; an error leaves
-         * the currently loaded rows in place.
+         * rows, continuing with the `recordStatus` the loaded page was
+         * fetched with. A no-op while a page is already in flight; an error
+         * leaves the currently loaded rows in place.
          *
          * @access public
          * @since 1.1.0
@@ -341,7 +367,36 @@ export const InterventionLinkedResourcesStore = signalStore(
          */
         loadMoreFacilities(interventionId: string): void {
           if (store.facilitiesLoadingMore()) return;
-          loadFacilities({ interventionId, page: store.facilitiesPage() + 1 });
+          loadFacilities({
+            interventionId,
+            page: store.facilitiesPage() + 1,
+            recordStatus: store.facilitiesRecordStatus(),
+          });
+        },
+
+        /**
+         * Method reloadFacilities
+         *
+         * @description
+         * Re-fetches the linked facilities' first page from scratch, ignoring
+         * the idle-only guard {@link ensureFacilitiesLoaded} applies — called
+         * after a facility is created from the intervention detail page, so
+         * the newly attached facility appears without navigating away from
+         * the tab.
+         *
+         * @access public
+         * @since 8.0.0
+         *
+         * @param {string} interventionId - The intervention shown on the page.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - The record status to request; omit to keep the canonical provider's own `'draft'` default.
+         *
+         * @returns {void}
+         */
+        reloadFacilities(
+          interventionId: string,
+          recordStatus?: FacilityOutput['recordStatus'],
+        ): void {
+          loadFacilities({ interventionId, page: 1, recordStatus });
         },
 
         /**

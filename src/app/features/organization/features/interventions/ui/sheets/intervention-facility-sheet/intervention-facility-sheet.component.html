@@ -1,0 +1,49 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="true"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[480px]! sm:max-w-none!"
+    data-testid="intervention-facility-sheet"
+    [showCloseButton]="false"
+    (keydown.escape)="requestClose()"
+  >
+    <button
+      hlmBtn
+      variant="ghost"
+      size="icon-sm"
+      type="button"
+      class="absolute end-3 top-3 max-sm:size-11"
+      data-testid="intervention-facility-sheet-close"
+      (click)="requestClose()"
+    >
+      <span class="sr-only" i18n="@@common.close">Close</span>
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@intervention.facilitySheet.header">Add facility</h3>
+      <p hlmSheetDescription i18n="@@intervention.facilitySheet.hint">
+        Attach a facility to this intervention. Only the type and name are required — the rest can
+        be filled in later from the facility's own record.
+      </p>
+    </hlm-sheet-header>
+
+    <app-facility-create-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

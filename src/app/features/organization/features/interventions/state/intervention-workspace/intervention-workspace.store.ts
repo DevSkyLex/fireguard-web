@@ -35,6 +35,8 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
   INTERVENTION_ATTACHMENT_QUEUE_MAX_BYTES,
   INTERVENTION_ATTACHMENT_QUEUE_MAX_FILES,
@@ -59,6 +61,7 @@ import type {
   InterventionChangeRejectCommand,
   InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
+  InterventionFacilityCreateCommand,
   InterventionWorkItemCreateCommand,
   InterventionWorkItemDeleteCommand,
   InterventionWorkItemStatusCommand,
@@ -94,6 +97,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
   assignTeamCallState: idleCallState(),
+  createFacilityCallState: idleCallState(),
   addCommentCallState: idleCallState(),
   attachments: [],
   attachmentsCallState: idleCallState(),
@@ -130,6 +134,7 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   pendingChangeIds: new Set<string>(),
   deleteCallState: idleCallState(),
   assignTeamCallState: idleCallState(),
+  createFacilityCallState: idleCallState(),
   addCommentCallState: idleCallState(),
   attachmentWriteCallState: idleCallState(),
   attachmentDeleteCallState: idleCallState(),
@@ -365,6 +370,7 @@ export const InterventionWorkspaceStore = signalStore(
     (
       store,
       service = inject<InterventionService>(InterventionService),
+      facilityService = inject<FacilityService>(FacilityService),
       offline = inject<InterventionOfflineService>(InterventionOfflineService),
       connectivity = inject<ConnectivityService>(ConnectivityService),
       optimistic = inject<InterventionWorkspaceOptimisticService>(
@@ -1050,6 +1056,47 @@ export const InterventionWorkspaceStore = signalStore(
                       ),
                     );
                     if (storeError.code === 409) reload(interventionId);
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method createFacility
+         * @method createFacility
+         *
+         * @description
+         * Creates a facility attached to this intervention through
+         * `FacilityService.createForIntervention`, which resolves to a `PUT`
+         * when the input carries a `clientId` (idempotent retry) and a `POST`
+         * otherwise. Online-only: unlike {@link createWorkItem}, a facility
+         * carries no offline outbox operation. On success, `reload` re-reads
+         * the workspace so the tab counter (`intervention.facilitiesCount`)
+         * and the issues list both reflect the write in one round trip,
+         * mirroring how a `409` conflict elsewhere in this store recovers.
+         *
+         * @access public
+         * @since 8.0.0
+         *
+         * @type {RxMethod<InterventionFacilityCreateCommand>}
+         */
+        createFacility: rxMethod<InterventionFacilityCreateCommand>(
+          pipe(
+            tap(() => patchState(store, { createFacilityCallState: pendingCallState() })),
+            switchMap(({ organizationId, interventionId, input }) =>
+              facilityService.createForIntervention(organizationId, interventionId, input).pipe(
+                tapResponse({
+                  next: (facility: FacilityOutput) => {
+                    patchState(store, { createFacilityCallState: successCallState(facility) });
+                    reload(interventionId);
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      createFacilityCallState: errorCallState(storeError),
+                    });
                   },
                 }),
               ),

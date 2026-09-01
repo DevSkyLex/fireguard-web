@@ -20,6 +20,16 @@ export interface InterventionLinkedResourcesState {
   /** Lifecycle of the linked-facilities fetch. */
   readonly facilitiesCallState: CallState<readonly FacilityOutput[]>;
 
+  /**
+   * The `recordStatus` the currently loaded facilities page was fetched
+   * with, carried across `loadMoreFacilities`' pagination — `undefined`
+   * leaves the canonical provider's own `'draft'` default in place.
+   * `ensureFacilitiesLoaded`/`reloadFacilities` overwrite it on every call
+   * so a status change (e.g. the intervention just published) is what a
+   * later page continues from.
+   */
+  readonly facilitiesRecordStatus: FacilityOutput['recordStatus'];
+
   /** One-based page of linked facilities currently loaded. */
   readonly facilitiesPage: number;
 

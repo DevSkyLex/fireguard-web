@@ -16134,6 +16134,27 @@
           <context context-type="linenumber">15,18</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.facilitySheet.header" datatype="html">
+        <source>Add facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-facility-sheet/intervention-facility-sheet.component.html</context>
+          <context context-type="linenumber">13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.facilitySheet.hint" datatype="html">
+        <source> Attach a facility to this intervention. Only the type and name are required — the rest can be filled in later from the facility's own record. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-facility-sheet/intervention-facility-sheet.component.html</context>
+          <context context-type="linenumber">14,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.facility.addButton" datatype="html">
+        <source>Add facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">330</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.workItemDrawer.header" datatype="html">
         <source>Add work item</source>
         <context-group purpose="location">

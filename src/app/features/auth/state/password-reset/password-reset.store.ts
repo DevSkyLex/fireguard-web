@@ -21,6 +21,11 @@ import type {
   PasswordResetVerifyInput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
+import {
+  toResendAvailableAt,
+  toResendAvailableIn,
+  toResendDelaySeconds,
+} from '@features/auth/utils';
 import { passwordResetStoreEvents } from './events';
 import type { PasswordResetState } from './models';
 
@@ -56,6 +61,7 @@ export const PasswordResetStore = signalStore(
     currentRequest: null,
     challengeToken: null,
     verificationCode: null,
+    resendAvailableAt: null,
     requestCallState: idleCallState<PasswordResetRequestOutput>(),
     confirmCallState: idleCallState<PasswordResetVerifyOutput>(),
     resendCallState: idleCallState<PasswordResetResendOutput>(),
@@ -145,6 +151,20 @@ export const PasswordResetStore = signalStore(
      * @type {Signal<StoreError | null>}
      */
     resendError: computed(() => store.resendCallState().error),
+
+    /**
+     * Computed resendAvailableIn
+     * @readonly
+     *
+     * @description
+     * Whole seconds before a new reset code may be requested, `0` when none. A
+     * snapshot, not a ticking clock — the OTP form runs the countdown from it.
+     *
+     * @since 1.1.0
+     *
+     * @type {Signal<number>}
+     */
+    resendAvailableIn: computed<number>(() => toResendAvailableIn(store.resendAvailableAt())),
   })),
   withMethods(
     (
@@ -176,6 +196,7 @@ export const PasswordResetStore = signalStore(
                     currentRequest: response,
                     challengeToken: response.challengeToken ?? null,
                     verificationCode: null,
+                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
                     requestCallState: successCallState(response),
                   });
                 },
@@ -343,12 +364,19 @@ export const PasswordResetStore = signalStore(
                   patchState(store, {
                     currentRequest: response,
                     challengeToken: response.challengeToken ?? null,
+                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
                     resendCallState: successCallState(response),
                   });
                 },
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
-                  patchState(store, { resendCallState: errorCallState(storeError) });
+                  const retryDelay: number | null = toResendDelaySeconds(storeError);
+                  patchState(store, {
+                    resendCallState: errorCallState(storeError),
+                    ...(retryDelay !== null
+                      ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
+                      : {}),
+                  });
                   dispatcher.dispatch(
                     passwordResetStoreEvents.resendFailed(
                       toStoreFailureEventPayload(storeError, 'Failed to resend code'),

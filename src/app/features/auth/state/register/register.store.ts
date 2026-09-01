@@ -21,6 +21,11 @@ import type {
   RegisterVerifyInput,
 } from '@features/auth/models';
 import { AuthStore } from '@features/auth/state';
+import {
+  toResendAvailableAt,
+  toResendAvailableIn,
+  toResendDelaySeconds,
+} from '@features/auth/utils';
 import { registerStoreEvents } from './events';
 import type { RegisterState } from './models';
 
@@ -36,6 +41,7 @@ const INITIAL_STATE: RegisterState = {
   currentChallenge: null,
   challengeToken: null,
   maskedRecipient: null,
+  resendAvailableAt: null,
   requestCallState: idleCallState<RegisterOutput>(),
   verifyCallState: idleCallState<LoginOutput>(),
   resendCallState: idleCallState<RegisterOutput>(),
@@ -149,6 +155,19 @@ export const RegisterStore = signalStore(
      * @type {Signal<boolean>}
      */
     hasChallenge: computed<boolean>(() => store.challengeToken() !== null),
+
+    /**
+     * Computed resendAvailableIn
+     *
+     * @description
+     * Whole seconds before a new verification code may be requested, `0` when
+     * none. A snapshot, not a ticking clock — the OTP form runs the countdown.
+     *
+     * @since 1.1.0
+     *
+     * @type {Signal<number>}
+     */
+    resendAvailableIn: computed<number>(() => toResendAvailableIn(store.resendAvailableAt())),
   })),
 
   withMethods(
@@ -181,6 +200,7 @@ export const RegisterStore = signalStore(
                     currentChallenge: response,
                     challengeToken: response.challengeToken,
                     maskedRecipient: response.maskedRecipient,
+                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
                     requestCallState: successCallState(response),
                   });
                 },
@@ -282,12 +302,19 @@ export const RegisterStore = signalStore(
                     currentChallenge: response,
                     challengeToken: response.challengeToken ?? token,
                     maskedRecipient: response.maskedRecipient,
+                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
                     resendCallState: successCallState(response),
                   });
                 },
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
-                  patchState(store, { resendCallState: errorCallState(storeError) });
+                  const retryDelay: number | null = toResendDelaySeconds(storeError);
+                  patchState(store, {
+                    resendCallState: errorCallState(storeError),
+                    ...(retryDelay !== null
+                      ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
+                      : {}),
+                  });
                   dispatcher.dispatch(
                     registerStoreEvents.resendFailed(
                       toStoreFailureEventPayload(storeError, 'Failed to resend code'),

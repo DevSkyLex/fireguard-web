@@ -14,6 +14,8 @@ describe('RegisterVerifyPage', () => {
     isVerifying: WritableSignal<boolean>;
     isResending: WritableSignal<boolean>;
     verifyError: WritableSignal<null>;
+    resendError: WritableSignal<null>;
+    resendAvailableIn: WritableSignal<number>;
   };
   let navigate: MockInstance;
 
@@ -26,6 +28,8 @@ describe('RegisterVerifyPage', () => {
       isVerifying: signal(false),
       isResending: signal(false),
       verifyError: signal(null),
+      resendError: signal(null),
+      resendAvailableIn: signal(0),
     };
 
     TestBed.configureTestingModule({

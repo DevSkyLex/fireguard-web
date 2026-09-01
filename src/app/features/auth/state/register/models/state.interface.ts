@@ -52,6 +52,21 @@ export interface RegisterState {
   readonly maskedRecipient: string | null;
 
   /**
+   * Property resendAvailableAt
+   * @readonly
+   *
+   * @description
+   * Epoch milliseconds when a new verification code may be requested, from
+   * the API's `canResendIn` on success or the parsed 429 detail on a refused
+   * resend. `null` when no cooldown applies.
+   *
+   * @since 1.1.0
+   *
+   * @type {number | null}
+   */
+  readonly resendAvailableAt: number | null;
+
+  /**
    * Property requestCallState
    * @readonly
    *

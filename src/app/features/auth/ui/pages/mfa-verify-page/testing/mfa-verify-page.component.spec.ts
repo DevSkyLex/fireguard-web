@@ -18,6 +18,8 @@ describe('MfaVerifyPage', () => {
     isVerifyingMfa: WritableSignal<boolean>;
     isResendingMfa: WritableSignal<boolean>;
     mfaVerifyError: WritableSignal<null>;
+    mfaResendError: WritableSignal<null>;
+    mfaResendAvailableIn: WritableSignal<number>;
     isAuthenticated: WritableSignal<boolean>;
     mfaMethod: WritableSignal<MfaMethod | null>;
     mfaDestination: WritableSignal<string | null>;
@@ -37,6 +39,8 @@ describe('MfaVerifyPage', () => {
       isVerifyingMfa: signal(false),
       isResendingMfa: signal(false),
       mfaVerifyError: signal(null),
+      mfaResendError: signal(null),
+      mfaResendAvailableIn: signal(0),
       isAuthenticated,
       mfaMethod,
       mfaDestination,

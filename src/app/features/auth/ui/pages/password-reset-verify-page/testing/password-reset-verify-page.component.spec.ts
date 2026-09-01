@@ -13,6 +13,7 @@ describe('PasswordResetVerifyPage', () => {
     resend: ReturnType<typeof vi.fn>;
     isResending: WritableSignal<boolean>;
     resendError: WritableSignal<null>;
+    resendAvailableIn: WritableSignal<number>;
     challengeToken: WritableSignal<string | null>;
   };
   let navigate: MockInstance;
@@ -55,6 +56,7 @@ describe('PasswordResetVerifyPage', () => {
       resend: vi.fn(),
       isResending: signal(false),
       resendError: signal(null),
+      resendAvailableIn: signal(0),
       challengeToken,
     };
   });

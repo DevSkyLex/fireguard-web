@@ -30,6 +30,11 @@ import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import {
+  toResendAvailableAt,
+  toResendAvailableIn,
+  toResendDelaySeconds,
+} from '@features/auth/utils';
 import { authStoreEvents } from './events';
 import type { AuthState } from './models';
 
@@ -64,6 +69,7 @@ const INITIAL_AUTH_STATE: AuthState = {
   mfaRequired: false,
   mfaToken: null,
   challengeToken: null,
+  mfaResendAvailableAt: null,
   loginCallState: idleCallState(),
   logoutCallState: idleCallState(),
   refreshCallState: idleCallState(),
@@ -289,6 +295,19 @@ export const AuthStore = signalStore(
     mfaDestination: computed<string | null>(
       () => store.loginCallState().data?.mfa_destination ?? null,
     ),
+
+    /**
+     * Computed mfaResendAvailableIn
+     *
+     * @description
+     * Whole seconds before a new MFA code may be requested, `0` when none. A
+     * snapshot, not a ticking clock — the OTP form runs the countdown from it.
+     *
+     * @since 1.1.0
+     *
+     * @returns {number}
+     */
+    mfaResendAvailableIn: computed<number>(() => toResendAvailableIn(store.mfaResendAvailableAt())),
   })),
   //#endregion
 
@@ -361,6 +380,7 @@ export const AuthStore = signalStore(
                         mfaRequired: true,
                         mfaToken: response.mfa_token ?? null,
                         challengeToken: response.challenge_token ?? null,
+                        mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
                         loginCallState: successCallState(response),
                       });
                     } else {
@@ -549,13 +569,20 @@ export const AuthStore = signalStore(
                     patchState(store, {
                       mfaToken: response.mfa_token ?? null,
                       challengeToken: response.challenge_token ?? null,
+                      mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
                       loginCallState: successCallState(response),
                       mfaResendCallState: successCallState(response),
                     });
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);
-                    patchState(store, { mfaResendCallState: errorCallState(storeError) });
+                    const retryDelay: number | null = toResendDelaySeconds(storeError);
+                    patchState(store, {
+                      mfaResendCallState: errorCallState(storeError),
+                      ...(retryDelay !== null
+                        ? { mfaResendAvailableAt: toResendAvailableAt(retryDelay) }
+                        : {}),
+                    });
                     dispatcher.dispatch(
                       authStoreEvents.mfaResendFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to resend code'),
@@ -738,6 +765,7 @@ export const AuthStore = signalStore(
             mfaRequired: false,
             mfaToken: null,
             challengeToken: null,
+            mfaResendAvailableAt: null,
           });
         },
 

@@ -571,6 +571,7 @@ test.describe('Facility Plan Overlay', () => {
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
+    await expect(facilities.overlayEquipment.first()).toBeVisible();
     await facilities.overlayEquipment.first().focus();
     await expect(facilities.overlayEquipment.first()).toBeFocused();
     await page.keyboard.press('Enter');

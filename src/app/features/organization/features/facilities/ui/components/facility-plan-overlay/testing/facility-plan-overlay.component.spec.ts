@@ -158,6 +158,13 @@ describe('FacilityPlanOverlay', () => {
     expect(byTestId('facility-plan-overlay-zone')?.getAttribute('tabindex')).toBe('0');
   });
 
+  it('is keyboard-reachable: the equipment pin carries tabindex 0', async () => {
+    fixture.componentRef.setInput('overlay', overlay());
+    await fixture.whenStable();
+
+    expect(byTestId('facility-plan-overlay-equipment')?.getAttribute('tabindex')).toBe('0');
+  });
+
   it('emits equipmentActivated when a pin is clicked', async () => {
     fixture.componentRef.setInput('overlay', overlay());
     await fixture.whenStable();

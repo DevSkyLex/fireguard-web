@@ -56,6 +56,7 @@
     @for (pin of equipmentViews(); track pin.equipmentId) {
       <button
         type="button"
+        tabindex="0"
         class="group pointer-events-auto absolute flex size-11 items-end justify-center rounded-full focus-visible:outline-none"
         [style.left.px]="pin.position.x"
         [style.top.px]="pin.position.y"

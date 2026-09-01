@@ -1540,7 +1540,7 @@ export class InterventionsPage {
       const requested: boolean = this.create() === '1';
 
       untracked((): void => {
-        if (!requested) return;
+        if (!requested || !isPlatformBrowser(this.platformId)) return;
 
         this.createSheetVisible.set(true);
         this.navigateQuery({ create: null });

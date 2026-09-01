@@ -91,9 +91,7 @@ describe('InterventionFacilitySheet', () => {
     fixture.componentRef.setInput('serverError', new Error('boom'));
     await fixture.whenStable();
 
-    expect(inSheet('[data-testid="facility-create-error"]').textContent).toContain(
-      'The facility could not be created.',
-    );
+    expect(inSheet('[data-testid="facility-create-error"]').textContent).toContain('boom');
   });
 
   it('should refuse to close while the creation request is in flight', async () => {

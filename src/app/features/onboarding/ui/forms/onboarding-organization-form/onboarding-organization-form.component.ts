@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupCreateOrganizationInput } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -136,8 +137,12 @@ export class OnboardingOrganizationForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const storeMessage: string | null = storeErrorMessage(error);
+
+    return storeMessage !== null
+      ? [storeMessage]
       : [$localize`:@@onboarding.orgForm.createFailed:The organization could not be created.`];
   });
   //#endregion

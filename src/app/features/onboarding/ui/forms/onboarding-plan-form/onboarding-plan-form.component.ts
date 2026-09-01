@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { storeErrorMessage } from '@features/onboarding/utils';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -243,8 +244,12 @@ export class OnboardingPlanForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const storeMessage: string | null = storeErrorMessage(error);
+
+    return storeMessage !== null
+      ? [storeMessage]
       : [$localize`:@@onboarding.planForm.confirmFailed:The plan could not be confirmed.`];
   });
   //#endregion

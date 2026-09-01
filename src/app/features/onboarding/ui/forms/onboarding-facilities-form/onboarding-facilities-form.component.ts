@@ -13,6 +13,7 @@ import {
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
+import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupCreateFacilityInput, SetupFacilityType } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -41,10 +42,11 @@ function trimmed(value: string): string | undefined {
  * The `create_first_facility` wizard step. Unlike the single-resource steps,
  * it stages up to {@link MAX_FACILITIES} rows locally — one small form adds a
  * row at a time — and emits the whole batch with {@link submitted} only when
- * the operator continues, matching the step's own copy ("up to 5 at once").
- * The list may also be empty: the step is skippable, and continuing with
- * nothing staged submits an empty batch rather than requiring a separate
- * skip affordance in the form itself.
+ * the operator continues. Continuing with a valid draft row still in the
+ * fields stages it automatically first. The batch must not be empty: the
+ * backend rejects confirming this step with no facility, so an empty continue
+ * shows a near-form message instead of emitting — skipping goes through the
+ * wizard's own skip affordance, a different endpoint.
  *
  * No draft row is ever sent to the API on its own — staging is local state,
  * so it never touches a service (`ARCHITECTURE.md` §10.4). The wizard page
@@ -94,7 +96,7 @@ export class OnboardingFacilitiesForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the staged batch — possibly empty — once the operator continues.
+   * @description Emits the staged batch — never empty — once the operator continues.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<readonly SetupCreateFacilityInput[]>}
@@ -112,6 +114,9 @@ export class OnboardingFacilitiesForm {
   protected readonly staged: WritableSignal<readonly SetupCreateFacilityInput[]> = signal<
     readonly SetupCreateFacilityInput[]
   >([]);
+
+  /** Whether the operator tried to continue with nothing staged and nothing addable. */
+  protected readonly emptyBatchError: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property draftForm
@@ -159,8 +164,12 @@ export class OnboardingFacilitiesForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const storeMessage: string | null = storeErrorMessage(error);
+
+    return storeMessage !== null
+      ? [storeMessage]
       : [$localize`:@@onboarding.facilitiesForm.createFailed:The facilities could not be created.`];
   });
 
@@ -195,6 +204,7 @@ export class OnboardingFacilitiesForm {
 
     this.staged.update((rows) => [...rows, { type, name, address }]);
     this.model.set(EMPTY_VALUES);
+    this.emptyBatchError.set(false);
   }
 
   /**
@@ -218,8 +228,10 @@ export class OnboardingFacilitiesForm {
    * Method submit
    *
    * @description
-   * Emits the staged batch as-is — an empty batch is a valid continue, since
-   * this step is skippable.
+   * Stages the current row first when it is valid, then emits the batch. An
+   * empty batch is never emitted — the backend rejects the step without a
+   * facility — so the draft is marked touched and a near-form message shows
+   * instead.
    *
    * @access protected
    * @since 1.0.0
@@ -233,6 +245,20 @@ export class OnboardingFacilitiesForm {
 
     if (this.pending()) return;
 
+    if (!this.draftForm().invalid()) {
+      this.addFacility();
+    } else if (this.model().type !== '' || this.model().name.trim() !== '') {
+      this.draftForm().markAsTouched();
+      return;
+    }
+
+    if (this.staged().length === 0) {
+      this.draftForm().markAsTouched();
+      this.emptyBatchError.set(true);
+      return;
+    }
+
+    this.emptyBatchError.set(false);
     this.submitted.emit(this.staged());
   }
   //#endregion

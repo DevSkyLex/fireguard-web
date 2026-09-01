@@ -6,7 +6,11 @@
     i18n-description="@@auth.register.subtitle"
   />
 
-  <app-register-form [pending]="registerStore.isRegistering()" (submitted)="register($event)" />
+  <app-register-form
+    [pending]="registerStore.isRegistering()"
+    [serverError]="registerStore.registerError()"
+    (submitted)="register($event)"
+  />
 
   <p class="text-center text-sm text-muted-foreground">
     <span i18n="@@auth.register.haveAccount">Already have an account?</span>

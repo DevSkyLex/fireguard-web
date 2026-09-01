@@ -107,6 +107,46 @@ describe('LoginForm', () => {
     expect(submit.disabled).toBe(true);
   });
 
+  it('should render the server error message when a sign-in attempt failed', async () => {
+    fixture.componentRef.setInput('serverError', {
+      error: new Error('Invalid credentials.'),
+      message: 'Invalid credentials.',
+      code: 401,
+      retryable: false,
+      timestamp: Date.now(),
+    });
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector(
+      '[data-testid="login-server-error"]',
+    ) as HTMLElement;
+
+    expect(alert).not.toBeNull();
+    expect(alert.getAttribute('role')).toBe('alert');
+    expect(alert.textContent).toContain('Invalid credentials.');
+  });
+
+  it('should fall back to a generic sentence when the server error has no message', async () => {
+    fixture.componentRef.setInput('serverError', {
+      error: new Error('boom'),
+      message: null,
+      code: null,
+      retryable: false,
+      timestamp: Date.now(),
+    });
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector(
+      '[data-testid="login-server-error"]',
+    ) as HTMLElement;
+
+    expect(alert.textContent).toContain('Sign-in failed. Check your credentials.');
+  });
+
+  it('should render no server error region while nothing has failed', () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="login-server-error"]')).toBeNull();
+  });
+
   it('should mark the email field aria-invalid once it is touched and invalid', async () => {
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
       new Event('submit'),

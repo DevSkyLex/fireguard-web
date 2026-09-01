@@ -1,5 +1,17 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
+    @if (serverError(); as error) {
+      <div role="alert" data-testid="register-server-error" class="text-sm text-destructive">
+        <p>
+          @if (error.message; as message) {
+            {{ message }}
+          } @else {
+            <span i18n="@@auth.register.failed">The account could not be created.</span>
+          }
+        </p>
+      </div>
+    }
+
     <div class="grid gap-4 sm:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="register-first-name"

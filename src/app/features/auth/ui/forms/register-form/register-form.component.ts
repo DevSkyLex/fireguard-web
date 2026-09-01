@@ -9,6 +9,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import type { StoreError } from '@core/request-state';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { HlmButton } from '@shared/ui/button';
@@ -55,6 +56,22 @@ export class RegisterForm {
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property serverError
+   * @readonly
+   *
+   * @description
+   * Whatever the store's account-creation call failed with, rendered above
+   * the fields so a rejected attempt is never silent. `null` while nothing
+   * has failed.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
   //#endregion
 
   //#region Outputs

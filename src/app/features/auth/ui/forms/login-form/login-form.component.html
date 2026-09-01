@@ -1,5 +1,17 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
+    @if (serverError(); as error) {
+      <div role="alert" data-testid="login-server-error" class="text-sm text-destructive">
+        <p>
+          @if (error.message; as message) {
+            {{ message }}
+          } @else {
+            <span i18n="@@auth.login.failed">Sign-in failed. Check your credentials.</span>
+          }
+        </p>
+      </div>
+    }
+
     <hlm-field>
       <label hlmFieldLabel for="login-email"
         ><span i18n="@@auth.email.label">Email address</span

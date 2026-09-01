@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
+import type { StoreError } from '@core/request-state';
 import { PasswordInput } from '@shared/password-input';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
@@ -67,6 +68,21 @@ export class LoginForm {
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property serverError
+   * @readonly
+   *
+   * @description
+   * Whatever the store's sign-in call failed with, rendered above the fields
+   * so a rejected attempt is never silent. `null` while nothing has failed.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
   //#endregion
 
   //#region Outputs

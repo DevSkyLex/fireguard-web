@@ -138,6 +138,14 @@
         <source>Sign in</source>
         <target>Iniciar sesión</target>
       </trans-unit>
+      <trans-unit id="auth.login.failed" datatype="html">
+        <source>Sign-in failed. Check your credentials.</source>
+        <target>No se pudo iniciar sesión. Comprueba tus credenciales.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.failed" datatype="html">
+        <source>The account could not be created.</source>
+        <target>No se pudo crear la cuenta.</target>
+      </trans-unit>
       <trans-unit id="auth.newPassword.label" datatype="html">
         <source>New Password</source>
         <target>Nueva contraseña</target>

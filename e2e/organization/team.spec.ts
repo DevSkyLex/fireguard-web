@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
 import {
   E2E_PERMISSION_CATALOG,
   organizationRoleOutput,
@@ -137,6 +138,9 @@ test.describe('Organization team', () => {
 
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID);
+    await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID);
+    await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [
       ownerOrganizationRoleOutput(),
       organizationRoleOutput(),

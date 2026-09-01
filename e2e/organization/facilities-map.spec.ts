@@ -26,14 +26,13 @@ const BLANK_PNG_BASE64 =
  * filters those specific messages rather than asserting a bare empty array.
  *
  * Marker rendering itself is asserted only in the unit spec
- * (`FacilityMapPage`, with `@shared/map`'s `Map` stubbed): the e2e dev
- * server's Vite pre-bundling does not resolve `maplibre-gl`'s clustering
- * worker (`maplibre-gl-worker.mjs` — a warning MapLibre itself logs), so the
- * GeoJSON source used for markers never finishes clustering in this
- * environment even though the map canvas itself mounts and renders
- * correctly. That is a `@shared/map`/build-tooling gap, not a facilities
- * defect — this suite covers what it can prove here: the map surface mounts
- * and paints without throwing.
+ * (`FacilityMapPage`, with `@shared/map`'s `Map` stubbed) — this suite covers
+ * what a browser proves that a unit spec cannot: the map surface mounts and
+ * paints without throwing. `MapComponent` self-hosts MapLibre's clustering
+ * worker under `public/map/` and points it there with `setWorkerUrl` (rather
+ * than the library's default of resolving `maplibre-gl-worker.mjs` next to
+ * its own bundled module), because Vite's dev-server pre-bundling breaks that
+ * default resolution and 404s the worker script.
  */
 /**
  * Console-error messages the blocked OpenFreeMap requests are expected to

@@ -70,9 +70,9 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
  * than re-implemented. The organization list panel below that caps itself to
  * three visible rows and scrolls for the rest.
  *
- * "Leave organization…" is not offered here — it moved to the settings
- * danger zone, reachable by whoever this menu's own Settings shortcut
- * reaches.
+ * "Leave organization…" is not offered here — it lives at
+ * `/account/organizations`, reachable by every signed-in member regardless
+ * of organization permission (`features/account/FEATURE.md`).
  *
  * @version 3.0.0
  *

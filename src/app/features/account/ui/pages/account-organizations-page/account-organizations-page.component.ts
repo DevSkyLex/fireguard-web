@@ -124,17 +124,17 @@ export class AccountOrganizationsPage implements OnInit {
   );
 
   /**
-   * Property previousLeaveStatus
-   * @description The leave call state's status as of the last time {@link navigateAwayOnLeaveActive} ran, so it can spot the transition into `'success'` rather than the state of being in it.
-   * @access private
-   * @since 1.0.0
-   * @type {string}
-   */
-  private previousLeaveStatus: string = 'idle';
-
-  /**
    * Property leftOrganizationId
-   * @description The organization id the in-flight leave call targeted, captured so the success effect knows whether it left the active workspace.
+   *
+   * @description
+   * The organization id the in-flight leave call targeted, or `null` once
+   * {@link navigateAwayOnLeaveActive} has consumed a success. Gating on this
+   * field rather than on a previous-status edge keeps the effect idempotent:
+   * a signals flush that coalesces the `pending` and `success` `CallState`
+   * writes into one tick — observed under WebKit — would make a
+   * previous-status comparison miss the transition and leave the dialog
+   * open forever.
+   *
    * @access private
    * @since 1.0.0
    * @type {string | null}
@@ -157,16 +157,14 @@ export class AccountOrganizationsPage implements OnInit {
    */
   private readonly navigateAwayOnLeaveActive: EffectRef = effect((): void => {
     const status: string = this.myOrganizations.leaveCallState().status;
-    const previous: string = this.previousLeaveStatus;
-    this.previousLeaveStatus = status;
+    const leftId: string | null = this.leftOrganizationId;
 
-    if (previous !== 'pending' || status !== 'success') return;
+    if (status !== 'success' || leftId === null) return;
 
     untracked((): void => {
-      this.confirmingLeaveId.set(null);
-      const leftId: string | null = this.leftOrganizationId;
       this.leftOrganizationId = null;
-      if (leftId !== null && leftId === this.myOrganizations.activeOrganizationId()) {
+      this.confirmingLeaveId.set(null);
+      if (leftId === this.myOrganizations.activeOrganizationId()) {
         void this.router.navigate(['/organizations']);
       }
     });

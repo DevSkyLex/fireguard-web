@@ -8,8 +8,7 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'test-results/screenshots';
 
 test.describe('Onboarding wizard first step', () => {
   test('renders the create-organization form inside the split shell on desktop, with the branded showcase panel', async ({

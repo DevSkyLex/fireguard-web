@@ -14,8 +14,10 @@ import {
   type LoginOutputFixture,
   type NotificationOutputFixture,
   type OnboardingOutputFixture,
+  type OnboardingStepKeyFixture,
   type OptionFixture,
   type OrganizationOutputFixture,
+  type RegisterOutputFixture,
   type UserProfileOutputFixture,
 } from '../fixtures/api-fixtures';
 import type { ApiErrorFixture } from '../fixtures/api-fixtures';
@@ -329,6 +331,148 @@ export class ApiMock {
   }
 
   /**
+   * Mocks a successful `POST /api/auth/login` — the sign-in submit. Pass a
+   * `loginOutput({ mfa_required: true, ... })` fixture to exercise the MFA
+   * hand-off instead of a plain sign-in.
+   */
+  public async mockLogin(response: LoginOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/login`, async (route) => {
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks a failing `POST /api/auth/login` — invalid credentials. The login
+   * page shows the feedback the form/toast owns; this only proves the request
+   * failed and the app stayed on `/auth/login`.
+   */
+  public async mockLoginError(error: Partial<ApiErrorFixture> = {}): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/login`, async (route) => {
+      await fulfillJson(route, error.status ?? 401, {
+        '@id': '/errors/login-failed',
+        '@type': 'Error',
+        status: 401,
+        type: 'about:blank',
+        title: 'Invalid email or password.',
+        detail: 'Invalid email or password.',
+        ...error,
+      });
+    });
+  }
+
+  /**
+   * Mocks `POST /api/auth/mfa/verify` — the second-factor submit that
+   * completes the session `mockLogin`'s `mfa_required` response started.
+   */
+  public async mockMfaVerify(response: LoginOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/mfa/verify`, async (route) => {
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks `POST /api/auth/mfa/resend` — a new code for the same challenge.
+   */
+  public async mockMfaResend(response: LoginOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/mfa/resend`, async (route) => {
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks `POST /api/auth/register` — account creation, returning the
+   * challenge token `register/verify` needs next.
+   */
+  public async mockRegister(response: RegisterOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/register`, async (route) => {
+      await fulfillJson(route, 201, response);
+    });
+  }
+
+  /**
+   * Mocks `POST /api/auth/register/verify` — the OTP that activates the
+   * account and auto-logs the visitor in, shaped like a login response.
+   */
+  public async mockRegisterVerify(response: LoginOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/register/verify`, async (route) => {
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks `POST /api/auth/register/resend` — a new verification code,
+   * returning a fresh challenge token that must replace the old one.
+   */
+  public async mockRegisterResend(response: RegisterOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/register/resend`, async (route) => {
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks a successful `POST /api/onboarding/organization/steps/{stepKey}/execute`
+   * — the wizard's step-confirm call. Pass the onboarding record as the
+   * server would return it post-execution (advanced `nextStep`, updated
+   * `completedSteps`).
+   */
+  public async mockOnboardingStepExecute(
+    stepKey: OnboardingStepKeyFixture,
+    onboarding: OnboardingOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/onboarding/organization/steps/${stepKey}/execute`,
+      async (route) => {
+        await fulfillJson(route, 200, onboarding);
+      },
+    );
+  }
+
+  /**
+   * Mocks a successful `POST /api/onboarding/organization/steps/{stepKey}/skip`
+   * — the wizard's "Skip for now" action. Pass the onboarding record as the
+   * server would return it post-skip (advanced `nextStep`, updated
+   * `skippedSteps`).
+   */
+  public async mockOnboardingStepSkip(
+    stepKey: OnboardingStepKeyFixture,
+    onboarding: OnboardingOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/onboarding/organization/steps/${stepKey}/skip`,
+      async (route) => {
+        await fulfillJson(route, 200, onboarding);
+      },
+    );
+  }
+
+  /**
+   * Mocks a successful `POST /api/organizations` — the wizard's
+   * `create_organization` step and any other organization-creation flow.
+   * Method-checked and meant to be registered alongside a collection mock
+   * (e.g. `mockSessionData`'s own `/api/organizations` route), which it falls
+   * back to for `GET`.
+   */
+  public async mockOrganizationCreate(organization: OrganizationOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/organizations(\\?.*)?$'), async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, organization);
+    });
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/equipment` — the
    * collection the equipments list page and the inspection create page's
    * equipment combobox (`InspectionCreationOptionsStore`) both read.
@@ -342,6 +486,29 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/equipment(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, hydraCollection(equipment));
+      },
+    );
+  }
+
+  /**
+   * Mocks a successful `POST /api/organizations/{organizationId}/equipment`
+   * — the onboarding wizard's `create_first_equipment` step and any other
+   * equipment-creation flow. Method-checked so it composes with
+   * `mockEquipmentList` on the same path, falling back to it for `GET`.
+   */
+  public async mockEquipmentCreate(
+    organizationId: string,
+    equipment: EquipmentOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, 201, equipment);
       },
     );
   }
@@ -420,6 +587,29 @@ export class ApiMock {
           200,
           hydraCollection(facilities, { totalItems: options.totalItems ?? facilities.length }),
         );
+      },
+    );
+  }
+
+  /**
+   * Mocks a successful `POST /api/organizations/{organizationId}/facilities`
+   * — the onboarding wizard's `create_first_facility` step and any other
+   * facility-creation flow. Method-checked so it composes with
+   * `mockFacilityList` on the same path, falling back to it for `GET`.
+   */
+  public async mockFacilityCreate(
+    organizationId: string,
+    facility: FacilityOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'POST') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, 201, facility);
       },
     );
   }
@@ -1595,6 +1785,23 @@ export class ApiMock {
       });
 
       await fulfillJson(route, 200, hydraCollection(filtered));
+    });
+  }
+
+  /**
+   * Mocks a successful `POST /api/interventions` — the create sheet's
+   * submit. Method-checked so it composes with `mockInterventionList` /
+   * `mockInterventionQueues` on the same path, falling back to whichever of
+   * those is registered for `GET`.
+   */
+  public async mockInterventionCreate(created: InterventionOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, created);
     });
   }
 

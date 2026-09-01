@@ -31,6 +31,7 @@ import {
   type SetupCreateEquipmentInput,
   type SetupCreateFacilityInput,
   type SetupCreateOrganizationInput,
+  type SetupFacilitySummary,
   type SetupInviteMemberInput,
   type SetupOrganizationRole,
 } from '@features/organization/setup';
@@ -231,6 +232,18 @@ export class OnboardingWizardPage {
   >([]);
 
   /**
+   * Property createdFacilities
+   * @readonly
+   * @description The facilities the `create_first_facility` step created, kept so `create_first_equipment` can attach the equipment to one of them. Empty when the facility step was skipped or the wizard resumed past it.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<readonly SetupFacilitySummary[]>}
+   */
+  protected readonly createdFacilities: WritableSignal<readonly SetupFacilitySummary[]> = signal<
+    readonly SetupFacilitySummary[]
+  >([]);
+
+  /**
    * Property catalogPending
    * @readonly
    * @description Whether a step's own catalog (plans, pricing, or roles) is loading.
@@ -337,10 +350,10 @@ export class OnboardingWizardPage {
 
   /**
    * Method submitFacilities
-   * @description Creates the staged facilities, then confirms `create_first_facility`.
+   * @description Creates the staged facilities, memorizes them for the equipment step, then confirms `create_first_facility`.
    * @access protected
    * @since 1.0.0
-   * @param {readonly SetupCreateFacilityInput[]} facilities - The staged batch, possibly empty.
+   * @param {readonly SetupCreateFacilityInput[]} facilities - The staged batch.
    * @returns {void}
    */
   protected submitFacilities(facilities: readonly SetupCreateFacilityInput[]): void {
@@ -350,6 +363,7 @@ export class OnboardingWizardPage {
     this.confirmStep(
       'create_first_facility',
       this.organizationSetupService.createFacilities(organizationId, facilities),
+      (created) => this.createdFacilities.set(created),
     );
   }
 
@@ -463,16 +477,22 @@ export class OnboardingWizardPage {
    * @since 1.0.0
    *
    * @param {OnboardingStepKey} stepKey - The step being confirmed.
-   * @param {Observable<void>} resourceCreation - The setup-boundary call that creates the underlying resource.
+   * @param {Observable<TResult>} resourceCreation - The setup-boundary call that creates the underlying resource.
+   * @param {(result: TResult) => void} [onCreated] - Invoked with the creation result before the step is confirmed.
    *
    * @returns {void}
    */
-  private confirmStep(stepKey: OnboardingStepKey, resourceCreation: Observable<void>): void {
+  private confirmStep<TResult>(
+    stepKey: OnboardingStepKey,
+    resourceCreation: Observable<TResult>,
+    onCreated?: (result: TResult) => void,
+  ): void {
     this.actionState.set({ pending: true, error: null });
 
     resourceCreation.subscribe({
-      next: () => {
+      next: (result: TResult) => {
         this.actionState.set({ pending: false, error: null });
+        onCreated?.(result);
         this.store.executeStep({ stepKey });
       },
       error: (error: unknown) => {

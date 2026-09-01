@@ -176,6 +176,50 @@ describe('OnboardingWizardPage', () => {
     expect(storeMock.executeStep).not.toHaveBeenCalled();
   });
 
+  it('should memorize the created facilities and confirm the facility step', () => {
+    storeMock.targetOrganizationId.set('org-1');
+    organizationSetupServiceMock.createFacilities.mockReturnValue(
+      of([{ id: 'facility-1', name: 'HQ' }]),
+    );
+
+    fixture.componentInstance['submitFacilities']([{ type: 'site', name: 'HQ' }]);
+
+    expect(organizationSetupServiceMock.createFacilities).toHaveBeenCalledWith('org-1', [
+      { type: 'site', name: 'HQ' },
+    ]);
+    expect(fixture.componentInstance['createdFacilities']()).toEqual([
+      { id: 'facility-1', name: 'HQ' },
+    ]);
+    expect(storeMock.executeStep).toHaveBeenCalledWith({ stepKey: 'create_first_facility' });
+  });
+
+  it('should keep no facilities memorized when the facility creation fails', () => {
+    storeMock.targetOrganizationId.set('org-1');
+    organizationSetupServiceMock.createFacilities.mockReturnValue(
+      throwError(() => ({ status: 400 })),
+    );
+
+    fixture.componentInstance['submitFacilities']([{ type: 'site', name: 'HQ' }]);
+
+    expect(fixture.componentInstance['createdFacilities']()).toEqual([]);
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+  });
+
+  it('should forward the equipment payload, facility attachment included, then confirm the step', () => {
+    storeMock.targetOrganizationId.set('org-1');
+
+    fixture.componentInstance['submitEquipment']({
+      type: 'fire_extinguisher',
+      facilityId: 'facility-1',
+    });
+
+    expect(organizationSetupServiceMock.createEquipment).toHaveBeenCalledWith('org-1', {
+      type: 'fire_extinguisher',
+      facilityId: 'facility-1',
+    });
+    expect(storeMock.executeStep).toHaveBeenCalledWith({ stepKey: 'create_first_equipment' });
+  });
+
   it('should skip the active step through the store', () => {
     fixture.componentInstance['skipCurrentStep']();
 

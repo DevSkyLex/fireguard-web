@@ -5,6 +5,7 @@ export type {
   SetupCreateInspectionInput,
   SetupCreateOrganizationInput,
   SetupEquipmentSummary,
+  SetupFacilitySummary,
   SetupFacilityType,
   SetupInspectionResult,
   SetupInspectorType,

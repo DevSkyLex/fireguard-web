@@ -746,6 +746,14 @@
         <source>Equipment type is required.</source>
         <target>El tipo de equipo es obligatorio.</target>
       </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.facility" datatype="html">
+        <source>Facility</source>
+        <target>Instalación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.facilityPlaceholder" datatype="html">
+        <source>Select a facility</source>
+        <target>Selecciona una instalación</target>
+      </trans-unit>
       <trans-unit id="onboarding.equipmentForm.brand" datatype="html">
         <source>Brand</source>
         <target>Marca</target>
@@ -833,6 +841,10 @@
       <trans-unit id="onboarding.facilitiesForm.createFailed" datatype="html">
         <source>The facilities could not be created.</source>
         <target>No se pudieron crear las instalaciones.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.emptyBatch" datatype="html">
+        <source>Add at least one facility to continue, or use "Skip for now".</source>
+        <target>Añade al menos una instalación para continuar, o usa «Omitir por ahora».</target>
       </trans-unit>
       <trans-unit id="onboarding.facilityType.site" datatype="html">
         <source>Site</source>

@@ -15,6 +15,7 @@ import type {
   SetupCreateInspectionInput,
   SetupCreateOrganizationInput,
   SetupEquipmentSummary,
+  SetupFacilitySummary,
   SetupInviteMemberInput,
   SetupOrganizationRole,
 } from './organization-setup.types';
@@ -193,22 +194,23 @@ export class OrganizationSetupService {
    * Method createFacilities
    *
    * @description
-   * Creates one or more facilities for the target organization and exposes a
-   * setup-friendly completion-only contract to consumers.
+   * Creates one or more facilities for the target organization and returns
+   * their setup-owned summaries so consumers can reference the created
+   * resources — onboarding attaches the first equipment to one of them.
    *
    * @param {string} organizationId Target organization identifier.
    * @param {readonly SetupCreateFacilityInput[]} facilities Facilities to create.
-   * @returns {Observable<void>} Observable completing when all facilities have been created.
+   * @returns {Observable<readonly SetupFacilitySummary[]>} Observable emitting the created facility summaries.
    */
   public createFacilities(
     organizationId: string,
     facilities: readonly SetupCreateFacilityInput[],
-  ): Observable<void> {
-    if (facilities.length === 0) return of(undefined);
+  ): Observable<readonly SetupFacilitySummary[]> {
+    if (facilities.length === 0) return of([]);
 
     return forkJoin(
       facilities.map((facility) => this.facilityService.create(organizationId, facility)),
-    ).pipe(map(() => undefined));
+    ).pipe(map((created) => created.map((facility) => ({ id: facility.id, name: facility.name }))));
   }
 
   /**
@@ -242,7 +244,8 @@ export class OrganizationSetupService {
    *
    * @description
    * Creates a new equipment record for the target organization through the
-   * setup boundary.
+   * setup boundary. An optional `facilityId` is mapped to the flat facility
+   * IRI the API validates, assigning the equipment in the same request.
    *
    * @param {string} organizationId Target organization identifier.
    * @param {SetupCreateEquipmentInput} input Equipment creation payload.
@@ -252,7 +255,14 @@ export class OrganizationSetupService {
     organizationId: string,
     input: SetupCreateEquipmentInput,
   ): Observable<void> {
-    return this.equipmentService.create(organizationId, input).pipe(map(() => undefined));
+    const { facilityId, ...equipment } = input;
+
+    return this.equipmentService
+      .create(organizationId, {
+        ...equipment,
+        facility: facilityId ? `/api/facilities/${facilityId}` : undefined,
+      })
+      .pipe(map(() => undefined));
   }
 
   /**

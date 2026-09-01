@@ -137,6 +137,41 @@ export interface SetupCreateFacilityInput {
 }
 
 /**
+ * Interface SetupFacilitySummary
+ * @interface SetupFacilitySummary
+ *
+ * @description
+ * Minimal representation of a facility created through the setup boundary,
+ * enough for consumers to reference it (equipment attachment) and to name it.
+ *
+ * @version 1.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface SetupFacilitySummary {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Unique identifier of the created facility.
+   *
+   * @type {string}
+   */
+  readonly id: string;
+
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * Display name of the created facility.
+   *
+   * @type {string}
+   */
+  readonly name: string;
+}
+
+/**
  * Interface SetupOrganizationRole
  * @interface SetupOrganizationRole
  *
@@ -281,6 +316,18 @@ export interface SetupCreateEquipmentInput {
    * @type {string | null | undefined}
    */
   readonly serialNumber?: string | null;
+
+  /**
+   * Property facilityId
+   * @readonly
+   *
+   * @description
+   * Optional identifier of the facility the equipment is assigned to at
+   * creation time — the setup boundary maps it to the transport IRI.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly facilityId?: string | null;
 }
 
 /**

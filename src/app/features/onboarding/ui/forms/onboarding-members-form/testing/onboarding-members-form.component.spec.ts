@@ -42,6 +42,36 @@ describe('OnboardingMembersForm', () => {
     expect(emitted).toEqual([[]]);
   });
 
+  it('should stage a valid draft row automatically when the operator continues', async () => {
+    await setDraft({ email: 'jordan@example.com', roleId: '' });
+
+    const emitted: Array<readonly SetupInviteMemberInput[]> = [];
+    fixture.componentInstance.submitted.subscribe(
+      (value: readonly SetupInviteMemberInput[]): void => {
+        emitted.push(value);
+      },
+    );
+
+    await submit();
+
+    expect(emitted).toEqual([[{ email: 'jordan@example.com', roleIds: undefined }]]);
+  });
+
+  it('should block the continue while a typed draft row is invalid', async () => {
+    await setDraft({ email: 'not-an-email', roleId: '' });
+
+    const emitted: Array<readonly SetupInviteMemberInput[]> = [];
+    fixture.componentInstance.submitted.subscribe(
+      (value: readonly SetupInviteMemberInput[]): void => {
+        emitted.push(value);
+      },
+    );
+
+    await submit();
+
+    expect(emitted).toEqual([]);
+  });
+
   it('should disable the add control until the email is valid', async () => {
     const addButton: HTMLButtonElement = element.querySelector(
       '[data-testid="onboarding-member-add"]',

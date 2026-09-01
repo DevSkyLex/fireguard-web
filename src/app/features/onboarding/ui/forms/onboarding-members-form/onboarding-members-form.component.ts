@@ -18,6 +18,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupInviteMemberInput, SetupOrganizationRole } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -157,8 +158,12 @@ export class OnboardingMembersForm {
       ]),
     ];
 
-    return combined.length > 0
-      ? combined
+    if (combined.length > 0) return combined;
+
+    const storeMessage: string | null = storeErrorMessage(error);
+
+    return storeMessage !== null
+      ? [storeMessage]
       : [$localize`:@@onboarding.membersForm.inviteFailed:The invitations could not be sent.`];
   });
 
@@ -217,8 +222,9 @@ export class OnboardingMembersForm {
    * Method submit
    *
    * @description
-   * Emits the staged batch as-is — an empty batch is a valid continue, since
-   * this step is skippable.
+   * Stages the current row first when it is valid — a typed but un-added
+   * invitation must not be lost silently — then emits the batch. An empty
+   * batch remains a valid continue, since this step is skippable.
    *
    * @access protected
    * @since 1.0.0
@@ -231,6 +237,13 @@ export class OnboardingMembersForm {
     event.preventDefault();
 
     if (this.pending()) return;
+
+    if (!this.draftForm().invalid()) {
+      this.addMember();
+    } else if (this.model().email.trim() !== '') {
+      this.draftForm().markAsTouched();
+      return;
+    }
 
     this.submitted.emit(this.staged());
   }

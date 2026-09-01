@@ -60,6 +60,7 @@
             </hlm-select-group>
           </hlm-select-content>
         </hlm-select>
+        <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
       </hlm-field>
 
       <hlm-field>
@@ -77,8 +78,8 @@
           i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
           [formField]="draftForm.name"
           [attr.aria-required]="true"
-          [attr.aria-invalid]="draftForm.name().touched() && draftForm.name().invalid()"
         />
+        <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
       </hlm-field>
 
       <hlm-field>
@@ -95,7 +96,6 @@
           type="text"
           data-testid="onboarding-facility-address"
           [formField]="draftForm.address"
-          [attr.aria-invalid]="draftForm.address().touched() && draftForm.address().invalid()"
         />
       </hlm-field>
 
@@ -112,6 +112,17 @@
           <span i18n="@@onboarding.facilitiesForm.add">Add facility</span>
         </button>
       </hlm-field>
+    }
+
+    @if (emptyBatchError()) {
+      <p
+        role="alert"
+        data-testid="onboarding-facilities-empty"
+        class="text-sm text-destructive"
+        i18n="@@onboarding.facilitiesForm.emptyBatch"
+      >
+        Add at least one facility to continue, or use "Skip for now".
+      </p>
     }
 
     <hlm-field orientation="horizontal" class="justify-end">

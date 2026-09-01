@@ -108,10 +108,23 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
 - `ui/components/onboarding-showcase/` — the split shell's showcase contribution for `/onboarding`.
 - `ui/forms/` — one form per step: `onboarding-organization-form`,
   `onboarding-plan-form`, `onboarding-members-form`,
-  `onboarding-facilities-form`, `onboarding-equipment-form`. The last two
+  `onboarding-facilities-form`, `onboarding-equipment-form`. The middle two
   stage rows locally (facilities capped at 5, matching the step's own copy;
-  members uncapped) and submit the whole batch — including an empty one,
-  since both steps are skippable — rather than calling a service per row.
+  members uncapped) and submit the whole batch rather than calling a service
+  per row. A valid draft row still in the fields is staged automatically on
+  continue, so typed input is never lost. The members batch may be empty (the
+  step is skippable through its own endpoint); the facilities batch may
+  **not** — the backend rejects confirming `create_first_facility` with no
+  facility, so an empty continue shows a near-form message instead of
+  emitting, and skipping goes through the wizard's skip affordance.
+- The `create_first_equipment` step attaches the equipment to a facility
+  created by `create_first_facility`: the wizard page memorizes the
+  `createFacilities` summaries and hands them to the equipment form, which
+  attaches silently when there is one and offers a pre-selected select when
+  there are several. The attachment travels in the same create request
+  (`SetupCreateEquipmentInput.facilityId`, mapped to the facility IRI by the
+  setup boundary). When the facility step was skipped or the wizard resumed
+  past it, the equipment is created unattached, as before.
 - `models/onboarding-step-status-tag/` — the presentation registry for
   `OnboardingStepStatus`, resolved by the rail instead of branched on in its
   template (`ARCHITECTURE.md` §10.10). Only the two-ends rule's terminal
@@ -149,6 +162,12 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
   stepper (below `lg`).
 - The wizard page is the route-entry orchestrator; step bodies delegate creation
   to `@features/organization/setup` and confirm via the store.
+- The onboarding forms are the pilot for spartan's self-gated validation
+  display: `<hlm-field-error>` renders bare (it gates itself on the same
+  `spartanInvalid` source as the input border) and inputs carry no manual
+  `[attr.aria-invalid]` (the spartan host binding owns it). Do not reintroduce
+  the manual `@if (touched() && invalid())` wrappers here; the rest of the
+  app's templates are a separate migration.
 - **No `unsavedChangesGuard` on `/onboarding`.** Each step persists to the
   backend the moment its form is submitted — `OnboardingWizardPage.confirmStep`
   creates the resource and confirms the step in the same call, with no batched

@@ -23,11 +23,8 @@
         i18n-placeholder="@@onboarding.orgForm.namePlaceholder"
         [formField]="organizationForm.name"
         [attr.aria-required]="true"
-        [attr.aria-invalid]="organizationForm.name().touched() && organizationForm.name().invalid()"
       />
-      @if (organizationForm.name().touched() && organizationForm.name().invalid()) {
-        <hlm-field-error>{{ organizationForm.name().errors()[0].message }}</hlm-field-error>
-      }
+      <hlm-field-error>{{ organizationForm.name().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
     <hlm-field>
@@ -42,7 +39,6 @@
         placeholder="acme-fire-safety"
         i18n-placeholder="@@onboarding.orgForm.slugPlaceholder"
         [formField]="organizationForm.slug"
-        [attr.aria-invalid]="organizationForm.slug().touched() && organizationForm.slug().invalid()"
       />
     </hlm-field>
 

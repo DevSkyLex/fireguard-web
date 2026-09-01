@@ -44,7 +44,13 @@ describe('OnboardingEquipmentForm', () => {
       fixture.componentInstance as unknown as {
         model: WritableSignal<OnboardingEquipmentFormDraft>;
       }
-    ).model.set({ type: 'fire_extinguisher', brand: ' Kidde ', model: '', serialNumber: '' });
+    ).model.set({
+      type: 'fire_extinguisher',
+      brand: ' Kidde ',
+      model: '',
+      serialNumber: '',
+      facilityId: '',
+    });
     await fixture.whenStable();
 
     await submit();
@@ -52,6 +58,60 @@ describe('OnboardingEquipmentForm', () => {
     expect(emitted).toEqual([
       { type: 'fire_extinguisher', brand: 'Kidde', model: undefined, serialNumber: undefined },
     ]);
+  });
+
+  it('should attach the only created facility silently, without rendering a select', async () => {
+    fixture.componentRef.setInput('facilities', [{ id: 'facility-1', name: 'HQ' }]);
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-testid="onboarding-equipment-facility"]')).toBeNull();
+
+    const emitted: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value: SetupCreateEquipmentInput): void => {
+      emitted.push(value);
+    });
+
+    (
+      fixture.componentInstance as unknown as {
+        model: WritableSignal<OnboardingEquipmentFormDraft>;
+      }
+    ).model.update((draft) => ({ ...draft, type: 'fire_extinguisher' }));
+    await fixture.whenStable();
+
+    await submit();
+
+    expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-1' }]);
+  });
+
+  it('should offer a facility select pre-selected on the first when several were created', async () => {
+    fixture.componentRef.setInput('facilities', [
+      { id: 'facility-1', name: 'HQ' },
+      { id: 'facility-2', name: 'Annex' },
+    ]);
+    await fixture.whenStable();
+
+    const trigger: HTMLElement | null = element.querySelector(
+      '[data-testid="onboarding-equipment-facility"]',
+    );
+
+    expect(trigger).not.toBeNull();
+    expect(trigger?.textContent).toContain('HQ');
+
+    const emitted: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value: SetupCreateEquipmentInput): void => {
+      emitted.push(value);
+    });
+
+    (
+      fixture.componentInstance as unknown as {
+        model: WritableSignal<OnboardingEquipmentFormDraft>;
+      }
+    ).model.update((draft) => ({ ...draft, type: 'fire_extinguisher' }));
+    await fixture.whenStable();
+
+    await submit();
+
+    expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-1' }]);
   });
 
   it('should surface the API rejection above the form', async () => {

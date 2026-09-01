@@ -253,3 +253,6 @@ distinct "delete" outcome is ever needed here, revisit this decision.
 - Equipment state and events stay owned by this subfeature.
 - Equipment lifecycle actions must respect the current equipment status.
 - Pages orchestrate stores; reusable UI components must not hide equipment workflow decisions.
+- A write response merges into the already-known entity (`utils/merge-equipment`) in both `EquipmentStore` and `ActiveEquipmentStore` — fields a response omits never erase known values, since API Platform omits null fields and a lifecycle Result may serialize fewer fields than the detail read. The one exception is unassign: its response's absent facility relation means unassigned, so `facilityId`/`facilityName` are cleared, never resurrected by the merge.
+- A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
+- `EquipmentCreatePage` resets the create operation only after the success navigation resolves, so `unsavedChangesGuard` still sees the settled success and never opens the discard dialog on the way to the new record.

@@ -36,11 +36,13 @@ describe('EquipmentCreatePage', () => {
   let resetCreateOperation: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let createCallState: WritableSignal<CallState<EquipmentOutput | null>>;
+  let isCreating: WritableSignal<boolean>;
 
   beforeEach(async () => {
     create = vi.fn();
     resetCreateOperation = vi.fn();
     createCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
+    isCreating = signal<boolean>(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -56,7 +58,7 @@ describe('EquipmentCreatePage', () => {
             create,
             resetCreateOperation,
             createCallState,
-            isCreating: signal(false),
+            isCreating,
             createError: signal(null),
           },
         },
@@ -79,12 +81,40 @@ describe('EquipmentCreatePage', () => {
     });
   });
 
+  it('should ignore a re-submission while a create is already in flight', () => {
+    isCreating.set(true);
+
+    fixture.componentInstance['onSubmitted']({ type: 'fire_extinguisher' });
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('should navigate to the created record and reset the create state once the write succeeds', async () => {
     createCallState.set(successCallState(CREATED));
     await fixture.whenStable();
 
-    expect(resetCreateOperation).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'equipments', 'equipment-9']);
+    expect(resetCreateOperation).toHaveBeenCalled();
+  });
+
+  it('should reset the create state only after the success navigation resolves', async () => {
+    let resolveNavigation!: (confirmed: boolean) => void;
+    navigate.mockReturnValue(
+      new Promise<boolean>((resolve: (confirmed: boolean) => void): void => {
+        resolveNavigation = resolve;
+      }),
+    );
+
+    createCallState.set(successCallState(CREATED));
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalled();
+    expect(resetCreateOperation).not.toHaveBeenCalled();
+
+    resolveNavigation(true);
+    await fixture.whenStable();
+
+    expect(resetCreateOperation).toHaveBeenCalledTimes(1);
   });
 
   it('should return to the equipment list on cancel', () => {

@@ -36,6 +36,7 @@ import type {
   AddTagInput,
   EquipmentMaintenanceLogOutput,
 } from '@features/organization/features/equipments/models';
+import { mergeEquipment } from '@features/organization/features/equipments/utils';
 import { isQuotaExceededError } from '@features/organization/utils';
 import { ActiveEquipmentStore } from '../active-equipment/active-equipment.store';
 import { equipmentStoreEvents } from './events';
@@ -512,8 +513,7 @@ export const EquipmentStore = signalStore(
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { createCallState: errorCallState(storeError) });
-                    // Quota (409) failures are surfaced by the page as an
-                    // actionable upgrade dialog, not as a generic error toast.
+                    // Quota (409) refusals render inline in the create form, not as a toast.
                     if (!isQuotaExceededError(storeError)) {
                       dispatcher.dispatch(
                         equipmentStoreEvents.createFailed(
@@ -555,10 +555,15 @@ export const EquipmentStore = signalStore(
               equipmentService.update(organizationId, equipmentId, input).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      updateCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = mergeEquipment(
+                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      equipment,
+                    );
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      updateCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -603,10 +608,15 @@ export const EquipmentStore = signalStore(
               equipmentService.assignToFacility(organizationId, equipmentId, input).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      assignToFacilityCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = mergeEquipment(
+                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      equipment,
+                    );
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      assignToFacilityCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -634,6 +644,9 @@ export const EquipmentStore = signalStore(
          * Removes a facility assignment from an equipment. Uses `exhaustMap`
          * to prevent concurrent submissions. On success, updates the entity
          * in the collection and synchronises the {@link ActiveEquipmentStore}.
+         * The facility relation is taken from the response verbatim (absent
+         * means unassigned, since the API omits null fields) — merging must
+         * not resurrect the assignment this write just removed.
          *
          * @since 1.0.0
          *
@@ -648,10 +661,19 @@ export const EquipmentStore = signalStore(
               equipmentService.unassignFromFacility(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      unassignFromFacilityCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = {
+                      ...mergeEquipment(
+                        store.equipmentEntityMap()[equipment.id] ?? null,
+                        equipment,
+                      ),
+                      facilityId: equipment.facilityId ?? null,
+                      facilityName: equipment.facilityName ?? null,
+                    };
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      unassignFromFacilityCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -695,10 +717,15 @@ export const EquipmentStore = signalStore(
               equipmentService.commission(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      commissionCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = mergeEquipment(
+                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      equipment,
+                    );
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      commissionCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -737,10 +764,15 @@ export const EquipmentStore = signalStore(
               equipmentService.decommission(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      decommissionCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = mergeEquipment(
+                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      equipment,
+                    );
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      decommissionCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -836,10 +868,15 @@ export const EquipmentStore = signalStore(
               equipmentService.maintenance(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
-                    patchState(store, setEntity(equipment, { collection: 'equipment' }), {
-                      maintenanceCallState: successCallState(equipment),
+                    const merged: EquipmentOutput = mergeEquipment(
+                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      equipment,
+                    );
+
+                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                      maintenanceCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(equipment);
+                    activeEquipmentStore.setEquipment(merged);
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);

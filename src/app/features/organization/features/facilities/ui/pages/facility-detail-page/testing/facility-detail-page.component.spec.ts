@@ -16,6 +16,7 @@ import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
   idleCallState,
+  pendingCallState,
   successCallState,
   type CallState,
   type StoreError,
@@ -145,8 +146,10 @@ describe('FacilityDetailPage', () => {
   let selectedPlan: WritableSignal<FacilityAttachmentOutput | null>;
   let planImageUrl: WritableSignal<string | null>;
   let plansLoading: WritableSignal<boolean>;
+  let planListCallState: WritableSignal<CallState>;
   let planOverlay: WritableSignal<FacilityPlanOverlayOutput | null>;
   let planOverlayHasContent: WritableSignal<boolean>;
+  let planOverlayCallState: WritableSignal<CallState>;
   let planShowZones: WritableSignal<boolean>;
   let planShowEquipment: WritableSignal<boolean>;
   let planSetShowZones: ReturnType<typeof vi.fn>;
@@ -210,8 +213,10 @@ describe('FacilityDetailPage', () => {
     selectedPlan = signal<FacilityAttachmentOutput | null>(null);
     planImageUrl = signal<string | null>(null);
     plansLoading = signal<boolean>(false);
+    planListCallState = signal<CallState>(idleCallState());
     planOverlay = signal<FacilityPlanOverlayOutput | null>(null);
     planOverlayHasContent = signal<boolean>(false);
+    planOverlayCallState = signal<CallState>(idleCallState());
     planShowZones = signal<boolean>(true);
     planShowEquipment = signal<boolean>(true);
     planSetShowZones = vi.fn();
@@ -300,11 +305,13 @@ describe('FacilityDetailPage', () => {
               selectedPlan,
               planImageUrl,
               isLoading: plansLoading,
+              listCallState: planListCallState,
               isUploading: signal(false),
               settingPrimaryId: signal<string | null>(null),
               deletingId: signal<string | null>(null),
               overlay: planOverlay,
               overlayHasContent: planOverlayHasContent,
+              overlayCallState: planOverlayCallState,
               showZones: planShowZones,
               showEquipment: planShowEquipment,
               load: planLoad,
@@ -665,7 +672,7 @@ describe('FacilityDetailPage', () => {
     });
 
     it('should announce a skeleton loading state while the first plans load is in flight', async () => {
-      plansLoading.set(true);
+      planListCallState.set(pendingCallState());
       await createPage();
 
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
@@ -675,6 +682,38 @@ describe('FacilityDetailPage', () => {
       expect(loading).not.toBeNull();
       expect(loading?.getAttribute('role')).toBe('status');
       expect(byTestId('facility-plans-empty')).toBeNull();
+    });
+
+    it('should show a retryable error state when the plan list fails to load', async () => {
+      planListCallState.set(errorCallState({ message: 'Network down' } as StoreError));
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      const errorState: HTMLElement | null = byTestId('facility-plans-error');
+      expect(errorState).not.toBeNull();
+      expect(errorState?.textContent).toContain("Couldn't load the floor plans");
+
+      byTestId('facility-plans-error')
+        ?.querySelector('button')
+        ?.dispatchEvent(new MouseEvent('click'));
+
+      expect(planLoad).toHaveBeenCalledWith({ facilityId: 'facility-1', organizationId: 'org-1' });
+    });
+
+    it('should show the "nothing drawn yet" empty state once the overlay has loaded with no content', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      planOverlayCallState.set(successCallState(null));
+      planOverlayHasContent.set(false);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-no-content')).not.toBeNull();
     });
 
     it('should announce the image spinner while the selected plan image resolves', async () => {
@@ -710,7 +749,7 @@ describe('FacilityDetailPage', () => {
       expect(byTestId('facility-plans-upload')).toBeNull();
     });
 
-    it('should show the plan viewer and the plan list once a plan exists', async () => {
+    it('should show the plan viewer, and the plan list behind the toolbar picker, once a plan exists', async () => {
       orderedPlans.set([plan({ isPrimaryPlan: true })]);
       selectedPlan.set(plan({ isPrimaryPlan: true }));
       planImageUrl.set('blob:test-plan');
@@ -720,7 +759,11 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       expect(byTestId('facility-plan-viewer')).not.toBeNull();
-      expect(root().querySelector('app-facility-plan-list')).not.toBeNull();
+      // The list left the row — it would have squeezed the plan to 281 px at a
+      // 1280 px viewport — and now sits inside the toolbar's picker popover,
+      // which renders its content only once opened.
+      expect(byTestId('facility-plan-picker-trigger')).not.toBeNull();
+      expect(root().querySelector('app-facility-plan-list')).toBeNull();
     });
 
     it('should route the picked file to the store as an upload', async () => {
@@ -783,13 +826,16 @@ describe('FacilityDetailPage', () => {
   describe('the "3D view" link', () => {
     it('should show for a building facility', async () => {
       selectedFacility.set(facility({ type: 'building' }));
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
       await createPage();
 
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
       const link: HTMLAnchorElement | null = byTestId(
-        'facility-detail-3d-view',
+        'facility-plan-3d-link',
       ) as HTMLAnchorElement | null;
       expect(link).not.toBeNull();
       expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1/3d');
@@ -797,12 +843,15 @@ describe('FacilityDetailPage', () => {
 
     it('should hide for a non-building facility', async () => {
       selectedFacility.set(facility({ type: 'floor' }));
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
       await createPage();
 
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
-      expect(byTestId('facility-detail-3d-view')).toBeNull();
+      expect(byTestId('facility-plan-3d-link')).toBeNull();
     });
   });
 
@@ -817,7 +866,7 @@ describe('FacilityDetailPage', () => {
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
-      expect(byTestId('facility-plan-overlay-toggles')).toBeNull();
+      expect(byTestId('facility-plan-toggle-zones')).toBeNull();
     });
 
     it('should show the layer toggles and project the overlay once it has content', async () => {
@@ -830,7 +879,7 @@ describe('FacilityDetailPage', () => {
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
-      expect(byTestId('facility-plan-overlay-toggles')).not.toBeNull();
+      expect(byTestId('facility-plan-toggle-zones')).not.toBeNull();
       expect(root().querySelector('app-facility-plan-overlay')).not.toBeNull();
     });
 
@@ -854,10 +903,56 @@ describe('FacilityDetailPage', () => {
       expect(planSetShowEquipment).toHaveBeenCalledWith(false);
     });
 
-    it('should navigate to the zone facility when a plan overlay zone is activated', async () => {
+    it('should select the zone rather than navigate when a plan overlay zone is activated', async () => {
       await createPage();
 
-      fixture.componentInstance['onPlanZoneActivated']('facility-zone-1');
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['selectedZoneId']()).toBe('facility-zone-1');
+    });
+
+    it('should select the equipment pin rather than navigate when a plan overlay pin is activated', async () => {
+      await createPage();
+
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['selectedEquipmentId']()).toBe('equipment-1');
+    });
+
+    it('selecting an equipment pin deselects any selected zone, and vice versa', async () => {
+      await createPage();
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+
+      expect(fixture.componentInstance['selectedZoneId']()).toBeNull();
+      expect(fixture.componentInstance['selectedEquipmentId']()).toBe('equipment-1');
+    });
+
+    it('navigates to the zone facility only from the panel\'s explicit "View facility record" action', async () => {
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [
+          {
+            facilityId: 'facility-zone-1',
+            name: 'Zone A',
+            type: 'zone',
+            status: 'active',
+            points: [],
+          },
+        ],
+        equipment: [],
+      });
+      await createPage();
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      expect(navigate).not.toHaveBeenCalled();
+
+      fixture.componentInstance['onZoneRecordRequested']();
 
       expect(navigate).toHaveBeenCalledWith([
         '/organizations',
@@ -867,10 +962,30 @@ describe('FacilityDetailPage', () => {
       ]);
     });
 
-    it('should navigate to the equipment record when a plan overlay pin is activated', async () => {
+    it('navigates to the equipment record only from the panel\'s explicit "View equipment record" action', async () => {
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [],
+        equipment: [
+          {
+            equipmentId: 'equipment-1',
+            type: 'fire_extinguisher',
+            serialNumber: null,
+            locationLabel: null,
+            status: 'operational',
+            x: 0.1,
+            y: 0.1,
+          },
+        ],
+      });
       await createPage();
 
-      fixture.componentInstance['onPlanEquipmentActivated']('equipment-1');
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+      expect(navigate).not.toHaveBeenCalled();
+
+      fixture.componentInstance['onEquipmentRecordRequested']();
 
       expect(navigate).toHaveBeenCalledWith([
         '/organizations',
@@ -879,20 +994,110 @@ describe('FacilityDetailPage', () => {
         'equipment-1',
       ]);
     });
+
+    it('clears the selection when the panel detail is closed', async () => {
+      await createPage();
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      fixture.componentInstance['onPlanDetailClosed']();
+
+      expect(fixture.componentInstance['selectedZoneId']()).toBeNull();
+    });
+
+    it('clears the selection when the Plans tab is left', async () => {
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+
+      byTestId('facility-tab-overview')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['selectedZoneId']()).toBeNull();
+    });
+
+    it('opens the zone geometry dialog for the selected zone from the panel\'s "Edit coordinates"', async () => {
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [
+          {
+            facilityId: 'facility-zone-1',
+            name: 'Zone A',
+            type: 'zone',
+            status: 'active',
+            points: [],
+          },
+        ],
+        equipment: [],
+      });
+      await createPage();
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      fixture.componentInstance['onZoneEditRequested']();
+
+      expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBe('facility-zone-1');
+    });
+
+    it('opens the pin position dialog for the selected pin from the panel\'s "Edit position"', async () => {
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [],
+        equipment: [
+          {
+            equipmentId: 'equipment-1',
+            type: 'fire_extinguisher',
+            serialNumber: null,
+            locationLabel: null,
+            status: 'operational',
+            x: 0.1,
+            y: 0.1,
+          },
+        ],
+      });
+      await createPage();
+
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+      fixture.componentInstance['onEquipmentEditRequested']();
+
+      expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBe('equipment-1');
+    });
+
+    it('removes the selected pin from the plan and clears the selection from the panel\'s "Remove from plan"', async () => {
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [],
+        equipment: [
+          {
+            equipmentId: 'equipment-1',
+            type: 'fire_extinguisher',
+            serialNumber: null,
+            locationLabel: null,
+            status: 'operational',
+            x: 0.1,
+            y: 0.1,
+          },
+        ],
+      });
+      await createPage();
+
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+      fixture.componentInstance['onEquipmentRemoveRequested']();
+
+      expect(planRemovePinFromPlan).toHaveBeenCalledWith('equipment-1');
+      expect(fixture.componentInstance['selectedEquipmentId']()).toBeNull();
+    });
   });
 
   describe('plan editor', () => {
     it('should hide the draw-zone and place-pin pickers without permission', async () => {
       hasPermission.mockReturnValue(false);
-      await createPage();
-
-      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
-      await fixture.whenStable();
-
-      expect(byTestId('facility-plan-editor-toolbar')).toBeNull();
-    });
-
-    it('should show the toolbar once permitted', async () => {
       orderedPlans.set([plan({ isPrimaryPlan: true })]);
       selectedPlan.set(plan({ isPrimaryPlan: true }));
       planImageUrl.set('blob:test-plan');
@@ -901,7 +1106,22 @@ describe('FacilityDetailPage', () => {
       byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
       await fixture.whenStable();
 
-      expect(byTestId('facility-plan-editor-toolbar')).not.toBeNull();
+      expect(byTestId('facility-plan-toolbar')).not.toBeNull();
+      expect(byTestId('facility-plan-editor-draw-zone-picker')).toBeNull();
+      expect(byTestId('facility-plan-editor-place-pin-picker')).toBeNull();
+    });
+
+    it('should show the pickers once permitted', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-editor-draw-zone-picker')).not.toBeNull();
+      expect(byTestId('facility-plan-editor-place-pin-picker')).not.toBeNull();
     });
 
     it('should load the candidate lists when their picker is opened', async () => {

@@ -7578,10 +7578,6 @@
         <source>Close polygon</source>
         <target>Fermer le polygone</target>
       </trans-unit>
-      <trans-unit id="facility.plans.editor.zoneListTitle" datatype="html">
-        <source>Zones on this plan</source>
-        <target>Zones sur ce plan</target>
-      </trans-unit>
       <trans-unit id="facility.plans.editor.editCoordinates" datatype="html">
         <source>Edit coordinates</source>
         <target>Modifier les coordonnées</target>
@@ -7658,6 +7654,14 @@
         <source>Plans</source>
         <target>Plans</target>
       </trans-unit>
+      <trans-unit id="facility.plans.pickerLabel" datatype="html">
+        <source>Floor plans</source>
+        <target>Plans d'étage</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.pickerEmpty" datatype="html">
+        <source>Choose a plan</source>
+        <target>Choisir un plan</target>
+      </trans-unit>
       <trans-unit id="facility.plans.emptyTitle" datatype="html">
         <source>No floor plan yet</source>
         <target>Aucun plan pour le moment</target>
@@ -7683,28 +7687,80 @@
         <target>Zones du site</target>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.zoneAria" datatype="html">
-        <source>Zone <x id="name" equiv-text="name"/></source>
-        <target>Zone <x id="name" equiv-text="name"/></target>
+        <source>Zone <x id="name" equiv-text="zone.name"/> — <x id="status" equiv-text="statusLabel"/></source>
+        <target>Zone <x id="name" equiv-text="zone.name"/> — <x id="status" equiv-text="statusLabel"/></target>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.equipmentAria" datatype="html">
         <source><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></source>
         <target><x id="name" equiv-text="item.name"/> — <x id="status" equiv-text="descriptor.label"/></target>
       </trans-unit>
-      <trans-unit id="facility.plans.overlay.toggleZonesAria" datatype="html">
-        <source>Show zones</source>
-        <target>Afficher les zones</target>
-      </trans-unit>
       <trans-unit id="facility.plans.overlay.toggleZonesLabel" datatype="html">
         <source>Zones</source>
         <target>Zones</target>
       </trans-unit>
-      <trans-unit id="facility.plans.overlay.toggleEquipmentAria" datatype="html">
-        <source>Show equipment</source>
-        <target>Afficher les équipements</target>
-      </trans-unit>
       <trans-unit id="facility.plans.overlay.toggleEquipmentLabel" datatype="html">
         <source>Equipment</source>
         <target>Équipement</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.errorTitle" datatype="html">
+        <source>Couldn&apos;t load the floor plans</source>
+        <target>Impossible de charger les plans</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.errorRetry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.toolbar.openPanel" datatype="html">
+        <source>Zones and equipment</source>
+        <target>Zones et équipements</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.title" datatype="html">
+        <source>Plan zones</source>
+        <target>Zones du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.close" datatype="html">
+        <source>Close</source>
+        <target>Fermer</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.viewZoneRecord" datatype="html">
+        <source>View facility record</source>
+        <target>Voir la fiche de l&apos;installation</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.viewEquipmentRecord" datatype="html">
+        <source>View equipment record</source>
+        <target>Voir la fiche de l&apos;équipement</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.noContentTitle" datatype="html">
+        <source>Nothing drawn on this plan yet</source>
+        <target>Rien n&apos;est encore dessiné sur ce plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.noContentDescription" datatype="html">
+        <source>Draw a zone outline or place equipment from the toolbar above to see it here.</source>
+        <target>Dessinez le contour d&apos;une zone ou placez un équipement depuis la barre d&apos;outils ci-dessus pour le voir apparaître ici.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.zoneListHeading" datatype="html">
+        <source>Zones on this plan</source>
+        <target>Zones de ce plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.zoneSelectionAnnouncement" datatype="html">
+        <source>Selected zone <x id="name" equiv-text="zone.name"/></source>
+        <target>Zone sélectionnée : <x id="name" equiv-text="zone.name"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.equipmentSelectionAnnouncement" datatype="html">
+        <source>Selected equipment <x id="name" equiv-text="equipmentPlanLabel(pin)"/></source>
+        <target>Équipement sélectionné : <x id="name" equiv-text="equipmentPlanLabel(pin)"/></target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.zoneListEmpty" datatype="html">
+        <source>No zones on this plan.</source>
+        <target>Aucune zone sur ce plan.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.equipmentListEmpty" datatype="html">
+        <source>No equipment on this plan yet.</source>
+        <target>Aucun équipement sur ce plan pour le moment.</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.pageRootLabel" datatype="html">
+        <source>Facility record</source>
+        <target>Fiche de l'installation</target>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>

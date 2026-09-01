@@ -95,10 +95,16 @@
     >
       Rooms on this floor
     </h4>
-    <app-facility-building-3d-room-list
-      [rooms]="floorRooms()"
-      [selectedRoomId]="room()?.facilityId ?? null"
-      (roomActivated)="roomActivated.emit($event)"
-    />
+    <app-facility-plan-item-list
+      [items]="roomOptions()"
+      [selectedId]="room()?.facilityId ?? null"
+      [listLabel]="roomListLabel"
+      [emptyMessage]="roomListEmpty"
+      (itemActivated)="roomActivated.emit($event)"
+    >
+      <ng-template let-room>
+        <app-facility-status-tag [value]="room.status" />
+      </ng-template>
+    </app-facility-plan-item-list>
   </section>
 </ng-template>

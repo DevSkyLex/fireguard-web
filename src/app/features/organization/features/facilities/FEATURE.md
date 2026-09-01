@@ -146,9 +146,15 @@ below is always mounted, with no prior pointer interaction required:
   pointer tap on the canvas. Presentational, inputs/outputs only
   (`ARCHITECTURE.md` §10.3); the page owns every store call its outputs
   trigger.
-- **`ui/components/facility-building-3d-room-panel/components/facility-building-3d-room-list`**
-  (`FacilityBuilding3dRoomList`) is the roster's actual accessible payload:
-  a hand-built `role="listbox"` over a real, focus-moving roving tabindex
+- **`ui/components/facility-plan-item-list`** (`FacilityPlanItemList`) is the
+  roster's actual accessible payload — extracted from this component's own
+  former private `facility-building-3d-room-list` once the 2D Plans tab
+  needed the identical list, then generalized a second time (from
+  zone-only `FacilityZoneList` to a generic `PlanItemListOption<T>` row)
+  once that tab's own equipment roster turned out to duplicate the same
+  `listbox`/`option` pattern by hand, badly, in the same panel; see "Plans
+  Tab Parity With The 3D View" below for both steps. A hand-built
+  `role="listbox"` over a real, focus-moving roving tabindex
   (`FocusKeyManager` from `@angular/cdk/a11y`) rather than the spartan
   `command` combobox — `command`'s arrow-key navigation only wires up while
   its search input holds focus, and its `Enter`-only activation swallows
@@ -413,16 +419,136 @@ only place this feature renders it, so it is duplicated locally rather than
 imported, mirroring `interventions`' own `equipmentStatus` kind on
 `intervention-tag.util.ts` (same `$localize` ids, three call sites, no
 cross-feature registry import). The component is presentational — inputs
-and outputs only, no store or service — and the page owns the navigation on
-`zoneActivated`/`equipmentActivated` (absolute paths, to
-`/organizations/:organizationId/facilities/:facilityId` and
-`/organizations/:organizationId/equipments/:equipmentId`).
+and outputs only, no store or service — and `zoneActivated`/`equipmentActivated`
+are forwarded by the page to a **selection**, not a navigation: see "Plans
+Tab Parity" below.
 
 `showZones`/`showEquipment` are store-held visibility toggles (both default
-`true`, `FacilityPlansStore.setShowZones`/`setShowEquipment`), rendered as
-`hlm-switch` chips above the viewer, shown only when
+`true`, `FacilityPlansStore.setShowZones`/`setShowEquipment`), rendered by
+`app-facility-plan-toolbar`, shown only when
 `FacilityPlansStore.overlayHasContent()` — no zones and no equipment renders
 no toggle chrome at all.
+
+## Plans Tab Parity With The 3D View
+
+The Plans tab was brought to the same interaction level as the Building 3D
+View (`facility-building-3d-page`) without becoming a route of its own — it
+stays a tab of `FacilityDetailPage`.
+
+- **The viewer takes the available height.** `hlmTabsContent="plans"` and
+  its ancestors up to the page root (`#facility-detail`, `hlm-tabs`) carry
+  `flex min-h-0 flex-1` instead of the page's previous unconstrained
+  document flow; the `overview`/`information` tab contents each gained their
+  own `overflow-y-auto` so they keep scrolling exactly as before inside the
+  now height-bound `hlm-tabs`. The plan viewer itself dropped its `h-[32rem]`
+  fixed height for `flex-1` (with a `min-h-[24rem]` floor).
+- **One toolbar** (`ui/components/facility-plan-toolbar`,
+  `FacilityPlanToolbar`) replaces the three previously stacked blocks — the
+  isolated "3D view" link, the zone/equipment layer switches, and the
+  editor's picker/status bar — laid out like `FacilityBuilding3dPage`'s own
+  toolbar (a left group, a right group, `lucide` icons). Presentational:
+  inputs/outputs only, including the pickers' `null`-clearing `valueChange`,
+  which it filters itself before emitting.
+- **A side panel** (`ui/components/facility-plan-panel`, `FacilityPlanPanel`)
+  is the tab's **only** browsing/editing surface for zones and equipment,
+  mirroring `FacilityBuilding3dRoomPanel`'s `hlm-card`/`hlm-sheet` breakpoint
+  switch — unlike that panel's `disableClose` sheet, this one is dismissible
+  and carries its own visible close button, since the toolbar's own opener
+  already reopens a dismissed sheet. It always renders two rosters, both
+  `app-facility-plan-item-list` (see generalization below) — every zone on
+  the selected plan, and every equipment pin (`equipment` input) — and, once
+  a zone or pin is selected, a **detail** block: name, type for a zone,
+  status through this feature's own registries, an explicit "View facility
+  record"/"View equipment record" action, and — **the editor actions
+  themselves**, gated exactly as before — "Edit coordinates" on a zone
+  (`canWrite`) or "Edit position"/"Remove from plan" on a pin
+  (`canEditEquipment`), disabled while a `draw-zone`/`place-pin` mode is
+  active (`editModeActive`). A first pass at this consolidation kept a
+  second, standing "Zones/Equipment on this plan" management roster beneath
+  the viewer for these same actions — the same list rendered twice on
+  screen, once to browse and once to edit — and was corrected before
+  shipping: one roster per kind now carries both. The detail block's own
+  close button is `FacilityPlanPanel.focus`'s target: `FacilityDetailPage`
+  moves real focus onto it when a selection opens the block and restores
+  whatever held it before once the block closes, mirroring
+  `FacilityBuilding3dPage.syncSelectionFocus` — the button is removed from
+  the DOM on close and would otherwise drop focus to `body`.
+- **The plan itself marks what is selected, not only the panel's roster.**
+  `FacilityDetailPage.selectedZoneId`/`selectedEquipmentId` are forwarded
+  through `FacilityPlanEditor` to `FacilityPlanOverlay`: the matching zone
+  polygon or equipment pin carries `aria-pressed="true"` plus a
+  non-chromatic cue of its own (a thicker polygon outline, an added pin
+  ring) — before this, a member selecting zones in sequence from the SVG
+  itself had no way to tell, without opening the panel, which one had been
+  picked. A zone's own `aria-label` now also carries its status
+  (`resolveFacilityStatusTag`), matching the equipment pin's existing
+  name+status pattern — reachable by keyboard without opening the panel.
+- **Activating a zone or a pin now selects instead of navigating.**
+  `FacilityDetailPage.onZoneSelected`/`onEquipmentSelected` — called from
+  `FacilityPlanEditor`'s `zoneActivated`/`equipmentActivated` (a plan tap)
+  or `FacilityPlanPanel`'s own `zoneActivated`/`equipmentActivated` (either
+  roster) — write `selectedZoneId`/`selectedEquipmentId`, page-local
+  `WritableSignal`s, never touching the router. Only the panel's explicit
+  "View record" action (`onZoneRecordRequested`/`onEquipmentRecordRequested`)
+  navigates, to the same absolute paths the old direct-navigation handlers
+  used; "Edit coordinates"/"Edit position" open the same
+  `FacilityPlanZoneGeometryDialog`/`FacilityPlanPinPositionDialog` the
+  removed management roster used to
+  (`onZoneEditRequested`/`onEquipmentEditRequested`), and "Remove from plan"
+  (`onEquipmentRemoveRequested`) calls the same store write
+  (`removePinFromPlan`) and clears the selection immediately rather than
+  waiting on the overlay reload. The selection is cleared on the panel's own
+  close control, on switching the shown plan (`onPlanSelected`), and on
+  leaving the Plans tab (`activateTab`) — never stale across a plan or tab
+  switch.
+- **A fourth Plans-tab state.** Alongside loading, "no floor plan uploaded",
+  and the normal content view, `FacilityPlansStore.overlayCallState()`
+  reaching `'success'` with `overlayHasContent()` still `false` now renders
+  `app-empty-state` inside the panel (`data-testid="facility-plan-no-content"`)
+  — a plan with nothing drawn on it used to render silently. The plan
+  **list** request failing also gained its own retryable `app-error-state`
+  (`data-testid="facility-plans-error"`), matching the 3D page's own
+  load-failure state; it previously had none.
+- **`aria-live="polite"`** (`facility-plan-selection-announcement`)
+  announces the selected zone or equipment's name — `FacilityDetailPage
+.planSelectionAnnouncement`, mirroring `FacilityBuilding3dPage
+.selectionAnnouncement`. Re-picking the **same** zone or pin still changes
+  the region's text: `planSelectionAnnouncement` folds the parity of a
+  private `selectionAnnouncementNonce` counter — bumped on every
+  `onZoneSelected`/`onEquipmentSelected` call regardless of whether the id
+  actually changed — into a trailing zero-width space, since a `WritableSignal`
+  set to its already-current value produces no new computed output on its
+  own, and most screen readers only announce a region whose text content
+  actually changed (WCAG 4.1.3).
+- **`ui/components/facility-plan-item-list` (`FacilityPlanItemList`) was
+  extracted, then generalized.** First extraction: from
+  `facility-building-3d-room-panel`'s own private
+  `facility-building-3d-room-list` once this tab needed the identical
+  keyboard-navigable roster over the same `FacilityPlanOverlayZone` type
+  (as `FacilityZoneList`). The rule of three (`ARCHITECTURE.md` §2.9)
+  normally waits for a third consumer before extracting, but the two
+  remaining options at two consumers — importing into another component's
+  private folder (banned, §13.4) or duplicating the `FocusKeyManager`
+  roving-tabindex implementation — were both worse than an early
+  extraction; a deliberate, documented exception, not a precedent for
+  extracting at two consumers generally. Second step, an a11y fix rather
+  than a new consumer: this panel's own equipment roster was a hand-rolled
+  `<button>` loop with no `listbox`/`option` roles and an invalid
+  `aria-selected` on a plain button — generalizing the zone-only list to a
+  `PlanItemListOption<T>` row (an id, a label, and the source record handed
+  back to a content-projected `ng-template` decorator) let the equipment
+  roster reuse the exact same roving-tabindex widget instead of a second,
+  independent fix. `FacilityBuilding3dRoomPanel` itself is otherwise
+  untouched: it still speaks of "rooms" throughout its own API, now
+  rendering `app-facility-plan-item-list` internally instead of
+  `app-facility-zone-list`.
+- **The layer switches' accessible name comes from their visible `<label>`
+  text alone.** `hlm-switch` renders a real `<button role="switch">`, a
+  labelable element, so wrapping it in a `<label>` already gives it an
+  implicit accessible name; the separate `aria-label`s
+  (`facility.plans.overlay.toggleZonesAria`/`toggleEquipmentAria`) silently
+  overrode that visible text with an equivalent-but-disconnected
+  translation and were removed.
 
 ## Plan Editor (Write Side)
 
@@ -759,6 +885,6 @@ organization-scoped read never carries `revision`, then sends the required
 - `FacilityPlanOverlay` stays read-only and presentational — it never gains a store, a service, or navigation of its own; every editor affordance lives in `FacilityPlanEditor` (which wraps it) and the page.
 - Drawing a zone outline requires at least three vertices, mirrored client-side (`isClosablePolygon`) ahead of the backend's own check.
 - Every editor write is permission-gated: `FACILITIES_WRITE` for a zone outline, `EQUIPMENT_WRITE` for an equipment pin — never inferred from the other.
-- `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page navigates.
+- `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page selects (and only its panel's explicit "View record" action navigates).
 - `/:facilityId/3d` is browser-only: `FacilityBuilding3dStore.loadModel` never fires on the server, and `FacilityBuilding3dPage` orchestrates it (route params, WebGL detection, the five states) — no child of that page ever injects a store or reads `window`/`document` outside `afterNextRender`.
 - `FacilityBuilding3dScene` never injects a store or service and never navigates itself — it emits, the page acts. Its mount is guarded by a monotonic generation token so an async continuation that resolves after teardown never attaches a live renderer to a dead scene, and its teardown disposes every geometry and material in the building group exactly once, cancels every pending `requestAnimationFrame`, and disconnects its `ResizeObserver` — no permanent render loop ever runs; rendering is invalidate-on-demand.

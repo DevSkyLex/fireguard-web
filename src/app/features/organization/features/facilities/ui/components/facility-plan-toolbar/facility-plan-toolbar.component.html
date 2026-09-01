@@ -1,0 +1,173 @@
+<div class="flex flex-wrap items-center justify-between gap-2" data-testid="facility-plan-toolbar">
+  <div class="flex flex-wrap items-center gap-3">
+    <ng-content select="[planPicker]" />
+
+    @if (overlayHasContent()) {
+      <label class="flex items-center gap-2 text-sm">
+        <hlm-switch
+          [checked]="showZones()"
+          (checkedChange)="showZonesChanged.emit($event)"
+          data-testid="facility-plan-toggle-zones"
+        />
+        <span i18n="@@facility.plans.overlay.toggleZonesLabel">Zones</span>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <hlm-switch
+          [checked]="showEquipment()"
+          (checkedChange)="showEquipmentChanged.emit($event)"
+          data-testid="facility-plan-toggle-equipment"
+        />
+        <span i18n="@@facility.plans.overlay.toggleEquipmentLabel">Equipment</span>
+      </label>
+    }
+
+    @if (panelOpenerVisible()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-expanded="false"
+        data-testid="facility-plan-open-panel"
+        (click)="panelOpenRequested.emit()"
+      >
+        <ng-icon name="lucideList" aria-hidden="true" />
+        <span>{{ panelOpenerLabel }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2">
+    @if (is3dLinkVisible()) {
+      <a
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="facility-plan-3d-link"
+        [routerLink]="plan3dRoute()"
+      >
+        <ng-icon name="lucideBoxes" aria-hidden="true" />
+        <span i18n="@@facility.detail.view3d">3D view</span>
+      </a>
+    }
+
+    @if (canWrite()) {
+      <hlm-select
+        [value]="null"
+        [disabled]="editMode() !== 'none'"
+        (valueChange)="onZoneDrawTargetPicked($event)"
+      >
+        <hlm-select-trigger
+          class="w-56"
+          data-testid="facility-plan-editor-draw-zone-picker"
+          (click)="zonePickerOpened.emit()"
+        >
+          <hlm-select-value [placeholder]="drawZonePlaceholder" />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal class="w-56">
+          <hlm-select-group>
+            @for (candidate of zoneCandidates(); track candidate.id) {
+              <hlm-select-item [value]="candidate.id">{{ candidate.name }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    }
+
+    @if (canEditEquipment()) {
+      <hlm-select
+        [value]="null"
+        [disabled]="editMode() !== 'none'"
+        (valueChange)="onEquipmentPlacePicked($event)"
+      >
+        <hlm-select-trigger
+          class="w-56"
+          data-testid="facility-plan-editor-place-pin-picker"
+          (click)="equipmentPickerOpened.emit()"
+        >
+          <hlm-select-value [placeholder]="placePinPlaceholder" />
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal class="w-56">
+          <hlm-select-group>
+            @for (candidate of equipmentCandidates(); track candidate.id) {
+              <hlm-select-item [value]="candidate.id">{{
+                equipmentCandidateLabel(candidate)
+              }}</hlm-select-item>
+            }
+          </hlm-select-group>
+        </hlm-select-content>
+      </hlm-select>
+    }
+
+    @if (editMode() !== 'none') {
+      <div
+        class="flex flex-wrap items-center gap-2 text-sm"
+        role="status"
+        data-testid="facility-plan-editor-status"
+      >
+        <span>{{ statusLabel() }}</span>
+        @if (editMode() === 'draw-zone') {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-plan-editor-undo"
+            [disabled]="draftPointCount() === 0"
+            (click)="undoVertexRequested.emit()"
+            i18n="@@facility.plans.editor.undo"
+          >
+            Undo last vertex
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            size="sm"
+            data-testid="facility-plan-editor-close-polygon"
+            [disabled]="draftPointCount() < 3 || isSavingZoneGeometry()"
+            (click)="closePolygonRequested.emit()"
+            i18n="@@facility.plans.editor.closePolygon"
+          >
+            Close polygon
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-plan-editor-enter-coordinates"
+            (click)="enterCoordinatesRequested.emit()"
+            i18n="@@facility.plans.editor.enterCoordinates"
+          >
+            Enter coordinates
+          </button>
+        }
+        @if (editMode() === 'place-pin') {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-plan-editor-enter-position"
+            (click)="enterPositionRequested.emit()"
+            i18n="@@facility.plans.editor.enterPosition"
+          >
+            Enter position
+          </button>
+        }
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-testid="facility-plan-editor-cancel"
+          (click)="editingCancelled.emit()"
+          i18n="@@common.cancel"
+        >
+          Cancel
+        </button>
+      </div>
+    }
+  </div>
+</div>

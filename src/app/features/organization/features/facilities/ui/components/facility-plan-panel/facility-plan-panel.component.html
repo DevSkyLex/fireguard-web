@@ -1,0 +1,203 @@
+@if (isCompact()) {
+  <hlm-sheet side="bottom" [state]="sheetState()" (stateChanged)="onSheetStateChanged($event)">
+    <hlm-sheet-content
+      *hlmSheetPortal
+      role="region"
+      [attr.aria-label]="panelLabel"
+      class="flex max-h-[85svh] w-full! flex-col gap-4 overflow-y-auto"
+      data-testid="facility-plan-panel"
+    >
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle>{{ panelLabel }}</h3>
+      </hlm-sheet-header>
+
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        <ng-container *ngTemplateOutlet="body" />
+      </div>
+    </hlm-sheet-content>
+  </hlm-sheet>
+} @else {
+  <div
+    hlmCard
+    role="region"
+    [attr.aria-label]="panelLabel"
+    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto sm:w-80"
+    data-testid="facility-plan-panel"
+  >
+    <div hlmCardHeader>
+      <h3 hlmCardTitle>{{ panelLabel }}</h3>
+    </div>
+
+    <div hlmCardContent class="flex flex-col gap-4">
+      <ng-container *ngTemplateOutlet="body" />
+    </div>
+  </div>
+}
+
+<ng-template #body>
+  @if (hasNoContent()) {
+    <app-empty-state
+      icon="lucideShapes"
+      [title]="noContentTitle"
+      [description]="noContentDescription"
+      data-testid="facility-plan-no-content"
+    />
+  } @else {
+    @if (selectedZone(); as zone) {
+      <div
+        class="flex flex-col gap-3 rounded-lg border border-border p-3"
+        data-testid="facility-plan-detail"
+      >
+        <div class="flex flex-row items-start justify-between gap-2">
+          <div class="flex flex-col gap-1">
+            <h4 class="text-sm font-semibold">{{ zone.name }}</h4>
+            <p class="text-xs text-muted-foreground">{{ typeLabel(zone.type) }}</p>
+          </div>
+          <button
+            #closeButton
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon"
+            [attr.aria-label]="closeLabel"
+            data-testid="facility-plan-detail-close"
+            (click)="zoneClosed.emit()"
+          >
+            <ng-icon name="lucideX" aria-hidden="true" />
+          </button>
+        </div>
+
+        <app-facility-status-tag [value]="zone.status" />
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-plan-detail-view-record"
+            (click)="zoneRecordRequested.emit()"
+          >
+            {{ zoneRecordLabel }}
+          </button>
+          @if (canWrite()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="facility-plan-detail-edit"
+              [disabled]="editModeActive()"
+              (click)="zoneEditRequested.emit()"
+            >
+              {{ zoneEditLabel }}
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (selectedEquipment(); as pin) {
+      <div
+        class="flex flex-col gap-3 rounded-lg border border-border p-3"
+        data-testid="facility-plan-detail"
+      >
+        <div class="flex flex-row items-start justify-between gap-2">
+          <div class="flex min-w-0 flex-col gap-1">
+            <h4 class="truncate text-sm font-semibold">{{ equipmentLabel(pin) }}</h4>
+            @if (equipmentDetail(pin); as detail) {
+              <p class="truncate text-xs text-muted-foreground">{{ detail }}</p>
+            }
+          </div>
+          <button
+            #closeButton
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon"
+            [attr.aria-label]="closeLabel"
+            data-testid="facility-plan-detail-close"
+            (click)="equipmentClosed.emit()"
+          >
+            <ng-icon name="lucideX" aria-hidden="true" />
+          </button>
+        </div>
+
+        <span class="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <ng-icon [name]="equipmentStatusIcon(pin)" aria-hidden="true" />
+          {{ equipmentStatusLabel(pin) }}
+        </span>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="facility-plan-detail-view-record"
+            (click)="equipmentRecordRequested.emit()"
+          >
+            {{ equipmentRecordLabel }}
+          </button>
+          @if (canEditEquipment()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="facility-plan-detail-edit"
+              [disabled]="editModeActive()"
+              (click)="equipmentEditRequested.emit()"
+            >
+              {{ equipmentEditLabel }}
+            </button>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="facility-plan-detail-remove"
+              [disabled]="editModeActive()"
+              (click)="equipmentRemoveRequested.emit()"
+            >
+              {{ equipmentRemoveLabel }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <section class="flex flex-col gap-2">
+      <h4 class="text-sm font-medium text-muted-foreground">{{ zoneListHeading }}</h4>
+      <app-facility-plan-item-list
+        [items]="zoneOptions()"
+        [selectedId]="selectedZone()?.facilityId ?? null"
+        [listLabel]="zoneListHeading"
+        [emptyMessage]="zoneListEmpty"
+        (itemActivated)="zoneActivated.emit($event)"
+      >
+        <ng-template let-zone>
+          <app-facility-status-tag [value]="zone.status" />
+        </ng-template>
+      </app-facility-plan-item-list>
+    </section>
+
+    <section class="flex flex-col gap-2">
+      <h4 class="text-sm font-medium text-muted-foreground">{{ equipmentListHeading }}</h4>
+      <app-facility-plan-item-list
+        [items]="equipmentOptions()"
+        [selectedId]="selectedEquipment()?.equipmentId ?? null"
+        [listLabel]="equipmentListHeading"
+        [emptyMessage]="equipmentListEmpty"
+        testId="facility-plan-equipment-list"
+        optionTestId="facility-plan-equipment-list-option"
+        (itemActivated)="equipmentActivated.emit($event)"
+      >
+        <ng-template let-pin>
+          <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ng-icon [name]="equipmentStatusIcon(pin)" aria-hidden="true" />
+            {{ equipmentStatusLabel(pin) }}
+          </span>
+        </ng-template>
+      </app-facility-plan-item-list>
+    </section>
+  }
+</ng-template>

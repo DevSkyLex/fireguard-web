@@ -1,4 +1,11 @@
-<div id="facility-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+<div
+  #pageRoot
+  id="facility-detail"
+  tabindex="-1"
+  role="group"
+  [attr.aria-label]="pageRootLabel"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 focus-visible:ring-2 focus-visible:ring-ring md:p-6"
+>
   @if (activeFacilityStore.selectedFacility(); as facility) {
     @if (facility.path.length > 0) {
       <nav
@@ -36,7 +43,11 @@
       {{ metaLine() }}
     </p>
 
-    <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onLinkedTabActivated($event)">
+    <hlm-tabs
+      [tab]="activeTab()"
+      class="min-h-0 flex-1 flex-col"
+      (tabActivated)="onLinkedTabActivated($event)"
+    >
       <hlm-tabs-list
         aria-label="Facility sections"
         i18n-aria-label="@@facility.detail.tabsAriaLabel"
@@ -60,7 +71,7 @@
         </button>
       </hlm-tabs-list>
 
-      <div hlmTabsContent="overview" class="flex flex-col gap-6">
+      <div hlmTabsContent="overview" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         <section
           class="flex flex-col gap-1"
           aria-labelledby="facility-hierarchy-title"
@@ -289,7 +300,7 @@
         </section>
       </div>
 
-      <div hlmTabsContent="information" class="flex flex-col gap-4">
+      <div hlmTabsContent="information" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
         <section
           class="flex max-w-2xl flex-col gap-1"
           aria-labelledby="facility-detail-info-title"
@@ -318,23 +329,12 @@
         </section>
       </div>
 
-      <div hlmTabsContent="plans" class="flex flex-col gap-4">
-        @if (facility.type === 'building') {
-          <div class="flex justify-end">
-            <a
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              data-testid="facility-detail-3d-view"
-              [routerLink]="['/organizations', organizationId(), 'facilities', facilityId(), '3d']"
-            >
-              <ng-icon name="lucideBoxes" aria-hidden="true" />
-              <span i18n="@@facility.detail.view3d">3D view</span>
-            </a>
-          </div>
-        }
-        @if (plans.isLoading() && plans.orderedPlans().length === 0) {
+      <div hlmTabsContent="plans" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+        <div class="sr-only" aria-live="polite" data-testid="facility-plan-selection-announcement">
+          {{ planSelectionAnnouncement() }}
+        </div>
+
+        @if (plans.listCallState().status === 'pending' && plans.orderedPlans().length === 0) {
           <div
             class="flex flex-col gap-4"
             role="status"
@@ -346,7 +346,19 @@
             <hlm-skeleton class="h-24 w-full" />
             <hlm-skeleton class="h-24 w-full" />
           </div>
-        } @else if (plans.orderedPlans().length === 0 && !plans.isLoading()) {
+        } @else if (plans.listCallState().status === 'error' && plans.orderedPlans().length === 0) {
+          <app-error-state
+            icon="lucideCircleAlert"
+            title="Couldn't load the floor plans"
+            i18n-title="@@facility.plans.errorTitle"
+            [description]="plans.listCallState().error?.message ?? null"
+            data-testid="facility-plans-error"
+          >
+            <button hlmBtn type="button" (click)="retryPlansLoad()">
+              <span i18n="@@facility.plans.errorRetry">Retry</span>
+            </button>
+          </app-error-state>
+        } @else if (plans.orderedPlans().length === 0) {
           <app-empty-state
             icon="lucideMap"
             title="No floor plan yet"
@@ -371,193 +383,82 @@
             }
           </app-empty-state>
         } @else {
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-[20rem_1fr]">
-            <app-facility-plan-list
-              [plans]="plans.orderedPlans()"
-              [selectedPlanId]="plans.selectedPlan()?.id ?? null"
-              [canManage]="canWrite()"
-              [uploading]="plans.isUploading()"
-              [settingPrimaryId]="plans.settingPrimaryId()"
-              [deletingId]="plans.deletingId()"
-              (planSelected)="onPlanSelected($event)"
-              (filePicked)="onPlanFilePicked($event)"
-              (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
-              (deleteRequested)="onPlanDeleteRequested($event)"
-            />
-            <div class="flex min-h-0 flex-col gap-2">
-              @if (plans.overlayHasContent()) {
-                <div
-                  class="flex flex-wrap items-center gap-4"
-                  data-testid="facility-plan-overlay-toggles"
-                >
-                  <label class="flex items-center gap-2 text-sm">
-                    <hlm-switch
-                      [checked]="plans.showZones()"
-                      (checkedChange)="onShowZonesChanged($event)"
-                      i18n-aria-label="@@facility.plans.overlay.toggleZonesAria"
-                      aria-label="Show zones"
-                      data-testid="facility-plan-overlay-toggle-zones"
+          <div class="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
+            <div class="flex min-h-0 flex-1 flex-col gap-2">
+              <app-facility-plan-toolbar
+                [is3dLinkVisible]="facility.type === 'building'"
+                [plan3dRoute]="[
+                  '/organizations',
+                  organizationId(),
+                  'facilities',
+                  facilityId(),
+                  '3d',
+                ]"
+                [showZones]="plans.showZones()"
+                [showEquipment]="plans.showEquipment()"
+                [overlayHasContent]="plans.overlayHasContent()"
+                [panelOpenerVisible]="isCompactPanel() && !planPanelOpen()"
+                [canWrite]="canWrite()"
+                [canEditEquipment]="canEditEquipment()"
+                [editMode]="plans.editMode()"
+                [zoneCandidates]="plans.availableZoneCandidates()"
+                [equipmentCandidates]="plans.availableEquipmentCandidates()"
+                [draftPointCount]="plans.draftPoints().length"
+                [isSavingZoneGeometry]="plans.isSavingZoneGeometry()"
+                [statusLabel]="editModeStatusLabel()"
+                (showZonesChanged)="onShowZonesChanged($event)"
+                (showEquipmentChanged)="onShowEquipmentChanged($event)"
+                (zoneDrawTargetPicked)="onZoneDrawTargetPicked($event)"
+                (equipmentPlacePicked)="onPlaceEquipmentPicked($event)"
+                (zonePickerOpened)="onZonePickerOpened()"
+                (equipmentPickerOpened)="onEquipmentPickerOpened()"
+                (undoVertexRequested)="plans.undoDraftVertex()"
+                (closePolygonRequested)="onPolygonCloseRequested()"
+                (enterCoordinatesRequested)="onEnterCoordinatesRequested()"
+                (enterPositionRequested)="onEnterPositionRequested()"
+                (editingCancelled)="plans.cancelEditing()"
+                (panelOpenRequested)="planPanelOpen.set(true)"
+              >
+                <hlm-popover planPicker sideOffset="5" align="start">
+                  <button
+                    hlmPopoverTrigger
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="facility-plan-picker-trigger"
+                  >
+                    <ng-icon name="lucideLayers" aria-hidden="true" />
+                    <span class="max-w-40 truncate">{{
+                      plans.selectedPlan()?.fileName ?? planPickerFallbackLabel
+                    }}</span>
+                    <span class="text-muted-foreground">({{ plans.orderedPlans().length }})</span>
+                  </button>
+
+                  <hlm-popover-content
+                    *hlmPopoverPortal
+                    class="w-80 max-w-[90vw]"
+                    role="region"
+                    [attr.aria-label]="planPickerLabel"
+                  >
+                    <app-facility-plan-list
+                      [plans]="plans.orderedPlans()"
+                      [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+                      [canManage]="canWrite()"
+                      [uploading]="plans.isUploading()"
+                      [settingPrimaryId]="plans.settingPrimaryId()"
+                      [deletingId]="plans.deletingId()"
+                      (planSelected)="onPlanSelected($event)"
+                      (filePicked)="onPlanFilePicked($event)"
+                      (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+                      (deleteRequested)="onPlanDeleteRequested($event)"
                     />
-                    <span i18n="@@facility.plans.overlay.toggleZonesLabel">Zones</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-sm">
-                    <hlm-switch
-                      [checked]="plans.showEquipment()"
-                      (checkedChange)="onShowEquipmentChanged($event)"
-                      i18n-aria-label="@@facility.plans.overlay.toggleEquipmentAria"
-                      aria-label="Show equipment"
-                      data-testid="facility-plan-overlay-toggle-equipment"
-                    />
-                    <span i18n="@@facility.plans.overlay.toggleEquipmentLabel">Equipment</span>
-                  </label>
-                </div>
-              }
-
-              @if (canWrite() || canEditEquipment()) {
-                <div
-                  class="flex flex-col gap-2 rounded-md border border-border p-2"
-                  data-testid="facility-plan-editor-toolbar"
-                >
-                  <div class="flex flex-wrap items-center gap-2">
-                    @if (canWrite()) {
-                      <hlm-select
-                        [value]="null"
-                        [disabled]="plans.editMode() !== 'none'"
-                        (valueChange)="onZoneDrawTargetPicked($event)"
-                      >
-                        <hlm-select-trigger
-                          class="w-56"
-                          data-testid="facility-plan-editor-draw-zone-picker"
-                          (click)="onZonePickerOpened()"
-                        >
-                          <hlm-select-value
-                            i18n-placeholder="@@facility.plans.editor.drawZonePlaceholder"
-                            placeholder="Draw a zone…"
-                          />
-                        </hlm-select-trigger>
-                        <hlm-select-content *hlmSelectPortal class="w-56">
-                          <hlm-select-group>
-                            @for (
-                              candidate of plans.availableZoneCandidates();
-                              track candidate.id
-                            ) {
-                              <hlm-select-item [value]="candidate.id">{{
-                                candidate.name
-                              }}</hlm-select-item>
-                            }
-                          </hlm-select-group>
-                        </hlm-select-content>
-                      </hlm-select>
-                    }
-
-                    @if (canEditEquipment()) {
-                      <hlm-select
-                        [value]="null"
-                        [disabled]="plans.editMode() !== 'none'"
-                        (valueChange)="onPlaceEquipmentPicked($event)"
-                      >
-                        <hlm-select-trigger
-                          class="w-56"
-                          data-testid="facility-plan-editor-place-pin-picker"
-                          (click)="onEquipmentPickerOpened()"
-                        >
-                          <hlm-select-value
-                            i18n-placeholder="@@facility.plans.editor.placePinPlaceholder"
-                            placeholder="Place equipment…"
-                          />
-                        </hlm-select-trigger>
-                        <hlm-select-content *hlmSelectPortal class="w-56">
-                          <hlm-select-group>
-                            @for (
-                              candidate of plans.availableEquipmentCandidates();
-                              track candidate.id
-                            ) {
-                              <hlm-select-item [value]="candidate.id">{{
-                                candidate.locationLabel ?? candidate.type
-                              }}</hlm-select-item>
-                            }
-                          </hlm-select-group>
-                        </hlm-select-content>
-                      </hlm-select>
-                    }
-                  </div>
-
-                  @if (plans.editMode() !== 'none') {
-                    <div
-                      class="flex flex-wrap items-center gap-2 text-sm"
-                      role="status"
-                      data-testid="facility-plan-editor-status"
-                    >
-                      <span>{{ editModeStatusLabel() }}</span>
-                      @if (plans.editMode() === 'draw-zone') {
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          data-testid="facility-plan-editor-undo"
-                          [disabled]="plans.draftPoints().length === 0"
-                          (click)="plans.undoDraftVertex()"
-                          i18n="@@facility.plans.editor.undo"
-                        >
-                          Undo last vertex
-                        </button>
-                        <button
-                          hlmBtn
-                          type="button"
-                          size="sm"
-                          data-testid="facility-plan-editor-close-polygon"
-                          [disabled]="
-                            plans.draftPoints().length < 3 || plans.isSavingZoneGeometry()
-                          "
-                          (click)="onPolygonCloseRequested()"
-                          i18n="@@facility.plans.editor.closePolygon"
-                        >
-                          Close polygon
-                        </button>
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          data-testid="facility-plan-editor-enter-coordinates"
-                          (click)="onEnterCoordinatesRequested()"
-                          i18n="@@facility.plans.editor.enterCoordinates"
-                        >
-                          Enter coordinates
-                        </button>
-                      }
-                      @if (plans.editMode() === 'place-pin') {
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          data-testid="facility-plan-editor-enter-position"
-                          (click)="onEnterPositionRequested()"
-                          i18n="@@facility.plans.editor.enterPosition"
-                        >
-                          Enter position
-                        </button>
-                      }
-                      <button
-                        hlmBtn
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        data-testid="facility-plan-editor-cancel"
-                        (click)="plans.cancelEditing()"
-                        i18n="@@common.cancel"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
+                  </hlm-popover-content>
+                </hlm-popover>
+              </app-facility-plan-toolbar>
 
               <div
-                class="h-[32rem] min-h-0 rounded-md border border-border"
+                class="relative min-h-[24rem] flex-1 rounded-md border border-border"
                 data-testid="facility-plan-viewer"
               >
                 @if (plans.selectedPlan(); as selected) {
@@ -576,11 +477,13 @@
                         [scale]="scale"
                         [showZones]="plans.showZones()"
                         [showEquipment]="plans.showEquipment()"
+                        [selectedZoneId]="selectedZoneId()"
+                        [selectedEquipmentId]="selectedEquipmentId()"
                         [editMode]="plans.editMode()"
                         [draftPoints]="plans.draftPoints()"
                         [canEditEquipment]="canEditEquipment()"
-                        (zoneActivated)="onPlanZoneActivated($event)"
-                        (equipmentActivated)="onPlanEquipmentActivated($event)"
+                        (zoneActivated)="onZoneSelected($event)"
+                        (equipmentActivated)="onEquipmentSelected($event)"
                         (vertexAdded)="onVertexAdded($event)"
                         (polygonCloseRequested)="onPolygonCloseRequested()"
                         (pinPlaced)="onPinPlaced($event)"
@@ -599,82 +502,29 @@
                   }
                 }
               </div>
-
-              @if (canWrite() && (plans.overlay()?.zones?.length ?? 0) > 0) {
-                <div class="flex flex-col gap-1" data-testid="facility-plan-zone-list">
-                  <h3
-                    class="text-xs font-medium text-muted-foreground"
-                    i18n="@@facility.plans.editor.zoneListTitle"
-                  >
-                    Zones on this plan
-                  </h3>
-                  @for (zone of plans.overlay()?.zones ?? []; track zone.facilityId) {
-                    <div class="flex items-center justify-between gap-2 text-sm">
-                      <span>{{ zone.name }}</span>
-                      <button
-                        hlmBtn
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        data-testid="facility-plan-zone-edit"
-                        [disabled]="plans.editMode() !== 'none'"
-                        (click)="openZoneGeometryDialog(zone.facilityId)"
-                        i18n="@@facility.plans.editor.editCoordinates"
-                      >
-                        Edit coordinates
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
-
-              @if (canEditEquipment() && (plans.overlay()?.equipment?.length ?? 0) > 0) {
-                <div class="flex flex-col gap-1" data-testid="facility-plan-equipment-list">
-                  <h3
-                    class="text-xs font-medium text-muted-foreground"
-                    i18n="@@facility.plans.editor.equipmentListTitle"
-                  >
-                    Equipment on this plan
-                  </h3>
-                  @for (pin of plans.overlay()?.equipment ?? []; track pin.equipmentId) {
-                    <div class="flex items-center justify-between gap-2 text-sm">
-                      <span class="flex min-w-0 flex-col">
-                        <span class="truncate">{{ equipmentLabelOf(pin) }}</span>
-                        @if (equipmentDetailOf(pin); as detail) {
-                          <span class="truncate text-xs text-muted-foreground">{{ detail }}</span>
-                        }
-                      </span>
-                      <div class="flex items-center gap-2">
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          data-testid="facility-plan-pin-edit"
-                          [disabled]="plans.editMode() !== 'none'"
-                          (click)="openPinPositionDialog(pin.equipmentId)"
-                          i18n="@@facility.plans.editor.editPosition"
-                        >
-                          Edit position
-                        </button>
-                        <button
-                          hlmBtn
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          data-testid="facility-plan-pin-remove"
-                          [disabled]="plans.editMode() !== 'none'"
-                          (click)="onPinPositionRemoved(pin.equipmentId)"
-                          i18n="@@facility.plans.editor.removeFromPlan"
-                        >
-                          Remove from plan
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
             </div>
+
+            <app-facility-plan-panel
+              [zones]="plans.overlay()?.zones ?? []"
+              [equipment]="plans.overlay()?.equipment ?? []"
+              [selectedZone]="selectedOverlayZone()"
+              [selectedEquipment]="selectedOverlayEquipment()"
+              [hasNoContent]="planHasNoContent()"
+              [editModeActive]="plans.editMode() !== 'none'"
+              [canWrite]="canWrite()"
+              [canEditEquipment]="canEditEquipment()"
+              [compactVisible]="planPanelOpen()"
+              (zoneActivated)="onZoneSelected($event)"
+              (equipmentActivated)="onEquipmentSelected($event)"
+              (zoneClosed)="onPlanDetailClosed()"
+              (equipmentClosed)="onPlanDetailClosed()"
+              (zoneRecordRequested)="onZoneRecordRequested()"
+              (equipmentRecordRequested)="onEquipmentRecordRequested()"
+              (zoneEditRequested)="onZoneEditRequested()"
+              (equipmentEditRequested)="onEquipmentEditRequested()"
+              (equipmentRemoveRequested)="onEquipmentRemoveRequested()"
+              (compactDismissed)="planPanelOpen.set(false)"
+            />
           </div>
         }
       </div>

@@ -430,7 +430,7 @@ describe('FacilityBuilding3dPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[data-testid="facility-3d-room-panel"]')).not.toBeNull();
     expect(element.querySelector('[data-testid="facility-3d-floor-selector"]')).not.toBeNull();
-    expect(element.querySelector('[data-testid="facility-3d-room-list"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="facility-zone-list"]')).not.toBeNull();
     expect(element.querySelector('[data-testid="facility-3d-room-panel-close"]')).toBeNull();
   });
 

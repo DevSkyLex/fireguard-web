@@ -71,6 +71,9 @@ export class FacilitiesPage {
   public readonly plansEmpty: Locator = this.page.getByTestId('facility-plans-empty');
   public readonly plansUpload: Locator = this.page.getByTestId('facility-plans-upload');
   public readonly planViewer: Locator = this.page.getByTestId('facility-plan-viewer');
+  public readonly planPickerTrigger: Locator = this.page.getByTestId(
+    'facility-plan-picker-trigger',
+  );
   public readonly planRows: Locator = this.page.getByTestId('facility-plan-row');
   public readonly planPrimaryBadge: Locator = this.page.getByTestId('facility-plan-primary-badge');
   public readonly planMenuTrigger: Locator = this.page.getByTestId('facility-plan-menu-trigger');
@@ -80,19 +83,17 @@ export class FacilitiesPage {
     'facility-plan-delete-confirm',
   );
 
-  public readonly overlayToggles: Locator = this.page.getByTestId('facility-plan-overlay-toggles');
-  public readonly overlayToggleZones: Locator = this.page.getByTestId(
-    'facility-plan-overlay-toggle-zones',
-  );
+  public readonly overlayToggles: Locator = this.page.getByTestId('facility-plan-toolbar');
+  public readonly overlayToggleZones: Locator = this.page.getByTestId('facility-plan-toggle-zones');
   public readonly overlayToggleEquipment: Locator = this.page.getByTestId(
-    'facility-plan-overlay-toggle-equipment',
+    'facility-plan-toggle-equipment',
   );
   public readonly overlayZones: Locator = this.page.getByTestId('facility-plan-overlay-zone');
   public readonly overlayEquipment: Locator = this.page.getByTestId(
     'facility-plan-overlay-equipment',
   );
 
-  public readonly editorToolbar: Locator = this.page.getByTestId('facility-plan-editor-toolbar');
+  public readonly editorToolbar: Locator = this.page.getByTestId('facility-plan-toolbar');
   public readonly drawZonePicker: Locator = this.page.getByTestId(
     'facility-plan-editor-draw-zone-picker',
   );
@@ -112,11 +113,29 @@ export class FacilitiesPage {
     'facility-plan-editor-enter-position',
   );
   public readonly editorStage: Locator = this.page.getByTestId('facility-plan-editor-stage');
-  public readonly zoneList: Locator = this.page.getByTestId('facility-plan-zone-list');
-  public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-zone-edit');
+  public readonly zoneList: Locator = this.page.getByTestId('facility-zone-list');
+  public readonly zoneOptions: Locator = this.page.getByTestId('facility-zone-list-option');
   public readonly equipmentList: Locator = this.page.getByTestId('facility-plan-equipment-list');
-  public readonly pinEditButton: Locator = this.page.getByTestId('facility-plan-pin-edit');
-  public readonly pinRemoveButton: Locator = this.page.getByTestId('facility-plan-pin-remove');
+  public readonly equipmentOptions: Locator = this.page.getByTestId(
+    'facility-plan-equipment-list-option',
+  );
+
+  /**
+   * The selection detail block, and its actions.
+   *
+   * Editing is no longer offered from a standalone list: a zone or an
+   * equipment item is selected first, and its own detail block carries the
+   * actions. `selectZone`/`selectEquipment` below do that first step, so a
+   * spec reads the way a user works rather than reaching for a button that
+   * only exists once something is picked.
+   */
+  public readonly planDetail: Locator = this.page.getByTestId('facility-plan-detail');
+  public readonly zoneEditButton: Locator = this.page.getByTestId('facility-plan-detail-edit');
+  public readonly pinEditButton: Locator = this.page.getByTestId('facility-plan-detail-edit');
+  public readonly pinRemoveButton: Locator = this.page.getByTestId('facility-plan-detail-remove');
+  public readonly planDetailViewRecord: Locator = this.page.getByTestId(
+    'facility-plan-detail-view-record',
+  );
 
   public readonly zoneGeometryDialog: Locator = this.page.getByTestId(
     'facility-plan-zone-geometry-dialog',
@@ -142,6 +161,27 @@ export class FacilitiesPage {
   public readonly pinPositionRemove: Locator = this.page.getByTestId(
     'facility-plan-pin-position-remove',
   );
+
+  /**
+   * Picks a zone in the panel's roster, which is what opens its detail block.
+   *
+   * @param index - Zero-based position in the roster.
+   */
+  public async selectZone(index = 0): Promise<void> {
+    await this.zoneOptions.nth(index).click();
+    await this.planDetail.waitFor({ state: 'visible' });
+  }
+
+  /**
+   * Picks an equipment item in the panel's roster. Same two-step as
+   * {@link selectZone}: nothing is editable until something is selected.
+   *
+   * @param index - Zero-based position in the roster.
+   */
+  public async selectEquipment(index = 0): Promise<void> {
+    await this.equipmentOptions.nth(index).click();
+    await this.planDetail.waitFor({ state: 'visible' });
+  }
 
   public async gotoList(organizationId: string, query = ''): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/facilities${query}`);
@@ -169,8 +209,37 @@ export class FacilitiesPage {
     await this.hierarchyToggles.first().click();
   }
 
-  /** Sets a file on the Plans tab's hidden upload input, bypassing the picker dialog. */
+  /**
+   * Opens the toolbar's plan picker, which holds the plan list.
+   *
+   * The list stopped being a column of its own: it left the plan itself
+   * 281 px wide at a 1280 px viewport, so it moved behind this trigger.
+   * Idempotent — a picker already open is left alone.
+   */
+  public async openPlanPicker(): Promise<void> {
+    if ((await this.planPickerTrigger.getAttribute('aria-expanded')) === 'true') return;
+
+    await this.planPickerTrigger.click();
+    await this.page.getByTestId('facility-plan-list').waitFor({ state: 'visible' });
+  }
+
+  /** Closes the toolbar's plan picker, so the plan underneath it is reachable again. */
+  public async closePlanPicker(): Promise<void> {
+    if ((await this.planPickerTrigger.getAttribute('aria-expanded')) !== 'true') return;
+
+    await this.page.keyboard.press('Escape');
+    await this.page.getByTestId('facility-plan-list').waitFor({ state: 'hidden' });
+  }
+
+  /**
+   * Sets a file on the Plans tab's hidden upload input, bypassing the picker dialog.
+   *
+   * The list lives behind the toolbar's picker once a plan exists, and
+   * directly inside the empty state before that — so the picker is opened
+   * only when there is one to open.
+   */
   public async uploadPlan(file: { name: string; mimeType: string; buffer: Buffer }): Promise<void> {
+    if (await this.planPickerTrigger.isVisible()) await this.openPlanPicker();
     await this.page
       .locator('[data-testid="facility-plan-list"] input[type="file"]')
       .setInputFiles(file);

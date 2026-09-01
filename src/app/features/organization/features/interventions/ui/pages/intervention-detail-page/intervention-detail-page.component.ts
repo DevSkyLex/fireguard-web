@@ -59,7 +59,6 @@ import type {
   InterventionConfirmRequest,
   InterventionEditState,
   InterventionEditTarget,
-  InterventionIssueOutput,
   InterventionIssueTarget,
   InterventionLinkedResourceTabId,
   InterventionOutboxOperation,
@@ -1409,11 +1408,6 @@ export class InterventionDetailPage {
   protected readonly requestChangesError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.transitionCallState().error,
   );
-
-  /** The blocking compliance issues, which stop publication. */
-  protected readonly blockerIssues: Signal<readonly InterventionIssueOutput[]> = computed<
-    readonly InterventionIssueOutput[]
-  >(() => this.store.issues().filter((issue) => issue.severity === 'blocker'));
 
   /** How many proposed changes publication would apply. */
   protected readonly pendingChangesCount: Signal<number> = computed<number>(

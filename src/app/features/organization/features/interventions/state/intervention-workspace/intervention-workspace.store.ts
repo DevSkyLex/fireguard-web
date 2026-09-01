@@ -502,6 +502,37 @@ export const InterventionWorkspaceStore = signalStore(
       );
 
       /**
+       * Method refreshIssues
+       * @method refreshIssues
+       *
+       * @description
+       * Re-reads the intervention's quality issues after a successful write.
+       * Every write recomputes the blockers server-side (the PATCH response
+       * already carries the fresh `blockersCount`), but the issues *list* only
+       * came with the initial workspace fetch — without this refresh the
+       * checklist keeps reporting blockers that no longer exist. Deliberately
+       * silent: it rides on writes that already report through their own call
+       * state, and a failed refresh keeps the last known list rather than
+       * surfacing a second error for an action that succeeded.
+       *
+       * @since 7.2.0
+       *
+       * @type {RxMethod<string>}
+       */
+      const refreshIssues = rxMethod<string>(
+        pipe(
+          switchMap((interventionId) =>
+            service.listIssues(interventionId).pipe(
+              tapResponse({
+                next: (collection) => patchState(store, { issues: collection.member }),
+                error: () => undefined,
+              }),
+            ),
+          ),
+        ),
+      );
+
+      /**
        * Method loadActivities
        * @method loadActivities
        *
@@ -828,12 +859,13 @@ export const InterventionWorkspaceStore = signalStore(
               return service
                 .update(interventionId, { status, reviewNote }, intervention?.revision)
                 .pipe(
-                  tap((updatedIntervention) =>
+                  tap((updatedIntervention) => {
                     patchState(store, {
                       intervention: updatedIntervention,
                       transitionCallState: successCallState(null),
-                    }),
-                  ),
+                    });
+                    refreshIssues(interventionId);
+                  }),
                   catchError((error: unknown) => {
                     if (connectivity.isNetworkFailure(error) && intervention) {
                       return queueTransition(intervention);
@@ -926,12 +958,13 @@ export const InterventionWorkspaceStore = signalStore(
               }
 
               return service.update(interventionId, input, intervention?.revision).pipe(
-                tap((updatedIntervention) =>
+                tap((updatedIntervention) => {
                   patchState(store, {
                     intervention: updatedIntervention,
                     updateDetailsCallState: successCallState(null),
-                  }),
-                ),
+                  });
+                  refreshIssues(interventionId);
+                }),
                 catchError((error: unknown) => {
                   if (connectivity.isNetworkFailure(error) && intervention) {
                     return queueDetails(intervention);
@@ -1100,6 +1133,7 @@ export const InterventionWorkspaceStore = signalStore(
                         )
                         .catch(() => undefined);
                     }
+                    refreshIssues(interventionId);
                   },
                   error: (error: unknown) =>
                     patchState(store, {
@@ -1234,6 +1268,7 @@ export const InterventionWorkspaceStore = signalStore(
                           )
                           .catch(() => undefined);
                       }
+                      refreshIssues(interventionId);
                     },
                     error: (error: unknown) =>
                       patchState(store, {
@@ -1332,7 +1367,10 @@ export const InterventionWorkspaceStore = signalStore(
               }
 
               return service.updateChange(changeId, { status: 'rejected' }, change.revision).pipe(
-                tap((rejected) => applyRejection(rejected)),
+                tap((rejected) => {
+                  applyRejection(rejected);
+                  refreshIssues(interventionId);
+                }),
                 catchError((error: unknown) => {
                   if (connectivity.isNetworkFailure(error)) {
                     return queueRejection();
@@ -1375,7 +1413,7 @@ export const InterventionWorkspaceStore = signalStore(
         deleteWorkItems: rxMethod<InterventionWorkItemDeleteCommand>(
           pipe(
             tap(() => patchState(store, { deleteWorkItemsCallState: pendingCallState() })),
-            switchMap(({ workItems }) => {
+            switchMap(({ interventionId, workItems }) => {
               if (workItems.length === 0) {
                 patchState(store, { deleteWorkItemsCallState: successCallState(null) });
                 return EMPTY;
@@ -1422,6 +1460,7 @@ export const InterventionWorkspaceStore = signalStore(
                         )
                         .catch(() => undefined);
                     }
+                    refreshIssues(interventionId);
                   },
                   error: (error: unknown) =>
                     patchState(store, {

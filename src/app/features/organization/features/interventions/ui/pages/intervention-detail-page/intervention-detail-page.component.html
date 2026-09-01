@@ -48,7 +48,7 @@
       [phase]="phase()"
       [action]="commandAction()"
       [busy]="store.saving()"
-      [blockersCount]="blockerIssues().length"
+      [blockersCount]="intervention.blockersCount"
       [revision]="intervention.revision"
       [secondaryAction]="secondaryCommandAction()"
       (invoked)="invokeCommandAction()"

@@ -21,6 +21,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -534,7 +535,7 @@ export class InterventionCreateSheet {
       ...(this.overrideSite() ? { site: this.overrideSite() as string } : {}),
       ...(this.overrideResponsible() ? { responsible: this.overrideResponsible() as string } : {}),
       ...(this.overridePlannedStartAt()
-        ? { plannedStartAt: this.overridePlannedStartAt() as Date }
+        ? { plannedStartAt: toUtcMidnight(this.overridePlannedStartAt() as Date) }
         : {}),
     });
   }

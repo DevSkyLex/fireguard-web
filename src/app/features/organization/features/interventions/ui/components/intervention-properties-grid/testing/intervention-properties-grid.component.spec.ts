@@ -152,6 +152,21 @@ describe('InterventionPropertiesGrid', () => {
     expect(byTestId('intervention-site-link')).toBeNull();
   });
 
+  it('should emit the planned window re-anchored at midnight UTC of the picked days', () => {
+    const grid = fixture.componentInstance as unknown as {
+      pickSchedule(range: [Date, Date] | null): void;
+    };
+
+    grid.pickSchedule([new Date(2026, 8, 2), new Date(2026, 8, 4)]);
+
+    expect(patches).toEqual([
+      {
+        plannedStartAt: new Date('2026-09-02T00:00:00.000Z'),
+        dueAt: new Date('2026-09-04T00:00:00.000Z'),
+      },
+    ]);
+  });
+
   it('should render every row when the wire payload omits its null fields entirely', async () => {
     const {
       description: _description,

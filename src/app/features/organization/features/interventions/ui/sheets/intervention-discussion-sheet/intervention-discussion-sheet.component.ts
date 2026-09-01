@@ -2,10 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
-  viewChild,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -17,7 +18,7 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 
 /**
@@ -48,23 +49,23 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
  * `bg-background` composer footer.
  *
  * Guards {@link SubjectDiscussion.dirtyChanged} against silent loss: an
- * unsent draft or a send still in flight both mark `disableClose` and, on
- * any attempt to close, open the shared {@link UnsavedChangesDialog} instead
- * of closing outright — the same "discard or stay" question a create page
- * asks through `unsavedChangesGuard`, hosted directly here since a sheet has
- * no route to hang a `CanDeactivate` guard off. `disableClose` alone cannot
- * carry this: the underlying dialog ref snapshots it once, at the moment the
- * panel opens, and a draft is never dirty at that exact instant — the
- * composer has not been typed into yet. {@link onStateChanged} is therefore
- * the real enforcement: an Escape or outside-click closing attempt while
- * {@link dirty} reaches it as a `'closed'` state it did not ask for, and it
- * calls the sheet's own {@link sheetRef}`.open()` — which resolves to
- * `BrnDialogRef.reopen()`, a primitive the library exposes for exactly this
- * "undo an in-progress close" case — before raising the confirmation, so the
- * panel never actually disappears. The vendored close button is replaced
- * with a plain one (`hlm-sheet-content`'s `showCloseButton` set `false`)
- * because it calls the dialog ref's `close()` directly rather than going
- * through this same guarded path.
+ * unsent draft or a send still in flight both mark {@link dirty} and, on any
+ * attempt to close, open the shared {@link UnsavedChangesDialog} instead of
+ * closing outright — the same "discard or stay" question a create page asks
+ * through `unsavedChangesGuard`, hosted directly here since a sheet has no
+ * route to hang a `CanDeactivate` guard off.
+ *
+ * Closing goes exclusively through {@link requestClose}: `disableClose` is
+ * hard-`true` (never reactive) so brn's own Escape/outside-click `dismiss()`
+ * is permanently a no-op, the vendored close button is replaced with a plain
+ * one wired to {@link requestClose} (it otherwise calls the dialog ref's
+ * `close()` directly, bypassing any gate), and a local `(keydown.escape)`
+ * binding restores Escape by routing it through the same method. No
+ * `reopen()`-on-`stateChanged` workaround: the previous approach read
+ * whether a still-mid-close dialog ref could be resurrected, a comparison
+ * that raced with the overlay stack and flaked under WebKit — every close
+ * attempt landing on one gate before the dialog ref is ever touched removes
+ * that race entirely.
  *
  * @since 1.1.0
  *
@@ -122,6 +123,25 @@ export class InterventionDiscussionSheet {
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Clears {@link dirty} whenever the panel closes, so a draft abandoned once cannot make the next opening raise a confirmation over nothing.
+   * @access public
+   * @since 1.3.0
+   */
+  public constructor() {
+    effect((): void => {
+      const isVisible: boolean = this.visible();
+
+      untracked((): void => {
+        if (!isVisible) this.dirty.set(false);
+      });
+    });
+  }
+  //#endregion
+
   //#region Properties
   /**
    * Property sheetState
@@ -151,8 +171,7 @@ export class InterventionDiscussionSheet {
    *
    * @description
    * Whether closing right now would lose something — set from
-   * {@link SubjectDiscussion.dirtyChanged}. Gates both {@link requestClose}
-   * and the sheet's own `disableClose`.
+   * {@link SubjectDiscussion.dirtyChanged}. Gates {@link requestClose}.
    *
    * @access protected
    * @since 1.2.0
@@ -176,23 +195,6 @@ export class InterventionDiscussionSheet {
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
-
-  /**
-   * Property sheetRef
-   * @readonly
-   *
-   * @description
-   * The panel directive itself, queried only so {@link onStateChanged} can
-   * call `.open()` — which resolves to `reopen()` on a dialog ref still
-   * mid-close — to undo an Escape/outside-click closing attempt made while
-   * {@link dirty}.
-   *
-   * @access protected
-   * @since 1.2.0
-   *
-   * @type {Signal<HlmSheet | undefined>}
-   */
-  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Methods
@@ -201,10 +203,10 @@ export class InterventionDiscussionSheet {
    * @method onStateChanged
    *
    * @description
-   * Relays a dismissal, ignoring the echo of a change the page already made.
-   * An Escape or outside-click attempt reaching here while {@link dirty} is
-   * undone through {@link sheetRef} — see the class doc — and redirected to
-   * the same confirmation {@link requestClose} raises.
+   * Relays the panel's own state, ignoring the echo of a change the page
+   * already made. With `disableClose` hard-`true` and the vendored close
+   * button replaced, brn never drives an unrequested `'closed'` here on its
+   * own — every real closing attempt reaches {@link requestClose} first.
    *
    * @access protected
    * @since 1.0.0
@@ -218,13 +220,6 @@ export class InterventionDiscussionSheet {
 
     if (isOpen === this.visible()) return;
 
-    if (!isOpen && this.dirty()) {
-      this.sheetRef()?.open();
-      this.unsavedChangesDialogState.set('open');
-
-      return;
-    }
-
     this.visibleChange.emit(isOpen);
   }
 
@@ -233,8 +228,9 @@ export class InterventionDiscussionSheet {
    * @method requestClose
    *
    * @description
-   * The panel's own close action. Closes right away when nothing would be
-   * lost; otherwise opens {@link UnsavedChangesDialog} and defers to
+   * The panel's single closing gate — reached from the plain close button
+   * and the local Escape binding alike. Closes right away when nothing would
+   * be lost; otherwise opens {@link UnsavedChangesDialog} and defers to
    * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
    *
    * @access protected

@@ -2,15 +2,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
-  viewChild,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   InterventionRecurrenceFormTarget,
@@ -21,7 +24,8 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { sheetSide } from '@shared/sheet-side';
-import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmButton } from '@shared/ui/button';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { InterventionRecurrenceForm } from '../../forms/intervention-recurrence-form';
 
@@ -43,11 +47,20 @@ import { InterventionRecurrenceForm } from '../../forms/intervention-recurrence-
  * Guards {@link InterventionRecurrenceForm.dirtyChanged} against silent
  * loss the same way {@link InterventionDiscussionSheet} guards its thread's
  * draft: an unsubmitted edit marks {@link dirty}, and any attempt to close —
- * Escape, the backdrop, or the form's own Cancel — opens the shared
+ * Escape, the close button, or the form's own Cancel — opens the shared
  * {@link UnsavedChangesDialog} instead of closing outright.
- * {@link onStateChanged} reopens the panel through {@link sheetRef} before
- * raising the confirmation, since the underlying dialog ref would otherwise
- * have already closed by the time this handler runs.
+ *
+ * Closing goes exclusively through {@link requestClose}: `disableClose` is
+ * hard-`true` (never reactive) so brn's own Escape/outside-click `dismiss()`
+ * is permanently a no-op, the vendored close button is replaced with a plain
+ * one wired to {@link requestClose} (it otherwise calls the dialog ref's
+ * `close()` directly, bypassing any gate), and a local `(keydown.escape)`
+ * binding restores Escape by routing it through the same method. No
+ * `reopen()`-on-`stateChanged` workaround: the previous approach read
+ * whether a still-mid-close dialog ref could be resurrected, a comparison
+ * that raced with the overlay stack and flaked under WebKit — every close
+ * attempt landing on one gate before the dialog ref is ever touched removes
+ * that race entirely.
  *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
@@ -58,7 +71,14 @@ import { InterventionRecurrenceForm } from '../../forms/intervention-recurrence-
  */
 @Component({
   selector: 'app-intervention-recurrence-sheet',
-  imports: [InterventionRecurrenceForm, UnsavedChangesDialog, ...HlmSheetImports],
+  imports: [
+    InterventionRecurrenceForm,
+    NgIcon,
+    HlmButton,
+    UnsavedChangesDialog,
+    ...HlmSheetImports,
+  ],
+  providers: [provideIcons({ lucideX })],
   templateUrl: './intervention-recurrence-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -160,6 +180,25 @@ export class InterventionRecurrenceSheet {
   public readonly closed: OutputEmitterRef<void> = output<void>();
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Clears {@link dirty} whenever the panel closes, so a draft abandoned once cannot make the next opening raise a confirmation over nothing.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const isVisible: boolean = this.target() !== null;
+
+      untracked((): void => {
+        if (!isVisible) this.dirty.set(false);
+      });
+    });
+  }
+  //#endregion
+
   //#region Properties
   /**
    * Property sheetState
@@ -237,23 +276,6 @@ export class InterventionRecurrenceSheet {
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
-
-  /**
-   * Property sheetRef
-   * @readonly
-   *
-   * @description
-   * The panel directive itself, queried only so {@link onStateChanged} can
-   * call `.open()` — which resolves to `reopen()` on a dialog ref still
-   * mid-close — to undo an Escape/outside-click attempt made while
-   * {@link dirty}.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<HlmSheet | undefined>}
-   */
-  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Methods
@@ -262,10 +284,10 @@ export class InterventionRecurrenceSheet {
    * @method onStateChanged
    *
    * @description
-   * Relays a dismissal, ignoring the echo of a change the page already made.
-   * An Escape or outside-click attempt reaching here while {@link dirty} is
-   * undone through {@link sheetRef} and redirected to the same confirmation
-   * {@link requestClose} raises.
+   * Relays the panel's own state, ignoring the echo of a change the page
+   * already made. With `disableClose` hard-`true` and the vendored close
+   * button replaced, brn never drives an unrequested `'closed'` here on its
+   * own — every real closing attempt reaches {@link requestClose} first.
    *
    * @access protected
    * @since 1.0.0
@@ -279,13 +301,6 @@ export class InterventionRecurrenceSheet {
 
     if (isOpen === (this.target() !== null)) return;
 
-    if (!isOpen && this.dirty()) {
-      this.sheetRef()?.open();
-      this.unsavedChangesDialogState.set('open');
-
-      return;
-    }
-
     this.closed.emit();
   }
 
@@ -294,10 +309,12 @@ export class InterventionRecurrenceSheet {
    * @method requestClose
    *
    * @description
-   * The panel's own close action, reached from the form's Cancel. Closes
-   * right away when nothing would be lost; otherwise opens
-   * {@link UnsavedChangesDialog} and defers to
-   * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   * The panel's single closing gate — reached from the form's Cancel, the
+   * plain close button, and the local Escape binding alike. A no-op while
+   * {@link pending} (a write is in flight); otherwise closes right away
+   * when nothing would be lost, or opens {@link UnsavedChangesDialog} and
+   * defers to {@link onUnsavedChangesConfirmed} /
+   * {@link onUnsavedChangesDismissed}.
    *
    * @access protected
    * @since 1.0.0
@@ -305,6 +322,8 @@ export class InterventionRecurrenceSheet {
    * @returns {void}
    */
   protected requestClose(): void {
+    if (this.pending()) return;
+
     if (this.dirty()) {
       this.unsavedChangesDialogState.set('open');
 

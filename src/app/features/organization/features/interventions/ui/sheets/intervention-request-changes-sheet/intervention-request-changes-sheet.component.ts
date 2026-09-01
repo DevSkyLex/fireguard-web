@@ -7,15 +7,17 @@ import {
   output,
   signal,
   untracked,
-  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { sheetSide } from '@shared/sheet-side';
-import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmButton } from '@shared/ui/button';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import {
   InterventionRequestChangesForm,
@@ -35,20 +37,39 @@ import {
  * than held locally, so the page stays the single owner and the two cannot
  * drift.
  *
- * Dismissal is blocked while the transition is in flight — `disableClose`
- * covers Escape and the backdrop alike. Cancel always closes: the guard is
- * against losing the note by accident, never against leaving deliberately.
+ * Dismissal is blocked while the transition is in flight. Cancel always
+ * closes when the note is clean: the guard is against losing the note by
+ * accident, never against leaving deliberately.
  *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
  *
- * @version 1.1.0
+ * Closing goes exclusively through {@link requestClose}: `disableClose` is
+ * hard-`true` (never reactive) so brn's own Escape/outside-click `dismiss()`
+ * is permanently a no-op, the vendored close button is replaced with a plain
+ * one wired to {@link requestClose} (it otherwise calls the dialog ref's
+ * `close()` directly, bypassing any gate), and a local `(keydown.escape)`
+ * binding restores Escape by routing it through the same method. No
+ * `reopen()`-on-`stateChanged` workaround: the previous approach read
+ * whether a still-mid-close dialog ref could be resurrected, a comparison
+ * that raced with the overlay stack and flaked under WebKit — every close
+ * attempt landing on one gate before the dialog ref is ever touched removes
+ * that race entirely.
+ *
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-request-changes-sheet',
-  imports: [InterventionRequestChangesForm, UnsavedChangesDialog, ...HlmSheetImports],
+  imports: [
+    InterventionRequestChangesForm,
+    NgIcon,
+    HlmButton,
+    UnsavedChangesDialog,
+    ...HlmSheetImports,
+  ],
+  providers: [provideIcons({ lucideX })],
   templateUrl: './intervention-request-changes-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -191,23 +212,6 @@ export class InterventionRequestChangesSheet {
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
-
-  /**
-   * Property sheetRef
-   * @readonly
-   *
-   * @description
-   * The panel directive itself, queried only so {@link onStateChanged} can
-   * call `.open()` — which resolves to `reopen()` on a dialog ref still
-   * mid-close — to undo an Escape/outside-click attempt made while
-   * {@link dirty}.
-   *
-   * @access protected
-   * @since 7.1.0
-   *
-   * @type {Signal<HlmSheet | undefined>}
-   */
-  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Methods
@@ -216,10 +220,10 @@ export class InterventionRequestChangesSheet {
    * @method onStateChanged
    *
    * @description
-   * Relays a dismissal, ignoring the echo of a change the page already made.
-   * An Escape or outside-click attempt reaching here while {@link dirty} is
-   * undone through {@link sheetRef} and redirected to the same confirmation
-   * {@link requestClose} raises.
+   * Relays the panel's own state, ignoring the echo of a change the page
+   * already made. With `disableClose` hard-`true` and the vendored close
+   * button replaced, brn never drives an unrequested `'closed'` here on its
+   * own — every real closing attempt reaches {@link requestClose} first.
    *
    * @access protected
    * @since 1.0.0
@@ -233,13 +237,6 @@ export class InterventionRequestChangesSheet {
 
     if (isOpen === this.visible()) return;
 
-    if (!isOpen && this.dirty()) {
-      this.sheetRef()?.open();
-      this.unsavedChangesDialogState.set('open');
-
-      return;
-    }
-
     this.visibleChange.emit(isOpen);
   }
 
@@ -248,10 +245,12 @@ export class InterventionRequestChangesSheet {
    * @method requestClose
    *
    * @description
-   * The panel's own close action, reached from the form's Cancel. Closes
-   * right away when nothing would be lost; otherwise opens
-   * {@link UnsavedChangesDialog} and defers to
-   * {@link onUnsavedChangesConfirmed} / {@link onUnsavedChangesDismissed}.
+   * The panel's single closing gate — reached from the form's Cancel, the
+   * plain close button, and the local Escape binding alike. A no-op while
+   * {@link pending} (a transition is in flight); otherwise closes right away
+   * when nothing would be lost, or opens {@link UnsavedChangesDialog} and
+   * defers to {@link onUnsavedChangesConfirmed} /
+   * {@link onUnsavedChangesDismissed}.
    *
    * @access protected
    * @since 7.1.0
@@ -259,6 +258,8 @@ export class InterventionRequestChangesSheet {
    * @returns {void}
    */
   protected requestClose(): void {
+    if (this.pending()) return;
+
     if (this.dirty()) {
       this.unsavedChangesDialogState.set('open');
 

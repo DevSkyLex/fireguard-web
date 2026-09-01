@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
 import type {
   InterventionRecurrenceFormTarget,
   InterventionRecurrenceFormValues,
@@ -17,6 +19,7 @@ import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { InterventionRecurrenceSheet } from '../intervention-recurrence-sheet.component';
@@ -72,9 +75,19 @@ describe('InterventionRecurrenceSheet', () => {
   let closed: number;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideIcons({ lucideX })],
+    });
     TestBed.overrideComponent(InterventionRecurrenceSheet, {
-      set: { imports: [InterventionRecurrenceFormStub, UnsavedChangesDialog, ...HlmSheetImports] },
+      set: {
+        imports: [
+          InterventionRecurrenceFormStub,
+          NgIcon,
+          HlmButton,
+          UnsavedChangesDialog,
+          ...HlmSheetImports,
+        ],
+      },
     });
 
     fixture = TestBed.createComponent(InterventionRecurrenceSheet);
@@ -139,6 +152,45 @@ describe('InterventionRecurrenceSheet', () => {
     await fixture.whenStable();
 
     expect(emitted).toEqual([values]);
+  });
+
+  it('should close through Escape when the form is clean', async () => {
+    fixture.componentRef.setInput('target', 'create');
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(closed).toBe(1);
+    expect(unsavedChangesDialog()).toBeNull();
+  });
+
+  it('should open the unsaved changes dialog instead of closing on Escape while the form is dirty', async () => {
+    fixture.componentRef.setInput('target', 'create');
+    await fixture.whenStable();
+
+    formStub(fixture).dirtyChanged.emit(true);
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(closed).toBe(0);
+    expect(panel()).not.toBeNull();
+    expect(unsavedChangesDialog()).not.toBeNull();
+  });
+
+  it('should forget a stale draft once the panel has closed', async () => {
+    fixture.componentRef.setInput('target', 'create');
+    await fixture.whenStable();
+
+    formStub(fixture).dirtyChanged.emit(true);
+    await fixture.whenStable();
+
+    fixture.componentRef.setInput('target', null);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 
   it('should close directly on cancel when the form is clean', async () => {

@@ -1,14 +1,29 @@
 <hlm-sheet
   [side]="side()"
   [state]="sheetState()"
-  [disableClose]="pending()"
+  [disableClose]="true"
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-sheet-content
     *hlmSheetPortal
     class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[540px]! sm:max-w-none!"
     data-testid="intervention-recurrence-sheet"
+    [showCloseButton]="false"
+    (keydown.escape)="requestClose()"
   >
+    <button
+      hlmBtn
+      variant="ghost"
+      size="icon-sm"
+      type="button"
+      class="absolute end-3 top-3 max-sm:size-11"
+      data-testid="intervention-recurrence-sheet-close"
+      (click)="requestClose()"
+    >
+      <span class="sr-only" i18n="@@common.close">Close</span>
+      <ng-icon name="lucideX" aria-hidden="true" />
+    </button>
+
     <hlm-sheet-header>
       @if (isEdit()) {
         <h3 hlmSheetTitle i18n="@@intervention.recurrences.editHeader">Edit recurrence</h3>

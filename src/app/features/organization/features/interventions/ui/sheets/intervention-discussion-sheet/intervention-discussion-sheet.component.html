@@ -1,7 +1,7 @@
 <hlm-sheet
   [side]="side()"
   [state]="sheetState()"
-  [disableClose]="dirty()"
+  [disableClose]="true"
   autoFocus="dialog"
   (stateChanged)="onStateChanged($event)"
 >
@@ -11,6 +11,7 @@
     class="w-full! bg-background! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
     data-testid="intervention-discussion-sheet"
     [showCloseButton]="false"
+    (keydown.escape)="requestClose()"
   >
     <button
       hlmBtn

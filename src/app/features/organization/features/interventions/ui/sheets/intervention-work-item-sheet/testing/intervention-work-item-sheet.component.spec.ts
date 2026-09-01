@@ -81,6 +81,27 @@ describe('InterventionWorkItemSheet', () => {
     expect(content().textContent).toContain('Add work item');
   });
 
+  it('should close through Escape when nothing is dirty', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    pressEscape();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([false]);
+  });
+
+  it('should close directly through its own close button when nothing is dirty', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    (inSheet('[data-testid="intervention-work-item-sheet-close"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([false]);
+    expect(unsavedChangesDialog()).toBeNull();
+  });
+
   it('should refuse to close while the creation request is in flight', async () => {
     fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('pending', true);

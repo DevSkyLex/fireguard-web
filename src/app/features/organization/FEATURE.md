@@ -458,10 +458,11 @@ open in the workspace navigates the caller to `/organizations`, which re-resolve
 accessible workspace (or onboarding) through the existing guard chain — it does not explicitly
 clear `ActiveOrganizationStore`, since `MY_ORGANIZATIONS_PORT` is deliberately read-only-plus-leave
 and exposes no such write; `organizationGuard`'s own cookie validation covers the stale reference.
-Leaving any other organization only removes its row. `OrganizationLeaveDialog` and
-`OrganizationSettingsStore.leave`/`leaveCallState` remain in this feature but are currently unused
-by any UI surface — kept rather than deleted since another settings-scoped consumer may still want
-them; flagged here so a future reviewer does not read them as dead code by accident.
+Leaving any other organization only removes its row. `OrganizationSettingsStore.leave`/
+`leaveCallState` remain in this feature but are currently unused by any UI surface — kept rather
+than deleted since another settings-scoped consumer may still want them; flagged here so a future
+reviewer does not read them as dead code by accident. `OrganizationLeaveDialog`, the settings
+danger-zone dialog this replaced, was removed.
 
 **The URL chooses the organization; the workspace outlives the route.** The dashboard shell serves
 global pages too — `/account` first among them — and those name no organization of their own.

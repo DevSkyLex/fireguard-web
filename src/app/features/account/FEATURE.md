@@ -196,10 +196,9 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   the caller's own organization memberships and the ability to leave one, entirely through the
   port; this feature imports no organization store, service, or dialog directly. Recorded in
   organization's `FEATURE.md`. The page's own destructive confirmation
-  (`AccountLeaveOrganizationDialog`, `ui/dialogs/`) is a **local** component rather than a
-  cross-boundary import of `OrganizationLeaveDialog`, per `DESIGN.md` Action Surfaces rule 5 — each
-  destructive confirmation is a per-case local component, and account may not import
-  organization-owned UI regardless.
+  (`AccountLeaveOrganizationDialog`, `ui/dialogs/`) is a **local** component, per `DESIGN.md`
+  Action Surfaces rule 5 — each destructive confirmation is a per-case local component, and
+  account may not import organization-owned UI regardless.
 - Must not own auth guards, auth interceptors, or refresh-token behavior.
 - `accountPermissionGuard`/`ACCOUNT_PERMISSION`/`UserPermissionService` may be consumed by other
   features to gate routes or UI on a global permission.

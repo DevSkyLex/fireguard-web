@@ -4,7 +4,9 @@ import type { Locator, Page } from '@playwright/test';
  * Page object OrganizationTeamPage
  *
  * @description
- * Wraps the team route (`/organizations/:organizationId/team`) behind named
+ * Wraps the retired `/organizations/:organizationId/team` route, which
+ * redirects functionally onto `OrganizationMembersPage`'s `?tab=roles` tab —
+ * still rendered under its own `#organization-team` root — behind named
  * locators and one method per user intent: the role grid, the create-role
  * dialog, the permissions sheet and the delete confirmation.
  */

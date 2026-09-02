@@ -197,8 +197,8 @@ describe('OrganizationSetupService', () => {
       ])
       .subscribe((result) => {
         expect(result).toEqual([
-          { id: 'org-1:HQ', name: 'HQ' },
-          { id: 'org-1:Building A', name: 'Building A' },
+          { id: 'org-1:HQ', name: 'HQ', type: 'site' },
+          { id: 'org-1:Building A', name: 'Building A', type: 'building' },
         ]);
       });
 

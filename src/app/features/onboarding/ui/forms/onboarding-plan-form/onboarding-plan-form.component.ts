@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   LOCALE_ID,
@@ -14,9 +15,10 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { storeErrorMessage } from '@features/onboarding/utils';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
-import { HlmButton } from '@shared/ui/button';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmRadioGroupImports } from '@shared/ui/radio-group';
@@ -39,6 +41,7 @@ interface OnboardingPlanRow {
   readonly description: string | null;
   readonly priceLabel: string;
   readonly requiresPayment: boolean;
+  readonly isDefault: boolean;
 }
 
 /**
@@ -86,8 +89,12 @@ function priceLabelOf(
  * @class OnboardingPlanForm
  *
  * @description
- * The `select_plan` wizard step: a radio list of the plan catalog, each row
- * priced from the billing pricing catalog. The wizard proposes monthly
+ * The `select_plan` wizard step: a radio list of plan cards, each priced
+ * from the billing pricing catalog, with the catalog's default plan
+ * pre-selected and marked "Current plan" — a new organization already sits
+ * on it, so confirming without touching anything is a truthful choice. The
+ * primary action names where it leads: "Confirm plan" for a free plan,
+ * "Continue to payment" for a priced one. The wizard proposes monthly
  * billing only — no yearly toggle — a deliberate scope cut recorded in
  * `FEATURE.md` "Deferred".
  *
@@ -108,7 +115,14 @@ function priceLabelOf(
  */
 @Component({
   selector: 'app-onboarding-plan-form',
-  imports: [FormField, HlmButton, HlmLabel, ...HlmFieldImports, ...HlmRadioGroupImports],
+  imports: [
+    FormField,
+    HlmBadge,
+    HlmLabel,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+    ...HlmRadioGroupImports,
+  ],
   templateUrl: './onboarding-plan-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -156,6 +170,16 @@ export class OnboardingPlanForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property skippable
+   * @readonly
+   * @description Whether the backend currently lets this step be skipped, which renders the footer's skip control.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -169,6 +193,16 @@ export class OnboardingPlanForm {
    */
   public readonly submitted: OutputEmitterRef<OnboardingPlanSelection> =
     output<OnboardingPlanSelection>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Relays the footer's skip request to the page.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -220,9 +254,41 @@ export class OnboardingPlanForm {
         description: plan.description ?? null,
         priceLabel: price.label,
         requiresPayment: price.requiresPayment,
+        isDefault: plan.isDefault,
       };
     }),
   );
+
+  /**
+   * Property selectedKey
+   * @readonly
+   * @description The picked plan's key, driving the card's selected ring.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly selectedKey: Signal<string> = computed<string>(() => this.model().planKey);
+
+  /**
+   * Property submitLabel
+   * @readonly
+   * @description Names where the primary action leads: Checkout for a priced plan, a plain confirmation otherwise.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly submitLabel: Signal<string> = computed<string>(() => {
+    const row: OnboardingPlanRow | undefined = this.rows().find(
+      (r) => r.key === this.selectedKey(),
+    );
+
+    return row?.requiresPayment
+      ? $localize`:@@onboarding.planForm.submitPayment:Continue to payment`
+      : $localize`:@@onboarding.planForm.submit:Confirm plan`;
+  });
+
+  /** The footer's label while the choice is being confirmed. */
+  protected readonly pendingLabel: string = $localize`:@@onboarding.planForm.submitting:Confirming…`;
 
   /**
    * Property serverMessages
@@ -252,6 +318,17 @@ export class OnboardingPlanForm {
       ? [storeMessage]
       : [$localize`:@@onboarding.planForm.confirmFailed:The plan could not be confirmed.`];
   });
+  //#endregion
+
+  //#region Lifecycle
+  constructor() {
+    effect(() => {
+      const defaultPlan: PlanOutput | undefined = this.plans().find((plan) => plan.isDefault);
+      if (defaultPlan === undefined || this.model().planKey !== '') return;
+
+      this.model.update((draft) => ({ ...draft, planKey: defaultPlan.key }));
+    });
+  }
   //#endregion
 
   //#region Methods

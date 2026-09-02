@@ -10,21 +10,30 @@
 
     @if (staged().length > 0) {
       <ul class="flex flex-col gap-2" data-testid="onboarding-facilities-staged">
-        @for (facility of staged(); track facility.name; let i = $index) {
-          <li
-            class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 ring-1 ring-foreground/10"
-          >
-            <span class="text-sm">{{ facility.name }}</span>
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              [attr.data-testid]="'onboarding-facilities-remove-' + i"
-              (click)="removeFacility(i)"
-            >
-              <span i18n="@@onboarding.facilitiesForm.remove">Remove</span>
-            </button>
+        @for (row of stagedRows(); track row.name; let i = $index) {
+          <li hlmItem variant="outline" size="sm">
+            <hlm-item-media variant="icon">
+              <ng-icon name="lucideMapPin" aria-hidden="true" />
+            </hlm-item-media>
+            <hlm-item-content>
+              <p hlmItemTitle>{{ row.name }}</p>
+              <p hlmItemDescription>{{ row.summary }}</p>
+            </hlm-item-content>
+            <hlm-item-actions>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="max-sm:size-11"
+                [attr.data-testid]="'onboarding-facilities-remove-' + i"
+                [attr.aria-label]="removeFacilityLabel(row.name)"
+                [disabled]="pending()"
+                (click)="removeFacility(i)"
+              >
+                <ng-icon name="lucideX" aria-hidden="true" />
+              </button>
+            </hlm-item-actions>
           </li>
         }
       </ul>
@@ -99,48 +108,30 @@
         />
       </hlm-field>
 
-      <hlm-field orientation="horizontal">
+      <div>
         <button
           hlmBtn
           type="button"
-          variant="outline"
+          variant="ghost"
+          size="sm"
           class="max-sm:min-h-11"
           data-testid="onboarding-facility-add"
           [disabled]="draftForm().invalid() || pending()"
           (click)="addFacility()"
         >
-          <span i18n="@@onboarding.facilitiesForm.add">Add facility</span>
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@onboarding.facilitiesForm.add">Add another facility</span>
         </button>
-      </hlm-field>
+      </div>
     }
 
-    @if (emptyBatchError()) {
-      <p
-        role="alert"
-        data-testid="onboarding-facilities-empty"
-        class="text-sm text-destructive"
-        i18n="@@onboarding.facilitiesForm.emptyBatch"
-      >
-        Add at least one facility to continue, or use "Skip for now".
-      </p>
-    }
-
-    <hlm-field orientation="horizontal" class="justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="onboarding-facilities-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@onboarding.facilitiesForm.submitting">Saving…</span>
-        } @else {
-          <span i18n="@@onboarding.facilitiesForm.submit">Continue</span>
-        }
-      </button>
-    </hlm-field>
+    <app-onboarding-step-footer
+      [label]="submitLabel()"
+      [pendingLabel]="pendingLabel"
+      [pending]="pending()"
+      [skippable]="skippable()"
+      submitTestId="onboarding-facilities-submit"
+      (skipped)="skipped.emit()"
+    />
   </hlm-field-group>
 </form>

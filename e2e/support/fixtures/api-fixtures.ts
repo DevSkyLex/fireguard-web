@@ -186,14 +186,14 @@ export const E2E_ONBOARDING_STEPS: ReadonlyArray<OnboardingStepOutputFixture> = 
     key: 'create_first_facility',
     label: 'Add your first facility',
     required: false,
-    skippable: true,
+    skippable: false,
     skipAvailable: false,
   }),
   onboardingStepOutput({
     key: 'create_first_equipment',
     label: 'Register your first equipment',
     required: false,
-    skippable: true,
+    skippable: false,
     skipAvailable: false,
   }),
 ];
@@ -556,6 +556,26 @@ export function apiError(overrides: Partial<ApiErrorFixture> = {}): ApiErrorFixt
     status: 400,
     type: 'about:blank',
     title: 'An error occurred',
+    ...overrides,
+  };
+}
+
+/** The `POST /api/trusted-devices` payload — the token itself travels in an HttpOnly cookie the mock cannot set. */
+export interface TrustDeviceOutputFixture {
+  readonly deviceId: string;
+  readonly token: string;
+  readonly deviceName: string;
+  readonly expiresAt: string;
+}
+
+export function trustDeviceOutput(
+  overrides: Partial<TrustDeviceOutputFixture> = {},
+): TrustDeviceOutputFixture {
+  return {
+    deviceId: 'e2e-trusted-device-id',
+    token: 'e2e-trusted-device-token',
+    deviceName: 'Chromium on Linux',
+    expiresAt: '2030-01-01T00:00:00+00:00',
     ...overrides,
   };
 }

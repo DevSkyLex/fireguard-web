@@ -1,37 +1,34 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
-    <hlm-field class="items-center">
-      <label hlmFieldLabel [attr.for]="inputId()" class="self-start"
+    <hlm-field>
+      <label hlmFieldLabel [attr.for]="inputId()"
         ><span i18n="@@auth.otp.label">Verification code</span><app-required-marker
       /></label>
 
       <brn-input-otp
         hlmInputOtp
-        class="justify-start"
+        class="w-full"
         autocomplete="one-time-code"
         data-testid="account-otp-code"
         [inputId]="inputId()"
         [length]="length"
         [formField]="codeForm.code"
-        [attr.aria-invalid]="codeForm.code().touched() && codeForm.code().invalid()"
         (completed)="autoSubmit()"
       >
-        <hlm-input-otp-group>
-          <hlm-input-otp-slot index="0" />
-          <hlm-input-otp-slot index="1" />
-          <hlm-input-otp-slot index="2" />
+        <hlm-input-otp-group class="min-w-0 flex-1">
+          <hlm-input-otp-slot index="0" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="1" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="2" class="h-11 w-auto min-w-0 flex-1 text-base" />
         </hlm-input-otp-group>
         <hlm-input-otp-separator />
-        <hlm-input-otp-group>
-          <hlm-input-otp-slot index="3" />
-          <hlm-input-otp-slot index="4" />
-          <hlm-input-otp-slot index="5" />
+        <hlm-input-otp-group class="min-w-0 flex-1">
+          <hlm-input-otp-slot index="3" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="4" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="5" class="h-11 w-auto min-w-0 flex-1 text-base" />
         </hlm-input-otp-group>
       </brn-input-otp>
 
-      @if (codeForm.code().touched() && codeForm.code().invalid()) {
-        <hlm-field-error>{{ codeForm.code().errors()[0].message }}</hlm-field-error>
-      }
+      <hlm-field-error>{{ codeForm.code().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
     <div class="flex flex-wrap items-center justify-end gap-2">

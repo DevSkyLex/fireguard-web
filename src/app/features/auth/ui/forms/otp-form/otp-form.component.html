@@ -12,40 +12,47 @@
       </div>
     }
 
-    <hlm-field class="items-center">
-      <label hlmFieldLabel for="otp-code" class="self-start"
+    <hlm-field>
+      <label hlmFieldLabel for="otp-code"
         ><span i18n="@@auth.otp.label">Verification code</span><app-required-marker
       /></label>
 
       <brn-input-otp
         hlmInputOtp
+        class="w-full"
         inputId="otp-code"
         autocomplete="one-time-code"
         data-testid="otp-code"
         [length]="length"
         [formField]="otpForm.code"
-        [attr.aria-invalid]="otpForm.code().touched() && otpForm.code().invalid()"
         (completed)="autoSubmit()"
       >
-        <hlm-input-otp-group>
-          <hlm-input-otp-slot index="0" />
-          <hlm-input-otp-slot index="1" />
-          <hlm-input-otp-slot index="2" />
+        <hlm-input-otp-group class="min-w-0 flex-1">
+          <hlm-input-otp-slot index="0" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="1" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="2" class="h-11 w-auto min-w-0 flex-1 text-base" />
         </hlm-input-otp-group>
         <hlm-input-otp-separator />
-        <hlm-input-otp-group>
-          <hlm-input-otp-slot index="3" />
-          <hlm-input-otp-slot index="4" />
-          <hlm-input-otp-slot index="5" />
+        <hlm-input-otp-group class="min-w-0 flex-1">
+          <hlm-input-otp-slot index="3" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="4" class="h-11 w-auto min-w-0 flex-1 text-base" />
+          <hlm-input-otp-slot index="5" class="h-11 w-auto min-w-0 flex-1 text-base" />
         </hlm-input-otp-group>
       </brn-input-otp>
 
-      @if (otpForm.code().touched() && otpForm.code().invalid()) {
-        <hlm-field-error class="self-start">{{
-          otpForm.code().errors()[0].message
-        }}</hlm-field-error>
-      }
+      <hlm-field-error>{{ otpForm.code().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
+
+    @if (showTrustDevice()) {
+      <label class="flex items-center gap-2 text-sm text-muted-foreground">
+        <hlm-checkbox
+          id="otp-trust-device"
+          data-testid="otp-trust-device"
+          [formField]="otpForm.trustDevice"
+        />
+        <span i18n="@@auth.otp.trustDevice">Trust this device for 30 days</span>
+      </label>
+    }
 
     <button
       hlmBtn

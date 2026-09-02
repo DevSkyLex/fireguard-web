@@ -9,20 +9,39 @@
     }
 
     <hlm-field>
-      <hlm-radio-group [formField]="planForm.planKey" data-testid="onboarding-plan-group">
+      <label hlmFieldLabel id="onboarding-plan-label" i18n="@@onboarding.planForm.choose">
+        Choose a plan
+      </label>
+      <hlm-radio-group
+        class="flex flex-col gap-2"
+        [formField]="planForm.planKey"
+        aria-labelledby="onboarding-plan-label"
+        data-testid="onboarding-plan-group"
+      >
         @for (row of rows(); track row.key) {
           <label
             hlmLabel
             [for]="'onboarding-plan-' + row.key"
-            class="flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 ring-1 ring-foreground/10"
+            class="flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 ring-1 ring-foreground/10 transition-shadow data-[selected=true]:ring-2 data-[selected=true]:ring-primary max-sm:min-h-11"
+            [attr.data-selected]="selectedKey() === row.key"
+            [attr.data-testid]="'onboarding-plan-card-' + row.key"
           >
             <hlm-radio [value]="row.key" [inputId]="'onboarding-plan-' + row.key">
               <hlm-radio-indicator indicator />
             </hlm-radio>
-            <span class="flex flex-1 flex-col gap-0.5">
-              <span class="flex items-baseline justify-between gap-2">
-                <span class="text-sm font-medium">{{ row.name }}</span>
-                <span class="text-xs text-muted-foreground">{{ row.priceLabel }}</span>
+            <span class="flex min-w-0 flex-1 flex-col gap-1">
+              <span class="flex items-center justify-between gap-2">
+                <span class="flex min-w-0 items-center gap-2">
+                  <span class="truncate text-sm font-medium">{{ row.name }}</span>
+                  @if (row.isDefault) {
+                    <span hlmBadge variant="secondary" i18n="@@onboarding.planForm.currentPlan"
+                      >Current plan</span
+                    >
+                  }
+                </span>
+                <span class="shrink-0 text-sm font-semibold tabular-nums">{{
+                  row.priceLabel
+                }}</span>
               </span>
               @if (row.description; as description) {
                 <span class="text-xs text-muted-foreground">{{ description }}</span>
@@ -34,22 +53,13 @@
       <hlm-field-error>{{ planForm.planKey().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="onboarding-plan-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@onboarding.planForm.submitting">Confirming…</span>
-        } @else {
-          <span i18n="@@onboarding.planForm.submit">Continue</span>
-        }
-      </button>
-    </hlm-field>
+    <app-onboarding-step-footer
+      [label]="submitLabel()"
+      [pendingLabel]="pendingLabel"
+      [pending]="pending()"
+      [skippable]="skippable()"
+      submitTestId="onboarding-plan-submit"
+      (skipped)="skipped.emit()"
+    />
   </hlm-field-group>
 </form>

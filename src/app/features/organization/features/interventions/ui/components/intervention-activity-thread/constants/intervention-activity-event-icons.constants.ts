@@ -62,9 +62,9 @@ export const INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON: string = 'lucideActivity
  * @description
  * The size and tint each known system event puts on its marker glyph — and
  * on nothing else, the text beside it stays `text-muted-foreground`.
- * `created` reads as a start (green, the diff convention for an added line);
- * `status_changed` stays a genuine grey — `text-neutral-500`/`400`, the same
- * literal pair `intervention-tag-severity.constants.ts` uses for `neutral` —
+ * `created` reads as a start (`text-success`, the diff convention for an
+ * added line); `status_changed` stays a genuine grey — `text-muted-foreground`,
+ * the same token `intervention-tag-severity.constants.ts` uses for `neutral` —
  * because it is the routine, most frequent entry on this timeline, and
  * giving it the same weight as `created` would compete with the one event
  * actually worth a colour.
@@ -87,9 +87,9 @@ export const INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON: string = 'lucideActivity
 export const INTERVENTION_ACTIVITY_EVENT_ICON_CLASS: Readonly<
   Partial<Record<InterventionActivityEvent, string>>
 > = {
-  created: 'text-[length:--spacing(4)] text-green-600 dark:text-green-400',
-  status_changed: 'text-[length:--spacing(4)] text-neutral-500 dark:text-neutral-400',
-  rescheduled: 'text-[length:--spacing(4)] text-amber-600 dark:text-amber-400',
+  created: 'text-[length:--spacing(4)] text-success',
+  status_changed: 'text-[length:--spacing(4)] text-muted-foreground',
+  rescheduled: 'text-[length:--spacing(4)] text-warning',
 };
 
 /**

@@ -32,8 +32,8 @@ const HATCH_PATTERN_ID = 'facility-plan-overlay-hatch';
  * The read-only zone/equipment overlay for one floor plan, projected into
  * `app-plan-viewer`'s `overlayTemplate` — it renders inside the viewer's
  * transformed stage, so its image-pixel coordinates inherit pan and zoom
- * through the DOM automatically. Zones render as an achromatic (per
- * `PRODUCT.md`) hatch-filled SVG polygon with a name label at its centroid,
+ * through the DOM automatically. Zones render as a neutral (per
+ * `DESIGN.md`'s glyph rule) hatch-filled SVG polygon with a name label at its centroid,
  * each wrapped in a focusable, keyboard-activatable SVG `<a>` (`role="button"`
  * since it navigates via an emitted output, not a real `href`). Equipment
  * renders as positioned `<button>` pins, a status-coloured icon (never

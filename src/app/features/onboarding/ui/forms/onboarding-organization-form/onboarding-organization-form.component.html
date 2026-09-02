@@ -42,22 +42,13 @@
       />
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="onboarding-org-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@onboarding.orgForm.submitting">Creating…</span>
-        } @else {
-          <span i18n="@@onboarding.orgForm.submit">Continue</span>
-        }
-      </button>
-    </hlm-field>
+    <app-onboarding-step-footer
+      [label]="submitLabel"
+      [pendingLabel]="pendingLabel"
+      [pending]="pending()"
+      [skippable]="skippable()"
+      submitTestId="onboarding-org-submit"
+      (skipped)="skipped.emit()"
+    />
   </hlm-field-group>
 </form>

@@ -35,9 +35,10 @@ interface ShowcaseProofPoint {
  * through the showcase slot, so a route that wants a different panel can claim
  * the slot instead of editing this one.
  *
- * The panel deliberately inverts the surface (`bg-primary`): the theme is
- * neutral by design, so contrast — not an invented brand colour — is what sets
- * it apart from the form column, and the inversion holds in both themes.
+ * The panel deliberately inverts the surface (`bg-foreground text-background`
+ * in light, the card ground in dark): contrast, not a flood of the Ember
+ * accent, is what sets it apart from the form column — Ember is spent on the
+ * mark and the proof-point glyphs only (`DESIGN.md` §Colors).
  *
  * @version 1.0.0
  *

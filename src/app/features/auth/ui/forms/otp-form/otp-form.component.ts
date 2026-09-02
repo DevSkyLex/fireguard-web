@@ -26,6 +26,7 @@ import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
 import type { StoreError } from '@core/request-state';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
 import {
   HlmInputOtp,
@@ -68,13 +69,20 @@ const OTP_LENGTH = 6;
  *
  * The resend affordance is optional because it has no counterpart for an
  * authenticator app — a TOTP challenge is generated on the device, so there is
- * nothing to send again (`FEATURE.md`, auth).
+ * nothing to send again (`FEATURE.md`, auth). The "trust this device" control
+ * is opt-in the same way: only the MFA screen has a session to bind a device
+ * to, so registration and password-reset verification never show it.
+ *
+ * The field, the slots and the error are laid out by `hlm-field` alone — no
+ * `items-center`, no manual `aria-invalid`, no gated `@if` around the error —
+ * so the six slots stretch to the column and the brain's own invalid state
+ * drives the error line, as the onboarding forms already do.
  *
  * `brn-input-otp` binds `[formField]` natively, with no compatibility layer:
  * it owns the real input behind the slots, which is what carries
  * `autocomplete="one-time-code"` and the numeric keypad on a phone.
  *
- * @version 1.0.0
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -90,6 +98,7 @@ const OTP_LENGTH = 6;
     FormField,
     BrnInputOtp,
     HlmButton,
+    HlmCheckbox,
     HlmInputOtp,
     HlmInputOtpGroup,
     HlmInputOtpSeparator,
@@ -143,6 +152,21 @@ export class OtpForm {
    * @type {InputSignal<boolean>}
    */
   public readonly resending: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property showTrustDevice
+   * @readonly
+   *
+   * @description
+   * Whether to offer "trust this device". Only the MFA screen has a session
+   * to bind the device to, so it is off unless a page turns it on.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showTrustDevice: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property serverError
@@ -227,14 +251,17 @@ export class OtpForm {
    * @readonly
    *
    * @description
-   * The edited code.
+   * The edited code, and whether the device should be trusted afterwards.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {WritableSignal<OtpFormValues>}
    */
-  protected readonly model: WritableSignal<OtpFormValues> = signal<OtpFormValues>({ code: '' });
+  protected readonly model: WritableSignal<OtpFormValues> = signal<OtpFormValues>({
+    code: '',
+    trustDevice: false,
+  });
 
   /**
    * Property cooldownRemaining

@@ -3,7 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
 import type { MfaMethod } from '@features/auth/models';
-import { AuthStore } from '@features/auth/state';
+import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';
 import { MfaVerifyPage } from '../mfa-verify-page.component';
 
 describe('MfaVerifyPage', () => {
@@ -26,6 +26,7 @@ describe('MfaVerifyPage', () => {
     mfaToken: WritableSignal<string | null>;
   };
   let navigateByUrl: MockInstance;
+  let setPendingTrustDevice: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     isAuthenticated = signal(false);
@@ -47,11 +48,14 @@ describe('MfaVerifyPage', () => {
       mfaToken,
     };
 
+    setPendingTrustDevice = vi.fn();
+
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthStore, useValue: mockAuthStore },
+        { provide: ActiveTrustedDeviceStore, useValue: { setPendingTrustDevice } },
       ],
     });
 
@@ -62,7 +66,7 @@ describe('MfaVerifyPage', () => {
   });
 
   it('should submit the code with the pre-auth token the sign-in left behind', () => {
-    fixture.componentInstance['verify']({ code: '123456' });
+    fixture.componentInstance['verify']({ code: '123456', trustDevice: false });
 
     expect(mockAuthStore.mfaVerify).toHaveBeenCalledWith({
       preAuthToken: 'pre-auth-token',
@@ -70,11 +74,28 @@ describe('MfaVerifyPage', () => {
     });
   });
 
+  it('should record the trust intent before verifying', () => {
+    const order: string[] = [];
+    setPendingTrustDevice.mockImplementation(() => order.push('trust'));
+    mockAuthStore.mfaVerify.mockImplementation(() => order.push('verify'));
+
+    fixture.componentInstance['verify']({ code: '123456', trustDevice: true });
+
+    // AuthStore reads the pending flag right after the verify succeeds, so it
+    // has to be set before the request leaves.
+    expect(setPendingTrustDevice).toHaveBeenCalledWith(true);
+    expect(order).toEqual(['trust', 'verify']);
+  });
+
+  it('should offer the trust-device control', () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-trust-device"]')).not.toBeNull();
+  });
+
   it('should not submit when the challenge has expired', async () => {
     mfaToken.set(null);
     await fixture.whenStable();
 
-    fixture.componentInstance['verify']({ code: '123456' });
+    fixture.componentInstance['verify']({ code: '123456', trustDevice: false });
 
     // Without a token the request could only fail; the guard sends the visitor
     // back to sign-in on the next navigation.
@@ -86,9 +107,7 @@ describe('MfaVerifyPage', () => {
   });
 
   it('should offer a resend for a delivered challenge', () => {
-    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
-
-    expect(buttons.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-resend"]')).not.toBeNull();
   });
 
   it('should hide the resend for an authenticator challenge', async () => {
@@ -98,9 +117,7 @@ describe('MfaVerifyPage', () => {
 
     // A TOTP code is generated on the device: there is no delivery to repeat,
     // and the backend rejects the resend outright.
-    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
-
-    expect(buttons.length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-resend"]')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('authenticator app');
   });
 

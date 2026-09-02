@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import type {
   OnboardingStepKey,
   OnboardingStepOutput,
@@ -66,6 +67,7 @@ describe('OnboardingWizardPage', () => {
     createCheckoutSession: ReturnType<typeof vi.fn>;
   };
   let routerMock: { navigateByUrl: ReturnType<typeof vi.fn> };
+  let feedbackMock: { success: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     storeMock = {
@@ -100,6 +102,7 @@ describe('OnboardingWizardPage', () => {
       createCheckoutSession: vi.fn(),
     };
     routerMock = { navigateByUrl: vi.fn().mockResolvedValue(true) };
+    feedbackMock = { success: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -109,6 +112,7 @@ describe('OnboardingWizardPage', () => {
         { provide: PlanService, useValue: planServiceMock },
         { provide: BillingService, useValue: billingServiceMock },
         { provide: Router, useValue: routerMock },
+        { provide: FeedbackService, useValue: feedbackMock },
       ],
     });
 
@@ -226,11 +230,34 @@ describe('OnboardingWizardPage', () => {
     expect(storeMock.skipStep).toHaveBeenCalledWith('create_organization');
   });
 
-  it('should redirect to the dashboard once onboarding is completed', async () => {
+  it('should redirect to the dashboard once onboarding is completed, announcing it', async () => {
     storeMock.isCompleted.set(true);
     await fixture.whenStable();
 
+    expect(feedbackMock.success).toHaveBeenCalledWith('Your organization is ready.');
     expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/');
+  });
+
+  it('should name the step that comes next under the heading', async () => {
+    storeMock.steps.set([
+      stepOf('create_organization', 'pending'),
+      stepOf('select_plan', 'pending'),
+    ]);
+    await fixture.whenStable();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-wizard-next-step"]',
+      )?.textContent,
+    ).toContain('Next: Choose a plan');
+  });
+
+  it('should say when the active step is the last one', () => {
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-wizard-next-step"]',
+      )?.textContent,
+    ).toContain('Last step');
   });
 });
 

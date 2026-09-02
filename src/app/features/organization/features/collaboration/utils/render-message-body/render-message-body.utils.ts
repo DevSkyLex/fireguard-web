@@ -21,7 +21,7 @@ const MENTION_PATTERN =
  * API's allow-list gives `span` no attributes at all, so this is applied here,
  * on the way to the DOM, never stored.
  */
-const MENTION_CLASS = 'rounded-sm bg-primary/10 px-1 font-medium text-primary';
+const MENTION_CLASS = 'rounded-sm bg-primary/15 px-1 font-medium text-foreground';
 
 /**
  * Function renderMessageBodyHtml

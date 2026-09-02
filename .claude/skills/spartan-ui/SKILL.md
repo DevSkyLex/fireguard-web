@@ -55,7 +55,7 @@ npx ng g @spartan-ng/cli:ui <name>
 
 - **Tailwind v4 utilities in literal class strings.** Tailwind scans `.ts`/`.html`, so a computed class name silently produces no CSS.
 - Compose classes with the `hlm` helper from `@shared/ui/utils` — it merges Tailwind classes so a caller's `class` input wins over the component default without specificity games.
-- **Semantic tokens, not raw palette.** `bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border`, `ring-ring`. These are the CSS custom properties in `src/styles.css`; using them is what makes dark mode and theming work at all.
+- **Semantic tokens, not raw palette.** `bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border`, `ring-ring`, plus `text-success` / `text-warning` / `text-info` / `text-destructive` for status glyphs. These are the CSS custom properties in `src/styles.css`; using them is what makes dark mode and theming work at all.
 - **Dark mode is `html[data-theme="dark"]`** — the attribute `ThemeService` writes, wired through `@custom-variant dark` and the `html[data-theme='dark']` token block. spartan's stock `:root.dark` was deliberately rewritten to it; do not reintroduce a second switch.
 - Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).
 

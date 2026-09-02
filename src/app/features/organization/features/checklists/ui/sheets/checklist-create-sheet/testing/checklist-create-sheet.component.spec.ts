@@ -1,25 +1,25 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CreateChecklistInput } from '@features/organization/features/checklists/models';
-import { ChecklistCreateDialog } from '../checklist-create-dialog.component';
+import { ChecklistCreateSheet } from '../checklist-create-sheet.component';
 
-describe('ChecklistCreateDialog', () => {
-  let fixture: ComponentFixture<ChecklistCreateDialog>;
+describe('ChecklistCreateSheet', () => {
+  let fixture: ComponentFixture<ChecklistCreateSheet>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(ChecklistCreateDialog);
+    fixture = TestBed.createComponent(ChecklistCreateSheet);
   });
 
   it('should render nothing to the portal while closed', async () => {
     fixture.componentRef.setInput('visible', false);
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="checklist-create-dialog"]')).toBeNull();
+    expect(document.querySelector('[data-testid="checklist-create-sheet"]')).toBeNull();
   });
 
-  it('should render the create form inside the dialog once open', async () => {
+  it('should render the create form inside the sheet once open', async () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 

@@ -13,18 +13,19 @@ import type {
   CreateOrganizationRoleInput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
-import { HlmDialogImports } from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { OrganizationRoleCreateForm } from '../../forms/organization-role-create-form';
 
 /**
- * Component OrganizationRoleCreateDialog
- * @class OrganizationRoleCreateDialog
+ * Component OrganizationRoleCreateSheet
+ * @class OrganizationRoleCreateSheet
  *
  * @description
- * The spartan dialog hosting {@link OrganizationRoleCreateForm}, mirroring
+ * The spartan sheet hosting {@link OrganizationRoleCreateForm}, mirroring
  * how the feature's other create flows host their form inside a panel
- * (`intervention-create-sheet`) — a dialog here because the record being
- * created is small enough that a full-width sheet would be excessive.
+ * (`intervention-create-sheet`): a record the operator will open next is
+ * created in a sheet, whatever its size (`DESIGN.md` "Action Surfaces").
  *
  * Purely presentational: it owns the overlay and forwards
  * `visible`/`visibleChange`, re-emitting the form's `submitted`; the page
@@ -37,17 +38,17 @@ import { OrganizationRoleCreateForm } from '../../forms/organization-role-create
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-role-create-dialog',
-  imports: [OrganizationRoleCreateForm, ...HlmDialogImports],
-  templateUrl: './organization-role-create-dialog.component.html',
+  selector: 'app-organization-role-create-sheet',
+  imports: [OrganizationRoleCreateForm, ...HlmSheetImports],
+  templateUrl: './organization-role-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationRoleCreateDialog {
+export class OrganizationRoleCreateSheet {
   //#region Inputs
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open. Owned by the page.
+   * @description Whether the panel is open. Owned by the page.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -91,7 +92,7 @@ export class OrganizationRoleCreateDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description The dialog wants to open or close.
+   * @description The panel wants to open or close.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<boolean>}
@@ -112,16 +113,26 @@ export class OrganizationRoleCreateDialog {
 
   //#region Properties
   /**
-   * Property dialogState
+   * Property sheetState
    * @readonly
    * @description The overlay state, derived from {@link visible} so there is no second copy of the truth.
    * @access protected
    * @since 1.0.0
    * @type {Signal<BrnDialogState>}
    */
-  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
+  protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

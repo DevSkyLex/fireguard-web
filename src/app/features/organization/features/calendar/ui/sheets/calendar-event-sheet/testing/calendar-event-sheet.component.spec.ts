@@ -1,25 +1,25 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CalendarEventFormValues } from '../../../forms/calendar-event-form';
-import { CalendarEventDialog } from '../calendar-event-dialog.component';
+import { CalendarEventSheet } from '../calendar-event-sheet.component';
 
-describe('CalendarEventDialog', () => {
-  let fixture: ComponentFixture<CalendarEventDialog>;
+describe('CalendarEventSheet', () => {
+  let fixture: ComponentFixture<CalendarEventSheet>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(CalendarEventDialog);
+    fixture = TestBed.createComponent(CalendarEventSheet);
   });
 
   it('should render nothing to the portal while closed', async () => {
     fixture.componentRef.setInput('visible', false);
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="calendar-event-dialog"]')).toBeNull();
+    expect(document.querySelector('[data-testid="calendar-event-sheet"]')).toBeNull();
   });
 
-  it('should render the event form inside the dialog once open', async () => {
+  it('should render the event form inside the sheet once open', async () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
@@ -30,7 +30,7 @@ describe('CalendarEventDialog', () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="calendar-event-dialog"]')?.textContent).toContain(
+    expect(document.querySelector('[data-testid="calendar-event-sheet"]')?.textContent).toContain(
       'New event',
     );
 
@@ -49,7 +49,7 @@ describe('CalendarEventDialog', () => {
     });
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="calendar-event-dialog"]')?.textContent).toContain(
+    expect(document.querySelector('[data-testid="calendar-event-sheet"]')?.textContent).toContain(
       'Edit event',
     );
   });

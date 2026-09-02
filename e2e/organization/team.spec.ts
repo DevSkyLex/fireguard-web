@@ -96,8 +96,8 @@ test.describe('Organization team', () => {
       overflowY: getComputedStyle(element).overflowY,
     }));
 
-    expect(bounds.overflowY, 'the dialog scrolls its own content').toBe('auto');
-    expect(bounds.height, 'the dialog fits the viewport').toBeLessThanOrEqual(667);
+    expect(bounds.overflowY, 'the sheet scrolls its own content').toBe('auto');
+    expect(bounds.height, 'the sheet fits the viewport').toBeLessThanOrEqual(667);
 
     const submit = page.getByTestId('organization-role-create-submit');
     await submit.scrollIntoViewIfNeeded();

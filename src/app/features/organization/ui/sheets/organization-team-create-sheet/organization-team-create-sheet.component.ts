@@ -10,15 +10,16 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { CreateTeamInput } from '@features/organization/models';
-import { HlmDialogImports } from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { OrganizationTeamCreateForm } from '../../forms/organization-team-create-form';
 
 /**
- * Component OrganizationTeamCreateDialog
- * @class OrganizationTeamCreateDialog
+ * Component OrganizationTeamCreateSheet
+ * @class OrganizationTeamCreateSheet
  *
  * @description
- * The spartan dialog hosting {@link OrganizationTeamCreateForm}, mirroring
+ * The spartan sheet hosting {@link OrganizationTeamCreateForm}, mirroring
  * `OrganizationRoleCreateDialog`'s shape — the record being created is small
  * enough that a full-width sheet would be excessive.
  *
@@ -31,17 +32,17 @@ import { OrganizationTeamCreateForm } from '../../forms/organization-team-create
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-organization-team-create-dialog',
-  imports: [OrganizationTeamCreateForm, ...HlmDialogImports],
-  templateUrl: './organization-team-create-dialog.component.html',
+  selector: 'app-organization-team-create-sheet',
+  imports: [OrganizationTeamCreateForm, ...HlmSheetImports],
+  templateUrl: './organization-team-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrganizationTeamCreateDialog {
+export class OrganizationTeamCreateSheet {
   //#region Inputs
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open. Owned by the page.
+   * @description Whether the panel is open. Owned by the page.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -73,7 +74,7 @@ export class OrganizationTeamCreateDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description The dialog wants to open or close.
+   * @description The panel wants to open or close.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<boolean>}
@@ -93,16 +94,26 @@ export class OrganizationTeamCreateDialog {
 
   //#region Properties
   /**
-   * Property dialogState
+   * Property sheetState
    * @readonly
    * @description The overlay state, derived from {@link visible} so there is no second copy of the truth.
    * @access protected
    * @since 1.0.0
    * @type {Signal<BrnDialogState>}
    */
-  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
+  protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

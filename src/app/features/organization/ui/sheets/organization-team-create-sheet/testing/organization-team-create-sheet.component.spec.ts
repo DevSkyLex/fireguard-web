@@ -1,21 +1,21 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CreateTeamInput } from '@features/organization/models';
-import { OrganizationTeamCreateDialog } from '../organization-team-create-dialog.component';
+import { OrganizationTeamCreateSheet } from '../organization-team-create-sheet.component';
 
 const dialog = (): HTMLElement | null =>
-  document.querySelector('[data-testid="organization-team-create-dialog"]');
+  document.querySelector('[data-testid="organization-team-create-sheet"]');
 const nameInput = (): HTMLInputElement | null =>
   dialog()?.querySelector('[data-testid="organization-team-create-name"]') ?? null;
 
-describe('OrganizationTeamCreateDialog', () => {
-  let fixture: ComponentFixture<OrganizationTeamCreateDialog>;
+describe('OrganizationTeamCreateSheet', () => {
+  let fixture: ComponentFixture<OrganizationTeamCreateSheet>;
   let submissions: CreateTeamInput[];
   let visibilities: boolean[];
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(OrganizationTeamCreateDialog);
+    fixture = TestBed.createComponent(OrganizationTeamCreateSheet);
 
     submissions = [];
     visibilities = [];

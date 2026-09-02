@@ -1,18 +1,18 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { ChannelCreateDraft } from '../../../forms/channel-create-form';
-import { ChannelCreateDialog } from '../channel-create-dialog.component';
+import { ChannelCreateSheet } from '../channel-create-sheet.component';
 
 const panel = (): HTMLElement | null =>
-  document.querySelector('[data-testid="channel-create-dialog"]');
+  document.querySelector('[data-testid="channel-create-sheet"]');
 
 const nameInput = (): HTMLInputElement | null =>
   panel()?.querySelector('[data-testid="channel-create-name"]') ?? null;
 
 const form = (): HTMLFormElement | null => panel()?.querySelector('form') ?? null;
 
-describe('ChannelCreateDialog', () => {
-  let fixture: ComponentFixture<ChannelCreateDialog>;
+describe('ChannelCreateSheet', () => {
+  let fixture: ComponentFixture<ChannelCreateSheet>;
   let submissions: ChannelCreateDraft[];
   let visibility: boolean[];
 
@@ -31,7 +31,7 @@ describe('ChannelCreateDialog', () => {
   async function open(): Promise<void> {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(ChannelCreateDialog);
+    fixture = TestBed.createComponent(ChannelCreateSheet);
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
@@ -45,7 +45,7 @@ describe('ChannelCreateDialog', () => {
 
   it('should render nothing until the page opens it', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(ChannelCreateDialog);
+    fixture = TestBed.createComponent(ChannelCreateSheet);
     await fixture.whenStable();
 
     expect(panel()).toBeNull();

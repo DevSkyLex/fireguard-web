@@ -1,0 +1,26 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    data-testid="organization-team-create-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@org.teams.createDialog.title">New team</h3>
+      <p hlmSheetDescription i18n="@@org.teams.createDialog.description">
+        Create a named group of members you can assign to interventions.
+      </p>
+    </hlm-sheet-header>
+
+    <app-organization-team-create-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="visibleChange.emit(false)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>

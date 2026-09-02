@@ -811,3 +811,4 @@ Backend endpoints exist for these; no frontend model, service method or store do
   (`ui/sheets/organization-team-members-sheet`) and its `OrganizationTeamMemberAddForm`
   (`ui/forms/organization-team-member-add-form`). Still owed: real specs replacing the smoke
   tests each of those units carries today (`fg-web-test-writer`).
+- Teams and custom roles are created in a sheet (`organization-team-create-sheet`, `organization-role-create-sheet`), not a dialog: a record the operator opens next takes the sheet surface (`DESIGN.md` "Action Surfaces" rules 2–3). The invite, member-add and transfer flows stay dialogs — they act on existing records.

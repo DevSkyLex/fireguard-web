@@ -1,2 +1,2 @@
-export { CalendarEventDialog } from './calendar-event-dialog.component';
+export { CalendarEventSheet } from './calendar-event-sheet.component';
 export type { CalendarEventFormValues } from '../../forms/calendar-event-form';

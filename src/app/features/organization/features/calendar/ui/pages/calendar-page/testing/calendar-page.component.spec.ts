@@ -249,13 +249,13 @@ describe('CalendarPage', () => {
     expect(byPageActionsTestId('calendar-subscribe')).not.toBeNull();
   });
 
-  it('opens the create dialog from "New event" and sends the create write on submit', async () => {
+  it('opens the create sheet from "New event" and sends the create write on submit', async () => {
     await render(true);
 
     (byPageActionsTestId('calendar-new-event') as HTMLButtonElement).click();
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="calendar-event-dialog"]')?.textContent).toContain(
+    expect(document.querySelector('[data-testid="calendar-event-sheet"]')?.textContent).toContain(
       'New event',
     );
 
@@ -427,7 +427,7 @@ describe('CalendarPage', () => {
       ).onCreateRequested('2026-08-12');
       await fixture.whenStable();
 
-      expect(document.querySelector('[data-testid="calendar-event-dialog"]')).toBeNull();
+      expect(document.querySelector('[data-testid="calendar-event-sheet"]')).toBeNull();
     });
   });
 

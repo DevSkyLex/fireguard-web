@@ -162,13 +162,13 @@ describe('ChecklistsPage', () => {
     expect(renderPageActions().querySelector('[data-testid="checklists-new"]')).toBeNull();
   });
 
-  it('should open the create dialog from the header action', async () => {
+  it('should open the create sheet from the header action', async () => {
     await createPage();
 
     renderPageActions().querySelector<HTMLButtonElement>('[data-testid="checklists-new"]')?.click();
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="checklist-create-dialog"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="checklist-create-sheet"]')).not.toBeNull();
   });
 
   it('should narrow the list to one status and return to page 1', async () => {

@@ -9,36 +9,32 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import {
-  HlmDialog,
-  HlmDialogContent,
-  HlmDialogHeader,
-  HlmDialogPortal,
-  HlmDialogTitle,
-} from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { ChannelCreateForm, type ChannelCreateDraft } from '../../forms/channel-create-form';
 
 /**
- * Component ChannelCreateDialog
- * @class ChannelCreateDialog
+ * Component ChannelCreateSheet
+ * @class ChannelCreateSheet
  *
  * @description
- * The spartan dialog hosting {@link ChannelCreateForm}, the same shape
- * `OrganizationInviteDialog` wraps `OrganizationInviteForm` in.
+ * The spartan sheet hosting {@link ChannelCreateForm}, the same shape
+ * `OrganizationInviteDialog` wraps `OrganizationInviteForm` in — but a sheet,
+ * since a channel is a record the operator opens next (`DESIGN.md`).
  *
  * Purely presentational: it owns the overlay chrome, forwards
  * `visible`/`visibleChange` to the form and re-emits {@link submitted},
  * closing itself the moment the form validates — the page's own success
  * event is what actually navigates, and a failure is already surfaced by
  * the app-wide feedback listener (`core/feedback`), so there is nothing
- * this dialog needs to wait for. Dismissal is blocked while a request is in
+ * this sheet needs to wait for. Dismissal is blocked while a request is in
  * flight (`ARCHITECTURE.md` §10.5).
  *
  * @version 2.0.0
  *
  * @example
  * ```html
- * <app-channel-create-dialog
+ * <app-channel-create-sheet
  *   [visible]="createDialogVisible()"
  *   [parentOptions]="rootChannelOptions()"
  *   (submitted)="create($event)"
@@ -48,26 +44,19 @@ import { ChannelCreateForm, type ChannelCreateDraft } from '../../forms/channel-
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-channel-create-dialog',
-  imports: [
-    ChannelCreateForm,
-    HlmDialog,
-    HlmDialogContent,
-    HlmDialogHeader,
-    HlmDialogPortal,
-    HlmDialogTitle,
-  ],
-  templateUrl: './channel-create-dialog.component.html',
+  selector: 'app-channel-create-sheet',
+  imports: [ChannelCreateForm, ...HlmSheetImports],
+  templateUrl: './channel-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChannelCreateDialog {
+export class ChannelCreateSheet {
   //#region Inputs
   /**
    * Property visible
    * @readonly
    *
    * @description
-   * Whether the dialog is open.
+   * Whether the panel is open.
    *
    * @access public
    * @since 1.0.0
@@ -114,7 +103,7 @@ export class ChannelCreateDialog {
    * @readonly
    *
    * @description
-   * Reports the dialog opening or closing, including a dismissal.
+   * Reports the panel opening or closing, including a dismissal.
    *
    * @access public
    * @since 1.0.0
@@ -140,7 +129,7 @@ export class ChannelCreateDialog {
 
   //#region Properties
   /**
-   * Property dialogState
+   * Property sheetState
    * @readonly
    *
    * @description
@@ -152,9 +141,19 @@ export class ChannelCreateDialog {
    *
    * @type {Signal<BrnDialogState>}
    */
-  protected readonly dialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
+  protected readonly sheetState: Signal<BrnDialogState> = computed((): BrnDialogState =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods
@@ -189,7 +188,7 @@ export class ChannelCreateDialog {
    * @method onFormSubmitted
    *
    * @description
-   * Re-emits the form's validated draft and closes the dialog.
+   * Re-emits the form's validated draft and closes the panel.
    *
    * @access protected
    * @since 2.0.0

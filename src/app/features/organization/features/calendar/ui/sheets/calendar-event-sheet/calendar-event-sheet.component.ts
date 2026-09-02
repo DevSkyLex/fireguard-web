@@ -11,23 +11,24 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
-import { HlmDialogImports } from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/calendar-event-form';
 
 /**
- * Component CalendarEventDialog
- * @class CalendarEventDialog
+ * Component CalendarEventSheet
+ * @class CalendarEventSheet
  *
  * @description
- * The spartan dialog hosting {@link CalendarEventForm}, which creates or
+ * The spartan sheet hosting {@link CalendarEventForm}, which creates or
  * edits a standalone calendar event. Mode follows {@link editing}: `null`
  * creates a new event, a value seeds the form with that record's fields and
- * switches the dialog's own title/description to editing.
+ * switches the panel's own title/description to editing.
  *
  * Purely presentational: it owns the overlay chrome, forwards every input
  * to the form, and re-emits {@link submitted} — the page keeps the store
  * call, the permission gate and the source-gating that decides whether
- * editing is even offered; this dialog never inspects `sourceKey`
+ * editing is even offered; this sheet never inspects `sourceKey`
  * (`ARCHITECTURE.md` §10.5). Dismissal is blocked while a request is in
  * flight.
  *
@@ -35,7 +36,7 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  *
  * @example
  * ```html
- * <app-calendar-event-dialog
+ * <app-calendar-event-sheet
  *   [visible]="eventDialogVisible()"
  *   [pending]="isEventWritePending()"
  *   [serverError]="eventWriteError()"
@@ -49,17 +50,17 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-calendar-event-dialog',
-  imports: [CalendarEventForm, ...HlmDialogImports],
-  templateUrl: './calendar-event-dialog.component.html',
+  selector: 'app-calendar-event-sheet',
+  imports: [CalendarEventForm, ...HlmSheetImports],
+  templateUrl: './calendar-event-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CalendarEventDialog {
+export class CalendarEventSheet {
   //#region Inputs
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open. Owned by the page.
+   * @description Whether the panel is open. Owned by the page.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -124,7 +125,7 @@ export class CalendarEventDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description Reports the dialog opening or closing, including a dismissal.
+   * @description Reports the panel opening or closing, including a dismissal.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<boolean>}
@@ -145,16 +146,26 @@ export class CalendarEventDialog {
 
   //#region Properties
   /**
-   * Property dialogState
+   * Property sheetState
    * @readonly
    * @description The overlay's own open/closed state, derived from {@link visible}.
    * @access protected
    * @since 1.0.0
    * @type {Signal<BrnDialogState>}
    */
-  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
+  protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
+
+  /**
+   * Property side
+   * @readonly
+   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#endregion
 
   //#region Methods

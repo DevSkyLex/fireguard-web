@@ -13,8 +13,8 @@ This subfeature is responsible for:
 
 This subfeature does not own top-level organization selection. That remains in `features/organization`.
 
-**Creation is parent-scoped.** `FacilityCreatePage` binds `?parent=` and seeds
-the create form's parent combobox from it, so "New facility" from the asset
+**Creation is parent-scoped.** `FacilitiesPage` binds `?create=1` and `?parent=`,
+opens `FacilityCreateSheet` and seeds its parent combobox from it, so "New facility" from the asset
 explorer's selected site opens already nested under it. The seed writes the
 model, not the field, so the form does not start dirty.
 
@@ -28,7 +28,8 @@ model, not the field, so the form does not start dirty.
 
 - `/organizations/:organizationId/facilities`
 - `/organizations/:organizationId/facilities/map`
-- `/organizations/:organizationId/facilities/create`
+- `/organizations/:organizationId/facilities/create` — a functional redirect onto
+  the list with `?create=1` (the creation sheet), keeping `?parent=`
 - `/organizations/:organizationId/facilities/:facilityId`
 - `/organizations/:organizationId/facilities/:facilityId/3d`
 
@@ -292,7 +293,7 @@ This subfeature is the primitive's first consumer, in two places:
   rendering mode of this page — it is page-local view state (`layout`, not
   URL-synced), too light a mechanism for an interactive map, so selecting it
   navigates to the dedicated `facilities/map` route instead.
-- `ui/pages/facility-create-page` (`FacilityCreatePage`) —
+- `ui/sheets/facility-create-sheet` (`FacilityCreateSheet`), opened by `FacilitiesPage` —
   `ui/forms/facility-create-form`, requiring only `type` and `name`; parent,
   code, address and coordinates are optional here and remain editable on the
   record afterward.
@@ -881,8 +882,8 @@ organization-scoped read never carries `revision`, then sends the required
 - Archived facilities can be restored.
 - Facility resolvers and facility page orchestration belong here, not in the parent feature or layouts.
 - A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
-- `FacilityCreatePage` resets the create operation only after the success navigation resolves, so `unsavedChangesGuard` still sees the settled success and never opens the discard dialog on the way to the new record.
-- The detail page's Hierarchy section offers "Add sub-facility" (create route with `?parent=`) only under `FACILITIES_WRITE`, whether or not the facility already has children.
+- `FacilitiesPage` closes the create sheet and resets the create operation only after the success navigation resolves. The sheet's own gate (an Escape or outside-click on a dirty draft raises `UnsavedChangesDialog`, the pattern of `intervention-work-item-sheet`) replaces the route-level `unsavedChangesGuard`. `?create=1` is consumed once (browser only) and ignored without `FACILITIES_WRITE` — the `/create` redirect carries no guard.
+- The detail page's Hierarchy section offers "Add sub-facility" (the list with `?create=1&parent=`) only under `FACILITIES_WRITE`, whether or not the facility already has children.
 - At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
 - The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.
 - `FacilityPlanOverlay` stays read-only and presentational — it never gains a store, a service, or navigation of its own; every editor affordance lives in `FacilityPlanEditor` (which wraps it) and the page.
@@ -900,8 +901,8 @@ organization-scoped read never carries `revision`, then sends the required
   component-scoped store loads the organization's facilities once per page
   (browser only, `ensureLoaded`) and derives the options plus a map centre;
   `FacilityStore`'s paginated root list is **not** an option source. Consumers:
-  `facility-create-page`, `facility-move-dialog` (through the assets page),
-  `equipment-create-page` / `equipment-detail-page` /
+  `facilities-page` (for its create sheet), `facility-move-dialog` (through the assets page),
+  `equipments-page` / `equipment-detail-page` /
   `equipment-assign-facility-dialog` (equipments imports the `models` and
   `state` barrels for this alone). A picker never formats a facility on its own
   and never falls back to a raw id on its trigger.

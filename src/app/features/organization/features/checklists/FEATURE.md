@@ -8,7 +8,7 @@ This subfeature is responsible for:
 
 - loading, filtering, creating, updating and archiving checklist templates,
 - exposing checklist state (`ChecklistStore.ensureInspectionCreateOptionsLoaded`) to the
-  inspections subfeature, which builds an inspection against a checklist.
+  inspections subfeature, whose list page provides it for the inspection-create sheet.
 
 Checklists are **not** immutable after creation: `PATCH /api/organizations/{orgId}/checklists/{checklistId}`
 lets a template's name, version and items be revised in place — only the identifier and creation

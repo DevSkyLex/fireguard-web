@@ -94,6 +94,7 @@ test.describe('Inspection create', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockEquipmentList(E2E_ORGANIZATION_ID, [equipmentOutput()]);
+    await api.mockInspectionList(E2E_ORGANIZATION_ID, []);
     const inspections = new InspectionsPage(page);
 
     await inspections.gotoCreate(E2E_ORGANIZATION_ID);

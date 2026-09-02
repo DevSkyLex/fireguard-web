@@ -1,0 +1,40 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[540px]! sm:max-w-none!"
+    data-testid="facility-create-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@facility.createSheet.header">Register a facility</h3>
+      <p hlmSheetDescription i18n="@@facility.createSheet.intro">
+        Register a site, building or area, and place it in the hierarchy.
+      </p>
+    </hlm-sheet-header>
+
+    <app-facility-create-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [parentOptions]="parentOptions()"
+      [initialParentFacilityId]="initialParentFacilityId()"
+      [mapCenter]="mapCenter()"
+      [geocodePending]="geocodePending()"
+      [geocodeResult]="geocodeResult()"
+      [geocodeNotFound]="geocodeNotFound()"
+      (geocodeRequested)="geocodeRequested.emit($event)"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

@@ -1,0 +1,35 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[540px]! sm:max-w-none!"
+    data-testid="equipment-create-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@equipment.createSheet.header">Register an equipment</h3>
+      <p hlmSheetDescription i18n="@@equipment.createSheet.intro">
+        Register an asset with the details field agents need to identify and inspect it.
+      </p>
+    </hlm-sheet-header>
+
+    <app-equipment-create-form
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [facilityOptions]="facilityOptions()"
+      [initialFacilityId]="initialFacilityId()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

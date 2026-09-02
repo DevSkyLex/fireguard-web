@@ -24,7 +24,8 @@ This subfeature does not own facility, equipment, or checklist data, even when i
 ## Routes
 
 - `/organizations/:organizationId/inspections`
-- `/organizations/:organizationId/inspections/create`
+- `/organizations/:organizationId/inspections/create` — a functional redirect onto
+  the list with `?create=1` (the creation sheet)
 - `/organizations/:organizationId/inspections/analytics`
 - `/organizations/:organizationId/inspections/:inspectionId`
 
@@ -65,7 +66,7 @@ the UI.
   ordering is remembered across visits (`InspectionListPreferencesService`,
   `services/inspection-list-preferences/`, cookie `fg-inspection-list`); page
   size is not.
-- `ui/pages/inspection-create-page` (`InspectionCreatePage`) —
+- `ui/sheets/inspection-create-sheet` (`InspectionCreateSheet`), opened by `InspectionsPage` —
   `ui/forms/inspection-create-form`, asking for what
   `CreateInspectionInput` requires — `equipmentId` (a combobox sourced from
   `InspectionCreationOptionsStore`), `result`, `performedAt`, `inspectorType`
@@ -121,13 +122,13 @@ Primary stores:
   `withQueryState` over the statistics snapshot, refetched on every
   organization or period-window change — mirrors
   `InterventionStatisticsStore`)
-- `InspectionCreationOptionsStore` (component-scoped to the create page;
+- `InspectionCreationOptionsStore` (component-scoped to the list page, loaded on the sheet's first open;
   loads the organization's equipment into the creation form's combobox
   through `EquipmentService`, imported via the sibling `equipments` feature's
   `data-access` barrel — the same cross-feature pattern
   `InterventionPlanningOptionsStore` already established for its own
   site/member pickers)
-- `ChecklistStore` (component-scoped to the create page, imported from the
+- `ChecklistStore` (component-scoped to the list page for the create sheet, imported from the
   sibling `checklists` feature's `state` barrel; feeds the create form's
   optional checklist select through `ensureInspectionCreateOptionsLoaded`)
 

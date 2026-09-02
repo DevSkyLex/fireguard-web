@@ -23,7 +23,10 @@ import {
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import { FacilityStore } from '@features/organization/features/facilities/state';
+import {
+  FacilityOptionsStore,
+  FacilityStore,
+} from '@features/organization/features/facilities/state';
 import { FacilitiesPage } from '../facilities-page.component';
 
 /**
@@ -117,6 +120,11 @@ describe('FacilitiesPage', () => {
             totalRootFacilities,
             rootListCallState,
             isLoadingRootFacilities: signal(false),
+            createCallState: signal(idleCallState()),
+            isCreating: signal(false),
+            createError: signal(null),
+            create: vi.fn(),
+            resetCreateOperation: vi.fn(),
             loadRootFacilities,
             archive,
             restore,
@@ -127,6 +135,17 @@ describe('FacilitiesPage', () => {
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
+    });
+
+    TestBed.overrideComponent(FacilitiesPage, {
+      set: {
+        providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: { options: signal([]), mapCenter: signal(undefined), ensureLoaded: vi.fn() },
+          },
+        ],
+      },
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -202,11 +221,15 @@ describe('FacilitiesPage', () => {
   it('should offer "New facility" with the write permission', async () => {
     fixture = await createPage();
 
-    const link: HTMLAnchorElement | null = renderPageActions().querySelector(
+    const button: HTMLButtonElement | null = renderPageActions().querySelector(
       '[data-testid="facilities-new"]',
     );
+    expect(button).not.toBeNull();
 
-    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/create');
+    button?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should show the error state and let the operator retry', async () => {

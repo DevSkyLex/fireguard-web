@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -14,9 +15,10 @@ import {
   type WritableSignal,
   untracked,
   viewChild,
+  PLATFORM_ID,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -33,9 +35,11 @@ import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
+  CreateEquipmentInput,
   EquipmentListSort,
   EquipmentOutput,
   EquipmentSortField,
@@ -51,6 +55,7 @@ import {
   type EquipmentKpisStoreType,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
@@ -70,6 +75,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
+import { EquipmentCreateSheet } from '../../sheets/equipment-create-sheet';
 import { EquipmentTable } from '../../tables/equipment-table';
 
 /** How long typing settles before the search reaches the wire. */
@@ -116,7 +122,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
 @Component({
   selector: 'app-equipments-page',
   imports: [
-    RouterLink,
+    EquipmentCreateSheet,
     NgIcon,
     EmptyState,
     ErrorState,
@@ -133,6 +139,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     HlmSpinner,
   ],
   providers: [
+    FacilityOptionsStore,
     provideIcons({
       lucideLock,
       lucideCircleAlert,
@@ -160,6 +167,26 @@ export class EquipmentsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property create
+   * @readonly
+   * @description `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create` redirect and the in-app links use. Consumed once, then stripped from the URL.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property facility
+   * @readonly
+   * @description The site the caller pre-picked, bound from `?facility=`, so a record created from a site lands in it. Consumed with `create`.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly facility: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /**
    * Property q
@@ -426,6 +453,47 @@ export class EquipmentsPage {
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
+  /**
+   * Property createSheetVisible
+   * @readonly
+   * @description Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pendingScopeId
+   * @readonly
+   * @description The site a `?facility=` deep link pre-picked for the sheet, cleared when it closes.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly pendingScopeId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property platformId
+   * @readonly
+   * @description Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are browser-only.
+   * @access private
+   * @since 1.6.0
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
+   * Property facilityOptionsStore
+   * @readonly
+   * @description The organization's facilities offered by the sheet's Site field, loaded on first open.
+   * @access protected
+   * @since 1.6.0
+   * @type {FacilityOptionsStore}
+   */
+  protected readonly facilityOptionsStore: FacilityOptionsStore =
+    inject<FacilityOptionsStore>(FacilityOptionsStore);
+
   //#region Constructor
   /**
    * Constructor
@@ -445,6 +513,35 @@ export class EquipmentsPage {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
 
     effect((): void => {
+      const requested: boolean = this.create() === '1';
+      const scope: string | undefined = this.facility();
+
+      untracked((): void => {
+        if (!requested || !isPlatformBrowser(this.platformId)) return;
+
+        if (this.canCreate()) {
+          this.pendingScopeId.set(scope ?? null);
+          this.openCreate();
+        }
+        this.navigateQuery({ create: null, facility: null });
+      });
+    });
+
+    effect((): void => {
+      const state: CallState<EquipmentOutput | null> = this.store.createCallState();
+
+      untracked((): void => {
+        if (state.status !== 'success' || !state.data) return;
+
+        const created: EquipmentOutput = state.data;
+        this.createSheetVisible.set(false);
+        void this.router
+          .navigate([...this.listRouteBase(), created.id])
+          .then((): void => this.store.resetCreateOperation());
+      });
+    });
+
+    effect((): void => {
       const term: string = this.searchTerm();
       untracked((): void => {
         if (term !== this.draftSearch()) this.draftSearch.set(term);
@@ -456,7 +553,7 @@ export class EquipmentsPage {
       .subscribe((term: string): void => {
         if (term !== this.searchTerm()) {
           this.page.set(1);
-          this.navigateQuery(term === '' ? null : term);
+          this.navigateQuery({ q: term === '' ? null : term });
         }
       });
 
@@ -507,7 +604,7 @@ export class EquipmentsPage {
   protected clearSearch(): void {
     this.draftSearch.set('');
     this.page.set(1);
-    this.navigateQuery(null);
+    this.navigateQuery({ q: null });
   }
 
   /**
@@ -781,17 +878,62 @@ export class EquipmentsPage {
   }
 
   /**
+   * Method openCreate
+   * @method openCreate
+   * @description Opens the creation sheet, loading its options the first time — browser only, they are secondary UI data.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openCreate(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.facilityOptionsStore.ensureLoaded(this.organizationId());
+    }
+    this.createSheetVisible.set(true);
+  }
+
+  /**
+   * Method onCreateSheetVisibleChange
+   * @method onCreateSheetVisibleChange
+   * @description Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   * @access protected
+   * @since 1.6.0
+   * @param {boolean} visible - Whether the sheet is open.
+   * @returns {void}
+   */
+  protected onCreateSheetVisibleChange(visible: boolean): void {
+    this.createSheetVisible.set(visible);
+
+    if (!visible) this.pendingScopeId.set(null);
+  }
+
+  /**
+   * Method onCreateSubmitted
+   * @method onCreateSubmitted
+   * @description Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The sheet closes and the page navigates once the store reports the new record.
+   * @access protected
+   * @since 1.6.0
+   * @param {CreateEquipmentInput} payload - The validated payload.
+   * @returns {void}
+   */
+  protected onCreateSubmitted(payload: CreateEquipmentInput): void {
+    if (this.store.isCreating()) return;
+
+    this.store.create({ organizationId: this.organizationId(), input: payload });
+  }
+
+  /**
    * Method navigateQuery
    * @description Round-trips `?q=` without disturbing the rest of the URL.
    * @access private
    * @since 1.0.0
-   * @param {string | null} term - The search term to set, or `null` to remove it.
+   * @param {Readonly<Record<string, string | null>>} patch - Query params to merge; `null` removes one.
    * @returns {void}
    */
-  private navigateQuery(term: string | null): void {
+  private navigateQuery(patch: Readonly<Record<string, string | null>>): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { q: term },
+      queryParams: patch,
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

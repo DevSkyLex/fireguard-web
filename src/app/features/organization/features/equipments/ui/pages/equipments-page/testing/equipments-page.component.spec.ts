@@ -27,6 +27,7 @@ import {
   EquipmentKpisStore,
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { EquipmentsPage } from '../equipments-page.component';
 
 const createPage = async (
@@ -100,6 +101,11 @@ describe('EquipmentsPage', () => {
             listCallState,
             totalEquipment,
             isLoadingEquipment: signal(false),
+            createCallState: signal(idleCallState()),
+            isCreating: signal(false),
+            createError: signal(null),
+            create: vi.fn(),
+            resetCreateOperation: vi.fn(),
           },
         },
         {
@@ -115,6 +121,17 @@ describe('EquipmentsPage', () => {
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
+    });
+
+    TestBed.overrideComponent(EquipmentsPage, {
+      set: {
+        providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: { options: signal([]), mapCenter: signal(undefined), ensureLoaded: vi.fn() },
+          },
+        ],
+      },
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -180,11 +197,15 @@ describe('EquipmentsPage', () => {
   it('should offer "New equipment" with the write permission', async () => {
     fixture = await createPage();
 
-    const link: HTMLAnchorElement | null = renderPageActions().querySelector(
+    const button: HTMLButtonElement | null = renderPageActions().querySelector(
       '[data-testid="equipments-new"]',
     );
+    expect(button).not.toBeNull();
 
-    expect(link?.getAttribute('href')).toBe('/organizations/org-1/equipments/create');
+    button?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should show the error state and let the operator retry', async () => {

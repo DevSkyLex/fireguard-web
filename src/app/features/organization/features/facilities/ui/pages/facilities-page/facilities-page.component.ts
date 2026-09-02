@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -17,6 +18,7 @@ import {
   type WritableSignal,
   untracked,
   viewChild,
+  PLATFORM_ID,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,16 +36,21 @@ import {
   lucideSearch,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
+import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
+  FacilityGeocodeOutput,
+  CreateFacilityInput,
   FacilityListSort,
   FacilityOutput,
   FacilitySortField,
 } from '@features/organization/features/facilities/models';
 import { FacilityListPreferencesService } from '@features/organization/features/facilities/services';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import {
   FacilityStore,
   type FacilityStoreType,
@@ -67,6 +74,7 @@ import { HlmLabel } from '@shared/ui/label';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityGrid } from '../../dataviews/facility-grid';
+import { FacilityCreateSheet } from '../../sheets/facility-create-sheet';
 import { FacilityTable } from '../../tables/facility-table';
 
 /** How long typing settles before the search reaches the wire. */
@@ -116,6 +124,7 @@ type FacilityLayout = 'list' | 'grid';
   selector: 'app-facilities-page',
   imports: [
     RouterLink,
+    FacilityCreateSheet,
     NgIcon,
     EmptyState,
     ErrorState,
@@ -133,6 +142,7 @@ type FacilityLayout = 'list' | 'grid';
     ...HlmToggleGroupImports,
   ],
   providers: [
+    FacilityOptionsStore,
     provideIcons({
       lucideLock,
       lucideArchive,
@@ -161,6 +171,26 @@ export class FacilitiesPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property create
+   * @readonly
+   * @description `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create` redirect and the in-app links use. Consumed once, then stripped from the URL.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property parent
+   * @readonly
+   * @description The parent facility the caller pre-picked, bound from `?parent=`, so a record created from a site lands in it. Consumed with `create`.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly parent: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /**
    * Property q
@@ -423,6 +453,57 @@ export class FacilitiesPage {
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
+  /**
+   * Property createSheetVisible
+   * @readonly
+   * @description Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pendingScopeId
+   * @readonly
+   * @description The parent facility a `?parent=` deep link pre-picked for the sheet, cleared when it closes.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly pendingScopeId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property platformId
+   * @readonly
+   * @description Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are browser-only.
+   * @access private
+   * @since 1.6.0
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
+   * Property facilityOptionsStore
+   * @readonly
+   * @description The organization's facilities as parent candidates for the sheet, loaded on first open.
+   * @access protected
+   * @since 1.6.0
+   * @type {FacilityOptionsStore}
+   */
+  protected readonly facilityOptionsStore: FacilityOptionsStore =
+    inject<FacilityOptionsStore>(FacilityOptionsStore);
+
+  /** Whether the sheet's "Locate address" lookup is in flight. */
+  protected readonly geocodePending: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** The latest successful lookup, handed to the sheet. */
+  protected readonly geocodeResult: WritableSignal<FacilityGeocodeOutput | null> =
+    signal<FacilityGeocodeOutput | null>(null);
+
+  /** Whether the latest lookup answered `404` — the form's non-blocking inline message. */
+  protected readonly geocodeNotFound: WritableSignal<boolean> = signal<boolean>(false);
+
   //#region Constructor
   /**
    * Constructor
@@ -439,6 +520,35 @@ export class FacilitiesPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
+    effect((): void => {
+      const requested: boolean = this.create() === '1';
+      const scope: string | undefined = this.parent();
+
+      untracked((): void => {
+        if (!requested || !isPlatformBrowser(this.platformId)) return;
+
+        if (this.canCreate()) {
+          this.pendingScopeId.set(scope ?? null);
+          this.openCreate();
+        }
+        this.navigateQuery({ create: null, parent: null });
+      });
+    });
+
+    effect((): void => {
+      const state: CallState<FacilityOutput | null> = this.store.createCallState();
+
+      untracked((): void => {
+        if (state.status !== 'success' || !state.data) return;
+
+        const created: FacilityOutput = state.data;
+        this.createSheetVisible.set(false);
+        void this.router
+          .navigate([...this.listRouteBase(), created.id])
+          .then((): void => this.store.resetCreateOperation());
+      });
+    });
 
     effect((): void => {
       const term: string = this.searchTerm();
@@ -757,6 +867,97 @@ export class FacilitiesPage {
     );
     this.preferences.write(this.sortOrder());
     this.navigateQuery({ page: null });
+  }
+
+  /**
+   * Method openCreate
+   * @method openCreate
+   * @description Opens the creation sheet, loading its options the first time — browser only, they are secondary UI data.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openCreate(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.facilityOptionsStore.ensureLoaded(this.organizationId());
+    }
+    this.createSheetVisible.set(true);
+  }
+
+  /**
+   * Method onCreateSheetVisibleChange
+   * @method onCreateSheetVisibleChange
+   * @description Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   * @access protected
+   * @since 1.6.0
+   * @param {boolean} visible - Whether the sheet is open.
+   * @returns {void}
+   */
+  protected onCreateSheetVisibleChange(visible: boolean): void {
+    this.createSheetVisible.set(visible);
+
+    if (!visible) this.pendingScopeId.set(null);
+  }
+
+  /**
+   * Method onCreateSubmitted
+   * @method onCreateSubmitted
+   * @description Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The sheet closes and the page navigates once the store reports the new record.
+   * @access protected
+   * @since 1.6.0
+   * @param {CreateFacilityInput} payload - The validated payload.
+   * @returns {void}
+   */
+  protected onCreateSubmitted(payload: CreateFacilityInput): void {
+    if (this.store.isCreating()) return;
+
+    this.store.create({ organizationId: this.organizationId(), input: payload });
+  }
+
+  /**
+   * Method onGeocodeRequested
+   * @method onGeocodeRequested
+   * @description
+   * Resolves the sheet's address draft to coordinates (`FacilityService.geocode`)
+   * and answers through the sheet's `geocodeResult` / `geocodeNotFound` inputs.
+   * A `404` renders inline and never blocks the form; any other refusal — the
+   * endpoint's `429` rate limit, a `400` — surfaces its RFC 7807 `detail` as an
+   * error toast.
+   * @access protected
+   * @since 1.6.0
+   * @param {string} address - The trimmed address the form asked to locate.
+   * @returns {void}
+   */
+  protected onGeocodeRequested(address: string): void {
+    if (this.geocodePending()) return;
+
+    this.geocodePending.set(true);
+    this.geocodeResult.set(null);
+    this.geocodeNotFound.set(false);
+
+    this.facilityService
+      .geocode(this.organizationId(), address)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (match: FacilityGeocodeOutput): void => {
+          this.geocodePending.set(false);
+          this.geocodeResult.set(match);
+        },
+        error: (error: unknown): void => {
+          this.geocodePending.set(false);
+
+          if (isApiError(error) && error.status === 404) {
+            this.geocodeNotFound.set(true);
+            return;
+          }
+
+          this.feedback.error(
+            isApiError(error)
+              ? error.detail
+              : $localize`:@@facility.form.locateFailed:Couldn't locate the address.`,
+          );
+        },
+      });
   }
 
   /**

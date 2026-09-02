@@ -668,8 +668,9 @@ regions with space rather than nesting cards in cards.
 
 ### Back-links
 
-Create pages put an outline back-link in `#pageActions`; detail pages rely on
-the breadcrumb alone; nothing else places a back-link in the content column.
+Detail pages rely on the breadcrumb alone; nothing places a back-link in the
+content column. (Create pages, which used to carry one in `#pageActions`, no
+longer exist — creation is a sheet on the list.)
 
 ### State vocabulary
 
@@ -697,12 +698,18 @@ Which surface an action gets is a decision rule, not a taste. The rule is
 contextual — the deciding question is what the operator must keep, leave, or
 confirm.
 
-1. **Dedicated route page** — creating a record entity (rich form, navigates
-   to the created record): facility, equipment, inspection. Card-wrapped
-   `max-w-xl` form, back-link in `#pageActions`, navigate on success.
-2. **Sheet (right drawer)** — creating or acting **without leaving a working
-   context** (a filtered list, a workspace): intervention create, work item,
-   request-changes, role permissions, participants. **Three named widths, and
+1. **Dedicated route page** — a multi-step workflow only (the onboarding
+   wizard). Creating a record is **not** a page any more: facility, equipment
+   and inspection moved to sheets on their lists on 2026-09-02, so every
+   resource is created the same way.
+2. **Sheet (right drawer)** — creating a record the operator will then open,
+   or acting **without leaving a working context** (a filtered list, a
+   workspace): facility / equipment / inspection / intervention create, work
+   item, request-changes, role permissions, participants. The list page owns
+   the sheet's state and navigates to the created record on success; a
+   `?create=1` query opens the sheet on arrival (with `?parent=` /
+   `?facility=` scoping it) and the retired `/create` segments redirect
+   there, so deep links survive. **Three named widths, and
    the content picks one**: `sm:w-[480px]` for a short form or a list,
    `sm:w-[540px]` for a longer form or a detail read-out, and `sm:w-[560px]`
    for the message thread. A sheet never holds a table: a collection of

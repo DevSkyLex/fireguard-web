@@ -145,10 +145,10 @@
           <span i18n="@@common.clearFilters">Clear filters</span>
         </button>
       } @else if (canCreate()) {
-        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+        <button hlmBtn type="button" (click)="openCreate()">
           <ng-icon name="lucidePlus" aria-hidden="true" />
           <span i18n="@@inspection.newButton">New inspection</span>
-        </a>
+        </button>
       }
     </app-empty-state>
   } @else {
@@ -187,16 +187,27 @@
     <span class="truncate max-sm:hidden" i18n="@@inspection.analyticsButton">Analytics</span>
   </a>
   @if (canCreate()) {
-    <a
+    <button
       hlmBtn
+      type="button"
       class="min-w-0 shrink max-sm:min-h-11"
       data-testid="inspections-new"
       i18n-aria-label="@@inspection.newButton"
       aria-label="New inspection"
-      [routerLink]="[...listRouteBase(), 'create']"
+      (click)="openCreate()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@inspection.newButton">New inspection</span>
-    </a>
+    </button>
   }
 </ng-template>
+
+<app-inspection-create-sheet
+  [visible]="createSheetVisible()"
+  [pending]="store.isCreating()"
+  [serverError]="store.createError()"
+  [equipmentOptions]="creationOptions.equipmentOptions()"
+  [checklists]="checklistStore.checklists()"
+  (visibleChange)="onCreateSheetVisibleChange($event)"
+  (submitted)="onCreateSubmitted($event)"
+/>

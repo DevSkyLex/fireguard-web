@@ -12,7 +12,7 @@ export class InspectionsPage {
   public constructor(private readonly page: Page) {}
 
   public readonly listRoot: Locator = this.page.locator('#inspections');
-  public readonly createRoot: Locator = this.page.locator('#inspection-create');
+  public readonly createRoot: Locator = this.page.getByTestId('inspection-create-sheet');
   public readonly detailRoot: Locator = this.page.locator('#inspection-detail');
 
   public readonly filtersToggle: Locator = this.page.getByTestId('inspections-filters-toggle');
@@ -54,8 +54,9 @@ export class InspectionsPage {
     await this.page.goto(`/organizations/${organizationId}/inspections`);
   }
 
-  public async gotoCreate(organizationId: string): Promise<void> {
-    await this.page.goto(`/organizations/${organizationId}/inspections/create`);
+  /** Lands on the list with the creation sheet open — `?create=1` is the deep link the retired `/create` page redirects to. */
+  public async gotoCreate(organizationId: string, query = ''): Promise<void> {
+    await this.page.goto(`/organizations/${organizationId}/inspections?create=1${query}`);
   }
 
   public async gotoDetail(organizationId: string, inspectionId: string): Promise<void> {

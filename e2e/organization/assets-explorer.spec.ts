@@ -51,9 +51,8 @@ test.describe('Assets explorer', () => {
     await expect(explorer.newEquipment).toBeVisible();
 
     await explorer.newFacility.click();
-    await expect(page).toHaveURL(
-      new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/facilities/create$`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/facilities`));
+    await expect(page.getByTestId('facility-create-sheet')).toBeVisible();
   });
 
   /*
@@ -73,14 +72,14 @@ test.describe('Assets explorer', () => {
 
     await expect(page).toHaveURL(new RegExp(`[?&]facility=${E2E_FACILITY_ID}`));
 
-    // The href is the contract: the operator lands on a form already scoped.
+    // The href is the contract: the operator lands on the list with the sheet open, already scoped.
     await expect(explorer.newEquipment).toHaveAttribute(
       'href',
-      `/organizations/${E2E_ORGANIZATION_ID}/equipments/create?facility=${E2E_FACILITY_ID}`,
+      `/organizations/${E2E_ORGANIZATION_ID}/equipments?create=1&facility=${E2E_FACILITY_ID}`,
     );
     await expect(explorer.newFacility).toHaveAttribute(
       'href',
-      `/organizations/${E2E_ORGANIZATION_ID}/facilities/create?parent=${E2E_FACILITY_ID}`,
+      `/organizations/${E2E_ORGANIZATION_ID}/facilities?create=1&parent=${E2E_FACILITY_ID}`,
     );
   });
 

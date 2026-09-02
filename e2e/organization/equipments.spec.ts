@@ -114,6 +114,8 @@ test.describe('Equipment create', () => {
   test('shows a required-type validation message on empty submit', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
     const equipments = new EquipmentsPage(page);
 
     await equipments.gotoCreate(E2E_ORGANIZATION_ID);
@@ -136,10 +138,13 @@ test.describe('Equipment detail', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
 
+    // The retired `/create` page redirects onto the list with `?create=1`, keeping the scope.
     await page.goto(
       `/organizations/${E2E_ORGANIZATION_ID}/equipments/create?facility=${E2E_FACILITY_ID}`,
     );
+    await expect(page.getByTestId('equipment-create-sheet')).toBeVisible();
 
     await expect(page.getByTestId('equipment-create-facility')).toContainText(
       facilityOutput().name,

@@ -176,10 +176,10 @@
           <span i18n="@@common.clearFilters">Clear filters</span>
         </button>
       } @else if (canCreate()) {
-        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+        <button hlmBtn type="button" (click)="openCreate()">
           <ng-icon name="lucidePlus" aria-hidden="true" />
           <span i18n="@@equipment.newButton">New equipment</span>
-        </a>
+        </button>
       }
     </app-empty-state>
   } @else {
@@ -206,16 +206,27 @@
 
 <ng-template #pageActions>
   @if (canCreate()) {
-    <a
+    <button
       hlmBtn
+      type="button"
       class="min-w-0 shrink max-sm:min-h-11"
       data-testid="equipments-new"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
-      [routerLink]="[...listRouteBase(), 'create']"
+      (click)="openCreate()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
-    </a>
+    </button>
   }
 </ng-template>
+
+<app-equipment-create-sheet
+  [visible]="createSheetVisible()"
+  [pending]="store.isCreating()"
+  [serverError]="store.createError()"
+  [facilityOptions]="facilityOptionsStore.options()"
+  [initialFacilityId]="pendingScopeId()"
+  (visibleChange)="onCreateSheetVisibleChange($event)"
+  (submitted)="onCreateSubmitted($event)"
+/>

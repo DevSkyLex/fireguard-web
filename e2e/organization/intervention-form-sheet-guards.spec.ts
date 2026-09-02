@@ -1,10 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import {
   E2E_MEMBER_IRI,
   interventionOutput,
   interventionStatisticsOutput,
 } from '../support/fixtures/intervention-fixtures';
+import { expectSheetGuardHolds } from '../support/helpers/sheet-guard';
 import { ApiMock } from '../support/mocks/api-mock';
 import { InterventionDetailPage } from '../support/pages/intervention-detail.page';
 import { InterventionsPage } from '../support/pages/interventions.page';
@@ -64,19 +65,6 @@ async function mockDetailPage(api: ApiMock, status: 'in_progress' | 'submitted')
   await mockOrganizationReads(api);
 }
 
-async function expectGuardHolds(
-  page: Page,
-  sheet: ReturnType<Page['getByTestId']>,
-  bail: () => Promise<void>,
-): Promise<void> {
-  await bail();
-  await expect(page.getByTestId('unsaved-changes-dialog')).toBeVisible();
-  await expect(sheet).toBeVisible();
-
-  await page.getByTestId('unsaved-changes-discard').click();
-  await expect(sheet).toBeHidden();
-}
-
 test.describe('Form sheets confirm before discarding a dirty draft', () => {
   test('the create sheet keeps a started draft that Escape would discard', async ({ page }) => {
     const api = new ApiMock(page);
@@ -93,7 +81,7 @@ test.describe('Form sheets confirm before discarding a dirty draft', () => {
     await name.click();
     await name.pressSequentially('Roof round — north wing');
 
-    await expectGuardHolds(page, list.createSheet, () => page.keyboard.press('Escape'));
+    await expectSheetGuardHolds(page, list.createSheet, () => page.keyboard.press('Escape'));
   });
 
   test('the work item sheet keeps a started draft that Cancel would discard', async ({ page }) => {
@@ -111,7 +99,7 @@ test.describe('Form sheets confirm before discarding a dirty draft', () => {
     await page.locator('#intervention-work-item-action').click();
     await page.getByRole('option').first().click();
 
-    await expectGuardHolds(page, sheet, () =>
+    await expectSheetGuardHolds(page, sheet, () =>
       sheet.getByTestId('intervention-work-item-cancel').click(),
     );
   });
@@ -134,6 +122,6 @@ test.describe('Form sheets confirm before discarding a dirty draft', () => {
     await note.click();
     await note.pressSequentially('Re-check the third floor.');
 
-    await expectGuardHolds(page, sheet, () => page.keyboard.press('Escape'));
+    await expectSheetGuardHolds(page, sheet, () => page.keyboard.press('Escape'));
   });
 });

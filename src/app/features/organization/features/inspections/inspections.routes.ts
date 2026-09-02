@@ -1,9 +1,35 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { inspectionResolver, inspectionTitleResolver } from './http/resolvers';
 import { InspectionStore, NonConformityStatisticsStore } from './state';
+
+/**
+ * Function redirectToCreateSheet
+ *
+ * @description
+ * `/create` is no longer a page: creation happens in a sheet on the list.
+ * The segment survives as a functional `redirectTo` onto the list with
+ * `?create=1` merged into whatever the incoming URL carried (`?equipment=`,
+ * a filter), so bookmarks and older links still open the sheet, pre-scoped.
+ * The write-permission guard the page carried does not run on a redirect;
+ * the list page ignores `?create=1` without the write permission instead.
+ *
+ * @since 1.6.0
+ *
+ * @param {RedirectData} redirectData - The matched segment's params and query.
+ *
+ * @returns {UrlTree} The list URL with `create=1` merged in.
+ */
+const redirectToCreateSheet: RedirectFunction = (redirectData) => {
+  const router: Router = inject(Router);
+  const organizationId: string | null = redirectData.paramMap.get('organizationId');
+
+  return router.createUrlTree(['/organizations', organizationId, 'inspections'], {
+    queryParams: { ...redirectData.queryParams, create: '1' },
+  });
+};
 
 /**
  * Constant INSPECTION_ROUTES
@@ -59,16 +85,7 @@ export const INSPECTION_ROUTES: Routes = [
       },
       {
         path: 'create',
-        providers: [InspectionStore],
-        canActivate: [
-          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_WRITE] }),
-        ],
-        canDeactivate: [unsavedChangesGuard],
-        loadComponent: () =>
-          import('./ui/pages/inspection-create-page/inspection-create-page.component').then(
-            (m) => m.InspectionCreatePage,
-          ),
-        title: $localize`:@@route.inspection.create:Create Inspection`,
+        redirectTo: redirectToCreateSheet,
       },
       {
         path: 'analytics',

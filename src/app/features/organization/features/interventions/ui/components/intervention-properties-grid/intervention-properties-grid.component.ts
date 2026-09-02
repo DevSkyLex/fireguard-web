@@ -30,6 +30,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
+import { PersonOption } from '@shared/person-option';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -100,6 +101,7 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
+    PersonOption,
     OrgDatePipe,
     NgIcon,
     RouterLink,
@@ -521,7 +523,8 @@ export class InterventionPropertiesGrid {
    * @type {(value: string) => string}
    */
   protected readonly siteLabelOf: (value: string) => string = (value) =>
-    this.siteOptions().find((option) => option.value === value)?.label ?? value;
+    this.siteOptions().find((option) => option.value === value)?.label ??
+    $localize`:@@common.unknownSite:Unknown site`;
 
   /**
    * Property labelNameOf
@@ -532,7 +535,8 @@ export class InterventionPropertiesGrid {
    * @type {(value: string) => string}
    */
   protected readonly labelNameOf: (value: string) => string = (value) =>
-    this.labelOptions().find((option) => option.id === value)?.name ?? value;
+    this.labelOptions().find((option) => option.id === value)?.name ??
+    $localize`:@@common.unknownLabel:Unknown label`;
   //#endregion
 
   //#region Methods

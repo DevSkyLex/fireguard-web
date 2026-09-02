@@ -134,11 +134,12 @@ describe('CollectionFilterSelect', () => {
     expect(label?.className).toContain('sr-only');
   });
 
-  it('should fall back to the raw value when it is absent from the catalog', async () => {
+  it('should name an unknown value instead of leaking the raw key', async () => {
     fixture.componentInstance.value.set('archived');
     await fixture.whenStable();
 
-    expect(trigger().textContent).toContain('archived');
+    expect(trigger().textContent).toContain('Unknown value');
+    expect(trigger().textContent).not.toContain('archived');
   });
 
   it('should keep the trigger focusable and mark it aria-disabled while disabled', async () => {

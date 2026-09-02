@@ -6,6 +6,8 @@ export type { FacilityState } from './facility';
 export { facilityStoreEvents } from './facility';
 export { FacilityStore } from './facility';
 export type { FacilityStoreType } from './facility';
+export type { FacilityOptionsState, FacilityOptionsStoreType } from './facility-options';
+export { facilityOptionsStoreEvents, FacilityOptionsStore } from './facility-options';
 export type { FacilityEquipmentStatusRow, FacilityOverviewState } from './facility-overview';
 export { FacilityOverviewStore } from './facility-overview';
 export { facilityTreeStoreEvents } from './facility-tree';

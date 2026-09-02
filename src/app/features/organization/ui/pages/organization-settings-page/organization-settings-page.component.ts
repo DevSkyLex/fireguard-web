@@ -55,10 +55,12 @@ import type {
   OrganizationOutput,
   OrganizationRegionalSettings,
   OrganizationTransferOwnershipConfirmedEvent,
+  MemberSelectOption,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { toMemberSelectOption } from '@features/organization/utils';
 import { AT_LEAST_LG, mediaQuery } from '@shared/breakpoint';
 import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -898,11 +900,11 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.6.0
-   * @type {WritableSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {WritableSignal<readonly MemberSelectOption[]>}
    */
-  protected readonly transferCandidates: WritableSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  protected readonly transferCandidates: WritableSignal<readonly MemberSelectOption[]> = signal<
+    readonly MemberSelectOption[]
+  >([]);
 
   /**
    * Property approvalActionTypes
@@ -1137,10 +1139,9 @@ export class OrganizationSettingsPage {
             .filter(
               (member: OrganizationMemberOutput): boolean => member.isActive && !member.isOwner,
             )
-            .map((member: OrganizationMemberOutput) => ({
-              value: member.userId,
-              label: this.memberDisplayName(member),
-            })),
+            .map((member: OrganizationMemberOutput): MemberSelectOption =>
+              toMemberSelectOption(member, organizationId, member.userId),
+            ),
         );
       });
     });
@@ -1730,35 +1731,6 @@ export class OrganizationSettingsPage {
       newOwnerUserId: event.newOwnerUserId,
       slug,
     });
-  }
-
-  /**
-   * Method memberDisplayName
-   * @method memberDisplayName
-   *
-   * @description
-   * The name a transfer-candidate option shows: the API's `displayName`, or
-   * the first/last name pair, or the email, in that order — the same
-   * fallback chain `OrganizationMemberTable.nameOf` applies to a row (two
-   * consumers, not a third yet, so this stays page-local rather than
-   * extracted, `ARCHITECTURE.md` §2.9).
-   *
-   * @access private
-   * @since 1.6.0
-   *
-   * @param {OrganizationMemberOutput} member - The candidate member.
-   *
-   * @returns {string} The name to render.
-   */
-  private memberDisplayName(member: OrganizationMemberOutput): string {
-    if (member.displayName) return member.displayName;
-
-    const composed: string = [member.firstName, member.lastName]
-      .filter((part): part is string => !!part)
-      .join(' ');
-    if (composed) return composed;
-
-    return member.email ?? $localize`:@@org.settings.danger.transferMemberUnnamed:Member`;
   }
 
   /**

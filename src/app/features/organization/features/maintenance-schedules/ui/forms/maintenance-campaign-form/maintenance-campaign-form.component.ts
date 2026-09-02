@@ -199,7 +199,10 @@ export class MaintenanceCampaignForm {
       return $localize`:@@maintenance.campaignDialog.everyFacility:Every facility`;
     }
 
-    return this.facilityOptions().find((option) => option.value === value)?.label ?? value;
+    return (
+      this.facilityOptions().find((option) => option.value === value)?.label ??
+      $localize`:@@common.unknownFacility:Unknown facility`
+    );
   };
 
   /**
@@ -215,7 +218,10 @@ export class MaintenanceCampaignForm {
       return $localize`:@@maintenance.campaignDialog.everyType:Every type`;
     }
 
-    return this.equipmentTypeOptions.find((option) => option.value === value)?.label ?? value;
+    return (
+      this.equipmentTypeOptions.find((option) => option.value === value)?.label ??
+      $localize`:@@common.unknownType:Unknown type`
+    );
   };
 
   /**

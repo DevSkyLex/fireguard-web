@@ -253,10 +253,13 @@ export class OrganizationApprovalForm {
    * @access protected
    * @since 1.0.0
    * @param {string} value - The action-type key.
-   * @returns {string} The catalog label, or the raw key if not found.
+   * @returns {string} The catalog label, or a localized "Unknown type" — never the raw key.
    */
   protected actionTypeLabelOf(value: string): string {
-    return this.actionTypes().find((type) => type.value === value)?.label ?? value;
+    return (
+      this.actionTypes().find((type) => type.value === value)?.label ??
+      $localize`:@@common.unknownType:Unknown type`
+    );
   }
 
   /**

@@ -36,8 +36,17 @@
               <hlm-combobox-item
                 [value]="option.value"
                 [attr.data-testid]="'equipment-facility-option-' + option.value"
-                >{{ option.label }}</hlm-combobox-item
               >
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.label }}</span>
+                  <span class="truncate text-xs text-muted-foreground"
+                    >{{ option.typeLabel }}
+                    @if (option.pathLabel; as path) {
+                      · {{ path }}
+                    }
+                  </span>
+                </div>
+              </hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>

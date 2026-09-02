@@ -34,12 +34,18 @@
         >No member matches.</hlm-combobox-empty
       >
       <div hlmComboboxList>
-        @for (candidate of candidates(); track candidate.memberId) {
+        @for (option of candidates(); track option.value) {
           <hlm-combobox-item
-            [value]="candidate.memberId"
-            [attr.data-testid]="'organization-team-member-add-option-' + candidate.memberId"
-            >{{ candidate.label }}</hlm-combobox-item
+            [value]="option.value"
+            [attr.data-testid]="'organization-team-member-add-option-' + option.value"
           >
+            <app-person-option
+              [name]="option.displayName"
+              [secondary]="option.roleLabel"
+              [avatarUrl]="option.avatarUrl"
+              [initials]="option.initials"
+            />
+          </hlm-combobox-item>
         }
       </div>
     </hlm-combobox-content>

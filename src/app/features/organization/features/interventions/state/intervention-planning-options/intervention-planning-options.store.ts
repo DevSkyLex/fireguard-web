@@ -16,17 +16,15 @@ import {
   type StoreError,
 } from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import {
   InterventionLabelService,
   InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
-import type {
-  MemberSelectOption,
-  SelectOption,
-} from '@features/organization/features/interventions/models';
-import type { OrganizationMemberOutput } from '@features/organization/models';
+import type { SelectOption } from '@features/organization/features/interventions/models';
+import { toMemberSelectOption } from '@features/organization/utils';
 import { interventionPlanningOptionsStoreEvents } from './events';
 import type { InterventionPlanningOptionsState } from './models';
 
@@ -52,54 +50,6 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
  * @type {number}
  */
 const PLANNING_OPTION_PAGE_SIZE = 100;
-
-/**
- * Function memberOption
- * @function memberOption
- *
- * @description
- * Maps a raw organization member to a {@link MemberSelectOption} for
- * use in planning and participant selectors. Derives display name and
- * initials from available member properties.
- *
- * @since 1.0.0
- *
- * @param {OrganizationMemberOutput} member - Raw organization member.
- * @param {string} organizationId - Organization owning the member.
- *
- * @returns {MemberSelectOption} Mapped selector option.
- */
-function memberOption(
-  member: OrganizationMemberOutput,
-  organizationId: string,
-): MemberSelectOption {
-  const displayName: string =
-    member.displayName?.trim() ||
-    [member.firstName, member.lastName].filter(Boolean).join(' ').trim() ||
-    member.userId;
-  const initials: string =
-    [member.firstName, member.lastName]
-      .filter(Boolean)
-      .map((part) => part?.charAt(0))
-      .join('')
-      .toUpperCase() ||
-    displayName
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() ||
-    '?';
-
-  return {
-    label: displayName,
-    value: `/api/organizations/${organizationId}/members/${member.id}`,
-    displayName,
-    roleLabel: member.roleNames?.join(', ') || $localize`:@@intervention.noRole:No assigned role`,
-    avatarUrl: member.avatarUrl ?? null,
-    initials,
-  };
-}
 
 /**
  * Store InterventionPlanningOptionsStore
@@ -266,7 +216,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               patchState(store, {
                 sites,
                 members: (result.members?.member ?? []).map((member) =>
-                  memberOption(member, result.organizationId),
+                  toMemberSelectOption(member, result.organizationId),
                 ),
                 labels: result.labels?.member ?? [],
                 templates: result.templates?.member ?? [],
@@ -388,13 +338,19 @@ export const InterventionPlanningOptionsStore = signalStore(
                     label: facility.name,
                     value: `/api/facilities/${facility.id}`,
                   })),
-                  ...(result.equipment?.member ?? []).map((item) => ({
-                    label: `${item.type} · ${item.serialNumber || item.id}`,
-                    value: `/api/equipment/${item.id}`,
-                  })),
+                  ...(result.equipment?.member ?? []).map((item) => {
+                    const typeLabel: string =
+                      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)?.label ??
+                      item.type.replace(/_/g, ' ');
+
+                    return {
+                      label: item.serialNumber ? `${typeLabel} · ${item.serialNumber}` : typeLabel,
+                      value: `/api/equipment/${item.id}`,
+                    };
+                  }),
                 ],
                 members: (result.members?.member ?? []).map((member) =>
-                  memberOption(member, result.organizationId),
+                  toMemberSelectOption(member, result.organizationId),
                 ),
                 labels: result.labels?.member ?? [],
                 loadCallState:

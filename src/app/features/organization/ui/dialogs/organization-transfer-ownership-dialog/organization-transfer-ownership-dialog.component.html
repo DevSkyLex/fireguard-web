@@ -45,8 +45,14 @@
               <hlm-combobox-item
                 [value]="candidate.value"
                 [attr.data-testid]="'organization-transfer-candidate-' + candidate.value"
-                >{{ candidate.label }}</hlm-combobox-item
               >
+                <app-person-option
+                  [name]="candidate.displayName"
+                  [secondary]="candidate.roleLabel"
+                  [avatarUrl]="candidate.avatarUrl"
+                  [initials]="candidate.initials"
+                />
+              </hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>

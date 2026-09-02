@@ -891,3 +891,17 @@ organization-scoped read never carries `revision`, then sends the required
 - `FacilityPlanOverlay` never injects a store or service, and never navigates itself — it emits, the page selects (and only its panel's explicit "View record" action navigates).
 - `/:facilityId/3d` is browser-only: `FacilityBuilding3dStore.loadModel` never fires on the server, and `FacilityBuilding3dPage` orchestrates it (route params, WebGL detection, the five states) — no child of that page ever injects a store or reads `window`/`document` outside `afterNextRender`.
 - `FacilityBuilding3dScene` never injects a store or service and never navigates itself — it emits, the page acts. Its mount is guarded by a monotonic generation token so an async continuation that resolves after teardown never attaches a live renderer to a dead scene, and its teardown disposes every geometry and material in the building group exactly once, cancels every pending `requestAnimationFrame`, and disconnects its `ResizeObserver` — no permanent render loop ever runs; rendering is invalidate-on-demand.
+
+## Published Contracts
+
+- **`FacilityOption` + `toFacilityOption` + `FacilityOptionsStore`** (`models/`,
+  `utils/`, `state/facility-options/`) — the one shape every facility picker
+  renders: name, localized type, ancestor path (" › "), address. The
+  component-scoped store loads the organization's facilities once per page
+  (browser only, `ensureLoaded`) and derives the options plus a map centre;
+  `FacilityStore`'s paginated root list is **not** an option source. Consumers:
+  `facility-create-page`, `facility-move-dialog` (through the assets page),
+  `equipment-create-page` / `equipment-detail-page` /
+  `equipment-assign-facility-dialog` (equipments imports the `models` and
+  `state` barrels for this alone). A picker never formats a facility on its own
+  and never falls back to a raw id on its trigger.

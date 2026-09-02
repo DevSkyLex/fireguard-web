@@ -149,11 +149,12 @@ export class EquipmentInformationPanel {
    *
    * `EquipmentOutput.type` is a raw `string` (the backend keeps the field
    * open beyond the current catalog), so this reads `string`, not
-   * `EquipmentType`, and falls back to the raw value for one the catalog
-   * does not know.
+   * `EquipmentType`, and names one the catalog does not know "Unknown type"
+   * rather than printing the raw key.
    */
   protected readonly typeLabelOf: (value: string) => string = (value) =>
-    this.typeOptions.find((option) => option.value === (value as EquipmentType))?.label ?? value;
+    this.typeOptions.find((option) => option.value === (value as EquipmentType))?.label ??
+    $localize`:@@common.unknownType:Unknown type`;
   //#endregion
 
   //#region Methods

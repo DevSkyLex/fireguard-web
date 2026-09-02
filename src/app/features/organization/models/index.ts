@@ -8,6 +8,7 @@ export type { OrganizationInvitationPreviewOutput } from './member/organization-
 export type { OrganizationInvitationStatus } from './member/organization-invitation-status.type';
 export type { OrganizationInvitationListQuery } from './member/organization-invitation-list-query.interface';
 export type { MemberDirectoryEntry } from './member/member-directory-entry.interface';
+export type { MemberSelectOption } from './member/member-select-option.interface';
 export type { OrganizationMemberOutput } from './member/organization-member-output.interface';
 export type { CurrentOrganizationMemberProfileOutput } from './member/current-organization-member-profile-output.interface';
 export type {

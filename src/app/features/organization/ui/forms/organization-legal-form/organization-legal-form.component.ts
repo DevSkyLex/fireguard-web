@@ -137,7 +137,8 @@ export class OrganizationLegalForm {
   protected readonly legalTypeLabel = (value: string): string =>
     value === UNSET_LEGAL_TYPE
       ? this.unsetLegalTypeLabel
-      : (this.legalTypeOptions().find((option) => option.value === value)?.label ?? value);
+      : (this.legalTypeOptions().find((option) => option.value === value)?.label ??
+        $localize`:@@common.unknownType:Unknown type`);
 
   /**
    * Property model

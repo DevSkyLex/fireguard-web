@@ -7,9 +7,13 @@ import { idleCallState, successCallState, type CallState } from '@core/request-s
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   CreateFacilityInput,
+  FacilityOption,
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
-import { FacilityStore } from '@features/organization/features/facilities/state';
+import {
+  FacilityOptionsStore,
+  FacilityStore,
+} from '@features/organization/features/facilities/state';
 import { FacilityCreatePage } from '../facility-create-page.component';
 
 const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
@@ -34,22 +38,22 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
 describe('FacilityCreatePage', () => {
   let fixture: ComponentFixture<FacilityCreatePage>;
   let create: ReturnType<typeof vi.fn>;
-  let ensureParentOptionsLoaded: ReturnType<typeof vi.fn>;
+  let ensureLoaded: ReturnType<typeof vi.fn>;
   let resetCreateOperation: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let geocode: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
-  let facilities: WritableSignal<readonly FacilityOutput[]>;
+  let options: WritableSignal<readonly FacilityOption[]>;
   let createCallState: WritableSignal<CallState<FacilityOutput | null>>;
   let isCreating: WritableSignal<boolean>;
 
   beforeEach(async () => {
     create = vi.fn();
-    ensureParentOptionsLoaded = vi.fn();
+    ensureLoaded = vi.fn();
     resetCreateOperation = vi.fn();
     geocode = vi.fn();
     feedbackError = vi.fn();
-    facilities = signal<readonly FacilityOutput[]>([]);
+    options = signal<readonly FacilityOption[]>([]);
     createCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
     isCreating = signal<boolean>(false);
 
@@ -63,15 +67,23 @@ describe('FacilityCreatePage', () => {
           provide: FacilityStore,
           useValue: {
             create,
-            ensureParentOptionsLoaded,
             resetCreateOperation,
             createCallState,
             isCreating,
             createError: signal(null),
-            facilities,
           },
         },
       ],
+    });
+    TestBed.overrideComponent(FacilityCreatePage, {
+      set: {
+        providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: { ensureLoaded, options, mapCenter: signal(undefined) },
+          },
+        ],
+      },
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -82,20 +94,21 @@ describe('FacilityCreatePage', () => {
   });
 
   it('should load candidate parents for the workspace on arrival', () => {
-    expect(ensureParentOptionsLoaded).toHaveBeenCalledWith('org-1');
+    expect(ensureLoaded).toHaveBeenCalledWith('org-1');
   });
 
-  it('should offer the store’s cached facilities as parent options', async () => {
-    facilities.set([
-      facility({ id: 'f-1', name: 'Site A' }),
-      facility({ id: 'f-2', name: 'Site B' }),
-    ]);
+  it('should offer the option store’s facilities as parent options', async () => {
+    const siteA: FacilityOption = {
+      value: 'f-1',
+      label: 'Site A',
+      typeLabel: 'Site',
+      pathLabel: null,
+      address: null,
+    };
+    options.set([siteA]);
     await fixture.whenStable();
 
-    expect(fixture.componentInstance['parentOptions']()).toEqual([
-      { value: 'f-1', label: 'Site A' },
-      { value: 'f-2', label: 'Site B' },
-    ]);
+    expect(fixture.componentInstance['parentOptions']()).toEqual([siteA]);
   });
 
   it('should send the submitted payload to the store', () => {

@@ -13,7 +13,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { OrganizationTransferOwnershipConfirmedEvent } from '@features/organization/models';
+import type {
+  OrganizationTransferOwnershipConfirmedEvent,
+  MemberSelectOption,
+} from '@features/organization/models';
+import { PersonOption } from '@shared/person-option';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldLabel } from '@shared/ui/field';
@@ -57,7 +61,7 @@ const NO_CANDIDATE_VALUE = '';
  */
 @Component({
   selector: 'app-organization-transfer-ownership-dialog',
-  imports: [HlmFieldLabel, HlmInput, ...HlmAlertDialogImports, ...HlmComboboxImports],
+  imports: [PersonOption, HlmFieldLabel, HlmInput, ...HlmAlertDialogImports, ...HlmComboboxImports],
   templateUrl: './organization-transfer-ownership-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -89,11 +93,11 @@ export class OrganizationTransferOwnershipDialog {
    * @description Active, non-owner members eligible to receive ownership — `value` is each candidate's `userId`.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {InputSignal<readonly MemberSelectOption[]>}
    */
-  public readonly candidates: InputSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  public readonly candidates: InputSignal<readonly MemberSelectOption[]> = input<
+    readonly MemberSelectOption[]
+  >([]);
 
   /**
    * Property pending
@@ -187,7 +191,7 @@ export class OrganizationTransferOwnershipDialog {
    * @type {(value: string) => string}
    */
   protected readonly candidateLabelOf = (value: string): string =>
-    this.candidates().find((candidate) => candidate.value === value)?.label ?? '';
+    this.candidates().find((candidate) => candidate.value === value)?.displayName ?? '';
 
   /**
    * Property confirmLabel

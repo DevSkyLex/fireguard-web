@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   inject,
@@ -13,7 +14,6 @@ import {
   type WritableSignal,
   type TemplateRef,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -26,7 +26,8 @@ import {
   EquipmentStore,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { UnsavedChangesDialog, type UnsavedChangesAware } from '@shared/unsaved-changes';
@@ -57,12 +58,11 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-/** One page is enough to offer every site of a normal organization. */
-const FACILITY_OPTIONS_PAGE_SIZE = 200;
 
 @Component({
   selector: 'app-equipment-create-page',
   imports: [RouterLink, EquipmentCreateForm, UnsavedChangesDialog, HlmButton, ...HlmCardImports],
+  providers: [FacilityOptionsStore],
   templateUrl: './equipment-create-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,9 +97,9 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
   public readonly facility: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /** The organization's sites, offered by the form's Site field. */
-  protected readonly facilityOptions: WritableSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  protected readonly facilityOptions: Signal<readonly FacilityOption[]> = computed(() =>
+    this.facilityOptionsStore.options(),
+  );
   //#endregion
 
   //#region Properties
@@ -109,7 +109,8 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
 
-  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+  private readonly facilityOptionsStore: FacilityOptionsStore =
+    inject<FacilityOptionsStore>(FacilityOptionsStore);
 
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
@@ -145,16 +146,7 @@ export class EquipmentCreatePage implements UnsavedChangesAware {
     effect((): void => {
       const organizationId: string = this.organizationId();
 
-      untracked((): void => {
-        this.facilityService
-          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((response) => {
-            this.facilityOptions.set(
-              response.member.map((facility) => ({ label: facility.name, value: facility.id })),
-            );
-          });
-      });
+      untracked((): void => this.facilityOptionsStore.ensureLoaded(organizationId));
     });
 
     effect((): void => {

@@ -48,6 +48,7 @@ import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constan
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
 import type {
+  FacilityOption,
   FacilityMoveRequest,
   FacilityMoveSubmittedEvent,
   FacilityOutput,
@@ -57,7 +58,10 @@ import {
   type FacilityTreeStoreType,
 } from '@features/organization/features/facilities/state';
 import { FacilityMoveDialog } from '@features/organization/features/facilities/ui/dialogs';
-import { facilityToTreeNode } from '@features/organization/features/facilities/utils';
+import {
+  facilityToTreeNode,
+  toFacilityOption,
+} from '@features/organization/features/facilities/utils';
 import { InspectionStatusTag } from '@features/organization/features/inspections/ui/components/inspection-status-tag';
 import {
   ORGANIZATION_PERMISSION,
@@ -354,11 +358,9 @@ export class OrganizationAssetsPage {
    * @readonly
    * @access protected
    * @since 1.1.0
-   * @type {Signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {Signal<readonly FacilityOption[]>}
    */
-  protected readonly moveOptions: Signal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = computed(() => {
+  protected readonly moveOptions: Signal<readonly FacilityOption[]> = computed(() => {
     const target: FacilityMoveRequest | null = this.moveTarget();
     if (target === null) return [];
 
@@ -374,7 +376,7 @@ export class OrganizationAssetsPage {
           facility.id !== target.facilityId &&
           !this.isLoadedDescendant(target.facilityId, facility.id),
       )
-      .map((facility) => ({ value: facility.id, label: facility.name }));
+      .map(toFacilityOption);
   });
 
   /** Whether the member may re-parent facilities — gates both drag-drop and the "Move to…" menu action. */

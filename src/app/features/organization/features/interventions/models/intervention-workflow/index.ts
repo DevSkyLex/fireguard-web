@@ -11,5 +11,5 @@ export type { InterventionPlanningDetails } from './intervention-planning-detail
 export type { InterventionScanResult } from './intervention-scan-result.type';
 export type { InterventionTransitionRequest } from './intervention-transition-request.interface';
 export type { InterventionWorkItemStatusChange } from './intervention-work-item-status-change.interface';
-export type { MemberSelectOption } from './member-select-option.interface';
+export type { MemberSelectOption } from '@features/organization/models';
 export type { SelectOption } from './select-option.interface';

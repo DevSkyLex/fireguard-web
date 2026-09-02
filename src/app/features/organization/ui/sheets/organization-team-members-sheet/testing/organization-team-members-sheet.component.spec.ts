@@ -147,7 +147,7 @@ describe('OrganizationTeamMembersSheet', () => {
     await create({ orgMembers: [ORG_MEMBER, OTHER_ORG_MEMBER] });
 
     expect(fixture.componentInstance['candidates']()).toEqual([
-      { memberId: 'member-2', label: 'Grace Hopper' },
+      expect.objectContaining({ value: 'member-2', displayName: 'Grace Hopper' }),
     ]);
   });
 

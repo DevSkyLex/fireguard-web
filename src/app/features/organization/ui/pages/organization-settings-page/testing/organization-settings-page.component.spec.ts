@@ -702,7 +702,7 @@ describe('OrganizationSettingsPage', () => {
 
     expect(listAllMembers).toHaveBeenCalledWith('org-1');
     expect(fixture.componentInstance['transferCandidates']()).toEqual([
-      { value: 'user-2', label: 'Jane Doe' },
+      expect.objectContaining({ value: 'user-2', label: 'Jane Doe', displayName: 'Jane Doe' }),
     ]);
   });
 

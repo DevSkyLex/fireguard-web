@@ -49,7 +49,8 @@ import {
   buildEquipmentTitle,
   fileToBase64,
 } from '@features/organization/features/equipments/utils';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { resolveCsvExportErrorDetail } from '@features/organization/utils';
@@ -67,9 +68,6 @@ import { EquipmentTags } from '../../components/equipment-tags';
 import { EquipmentAssignFacilityDialog } from '../../dialogs/equipment-assign-facility-dialog';
 import { EquipmentDecommissionDialog } from '../../dialogs/equipment-decommission-dialog';
 import type { EquipmentDetailTabId } from './models';
-
-/** How many facilities the assignment picker fetches — organizations rarely exceed this. */
-const FACILITY_OPTIONS_PAGE_SIZE = 200;
 
 /** The equipment properties this page has open, writing or showing a rejection. */
 const IDLE_EDIT_STATE: EquipmentEditState = {
@@ -154,6 +152,8 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     ...HlmTabsImports,
   ],
   providers: [
+    FacilityOptionsStore,
+
     provideIcons({ lucideCircleAlert, lucideDownload, lucideMapPin, lucidePencil, lucideWrench }),
   ],
   templateUrl: './equipment-detail-page.component.html',
@@ -208,7 +208,8 @@ export class EquipmentDetailPage {
    * cross-feature dependency (`FEATURE.md` "Cross-Feature Dependencies"),
    * mirroring `MaintenanceSchedulesPage`.
    */
-  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+  private readonly facilityOptionsStore: FacilityOptionsStore =
+    inject<FacilityOptionsStore>(FacilityOptionsStore);
 
   /**
    * The equipment transport service, injected directly (not through the
@@ -258,9 +259,9 @@ export class EquipmentDetailPage {
   >(new Set<string>());
 
   /** The organization's facilities, preloaded for the assignment dialog. */
-  protected readonly facilityOptions: WritableSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = signal([]);
+  protected readonly facilityOptions: Signal<readonly FacilityOption[]> = computed(() =>
+    this.facilityOptionsStore.options(),
+  );
 
   /** Whether the facility assignment dialog is open. */
   protected readonly assignFacilityDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -405,16 +406,7 @@ export class EquipmentDetailPage {
     effect((): void => {
       const organizationId: string = this.organizationId();
 
-      untracked((): void => {
-        this.facilityService
-          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((response) => {
-            this.facilityOptions.set(
-              response.member.map((facility) => ({ label: facility.name, value: facility.id })),
-            );
-          });
-      });
+      untracked((): void => this.facilityOptionsStore.ensureLoaded(organizationId));
     });
 
     effect((): void => {

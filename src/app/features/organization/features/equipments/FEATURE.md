@@ -232,6 +232,12 @@ Utility:
   `facilities`; the equipment side of the assignment stays on
   `EquipmentStore.assignToFacility` / `unassignFromFacility`.
 
+- Facility pickers (`equipment-create-form`, `equipment-assign-facility-dialog`)
+  take `FacilityOption[]` from the facilities feature's `models` barrel, and the
+  create/detail pages provide the facilities feature's `FacilityOptionsStore`
+  (its `state` barrel) instead of listing facilities inline — one loader, one
+  option shape, no raw id on a trigger.
+
 ## Deletion (data-access only, no duplicate UI)
 
 `EquipmentService.remove` / `EquipmentStore.remove` call the canonical

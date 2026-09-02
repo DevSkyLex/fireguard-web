@@ -19,7 +19,7 @@ import type {
   CreateInspectionInput,
   InspectionResult,
   InspectorType,
-  SelectOption,
+  EquipmentSelectOption,
 } from '@features/organization/features/inspections/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -117,10 +117,10 @@ export class InspectionCreateForm {
    * @description The organization's equipment, offered by the equipment combobox.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<readonly SelectOption[]>}
+   * @type {InputSignal<readonly EquipmentSelectOption[]>}
    */
-  public readonly equipmentOptions: InputSignal<readonly SelectOption[]> = input<
-    readonly SelectOption[]
+  public readonly equipmentOptions: InputSignal<readonly EquipmentSelectOption[]> = input<
+    readonly EquipmentSelectOption[]
   >([]);
 
   /**
@@ -234,7 +234,7 @@ export class InspectionCreateForm {
 
   /** Names a picked equipment on the closed combobox trigger. */
   protected readonly equipmentLabelOf: (value: string) => string = (value: string): string =>
-    this.equipmentOptions().find((option: SelectOption): boolean => option.value === value)
+    this.equipmentOptions().find((option: EquipmentSelectOption): boolean => option.value === value)
       ?.label ?? '';
 
   /** Names an inspector type on the closed select trigger. */

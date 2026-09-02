@@ -24,15 +24,16 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
+  FacilityOption,
   CreateFacilityInput,
   FacilityGeocodeOutput,
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
 import {
+  FacilityOptionsStore,
   FacilityStore,
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
-import { resolveFacilityMapCenter } from '@features/organization/features/facilities/utils';
 import type { MapCoordinates } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -67,6 +68,7 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
 @Component({
   selector: 'app-facility-create-page',
   imports: [RouterLink, FacilityCreateForm, UnsavedChangesDialog, HlmButton, ...HlmCardImports],
+  providers: [FacilityOptionsStore],
   templateUrl: './facility-create-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,6 +100,17 @@ export class FacilityCreatePage implements UnsavedChangesAware {
   /** The store this route provided. */
   protected readonly store: FacilityStoreType = inject<FacilityStoreType>(FacilityStore);
 
+  /**
+   * Property facilityOptionsStore
+   * @readonly
+   * @description The organization's facilities as parent candidates, loaded once in the browser.
+   * @access private
+   * @since 1.3.0
+   * @type {FacilityOptionsStore}
+   */
+  private readonly facilityOptionsStore: FacilityOptionsStore =
+    inject<FacilityOptionsStore>(FacilityOptionsStore);
+
   /** Router used to open the new record once it exists. */
   private readonly router: Router = inject(Router);
 
@@ -126,15 +139,10 @@ export class FacilityCreatePage implements UnsavedChangesAware {
    * @description The organization's facilities, offered as candidate parents.
    * @access protected
    * @since 1.0.0
-   * @type {Signal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {Signal<readonly FacilityOption[]>}
    */
-  protected readonly parentOptions: Signal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = computed(() =>
-    this.store.facilities().map((facility: FacilityOutput) => ({
-      value: facility.id,
-      label: facility.name,
-    })),
+  protected readonly parentOptions: Signal<readonly FacilityOption[]> = computed(() =>
+    this.facilityOptionsStore.options(),
   );
 
   /**
@@ -146,7 +154,7 @@ export class FacilityCreatePage implements UnsavedChangesAware {
    * @type {Signal<MapCoordinates | undefined>}
    */
   protected readonly mapCenter: Signal<MapCoordinates | undefined> = computed(() =>
-    resolveFacilityMapCenter(null, this.store.facilities()),
+    this.facilityOptionsStore.mapCenter(),
   );
 
   /** Whether {@link FacilityCreateForm}'s field tree currently holds unsaved work. */
@@ -181,7 +189,7 @@ export class FacilityCreatePage implements UnsavedChangesAware {
     effect((): void => {
       const organizationId: string = this.organizationId();
 
-      untracked((): void => this.store.ensureParentOptionsLoaded(organizationId));
+      untracked((): void => this.facilityOptionsStore.ensureLoaded(organizationId));
     });
 
     effect((): void => {

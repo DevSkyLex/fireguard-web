@@ -976,6 +976,15 @@ Internal code imports deep paths directly.
   through its own template; it creates, edits and deletes nothing here, and owns no intervention
   state.
 
+- `MemberSelectOption` now lives in `@features/organization/models` (this
+  feature re-exports it from its `models` barrel for its own consumers) and is
+  built by `toMemberSelectOption` from `@features/organization/utils` —
+  `InterventionPlanningOptionsStore` no longer carries a private mapper. Every
+  member picker (assign dialog, properties grid, work-item form, create sheet,
+  recurrence form) renders `app-person-option` (`@shared/person-option`):
+  avatar, name, role. A trigger whose value left the option list reads a
+  localized "Unknown member/site/label/target", never the IRI.
+
 ## Detail workspace composition
 
 The detail page (`ui/pages/intervention-detail-page`) is **tabbed again**, on

@@ -373,7 +373,8 @@ export class FacilityInformationPanel {
 
   /** Names a facility type for the read-only type row. */
   protected readonly typeLabelOf: (value: string) => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.label ?? value.replace(/_/g, ' ');
+    this.typeOptions.find((option) => option.value === value)?.label ??
+    $localize`:@@common.unknownType:Unknown type`;
 
   /** Whether the "Pick on map" dialog is open. */
   protected readonly mapPickerVisible: WritableSignal<boolean> = signal<boolean>(false);

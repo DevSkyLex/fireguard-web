@@ -30,6 +30,42 @@
         <source> required</source>
         <target> obligatorio</target>
       </trans-unit>
+      <trans-unit id="common.unknownType" datatype="html">
+        <source>Unknown type</source>
+        <target>Tipo desconocido</target>
+      </trans-unit>
+      <trans-unit id="common.unknownFacility" datatype="html">
+        <source>Unknown facility</source>
+        <target>Instalación desconocida</target>
+      </trans-unit>
+      <trans-unit id="common.unknownSite" datatype="html">
+        <source>Unknown site</source>
+        <target>Sitio desconocido</target>
+      </trans-unit>
+      <trans-unit id="common.unknownLabel" datatype="html">
+        <source>Unknown label</source>
+        <target>Etiqueta desconocida</target>
+      </trans-unit>
+      <trans-unit id="common.unknownTarget" datatype="html">
+        <source>Unknown target</source>
+        <target>Objetivo desconocido</target>
+      </trans-unit>
+      <trans-unit id="common.unknownMember" datatype="html">
+        <source>Unknown member</source>
+        <target>Miembro desconocido</target>
+      </trans-unit>
+      <trans-unit id="common.unknownValue" datatype="html">
+        <source>Unknown value</source>
+        <target>Valor desconocido</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.unknownValue" datatype="html">
+        <source>Unknown value</source>
+        <target>Valor desconocido</target>
+      </trans-unit>
+      <trans-unit id="org.member.noRole" datatype="html">
+        <source>No assigned role</source>
+        <target>Sin rol asignado</target>
+      </trans-unit>
       <trans-unit id="account.mfa.secretLabel" datatype="html">
         <source>Manual entry key</source>
         <target>Clave de entrada manual</target>

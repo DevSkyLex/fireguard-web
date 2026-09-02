@@ -14,10 +14,9 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
-import { storeErrorMessage } from '@features/onboarding/utils';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmLabel } from '@shared/ui/label';
@@ -298,26 +297,13 @@ export class OnboardingPlanForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const storeMessage: string | null = storeErrorMessage(error);
-
-    return storeMessage !== null
-      ? [storeMessage]
-      : [$localize`:@@onboarding.planForm.confirmFailed:The plan could not be confirmed.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@onboarding.planForm.confirmFailed:The plan could not be confirmed.`,
+    ),
+  );
   //#endregion
 
   //#region Lifecycle

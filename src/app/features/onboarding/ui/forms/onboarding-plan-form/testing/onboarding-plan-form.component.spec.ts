@@ -125,12 +125,16 @@ describe('OnboardingPlanForm', () => {
     expect(emitted).toEqual([{ planKey: 'pro', interval: 'month', requiresPayment: true }]);
   });
 
-  it('should surface the API rejection above the form', async () => {
-    fixture.componentRef.setInput('serverError', new Error('boom'));
+  it('should surface the normalized error message above the form', async () => {
+    fixture.componentRef.setInput('serverError', {
+      message: 'boom',
+      retryable: false,
+      timestamp: 1,
+    });
     await fixture.whenStable();
 
     expect(element.querySelector('[data-testid="onboarding-plan-error"]')?.textContent).toContain(
-      'The plan could not be confirmed.',
+      'boom',
     );
   });
 });

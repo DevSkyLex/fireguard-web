@@ -211,10 +211,13 @@ verbatim; light mode is the deck inverted onto warm paper. Every value is
   and draws the focus ring. Its foreground is **Ink in both modes**
   (5.3:1 light, 6.6:1 dark) — white on orange fails AA, so "primary" never
   inverts the way the old neutral primary did.
-- **Ember as text** is legal only at ≥ 14px semibold or on an icon: at 3.4:1 on
-  Paper it is under the 4.5:1 body-text floor. Body links stay
-  `text-foreground underline`; a text link that must be orange uses Ember-700
-  (`oklch(0.553 0.174 38.4)`, 5.0:1).
+- **Ember as text** is never legal at body sizes: 3.4:1 on Paper is under the
+  4.5:1 floor, and WCAG's large-text relief (≥ 24px, or ≥ 18.7px bold) only
+  covers display headings, which never take Ember anyway. Links stay
+  `text-foreground underline`. The `link` variant of `hlmBtn` and `hlmBadge`
+  ships `text-primary` from spartan, so every call site adds
+  `class="text-foreground"` (`src/app/shared/ui` is not edited). A word that
+  must be orange uses Ember-700 (`oklch(0.553 0.174 38.4)`, 5.0:1).
 
 ### Neutral
 

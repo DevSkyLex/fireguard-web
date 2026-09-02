@@ -11,10 +11,10 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
-import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupCreateOrganizationInput } from '@features/organization/setup';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { OnboardingOrganizationFormDraft } from './models';
@@ -54,7 +54,7 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-organization-form',
-  imports: [FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
   templateUrl: './onboarding-organization-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -151,26 +151,13 @@ export class OnboardingOrganizationForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const storeMessage: string | null = storeErrorMessage(error);
-
-    return storeMessage !== null
-      ? [storeMessage]
-      : [$localize`:@@onboarding.orgForm.createFailed:The organization could not be created.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@onboarding.orgForm.createFailed:The organization could not be created.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

@@ -12,12 +12,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
-import { storeErrorMessage } from '@features/onboarding/utils';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -70,7 +70,14 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-equipment-form',
-  imports: [FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmInput,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
   templateUrl: './onboarding-equipment-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -176,28 +183,13 @@ export class OnboardingEquipmentForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const storeMessage: string | null = storeErrorMessage(error);
-
-    return storeMessage !== null
-      ? [storeMessage]
-      : [
-          $localize`:@@onboarding.equipmentForm.createFailed:The equipment could not be registered.`,
-        ];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@onboarding.equipmentForm.createFailed:The equipment could not be registered.`,
+    ),
+  );
 
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>

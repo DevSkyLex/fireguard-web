@@ -19,10 +19,10 @@ import {
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMail, lucidePlus, lucideX } from '@ng-icons/lucide';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
-import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupInviteMemberInput, SetupOrganizationRole } from '@features/organization/setup';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -67,6 +67,7 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
 @Component({
   selector: 'app-onboarding-members-form',
   imports: [
+    RequiredMarker,
     FormField,
     HlmButton,
     HlmInput,
@@ -184,26 +185,13 @@ export class OnboardingMembersForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const storeMessage: string | null = storeErrorMessage(error);
-
-    return storeMessage !== null
-      ? [storeMessage]
-      : [$localize`:@@onboarding.membersForm.inviteFailed:The invitations could not be sent.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@onboarding.membersForm.inviteFailed:The invitations could not be sent.`,
+    ),
+  );
 
   /** Names a picked role on the closed select trigger. */
   protected readonly roleLabelOf: (value: string) => string = (value) =>

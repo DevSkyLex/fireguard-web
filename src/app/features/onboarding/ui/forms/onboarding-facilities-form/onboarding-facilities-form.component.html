@@ -46,10 +46,8 @@
     } @else {
       <hlm-field>
         <label hlmFieldLabel for="onboarding-facility-type"
-          ><span i18n="@@onboarding.facilitiesForm.type"> Type</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span>
-        </label>
+          ><span i18n="@@onboarding.facilitiesForm.type"> Type</span><app-required-marker
+        /></label>
         <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
           <hlm-select-trigger
             buttonId="onboarding-facility-type"
@@ -74,10 +72,8 @@
 
       <hlm-field>
         <label hlmFieldLabel for="onboarding-facility-name"
-          ><span i18n="@@onboarding.facilitiesForm.name"> Name</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span>
-        </label>
+          ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="onboarding-facility-name"

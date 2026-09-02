@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { loginOutput } from '../support/fixtures/api-fixtures';
+import { loginOutput, type LoginOutputFixture } from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 
@@ -15,9 +15,13 @@ const MFA_CHALLENGE_RESPONSE = loginOutput({
 });
 
 /** Signs in through the real login flow, which is the only way the client-side `mfaGuard` lets `/auth/mfa-verify` render. */
-async function reachMfaVerify(api: ApiMock, auth: AuthPages): Promise<void> {
+async function reachMfaVerify(
+  api: ApiMock,
+  auth: AuthPages,
+  challenge: LoginOutputFixture = MFA_CHALLENGE_RESPONSE,
+): Promise<void> {
   await api.mockUnauthenticatedSession();
-  await api.mockLogin(MFA_CHALLENGE_RESPONSE);
+  await api.mockLogin(challenge);
 
   await auth.gotoLogin();
   await auth.login('e2e.user@fireguard.test', 'Passw0rd!');
@@ -42,7 +46,7 @@ test.describe('MFA verification', () => {
   test('resends the code on request', async ({ page }) => {
     const api = new ApiMock(page);
     const auth = new AuthPages(page);
-    await reachMfaVerify(api, auth);
+    await reachMfaVerify(api, auth, loginOutput({ ...MFA_CHALLENGE_RESPONSE, mfa_resend_in: 0 }));
     await api.mockMfaResend(
       loginOutput({
         access_token: '',

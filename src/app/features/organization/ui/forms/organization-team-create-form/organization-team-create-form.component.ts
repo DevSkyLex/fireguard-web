@@ -175,23 +175,6 @@ export class OrganizationTeamCreateForm {
   }
   //#endregion
 
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
-   * @access public
-   * @since 1.1.0
-   */
-  public constructor() {
-    effect((): void => {
-      const dirty: boolean = this.createForm().dirty();
-
-      untracked((): void => this.dirtyChanged.emit(dirty));
-    });
-  }
-  //#endregion
-
   //#region Methods
   /**
    * Method submit

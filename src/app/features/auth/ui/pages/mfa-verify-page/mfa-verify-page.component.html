@@ -15,6 +15,7 @@
   <app-otp-form
     [pending]="authStore.isVerifyingMfa()"
     [showResend]="canResend()"
+    [showTrustDevice]="true"
     [resending]="authStore.isResendingMfa()"
     [serverError]="authStore.mfaVerifyError() ?? authStore.mfaResendError()"
     [resendAvailableIn]="authStore.mfaResendAvailableIn()"

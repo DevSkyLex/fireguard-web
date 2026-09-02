@@ -741,7 +741,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-otp-code-form/account-otp-code-form.component.html</context>
-          <context context-type="linenumber">49,52</context>
+          <context context-type="linenumber">46,49</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
@@ -1375,7 +1375,7 @@
         <source>Checking…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/ui/forms/account-otp-code-form/account-otp-code-form.component.html</context>
-          <context context-type="linenumber">63,65</context>
+          <context context-type="linenumber">60,62</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.otp.required" datatype="html">
@@ -2229,53 +2229,60 @@
           <context context-type="linenumber">9,11</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="auth.otp.trustDevice" datatype="html">
+        <source>Trust this device for 30 days</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
+          <context context-type="linenumber">55,59</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="auth.otp.submitting" datatype="html">
         <source>Verifying…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
-          <context context-type="linenumber">62,64</context>
+          <context context-type="linenumber">69,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.submit" datatype="html">
         <source>Verify</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
-          <context context-type="linenumber">64,67</context>
+          <context context-type="linenumber">71,74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.resending" datatype="html">
         <source>Sending a new code…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
-          <context context-type="linenumber">80,81</context>
+          <context context-type="linenumber">87,88</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.resendIn" datatype="html">
         <source>Resend available in <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
-          <context context-type="linenumber">83,84</context>
+          <context context-type="linenumber">90,91</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.resend" datatype="html">
         <source>Send a new code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.html</context>
-          <context context-type="linenumber">86,88</context>
+          <context context-type="linenumber">93,95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.required" datatype="html">
         <source>Enter the verification code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.ts</context>
-          <context context-type="linenumber">295</context>
+          <context context-type="linenumber">322</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.otp.pattern" datatype="html">
         <source>The code is <x id="length" equiv-text="OTP_LENGTH"/> digits</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/forms/otp-form/otp-form.component.ts</context>
-          <context context-type="linenumber">300</context>
+          <context context-type="linenumber">327</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.register.failed" datatype="html">
@@ -18194,14 +18201,14 @@
         <source>Current plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
-          <context context-type="linenumber">44,46</context>
+          <context context-type="linenumber">40,42</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.plan.switch" datatype="html">
         <source>Switch to this plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
-          <context context-type="linenumber">73,75</context>
+          <context context-type="linenumber">69,71</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.plan.free" datatype="html">
@@ -22535,49 +22542,49 @@
         <source> Built for the people who sign the compliance report. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.html</context>
-          <context context-type="linenumber">60,63</context>
+          <context context-type="linenumber">65,68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.lifecycle.label" datatype="html">
         <source>One thread per intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">83</context>
+          <context context-type="linenumber">84</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.lifecycle.detail" datatype="html">
         <source>Plan it, run it in the field, publish the report — without re-entering anything.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.offline.label" datatype="html">
         <source>Works with no signal</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">89</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.offline.detail" datatype="html">
         <source>Boiler rooms and basements included. Work saves on the device and syncs when the network returns.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">90</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.estate.label" datatype="html">
         <source>Your whole estate, one place</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">93</context>
+          <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.showcase.estate.detail" datatype="html">
         <source>Sites, equipment and inspections stay linked, so a serial number is enough to find the history.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/layouts/split-layout/components/split-layout-showcase/split-layout-showcase.component.ts</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="calendar.dayEventCount" datatype="html">

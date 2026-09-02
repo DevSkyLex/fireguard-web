@@ -186,6 +186,10 @@
         <source>Resend available in <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</source>
         <target>Renvoi possible dans <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</target>
       </trans-unit>
+      <trans-unit id="auth.otp.trustDevice" datatype="html">
+        <source>Trust this device for 30 days</source>
+        <target>Faire confiance à cet appareil pendant 30 jours</target>
+      </trans-unit>
       <trans-unit id="auth.register.submit" datatype="html">
         <source>Create account</source>
         <target>Créer un compte</target>

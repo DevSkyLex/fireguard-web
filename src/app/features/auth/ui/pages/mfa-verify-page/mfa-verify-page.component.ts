@@ -8,7 +8,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthStore } from '@features/auth/state';
+import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
@@ -28,7 +28,12 @@ import { PageHeading } from '@shared/page-heading';
  * "sent to" to name, so the template's projected lead falls back to a generic
  * sentence instead of an empty one.
  *
- * @version 1.0.0
+ * The "trust this device" checkbox lives here and nowhere else: the page hands
+ * the flag to `ActiveTrustedDeviceStore` before verifying, and `AuthStore`
+ * issues `POST /api/trusted-devices` only once the second factor succeeded —
+ * the backend cookie is what lets the next sign-in skip MFA.
+ *
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -53,6 +58,22 @@ export class MfaVerifyPage {
    * @type {AuthStore}
    */
   protected readonly authStore: AuthStore = inject<AuthStore>(AuthStore);
+
+  /**
+   * Property activeTrustedDeviceStore
+   * @readonly
+   *
+   * @description
+   * Receives the "trust this device" intent before the verify call, and acts
+   * on it after the session exists.
+   *
+   * @access private
+   * @since 1.1.0
+   *
+   * @type {ActiveTrustedDeviceStore}
+   */
+  private readonly activeTrustedDeviceStore: ActiveTrustedDeviceStore =
+    inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore);
 
   /**
    * Property router
@@ -145,13 +166,14 @@ export class MfaVerifyPage {
    *
    * @description
    * Submits the code together with the pre-auth token the sign-in response
-   * left in the store. A missing token means the challenge expired, and the
-   * guard sends the visitor back to sign-in on the next navigation.
+   * left in the store, after recording whether this device should be trusted
+   * once the code is accepted. A missing token means the challenge expired,
+   * and the guard sends the visitor back to sign-in on the next navigation.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {OtpFormValues} values - The entered code.
+   * @param {OtpFormValues} values - The entered code and the trust intent.
    *
    * @returns {void}
    */
@@ -159,6 +181,7 @@ export class MfaVerifyPage {
     const preAuthToken: string | null = this.authStore.mfaToken();
     if (preAuthToken === null) return;
 
+    this.activeTrustedDeviceStore.setPendingTrustDevice(values.trustDevice);
     this.authStore.mfaVerify({ preAuthToken, code: values.code });
   }
 

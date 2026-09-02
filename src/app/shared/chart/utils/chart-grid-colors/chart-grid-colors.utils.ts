@@ -12,18 +12,18 @@
  * a modern, uncaged plot.
  */
 const LIGHT_CHART_GRID = {
-  border: 'oklch(0.922 0 0 / 60%)',
-  tick: 'oklch(0.556 0 0)',
-  tooltipBackground: 'oklch(1 0 0)',
-  tooltipForeground: 'oklch(0.145 0 0)',
+  border: 'oklch(0.91 0.006 80 / 60%)',
+  tick: 'oklch(0.5 0.012 70)',
+  tooltipBackground: 'oklch(0.995 0.002 80)',
+  tooltipForeground: 'oklch(0.18 0.006 60)',
 } as const;
 
 /** The dark-appearance twin of {@link LIGHT_CHART_GRID}. */
 const DARK_CHART_GRID = {
-  border: 'oklch(1 0 0 / 8%)',
-  tick: 'oklch(0.708 0 0)',
-  tooltipBackground: 'oklch(0.205 0 0)',
-  tooltipForeground: 'oklch(0.985 0 0)',
+  border: 'oklch(0.258 0.009 286 / 80%)',
+  tick: 'oklch(0.767 0.012 90)',
+  tooltipBackground: 'oklch(0.195 0.005 286)',
+  tooltipForeground: 'oklch(0.967 0.004 91)',
 } as const;
 
 /**

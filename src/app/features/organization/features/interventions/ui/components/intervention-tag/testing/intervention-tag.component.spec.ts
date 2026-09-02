@@ -74,8 +74,7 @@ describe('InterventionTag', () => {
   it('should put the abandoned tone on the glyph alone, in red', async () => {
     const icon: Element | null = (await render('status', 'abandoned')).querySelector('ng-icon');
 
-    expect(icon?.className).toContain('text-red-500');
-    expect(icon?.className).toContain('dark:text-red-400');
+    expect(icon?.className).toContain('text-destructive');
   });
 
   it.each(['draft', 'planned', 'in_progress', 'submitted', 'changes_requested'])(
@@ -83,8 +82,7 @@ describe('InterventionTag', () => {
     async (status: string) => {
       const icon: Element | null = (await render('status', status)).querySelector('ng-icon');
 
-      expect(icon?.className).toContain('text-neutral-500');
-      expect(icon?.className).toContain('dark:text-neutral-400');
+      expect(icon?.className).toContain('text-muted-foreground');
       expect(icon?.className).not.toMatch(/text-(blue|green|amber|red)-/);
     },
   );

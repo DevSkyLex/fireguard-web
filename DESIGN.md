@@ -1,58 +1,58 @@
 ---
 name: FireGuard
-description: An achromatic, instrument-dense control surface for planning and publishing field interventions.
+description: A warm-neutral, ember-accented, instrument-dense control surface for planning and publishing field interventions.
 colors:
-  background: 'oklch(1 0 0)'
-  foreground: 'oklch(0.145 0 0)'
-  card: 'oklch(1 0 0)'
-  card-foreground: 'oklch(0.145 0 0)'
-  popover: 'oklch(1 0 0)'
-  primary: 'oklch(0.205 0 0)'
-  primary-foreground: 'oklch(0.985 0 0)'
-  secondary: 'oklch(0.97 0 0)'
-  secondary-foreground: 'oklch(0.205 0 0)'
-  muted: 'oklch(0.97 0 0)'
-  muted-foreground: 'oklch(0.556 0 0)'
-  accent: 'oklch(0.97 0 0)'
-  destructive: 'oklch(0.577 0.245 27.325)'
-  border: 'oklch(0.922 0 0)'
-  input: 'oklch(0.922 0 0)'
-  ring: 'oklch(0.64 0 0)'
-  sidebar: 'oklch(0.985 0 0)'
-  sidebar-border: 'oklch(0.922 0 0)'
-  success: 'oklch(0.723 0.219 149.579)'
-  glyph-neutral: 'oklch(55.6% 0 none)'
-  glyph-info: 'oklch(62.3% 0.214 259.815)'
-  glyph-warning: 'oklch(76.9% 0.188 70.08)'
-  glyph-danger: 'oklch(63.7% 0.237 25.331)'
-  chart-1: 'oklch(0.53 0.20 272)'
-  chart-2: 'oklch(0.67 0.19 41)'
-  chart-3: 'oklch(0.67 0.14 162)'
-  chart-4: 'oklch(0.76 0.155 75)'
-  chart-5: 'oklch(0.70 0.17 357)'
-  chart-6: 'oklch(0.55 0.17 142)'
-  background-dark: 'oklch(0.145 0 0)'
-  foreground-dark: 'oklch(0.985 0 0)'
-  card-dark: 'oklch(0.205 0 0)'
-  primary-dark: 'oklch(0.922 0 0)'
-  primary-foreground-dark: 'oklch(0.205 0 0)'
-  muted-dark: 'oklch(0.269 0 0)'
-  muted-foreground-dark: 'oklch(0.708 0 0)'
-  destructive-dark: 'oklch(0.704 0.191 22.216)'
-  success-dark: 'oklch(0.792 0.209 151.711)'
-  border-dark: 'oklch(1 0 0 / 10%)'
-  input-dark: 'oklch(1 0 0 / 15%)'
-  ring-dark: 'oklch(0.556 0 0)'
-  glyph-neutral-dark: 'oklch(70.8% 0 none)'
-  glyph-info-dark: 'oklch(70.7% 0.165 254.624)'
-  glyph-warning-dark: 'oklch(82.8% 0.189 84.429)'
-  glyph-danger-dark: 'oklch(70.4% 0.191 22.216)'
-  chart-1-dark: 'oklch(0.62 0.18 272)'
-  chart-2-dark: 'oklch(0.62 0.17 41)'
-  chart-3-dark: 'oklch(0.62 0.13 162)'
-  chart-4-dark: 'oklch(0.665 0.135 75)'
-  chart-5-dark: 'oklch(0.62 0.16 357)'
-  chart-6-dark: 'oklch(0.55 0.17 142)'
+  background: 'oklch(0.985 0.003 80)'
+  foreground: 'oklch(0.18 0.006 60)'
+  card: 'oklch(0.995 0.002 80)'
+  card-foreground: 'oklch(0.18 0.006 60)'
+  popover: 'oklch(0.995 0.002 80)'
+  primary: 'oklch(0.646 0.194 41.1)'
+  primary-foreground: 'oklch(0.18 0.006 60)'
+  secondary: 'oklch(0.955 0.005 80)'
+  secondary-foreground: 'oklch(0.18 0.006 60)'
+  muted: 'oklch(0.955 0.005 80)'
+  muted-foreground: 'oklch(0.5 0.012 70)'
+  accent: 'oklch(0.955 0.01 65)'
+  destructive: 'oklch(0.577 0.245 27.3)'
+  success: 'oklch(0.596 0.145 163.2)'
+  warning: 'oklch(0.666 0.179 58.3)'
+  info: 'oklch(0.609 0.126 221.7)'
+  border: 'oklch(0.91 0.006 80)'
+  input: 'oklch(0.91 0.006 80)'
+  ring: 'oklch(0.646 0.194 41.1)'
+  sidebar: 'oklch(0.975 0.004 80)'
+  sidebar-accent: 'oklch(0.945 0.01 65)'
+  sidebar-border: 'oklch(0.91 0.006 80)'
+  chart-1: 'oklch(0.646 0.194 41.1)'
+  chart-2: 'oklch(0.666 0.179 58.3)'
+  chart-3: 'oklch(0.596 0.145 163.2)'
+  chart-4: 'oklch(0.609 0.126 221.7)'
+  chart-5: 'oklch(0.58 0.2 293)'
+  chart-6: 'oklch(0.6 0.21 17)'
+  background-dark: 'oklch(0.155 0.004 286)'
+  foreground-dark: 'oklch(0.967 0.004 91)'
+  card-dark: 'oklch(0.195 0.005 286)'
+  primary-dark: 'oklch(0.705 0.187 47.6)'
+  primary-foreground-dark: 'oklch(0.155 0.004 286)'
+  secondary-dark: 'oklch(0.258 0.009 286)'
+  muted-dark: 'oklch(0.225 0.007 286)'
+  muted-foreground-dark: 'oklch(0.767 0.012 90)'
+  accent-dark: 'oklch(0.245 0.01 60)'
+  destructive-dark: 'oklch(0.711 0.166 22.2)'
+  success-dark: 'oklch(0.773 0.153 163.2)'
+  warning-dark: 'oklch(0.837 0.164 84.4)'
+  info-dark: 'oklch(0.797 0.134 211.5)'
+  border-dark: 'oklch(0.258 0.009 286)'
+  input-dark: 'oklch(0.324 0.012 286)'
+  ring-dark: 'oklch(0.705 0.187 47.6)'
+  sidebar-accent-dark: 'oklch(0.225 0.008 60)'
+  chart-1-dark: 'oklch(0.705 0.187 47.6)'
+  chart-2-dark: 'oklch(0.837 0.164 84.4)'
+  chart-3-dark: 'oklch(0.773 0.153 163.2)'
+  chart-4-dark: 'oklch(0.797 0.134 211.5)'
+  chart-5-dark: 'oklch(0.709 0.159 293.5)'
+  chart-6-dark: 'oklch(0.719 0.169 13.4)'
 typography:
   subhead:
     fontFamily: 'Geist Variable, ui-sans-serif, system-ui, sans-serif'
@@ -165,18 +165,20 @@ a value to read, a control to press, or the whitespace that keeps the two apart.
 The interface is the flat panel a professional works against for eight hours,
 not a page they visit.
 
-The system is **achromatic by decision**. Surfaces, text, borders and controls
-are pure zero-chroma neutral — genuinely neither warm nor cool. Colour is not a
-decorative resource here; it is a scarce, load-bearing signal, and it is spent
-in one place: the glyph of a status indicator. That single constraint is
-what makes a dense table readable. When nothing else is coloured, a red chevron
-at 12px is impossible to miss.
+The system is **warm-neutral with one ember accent**. Surfaces, text, borders
+and controls are a low-chroma neutral scale — warm paper and warm ink in light
+mode, the Bloc 3 deck's cool near-black and warm off-white in dark mode. Colour
+is a scarce, load-bearing signal spent in exactly two places: **Ember**
+(orange) on the single committed action and on keyboard focus, and the status
+hues on the glyph of a status indicator. That discipline is what keeps a dense
+table readable: when nothing else is coloured, an orange button and a red
+chevron at 12px are impossible to miss.
 
-There is one named exception, and naming it is what keeps it from spreading: a
-chart has no glyph to tint, so `shared/chart` carries its own six-slot ordinal
-palette. It is admitted on the same terms the glyph rule sets — a series is
-never told apart by hue alone, because the legend and the tooltip always name
-it — and it never leaves the plot.
+The status hues are members of the same family as the chart series (the deck's
+rule: "statuses are members of the series palette, not neighbouring tints"), so
+a chart and a badge on the same screen read as one system. `shared/chart`
+carries the six-slot ordinal palette; a series is never told apart by hue
+alone, because the legend and the tooltip always name it.
 
 Density is the second half of the identity. The largest type in the entire
 application is 24px, and 86% of sized text is 14px or 12px. Controls are 32px
@@ -185,7 +187,8 @@ one viewport, and the interface stops competing with the data it carries.
 
 **Key Characteristics:**
 
-- Achromatic neutral palette; chroma confined to status glyphs and chart series
+- Warm-neutral palette; Ember on the committed action and focus, status hues
+  on glyphs and chart series, nowhere else
 - Compressed scale — a hard 24px type ceiling, 32px controls
 - Flat in-page surfaces; a hairline ring instead of shadows or borders
 - Compact and mechanical controls with a 1px press displacement
@@ -194,81 +197,77 @@ one viewport, and the interface stops competing with the data it carries.
 
 ## Colors
 
-A pure zero-chroma neutral scale carrying the entire interface, plus five
-saturated hues that are permitted **only** on a status glyph.
+The "Ember" palette, derived from the Bloc 3 presentation deck: a warm-neutral
+scale carrying the entire interface, one orange accent, and four status hues
+that are permitted on a status glyph and on chart series. Dark mode is the deck
+verbatim; light mode is the deck inverted onto warm paper. Every value is
+`oklch`, and every token has a light and a dark value in `src/styles.css`.
 
-### Primary
+### Primary — Ember
 
-- **Ink** (`oklch(0.205 0 0)`): the near-black that fills primary buttons, the
-  default badge, and any element that must read as the single committed action
-  on screen. In dark mode the relationship inverts — Ink becomes
-  `oklch(0.922 0 0)` and its foreground goes dark — so "primary" always means
-  maximum contrast against the page, never a specific darkness.
+- **Ember** (`oklch(0.646 0.194 41.1)` light, `oklch(0.705 0.187 47.6)` dark —
+  orange-600 / the deck's orange-500): fills the primary button, the checked
+  checkbox and radio, the switch, the progress bar, the selected calendar day,
+  and draws the focus ring. Its foreground is **Ink in both modes**
+  (5.3:1 light, 6.6:1 dark) — white on orange fails AA, so "primary" never
+  inverts the way the old neutral primary did.
+- **Ember as text** is legal only at ≥ 14px semibold or on an icon: at 3.4:1 on
+  Paper it is under the 4.5:1 body-text floor. Body links stay
+  `text-foreground underline`; a text link that must be orange uses Ember-700
+  (`oklch(0.553 0.174 38.4)`, 5.0:1).
 
 ### Neutral
 
-- **Paper** (`oklch(1 0 0)`): the page and card ground in light mode. Pure
-  white; cards do not tint away from the page, they separate by ring alone.
-- **Ink** (`oklch(0.145 0 0)`): body and heading text at full strength, and the
-  page ground in dark mode.
-- **Wash** (`oklch(0.97 0 0)`): the secondary, muted and accent surface — the
-  single step of tonal separation used for hover grounds, table zebra, inert
-  panels and secondary buttons. It is the only fill between Paper and Ink.
-- **Slate** (`oklch(0.556 0 0)`): muted foreground. Labels, metadata, timestamps,
-  the resting text of a status badge, and every word that supports rather than
-  states.
-- **Hairline** (`oklch(0.922 0 0)`): borders and input strokes. In dark mode it
-  becomes translucent white at 10%, so dividers dissolve into the surface they
-  sit on rather than glowing against it.
-- **Halo** (`oklch(0.64 0 0)`, `oklch(0.556 0 0)` in dark): the focus ring, and
-  nothing else. The light value was darkened from `0.708` because the ring is
-  drawn at 50% opacity: at `0.708` the composited outline measured 2.51:1
-  against Paper, under the 3:1 required of a non-text indicator.
+| Name         | Light                   | Dark                                                                    | Role                                                                                                                          |
+| ------------ | ----------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Paper**    | `oklch(0.985 0.003 80)` | `oklch(0.155 0.004 286)`                                                | the page ground — warm off-white, never pure white; the deck's near-black in dark                                             |
+| **Card**     | `oklch(0.995 0.002 80)` | `oklch(0.195 0.005 286)`                                                | card and popover ground, one step off Paper; cards still separate by ring, not by tint                                        |
+| **Ink**      | `oklch(0.18 0.006 60)`  | `oklch(0.967 0.004 91)`                                                 | body and heading text at full strength — warm in both modes                                                                   |
+| **Wash**     | `oklch(0.955 0.005 80)` | `oklch(0.225 0.007 286)` (muted) / `oklch(0.258 0.009 286)` (secondary) | the single step of tonal separation: hover grounds, zebra, inert panels, secondary buttons                                    |
+| **Tint**     | `oklch(0.955 0.01 65)`  | `oklch(0.245 0.01 60)`                                                  | `--accent`, the hover surface — a warmer Wash, deliberately **not** orange, so hover never competes with the committed action |
+| **Slate**    | `oklch(0.5 0.012 70)`   | `oklch(0.767 0.012 90)`                                                 | muted foreground: labels, metadata, timestamps, badge text (5.8:1 / 8.9:1 on Paper)                                           |
+| **Hairline** | `oklch(0.91 0.006 80)`  | `oklch(0.258 0.009 286)`                                                | borders and input strokes — opaque in dark now (the deck's `line`), no longer translucent white                               |
 
-### Tertiary — the glyph palette
+The sidebar mirrors Paper/Ink with its own Tint (`--sidebar-accent`) for hover
+and the active row; its `--sidebar-primary` is Ember and colours only the
+account-menu avatar fallback.
 
-These five exist to be read at 12px, on an otherwise colourless screen. They
-never fill a shape, tint a surface, or colour a word.
+### Tertiary — the status hues
 
-- **Neutral glyph** (`oklch(55.6% 0 none)`): no status. A genuine grey, close
-  enough in value to the label beside it to read as absence rather than as a
-  sixth state.
-- **Info glyph** (`oklch(62.3% 0.214 259.815)`): the baseline or expected state.
-- **Success glyph** (`oklch(0.723 0.219 149.579)`): the positive terminal state.
-  The only one of the five promoted to a theme token — `--success`, exposed as
-  `text-success` — so it flips with the appearance instead of needing a
-  `dark:` twin at every call site. The other four are Tailwind's `500` rung
-  paired with an explicit `dark:` `400` rung.
-- **Warning glyph** (`oklch(76.9% 0.188 70.08)`): elevated but not failing.
-- **Danger glyph** (`oklch(63.7% 0.237 25.331)`): the destructive terminal state,
-  and the tint behind destructive actions.
+Four hues that exist to be read at 12px on an otherwise colourless screen, and
+that double as chart series. Light mode sits on the Tailwind 600 rung so a
+glyph clears the 3:1 non-text floor on Paper; dark mode is the deck's 400 rung.
 
-Each lightens one step in dark mode (the `400` rung) so it holds its position
-against a dark ground instead of going muddy.
+| Token           | Light                      | Dark                       | Light / dark contrast on Paper |
+| --------------- | -------------------------- | -------------------------- | ------------------------------ |
+| `--success`     | `oklch(0.596 0.145 163.2)` | `oklch(0.773 0.153 163.2)` | 3.5 / 9.9                      |
+| `--warning`     | `oklch(0.666 0.179 58.3)`  | `oklch(0.837 0.164 84.4)`  | 3.1 / 11.1                     |
+| `--info`        | `oklch(0.609 0.126 221.7)` | `oklch(0.797 0.134 211.5)` | 3.5 / 10.6                     |
+| `--destructive` | `oklch(0.577 0.245 27.3)`  | `oklch(0.711 0.166 22.2)`  | 4.6 / 6.6                      |
+| neutral glyph   | Slate                      | Slate                      | —                              |
 
-### Data Visualization — the tolerated exception
+They are exposed as `text-success`, `text-warning`, `text-info`,
+`text-destructive` and flip with the appearance — no `dark:` twin at a call
+site, ever. Only `text-destructive` clears 4.5:1 in light mode, so it is the
+only status token allowed on a word; the other three colour a glyph and nothing
+else.
 
-A chart cannot obey the glyph rule: a line has no icon to tint. `shared/chart`
-therefore carries its own six-slot ordinal palette, resolved from
-`core/theme`'s `resolvedTheme` rather than read off the DOM — Chart.js draws
-to a canvas, and a canvas 2D context never resolves `var()`.
+### Data Visualization
 
-Light, in series order: `oklch(0.53 0.20 272)` indigo, `oklch(0.67 0.19 41)`
-orange, `oklch(0.67 0.14 162)` teal, `oklch(0.76 0.155 75)` amber,
-`oklch(0.70 0.17 357)` magenta, `oklch(0.55 0.17 142)` green. The dark twin
-re-steps the same six hues into the `L 0.48–0.67` band rather than lifting the
-light values uniformly.
+`shared/chart` carries the six-slot ordinal palette, resolved from
+`core/theme`'s `resolvedTheme` rather than read off the DOM — Chart.js draws to
+a canvas, and a canvas 2D context never resolves `var()`. The `--chart-1..6`
+custom properties in `src/styles.css` document the same values.
 
-Slot 1 is indigo at hue ≈272 on purpose: it echoes the `#4f46e5` brand mark,
-which is the only other place the retired chromatic accent still lives. Chart
-chrome stays achromatic — gridlines at 60% Hairline (8% white in dark), ticks
-in Slate, and a tooltip on the card ground rather than Chart.js' default black
-box.
+Light, in series order: Ember, amber, emerald, cyan, violet
+(`oklch(0.58 0.2 293)`), rose (`oklch(0.6 0.21 17)`). Dark is the deck's
+`--c1..c6` verbatim. Slot 1 is the brand orange on purpose. Chart chrome stays
+neutral — gridlines at 60% Hairline (80% in dark), ticks in Slate, and a
+tooltip on the card ground rather than Chart.js' default black box.
 
-Three light slots (teal, amber, magenta) sit under the 3:1 relief floor
-against Paper. That is legal only because `line-chart` always renders a text
-legend with a swatch and a value tooltip, so a series is never told apart by
-hue alone — the same redundancy the glyph rule buys with its label.
+Light slots under the 3:1 relief floor against Card (amber, cyan) are legal only
+because `line-chart` always renders a text legend with a swatch and a value
+tooltip, so a series is never told apart by hue alone.
 
 ### Named Rules
 
@@ -457,7 +456,7 @@ one that was never filled.
 - **Size:** Compact by default — 32px tall with 10px horizontal padding, 14px
   medium-weight text. A 24px and a 28px rung exist for toolbars and inline
   actions; 36px is the largest.
-- **Default:** Ink ground with Paper text. This is the single committed action;
+- **Default:** Ember ground with Ink text. This is the single committed action;
   a screen with two of them has not decided what it wants the operator to do.
 - **Outline:** Page ground with a hairline border — the workhorse secondary.
   Hovers to Wash.
@@ -481,7 +480,7 @@ one that was never filled.
 - **Press:** A 1px downward displacement on `:active`, suppressed on menu
   triggers so a popover anchor does not shift under an opening panel. This is
   the system's one piece of physical feedback and it is worth preserving.
-- **Focus:** A 3px ring at 50% Halo plus a solid ring-coloured border. The ring
+- **Focus:** A 3px ring at 50% Ember plus a solid Ember border. The ring
   is thick on purpose: at this control size a 1px outline is invisible against
   a dense table.
 
@@ -501,7 +500,7 @@ one that was never filled.
   rather than as a hole.
 - **Sizing:** 16px text below `md`, 14px above. The larger mobile size is not a
   style choice — it is what stops iOS Safari zooming the viewport on focus.
-- **Focus:** Border shifts to Halo, plus a 3px ring at 50% Halo.
+- **Focus:** Border shifts to Ember, plus a 3px ring at 50% Ember.
 - **Error:** Border and ring go destructive, driven by the brain's
   `data-matches-spartan-invalid` attribute rather than a class the template
   sets. (Badges still gate on `aria-invalid`; controls the brain owns do not.)
@@ -552,8 +551,8 @@ or `ChartOptions`, and no caller names a colour.
   A live appearance switch recolours an already-drawn chart, because both the
   dataset palette and the grid chrome are computed signals over that signal —
   not values read off the DOM, which a canvas cannot do anyway.
-- **Chrome:** gridlines on the horizontal axis only, at 60% Hairline (8% white
-  in dark). Ticks in Slate. The tooltip is a themed rounded card on the card
+- **Chrome:** gridlines on the horizontal axis only, at 60% Hairline (80% in
+  dark). Ticks in Slate. The tooltip is a themed rounded card on the card
   ground, replacing Chart.js' default black box.
 - **Points:** hidden at rest, revealed on hover with an enlarged hit radius —
   the line is the value, the point is the interaction.
@@ -799,8 +798,9 @@ Cross-cutting rules:
 
 ### Do:
 
-- **Do** spend colour only on a status glyph. If a new surface needs to
-  distinguish states, reach for icon, weight, position and tone first.
+- **Do** spend Ember only on the committed action and on focus, and status hue
+  only on a status glyph. If a new surface needs to distinguish states, reach
+  for icon, weight, position and tone first.
 - **Do** pair every severity colour with a label and an icon, and give the icon
   `aria-hidden` so the label is the accessible name.
 - **Do** let the shell own the page title. Inside `DashboardLayout` no feature
@@ -817,14 +817,17 @@ Cross-cutting rules:
 - **Do** give every interactive element a visible 3px focus ring; on bare inline
   links a 2px ring is the established exception.
 - **Do** mark genuinely empty containers with a dashed border.
-- **Do** verify every new surface in both themes — dark is not a filter, it
-  inverts the primary relationship and makes borders translucent.
+- **Do** verify every new surface in both themes — dark is not a filter: the
+  neutrals go cool, the ink stays warm, and Ember lightens one rung.
 
 ### Don't:
 
-- **Don't** reintroduce a chromatic brand accent. The interface is achromatic by
-  decision; indigo lives on the mark, in browser chrome, and as the first chart
-  slot — nowhere else.
+- **Don't** spend Ember on anything that is not the committed action or the
+  focus ring — not a hover ground, not a heading, not a link, not a badge. One
+  orange thing per screen is the whole point of having one.
+- **Don't** write a status colour as a raw Tailwind pair. `text-success`,
+  `text-warning`, `text-info`, `text-destructive` flip with the appearance;
+  `text-amber-500 dark:text-amber-400` does not belong in this codebase.
 - **Don't** borrow a chart slot for a badge, a tag, a button or a surface.
   Outside a plot those six hues have no legend, which is the only reason they
   are allowed at all.

@@ -18,9 +18,9 @@ import type { SubscriptionStatusTagSeverity } from '../models';
 export const SUBSCRIPTION_STATUS_TAG_ICON_CLASS: Readonly<
   Record<SubscriptionStatusTagSeverity, string>
 > = {
-  neutral: 'text-neutral-500 dark:text-neutral-400',
-  info: 'text-blue-500 dark:text-blue-400',
+  neutral: 'text-muted-foreground',
+  info: 'text-info',
   success: 'text-success',
-  warning: 'text-amber-500 dark:text-amber-400',
-  danger: 'text-red-500 dark:text-red-400',
+  warning: 'text-warning',
+  danger: 'text-destructive',
 };

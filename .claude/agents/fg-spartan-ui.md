@@ -98,7 +98,7 @@ Ask the **spartan MCP** for a component's inputs, outputs, and a working example
 
 - Tailwind v4 utilities in **literal class strings** — a computed class name silently produces no CSS.
 - Compose with the `hlm` helper from `@shared/ui/utils` so a caller's `class` input wins over the component default.
-- **Semantic tokens only**: `bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border`, `ring-ring`. Never a raw palette value, never a hex.
+- **Semantic tokens only**: `bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border`, `ring-ring`, and `text-success` / `text-warning` / `text-info` / `text-destructive` for status glyphs. Never a raw palette value, never a hex, never a `dark:` colour twin.
 - Dark mode is `html[data-theme="dark"]`. Tokens make it work automatically — if you find yourself writing `dark:` variants for colour, you have bypassed the tokens.
 - `src/styles.css` takes theme tokens only. A component rule there is blocked by the guard hook.
 - Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).

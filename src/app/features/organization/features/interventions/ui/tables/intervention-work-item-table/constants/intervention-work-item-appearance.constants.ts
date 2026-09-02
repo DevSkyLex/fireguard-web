@@ -35,6 +35,6 @@ export const WORK_ITEM_STATUS_ICON: Readonly<Record<InterventionWorkItemStatus, 
 export const WORK_ITEM_STATUS_ICON_CLASS: Readonly<Record<InterventionWorkItemStatus, string>> = {
   planned: 'text-[length:--spacing(5)] text-muted-foreground',
   in_progress: 'text-[length:--spacing(5)] text-muted-foreground',
-  completed: 'text-[length:--spacing(5)] text-green-600 dark:text-green-400',
+  completed: 'text-[length:--spacing(5)] text-success',
   skipped: 'text-[length:--spacing(5)] text-muted-foreground',
 };

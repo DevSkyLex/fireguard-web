@@ -37,7 +37,7 @@ test.describe('Create an account', () => {
       password: 'Passw0rd!',
     });
 
-    await expect(page).toHaveURL(/\/auth\/register\/verify$/);
+    await expect(page).toHaveURL(/\/auth\/register\/verify(\?.*)?$/);
     await expect(auth.registerVerifyRoot).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe('Create an account', () => {
       email: 'jane.doe@fireguard.test',
       password: 'Passw0rd!',
     });
-    await expect(page).toHaveURL(/\/auth\/register\/verify$/);
+    await expect(page).toHaveURL(/\/auth\/register\/verify(\?.*)?$/);
 
     await auth.submitOtp('123456');
 

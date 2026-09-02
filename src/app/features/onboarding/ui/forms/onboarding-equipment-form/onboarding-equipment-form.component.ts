@@ -13,10 +13,11 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
+import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { storeErrorMessage } from '@features/onboarding/utils';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
-import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -48,8 +49,10 @@ function trimmed(value: string): string | undefined {
  * type catalog is the equipments subfeature's own canonical
  * `EQUIPMENT_TYPE_OPTIONS`, not a local copy (`FEATURE.md` "Cross-Feature
  * Dependencies"). The equipment is attached to a facility created earlier in
- * the wizard: silently when there is exactly one, through a pre-selected
- * facility select when there are several.
+ * the wizard through a facility select that is rendered whenever at least one
+ * exists and pre-selected on the first — a single facility is shown rather
+ * than attached silently, so the operator sees where the equipment lands.
+ * Each option names the facility and its type.
  *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the setup-boundary-shaped payload — the wizard page
@@ -67,7 +70,7 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-equipment-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports, ...HlmSelectImports],
   templateUrl: './onboarding-equipment-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,6 +108,16 @@ export class OnboardingEquipmentForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property skippable
+   * @readonly
+   * @description Whether the backend currently lets this step be skipped. The backend never does for the first equipment, but every step form shares the footer contract.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -118,6 +131,16 @@ export class OnboardingEquipmentForm {
    */
   public readonly submitted: OutputEmitterRef<SetupCreateEquipmentInput> =
     output<SetupCreateEquipmentInput>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Relays the footer's skip request to the page.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -180,9 +203,39 @@ export class OnboardingEquipmentForm {
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
 
-  /** Names a facility on the closed select trigger. */
-  protected readonly facilityLabelOf: (value: string) => string = (value) =>
-    this.facilities().find((facility) => facility.id === value)?.name ?? '';
+  /**
+   * Property facilityRows
+   * @readonly
+   * @description The created facilities with their type resolved to its localized label, for the select options.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly { id: string; name: string; typeLabel: string }[]>}
+   */
+  protected readonly facilityRows: Signal<
+    readonly { readonly id: string; readonly name: string; readonly typeLabel: string }[]
+  > = computed(() =>
+    this.facilities().map((facility) => ({
+      id: facility.id,
+      name: facility.name,
+      typeLabel:
+        ONBOARDING_FACILITY_TYPE_OPTIONS.find((option) => option.value === facility.type)?.label ??
+        '',
+    })),
+  );
+
+  /** Names a facility on the closed select trigger as "Name · Type". */
+  protected readonly facilityLabelOf: (value: string) => string = (value) => {
+    const row = this.facilityRows().find((facility) => facility.id === value);
+    if (row === undefined) return '';
+
+    return row.typeLabel === '' ? row.name : `${row.name} · ${row.typeLabel}`;
+  };
+
+  /** The footer's resting label. */
+  protected readonly submitLabel: string = $localize`:@@onboarding.equipmentForm.submit:Register equipment`;
+
+  /** The footer's label while the equipment is being registered. */
+  protected readonly pendingLabel: string = $localize`:@@onboarding.equipmentForm.submitting:Registering…`;
   //#endregion
 
   //#region Lifecycle

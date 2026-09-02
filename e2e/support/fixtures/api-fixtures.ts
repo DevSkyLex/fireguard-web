@@ -186,14 +186,14 @@ export const E2E_ONBOARDING_STEPS: ReadonlyArray<OnboardingStepOutputFixture> = 
     key: 'create_first_facility',
     label: 'Add your first facility',
     required: false,
-    skippable: true,
+    skippable: false,
     skipAvailable: false,
   }),
   onboardingStepOutput({
     key: 'create_first_equipment',
     label: 'Register your first equipment',
     required: false,
-    skippable: true,
+    skippable: false,
     skipAvailable: false,
   }),
 ];

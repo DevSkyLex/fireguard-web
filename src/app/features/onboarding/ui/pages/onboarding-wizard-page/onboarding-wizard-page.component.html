@@ -9,7 +9,11 @@
     </div>
 
     @if (stepPresentation(); as presentation) {
-      <app-page-heading [heading]="presentation.label" [description]="presentation.description" />
+      <app-page-heading [heading]="presentation.label" [description]="presentation.description">
+        <p class="text-sm text-muted-foreground" data-testid="onboarding-wizard-next-step">
+          {{ nextStepHint() }}
+        </p>
+      </app-page-heading>
     }
 
     @switch (step.key) {
@@ -17,7 +21,9 @@
         <app-onboarding-organization-form
           [pending]="stepPending()"
           [serverError]="stepError()"
+          [skippable]="canSkip()"
           (submitted)="submitOrganization($event)"
+          (skipped)="skipCurrentStep()"
         />
       }
       @case ('select_plan') {
@@ -26,7 +32,9 @@
           [pricing]="pricing()"
           [pending]="stepPending()"
           [serverError]="stepError()"
+          [skippable]="canSkip()"
           (submitted)="submitPlan($event)"
+          (skipped)="skipCurrentStep()"
         />
       }
       @case ('invite_members') {
@@ -34,14 +42,18 @@
           [roles]="roles()"
           [pending]="stepPending()"
           [serverError]="stepError()"
+          [skippable]="canSkip()"
           (submitted)="submitMembers($event)"
+          (skipped)="skipCurrentStep()"
         />
       }
       @case ('create_first_facility') {
         <app-onboarding-facilities-form
           [pending]="stepPending()"
           [serverError]="stepError()"
+          [skippable]="canSkip()"
           (submitted)="submitFacilities($event)"
+          (skipped)="skipCurrentStep()"
         />
       }
       @case ('create_first_equipment') {
@@ -49,22 +61,11 @@
           [facilities]="createdFacilities()"
           [pending]="stepPending()"
           [serverError]="stepError()"
+          [skippable]="canSkip()"
           (submitted)="submitEquipment($event)"
+          (skipped)="skipCurrentStep()"
         />
       }
-    }
-
-    @if (step.skippable && step.skipAvailable) {
-      <button
-        hlmBtn
-        type="button"
-        variant="ghost"
-        data-testid="onboarding-wizard-skip"
-        [disabled]="stepPending()"
-        (click)="skipCurrentStep()"
-      >
-        <span i18n="@@onboarding.wizard.skip">Skip for now</span>
-      </button>
     }
   } @else if (store.isBlocked()) {
     <div
@@ -79,15 +80,17 @@
         <p class="text-sm text-muted-foreground">{{ reason }}</p>
       }
       @if (store.canRollback()) {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          [disabled]="store.isRollingBack()"
-          (click)="rollbackStep()"
-        >
-          <span i18n="@@onboarding.wizard.rollback">Go back a step</span>
-        </button>
+        <div class="flex justify-end">
+          <button
+            hlmBtn
+            type="button"
+            class="max-sm:min-h-11"
+            [disabled]="store.isRollingBack()"
+            (click)="rollbackStep()"
+          >
+            <span i18n="@@onboarding.wizard.rollback">Go back a step</span>
+          </button>
+        </div>
       }
     </div>
   } @else {

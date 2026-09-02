@@ -25,8 +25,13 @@ import type { OnboardingStepRailRow } from './models';
  *
  * @description
  * Read-only progress list for the activation wizard: every step in order,
- * each with its own glyph, a status glyph and label, and the currently
- * active step marked with `aria-current="step"`. Shared verbatim by the
+ * each with its own glyph and a status glyph, the currently active step
+ * marked with `aria-current="step"` and the only one to carry its sublabel
+ * and status text. A resolved step collapses to its label and glyph (the
+ * status stays in the accessible name), a skipped or blocked one keeps its
+ * status visible because it explains the row — except a step the backend
+ * reports `blocked` merely because it comes after the active one: that is
+ * "not started", not a failure, and renders as such. Shared verbatim by the
  * split-layout showcase panel (`lg` and up) and the wizard page's own
  * in-content copy (below `lg`) — one component, so the two surfaces the
  * feature's `FEATURE.md` promises can never drift apart.
@@ -103,10 +108,14 @@ export class OnboardingStepRail {
     readonly OnboardingStepRailRow[]
   >(() => {
     const activeKey: OnboardingStepKey | null = this.activeStepKey();
+    const steps: readonly OnboardingStepOutput[] = this.steps();
+    const activeIndex: number = steps.findIndex((step) => step.key === activeKey);
 
-    return this.steps().map((step: OnboardingStepOutput): OnboardingStepRailRow => {
+    return steps.map((step: OnboardingStepOutput, index: number): OnboardingStepRailRow => {
       const presentation = ONBOARDING_STEP_PRESENTATION[step.key];
-      const statusTag = resolveOnboardingStepStatusTag(step.status);
+      const upcoming: boolean =
+        step.status === 'blocked' && activeIndex !== -1 && index > activeIndex;
+      const statusTag = resolveOnboardingStepStatusTag(upcoming ? 'pending' : step.status);
 
       return {
         key: step.key,
@@ -117,6 +126,11 @@ export class OnboardingStepRail {
         statusLabel: statusTag.label,
         statusIconClass: ONBOARDING_STEP_STATUS_TAG_ICON_CLASS[statusTag.severity],
         isActive: step.key === activeKey,
+        showSublabel: step.key === activeKey,
+        statusLabelVisible:
+          step.key === activeKey ||
+          step.status === 'skipped' ||
+          (step.status === 'blocked' && !upcoming),
       };
     });
   });

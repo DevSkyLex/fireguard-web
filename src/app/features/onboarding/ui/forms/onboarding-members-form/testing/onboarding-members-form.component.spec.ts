@@ -42,6 +42,31 @@ describe('OnboardingMembersForm', () => {
     expect(emitted).toEqual([[]]);
   });
 
+  it('should close the send and name the way out while skippable with nothing typed or staged', async () => {
+    fixture.componentRef.setInput('skippable', true);
+    await fixture.whenStable();
+
+    const submitButton: HTMLButtonElement = element.querySelector(
+      '[data-testid="onboarding-members-submit"]',
+    ) as HTMLButtonElement;
+
+    expect(submitButton.disabled).toBe(true);
+    expect(element.textContent).toContain('Add at least one email, or skip this step.');
+    expect(element.querySelector('[data-testid="onboarding-wizard-skip"]')).not.toBeNull();
+  });
+
+  it('should reopen the send as soon as an address is typed', async () => {
+    fixture.componentRef.setInput('skippable', true);
+    await fixture.whenStable();
+    await setDraft({ email: 'jordan@example.com', roleId: '' });
+
+    const submitButton: HTMLButtonElement = element.querySelector(
+      '[data-testid="onboarding-members-submit"]',
+    ) as HTMLButtonElement;
+
+    expect(submitButton.disabled).toBe(false);
+  });
+
   it('should stage a valid draft row automatically when the operator continues', async () => {
     await setDraft({ email: 'jordan@example.com', roleId: '' });
 

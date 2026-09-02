@@ -22,6 +22,14 @@ export class OnboardingPage {
   public readonly orgError: Locator = this.page.getByTestId('onboarding-org-error');
 
   public readonly skipButton: Locator = this.page.getByTestId('onboarding-wizard-skip');
+  public readonly nextStepHint: Locator = this.page.getByTestId('onboarding-wizard-next-step');
+  public readonly completedToast: Locator = this.page.getByText('Your organization is ready.');
+
+  public readonly planSubmit: Locator = this.page.getByTestId('onboarding-plan-submit');
+
+  public readonly memberEmailInput: Locator = this.page.getByTestId('onboarding-member-email');
+  public readonly memberAddButton: Locator = this.page.getByTestId('onboarding-member-add');
+  public readonly membersSubmit: Locator = this.page.getByTestId('onboarding-members-submit');
   public readonly blockedBanner: Locator = this.page.getByTestId('onboarding-wizard-blocked');
   public readonly loadingIndicator: Locator = this.page.getByTestId('onboarding-wizard-loading');
 
@@ -36,6 +44,9 @@ export class OnboardingPage {
 
   public readonly equipmentTypeTrigger: Locator = this.page.getByTestId(
     'onboarding-equipment-type',
+  );
+  public readonly equipmentFacilityTrigger: Locator = this.page.getByTestId(
+    'onboarding-equipment-facility',
   );
   public readonly equipmentBrandInput: Locator = this.page.getByTestId(
     'onboarding-equipment-brand',
@@ -64,7 +75,7 @@ export class OnboardingPage {
     await this.page.getByRole('option', { name: label }).click();
   }
 
-  /** Fills the facility draft and stages it with "Add facility" — the explicit step every fix-#227 wizard walk requires. */
+  /** Fills the facility draft and stages it explicitly with "Add another facility"; a valid draft is also staged by the primary action itself, so this is the two-facility path. */
   public async addFacility(values: {
     readonly type: string;
     readonly name: string;

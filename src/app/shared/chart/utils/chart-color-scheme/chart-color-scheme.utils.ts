@@ -1,43 +1,37 @@
 /**
  * The light-appearance categorical series palette, in series order. This is
- * the single source of truth for it — `src/styles.css` is off-limits to a
- * generated change (a repo guard hook blocks editing it outside the design
- * token workflow), and Chart.js's canvas 2D context never resolves `var()`
- * against a custom property, so a resolved literal is what it needs
- * (`core/theme`'s `ThemePort.resolvedTheme` doc comment states the same rule
- * for canvas/SVG chart consumers).
+ * the single source of truth for it: Chart.js's canvas 2D context never
+ * resolves `var()` against a custom property, so the `--chart-1..6` tokens in
+ * `src/styles.css` are documentation and this literal is what the canvas
+ * reads (`core/theme`'s `ThemePort.resolvedTheme` doc comment states the same
+ * rule for canvas/SVG chart consumers). Keep both in step.
  *
- * Chroma sits in the 0.14–0.20 vibrant band (raised from the previous
- * 0.09–0.13 wash) and slot 1 (indigo, hue ≈272) deliberately echoes the
- * `#4f46e5` brand mark (`PRODUCT.md` Brand Commitments) — the interface's
- * chromatic accent is retired everywhere except the mark and this tolerated
- * data-viz exception, so the first series is where the product's own colour
- * legitimately shows up. Every slot and its {@link DARK_CHART_PALETTE} twin
- * pass `scripts/validate_palette.js` (dataviz skill) on the adjacent
- * pairlist — lightness band, chroma floor, CVD ΔE ≥ 8, normal-vision ΔE ≥ 15
- * — against this app's actual `--card` surface (`#ffffff` light, `#171717`
- * dark), not the skill's placeholder surface. Three light-mode slots (teal,
- * amber, magenta) sit under the 3:1 relief floor by design — legal only
- * because `line-chart` always renders a text legend and a value tooltip, so
- * a series is never told apart by hue alone.
+ * The six hues are the Bloc 3 deck's series (`DESIGN.md` §Colors, "Ember"):
+ * orange, amber, emerald, cyan, violet, rose — the deck's intent being that
+ * status colours are members of the series family, not neighbours of it. Slot
+ * 1 is the brand orange itself, at the 600 rung so it holds ≥ 3:1 relief
+ * against the warm paper card. Slots that fall under the 3:1 relief floor in
+ * light mode (amber, cyan) are legal only because `line-chart` always renders
+ * a text legend and a value tooltip, so a series is never told apart by hue
+ * alone.
  */
 const LIGHT_CHART_PALETTE: readonly string[] = [
-  'oklch(0.53 0.20 272)',
-  'oklch(0.67 0.19 41)',
-  'oklch(0.67 0.14 162)',
-  'oklch(0.76 0.155 75)',
-  'oklch(0.70 0.17 357)',
-  'oklch(0.55 0.17 142)',
+  'oklch(0.646 0.194 41.1)',
+  'oklch(0.666 0.179 58.3)',
+  'oklch(0.596 0.145 163.2)',
+  'oklch(0.609 0.126 221.7)',
+  'oklch(0.58 0.2 293)',
+  'oklch(0.6 0.21 17)',
 ];
 
-/** The dark-appearance twin of {@link LIGHT_CHART_PALETTE} — same six hues re-stepped into the dark lightness band (OKLCH L 0.48–0.67) and validated against the `#171717` dark card surface, not a uniform lift of the light values. */
+/** The dark-appearance twin of {@link LIGHT_CHART_PALETTE} — the deck's six series verbatim (Tailwind 400 rung), which already sit in the dark lightness band against the `oklch(0.195 0.005 286)` card surface. */
 const DARK_CHART_PALETTE: readonly string[] = [
-  'oklch(0.62 0.18 272)',
-  'oklch(0.62 0.17 41)',
-  'oklch(0.62 0.13 162)',
-  'oklch(0.665 0.135 75)',
-  'oklch(0.62 0.16 357)',
-  'oklch(0.55 0.17 142)',
+  'oklch(0.705 0.187 47.6)',
+  'oklch(0.837 0.164 84.4)',
+  'oklch(0.773 0.153 163.2)',
+  'oklch(0.797 0.134 211.5)',
+  'oklch(0.709 0.159 293.5)',
+  'oklch(0.719 0.169 13.4)',
 ];
 
 /**

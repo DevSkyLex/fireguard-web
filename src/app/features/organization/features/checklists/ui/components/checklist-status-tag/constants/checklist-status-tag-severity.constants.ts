@@ -14,6 +14,6 @@ import type { ChecklistStatusTagSeverity } from '@features/organization/features
  */
 export const CHECKLIST_STATUS_TAG_ICON_CLASS: Readonly<Record<ChecklistStatusTagSeverity, string>> =
   {
-    neutral: 'text-neutral-500 dark:text-neutral-400',
+    neutral: 'text-muted-foreground',
     success: 'text-success',
   };

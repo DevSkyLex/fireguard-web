@@ -13,6 +13,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDialogImports } from '@shared/ui/dialog';
@@ -90,11 +91,11 @@ export class EquipmentAssignFacilityDialog {
    * @description The organization's facilities, preloaded by the page.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {InputSignal<readonly FacilityOption[]>}
    */
-  public readonly options: InputSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  public readonly options: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
 
   /**
    * Property assigning

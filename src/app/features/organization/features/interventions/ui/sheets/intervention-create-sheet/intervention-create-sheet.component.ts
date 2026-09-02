@@ -22,6 +22,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
+import { PersonOption } from '@shared/person-option';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -68,6 +69,7 @@ import {
 @Component({
   selector: 'app-intervention-create-sheet',
   imports: [
+    PersonOption,
     InterventionCreateForm,
     UnsavedChangesDialog,
     HlmButton,

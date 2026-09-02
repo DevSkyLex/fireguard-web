@@ -80,13 +80,12 @@
           <div hlmComboboxList>
             @for (option of memberOptions(); track option.value) {
               <hlm-combobox-item [value]="option.value">
-                <hlm-avatar size="sm" class="shrink-0">
-                  @if (option.avatarUrl; as avatarUrl) {
-                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                  }
-                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
-                </hlm-avatar>
-                <span class="truncate">{{ option.displayName }}</span>
+                <app-person-option
+                  [name]="option.displayName"
+                  [secondary]="option.roleLabel"
+                  [avatarUrl]="option.avatarUrl"
+                  [initials]="option.initials"
+                />
               </hlm-combobox-item>
             }
           </div>

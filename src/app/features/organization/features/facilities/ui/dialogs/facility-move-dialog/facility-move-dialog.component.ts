@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
+  FacilityOption,
   FacilityMoveRequest,
   FacilityMoveSubmittedEvent,
 } from '@features/organization/features/facilities/models';
@@ -71,11 +72,11 @@ export class FacilityMoveDialog {
    * @description Candidate parents offered — every other currently loaded facility.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {InputSignal<readonly FacilityOption[]>}
    */
-  public readonly options: InputSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  public readonly options: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
 
   /**
    * Property busy

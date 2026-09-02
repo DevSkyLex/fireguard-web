@@ -18,6 +18,7 @@ import type {
   InterventionAssignSubmittedEvent,
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
+import { PersonOption } from '@shared/person-option';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -47,6 +48,7 @@ import { HlmFieldImports } from '@shared/ui/field';
 @Component({
   selector: 'app-intervention-assign-dialog',
   imports: [
+    PersonOption,
     HlmButton,
     ...HlmAvatarImports,
     ...HlmComboboxImports,

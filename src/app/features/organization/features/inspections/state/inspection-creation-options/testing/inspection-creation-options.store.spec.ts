@@ -15,8 +15,20 @@ describe('InspectionCreationOptionsStore', () => {
       list: vi.fn().mockReturnValue(
         of({
           member: [
-            { id: 'equipment-1', type: 'fire_extinguisher', serialNumber: 'SN-1' },
-            { id: 'equipment-2', type: 'smoke_detector', serialNumber: null },
+            {
+              id: 'equipment-1',
+              type: 'fire_extinguisher',
+              serialNumber: 'SN-1',
+              locationLabel: 'Hall',
+              facilityName: 'Head office',
+            },
+            {
+              id: 'equipment-2',
+              type: 'smoke_detector',
+              serialNumber: null,
+              locationLabel: null,
+              facilityName: null,
+            },
           ],
           totalItems: 2,
         }),
@@ -40,8 +52,18 @@ describe('InspectionCreationOptionsStore', () => {
 
     expect(equipment.list).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 100 });
     expect(store.equipmentOptions()).toEqual([
-      { label: 'fire_extinguisher · SN-1', value: 'equipment-1' },
-      { label: 'smoke_detector', value: 'equipment-2' },
+      {
+        label: 'SN-1',
+        value: 'equipment-1',
+        typeLabel: 'Fire extinguisher',
+        secondary: 'Hall · Head office',
+      },
+      {
+        label: 'Smoke detector',
+        value: 'equipment-2',
+        typeLabel: 'Smoke detector',
+        secondary: null,
+      },
     ]);
     expect(store.loadError()).toBeNull();
   });

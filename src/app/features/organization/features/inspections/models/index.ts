@@ -41,6 +41,7 @@ export { resolveInspectionStatusTag } from './inspection-status-tag/inspection-s
 export type { InspectionEditState } from './inspection-edit/inspection-edit-state.interface';
 export type { InspectionEditTarget } from './inspection-edit/inspection-edit-target.type';
 export type { SelectOption } from './select-option/select-option.interface';
+export type { EquipmentSelectOption } from './select-option/equipment-select-option.interface';
 export type {
   NonConformityStatisticsOutput,
   NonConformitySeverityStatisticOutput,

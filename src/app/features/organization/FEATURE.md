@@ -505,6 +505,13 @@ requires `organization.members.read`, which messaging permissions do **not** imp
 publishes `isAvailable` and consumers must degrade to raw ids rather than surface an error. The
 store never calls the API without the permission — the request would be a guaranteed 403.
 
+- **`MemberSelectOption`** (`models/member/`) and **`toMemberSelectOption`**
+  (`utils/member-select-option/`) — the one shape and the one mapper for a
+  member in a picker; the caller picks what `value` submits (member IRI by
+  default, member id for a team roster, user id for an ownership transfer).
+  Rendered by `app-person-option` (`@shared/person-option`) in the team
+  member-add form, the transfer-ownership dialog and every intervention picker.
+
 ## UI Conventions
 
 **Dashboard (`organization-dashboard-page`) merges the retired Today and Statistics pages into one

@@ -169,7 +169,10 @@ export class MaintenanceOverrideDialog {
       return $localize`:@@maintenance.overrideDialog.useDefault:Use organization default`;
     }
 
-    return this.durationOptions.find((option) => option.value === value)?.label ?? value;
+    return (
+      this.durationOptions.find((option) => option.value === value)?.label ??
+      $localize`:@@common.unknownValue:Unknown value`
+    );
   };
 
   /**

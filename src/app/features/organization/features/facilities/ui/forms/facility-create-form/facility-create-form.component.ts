@@ -24,6 +24,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMapPin } from '@ng-icons/lucide';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
+  FacilityOption,
   CreateFacilityInput,
   FacilityGeocodeOutput,
   FacilityType,
@@ -193,9 +194,9 @@ export class FacilityCreateForm {
    */
   public readonly initialParentFacilityId: InputSignal<string | null> = input<string | null>(null);
 
-  public readonly parentOptions: InputSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  public readonly parentOptions: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
 
   /**
    * Property mapCenter

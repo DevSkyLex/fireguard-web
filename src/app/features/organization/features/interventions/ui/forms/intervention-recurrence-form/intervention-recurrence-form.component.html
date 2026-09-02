@@ -257,7 +257,14 @@
           >
           <div hlmComboboxList>
             @for (option of memberOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">{{ option.displayName }}</hlm-combobox-item>
+              <hlm-combobox-item [value]="option.value">
+                <app-person-option
+                  [name]="option.displayName"
+                  [secondary]="option.roleLabel"
+                  [avatarUrl]="option.avatarUrl"
+                  [initials]="option.initials"
+                />
+              </hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>

@@ -432,10 +432,11 @@ export class ApprovalsPage {
    * @access protected
    * @since 1.0.0
    * @param {string} value - The raw action-type key.
-   * @returns {string} The catalog label, or the raw key if not yet loaded.
+   * @returns {string} The catalog label, or a localized "Unknown type" while the catalog has not answered — never the raw key.
    */
   protected actionTypeLabelOf = (value: string): string =>
-    this.actionTypeOptions().find((option) => option.value === value)?.label ?? value;
+    this.actionTypeOptions().find((option) => option.value === value)?.label ??
+    $localize`:@@common.unknownType:Unknown type`;
 
   /**
    * Method onFieldPicked

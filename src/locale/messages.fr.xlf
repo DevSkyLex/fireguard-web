@@ -30,6 +30,42 @@
         <source> required</source>
         <target> obligatoire</target>
       </trans-unit>
+      <trans-unit id="common.unknownType" datatype="html">
+        <source>Unknown type</source>
+        <target>Type inconnu</target>
+      </trans-unit>
+      <trans-unit id="common.unknownFacility" datatype="html">
+        <source>Unknown facility</source>
+        <target>Établissement inconnu</target>
+      </trans-unit>
+      <trans-unit id="common.unknownSite" datatype="html">
+        <source>Unknown site</source>
+        <target>Site inconnu</target>
+      </trans-unit>
+      <trans-unit id="common.unknownLabel" datatype="html">
+        <source>Unknown label</source>
+        <target>Étiquette inconnue</target>
+      </trans-unit>
+      <trans-unit id="common.unknownTarget" datatype="html">
+        <source>Unknown target</source>
+        <target>Cible inconnue</target>
+      </trans-unit>
+      <trans-unit id="common.unknownMember" datatype="html">
+        <source>Unknown member</source>
+        <target>Membre inconnu</target>
+      </trans-unit>
+      <trans-unit id="common.unknownValue" datatype="html">
+        <source>Unknown value</source>
+        <target>Valeur inconnue</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.unknownValue" datatype="html">
+        <source>Unknown value</source>
+        <target>Valeur inconnue</target>
+      </trans-unit>
+      <trans-unit id="org.member.noRole" datatype="html">
+        <source>No assigned role</source>
+        <target>Aucun rôle attribué</target>
+      </trans-unit>
       <trans-unit id="account.mfa.secretLabel" datatype="html">
         <source>Manual entry key</source>
         <target>Clé de saisie manuelle</target>

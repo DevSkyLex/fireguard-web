@@ -9,3 +9,4 @@ export {
   equipmentPlanDetail,
   equipmentPlanLabel,
 } from './equipment-plan-label/equipment-plan-label.utils';
+export { toFacilityOption } from './facility-option/facility-option.utils';

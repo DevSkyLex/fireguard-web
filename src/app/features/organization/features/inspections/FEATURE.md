@@ -262,3 +262,10 @@ field.
   non-conformity were waived — its status tag and the record itself stay
   exactly as they were until a reviewer decides the request from the
   organization's approvals inbox.
+
+## Published Contracts
+
+- `EquipmentSelectOption` (`models/`) — what `InspectionCreationOptionsStore`
+  offers the create form: serial number (or the localized type) as the label,
+  the localized type and "location · facility" as the qualifier. The raw
+  equipment type key and the id never reach a template.

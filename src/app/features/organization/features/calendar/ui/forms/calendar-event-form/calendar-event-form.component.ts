@@ -310,7 +310,10 @@ export class CalendarEventForm {
       return $localize`:@@calendar.eventDialog.noFacility:No facility`;
     }
 
-    return this.facilityOptions().find((option) => option.value === value)?.label ?? value;
+    return (
+      this.facilityOptions().find((option) => option.value === value)?.label ??
+      $localize`:@@common.unknownFacility:Unknown facility`
+    );
   };
 
   /**

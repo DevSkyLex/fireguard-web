@@ -19,6 +19,7 @@ import type {
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -109,11 +110,11 @@ export class EquipmentCreateForm {
    * "unassigned" choice rather than blocking the form.
    * @access public
    * @since 2.0.0
-   * @type {InputSignal<ReadonlyArray<{ readonly value: string; readonly label: string }>>}
+   * @type {InputSignal<readonly FacilityOption[]>}
    */
-  public readonly facilityOptions: InputSignal<
-    ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = input<ReadonlyArray<{ readonly value: string; readonly label: string }>>([]);
+  public readonly facilityOptions: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
 
   /**
    * Property initialFacilityId

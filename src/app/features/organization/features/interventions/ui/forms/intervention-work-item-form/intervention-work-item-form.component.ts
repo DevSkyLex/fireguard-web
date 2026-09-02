@@ -20,6 +20,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { PersonOption } from '@shared/person-option';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -65,6 +66,7 @@ const EMPTY_VALUES: InterventionWorkItemFormValues = {
 @Component({
   selector: 'app-intervention-work-item-form',
   imports: [
+    PersonOption,
     FormField,
     HlmButton,
     InterventionTag,
@@ -242,7 +244,8 @@ export class InterventionWorkItemForm {
    * @type {(value: string) => string}
    */
   protected readonly targetLabelOf: (value: string) => string = (value) =>
-    this.targetOptions().find((option) => option.value === value)?.label ?? value;
+    this.targetOptions().find((option) => option.value === value)?.label ??
+    $localize`:@@common.unknownTarget:Unknown target`;
 
   /**
    * Property memberLabelOf
@@ -253,7 +256,8 @@ export class InterventionWorkItemForm {
    * @type {(value: string) => string}
    */
   protected readonly memberLabelOf: (value: string) => string = (value) =>
-    this.memberOptions().find((option) => option.value === value)?.displayName ?? value;
+    this.memberOptions().find((option) => option.value === value)?.displayName ??
+    $localize`:@@common.unknownMember:Unknown member`;
 
   /**
    * Property actionLabelOf

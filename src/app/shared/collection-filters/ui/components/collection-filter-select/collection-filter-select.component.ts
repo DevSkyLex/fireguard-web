@@ -313,7 +313,7 @@ export class CollectionFilterSelect {
    */
   protected readonly labelOf: (value: string) => string = (value: string): string =>
     this.options().find((option: CollectionFilterOption): boolean => option.value === value)
-      ?.label ?? value;
+      ?.label ?? $localize`:@@collectionFilters.unknownValue:Unknown value`;
 
   /**
    * Property fieldA11y

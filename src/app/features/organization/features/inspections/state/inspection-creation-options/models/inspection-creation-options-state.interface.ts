@@ -1,5 +1,5 @@
 import type { CallState } from '@core/request-state';
-import type { SelectOption } from '@features/organization/features/inspections/models';
+import type { EquipmentSelectOption } from '@features/organization/features/inspections/models';
 
 /**
  * Interface InspectionCreationOptionsState
@@ -11,7 +11,7 @@ import type { SelectOption } from '@features/organization/features/inspections/m
  */
 export interface InspectionCreationOptionsState {
   /** The organization's equipment, offered by `InspectionCreateForm`'s combobox. */
-  readonly equipmentOptions: readonly SelectOption[];
+  readonly equipmentOptions: readonly EquipmentSelectOption[];
 
   /** Lifecycle of the options load (pending / success / error). */
   readonly loadCallState: CallState;

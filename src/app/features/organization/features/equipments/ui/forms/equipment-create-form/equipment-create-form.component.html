@@ -56,7 +56,17 @@
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              <hlm-select-item [value]="option.value">
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.label }}</span>
+                  <span class="truncate text-xs text-muted-foreground"
+                    >{{ option.typeLabel }}
+                    @if (option.pathLabel; as path) {
+                      · {{ path }}
+                    }
+                  </span>
+                </div>
+              </hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>

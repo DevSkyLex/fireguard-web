@@ -34,16 +34,12 @@
                 [value]="option.value"
                 [attr.data-testid]="'intervention-assign-option-' + option.value"
               >
-                <hlm-avatar size="sm" class="shrink-0">
-                  @if (option.avatarUrl; as avatarUrl) {
-                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                  }
-                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
-                </hlm-avatar>
-                <span class="flex min-w-0 flex-col">
-                  <span class="truncate">{{ option.displayName }}</span>
-                  <span class="truncate text-xs text-muted-foreground">{{ option.roleLabel }}</span>
-                </span>
+                <app-person-option
+                  [name]="option.displayName"
+                  [secondary]="option.roleLabel"
+                  [avatarUrl]="option.avatarUrl"
+                  [initials]="option.initials"
+                />
               </hlm-combobox-item>
             }
           </div>

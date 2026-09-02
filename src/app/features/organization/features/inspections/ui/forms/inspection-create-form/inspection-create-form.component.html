@@ -27,7 +27,22 @@
           >
           <div hlmComboboxList>
             @for (option of equipmentOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+              <hlm-combobox-item [value]="option.value">
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.label }}</span>
+                  <span class="truncate text-xs text-muted-foreground">
+                    @if (option.label !== option.typeLabel) {
+                      {{ option.typeLabel }}
+                    }
+                    @if (option.secondary; as where) {
+                      @if (option.label !== option.typeLabel) {
+                        ·
+                      }
+                      {{ where }}
+                    }
+                  </span>
+                </div>
+              </hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>

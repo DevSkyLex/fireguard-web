@@ -12,11 +12,13 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideTrash2, lucideUsersRound } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
+  MemberSelectOption,
   AddTeamMemberInput,
   OrganizationMemberOutput,
   TeamMemberOutput,
   TeamOutput,
 } from '@features/organization/models';
+import { toMemberSelectOption } from '@features/organization/utils';
 import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import {
@@ -30,10 +32,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import {
-  OrganizationTeamMemberAddForm,
-  type OrganizationTeamMemberCandidate,
-} from '../../forms/organization-team-member-add-form';
+import { OrganizationTeamMemberAddForm } from '../../forms/organization-team-member-add-form';
 
 /**
  * Interface OrganizationTeamRosterRow
@@ -316,20 +315,19 @@ export class OrganizationTeamMembersSheet {
    * @description Organization members not already on the roster, offered to the add-member picker.
    * @access protected
    * @since 1.0.0
-   * @type {Signal<readonly OrganizationTeamMemberCandidate[]>}
+   * @type {Signal<readonly MemberSelectOption[]>}
    */
-  protected readonly candidates: Signal<readonly OrganizationTeamMemberCandidate[]> = computed(
-    (): readonly OrganizationTeamMemberCandidate[] => {
+  protected readonly candidates: Signal<readonly MemberSelectOption[]> = computed(
+    (): readonly MemberSelectOption[] => {
       const rosterIds: ReadonlySet<string> = new Set(
         this.members().map((member) => member.memberId),
       );
 
       return this.orgMembers()
         .filter((member) => !rosterIds.has(member.id))
-        .map((member): OrganizationTeamMemberCandidate => ({
-          memberId: member.id,
-          label: member.displayName,
-        }));
+        .map((member): MemberSelectOption =>
+          toMemberSelectOption(member, member.organizationId, member.id),
+        );
     },
   );
   //#endregion

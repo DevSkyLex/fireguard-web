@@ -1,0 +1,12 @@
+<hlm-avatar size="sm" class="shrink-0">
+  @if (avatarUrl(); as pictureUrl) {
+    <img hlmAvatarImage [src]="pictureUrl" alt="" />
+  }
+  <span hlmAvatarFallback class="text-[10px]">{{ initials() }}</span>
+</hlm-avatar>
+<span class="flex min-w-0 flex-col">
+  <span class="truncate">{{ name() }}</span>
+  @if (secondary(); as line) {
+    <span class="truncate text-xs text-muted-foreground">{{ line }}</span>
+  }
+</span>

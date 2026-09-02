@@ -11,7 +11,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
-import type { AddTeamMemberInput } from '@features/organization/models';
+import type { AddTeamMemberInput, MemberSelectOption } from '@features/organization/models';
+import { PersonOption } from '@shared/person-option';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -19,21 +20,6 @@ import { HlmInput } from '@shared/ui/input';
 
 /** The value standing in for "no member picked" in the combobox — a member id is never an empty string. */
 const NO_PICK_VALUE: string = '';
-
-/**
- * Interface OrganizationTeamMemberCandidate
- *
- * @description
- * One combobox choice: the organization member's id and a display label
- * pre-resolved by the caller (the sheet already holds the member directory
- * and the current roster it must be excluded from).
- *
- * @since 1.0.0
- */
-export interface OrganizationTeamMemberCandidate {
-  readonly memberId: string;
-  readonly label: string;
-}
 
 /**
  * Component OrganizationTeamMemberAddForm
@@ -59,7 +45,7 @@ export interface OrganizationTeamMemberCandidate {
  */
 @Component({
   selector: 'app-organization-team-member-add-form',
-  imports: [HlmButton, HlmInput, ...HlmComboboxImports, ...HlmFieldImports],
+  imports: [HlmButton, HlmInput, PersonOption, ...HlmComboboxImports, ...HlmFieldImports],
   templateUrl: './organization-team-member-add-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,10 +58,10 @@ export class OrganizationTeamMemberAddForm {
    * @description Organization members not already on the roster, offered as picks.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<readonly OrganizationTeamMemberCandidate[]>}
+   * @type {InputSignal<readonly MemberSelectOption[]>}
    */
-  public readonly candidates: InputSignal<readonly OrganizationTeamMemberCandidate[]> = input<
-    readonly OrganizationTeamMemberCandidate[]
+  public readonly candidates: InputSignal<readonly MemberSelectOption[]> = input<
+    readonly MemberSelectOption[]
   >([]);
 
   /**
@@ -130,7 +116,7 @@ export class OrganizationTeamMemberAddForm {
 
   /** Names a picked member on the closed combobox trigger. */
   protected readonly memberLabelOf: (value: string) => string = (value: string): string =>
-    this.candidates().find((candidate) => candidate.memberId === value)?.label ?? '';
+    this.candidates().find((candidate) => candidate.value === value)?.displayName ?? '';
 
   /**
    * Property serverMessages

@@ -16,9 +16,10 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import type { SelectOption } from '@features/organization/features/inspections/models';
+import type { EquipmentSelectOption } from '@features/organization/features/inspections/models';
 import { inspectionCreationOptionsStoreEvents } from './events';
 import type { InspectionCreationOptionsState } from './models';
 
@@ -58,7 +59,9 @@ const CREATION_OPTION_PAGE_SIZE: number = 100;
  *
  * @description
  * Component-scoped NgRx SignalStore that loads the organization's equipment
- * into the `SelectOption` list `InspectionCreateForm`'s combobox offers.
+ * into the `EquipmentSelectOption` list `InspectionCreateForm`'s combobox
+ * offers — serial number first, localized type, then location and facility;
+ * the raw type key and the id never reach the template.
  * `CreateInspectionInput.equipmentId` is required and this feature owns no
  * equipment data of its own, so the create page provides this store and
  * reads `EquipmentService` through its cross-feature `data-access` barrel —
@@ -113,13 +116,22 @@ export const InspectionCreationOptionsStore = signalStore(
               .pipe(
                 tapResponse({
                   next: (response: HydraCollection<EquipmentOutput>): void => {
-                    const options: readonly SelectOption[] = response.member.map(
-                      (item: EquipmentOutput): SelectOption => ({
-                        label: item.serialNumber
-                          ? `${item.type} · ${item.serialNumber}`
-                          : item.type,
-                        value: item.id,
-                      }),
+                    const options: readonly EquipmentSelectOption[] = response.member.map(
+                      (item: EquipmentOutput): EquipmentSelectOption => {
+                        const typeLabel: string =
+                          EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)
+                            ?.label ?? item.type.replace(/_/g, ' ');
+                        const secondary: string = [item.locationLabel, item.facilityName]
+                          .filter((part): part is string => !!part)
+                          .join(' · ');
+
+                        return {
+                          label: item.serialNumber || typeLabel,
+                          value: item.id,
+                          typeLabel,
+                          secondary: secondary === '' ? null : secondary,
+                        };
+                      },
                     );
 
                     patchState(store, {

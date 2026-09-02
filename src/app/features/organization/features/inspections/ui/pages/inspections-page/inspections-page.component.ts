@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -14,6 +15,7 @@ import {
   type WritableSignal,
   untracked,
   viewChild,
+  PLATFORM_ID,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,9 +36,12 @@ import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
+  CreateInspectionInput,
   InspectionListOptions,
   InspectionListSort,
   InspectionOutput,
@@ -50,6 +55,7 @@ import {
   InspectionStore,
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
+import { InspectionCreationOptionsStore } from '@features/organization/features/inspections/state/inspection-creation-options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
@@ -68,6 +74,7 @@ import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
+import { InspectionCreateSheet } from '../../sheets/inspection-create-sheet';
 import { InspectionTable } from '../../tables/inspection-table';
 
 /** How long typing settles before the search reaches the wire. */
@@ -121,6 +128,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   selector: 'app-inspections-page',
   imports: [
     RouterLink,
+    InspectionCreateSheet,
     NgIcon,
     EmptyState,
     ErrorState,
@@ -136,6 +144,8 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     HlmSpinner,
   ],
   providers: [
+    ChecklistStore,
+    InspectionCreationOptionsStore,
     provideIcons({
       lucideLock,
       lucideChartColumn,
@@ -164,6 +174,26 @@ export class InspectionsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property create
+   * @readonly
+   * @description `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create` redirect and the in-app links use. Consumed once, then stripped from the URL.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property equipment
+   * @readonly
+   * @description The equipment the caller pre-picked, bound from `?equipment=`, so a record created from a site lands in it. Consumed with `create`.
+   * @access public
+   * @since 1.6.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly equipment: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /**
    * Property q
@@ -430,6 +460,58 @@ export class InspectionsPage {
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
+  /**
+   * Property createSheetVisible
+   * @readonly
+   * @description Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property pendingScopeId
+   * @readonly
+   * @description The equipment a `?equipment=` deep link pre-picked for the sheet, cleared when it closes.
+   * @access protected
+   * @since 1.6.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly pendingScopeId: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property platformId
+   * @readonly
+   * @description Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are browser-only.
+   * @access private
+   * @since 1.6.0
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
+   * Property creationOptions
+   * @readonly
+   * @description The equipment the sheet's combobox offers, loaded on first open.
+   * @access protected
+   * @since 1.6.0
+   * @type {InspectionCreationOptionsStore}
+   */
+  protected readonly creationOptions: InspectionCreationOptionsStore = inject(
+    InspectionCreationOptionsStore,
+  );
+
+  /**
+   * Property checklistStore
+   * @readonly
+   * @description The active checklist templates the sheet's optional picker offers — the checklists subfeature's documented cross-feature consumer.
+   * @access protected
+   * @since 1.6.0
+   * @type {ChecklistStore}
+   */
+  protected readonly checklistStore: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
+
   //#region Constructor
   /**
    * Constructor
@@ -446,6 +528,35 @@ export class InspectionsPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
+    effect((): void => {
+      const requested: boolean = this.create() === '1';
+      const scope: string | undefined = this.equipment();
+
+      untracked((): void => {
+        if (!requested || !isPlatformBrowser(this.platformId)) return;
+
+        if (this.canCreate()) {
+          this.pendingScopeId.set(scope ?? null);
+          this.openCreate();
+        }
+        this.navigateQuery({ create: null, equipment: null });
+      });
+    });
+
+    effect((): void => {
+      const state: CallState<InspectionOutput | null> = this.store.createCallState();
+
+      untracked((): void => {
+        if (state.status !== 'success' || !state.data) return;
+
+        const created: InspectionOutput = state.data;
+        this.createSheetVisible.set(false);
+        void this.router
+          .navigate([...this.listRouteBase(), created.id])
+          .then((): void => this.store.resetCreateOperation());
+      });
+    });
 
     effect((): void => {
       const term: string = this.searchTerm();
@@ -747,6 +858,52 @@ export class InspectionsPage {
       search: search === '' ? undefined : search,
       sort: this.sortOrder(),
     };
+  }
+
+  /**
+   * Method openCreate
+   * @method openCreate
+   * @description Opens the creation sheet, loading its options the first time — browser only, they are secondary UI data.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected openCreate(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.creationOptions.loadEquipmentOptions(this.organizationId());
+      this.checklistStore.ensureInspectionCreateOptionsLoaded(this.organizationId());
+    }
+    this.createSheetVisible.set(true);
+  }
+
+  /**
+   * Method onCreateSheetVisibleChange
+   * @method onCreateSheetVisibleChange
+   * @description Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   * @access protected
+   * @since 1.6.0
+   * @param {boolean} visible - Whether the sheet is open.
+   * @returns {void}
+   */
+  protected onCreateSheetVisibleChange(visible: boolean): void {
+    this.createSheetVisible.set(visible);
+
+    if (!visible) this.pendingScopeId.set(null);
+  }
+
+  /**
+   * Method onCreateSubmitted
+   * @method onCreateSubmitted
+   * @description Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The sheet closes and the page navigates once the store reports the new record.
+   * @access protected
+   * @since 1.6.0
+   * @param {CreateInspectionInput} payload - The validated payload.
+   * @returns {void}
+   */
+  protected onCreateSubmitted(payload: CreateInspectionInput): void {
+    if (this.store.isCreating()) return;
+
+    this.store.create({ organizationId: this.organizationId(), input: payload });
   }
 
   /**

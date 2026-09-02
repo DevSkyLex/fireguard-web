@@ -824,9 +824,9 @@ export class OrganizationAssetsPage {
    * @method createScopeParams
    *
    * @description
-   * The query params a creation link carries so the new record lands in the
-   * site the operator is looking at. Empty when nothing is selected, which
-   * keeps the unscoped link exactly as it was.
+   * The query params a creation link carries: `create=1` opens the list's
+   * creation sheet on arrival, and the selected site scopes it so the new
+   * record lands where the operator is looking.
    *
    * The two creation forms name the site differently — equipment owns a
    * `facility`, a site owns a `parent` — so the caller states which key it
@@ -840,7 +840,7 @@ export class OrganizationAssetsPage {
   protected createScopeParams(key: 'facility' | 'parent'): Record<string, string> {
     const facilityId: string | null = this.selectedFacilityId();
 
-    return facilityId && this.axis() === 'site' ? { [key]: facilityId } : {};
+    return facilityId === null ? { create: '1' } : { create: '1', [key]: facilityId };
   }
 
   /**

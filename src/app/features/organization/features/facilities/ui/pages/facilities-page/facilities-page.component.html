@@ -158,10 +158,10 @@
           <span i18n="@@common.clearFilters">Clear filters</span>
         </button>
       } @else if (canCreate()) {
-        <a hlmBtn [routerLink]="[...listRouteBase(), 'create']">
+        <button hlmBtn type="button" (click)="openCreate()">
           <ng-icon name="lucidePlus" aria-hidden="true" />
           <span i18n="@@facility.newButton">New facility</span>
-        </a>
+        </button>
       }
     </app-empty-state>
   } @else {
@@ -210,16 +210,32 @@
 
 <ng-template #pageActions>
   @if (canCreate()) {
-    <a
+    <button
       hlmBtn
+      type="button"
       class="min-w-0 shrink max-sm:min-h-11"
       data-testid="facilities-new"
       i18n-aria-label="@@facility.newButton"
       aria-label="New facility"
-      [routerLink]="[...listRouteBase(), 'create']"
+      (click)="openCreate()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@facility.newButton">New facility</span>
-    </a>
+    </button>
   }
 </ng-template>
+
+<app-facility-create-sheet
+  [visible]="createSheetVisible()"
+  [pending]="store.isCreating()"
+  [serverError]="store.createError()"
+  [parentOptions]="facilityOptionsStore.options()"
+  [initialParentFacilityId]="pendingScopeId()"
+  [mapCenter]="facilityOptionsStore.mapCenter()"
+  [geocodePending]="geocodePending()"
+  [geocodeResult]="geocodeResult()"
+  [geocodeNotFound]="geocodeNotFound()"
+  (visibleChange)="onCreateSheetVisibleChange($event)"
+  (submitted)="onCreateSubmitted($event)"
+  (geocodeRequested)="onGeocodeRequested($event)"
+/>

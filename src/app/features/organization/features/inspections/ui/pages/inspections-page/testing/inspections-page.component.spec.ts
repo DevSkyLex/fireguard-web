@@ -22,9 +22,11 @@ import {
   type CallState,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
+import { InspectionCreationOptionsStore } from '@features/organization/features/inspections/state/inspection-creation-options';
 import { InspectionsPage } from '../inspections-page.component';
 
 const createPage = async (
@@ -96,6 +98,11 @@ describe('InspectionsPage', () => {
             listCallState,
             totalInspections,
             isLoadingInspections: signal(false),
+            createCallState: signal(idleCallState()),
+            isCreating: signal(false),
+            createError: signal(null),
+            create: vi.fn(),
+            resetCreateOperation: vi.fn(),
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
@@ -107,6 +114,21 @@ describe('InspectionsPage', () => {
         },
         { provide: ActivatedRoute, useValue: {} },
       ],
+    });
+
+    TestBed.overrideComponent(InspectionsPage, {
+      set: {
+        providers: [
+          {
+            provide: InspectionCreationOptionsStore,
+            useValue: { equipmentOptions: signal([]), loadEquipmentOptions: vi.fn() },
+          },
+          {
+            provide: ChecklistStore,
+            useValue: { checklists: signal([]), ensureInspectionCreateOptionsLoaded: vi.fn() },
+          },
+        ],
+      },
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -211,11 +233,15 @@ describe('InspectionsPage', () => {
   it('should offer "New inspection" with the write permission', async () => {
     fixture = await createPage();
 
-    const link: HTMLAnchorElement | null = renderPageActions().querySelector(
+    const button: HTMLButtonElement | null = renderPageActions().querySelector(
       '[data-testid="inspections-new"]',
     );
+    expect(button).not.toBeNull();
 
-    expect(link?.getAttribute('href')).toBe('/organizations/org-1/inspections/create');
+    button?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
   });
 
   it('should show the error state and let the operator retry', async () => {

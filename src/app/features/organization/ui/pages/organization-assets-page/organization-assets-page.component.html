@@ -719,7 +719,7 @@
       data-testid="assets-new-facility"
       i18n-aria-label="@@facility.newButton"
       aria-label="New facility"
-      [routerLink]="['/organizations', organizationId(), 'facilities', 'create']"
+      [routerLink]="['/organizations', organizationId(), 'facilities']"
       [queryParams]="createScopeParams('parent')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
@@ -734,7 +734,7 @@
       data-testid="assets-new-equipment"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
-      [routerLink]="['/organizations', organizationId(), 'equipments', 'create']"
+      [routerLink]="['/organizations', organizationId(), 'equipments']"
       [queryParams]="createScopeParams('facility')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />

@@ -30,6 +30,30 @@
         <source> required</source>
         <target> obligatorio</target>
       </trans-unit>
+      <trans-unit id="facility.createSheet.header" datatype="html">
+        <source>Register a facility</source>
+        <target>Registrar una instalación</target>
+      </trans-unit>
+      <trans-unit id="facility.createSheet.intro" datatype="html">
+        <source>Register a site, building or area, and place it in the hierarchy.</source>
+        <target>Registra un sitio, edificio o área y colócalo en la jerarquía.</target>
+      </trans-unit>
+      <trans-unit id="equipment.createSheet.header" datatype="html">
+        <source>Register an equipment</source>
+        <target>Registrar un equipo</target>
+      </trans-unit>
+      <trans-unit id="equipment.createSheet.intro" datatype="html">
+        <source>Register an asset with the details field agents need to identify and inspect it.</source>
+        <target>Registra un activo con los detalles que los agentes de campo necesitan para identificarlo e inspeccionarlo.</target>
+      </trans-unit>
+      <trans-unit id="inspection.createSheet.header" datatype="html">
+        <source>Open an inspection</source>
+        <target>Abrir una inspección</target>
+      </trans-unit>
+      <trans-unit id="inspection.createSheet.intro" datatype="html">
+        <source>Record which equipment was inspected, its result and who carried it out.</source>
+        <target>Indica qué equipo se inspeccionó, su resultado y quién la realizó.</target>
+      </trans-unit>
       <trans-unit id="common.unknownType" datatype="html">
         <source>Unknown type</source>
         <target>Tipo desconocido</target>

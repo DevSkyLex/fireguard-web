@@ -1,9 +1,35 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { facilityResolver, facilityTitleResolver } from './http/resolvers';
 import { FacilityBuilding3dStore, FacilityStore } from './state';
+
+/**
+ * Function redirectToCreateSheet
+ *
+ * @description
+ * `/create` is no longer a page: creation happens in a sheet on the list.
+ * The segment survives as a functional `redirectTo` onto the list with
+ * `?create=1` merged into whatever the incoming URL carried (`?parent=`,
+ * a filter), so bookmarks and older links still open the sheet, pre-scoped.
+ * The write-permission guard the page carried does not run on a redirect;
+ * the list page ignores `?create=1` without the write permission instead.
+ *
+ * @since 1.6.0
+ *
+ * @param {RedirectData} redirectData - The matched segment's params and query.
+ *
+ * @returns {UrlTree} The list URL with `create=1` merged in.
+ */
+const redirectToCreateSheet: RedirectFunction = (redirectData) => {
+  const router: Router = inject(Router);
+  const organizationId: string | null = redirectData.paramMap.get('organizationId');
+
+  return router.createUrlTree(['/organizations', organizationId, 'facilities'], {
+    queryParams: { ...redirectData.queryParams, create: '1' },
+  });
+};
 
 /**
  * Constant FACILITY_ROUTES
@@ -12,7 +38,7 @@ import { FacilityBuilding3dStore, FacilityStore } from './state';
  * @description
  * Organization-scoped facility workflows: the roots-only index at
  * `/organizations/:organizationId/facilities`, a map surface over every
- * located facility, a creation page, one facility record, and that
+ * located facility, a `create` redirect, one facility record, and that
  * record's dedicated 3D view. `map` is listed ahead of `:facilityId` so it
  * never matches as a facility id; `:facilityId/3d` needs no such ordering —
  * it is two segments against `:facilityId`'s one, so the two can never be
@@ -21,8 +47,9 @@ import { FacilityBuilding3dStore, FacilityStore } from './state';
  * The read permission guard sits on the pathless parent, as it does in
  * `EQUIPMENT_ROUTES`: it re-runs on an organization switch because the
  * params change, and guarding each child would leave the next one added
- * unprotected by omission. `create` carries an additional write-permission
- * guard, since registering a facility needs more than read access.
+ * unprotected by omission. `create` is a functional redirect onto the list with
+ * `?create=1` — the creation sheet lives on the list page, which gates the deep
+ * link on the write permission itself.
  *
  * Each leaf provides its own {@link FacilityStore} rather than a shared
  * pathless parent — like equipment, facilities have no documented
@@ -34,8 +61,7 @@ import { FacilityBuilding3dStore, FacilityStore } from './state';
  * pending state, and redirects to the organization landing page itself if the
  * load fails. {@link facilityTitleResolver} titles the route synchronously
  * from the same state, falling back to a neutral section label until the
- * record lands. `create` also carries `unsavedChangesGuard`, confirming
- * before the operator loses an in-progress registration.
+ * record lands.
  *
  * `:facilityId/3d` reuses both {@link facilityResolver} and
  * {@link facilityTitleResolver} unchanged, and additionally provides
@@ -76,16 +102,7 @@ export const FACILITY_ROUTES: Routes = [
       },
       {
         path: 'create',
-        providers: [FacilityStore],
-        canActivate: [
-          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.FACILITIES_WRITE] }),
-        ],
-        canDeactivate: [unsavedChangesGuard],
-        loadComponent: () =>
-          import('./ui/pages/facility-create-page/facility-create-page.component').then(
-            (m) => m.FacilityCreatePage,
-          ),
-        title: $localize`:@@route.facility.create:Create Facility`,
+        redirectTo: redirectToCreateSheet,
       },
       {
         path: ':facilityId',

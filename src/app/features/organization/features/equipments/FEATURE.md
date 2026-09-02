@@ -72,7 +72,7 @@ This subfeature does not own top-level organization context or inspection workfl
   the organization's plan tier (pro/max): a non-entitled plan answers 403
   with an RFC 7807 `detail`, read back through `resolveCsvExportErrorDetail`
   and surfaced verbatim as the error toast.
-- `/organizations/:organizationId/equipments/create` — `EquipmentCreatePage`:
+- `/organizations/:organizationId/equipments/create` — a functional redirect onto the list with `?create=1` (keeping `?facility=`); creation is `EquipmentCreateSheet`, opened by `EquipmentsPage`:
   `EquipmentCreateForm` (Signal Forms) asking for the one required field,
   `type`; the five remaining editable properties are filled in afterward, in
   place, on the created record. Navigates to `/:equipmentId` on success.
@@ -234,7 +234,7 @@ Utility:
 
 - Facility pickers (`equipment-create-form`, `equipment-assign-facility-dialog`)
   take `FacilityOption[]` from the facilities feature's `models` barrel, and the
-  create/detail pages provide the facilities feature's `FacilityOptionsStore`
+  list/detail pages provide the facilities feature's `FacilityOptionsStore`
   (its `state` barrel) instead of listing facilities inline — one loader, one
   option shape, no raw id on a trigger.
 
@@ -261,4 +261,4 @@ distinct "delete" outcome is ever needed here, revisit this decision.
 - Pages orchestrate stores; reusable UI components must not hide equipment workflow decisions.
 - A write response merges into the already-known entity (`utils/merge-equipment`) in both `EquipmentStore` and `ActiveEquipmentStore` — fields a response omits never erase known values, since API Platform omits null fields and a lifecycle Result may serialize fewer fields than the detail read. The one exception is unassign: its response's absent facility relation means unassigned, so `facilityId`/`facilityName` are cleared, never resurrected by the merge.
 - A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
-- `EquipmentCreatePage` resets the create operation only after the success navigation resolves, so `unsavedChangesGuard` still sees the settled success and never opens the discard dialog on the way to the new record.
+- `EquipmentsPage` closes the create sheet and resets the create operation only after the success navigation resolves; the sheet's own unsaved-changes gate replaces the route-level `unsavedChangesGuard`, and `?create=1` is ignored without `EQUIPMENT_WRITE`.

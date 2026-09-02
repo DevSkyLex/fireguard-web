@@ -105,8 +105,8 @@
               size="sm"
               class="mx-2 mt-1 self-start max-sm:min-h-11"
               data-testid="facility-detail-add-sub-facility"
-              [routerLink]="['/organizations', organizationId(), 'facilities', 'create']"
-              [queryParams]="{ parent: facilityId() }"
+              [routerLink]="['/organizations', organizationId(), 'facilities']"
+              [queryParams]="{ create: 1, parent: facilityId() }"
             >
               <ng-icon name="lucidePlus" aria-hidden="true" />
               <span i18n="@@facility.detail.addSubFacility">Add sub-facility</span>

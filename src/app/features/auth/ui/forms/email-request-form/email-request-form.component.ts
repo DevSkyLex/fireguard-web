@@ -15,6 +15,7 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -41,7 +42,7 @@ import type { EmailRequestFormValues } from './models';
  */
 @Component({
   selector: 'app-email-request-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, HlmButton, HlmInput, ...HlmFieldImports],
   templateUrl: './email-request-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -13,7 +13,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmSheetFooter } from '@shared/ui/sheet';
@@ -48,7 +49,14 @@ const EMPTY_VALUES: InterventionRequestChangesFormValues = { note: '' };
  */
 @Component({
   selector: 'app-intervention-request-changes-form',
-  imports: [FormField, HlmButton, ...HlmFieldImports, HlmSheetFooter, ...HlmTextareaImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    ...HlmFieldImports,
+    HlmSheetFooter,
+    ...HlmTextareaImports,
+  ],
   templateUrl: './intervention-request-changes-form.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -192,26 +200,13 @@ export class InterventionRequestChangesForm {
    *
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map(
-          (violation: Violation): string => violation.message,
-        ),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [
-          $localize`:@@intervention.requestChanges.transitionFailed:The intervention status could not be changed.`,
-        ];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@intervention.requestChanges.transitionFailed:The intervention status could not be changed.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

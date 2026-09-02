@@ -31,6 +31,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
 import { PersonOption } from '@shared/person-option';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
@@ -104,6 +105,7 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
 @Component({
   selector: 'app-intervention-recurrence-form',
   imports: [
+    RequiredMarker,
     PersonOption,
     FormField,
     HlmButton,

@@ -17,6 +17,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import {
@@ -74,6 +75,7 @@ const OTP_LENGTH = 6;
 @Component({
   selector: 'app-account-otp-code-form',
   imports: [
+    RequiredMarker,
     FormField,
     BrnInputOtp,
     HlmButton,

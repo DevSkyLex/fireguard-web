@@ -8,10 +8,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="calendar-event-title"
-        ><span i18n="@@calendar.eventDialog.title">Title</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@calendar.eventDialog.title">Title</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="calendar-event-title"
@@ -51,10 +49,8 @@
     <div class="grid grid-cols-1 gap-4">
       <hlm-field>
         <label hlmFieldLabel for="calendar-event-starts-at-date"
-          ><span i18n="@@calendar.eventDialog.startsAt">Starts</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@calendar.eventDialog.startsAt">Starts</span><app-required-marker
+        /></label>
         <div class="flex gap-2">
           <div class="min-w-0 flex-1">
             <hlm-date-picker
@@ -173,7 +169,7 @@
       </hlm-select>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -202,6 +198,6 @@
           <span i18n="@@calendar.eventDialog.submitCreate">Create event</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

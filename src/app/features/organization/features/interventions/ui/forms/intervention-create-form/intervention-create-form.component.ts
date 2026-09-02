@@ -20,7 +20,6 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import {
   resolveInterventionTag,
   type InterventionDuplicatePrefill,
@@ -30,6 +29,8 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -96,6 +97,7 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
 @Component({
   selector: 'app-intervention-create-form',
   imports: [
+    RequiredMarker,
     FormField,
     HlmButton,
     HlmInput,
@@ -323,22 +325,13 @@ export class InterventionCreateForm {
    *
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@intervention.cf.createFailed:The intervention could not be created.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@intervention.cf.createFailed:The intervention could not be created.`,
+    ),
+  );
 
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: InterventionType) => string = (

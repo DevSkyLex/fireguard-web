@@ -3,10 +3,8 @@
     <div class="grid gap-4 sm:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="org-regional-timezone"
-          ><span i18n="@@org.settings.regional.timezoneLabel">Timezone</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@org.settings.regional.timezoneLabel">Timezone</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="org-regional-timezone"
@@ -26,10 +24,8 @@
 
       <hlm-field>
         <label hlmFieldLabel for="org-regional-locale"
-          ><span i18n="@@org.settings.regional.localeLabel">Locale</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@org.settings.regional.localeLabel">Locale</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="org-regional-locale"
@@ -126,7 +122,7 @@
       </hlm-field>
     </div>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="submit"
@@ -142,6 +138,6 @@
           <span i18n="@@org.settings.regional.submit">Save changes</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

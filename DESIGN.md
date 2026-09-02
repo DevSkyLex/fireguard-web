@@ -506,6 +506,16 @@ one that was never filled.
   `data-matches-spartan-invalid` attribute rather than a class the template
   sets. (Badges still gate on `aria-invalid`; controls the brain owns do not.)
 - **Disabled:** 50% opacity with a filled ground and `not-allowed` cursor.
+- **Required:** the label ends with `<app-required-marker />`
+  (`@shared/required-marker`) — a destructive asterisk hidden from assistive
+  tech plus an `sr-only` "required". Never the two spans by hand.
+- **Server refusals:** a form's lines above the fields come from
+  `serverMessagesOf(error, knownFields, fallback)` (`@shared/form-feedback`):
+  violations first, then the normalized message, then the generic line.
+- **Button rows:** a form's Cancel → primary row is a plain
+  `flex flex-wrap items-center justify-end gap-2` div, never an
+  `hlm-field orientation="horizontal"` — that primitive lays out a control
+  beside its label, not buttons beside each other.
 
 ### Navigation
 

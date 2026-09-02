@@ -13,14 +13,15 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import {
   resolveInterventionTag,
   type InterventionWorkItemAction,
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import { serverMessagesOf } from '@shared/form-feedback';
 import { PersonOption } from '@shared/person-option';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -66,6 +67,7 @@ const EMPTY_VALUES: InterventionWorkItemFormValues = {
 @Component({
   selector: 'app-intervention-work-item-form',
   imports: [
+    RequiredMarker,
     PersonOption,
     FormField,
     HlmButton,
@@ -283,26 +285,13 @@ export class InterventionWorkItemForm {
    *
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map(
-          (violation: Violation): string => violation.message,
-        ),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [
-          $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
-        ];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

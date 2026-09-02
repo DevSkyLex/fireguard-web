@@ -92,6 +92,8 @@ describe('OrganizationInviteForm', () => {
   it('should fall back to the store error message when nothing more specific is reported', async () => {
     fixture.componentRef.setInput('serverError', {
       message: 'The current plan limit of 5 members has been reached.',
+      retryable: false,
+      timestamp: 1,
     });
     await fixture.whenStable();
 

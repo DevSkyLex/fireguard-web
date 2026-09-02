@@ -10,10 +10,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="intervention-work-item-action"
-        ><span i18n="@@intervention.wif.actionLabel">Action</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@intervention.wif.actionLabel">Action</span><app-required-marker
+      /></label>
       <hlm-select [itemToString]="actionLabelOf" [formField]="workItemForm.action">
         <hlm-select-trigger buttonId="intervention-work-item-action" class="w-full">
           @if (workItemForm.action().value(); as action) {

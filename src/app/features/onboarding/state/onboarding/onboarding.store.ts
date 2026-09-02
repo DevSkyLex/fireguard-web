@@ -586,7 +586,7 @@ export const OnboardingStore = signalStore(
        * response is patched into the store as a side-effect so consumers (the
        * wizard-access guard, the shell checklist) do not re-fetch it.
        *
-       * Onboarding is non-blocking: any API error resolves to `null` so a failing
+       * Loading never blocks the shell: any API error resolves to `null` so a failing
        * endpoint never hard-locks navigation.
        *
        * @since 3.0.0

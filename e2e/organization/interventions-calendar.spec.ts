@@ -53,7 +53,7 @@ test.describe('Interventions calendar — month view over the shared dataset', (
 
     await expect(calendar.root).toBeVisible();
     await expect(page.getByTestId('intervention-view-toggle-calendar').first()).toHaveAttribute(
-      'aria-selected',
+      'aria-pressed',
       'true',
     );
 

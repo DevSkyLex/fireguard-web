@@ -11,12 +11,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type { StoreError } from '@core/request-state';
 import type {
   InviteOrganizationMemberInput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -53,7 +54,14 @@ const EMPTY_VALUES: OrganizationInviteFormDraft = { email: '', roleId: '' };
  */
 @Component({
   selector: 'app-organization-invite-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
   templateUrl: './organization-invite-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -149,23 +157,13 @@ export class OrganizationInviteForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: StoreError | null = this.serverError();
-    if (error === null) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, ['email']).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    return [
-      error.message ?? $localize`:@@org.inviteForm.submitFailed:The invitation could not be sent.`,
-    ];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      ['email'],
+      $localize`:@@org.inviteForm.submitFailed:The invitation could not be sent.`,
+    ),
+  );
 
   /** Names a picked role on the closed select trigger. */
   protected readonly roleLabelOf: (value: string) => string = (value: string): string =>

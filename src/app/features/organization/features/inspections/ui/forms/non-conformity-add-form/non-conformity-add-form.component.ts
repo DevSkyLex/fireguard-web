@@ -18,6 +18,7 @@ import type {
   AddNonConformityInput,
   NonConformitySeverity,
 } from '@features/organization/features/inspections/models';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -75,6 +76,7 @@ const SEVERITY_VALUES: ReadonlyArray<NonConformitySeverity> = ['low', 'medium', 
 @Component({
   selector: 'app-non-conformity-add-form',
   imports: [
+    RequiredMarker,
     FormField,
     InspectionStatusTag,
     HlmButton,

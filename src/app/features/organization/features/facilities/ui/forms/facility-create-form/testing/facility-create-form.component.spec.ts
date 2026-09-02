@@ -229,6 +229,8 @@ describe('FacilityCreateForm', () => {
       message: 'You have reached the plan limit of 2 facilities.',
       code: 409,
       raw: null,
+      retryable: false,
+      timestamp: 1,
     });
     await fixture.whenStable();
 

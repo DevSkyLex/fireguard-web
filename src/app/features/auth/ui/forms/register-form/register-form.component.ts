@@ -12,6 +12,7 @@ import { email, form, FormField, required, type FieldTree } from '@angular/forms
 import type { StoreError } from '@core/request-state';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -37,7 +38,7 @@ import type { RegisterFormValues } from './models';
  */
 @Component({
   selector: 'app-register-form',
-  imports: [FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
   templateUrl: './register-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -102,6 +102,8 @@ describe('EquipmentCreateForm', () => {
       message: 'You have reached the plan limit of 10 equipments.',
       code: 409,
       raw: null,
+      retryable: false,
+      timestamp: 1,
     });
     await fixture.whenStable();
 

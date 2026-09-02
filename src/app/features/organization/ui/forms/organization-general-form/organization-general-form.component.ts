@@ -11,6 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -43,7 +44,7 @@ import type { OrganizationGeneralFormValues } from './models';
  */
 @Component({
   selector: 'app-organization-general-form',
-  imports: [FormField, HlmButton, HlmInput, HlmTextarea, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, HlmButton, HlmInput, HlmTextarea, ...HlmFieldImports],
   templateUrl: './organization-general-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

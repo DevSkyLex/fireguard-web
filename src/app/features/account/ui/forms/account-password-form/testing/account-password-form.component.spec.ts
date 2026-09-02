@@ -135,9 +135,7 @@ describe('AccountPasswordForm', () => {
     });
 
     it('should list the start-over button before the confirm submit button in the action row', () => {
-      const row = fixture.nativeElement.querySelector(
-        'hlm-field[orientation="horizontal"]',
-      ) as HTMLElement;
+      const row = fixture.nativeElement.querySelector('.justify-end') as HTMLElement;
       const buttons = Array.from(row.querySelectorAll('button'));
       const startOver = fixture.nativeElement.querySelector(
         '[data-testid="account-password-start-over"]',

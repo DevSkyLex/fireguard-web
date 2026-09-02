@@ -16,6 +16,7 @@ import type {
   ChecklistOutput,
   UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -65,7 +66,7 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  */
 @Component({
   selector: 'app-checklist-edit-form',
-  imports: [FormField, HlmButton, HlmCheckbox, HlmInput, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, HlmButton, HlmCheckbox, HlmInput, ...HlmFieldImports],
   templateUrl: './checklist-edit-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

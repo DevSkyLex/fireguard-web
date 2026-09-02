@@ -18,6 +18,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { PasswordInput } from '@shared/password-input';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -67,7 +68,7 @@ const EMAIL_MAX_LENGTH = 320;
  */
 @Component({
   selector: 'app-account-email-change-form',
-  imports: [FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [RequiredMarker, FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
   templateUrl: './account-email-change-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

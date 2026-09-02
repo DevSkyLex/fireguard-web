@@ -19,11 +19,12 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   CreateOrganizationRoleInput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -147,7 +148,15 @@ function permissionDomainLabelOf(domain: string): string {
  */
 @Component({
   selector: 'app-organization-role-create-form',
-  imports: [FormField, HlmButton, HlmCheckbox, HlmInput, ...HlmFieldImports, ...HlmTextareaImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmCheckbox,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmTextareaImports,
+  ],
   templateUrl: './organization-role-create-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -281,22 +290,13 @@ export class OrganizationRoleCreateForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@org.team.form.createFailed:The role could not be created.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@org.team.form.createFailed:The role could not be created.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

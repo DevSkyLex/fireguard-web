@@ -15,6 +15,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown, lucideFileText, lucideUpload } from '@ng-icons/lucide';
 import type { ImportJobKind } from '@features/organization/features/imports/models';
 import { IMPORT_JOB_KIND_OPTIONS } from '@features/organization/features/imports/options';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -72,6 +73,7 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: false };
 @Component({
   selector: 'app-import-upload-form',
   imports: [
+    RequiredMarker,
     FormField,
     NgIcon,
     HlmButton,

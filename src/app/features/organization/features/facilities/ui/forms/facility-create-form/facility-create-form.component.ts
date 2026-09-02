@@ -22,7 +22,6 @@ import {
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMapPin } from '@ng-icons/lucide';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   FacilityOption,
   CreateFacilityInput,
@@ -30,7 +29,9 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import { serverMessagesOf } from '@shared/form-feedback';
 import type { MapCoordinates } from '@shared/map';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -134,6 +135,7 @@ function parsedLevelIndex(value: string): number | undefined {
 @Component({
   selector: 'app-facility-create-form',
   imports: [
+    RequiredMarker,
     FormField,
     FacilityMapPickerDialog,
     NgIcon,
@@ -369,26 +371,13 @@ export class FacilityCreateForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const message: unknown = (error as { readonly message?: unknown }).message;
-
-    return typeof message === 'string' && message.length > 0
-      ? [message]
-      : [$localize`:@@facility.cf.createFailed:The facility could not be created.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@facility.cf.createFailed:The facility could not be created.`,
+    ),
+  );
 
   /** Names a facility type on the closed select trigger. */
   protected readonly typeLabelOf: (value: FacilityType | '') => string = (value) =>

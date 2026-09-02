@@ -16,7 +16,6 @@ import {
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideAtSign } from '@ng-icons/lucide';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   InterventionMentionQuery,
   MemberSelectOption,
@@ -27,6 +26,7 @@ import {
   parseInterventionMentions,
   resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
+import { serverMessagesOf } from '@shared/form-feedback';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -200,24 +200,13 @@ export class InterventionCommentForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map(
-          (violation: Violation): string => violation.message,
-        ),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@intervention.workspace.commentAddFailed:The comment could not be posted.`,
+    ),
+  );
 
   /**
    * Property field

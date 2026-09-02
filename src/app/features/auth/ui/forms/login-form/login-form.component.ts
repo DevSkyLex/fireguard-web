@@ -12,6 +12,7 @@ import { email, form, FormField, required, type FieldTree } from '@angular/forms
 import { RouterLink } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import { PasswordInput } from '@shared/password-input';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -42,6 +43,7 @@ import type { LoginFormValues } from './models';
 @Component({
   selector: 'app-login-form',
   imports: [
+    RequiredMarker,
     RouterLink,
     FormField,
     PasswordInput,

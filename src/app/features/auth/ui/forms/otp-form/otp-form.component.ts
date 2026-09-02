@@ -24,6 +24,7 @@ import {
 } from '@angular/forms/signals';
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
 import type { StoreError } from '@core/request-state';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -93,6 +94,7 @@ const OTP_LENGTH = 6;
 @Component({
   selector: 'app-otp-form',
   imports: [
+    RequiredMarker,
     FormField,
     BrnInputOtp,
     HlmButton,

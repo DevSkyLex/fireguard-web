@@ -14,10 +14,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="login-email"
-        ><span i18n="@@auth.email.label">Email address</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@auth.email.label">Email address</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="login-email"
@@ -39,10 +37,8 @@
     <hlm-field>
       <div class="flex items-center justify-between gap-2">
         <label hlmFieldLabel for="login-password"
-          ><span i18n="@@auth.password.label">Password</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@auth.password.label">Password</span><app-required-marker
+        /></label>
         <a
           class="text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           routerLink="/auth/password-reset/forgot"

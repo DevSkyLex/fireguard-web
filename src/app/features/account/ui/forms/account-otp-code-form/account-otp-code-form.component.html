@@ -2,10 +2,8 @@
   <hlm-field-group>
     <hlm-field>
       <label hlmFieldLabel [attr.for]="inputId()"
-        ><span i18n="@@auth.otp.label">Verification code</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@auth.otp.label">Verification code</span><app-required-marker
+      /></label>
 
       <brn-input-otp
         hlmInputOtp
@@ -33,7 +31,7 @@
       <hlm-field-error>{{ codeForm.code().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -62,6 +60,6 @@
           <span class="truncate">{{ submitLabel() }}</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

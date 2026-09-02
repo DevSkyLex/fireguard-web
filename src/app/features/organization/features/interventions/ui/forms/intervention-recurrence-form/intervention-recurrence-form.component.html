@@ -12,10 +12,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="intervention-recurrence-name"
-        ><span i18n="@@intervention.recurrences.nameLabel">Name</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@intervention.recurrences.nameLabel">Name</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="intervention-recurrence-name"
@@ -32,10 +30,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="intervention-recurrence-template"
-        ><span i18n="@@intervention.recurrences.templateLabel">Template</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@intervention.recurrences.templateLabel">Template</span><app-required-marker
+      /></label>
       <hlm-select
         [itemToString]="templateLabelOf"
         [formField]="recurrenceForm.templateId"
@@ -68,9 +64,8 @@
       <hlm-field>
         <label hlmFieldLabel for="intervention-recurrence-frequency"
           ><span i18n="@@intervention.recurrences.frequencyLabel">Frequency</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><app-required-marker
+        /></label>
         <hlm-select
           [itemToString]="frequencyLabelOf"
           [formField]="recurrenceForm.frequency"
@@ -125,9 +120,8 @@
       <hlm-field>
         <label hlmFieldLabel for="intervention-recurrence-anchor"
           ><span i18n="@@intervention.recurrences.anchorLabel">Anchor date</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><app-required-marker
+        /></label>
         <hlm-date-picker [formField]="recurrenceForm.anchorDate" [attr.aria-required]="true">
           <hlm-date-picker-trigger
             buttonId="intervention-recurrence-anchor"
@@ -150,9 +144,8 @@
       <hlm-field>
         <label hlmFieldLabel for="intervention-recurrence-timezone"
           ><span i18n="@@intervention.recurrences.timezoneLabel">Timezone</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><app-required-marker
+        /></label>
         <input
           hlmInput
           id="intervention-recurrence-timezone"

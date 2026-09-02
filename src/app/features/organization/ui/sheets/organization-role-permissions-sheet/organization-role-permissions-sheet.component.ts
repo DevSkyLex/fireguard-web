@@ -9,11 +9,11 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmSheetImports } from '@shared/ui/sheet';
@@ -279,24 +279,13 @@ export class OrganizationRolePermissionsSheet {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [
-          $localize`:@@org.team.permissionsSheet.updateFailed:The role's permissions could not be updated.`,
-        ];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@org.team.permissionsSheet.updateFailed:The role's permissions could not be updated.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

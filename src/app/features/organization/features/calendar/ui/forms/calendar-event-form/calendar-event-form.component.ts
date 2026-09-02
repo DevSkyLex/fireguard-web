@@ -24,6 +24,7 @@ import {
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { toApiDateTime } from '@features/organization/features/calendar/utils';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDatePicker, HlmDatePickerTrigger } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -101,6 +102,7 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
 @Component({
   selector: 'app-calendar-event-form',
   imports: [
+    RequiredMarker,
     FormField,
     HlmButton,
     HlmDatePicker,

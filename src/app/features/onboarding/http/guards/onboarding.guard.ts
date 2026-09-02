@@ -8,7 +8,7 @@ import { OnboardingStore } from '@features/onboarding/state';
  * Guard onboardingGuard
  *
  * @description
- * Wizard-access guard for the `/onboarding` route. Onboarding is **non-blocking**:
+ * Wizard-access guard for the `/onboarding` route. The wizard itself never blocks on its own record:
  * it never prevents access to the application. This guard only protects the
  * dedicated activation wizard, redirecting to the dashboard (`/`) when the flow
  * is already `completed` so users do not land on an empty wizard. In-progress and

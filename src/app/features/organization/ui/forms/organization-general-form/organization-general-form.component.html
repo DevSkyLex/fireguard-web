@@ -4,9 +4,8 @@
       <hlm-field>
         <label hlmFieldLabel for="org-settings-name"
           ><span i18n="@@org.settings.general.nameLabel">Organization name</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><app-required-marker
+        /></label>
         <input
           hlmInput
           id="org-settings-name"
@@ -24,10 +23,8 @@
 
       <hlm-field>
         <label hlmFieldLabel for="org-settings-slug"
-          ><span i18n="@@org.settings.general.slugLabel">URL slug</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@org.settings.general.slugLabel">URL slug</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="org-settings-slug"
@@ -62,7 +59,7 @@
       ></textarea>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="submit"
@@ -78,6 +75,6 @@
           <span i18n="@@org.settings.general.submit">Save changes</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

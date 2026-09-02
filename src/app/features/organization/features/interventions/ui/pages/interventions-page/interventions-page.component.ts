@@ -648,18 +648,13 @@ export class InterventionsPage {
    * selector and the "New intervention" action, unconditional across every
    * tab. Both render from one `#pageActions` `ng-template` because
    * `PageActionsService.register` holds a single `TemplateRef`, declared as
-   * a **sibling of `<hlm-tabs>`, not a descendant of it**. An earlier
-   * revision nested it inside `<hlm-tabs>` so `hlm-tabs-list`'s
-   * `hlmTabsTrigger` buttons could resolve `BrnTabs` through Angular DI —
-   * `<hlm-tabs>` is already driven from the outside via `[tab]="activeView()"`,
-   * so the header carries a spartan `hlm-toggle-group` (single, non-nullable)
-   * that calls {@link switchView}; a `null` change (no item pressed) is ignored
-   * directly, needs no `BrnTabs` injector, and can safely sit at the root
-   * where nothing recreates it. Its `id`/`aria-controls` pairs
-   * (`brn-tabs-label-<view>` / `brn-tabs-content-<view>`) reproduce the
-   * exact strings `BrnTabsContent` computes internally for the still-
-   * `hlm-tabs`-driven panels below, so a real tablist still controls real
-   * tabpanels without needing to share an injector with them.
+   * a **sibling of `<hlm-tabs>`, not a descendant of it**. `<hlm-tabs>` is
+   * driven from the outside via `[tab]="activeView()"`, so the header carries
+   * a spartan `hlm-toggle-group` (single, non-nullable) that calls
+   * {@link switchView}; a `null` change (no item pressed) is ignored. The
+   * toggle group is a set of pressed buttons, not a tablist: it claims no
+   * `id`/`aria-controls` relation with the panels below, which stay plain
+   * content switched by the tabs component.
    *
    * @access private
    * @since 1.0.0

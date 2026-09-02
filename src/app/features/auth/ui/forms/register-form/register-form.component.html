@@ -15,10 +15,8 @@
     <div class="grid gap-4 sm:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="register-first-name"
-          ><span i18n="@@auth.firstName.label">First name</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@auth.firstName.label">First name</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="register-first-name"
@@ -40,10 +38,8 @@
 
       <hlm-field>
         <label hlmFieldLabel for="register-last-name"
-          ><span i18n="@@auth.lastName.label">Last name</span
-          ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-          ><span class="sr-only" i18n="@@common.required"> required</span></label
-        >
+          ><span i18n="@@auth.lastName.label">Last name</span><app-required-marker
+        /></label>
         <input
           hlmInput
           id="register-last-name"
@@ -66,10 +62,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="register-email"
-        ><span i18n="@@auth.email.label">Email address</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@auth.email.label">Email address</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="register-email"
@@ -90,10 +84,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="register-password"
-        ><span i18n="@@auth.password.label">Password</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@auth.password.label">Password</span><app-required-marker
+      /></label>
       <app-password-input
         inputId="register-password"
         autocomplete="new-password"
@@ -108,10 +100,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="register-confirm-password"
-        ><span i18n="@@auth.passwordConfirmation.label">Repeat password</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@auth.passwordConfirmation.label">Repeat password</span><app-required-marker
+      /></label>
       <app-password-input
         inputId="register-confirm-password"
         autocomplete="new-password"

@@ -8,10 +8,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="maintenance-campaign-name"
-        ><span i18n="@@maintenance.campaignDialog.name">Name</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@maintenance.campaignDialog.name">Name</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="maintenance-campaign-name"
@@ -30,10 +28,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="maintenance-campaign-due-before"
-        ><span i18n="@@maintenance.campaignDialog.dueBefore">Due before</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@maintenance.campaignDialog.dueBefore">Due before</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="maintenance-campaign-due-before"
@@ -114,7 +110,7 @@
       </hlm-select>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -141,6 +137,6 @@
           <span i18n="@@maintenance.campaignDialog.submit">Generate campaign</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

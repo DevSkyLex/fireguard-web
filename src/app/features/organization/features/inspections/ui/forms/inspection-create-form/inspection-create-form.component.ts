@@ -13,7 +13,6 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   CreateInspectionInput,
@@ -21,6 +20,8 @@ import type {
   InspectorType,
   EquipmentSelectOption,
 } from '@features/organization/features/inspections/models';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
@@ -76,6 +77,7 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
 @Component({
   selector: 'app-inspection-create-form',
   imports: [
+    RequiredMarker,
     FormField,
     InspectionStatusTag,
     HlmButton,
@@ -215,22 +217,13 @@ export class InspectionCreateForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@inspection.cf.createFailed:The inspection could not be created.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@inspection.cf.createFailed:The inspection could not be created.`,
+    ),
+  );
 
   /** Names a picked equipment on the closed combobox trigger. */
   protected readonly equipmentLabelOf: (value: string) => string = (value: string): string =>

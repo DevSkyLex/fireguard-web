@@ -8,6 +8,7 @@
     *hlmSheetPortal
     class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[540px]! sm:max-w-none!"
     data-testid="inspection-create-sheet"
+    [attr.data-dirty]="dirty()"
   >
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@inspection.createSheet.header">Open an inspection</h3>

@@ -13,8 +13,9 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type { TeamOutput, UpdateTeamInput } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -51,7 +52,14 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
  */
 @Component({
   selector: 'app-organization-team-edit-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmTextareaImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmTextareaImports,
+  ],
   templateUrl: './organization-team-edit-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,22 +152,13 @@ export class OrganizationTeamEditForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@org.teams.editForm.updateFailed:The team could not be updated.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@org.teams.editForm.updateFailed:The team could not be updated.`,
+    ),
+  );
   //#endregion
 
   //#region Constructor

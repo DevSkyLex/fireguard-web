@@ -18,6 +18,7 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -75,7 +76,14 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
  */
 @Component({
   selector: 'app-channel-create-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
   templateUrl: './channel-create-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

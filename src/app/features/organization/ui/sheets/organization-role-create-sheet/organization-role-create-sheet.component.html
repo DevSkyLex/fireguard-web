@@ -8,6 +8,7 @@
     *hlmSheetPortal
     class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[540px]! sm:max-w-none!"
     data-testid="organization-role-create-sheet"
+    [attr.data-dirty]="dirty()"
   >
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@org.team.createDialog.title">New role</h3>

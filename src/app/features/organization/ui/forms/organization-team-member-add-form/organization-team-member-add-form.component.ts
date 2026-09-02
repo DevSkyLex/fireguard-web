@@ -10,8 +10,8 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type { AddTeamMemberInput, MemberSelectOption } from '@features/organization/models';
+import { serverMessagesOf } from '@shared/form-feedback';
 import { PersonOption } from '@shared/person-option';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -126,22 +126,13 @@ export class OrganizationTeamMemberAddForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    return combined.length > 0
-      ? combined
-      : [$localize`:@@org.teams.membersSheet.addFailed:The member could not be added.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@org.teams.membersSheet.addFailed:The member could not be added.`,
+    ),
+  );
   //#endregion
 
   //#region Methods

@@ -8,10 +8,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="import-upload-kind"
-        ><span i18n="@@imports.upload.kind">Import type</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@imports.upload.kind">Import type</span><app-required-marker
+      /></label>
       <hlm-select [formField]="uploadForm.kind">
         <hlm-select-trigger
           buttonId="import-upload-kind"
@@ -38,10 +36,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="import-upload-file"
-        ><span i18n="@@imports.upload.file">CSV file</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@imports.upload.file">CSV file</span><app-required-marker
+      /></label>
       <div class="flex flex-wrap items-center gap-2">
         <button
           hlmBtn

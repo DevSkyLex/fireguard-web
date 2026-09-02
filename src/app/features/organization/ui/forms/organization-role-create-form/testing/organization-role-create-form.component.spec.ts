@@ -29,7 +29,8 @@ describe('OrganizationRoleCreateForm', () => {
   const cancelButton = (): HTMLButtonElement =>
     root().querySelector('[data-testid="organization-role-create-cancel"]') as HTMLButtonElement;
   const actionRow = (): HTMLElement =>
-    root().querySelector('hlm-field[orientation="horizontal"]') as HTMLElement;
+    root().querySelector('[data-testid="organization-role-create-submit"]')
+      ?.parentElement as HTMLElement;
 
   const checkboxFor = (name: string): HTMLElement | null =>
     Array.from(root().querySelectorAll('[data-testid="organization-role-create-permission"]'))

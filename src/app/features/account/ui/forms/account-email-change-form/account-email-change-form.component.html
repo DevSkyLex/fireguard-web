@@ -2,10 +2,8 @@
   <hlm-field-group>
     <hlm-field>
       <label hlmFieldLabel for="account-email-change-new"
-        ><span i18n="@@account.email.newLabel">New email address</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@account.email.newLabel">New email address</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="account-email-change-new"
@@ -30,10 +28,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="account-email-change-password"
-        ><span i18n="@@account.email.passwordLabel">Current password</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@account.email.passwordLabel">Current password</span><app-required-marker
+      /></label>
       <app-password-input
         inputId="account-email-change-password"
         autocomplete="current-password"
@@ -46,7 +42,7 @@
       }
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -73,6 +69,6 @@
           <span i18n="@@account.email.submit">Send confirmation link</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

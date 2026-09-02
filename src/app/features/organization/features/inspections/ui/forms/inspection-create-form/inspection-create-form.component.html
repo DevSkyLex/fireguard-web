@@ -10,10 +10,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="inspection-create-equipment"
-        ><span i18n="@@inspection.form.equipment">Equipment</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@inspection.form.equipment">Equipment</span><app-required-marker
+      /></label>
       <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
         <hlm-combobox-input
           inputId="inspection-create-equipment"
@@ -54,10 +52,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="inspection-create-result"
-        ><span i18n="@@inspection.form.result">Result</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@inspection.form.result">Result</span><app-required-marker
+      /></label>
       <hlm-select [formField]="createForm.result">
         <hlm-select-trigger
           buttonId="inspection-create-result"
@@ -90,10 +86,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="inspection-create-performed-at"
-        ><span i18n="@@inspection.form.performedAt">Performed on</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@inspection.form.performedAt">Performed on</span><app-required-marker
+      /></label>
       <hlm-date-picker [formField]="createForm.performedAt">
         <hlm-date-picker-trigger buttonId="inspection-create-performed-at" class="w-full">
           <span i18n="@@inspection.form.performedAtPlaceholder">Select a date</span>
@@ -131,10 +125,8 @@
 
     <hlm-field>
       <label hlmFieldLabel for="inspection-create-inspector-name"
-        ><span i18n="@@inspection.form.inspectorName">Inspector name</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@inspection.form.inspectorName">Inspector name</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="inspection-create-inspector-name"
@@ -181,7 +173,7 @@
       </hlm-select>
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -207,6 +199,6 @@
           <span i18n="@@inspection.form.submit">Create inspection</span>
         }
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

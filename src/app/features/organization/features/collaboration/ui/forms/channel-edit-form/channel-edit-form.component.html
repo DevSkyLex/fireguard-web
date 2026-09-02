@@ -2,10 +2,8 @@
   <hlm-field-group>
     <hlm-field>
       <label hlmFieldLabel for="edit-channel-name"
-        ><span i18n="@@channels.editDialog.name">Name</span
-        ><span aria-hidden="true" class="text-destructive">&nbsp;*</span
-        ><span class="sr-only" i18n="@@common.required"> required</span></label
-      >
+        ><span i18n="@@channels.editDialog.name">Name</span><app-required-marker
+      /></label>
       <input
         hlmInput
         id="edit-channel-name"
@@ -50,7 +48,7 @@
       </hlm-field>
     }
 
-    <hlm-field orientation="horizontal" class="justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <button
         hlmBtn
         type="button"
@@ -72,6 +70,6 @@
       >
         <span i18n="@@channels.editDialog.submit">Save changes</span>
       </button>
-    </hlm-field>
+    </div>
   </hlm-field-group>
 </form>

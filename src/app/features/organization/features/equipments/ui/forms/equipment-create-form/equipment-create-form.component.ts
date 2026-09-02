@@ -13,13 +13,14 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
-import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import type {
   CreateEquipmentInput,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { serverMessagesOf } from '@shared/form-feedback';
+import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -74,7 +75,14 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-equipment-create-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
   templateUrl: './equipment-create-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -198,26 +206,13 @@ export class EquipmentCreateForm {
    * @since 1.0.0
    * @type {Signal<readonly string[]>}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() => {
-    const error: unknown = this.serverError();
-
-    if (error === null || error === undefined) return [];
-
-    const combined: readonly string[] = [
-      ...new Set([
-        ...Object.values(toServerFieldErrors(error)),
-        ...toUnmatchedViolations(error, []).map((v: Violation): string => v.message),
-      ]),
-    ];
-
-    if (combined.length > 0) return combined;
-
-    const message: unknown = (error as { readonly message?: unknown }).message;
-
-    return typeof message === 'string' && message.length > 0
-      ? [message]
-      : [$localize`:@@equipment.cf.createFailed:The equipment could not be registered.`];
-  });
+  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
+    serverMessagesOf(
+      this.serverError(),
+      [],
+      $localize`:@@equipment.cf.createFailed:The equipment could not be registered.`,
+    ),
+  );
 
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>

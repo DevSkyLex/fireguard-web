@@ -225,11 +225,13 @@
           variant="outline"
           class="min-w-0 shrink max-sm:min-h-11"
           data-testid="inspection-cancel"
+          i18n-aria-label="@@inspection.cancel"
+          aria-label="Cancel"
           [disabled]="store.isChangingLifecycle()"
           (click)="requestCancel()"
         >
           <ng-icon name="lucideBan" aria-hidden="true" />
-          <span class="truncate" i18n="@@inspection.cancel">Cancel</span>
+          <span class="truncate max-sm:hidden" i18n="@@inspection.cancel">Cancel</span>
         </button>
 
         <button
@@ -242,6 +244,8 @@
         >
           @if (store.isChangingLifecycle()) {
             <hlm-spinner class="size-3.5" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideSend" aria-hidden="true" />
           }
           <span class="truncate" i18n="@@inspection.submit">Submit</span>
         </button>
@@ -258,6 +262,8 @@
         >
           @if (store.isChangingLifecycle()) {
             <hlm-spinner class="size-3.5" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideCheck" aria-hidden="true" />
           }
           <span class="truncate" i18n="@@inspection.close">Close</span>
         </button>

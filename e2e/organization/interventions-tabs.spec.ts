@@ -31,36 +31,36 @@ test.describe('Interventions tabs — header survives a tab switch', () => {
 
     const tabList = page.getByTestId('intervention-view-toggle');
     const newButton = page.getByTestId('interventions-new');
-    const listTab = page.getByRole('tab', { name: 'List' });
-    const boardTab = page.getByRole('tab', { name: 'Board' });
-    const calendarTab = page.getByRole('tab', { name: 'Calendar' });
+    const listTab = page.getByTestId('intervention-view-toggle-list');
+    const boardTab = page.getByTestId('intervention-view-toggle-board');
+    const calendarTab = page.getByTestId('intervention-view-toggle-calendar');
 
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
 
     await boardTab.click();
     await expect(page).toHaveURL(/view=board/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(boardTab).toHaveAttribute('aria-selected', 'true');
+    await expect(boardTab).toHaveAttribute('aria-pressed', 'true');
 
     await listTab.click();
     await expect(page).not.toHaveURL(/view=/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
 
     await calendarTab.click();
     await expect(page).toHaveURL(/view=calendar/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(calendarTab).toHaveAttribute('aria-selected', 'true');
+    await expect(calendarTab).toHaveAttribute('aria-pressed', 'true');
 
     await listTab.click();
     await expect(page).not.toHaveURL(/view=/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-selected', 'true');
+    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
   });
 });

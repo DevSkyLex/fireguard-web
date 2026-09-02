@@ -54,6 +54,10 @@ export class FacilitiesPage {
   public readonly mapWorstSiteRows: Locator = this.page.getByTestId('facility-map-worst-site');
 
   public readonly detailLoading: Locator = this.page.getByTestId('facility-detail-loading');
+  public readonly moreMenu: Locator = this.page.getByTestId('facility-detail-menu');
+  public readonly newSubFacilityAction: Locator = this.page.getByTestId(
+    'facility-detail-new-sub-facility',
+  );
   public readonly deleteAction: Locator = this.page.getByTestId('facility-detail-delete');
   public readonly qrAction: Locator = this.page.getByTestId('facility-detail-qr');
   public readonly qrDialog: Locator = this.page.getByTestId('facility-qr-dialog');

@@ -21,7 +21,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBan, lucideCircleAlert, lucideDownload, lucideWrench } from '@ng-icons/lucide';
+import {
+  lucideBan,
+  lucideCircleAlert,
+  lucideDownload,
+  lucideWrench,
+  lucideCheck,
+  lucideSend,
+} from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -139,7 +146,16 @@ const IDLE_EDIT_STATE: InspectionEditState = {
     HlmSkeleton,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideBan, lucideCircleAlert, lucideDownload, lucideWrench })],
+  providers: [
+    provideIcons({
+      lucideBan,
+      lucideCircleAlert,
+      lucideDownload,
+      lucideWrench,
+      lucideCheck,
+      lucideSend,
+    }),
+  ],
   templateUrl: './inspection-detail-page.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

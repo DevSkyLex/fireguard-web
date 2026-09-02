@@ -620,23 +620,56 @@
     variant="outline"
     class="min-w-0 shrink max-sm:min-h-11"
     data-testid="facility-detail-qr"
+    i18n-aria-label="@@facility.detail.qr"
+    aria-label="QR code"
     (click)="openQrDialog()"
   >
     <ng-icon name="lucideQrCode" aria-hidden="true" />
-    <span class="truncate" i18n="@@facility.detail.qr">QR code</span>
+    <span class="truncate max-sm:hidden" i18n="@@facility.detail.qr">QR code</span>
   </button>
   @if (canWrite()) {
+    <a
+      hlmBtn
+      class="min-w-0 shrink max-sm:min-h-11"
+      data-testid="facility-detail-new-sub-facility"
+      i18n-aria-label="@@facility.detail.addSubFacility"
+      aria-label="Add sub-facility"
+      [routerLink]="['/organizations', organizationId(), 'facilities']"
+      [queryParams]="{ create: 1, parent: facilityId() }"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@facility.detail.addSubFacility"
+        >Add sub-facility</span
+      >
+    </a>
+
     <button
       hlmBtn
       type="button"
-      variant="destructive"
-      class="min-w-0 shrink max-sm:min-h-11"
-      data-testid="facility-detail-delete"
-      (click)="requestDelete()"
+      variant="ghost"
+      size="icon-sm"
+      align="end"
+      class="max-sm:size-11"
+      data-testid="facility-detail-menu"
+      [hlmDropdownMenuTrigger]="moreMenu"
     >
-      <ng-icon name="lucideTrash2" aria-hidden="true" />
-      <span class="truncate" i18n="@@facility.detail.delete">Delete</span>
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      <span class="sr-only" i18n="@@facility.detail.moreActions">More actions</span>
     </button>
+
+    <ng-template #moreMenu>
+      <hlm-dropdown-menu class="w-56">
+        <button
+          hlmDropdownMenuItem
+          variant="destructive"
+          data-testid="facility-detail-delete"
+          (click)="requestDelete()"
+        >
+          <ng-icon name="lucideTrash2" aria-hidden="true" />
+          <span i18n="@@facility.detail.delete">Delete</span>
+        </button>
+      </hlm-dropdown-menu>
+    </ng-template>
   }
 </ng-template>
 

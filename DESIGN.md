@@ -781,6 +781,35 @@ Cross-cutting rules:
 - Pending state is `[disabled]="pending()"` — no hand-rolled
   `aria-disabled`/`pointer-events-none` stacks.
 
+### Header actions
+
+What `#pageActions` may hold, so a page never grows a row of look-alike
+buttons:
+
+1. **At most two visible buttons** — one primary (`hlmBtn`, default variant,
+   rightmost) and at most one `variant="outline"` secondary to its left. A
+   state-exclusive pair (Cancel + Submit on a draft, Close on a submitted
+   record) counts as two.
+2. **Everything else goes into one overflow menu** — a ghost `size="icon-sm"`
+   `lucideEllipsis` trigger with `[hlmDropdownMenuTrigger]` and an `sr-only`
+   name (`intervention-detail-page` is the exemplar). **A destructive or
+   irreversible action is never a visible header button**: it is the last
+   item of that menu, `variant="destructive"`, and always confirms
+   (`equipment-detail`'s Decommission, `facility-detail`'s Delete).
+3. **Split button** — `hlmButtonGroup` holding the primary and an `icon`
+   `[hlmDropdownMenuTrigger]` — only when the menu items are **variants of the
+   primary verb** (`interventions-page`: "New intervention" ▾ "Start from a
+   template"). Not a home for unrelated actions, not a second overflow.
+4. **View switches** are `hlm-toggle-group type="single" [nullable]="false"
+variant="outline" size="sm"`, placed before the buttons — never a
+   hand-rolled `role="tablist"`.
+5. **Mobile**: every button `min-w-0 shrink max-sm:min-h-11`; a label may hide
+   behind its icon (`max-sm:hidden`) only when the button carries an icon and
+   an `aria-label`; icon-only triggers take `max-sm:size-11`. Order stays
+   toggle → outline → primary → overflow.
+6. A page whose only header action is a create button renders just that
+   button; a detail page relies on the breadcrumb and holds no back-link.
+
 ## Collections
 
 - **The Server Rule.** Any collection that is not bounded by nature paginates,

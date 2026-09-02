@@ -2221,3 +2221,4 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   moved out of the Overview tab into their own lazily-mounted tabs in the
   same change — see `### The rail is not the retired workspace tabs` for
   what that narrows on top of the action-box/command-bar retirement.
+- The list header's view switch is a spartan `hlm-toggle-group` (the hand-rolled `role="tablist"` is retired); "New intervention" becomes a split button (`hlmButtonGroup` + `hlmDropdownMenuTrigger`) whose menu instantiates one of `InterventionPlanningOptionsStore.templates` directly — the only header split button in the app, because its items are variants of the primary verb (`DESIGN.md` "Header actions").

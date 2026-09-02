@@ -36,7 +36,7 @@
       <hlm-field-error>{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
-    @if (facilities().length > 1) {
+    @if (facilities().length > 0) {
       <hlm-field>
         <label
           hlmFieldLabel
@@ -58,8 +58,11 @@
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
-              @for (facility of facilities(); track facility.id) {
-                <hlm-select-item [value]="facility.id">{{ facility.name }}</hlm-select-item>
+              @for (facility of facilityRows(); track facility.id) {
+                <hlm-select-item [value]="facility.id">
+                  <span>{{ facility.name }}</span>
+                  <span class="text-muted-foreground"> · {{ facility.typeLabel }}</span>
+                </hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
@@ -116,22 +119,13 @@
       />
     </hlm-field>
 
-    <hlm-field orientation="horizontal" class="justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="onboarding-equipment-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@onboarding.equipmentForm.submitting">Registering…</span>
-        } @else {
-          <span i18n="@@onboarding.equipmentForm.submit">Continue</span>
-        }
-      </button>
-    </hlm-field>
+    <app-onboarding-step-footer
+      [label]="submitLabel"
+      [pendingLabel]="pendingLabel"
+      [pending]="pending()"
+      [skippable]="skippable()"
+      submitTestId="onboarding-equipment-submit"
+      (skipped)="skipped.emit()"
+    />
   </hlm-field-group>
 </form>

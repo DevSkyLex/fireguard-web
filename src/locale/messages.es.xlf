@@ -246,6 +246,10 @@
         <source>Resend available in <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</source>
         <target>Reenvío disponible en <x id="INTERPOLATION" equiv-text="{{ cooldownRemaining() }}"/>s</target>
       </trans-unit>
+      <trans-unit id="auth.otp.trustDevice" datatype="html">
+        <source>Trust this device for 30 days</source>
+        <target>Confiar en este dispositivo durante 30 días</target>
+      </trans-unit>
       <trans-unit id="auth.register.submit" datatype="html">
         <source>Create account</source>
         <target>Crear cuenta</target>
@@ -735,8 +739,8 @@
         <target>Establecimiento</target>
       </trans-unit>
       <trans-unit id="onboarding.facilities.subtitle" datatype="html">
-        <source>Add the locations to monitor. You can create up to 5 at once.</source>
-        <target>Añade las ubicaciones que vas a supervisar. Puedes crear hasta 5 a la vez.</target>
+        <source>Add the locations you monitor.</source>
+        <target>Añade las ubicaciones que supervisas.</target>
       </trans-unit>
       <trans-unit id="onboarding.step.equipment.label" datatype="html">
         <source>First equipment</source>
@@ -773,6 +777,42 @@
       <trans-unit id="onboarding.wizard.skip" datatype="html">
         <source>Skip for now</source>
         <target>Omitir por ahora</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.nextStep" datatype="html">
+        <source>Next: <x id="label" equiv-text="label"/></source>
+        <target>Siguiente: <x id="label"/></target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.lastStep" datatype="html">
+        <source>Last step — your workspace opens right after.</source>
+        <target>Último paso: tu espacio de trabajo se abre justo después.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.completed" datatype="html">
+        <source>Your organization is ready.</source>
+        <target>Tu organización está lista.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.submitPayment" datatype="html">
+        <source>Continue to payment</source>
+        <target>Continuar al pago</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.choose" datatype="html">
+        <source>Choose a plan</source>
+        <target>Elegir un plan</target>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.currentPlan" datatype="html">
+        <source>Current plan</source>
+        <target>Plan actual</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.emptyGate" datatype="html">
+        <source>Add at least one email, or skip this step.</source>
+        <target>Añade al menos un correo electrónico u omite este paso.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.submitOne" datatype="html">
+        <source>Create facility</source>
+        <target>Crear la instalación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.submitMany" datatype="html">
+        <source>Create facilities</source>
+        <target>Crear las instalaciones</target>
       </trans-unit>
       <trans-unit id="facilityType.site" datatype="html">
         <source>Site</source>
@@ -843,16 +883,16 @@
         <target>Registrando…</target>
       </trans-unit>
       <trans-unit id="onboarding.equipmentForm.submit" datatype="html">
-        <source>Continue</source>
-        <target>Continuar</target>
+        <source>Register equipment</source>
+        <target>Registrar el equipo</target>
       </trans-unit>
       <trans-unit id="onboarding.equipmentForm.createFailed" datatype="html">
         <source>The equipment could not be registered.</source>
         <target>No se pudo registrar el equipo.</target>
       </trans-unit>
-      <trans-unit id="onboarding.facilitiesForm.remove" datatype="html">
-        <source>Remove</source>
-        <target>Quitar</target>
+      <trans-unit id="onboarding.facilitiesForm.removeNamed" datatype="html">
+        <source>Remove <x id="name" equiv-text="${name}"/></source>
+        <target>Quitar <x id="name" equiv-text="${name}"/></target>
       </trans-unit>
       <trans-unit id="onboarding.facilitiesForm.capacity" datatype="html">
         <source>You can stage up to 5 facilities at once.</source>
@@ -879,16 +919,12 @@
         <target>Dirección (opcional)</target>
       </trans-unit>
       <trans-unit id="onboarding.facilitiesForm.add" datatype="html">
-        <source>Add facility</source>
-        <target>Añadir instalación</target>
+        <source>Add another facility</source>
+        <target>Añadir otra instalación</target>
       </trans-unit>
       <trans-unit id="onboarding.facilitiesForm.submitting" datatype="html">
         <source>Saving…</source>
         <target>Guardando…</target>
-      </trans-unit>
-      <trans-unit id="onboarding.facilitiesForm.submit" datatype="html">
-        <source>Continue</source>
-        <target>Continuar</target>
       </trans-unit>
       <trans-unit id="onboarding.facilitiesForm.typeRequired" datatype="html">
         <source>Facility type is required.</source>
@@ -901,10 +937,6 @@
       <trans-unit id="onboarding.facilitiesForm.createFailed" datatype="html">
         <source>The facilities could not be created.</source>
         <target>No se pudieron crear las instalaciones.</target>
-      </trans-unit>
-      <trans-unit id="onboarding.facilitiesForm.emptyBatch" datatype="html">
-        <source>Add at least one facility to continue, or use "Skip for now".</source>
-        <target>Añade al menos una instalación para continuar, o usa «Omitir por ahora».</target>
       </trans-unit>
       <trans-unit id="onboarding.facilityType.site" datatype="html">
         <source>Site</source>
@@ -926,9 +958,9 @@
         <source>Area</source>
         <target>Área</target>
       </trans-unit>
-      <trans-unit id="onboarding.membersForm.remove" datatype="html">
-        <source>Remove</source>
-        <target>Quitar</target>
+      <trans-unit id="onboarding.membersForm.removeNamed" datatype="html">
+        <source>Remove <x id="email" equiv-text="${email}"/></source>
+        <target>Quitar <x id="email" equiv-text="${email}"/></target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.email" datatype="html">
         <source>Email</source>
@@ -947,16 +979,16 @@
         <target>Sin rol</target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.add" datatype="html">
-        <source>Add invitation</source>
-        <target>Añadir invitación</target>
+        <source>Add another invitation</source>
+        <target>Añadir otra invitación</target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.submitting" datatype="html">
         <source>Sending…</source>
         <target>Enviando…</target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.submit" datatype="html">
-        <source>Continue</source>
-        <target>Continuar</target>
+        <source>Send invitations</source>
+        <target>Enviar las invitaciones</target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.emailRequired" datatype="html">
         <source>Enter an email address.</source>
@@ -991,8 +1023,8 @@
         <target>Creando…</target>
       </trans-unit>
       <trans-unit id="onboarding.orgForm.submit" datatype="html">
-        <source>Continue</source>
-        <target>Continuar</target>
+        <source>Create organization</source>
+        <target>Crear la organización</target>
       </trans-unit>
       <trans-unit id="onboarding.orgForm.nameRequired" datatype="html">
         <source>Enter your organization's name.</source>
@@ -1007,8 +1039,8 @@
         <target>Confirmando…</target>
       </trans-unit>
       <trans-unit id="onboarding.planForm.submit" datatype="html">
-        <source>Continue</source>
-        <target>Continuar</target>
+        <source>Confirm plan</source>
+        <target>Confirmar el plan</target>
       </trans-unit>
       <trans-unit id="onboarding.planForm.free" datatype="html">
         <source>Free</source>

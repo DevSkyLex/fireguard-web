@@ -33,4 +33,10 @@ export interface OnboardingStepRailRow {
 
   /** Whether this is the step the operator should act on next. */
   readonly isActive: boolean;
+
+  /** Whether the sublabel renders — only on the active step, so the rail reads as one line per resolved step. */
+  readonly showSublabel: boolean;
+
+  /** Whether the status label is visible text; a resolved step keeps it screen-reader-only and lets the glyph speak. */
+  readonly statusLabelVisible: boolean;
 }

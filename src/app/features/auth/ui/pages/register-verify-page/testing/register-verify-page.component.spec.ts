@@ -48,7 +48,7 @@ describe('RegisterVerifyPage', () => {
   });
 
   it('should send only the code, leaving the token with the store', () => {
-    fixture.componentInstance['verify']({ code: '123456' });
+    fixture.componentInstance['verify']({ code: '123456', trustDevice: false });
 
     expect(mockRegisterStore.verify).toHaveBeenCalledWith({ code: '123456' });
   });

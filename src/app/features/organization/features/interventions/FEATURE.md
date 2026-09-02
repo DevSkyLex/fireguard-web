@@ -1747,10 +1747,11 @@ feature already renders another feature's enum.
   one rendering. An `outline` `hlm-badge` where only the glyph carries the tone;
   `asOption` drops the badge and renders the same icon and label as a plain row,
   for use inside a select or combobox item.
-- The severity tints are **literal Tailwind palette pairs** in that component's own
-  `constants/`, because the theme has no `--success` / `--warning` / `--info`
-  token. That file is private to the tag: other surfaces write their own literal
-  pairs rather than reaching into it (§2.8).
+- The severity tints are the theme's status tokens (`text-success`,
+  `text-warning`, `text-info`, `text-destructive`, `text-muted-foreground` —
+  `DESIGN.md` §Colors), mapped in that component's own `constants/`. That file
+  is private to the tag: other surfaces keep their own severity map rather than
+  reaching into it (§2.8).
 
 To add a new enum value, extend the relevant descriptor map only — every consumer
 follows.

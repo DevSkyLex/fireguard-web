@@ -210,7 +210,11 @@ export class OrganizationSetupService {
 
     return forkJoin(
       facilities.map((facility) => this.facilityService.create(organizationId, facility)),
-    ).pipe(map((created) => created.map((facility) => ({ id: facility.id, name: facility.name }))));
+    ).pipe(
+      map((created) =>
+        created.map((facility) => ({ id: facility.id, name: facility.name, type: facility.type })),
+      ),
+    );
   }
 
   /**

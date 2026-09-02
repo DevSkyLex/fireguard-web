@@ -52,8 +52,7 @@ describe('FacilityStatusTag', () => {
     const element: HTMLElement = await render('archived');
     const icon: Element | null = element.querySelector('ng-icon');
 
-    expect(icon?.className).toContain('text-neutral-500');
-    expect(icon?.className).toContain('dark:text-neutral-400');
+    expect(icon?.className).toContain('text-muted-foreground');
   });
 
   it('should render icon and label as a plain row, with no badge, when used as an option', async () => {

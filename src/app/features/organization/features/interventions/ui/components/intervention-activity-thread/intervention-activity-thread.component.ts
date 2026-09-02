@@ -140,7 +140,7 @@ const SKELETON_ROW_COUNT: number = 3;
  * (`InterventionCommentForm` + `store.addComment`).
  *
  * A comment's `@{uuid}` mention tokens are resolved to the mentioned
- * member's display name and rendered as a plain `font-medium text-primary`
+ * member's display name and rendered as a plain `font-medium text-foreground`
  * span — no link, no `innerHTML` — with the role as its hover title. An
  * unresolved token (the member left, or the id is malformed) falls back to
  * the same neutral label an unattributable activity actor already gets.

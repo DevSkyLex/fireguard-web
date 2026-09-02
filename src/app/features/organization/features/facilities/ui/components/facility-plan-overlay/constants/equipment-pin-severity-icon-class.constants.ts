@@ -20,8 +20,8 @@ import type { EquipmentStatusTagSeverity } from '@features/organization/features
 export const EQUIPMENT_PIN_SEVERITY_ICON_CLASS: Readonly<
   Record<EquipmentStatusTagSeverity, string>
 > = {
-  neutral: 'text-neutral-500 dark:text-neutral-400',
+  neutral: 'text-muted-foreground',
   success: 'text-success',
-  warning: 'text-amber-500 dark:text-amber-400',
-  danger: 'text-red-500 dark:text-red-400',
+  warning: 'text-warning',
+  danger: 'text-destructive',
 };

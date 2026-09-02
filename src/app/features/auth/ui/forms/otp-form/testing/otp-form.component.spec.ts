@@ -72,7 +72,32 @@ describe('OtpForm', () => {
     await typeCode(fixture, '123456');
     await submit(fixture);
 
-    expect(submitted).toHaveBeenCalledWith({ code: '123456' });
+    expect(submitted).toHaveBeenCalledWith({ code: '123456', trustDevice: false });
+  });
+
+  it('should hide the trust-device control by default', () => {
+    // Registration and password-reset verification have no session to bind a
+    // device to; only the MFA page turns the control on.
+    expect(fixture.nativeElement.querySelector('[data-testid="otp-trust-device"]')).toBeNull();
+  });
+
+  it('should emit the trust intent when the control is shown and checked', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    fixture.componentRef.setInput('showTrustDevice', true);
+    await fixture.whenStable();
+
+    const checkbox = fixture.nativeElement.querySelector(
+      '[data-testid="otp-trust-device"]',
+    ) as HTMLElement;
+    expect(checkbox).not.toBeNull();
+    checkbox.click();
+    await fixture.whenStable();
+
+    await typeCode(fixture, '123456');
+    await submit(fixture);
+
+    expect(submitted).toHaveBeenCalledWith({ code: '123456', trustDevice: true });
   });
 
   it('should hide the resend control by default', () => {

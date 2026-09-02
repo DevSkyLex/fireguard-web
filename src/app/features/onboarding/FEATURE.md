@@ -104,27 +104,57 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
   verbatim by `OnboardingShowcase` (`lg` and up, inside the split shell's
   branded panel) and the wizard page's own in-content copy (below `lg`, since
   that is the shell's own breakpoint for showing the panel at all — not `xl`
-  as an earlier draft of this document said).
+  as an earlier draft of this document said). Only the active row carries
+  its sublabel and status text; a completed or pending row collapses to its
+  label and status glyph (the status label stays screen-reader-only), a
+  skipped or blocked row keeps the status visible because it explains the
+  row.
 - `ui/components/onboarding-showcase/` — the split shell's showcase contribution for `/onboarding`.
+- `ui/components/onboarding-step-footer/` — the one action row every step
+  form ends with: the step's **named** primary action on the right ("Create
+  organization", "Confirm plan" / "Continue to payment", "Send invitations",
+  "Create facility" / "Create facilities", "Register equipment" — never a bare
+  "Continue") and, only when the backend lets the step be skipped, a ghost
+  "Skip for now" on the left. Never a third control. Each form renders it
+  inside its own `<form>` so the primary action stays `type="submit"`, takes
+  a `skippable` input and relays the footer's `skipped` output to the page.
+  Below `lg` the row sticks to the bottom of the viewport. A closed primary
+  action names its reason through `@shared/gate-reason`.
 - `ui/forms/` — one form per step: `onboarding-organization-form`,
   `onboarding-plan-form`, `onboarding-members-form`,
   `onboarding-facilities-form`, `onboarding-equipment-form`. The middle two
   stage rows locally (facilities capped at 5, matching the step's own copy;
-  members uncapped) and submit the whole batch rather than calling a service
-  per row. A valid draft row still in the fields is staged automatically on
-  continue, so typed input is never lost. The members batch may be empty (the
-  step is skippable through its own endpoint); the facilities batch may
-  **not** — the backend rejects confirming `create_first_facility` with no
-  facility, so an empty continue shows a near-form message instead of
-  emitting, and skipping goes through the wizard's skip affordance.
+  members uncapped) as `hlm-item` rows and submit the whole batch rather than
+  calling a service per row. **The fields always hold the next row**: a valid
+  draft still in them is staged automatically by the primary action, so the
+  common path is "fill, submit" with no explicit add — "Add another
+  facility/invitation" is a ghost control for a second row. The facilities
+  batch may **not** be empty (the backend rejects confirming
+  `create_first_facility` with no facility and does not let the step be
+  skipped), so an empty submit marks the draft touched and lets the two
+  required-field errors name what is missing — there is no separate message
+  and no skip control on that step. The members batch may be empty, but
+  while the backend offers the skip and nothing is typed or staged the send
+  is closed with "Add at least one email, or skip this step." — skip is the
+  named path for the empty case; without the skip on offer an empty batch
+  remains a valid continue.
+- The `select_plan` step renders the catalog as radio cards, pre-selects the
+  plan the catalog marks `isDefault` (a new organization already sits on it)
+  and badges it "Current plan"; the primary action reads "Continue to
+  payment" once a priced plan is picked, naming the Stripe exit.
 - The `create_first_equipment` step attaches the equipment to a facility
   created by `create_first_facility`: the wizard page memorizes the
-  `createFacilities` summaries and hands them to the equipment form, which
-  attaches silently when there is one and offers a pre-selected select when
-  there are several. The attachment travels in the same create request
+  `createFacilities` summaries (id, name, **type**) and hands them to the
+  equipment form, which renders a facility select whenever at least one
+  exists, pre-selected on the first, each option reading "Name · Type". The
+  attachment travels in the same create request
   (`SetupCreateEquipmentInput.facilityId`, mapped to the facility IRI by the
   setup boundary). When the facility step was skipped or the wizard resumed
   past it, the equipment is created unattached, as before.
+- Under the step heading the page names what follows — "Next: Choose a
+  plan" — or "Last step — your workspace opens right after." on the final
+  step (`ONBOARDING_STEP_PRESENTATION` labels). Completion is announced with
+  a `FeedbackService` success toast before the redirect to `/`.
 - `models/onboarding-step-status-tag/` — the presentation registry for
   `OnboardingStepStatus`, resolved by the rail instead of branched on in its
   template (`ARCHITECTURE.md` §10.10). Only the two-ends rule's terminal
@@ -162,6 +192,12 @@ dependency, record it here first, then extend that rule (`ARCHITECTURE.md` §4.1
   stepper (below `lg`).
 - The wizard page is the route-entry orchestrator; step bodies delegate creation
   to `@features/organization/setup` and confirm via the store.
+- **One action row per step, and the skip lives in it.** The wizard page
+  never renders a skip of its own; each form's footer does, only when
+  `step.skippable && step.skipAvailable`, and relays it to
+  `OnboardingWizardPage.skipCurrentStep`. Facilities and equipment are never
+  skippable — the backend (`src/Onboarding/MODULE.md`) declares them
+  required; the e2e fixtures mirror that.
 - The onboarding forms are the pilot for spartan's self-gated validation
   display: `<hlm-field-error>` renders bare (it gates itself on the same
   `spartanInvalid` source as the input border) and inputs carry no manual

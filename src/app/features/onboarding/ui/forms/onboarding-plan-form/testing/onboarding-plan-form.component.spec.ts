@@ -1,4 +1,4 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import type { OnboardingPlanSelection } from '../models';
@@ -57,6 +57,12 @@ describe('OnboardingPlanForm', () => {
   });
 
   it('should refuse to emit while no plan is picked, and show the reason', async () => {
+    fixture.componentRef.setInput('plans', [planOf('pro', 'Pro')]);
+    (
+      fixture.componentInstance as unknown as { model: WritableSignal<{ planKey: string }> }
+    ).model.set({ planKey: '' });
+    await fixture.whenStable();
+
     const emitted: OnboardingPlanSelection[] = [];
     fixture.componentInstance.submitted.subscribe((value: OnboardingPlanSelection): void => {
       emitted.push(value);
@@ -66,6 +72,27 @@ describe('OnboardingPlanForm', () => {
 
     expect(emitted).toEqual([]);
     expect(element.textContent).toContain('Choose a plan to continue.');
+  });
+
+  it('should pre-select the default plan and mark it as the current one', async () => {
+    const card: HTMLElement = element.querySelector(
+      '[data-testid="onboarding-plan-card-free"]',
+    ) as HTMLElement;
+
+    expect(card.getAttribute('data-selected')).toBe('true');
+    expect(card.textContent).toContain('Current plan');
+    expect(element.querySelector('[data-testid="onboarding-plan-submit"]')?.textContent).toContain(
+      'Confirm plan',
+    );
+  });
+
+  it('should name the payment on the primary action once a priced plan is picked', async () => {
+    (element.querySelector('#onboarding-plan-pro') as HTMLElement).click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[data-testid="onboarding-plan-submit"]')?.textContent).toContain(
+      'Continue to payment',
+    );
   });
 
   it('should emit the free plan as not requiring payment', async () => {

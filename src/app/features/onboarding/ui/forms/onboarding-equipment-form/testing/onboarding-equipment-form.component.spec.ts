@@ -60,11 +60,15 @@ describe('OnboardingEquipmentForm', () => {
     ]);
   });
 
-  it('should attach the only created facility silently, without rendering a select', async () => {
-    fixture.componentRef.setInput('facilities', [{ id: 'facility-1', name: 'HQ' }]);
+  it('should attach the only created facility through a pre-selected select that names it', async () => {
+    fixture.componentRef.setInput('facilities', [{ id: 'facility-1', name: 'HQ', type: 'site' }]);
     await fixture.whenStable();
 
-    expect(element.querySelector('[data-testid="onboarding-equipment-facility"]')).toBeNull();
+    const trigger: HTMLElement | null = element.querySelector(
+      '[data-testid="onboarding-equipment-facility"]',
+    );
+    expect(trigger).not.toBeNull();
+    expect(trigger?.textContent).toContain('HQ · Site');
 
     const emitted: SetupCreateEquipmentInput[] = [];
     fixture.componentInstance.submitted.subscribe((value: SetupCreateEquipmentInput): void => {
@@ -85,8 +89,8 @@ describe('OnboardingEquipmentForm', () => {
 
   it('should offer a facility select pre-selected on the first when several were created', async () => {
     fixture.componentRef.setInput('facilities', [
-      { id: 'facility-1', name: 'HQ' },
-      { id: 'facility-2', name: 'Annex' },
+      { id: 'facility-1', name: 'HQ', type: 'site' },
+      { id: 'facility-2', name: 'Annex', type: 'building' },
     ]);
     await fixture.whenStable();
 

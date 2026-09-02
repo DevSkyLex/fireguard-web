@@ -166,7 +166,7 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 
 Ask the **spartan MCP** for a component's API before writing markup.
 
-Styling: Tailwind v4 utilities in **literal class strings** (Tailwind scans `.ts`/`.html`, so a computed class name silently produces no CSS). Use the semantic tokens — `bg-background`, `text-foreground`, `bg-primary`, `border-border` — never raw palette values; that is what makes dark mode (`html[data-theme="dark"]`) work without `dark:` variants everywhere. Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).
+Styling: Tailwind v4 utilities in **literal class strings** (Tailwind scans `.ts`/`.html`, so a computed class name silently produces no CSS). Use the semantic tokens — `bg-background`, `text-foreground`, `bg-primary`, `border-border`, and `text-success` / `text-warning` / `text-info` / `text-destructive` for status glyphs — never raw palette values; that is what makes dark mode (`html[data-theme="dark"]`) work without `dark:` variants everywhere. Status is never conveyed by colour alone — pair severity with a label or icon (`PRODUCT.md`).
 
 ## Barrels (§13.3)
 

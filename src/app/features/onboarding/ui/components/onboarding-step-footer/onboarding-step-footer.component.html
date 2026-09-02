@@ -1,0 +1,48 @@
+<div
+  class="flex items-center gap-3 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-6 max-lg:border-t max-lg:border-border max-lg:bg-background max-lg:px-6 max-lg:py-3 sm:max-lg:-mx-8 sm:max-lg:px-8"
+  [class.justify-between]="skippable()"
+  [class.justify-end]="!skippable()"
+>
+  @if (skippable()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="max-sm:min-h-11"
+      data-testid="onboarding-wizard-skip"
+      [disabled]="pending()"
+      (click)="skipped.emit()"
+    >
+      <span i18n="@@onboarding.wizard.skip">Skip for now</span>
+    </button>
+  }
+
+  <div class="flex min-w-0 flex-col items-end gap-1">
+    @if (gateReason(); as reason) {
+      <p
+        class="text-xs text-muted-foreground"
+        data-testid="onboarding-step-gate-reason"
+        [id]="gate.reasonId()"
+      >
+        {{ reason }}
+      </p>
+    }
+    <button
+      hlmBtn
+      type="submit"
+      class="max-sm:min-h-11"
+      #gate="appGateReason"
+      [attr.data-testid]="submitTestId()"
+      [disabled]="pending() || gateReason() !== null"
+      [appGateReason]="gateReason()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (pending()) {
+        <span>{{ pendingLabel() }}</span>
+      } @else {
+        <span>{{ label() }}</span>
+      }
+    </button>
+  </div>
+</div>

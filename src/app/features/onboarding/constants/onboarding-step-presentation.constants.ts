@@ -8,8 +8,7 @@ import type { OnboardingStepKey, OnboardingStepPresentation } from '@features/on
  * Exhaustive, localized presentation metadata for every {@link OnboardingStepKey}:
  * an icon name, a short title, a compact rail subtitle, and the longer
  * content-heading description. Shared by the wizard rail, the wizard content
- * heading, and the shell setup checklist so every surface renders identical step
- * copy. A typed `Record` fails the build if a step key is added to the domain
+ * heading and its "Next:" hint, so every surface renders identical step copy. A typed `Record` fails the build if a step key is added to the domain
  * model without a presentation entry.
  *
  * `icon` is a registered `@ng-icons/lucide` name — the values below replace a
@@ -43,7 +42,7 @@ export const ONBOARDING_STEP_PRESENTATION: Record<OnboardingStepKey, OnboardingS
     icon: 'lucideMapPin',
     label: $localize`:@@onboarding.step.facility.label:First facility`,
     sublabel: $localize`:@@onboarding.step.facility.sublabel:Establishment`,
-    description: $localize`:@@onboarding.facilities.subtitle:Add the locations to monitor. You can create up to 5 at once.`,
+    description: $localize`:@@onboarding.facilities.subtitle:Add the locations you monitor.`,
   },
   create_first_equipment: {
     icon: 'lucideWrench',

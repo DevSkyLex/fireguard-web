@@ -36,11 +36,7 @@
             <h3 hlmCardTitle>{{ row.name }}</h3>
             @if (row.isCurrent) {
               <span hlmBadge variant="outline" class="gap-1 text-foreground">
-                <ng-icon
-                  name="lucideCheck"
-                  class="text-emerald-500 dark:text-emerald-400"
-                  aria-hidden="true"
-                />
+                <ng-icon name="lucideCheck" class="text-success" aria-hidden="true" />
                 <span i18n="@@org.settings.plan.current">Current plan</span>
               </span>
             }

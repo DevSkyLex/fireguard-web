@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import { expectSheetGuardHolds } from '../support/helpers/sheet-guard';
 import { ApiMock } from '../support/mocks/api-mock';
 import { ChecklistsPage } from '../support/pages/checklists.page';
 
@@ -50,5 +51,25 @@ test.describe('Checklists list — filter bar', () => {
 
     expect(new URL((await clearedRequest).url()).searchParams.has('status')).toBe(false);
     await expect(checklists.filterChip('Status')).toHaveCount(0);
+  });
+});
+
+test.describe('Checklists list — create sheet', () => {
+  test('opens its sheet from the header button and guards a dirty draft', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockChecklistList(E2E_ORGANIZATION_ID, []);
+    const checklists = new ChecklistsPage(page);
+
+    await checklists.goto(E2E_ORGANIZATION_ID);
+    await expect(checklists.createRoot).toBeHidden();
+
+    await checklists.newButton.click();
+    await expect(checklists.createRoot).toBeVisible();
+
+    await checklists.createName.click();
+    await checklists.createName.pressSequentially('Fire Safety Inspection');
+
+    await expectSheetGuardHolds(page, checklists.createRoot, () => page.keyboard.press('Escape'));
   });
 });

@@ -54,7 +54,7 @@ entry, so a row is never hand-rolled twice.
 every write): each month-grid cell offers the shared calendar's "+" button
 — revealed on cell hover and on its own keyboard focus, dated `aria-label` —
 and each week/day section offers its own; both open the existing
-`calendar-event-dialog` with `startsAt` pre-filled on that day at 09:00
+`calendar-event-sheet` with `startsAt` pre-filled on that day at 09:00
 local (`initialStartsAt`).
 
 **Drag reschedule** (same gate): only a `calendar_event`-source chip is
@@ -165,6 +165,7 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   for the `createdAt`/`lastUsedAt` rendering. No new route and no new
   permission: the page's own `organization.events.read` gate covers the
   token endpoints.
+- **The sheet gates dismissal while the form is dirty, in both create and edit mode.** `CalendarEventForm` reports its own dirtiness through `dirtyChanged`; `calendar-event-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
 
 ## Cross-feature dependencies
 
@@ -180,3 +181,4 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
 
 - Detail links for inspection and maintenance entries once their pages have
   stable per-record routes.
+- Standalone events are created and edited in `calendar-event-sheet` (`sm:w-[540px]`, bottom drawer under `sm`); the delete confirmation stays an alert-dialog.

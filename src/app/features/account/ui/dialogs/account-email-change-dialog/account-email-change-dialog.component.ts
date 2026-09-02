@@ -28,7 +28,7 @@ import {
  *
  * @description
  * The spartan dialog hosting {@link AccountEmailChangeForm}, the shape
- * `ChecklistCreateDialog` wraps `ChecklistCreateForm` in.
+ * `ChecklistCreateSheet` wraps `ChecklistCreateForm` in.
  *
  * Purely presentational: it owns the overlay chrome, forwards
  * `visible`/`visibleChange`, `pending` and `initialEmail` to the form, and

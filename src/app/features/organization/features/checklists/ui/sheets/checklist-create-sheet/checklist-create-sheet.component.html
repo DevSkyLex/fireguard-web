@@ -1,0 +1,30 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="sheetState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    data-testid="checklist-create-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@checklists.createDialog.title">New checklist</h3>
+    </hlm-sheet-header>
+
+    <app-checklist-create-form
+      [visible]="visible()"
+      [pending]="pending()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

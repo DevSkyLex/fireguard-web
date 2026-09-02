@@ -706,8 +706,9 @@ confirm.
    resource is created the same way.
 2. **Sheet (right drawer)** — creating a record the operator will then open,
    or acting **without leaving a working context** (a filtered list, a
-   workspace): facility / equipment / inspection / intervention create, work
-   item, request-changes, role permissions, participants. The list page owns
+   workspace): facility / equipment / inspection / intervention / checklist /
+   calendar event / team / role / channel create, work item, request-changes,
+   role permissions, participants. The list page owns
    the sheet's state and navigates to the created record on success; a
    `?create=1` query opens the sheet on arrival (with `?parent=` /
    `?facility=` scoping it) and the retired `/create` segments redirect
@@ -723,9 +724,12 @@ confirm.
    `max-h-[85svh]` with internal scroll) so the footer lands in the thumb
    zone. No drag-to-dismiss, no snap points — the primitives do not provide
    them and we do not hand-roll them.
-3. **Dialog** — a light, focal action (≤ ~5 fields, no navigation after):
-   invitation, role create, channel create/edit, pickers. Dialogs and
-   alert-dialogs stay centered at every width.
+3. **Dialog** — an action **on an existing record**, or a message: invitation,
+   direct message, channel edit, member add, assignment, pickers. Creating a
+   record the operator will then open is never a dialog, whatever the form's
+   size — checklists, calendar events, teams, roles and channels moved to
+   sheets on 2026-09-02 for that reason. Dialogs and alert-dialogs stay
+   centered at every width.
 4. **In place** — record editing happens on the detail page through
    `@shared/inplace-field` ("the record is the edit surface"). No edit route,
    no edit modal for a record.

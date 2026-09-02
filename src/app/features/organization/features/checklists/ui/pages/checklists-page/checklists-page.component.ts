@@ -58,8 +58,8 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
 import { ChecklistArchiveDialog } from '../../dialogs/checklist-archive-dialog';
-import { ChecklistCreateDialog } from '../../dialogs/checklist-create-dialog';
 import { ChecklistEditDialog } from '../../dialogs/checklist-edit-dialog';
+import { ChecklistCreateSheet } from '../../sheets/checklist-create-sheet';
 import { ChecklistTable } from '../../tables/checklist-table';
 
 /** The page sizes offered under the table — the server default first. */
@@ -108,7 +108,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
   imports: [
     NgIcon,
     ChecklistArchiveDialog,
-    ChecklistCreateDialog,
+    ChecklistCreateSheet,
     ChecklistEditDialog,
     ChecklistStatusTag,
     ChecklistTable,

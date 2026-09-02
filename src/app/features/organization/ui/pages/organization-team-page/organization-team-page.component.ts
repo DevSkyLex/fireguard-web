@@ -39,8 +39,8 @@ import { StatTile } from '@features/organization/ui/components';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { OrganizationRoleGrid } from '../../dataviews/organization-role-grid';
-import { OrganizationRoleCreateDialog } from '../../dialogs/organization-role-create-dialog';
 import { OrganizationRoleDeleteDialog } from '../../dialogs/organization-role-delete-dialog';
+import { OrganizationRoleCreateSheet } from '../../sheets/organization-role-create-sheet';
 import { OrganizationRolePermissionsSheet } from '../../sheets/organization-role-permissions-sheet';
 
 /** Which surface's write is currently attributed the shared mutation state, so a stale error from one dialog cannot leak into another. */
@@ -75,7 +75,7 @@ type OrganizationTeamKpiTile = {
  * into a System roles and a Custom roles section — so the custom-roles empty
  * state can never stack above a grid still full of system roles; a member
  * holding `organization.roles.manage` can create a role
- * ({@link OrganizationRoleCreateDialog}), edit a custom role's permissions
+ * ({@link OrganizationRoleCreateSheet}), edit a custom role's permissions
  * ({@link OrganizationRolePermissionsSheet}), or delete a custom role
  * ({@link OrganizationRoleDeleteDialog}).
  *
@@ -111,7 +111,7 @@ type OrganizationTeamKpiTile = {
   imports: [
     NgIcon,
     ErrorState,
-    OrganizationRoleCreateDialog,
+    OrganizationRoleCreateSheet,
     OrganizationRoleDeleteDialog,
     OrganizationRoleGrid,
     OrganizationRolePermissionsSheet,

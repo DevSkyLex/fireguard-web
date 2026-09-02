@@ -1,18 +1,18 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { ChannelCreateDraft } from '../../../forms/channel-create-form';
-import { ChannelCreateDialog } from '../channel-create-dialog.component';
+import { ChannelCreateSheet } from '../channel-create-sheet.component';
 
 const panel = (): HTMLElement | null =>
-  document.querySelector('[data-testid="channel-create-dialog"]');
+  document.querySelector('[data-testid="channel-create-sheet"]');
 
 const nameInput = (): HTMLInputElement | null =>
   panel()?.querySelector('[data-testid="channel-create-name"]') ?? null;
 
 const form = (): HTMLFormElement | null => panel()?.querySelector('form') ?? null;
 
-describe('ChannelCreateDialog', () => {
-  let fixture: ComponentFixture<ChannelCreateDialog>;
+describe('ChannelCreateSheet', () => {
+  let fixture: ComponentFixture<ChannelCreateSheet>;
   let submissions: ChannelCreateDraft[];
   let visibility: boolean[];
 
@@ -31,7 +31,7 @@ describe('ChannelCreateDialog', () => {
   async function open(): Promise<void> {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(ChannelCreateDialog);
+    fixture = TestBed.createComponent(ChannelCreateSheet);
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
@@ -45,7 +45,7 @@ describe('ChannelCreateDialog', () => {
 
   it('should render nothing until the page opens it', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(ChannelCreateDialog);
+    fixture = TestBed.createComponent(ChannelCreateSheet);
     await fixture.whenStable();
 
     expect(panel()).toBeNull();
@@ -72,9 +72,8 @@ describe('ChannelCreateDialog', () => {
     expect(submitButton?.disabled).toBe(true);
   });
 
-  it('should relay a cancel without submitting anything', async () => {
+  it('should relay a cancel without submitting anything, while nothing was typed', async () => {
     await open();
-    await typeName('Incident room');
 
     panel()?.querySelector('[data-testid="new-channel-cancel"]')?.dispatchEvent(new Event('click'));
     await fixture.whenStable();
@@ -87,5 +86,40 @@ describe('ChannelCreateDialog', () => {
     await open();
 
     expect(panel()?.querySelector('[data-testid="new-channel-parent"]')).toBeNull();
+  });
+
+  it('should ask before discarding a dirty draft on cancel, and close only once confirmed', async () => {
+    await open();
+    await typeName('Incident room');
+
+    panel()?.querySelector('[data-testid="new-channel-cancel"]')?.dispatchEvent(new Event('click'));
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+
+    expect(visibility).toEqual([false]);
+  });
+
+  it('should treat an Escape on a dirty draft as a close request, not a close', async () => {
+    await open();
+    await typeName('Incident room');
+
+    fixture.componentInstance['onStateChanged']('closed');
+
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibility).toEqual([]);
+  });
+
+  it('should forget the dirty flag once the panel closes', async () => {
+    await open();
+    await typeName('Incident room');
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 });

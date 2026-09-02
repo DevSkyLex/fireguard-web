@@ -160,4 +160,34 @@ describe('CalendarEventForm', () => {
       document.querySelector<HTMLInputElement>('[data-testid="calendar-event-title"]')?.value,
     ).toBe('');
   });
+
+  it('should report dirtiness through dirtyChanged after a value change, and clear it once the overlay closes', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    setValue('calendar-event-title', 'Fire drill');
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
+
+  it('should stay clean when a draft is only seeded for editing, not yet touched', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+
+    fixture.componentRef.setInput('editing', EVENT);
+    await fixture.whenStable();
+
+    expect(dirtyChanges).not.toContain(true);
+  });
 });

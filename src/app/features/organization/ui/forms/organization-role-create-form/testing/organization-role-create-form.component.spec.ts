@@ -146,4 +146,36 @@ describe('OrganizationRoleCreateForm', () => {
     expect(buttons[0]).toBe(cancelButton());
     expect(buttons[1]).toBe(submitButton());
   });
+
+  it('should report dirtiness through dirtyChanged after a value change, and clear it once reset', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await typeName('inspector');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+
+    fixture.componentInstance['createForm']().reset();
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
+
+  it('should report dirtiness from a checked permission alone, since the checklist has no bound field', async () => {
+    fixture.componentRef.setInput('catalog', [permission('organization.inspection.read')]);
+    await fixture.whenStable();
+
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await check('organization.inspection.read');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+  });
 });

@@ -46,7 +46,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { ChannelCreateDialog, type ChannelCreateDraft } from '../../dialogs/channel-create-dialog';
+import { ChannelCreateSheet, type ChannelCreateDraft } from '../../sheets/channel-create-sheet';
 
 /**
  * Component ChannelsPage
@@ -93,7 +93,7 @@ import { ChannelCreateDialog, type ChannelCreateDraft } from '../../dialogs/chan
     HlmBadge,
     HlmButton,
     HlmSkeleton,
-    ChannelCreateDialog,
+    ChannelCreateSheet,
     ...HlmItemImports,
     ...HlmSeparatorImports,
   ],

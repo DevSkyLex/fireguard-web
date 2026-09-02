@@ -571,3 +571,5 @@ the panel nor its toggle renders.
   the store loads the full result in one go; the messaging API has no server-side search for
   channels, so filtering happens in memory over the already-loaded set rather than through the
   server. Do not read this as license to drain an unbounded collection elsewhere.
+- A channel is created in `channel-create-sheet` (a record the operator opens next), while channel edit, DM creation and message actions stay dialogs (`DESIGN.md` "Action Surfaces" rules 2–3).
+- **The sheet gates dismissal while the form is dirty.** `ChannelCreateForm` reports its own dirtiness through `dirtyChanged`; `channel-create-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.

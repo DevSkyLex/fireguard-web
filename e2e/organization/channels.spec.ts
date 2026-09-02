@@ -18,6 +18,7 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { expectSheetGuardHolds } from '../support/helpers/sheet-guard';
 import { ApiMock } from '../support/mocks/api-mock';
 import { ChannelConversationPage } from '../support/pages/channel-conversation.page';
 import { ChannelsPage } from '../support/pages/channels.page';
@@ -62,6 +63,22 @@ test.describe('Channels list', () => {
     await channels.openChannelCreateDialog();
     await expect(channels.newDialog).toBeVisible();
     await expect(channels.newNameInput).toBeVisible();
+  });
+
+  test('guards a dirty draft in the new-channel dialog', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockChannelList([inspectionsChannelOutput()]);
+    const channels = new ChannelsPage(page);
+
+    await channels.goto(E2E_ORGANIZATION_ID);
+    await channels.openChannelCreateDialog();
+    await expect(channels.newDialog).toBeVisible();
+
+    await channels.newNameInput.click();
+    await channels.newNameInput.pressSequentially('Incident room');
+
+    await expectSheetGuardHolds(page, channels.newDialog, () => page.keyboard.press('Escape'));
   });
 
   test('hides "New channel" without messaging.manage', async ({ page }) => {

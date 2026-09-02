@@ -29,7 +29,7 @@ action on the row's own status once it exists, not rely on a backend refusal.
 
 `/organizations/:organizationId/checklists` — the template library list, gated by
 `organization.inspection.read`. There is no detail route: creation, editing and archiving are
-list-scoped actions (`ChecklistCreateDialog`, `ChecklistEditDialog`, `ChecklistArchiveDialog`),
+list-scoped actions (`ChecklistCreateSheet`, `ChecklistEditDialog`, `ChecklistArchiveDialog`),
 gated by `organization.inspection.write`.
 
 ## State and Data Access
@@ -71,3 +71,5 @@ Primary service:
   `referenceCode` is part of the backend contract (`CreateChecklistInput`, `UpdateChecklistInput`)
   but is not yet exposed in `ChecklistCreateForm` / `ChecklistEditForm` — a future pass can add it
   once the product decides how it should read.
+- A checklist template is created in `checklist-create-sheet` — its item list grows with the data, which `DESIGN.md` names as a surface that is never a dialog.
+- **The sheet gates dismissal while the form is dirty.** `ChecklistCreateForm` reports its own dirtiness (name field, item draft row, or a staged item) through `dirtyChanged`; `checklist-create-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.

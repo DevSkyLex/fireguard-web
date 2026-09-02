@@ -38,9 +38,9 @@ import { EmptyState } from '@shared/empty-state';
 import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { OrganizationTeamCreateDialog } from '../../dialogs/organization-team-create-dialog';
 import { OrganizationTeamDeleteDialog } from '../../dialogs/organization-team-delete-dialog';
 import { OrganizationTeamEditDialog } from '../../dialogs/organization-team-edit-dialog';
+import { OrganizationTeamCreateSheet } from '../../sheets/organization-team-create-sheet';
 import { OrganizationTeamMembersSheet } from '../../sheets/organization-team-members-sheet';
 import { OrganizationTeamTable } from '../../tables/organization-team-table';
 
@@ -86,7 +86,7 @@ import { OrganizationTeamTable } from '../../tables/organization-team-table';
     EmptyState,
     ErrorState,
     HlmButton,
-    OrganizationTeamCreateDialog,
+    OrganizationTeamCreateSheet,
     OrganizationTeamDeleteDialog,
     OrganizationTeamEditDialog,
     OrganizationTeamMembersSheet,

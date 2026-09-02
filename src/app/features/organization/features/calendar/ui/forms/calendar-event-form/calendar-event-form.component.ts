@@ -6,6 +6,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -75,10 +76,12 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
  * editing.
  *
  * Presentational: it validates and emits {@link submitted}; the hosting
- * `CalendarEventDialog` forwards it untouched and the page calls the store
- * (`ARCHITECTURE.md` §10.5).
+ * `CalendarEventSheet` forwards it untouched and the page calls the store
+ * (`ARCHITECTURE.md` §10.5). Reports its own dirtiness through
+ * {@link dirtyChanged} so the hosting sheet can gate dismissal on it, in
+ * both create and edit mode.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -199,6 +202,16 @@ export class CalendarEventForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the field tree's dirtiness changes.
+   * @access public
+   * @since 2.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -274,7 +287,8 @@ export class CalendarEventForm {
    * @description
    * Seeds the draft from {@link editing} the moment the hosting overlay
    * opens, and clears it the moment it closes, so a reopened dialog never
-   * resumes a discarded draft nor a stale prior record.
+   * resumes a discarded draft nor a stale prior record. Relays
+   * {@link eventForm}'s dirtiness through {@link dirtyChanged}.
    *
    * @access public
    * @since 1.0.0
@@ -292,6 +306,12 @@ export class CalendarEventForm {
       }
 
       this.model.set(editing ? toDraft(editing) : draftFromInitialStartsAt(this.initialStartsAt()));
+    });
+
+    effect((): void => {
+      const dirty: boolean = this.eventForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
     });
   }
   //#endregion

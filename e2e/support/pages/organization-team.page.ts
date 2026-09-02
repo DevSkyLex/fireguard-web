@@ -26,7 +26,8 @@ export class OrganizationTeamPage {
   public readonly roleCardDelete: Locator = this.page.getByTestId(
     'organization-role-grid-card-delete',
   );
-  public readonly createDialog: Locator = this.page.getByTestId('organization-role-create-dialog');
+  public readonly createDialog: Locator = this.page.getByTestId('organization-role-create-sheet');
+  public readonly createNameInput: Locator = this.page.getByTestId('organization-role-create-name');
   public readonly permissionsSheet: Locator = this.page.getByTestId(
     'organization-role-permissions-sheet',
   );

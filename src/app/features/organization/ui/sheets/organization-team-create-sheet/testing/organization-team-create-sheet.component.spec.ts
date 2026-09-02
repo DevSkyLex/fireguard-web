@@ -1,21 +1,21 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { CreateTeamInput } from '@features/organization/models';
-import { OrganizationTeamCreateDialog } from '../organization-team-create-dialog.component';
+import { OrganizationTeamCreateSheet } from '../organization-team-create-sheet.component';
 
 const dialog = (): HTMLElement | null =>
-  document.querySelector('[data-testid="organization-team-create-dialog"]');
+  document.querySelector('[data-testid="organization-team-create-sheet"]');
 const nameInput = (): HTMLInputElement | null =>
   dialog()?.querySelector('[data-testid="organization-team-create-name"]') ?? null;
 
-describe('OrganizationTeamCreateDialog', () => {
-  let fixture: ComponentFixture<OrganizationTeamCreateDialog>;
+describe('OrganizationTeamCreateSheet', () => {
+  let fixture: ComponentFixture<OrganizationTeamCreateSheet>;
   let submissions: CreateTeamInput[];
   let visibilities: boolean[];
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(OrganizationTeamCreateDialog);
+    fixture = TestBed.createComponent(OrganizationTeamCreateSheet);
 
     submissions = [];
     visibilities = [];
@@ -104,5 +104,49 @@ describe('OrganizationTeamCreateDialog', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['pending']()).toBe(true);
+  });
+
+  it('should close right away on cancel while nothing was typed', () => {
+    fixture.componentInstance['requestClose']();
+
+    expect(visibilities).toEqual([false]);
+  });
+
+  it('should ask before discarding a dirty draft, and close only once confirmed', () => {
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentInstance['requestClose']();
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibilities).toEqual([]);
+
+    fixture.componentInstance['onUnsavedChangesDismissed']();
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+    expect(visibilities).toEqual([]);
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+    expect(visibilities).toEqual([false]);
+  });
+
+  it('should treat an Escape on a dirty draft as a close request, not a close', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentInstance['onStateChanged']('closed');
+
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibilities).toEqual([]);
+  });
+
+  it('should forget the dirty flag once the panel closes', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 });

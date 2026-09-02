@@ -69,9 +69,9 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { CalendarEntryList } from '../../components/calendar-entry-list';
 import { CalendarEventDeleteDialog } from '../../dialogs/calendar-event-delete-dialog';
-import { CalendarEventDialog } from '../../dialogs/calendar-event-dialog';
-import type { CalendarEventFormValues } from '../../dialogs/calendar-event-dialog';
 import { CalendarFeedSubscribeDialog } from '../../dialogs/calendar-feed-subscribe-dialog';
+import { CalendarEventSheet } from '../../sheets/calendar-event-sheet';
+import type { CalendarEventFormValues } from '../../sheets/calendar-event-sheet';
 
 /** How many facilities the event dialog's facility select offers, mirroring `equipment-detail-page`'s own facility picker. */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
@@ -154,7 +154,7 @@ type CalendarPageAgendaGroup = {
     Calendar,
     CalendarEntryList,
     CalendarEventDeleteDialog,
-    CalendarEventDialog,
+    CalendarEventSheet,
     CalendarFeedSubscribeDialog,
     NgIcon,
     ErrorState,

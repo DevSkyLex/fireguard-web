@@ -7,7 +7,7 @@
   <ol class="flex flex-col">
     @for (row of rows(); track row.key; let isLast = $last) {
       <li
-        class="relative flex gap-3 pb-6 last:pb-0"
+        class="relative flex gap-3 pb-5 last:pb-0"
         [attr.aria-current]="row.isActive ? 'step' : null"
       >
         @if (!isLast) {
@@ -19,19 +19,28 @@
 
         <span
           class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full ring-1 ring-foreground/10"
-          [class]="
-            row.isActive ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
-          "
+          [class.bg-primary]="row.isActive"
+          [class.text-primary-foreground]="row.isActive"
+          [class.bg-muted]="!row.isActive"
+          [class.text-muted-foreground]="!row.isActive"
         >
           <ng-icon [name]="row.icon" aria-hidden="true" class="text-base" />
         </span>
 
-        <div class="flex flex-col gap-1 pt-1">
-          <p class="text-sm font-medium" [class.text-foreground]="row.isActive">{{ row.label }}</p>
-          <p class="text-xs text-muted-foreground">{{ row.sublabel }}</p>
+        <div class="flex min-w-0 flex-col gap-0.5 pt-1.5">
+          <p
+            class="text-sm font-medium"
+            [class.text-foreground]="row.isActive"
+            [class.text-muted-foreground]="!row.isActive"
+          >
+            {{ row.label }}
+          </p>
+          @if (row.showSublabel) {
+            <p class="text-xs text-muted-foreground">{{ row.sublabel }}</p>
+          }
           <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ng-icon [name]="row.statusIcon" [class]="row.statusIconClass" aria-hidden="true" />
-            {{ row.statusLabel }}
+            <span [class.sr-only]="!row.statusLabelVisible">{{ row.statusLabel }}</span>
           </p>
         </div>
       </li>

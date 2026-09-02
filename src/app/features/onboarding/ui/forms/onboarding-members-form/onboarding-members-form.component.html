@@ -10,21 +10,32 @@
 
     @if (staged().length > 0) {
       <ul class="flex flex-col gap-2" data-testid="onboarding-members-staged">
-        @for (member of staged(); track member.email; let i = $index) {
-          <li
-            class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 ring-1 ring-foreground/10"
-          >
-            <span class="text-sm">{{ member.email }}</span>
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              [attr.data-testid]="'onboarding-members-remove-' + i"
-              (click)="removeMember(i)"
-            >
-              <span i18n="@@onboarding.membersForm.remove">Remove</span>
-            </button>
+        @for (row of stagedRows(); track row.email; let i = $index) {
+          <li hlmItem variant="outline" size="sm">
+            <hlm-item-media variant="icon">
+              <ng-icon name="lucideMail" aria-hidden="true" />
+            </hlm-item-media>
+            <hlm-item-content>
+              <p hlmItemTitle>{{ row.email }}</p>
+              @if (row.roleName; as roleName) {
+                <p hlmItemDescription>{{ roleName }}</p>
+              }
+            </hlm-item-content>
+            <hlm-item-actions>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="max-sm:size-11"
+                [attr.data-testid]="'onboarding-members-remove-' + i"
+                [disabled]="pending()"
+                (click)="removeMember(i)"
+              >
+                <ng-icon name="lucideX" aria-hidden="true" />
+                <span class="sr-only" i18n="@@onboarding.membersForm.remove">Remove</span>
+              </button>
+            </hlm-item-actions>
           </li>
         }
       </ul>
@@ -76,36 +87,30 @@
       </hlm-field>
     }
 
-    <hlm-field orientation="horizontal">
+    <div>
       <button
         hlmBtn
         type="button"
-        variant="outline"
+        variant="ghost"
+        size="sm"
         class="max-sm:min-h-11"
         data-testid="onboarding-member-add"
         [disabled]="draftForm().invalid() || pending()"
         (click)="addMember()"
       >
-        <span i18n="@@onboarding.membersForm.add">Add invitation</span>
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span i18n="@@onboarding.membersForm.add">Add another invitation</span>
       </button>
-    </hlm-field>
+    </div>
 
-    <hlm-field orientation="horizontal" class="justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="onboarding-members-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@onboarding.membersForm.submitting">Sending…</span>
-        } @else {
-          <span i18n="@@onboarding.membersForm.submit">Continue</span>
-        }
-      </button>
-    </hlm-field>
+    <app-onboarding-step-footer
+      [label]="submitLabel"
+      [pendingLabel]="pendingLabel"
+      [pending]="pending()"
+      [skippable]="skippable()"
+      [gateReason]="gateReason()"
+      submitTestId="onboarding-members-submit"
+      (skipped)="skipped.emit()"
+    />
   </hlm-field-group>
 </form>

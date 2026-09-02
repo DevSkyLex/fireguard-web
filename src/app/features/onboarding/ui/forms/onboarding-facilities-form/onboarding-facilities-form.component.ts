@@ -11,13 +11,17 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMapPin, lucidePlus, lucideX } from '@ng-icons/lucide';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
 import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
+import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupCreateFacilityInput, SetupFacilityType } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OnboardingFacilityDraft } from './models';
 
@@ -39,14 +43,15 @@ function trimmed(value: string): string | undefined {
  * @class OnboardingFacilitiesForm
  *
  * @description
- * The `create_first_facility` wizard step. Unlike the single-resource steps,
- * it stages up to {@link MAX_FACILITIES} rows locally — one small form adds a
- * row at a time — and emits the whole batch with {@link submitted} only when
- * the operator continues. Continuing with a valid draft row still in the
- * fields stages it automatically first. The batch must not be empty: the
- * backend rejects confirming this step with no facility, so an empty continue
- * shows a near-form message instead of emitting — skipping goes through the
- * wizard's own skip affordance, a different endpoint.
+ * The `create_first_facility` wizard step. It stages up to
+ * {@link MAX_FACILITIES} rows locally and emits the whole batch with
+ * {@link submitted} when the operator creates them. The fields always hold
+ * the next facility: a valid draft is staged automatically on submit, so the
+ * common path — one facility — is "fill the fields, create", with "Add
+ * another facility" only for a second row. The batch must not be empty (the
+ * backend rejects confirming this step with no facility, and does not let it
+ * be skipped), so an empty submit marks the draft touched and lets the two
+ * required-field errors name what is missing; there is no separate message.
  *
  * No draft row is ever sent to the API on its own — staging is local state,
  * so it never touches a service (`ARCHITECTURE.md` §10.4). The wizard page
@@ -64,7 +69,17 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-facilities-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    FormField,
+    HlmButton,
+    HlmInput,
+    NgIcon,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+    ...HlmItemImports,
+    ...HlmSelectImports,
+  ],
+  providers: [provideIcons({ lucideMapPin, lucidePlus, lucideX })],
   templateUrl: './onboarding-facilities-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -90,6 +105,16 @@ export class OnboardingFacilitiesForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property skippable
+   * @readonly
+   * @description Whether the backend currently lets this step be skipped. The backend never does for facilities, but every step form shares the footer contract.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -103,6 +128,16 @@ export class OnboardingFacilitiesForm {
    */
   public readonly submitted: OutputEmitterRef<readonly SetupCreateFacilityInput[]> =
     output<readonly SetupCreateFacilityInput[]>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Relays the footer's skip request to the page.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -114,9 +149,6 @@ export class OnboardingFacilitiesForm {
   protected readonly staged: WritableSignal<readonly SetupCreateFacilityInput[]> = signal<
     readonly SetupCreateFacilityInput[]
   >([]);
-
-  /** Whether the operator tried to continue with nothing staged and nothing addable. */
-  protected readonly emptyBatchError: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property draftForm
@@ -176,6 +208,42 @@ export class OnboardingFacilitiesForm {
   /** Names a facility type on the closed select trigger. */
   protected readonly typeLabelOf: (value: SetupFacilityType | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
+
+  /**
+   * Property stagedRows
+   * @readonly
+   * @description The staged batch with a "type · address" summary line per row.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly { name: string; summary: string }[]>}
+   */
+  protected readonly stagedRows: Signal<
+    readonly { readonly name: string; readonly summary: string }[]
+  > = computed(() =>
+    this.staged().map((row) => ({
+      name: row.name,
+      summary: [this.typeLabelOf(row.type), row.address].filter(Boolean).join(' · '),
+    })),
+  );
+
+  /**
+   * Property submitLabel
+   * @readonly
+   * @description Counts what a submit would create — the staged rows plus a valid draft — and pluralizes the verb accordingly.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly submitLabel: Signal<string> = computed<string>(() => {
+    const total: number = this.staged().length + (this.draftForm().invalid() ? 0 : 1);
+
+    return total >= 2
+      ? $localize`:@@onboarding.facilitiesForm.submitMany:Create facilities`
+      : $localize`:@@onboarding.facilitiesForm.submitOne:Create facility`;
+  });
+
+  /** The footer's label while the batch is being created. */
+  protected readonly pendingLabel: string = $localize`:@@onboarding.facilitiesForm.submitting:Saving…`;
   //#endregion
 
   //#region Methods
@@ -204,7 +272,6 @@ export class OnboardingFacilitiesForm {
 
     this.staged.update((rows) => [...rows, { type, name, address }]);
     this.model.set(EMPTY_VALUES);
-    this.emptyBatchError.set(false);
   }
 
   /**
@@ -230,8 +297,8 @@ export class OnboardingFacilitiesForm {
    * @description
    * Stages the current row first when it is valid, then emits the batch. An
    * empty batch is never emitted — the backend rejects the step without a
-   * facility — so the draft is marked touched and a near-form message shows
-   * instead.
+   * facility — so with nothing staged the draft is marked touched and its
+   * required-field errors name what is missing.
    *
    * @access protected
    * @since 1.0.0
@@ -247,18 +314,15 @@ export class OnboardingFacilitiesForm {
 
     if (!this.draftForm().invalid()) {
       this.addFacility();
-    } else if (this.model().type !== '' || this.model().name.trim() !== '') {
+    } else if (
+      this.staged().length === 0 ||
+      this.model().type !== '' ||
+      this.model().name.trim() !== ''
+    ) {
       this.draftForm().markAsTouched();
       return;
     }
 
-    if (this.staged().length === 0) {
-      this.draftForm().markAsTouched();
-      this.emptyBatchError.set(true);
-      return;
-    }
-
-    this.emptyBatchError.set(false);
     this.submitted.emit(this.staged());
   }
   //#endregion

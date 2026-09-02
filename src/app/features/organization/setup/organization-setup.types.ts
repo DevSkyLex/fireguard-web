@@ -169,6 +169,17 @@ export interface SetupFacilitySummary {
    * @type {string}
    */
   readonly name: string;
+
+  /**
+   * Property type
+   * @readonly
+   *
+   * @description
+   * The facility's type, so a consumer can name it beside the facility.
+   *
+   * @type {SetupFacilityType}
+   */
+  readonly type: SetupFacilityType;
 }
 
 /**

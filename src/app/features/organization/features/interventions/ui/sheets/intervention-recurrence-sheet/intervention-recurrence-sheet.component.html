@@ -8,6 +8,7 @@
     *hlmSheetPortal
     class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[540px]! sm:max-w-none!"
     data-testid="intervention-recurrence-sheet"
+    [attr.data-dirty]="dirty()"
   >
     <hlm-sheet-header>
       @if (isEdit()) {

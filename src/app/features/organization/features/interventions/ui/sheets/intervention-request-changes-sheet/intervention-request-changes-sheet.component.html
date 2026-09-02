@@ -8,6 +8,7 @@
     *hlmSheetPortal
     class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[480px]! sm:max-w-none!"
     data-testid="intervention-request-changes-sheet"
+    [attr.data-dirty]="dirty()"
   >
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@intervention.rcDrawer.header">Request changes</h3>

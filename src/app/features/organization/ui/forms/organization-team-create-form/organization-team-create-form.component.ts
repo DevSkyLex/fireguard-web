@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -37,8 +39,10 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
  * rules and its own validity, and emits {@link submitted} with the
  * API-shaped payload — the page calls the store (`ARCHITECTURE.md` §10.4).
  * A blank description is emitted as `undefined` (omitted), matching
- * `CreateTeamInput`.
+ * `CreateTeamInput`. Reports its own dirtiness through {@link dirtyChanged}
+ * so the hosting sheet can gate dismissal on it.
  *
+ * @version 1.1.0
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -100,6 +104,16 @@ export class OrganizationTeamCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the field tree's dirtiness changes.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -142,6 +156,23 @@ export class OrganizationTeamCreateForm {
       $localize`:@@org.teams.form.createFailed:The team could not be created.`,
     ),
   );
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const dirty: boolean = this.createForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+  }
   //#endregion
 
   //#region Methods

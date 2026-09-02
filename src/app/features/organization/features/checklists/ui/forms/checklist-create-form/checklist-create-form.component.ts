@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
@@ -48,9 +51,11 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  * versioning UI yet (`FEATURE.md`).
  *
  * Presentational: it validates and emits {@link submitted}; the hosting
- * dialog calls `ChecklistStore.create` (`ARCHITECTURE.md` §10.5).
+ * dialog calls `ChecklistStore.create` (`ARCHITECTURE.md` §10.5). Reports
+ * its own dirtiness through {@link dirtyChanged} so the hosting sheet can
+ * gate dismissal on it.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -115,6 +120,16 @@ export class ChecklistCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the draft's dirtiness changes — the name field, the item draft row, or a staged item.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -172,13 +187,25 @@ export class ChecklistCreateForm {
       });
     },
   );
+
+  /**
+   * Property dirty
+   * @readonly
+   * @description Whether closing right now would lose something: a touched name, a mid-draft item row, or an item already staged — staging happens outside the name field tree, so it is counted alongside it.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly dirty: Signal<boolean> = computed<boolean>(
+    () => this.nameForm().dirty() || this.itemDraftForm().dirty() || this.staged().length > 0,
+  );
   //#endregion
 
   //#region Lifecycle
   /**
    * Method constructor
    * @constructor
-   * @description Clears the name, staged items and item draft the moment {@link visible} turns false, so a reopened dialog never resumes a discarded draft.
+   * @description Clears the name, staged items and item draft the moment {@link visible} turns false, so a reopened dialog never resumes a discarded draft. Relays {@link dirty} through {@link dirtyChanged}.
    * @access public
    * @since 1.0.0
    */
@@ -191,6 +218,12 @@ export class ChecklistCreateForm {
       this.staged.set([]);
       this.itemDraft.set(EMPTY_ITEM);
       this.itemDraftForm().reset();
+    });
+
+    effect((): void => {
+      const dirty: boolean = this.dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
     });
   }
   //#endregion

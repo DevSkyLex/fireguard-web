@@ -102,4 +102,68 @@ describe('CalendarEventSheet', () => {
         ?.disabled,
     ).toBe(true);
   });
+
+  it('should close right away on cancel while nothing was typed', () => {
+    const visibleChange = vi.fn();
+    fixture.componentInstance.visibleChange.subscribe(visibleChange);
+
+    fixture.componentInstance['requestClose']();
+
+    expect(visibleChange).toHaveBeenCalledWith(false);
+  });
+
+  it('should ask before discarding a dirty draft, and close only once confirmed', () => {
+    const visibleChange = vi.fn();
+    fixture.componentInstance.visibleChange.subscribe(visibleChange);
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentInstance['requestClose']();
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibleChange).not.toHaveBeenCalled();
+
+    fixture.componentInstance['onUnsavedChangesDismissed']();
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
+    expect(visibleChange).not.toHaveBeenCalled();
+
+    fixture.componentInstance['requestClose']();
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+    expect(visibleChange).toHaveBeenCalledWith(false);
+  });
+
+  it('should treat an Escape on a dirty draft as a close request, not a close, in edit mode too', async () => {
+    const visibleChange = vi.fn();
+    fixture.componentInstance.visibleChange.subscribe(visibleChange);
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('editing', {
+      sourceKey: 'calendar_event',
+      id: 'event-1',
+      title: 'Fire drill',
+      description: null,
+      startsAt: '2026-08-01T09:00:00+02:00',
+      endsAt: null,
+      allDay: false,
+      facilityId: null,
+      status: null,
+      targetType: 'calendar_event',
+      targetId: 'event-1',
+    });
+    await fixture.whenStable();
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentInstance['onStateChanged']('closed');
+
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibleChange).not.toHaveBeenCalled();
+  });
+
+  it('should forget the dirty flag once the panel closes', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    fixture.componentInstance['dirty'].set(true);
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
+  });
 });

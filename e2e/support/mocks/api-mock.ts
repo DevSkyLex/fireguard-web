@@ -1288,6 +1288,33 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/teams` — the named-group
+   * catalog `OrganizationTeamsStore.load` reads for the members page's
+   * `teams` tab. Defaults to an empty collection so navigating the route in
+   * an otherwise-unrelated spec never hangs on the catch-all 404 net.
+   */
+  public async mockOrganizationTeams(
+    organizationId: string,
+    teams: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly description?: string;
+    }> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/teams(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') {
+          await route.fallback();
+          return;
+        }
+        await fulfillJson(route, 200, hydraCollection(teams));
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/quota` — the per-resource
    * usage `OrganizationQuotaStore` loads automatically for every organization
    * route, and the settings page's Usage tab renders directly.
@@ -1929,6 +1956,31 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/checklists(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, hydraCollection(checklists));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/calendar/feed` — the
+   * unified feed `CalendarFeedStore.load` reads for `calendar-page`'s
+   * displayed window. Defaults to an empty window so navigating the route in
+   * an otherwise-unrelated spec never hangs on the catch-all 404 net.
+   */
+  public async mockCalendarFeed(
+    organizationId: string,
+    items: ReadonlyArray<unknown> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/calendar/feed(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, {
+          '@id': `/api/organizations/${organizationId}/calendar/feed`,
+          '@type': 'CalendarFeed',
+          from: new Date().toISOString(),
+          to: new Date().toISOString(),
+          items,
+        });
       },
     );
   }

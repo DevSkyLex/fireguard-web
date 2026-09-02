@@ -136,4 +136,36 @@ describe('ChecklistCreateForm', () => {
 
     expect(root().querySelector<HTMLInputElement>('#checklist-create-name')?.value).toBe('');
   });
+
+  it('should report dirtiness through dirtyChanged after a value change, and clear it once the overlay closes', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    setInput('checklist-create-name', 'Fire Safety Inspection');
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
+
+  it('should report dirtiness as soon as an item is staged, even with the name untouched', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    setInput('checklist-create-item-label', 'Check fire extinguishers');
+    root().querySelector<HTMLButtonElement>('[data-testid="checklist-create-item-add"]')?.click();
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+  });
 });

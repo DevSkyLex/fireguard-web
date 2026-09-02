@@ -1,21 +1,21 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { CreateTeamInput } from '@features/organization/models';
-import { OrganizationTeamCreateSheet } from '../organization-team-create-sheet.component';
+import type { CreateOrganizationRoleInput } from '@features/organization/models';
+import { OrganizationRoleCreateSheet } from '../organization-role-create-sheet.component';
 
 const dialog = (): HTMLElement | null =>
-  document.querySelector('[data-testid="organization-team-create-sheet"]');
+  document.querySelector('[data-testid="organization-role-create-sheet"]');
 const nameInput = (): HTMLInputElement | null =>
-  dialog()?.querySelector('[data-testid="organization-team-create-name"]') ?? null;
+  dialog()?.querySelector('[data-testid="organization-role-create-name"]') ?? null;
 
-describe('OrganizationTeamCreateSheet', () => {
-  let fixture: ComponentFixture<OrganizationTeamCreateSheet>;
-  let submissions: CreateTeamInput[];
+describe('OrganizationRoleCreateSheet', () => {
+  let fixture: ComponentFixture<OrganizationRoleCreateSheet>;
+  let submissions: CreateOrganizationRoleInput[];
   let visibilities: boolean[];
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-    fixture = TestBed.createComponent(OrganizationTeamCreateSheet);
+    fixture = TestBed.createComponent(OrganizationRoleCreateSheet);
 
     submissions = [];
     visibilities = [];
@@ -40,30 +40,17 @@ describe('OrganizationTeamCreateSheet', () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
-    (nameInput() as HTMLInputElement).value = 'Response team';
-    nameInput()?.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
+    const payload: CreateOrganizationRoleInput = {
+      name: 'inspector',
+      description: undefined,
+      permissions: ['organization.inspection.read'],
+    };
+    fixture.componentInstance.submitted.emit(payload);
 
-    dialog()?.querySelector('form')?.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-
-    expect(submissions).toEqual([{ name: 'Response team', description: undefined }]);
+    expect(submissions).toEqual([payload]);
   });
 
-  it('should relay the hosted form’s cancel as visibleChange(false)', async () => {
-    fixture.componentRef.setInput('visible', true);
-    await fixture.whenStable();
-
-    const cancel: HTMLButtonElement | null | undefined = dialog()?.querySelector(
-      '[data-testid="organization-team-create-cancel"]',
-    );
-    cancel?.dispatchEvent(new Event('click'));
-    await fixture.whenStable();
-
-    expect(visibilities).toEqual([false]);
-  });
-
-  it('should relay a dismissal — escape or the backdrop — as visibleChange(false)', async () => {
+  it('should relay a dismissal — escape or the backdrop — as visibleChange(false) while clean', async () => {
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
 
@@ -79,31 +66,6 @@ describe('OrganizationTeamCreateSheet', () => {
     fixture.componentInstance['onStateChanged']('open');
 
     expect(visibilities).toEqual([]);
-  });
-
-  it('should forward pending and serverError to the hosted form', async () => {
-    fixture.componentRef.setInput('visible', true);
-    fixture.componentRef.setInput('pending', true);
-    fixture.componentRef.setInput('serverError', {
-      status: 422,
-      violations: [{ propertyPath: 'name', message: 'This team name is already used.' }],
-    });
-    await fixture.whenStable();
-
-    const submit: HTMLButtonElement | null | undefined = dialog()?.querySelector(
-      '[data-testid="organization-team-create-submit"]',
-    );
-
-    expect(dialog()?.textContent).toContain('This team name is already used.');
-    expect(submit?.disabled).toBe(true);
-  });
-
-  it('should disable dismissal while pending', async () => {
-    fixture.componentRef.setInput('visible', true);
-    fixture.componentRef.setInput('pending', true);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['pending']()).toBe(true);
   });
 
   it('should close right away on cancel while nothing was typed', () => {
@@ -148,5 +110,29 @@ describe('OrganizationTeamCreateSheet', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['dirty']()).toBe(false);
+  });
+
+  it('should forward pending and serverError to the hosted form', async () => {
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('pending', true);
+    fixture.componentRef.setInput('serverError', {
+      status: 422,
+      violations: [{ propertyPath: 'name', message: 'This role name is already used.' }],
+    });
+    await fixture.whenStable();
+
+    const submit: HTMLButtonElement | null | undefined = dialog()?.querySelector(
+      '[data-testid="organization-role-create-submit"]',
+    );
+
+    expect(dialog()?.textContent).toContain('This role name is already used.');
+    expect(submit?.disabled).toBe(true);
+  });
+
+  it('should render the name field from the hosted form', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    expect(nameInput()).not.toBeNull();
   });
 });

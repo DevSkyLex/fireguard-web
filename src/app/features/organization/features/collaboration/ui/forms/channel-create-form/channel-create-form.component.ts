@@ -5,6 +5,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type WritableSignal,
@@ -56,7 +57,10 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
  * dismissing on escape, the backdrop or Cancel — so a reopened dialog never
  * resumes a discarded draft.
  *
- * @version 1.0.0
+ * Reports its own dirtiness through {@link dirtyChanged} so the hosting
+ * sheet can gate dismissal on it.
+ *
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -161,6 +165,20 @@ export class ChannelCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes.
+   *
+   * @access public
+   * @since 2.1.0
+   *
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -205,7 +223,8 @@ export class ChannelCreateForm {
    *
    * @description
    * Clears the draft the moment {@link visible} turns false, so a reopened
-   * dialog never resumes a discarded draft.
+   * dialog never resumes a discarded draft. Relays {@link createForm}'s
+   * dirtiness through {@link dirtyChanged}.
    *
    * @access public
    * @since 1.0.0
@@ -216,6 +235,12 @@ export class ChannelCreateForm {
 
       this.model.set(EMPTY_VALUES);
       this.createForm().reset();
+    });
+
+    effect((): void => {
+      const dirty: boolean = this.createForm().dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
     });
   }
   //#endregion

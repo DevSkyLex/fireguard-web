@@ -72,9 +72,8 @@ describe('ChannelCreateSheet', () => {
     expect(submitButton?.disabled).toBe(true);
   });
 
-  it('should relay a cancel without submitting anything', async () => {
+  it('should relay a cancel without submitting anything, while nothing was typed', async () => {
     await open();
-    await typeName('Incident room');
 
     panel()?.querySelector('[data-testid="new-channel-cancel"]')?.dispatchEvent(new Event('click'));
     await fixture.whenStable();
@@ -87,5 +86,40 @@ describe('ChannelCreateSheet', () => {
     await open();
 
     expect(panel()?.querySelector('[data-testid="new-channel-parent"]')).toBeNull();
+  });
+
+  it('should ask before discarding a dirty draft on cancel, and close only once confirmed', async () => {
+    await open();
+    await typeName('Incident room');
+
+    panel()?.querySelector('[data-testid="new-channel-cancel"]')?.dispatchEvent(new Event('click'));
+    await fixture.whenStable();
+
+    expect(visibility).toEqual([]);
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+
+    fixture.componentInstance['onUnsavedChangesConfirmed']();
+
+    expect(visibility).toEqual([false]);
+  });
+
+  it('should treat an Escape on a dirty draft as a close request, not a close', async () => {
+    await open();
+    await typeName('Incident room');
+
+    fixture.componentInstance['onStateChanged']('closed');
+
+    expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('open');
+    expect(visibility).toEqual([]);
+  });
+
+  it('should forget the dirty flag once the panel closes', async () => {
+    await open();
+    await typeName('Incident room');
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['dirty']()).toBe(false);
   });
 });

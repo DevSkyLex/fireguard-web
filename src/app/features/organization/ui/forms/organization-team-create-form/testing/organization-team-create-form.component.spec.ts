@@ -114,4 +114,21 @@ describe('OrganizationTeamCreateForm', () => {
       root().querySelector('[data-testid="organization-team-create-error"]')?.textContent,
     ).toContain('The team could not be created.');
   });
+
+  it('should report dirtiness through dirtyChanged after a value change, and clear it once reset', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await typeName('Response team');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+
+    fixture.componentInstance['createForm']().reset();
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
 });

@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -139,9 +141,10 @@ function permissionDomainLabelOf(domain: string): string {
  * schema via `minLength(path.permissions, 1)`, toggled by mutating the model
  * signal directly. It owns its model, its rules and its own validity, and
  * emits {@link submitted} with the API-shaped payload — the page calls the
- * store (`ARCHITECTURE.md` §10.4).
+ * store (`ARCHITECTURE.md` §10.4). Reports its own dirtiness through
+ * {@link dirtyChanged} so the hosting sheet can gate dismissal on it.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -208,6 +211,16 @@ export class OrganizationRoleCreateForm {
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Emits whenever the draft's dirtiness changes — a touched field or a checked permission, since the checklist has no bound `[formField]` to mark the tree dirty for it.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -297,6 +310,42 @@ export class OrganizationRoleCreateForm {
       ? combined
       : [$localize`:@@org.team.form.createFailed:The role could not be created.`];
   });
+
+  /**
+   * Property dirty
+   * @readonly
+   *
+   * @description
+   * Whether closing right now would lose something: a touched name/description
+   * or a checked permission. The permission checklist has no bound
+   * `[formField]` — {@link togglePermission} writes the model directly — so
+   * {@link createForm}'s own `dirty()` never reflects it and a checked
+   * permission is counted alongside it.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly dirty: Signal<boolean> = computed<boolean>(
+    () => this.createForm().dirty() || this.model().permissions.length > 0,
+  );
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Relays {@link dirty} through {@link dirtyChanged}.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const dirty: boolean = this.dirty();
+
+      untracked((): void => this.dirtyChanged.emit(dirty));
+    });
+  }
   //#endregion
 
   //#region Methods

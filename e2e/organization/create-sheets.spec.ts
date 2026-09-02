@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import {
+  ALL_ORGANIZATION_PERMISSIONS,
+  E2E_ORGANIZATION_ID,
+} from '../support/fixtures/api-fixtures';
 import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
 import { E2E_FACILITY_ID, facilityOutput } from '../support/fixtures/facility-fixtures';
 import { expectSheetGuardHolds } from '../support/helpers/sheet-guard';
@@ -13,6 +16,10 @@ import { InspectionsPage } from '../support/pages/inspections.page';
  * like interventions: the "New …" button opens it, `?create=1` opens it on
  * arrival (with `?parent=` / `?facility=` scoping it), the retired `/create`
  * segment redirects there, and a dirty draft confirms before it is lost.
+ *
+ * Calendar events and organization teams have no other e2e coverage yet, so
+ * their own gate tests live here too — the same "New …" button opens the
+ * sheet and the same shared confirmation guards a dirty draft.
  */
 test.describe('Creation sheets', () => {
   test('the facility list opens its sheet from the header button and guards a dirty draft', async ({
@@ -78,5 +85,60 @@ test.describe('Creation sheets', () => {
 
     await expect(inspections.createRoot).toBeVisible();
     await expect(inspections.createEquipmentCombobox).toBeVisible();
+  });
+
+  test('the calendar opens its event sheet from the header button and guards a dirty draft', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    /*
+     * `ALL_ORGANIZATION_PERMISSIONS` predates the calendar feature and does
+     * not carry `organization.events.*` — registered after
+     * `mockAuthenticatedSession`, this override wins (last-registered-first).
+     */
+    await api.mockOrganizationAccess(E2E_ORGANIZATION_ID, {
+      permissions: [
+        ...ALL_ORGANIZATION_PERMISSIONS,
+        'organization.events.read',
+        'organization.events.write',
+      ],
+    });
+    await api.mockCalendarFeed(E2E_ORGANIZATION_ID, []);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
+
+    await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/calendar`);
+    const sheet = page.getByTestId('calendar-event-sheet');
+    await expect(sheet).toBeHidden();
+
+    await page.getByTestId('calendar-new-event').click();
+    await expect(sheet).toBeVisible();
+
+    const titleInput = page.getByTestId('calendar-event-title');
+    await titleInput.click();
+    await titleInput.pressSequentially('Fire drill');
+
+    await expectSheetGuardHolds(page, sheet, () => page.keyboard.press('Escape'));
+  });
+
+  test('the teams tab opens its create sheet from the header button and guards a dirty draft', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationTeams(E2E_ORGANIZATION_ID, []);
+
+    await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/members?tab=teams`);
+    const sheet = page.getByTestId('organization-team-create-sheet');
+    await expect(sheet).toBeHidden();
+
+    await page.getByTestId('organization-teams-create').click();
+    await expect(sheet).toBeVisible();
+
+    const nameInput = page.getByTestId('organization-team-create-name');
+    await nameInput.click();
+    await nameInput.pressSequentially('Response team');
+
+    await expectSheetGuardHolds(page, sheet, () => page.keyboard.press('Escape'));
   });
 });

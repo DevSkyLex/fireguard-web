@@ -18,7 +18,14 @@
       [parentOptions]="parentOptions()"
       [pending]="pending()"
       (submitted)="onFormSubmitted($event)"
-      (cancelled)="visibleChange.emit(false)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
     />
   </hlm-sheet-content>
 </hlm-sheet>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

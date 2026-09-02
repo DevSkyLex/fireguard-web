@@ -165,6 +165,7 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   for the `createdAt`/`lastUsedAt` rendering. No new route and no new
   permission: the page's own `organization.events.read` gate covers the
   token endpoints.
+- **The sheet gates dismissal while the form is dirty, in both create and edit mode.** `CalendarEventForm` reports its own dirtiness through `dirtyChanged`; `calendar-event-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
 
 ## Cross-feature dependencies
 

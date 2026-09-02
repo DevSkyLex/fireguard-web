@@ -108,4 +108,34 @@ describe('ChannelCreateForm', () => {
   it('should offer no parent field when there are no root-channel candidates', async () => {
     expect(root().querySelector('[data-testid="new-channel-parent"]')).toBeNull();
   });
+
+  it('should report dirtiness through dirtyChanged after a value change, and clear it once the overlay closes', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await typeName('Incident room');
+
+    expect(dirtyChanges.at(-1)).toBe(true);
+
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
+
+  it('should clear dirtiness once a successful submit resets the draft', async () => {
+    const dirtyChanges: boolean[] = [];
+    fixture.componentInstance.dirtyChanged.subscribe((dirty: boolean): void => {
+      dirtyChanges.push(dirty);
+    });
+    await fixture.whenStable();
+
+    await typeName('Incident room');
+    await submit();
+
+    expect(dirtyChanges.at(-1)).toBe(false);
+  });
 });

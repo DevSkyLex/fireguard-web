@@ -2,11 +2,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
+  signal,
+  untracked,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
@@ -14,7 +19,8 @@ import type {
   OrganizationPermissionOutput,
 } from '@features/organization/models';
 import { sheetSide } from '@shared/sheet-side';
-import { HlmSheetImports } from '@shared/ui/sheet';
+import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { OrganizationRoleCreateForm } from '../../forms/organization-role-create-form';
 
 /**
@@ -31,15 +37,17 @@ import { OrganizationRoleCreateForm } from '../../forms/organization-role-create
  * `visible`/`visibleChange`, re-emitting the form's `submitted`; the page
  * keeps the orchestration (`ARCHITECTURE.md` §10.5). Its open state is
  * derived from `visible` rather than held locally, so the page stays the
- * single owner and the two cannot drift.
+ * single owner and the two cannot drift. An Escape or outside-click on a
+ * dirty draft is undone and turned into the shared unsaved-changes
+ * confirmation, exactly as `facility-create-sheet` does.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-role-create-sheet',
-  imports: [OrganizationRoleCreateForm, ...HlmSheetImports],
+  imports: [OrganizationRoleCreateForm, UnsavedChangesDialog, ...HlmSheetImports],
   templateUrl: './organization-role-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -111,6 +119,25 @@ export class OrganizationRoleCreateSheet {
     output<CreateOrganizationRoleInput>();
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   * @access public
+   * @since 1.1.0
+   */
+  public constructor() {
+    effect((): void => {
+      const isVisible: boolean = this.visible();
+
+      untracked((): void => {
+        if (!isVisible) this.dirty.set(false);
+      });
+    });
+  }
+  //#endregion
+
   //#region Properties
   /**
    * Property sheetState
@@ -133,6 +160,37 @@ export class OrganizationRoleCreateSheet {
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
+
+  /**
+   * Property dirty
+   * @readonly
+   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates {@link requestClose}.
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property unsavedChangesDialogState
+   * @readonly
+   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<BrnDialogState>}
+   */
+  protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
+    signal<BrnDialogState>('closed');
+
+  /**
+   * Property sheetRef
+   * @readonly
+   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<HlmSheet | undefined>}
+   */
+  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Methods
@@ -142,7 +200,8 @@ export class OrganizationRoleCreateSheet {
    *
    * @description
    * Relays a dismissal — escape, the backdrop, the close button — ignoring
-   * the echo of a change the page already made.
+   * the echo of a change the page already made; a dismissal reaching here
+   * while {@link dirty} is undone and redirected to the confirmation.
    *
    * @access protected
    * @since 1.0.0
@@ -156,7 +215,54 @@ export class OrganizationRoleCreateSheet {
 
     if (isOpen === this.visible()) return;
 
+    if (!isOpen && this.dirty()) {
+      this.sheetRef()?.open();
+      this.unsavedChangesDialogState.set('open');
+
+      return;
+    }
+
     this.visibleChange.emit(isOpen);
+  }
+
+  /**
+   * Method requestClose
+   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected requestClose(): void {
+    if (this.dirty()) {
+      this.unsavedChangesDialogState.set('open');
+
+      return;
+    }
+
+    this.visibleChange.emit(false);
+  }
+
+  /**
+   * Method onUnsavedChangesConfirmed
+   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesConfirmed(): void {
+    this.unsavedChangesDialogState.set('closed');
+    this.visibleChange.emit(false);
+  }
+
+  /**
+   * Method onUnsavedChangesDismissed
+   * @description The operator chose to keep editing — closes the confirmation only.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected onUnsavedChangesDismissed(): void {
+    this.unsavedChangesDialogState.set('closed');
   }
   //#endregion
 }

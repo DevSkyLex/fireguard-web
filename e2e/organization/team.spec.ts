@@ -11,6 +11,7 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { expectSheetGuardHolds } from '../support/helpers/sheet-guard';
 import { ApiMock } from '../support/mocks/api-mock';
 import { OrganizationTeamPage } from '../support/pages/organization-team.page';
 
@@ -66,6 +67,33 @@ test.describe('Organization team', () => {
     await team.openPermissionsEditorForCard(1);
     await expect(team.permissionsSheet).toBeVisible();
     await expect(team.permissionCheckboxes.first()).toBeVisible();
+  });
+
+  test('guards a dirty draft in the create-role dialog', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [
+      ownerOrganizationRoleOutput(),
+      organizationRoleOutput(),
+    ]);
+    await api.mockOrganizationPermissions(E2E_ORGANIZATION_ID, E2E_PERMISSION_CATALOG);
+    const team = new OrganizationTeamPage(page);
+
+    await team.goto(E2E_ORGANIZATION_ID);
+    await team.openCreateDialog();
+    await expect(team.createDialog).toBeVisible();
+
+    await team.createNameInput.click();
+    await team.createNameInput.pressSequentially('inspector');
+    /*
+     * The 36-permission checklist makes this the heaviest form in the
+     * catalog to re-render; give Signal Forms' own dirty tracking one frame
+     * to settle before Escape, or the guard reads a dirty flag that has not
+     * caught up with the last keystroke yet.
+     */
+    await page.waitForTimeout(100);
+
+    await expectSheetGuardHolds(page, team.createDialog, () => page.keyboard.press('Escape'));
   });
 
   /*

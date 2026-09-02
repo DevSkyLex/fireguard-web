@@ -86,7 +86,7 @@ describe('PasswordResetVerifyPage', () => {
   it('should record the code and move on without calling the API', async () => {
     const fixture = await createPage('link-token');
 
-    fixture.componentInstance['verify']({ code: '123456' });
+    fixture.componentInstance['verify']({ code: '123456', trustDevice: false });
 
     // Nothing is sent yet: the API validates the code and the new password in
     // one call, so this step only records what the final screen will need.

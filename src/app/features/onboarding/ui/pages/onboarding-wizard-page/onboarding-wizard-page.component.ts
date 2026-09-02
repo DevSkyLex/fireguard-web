@@ -12,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import type { Observable } from 'rxjs';
 import { forkJoin } from 'rxjs';
+import { FeedbackService } from '@core/feedback';
 import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
 import type { OnboardingStepKey, OnboardingStepOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
@@ -73,10 +74,12 @@ export function redirectToStripe(documentRef: Document, url: string): void {
  * pricing, roles), creates the underlying resource through
  * `@features/organization/setup`, and confirms every step through
  * `OnboardingStore` — the step bodies themselves never call a service
- * (`ARCHITECTURE.md` §10.1, §10.3). Redirects to `/` the moment the record
- * reports `completed`.
+ * (`ARCHITECTURE.md` §10.1, §10.3). Under the heading it names the step that
+ * comes next, so the operator always knows where the flow leads; the skip
+ * affordance lives in each form's footer and is relayed here. Redirects to
+ * `/` the moment the record reports `completed`, announcing it with a toast.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -155,6 +158,16 @@ export class OnboardingWizardPage {
   private readonly router: Router = inject<Router>(Router);
 
   /**
+   * Property feedback
+   * @readonly
+   * @description Announces the completed activation before the dashboard takes over.
+   * @access private
+   * @since 1.1.0
+   * @type {FeedbackService}
+   */
+  private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
+
+  /**
    * Property document
    * @readonly
    * @description Used for the SSR-safe Stripe Checkout redirect.
@@ -193,6 +206,45 @@ export class OnboardingWizardPage {
     const step: OnboardingStepOutput | null = this.currentStep();
 
     return step === null ? null : ONBOARDING_STEP_PRESENTATION[step.key];
+  });
+
+  /**
+   * Property canSkip
+   * @readonly
+   * @description Whether the active step may be skipped right now — the backend both declares it skippable and currently offers the skip.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSkip: Signal<boolean> = computed<boolean>(() => {
+    const step: OnboardingStepOutput | null = this.currentStep();
+
+    return step !== null && step.skippable && step.skipAvailable;
+  });
+
+  /**
+   * Property nextStepHint
+   * @readonly
+   * @description Names the step that follows the active one — "Next: Choose a plan" — or says this is the last step, so the flow's shape is visible from inside any step. A step the backend reports `blocked` only because this one is not done yet still counts as what comes next.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly nextStepHint: Signal<string> = computed<string>(() => {
+    const steps: readonly OnboardingStepOutput[] = this.store.steps();
+    const current: OnboardingStepOutput | null = this.currentStep();
+    const index: number = current === null ? -1 : steps.findIndex((s) => s.key === current.key);
+    const following: OnboardingStepOutput | undefined = steps
+      .slice(index + 1)
+      .find((s) => s.status !== 'completed' && s.status !== 'skipped');
+
+    if (following === undefined) {
+      return $localize`:@@onboarding.wizard.lastStep:Last step — your workspace opens right after.`;
+    }
+
+    const label: string = ONBOARDING_STEP_PRESENTATION[following.key].label;
+
+    return $localize`:@@onboarding.wizard.nextStep:Next: ${label}:label:`;
   });
 
   /**
@@ -295,6 +347,9 @@ export class OnboardingWizardPage {
 
     effect(() => {
       if (this.store.isCompleted()) {
+        this.feedback.success(
+          $localize`:@@onboarding.wizard.completed:Your organization is ready.`,
+        );
         void this.router.navigateByUrl('/');
       }
     });

@@ -124,18 +124,23 @@ Two further mechanisms are equally true and support it, but do not lead:
 ## Brand Commitments
 
 - **Name:** FireGuard (`Fireguard Field Operations` as the installed PWA name).
-- **Mark:** three stable blocks plus a 45°-pivoted "guard" square in indigo, on
-  a near-black rounded tile. It survives as `public/favicon.svg`,
-  `favicon.ico` and the PWA icons (192/512, maskable). It is the identity; it
-  is not open for redecoration. There is no in-app logo component today.
-- **Accent: the interface is achromatic by decision.** The theme is spartan's
-  neutral scale (`--primary: oklch(0.205 0 0)` light, `oklch(0.922 0 0)` dark —
-  zero chroma). Indigo `#4f46e5` is **retired** to the mark and to browser
-  chrome only (`manifest.webmanifest` `theme_color`, the `index.html`
-  `theme-color` meta). Future work must **not** reintroduce a chromatic brand
-  accent; hierarchy and emphasis come from the neutral scale, weight and
-  spacing. Semantic status color (destructive, warning, success) is unaffected
-  and stays a functional signal.
+- **Mark:** three stable blocks plus a 45°-pivoted "guard" square in Ember
+  orange (`#F97316`), on a near-black rounded tile (`#0C0C0E`). It survives as
+  `public/favicon.svg`, `favicon.ico` and the PWA icons (192/512, maskable).
+  The geometry is the identity and is not open for redecoration; its colour
+  follows the palette. There is no in-app logo component today.
+- **Accent: "Ember".** The palette is derived from the Bloc 3 presentation
+  deck: a warm-neutral scale (warm paper and warm ink in light mode, the
+  deck's near-black and off-white in dark mode) with **one** orange accent —
+  `--primary: oklch(0.646 0.194 41.1)` light, `oklch(0.705 0.187 47.6)` dark —
+  whose foreground is ink in both modes. Ember is spent on the single
+  committed action and on keyboard focus, and nowhere else: not on hover
+  grounds, headings, links or badges. Browser chrome follows it
+  (`manifest.webmanifest` `theme_color`, the `index.html` `theme-color` meta:
+  `#EA580C`). The former indigo `#4f46e5` is retired entirely. Semantic
+  status colour (`--destructive`, `--warning`, `--success`, `--info`) is a
+  functional signal on a glyph, never a decoration. `DESIGN.md` §Colors holds
+  the values and the rules.
 - **Type:** Geist Variable for UI, Geist Mono for code and identifiers
   (revision hashes, `FG-{number}` codes). Both are self-hosted via
   `@fontsource-variable` so they are offline-safe and cached by the service
@@ -163,7 +168,8 @@ Two further mechanisms are equally true and support it, but do not lead:
   deleted rather than kept as a second way to draw one.
 - Tiny uppercase tracked eyebrows above every section.
 - Gratuitous motion or page-load choreography that delays the task.
-- A reintroduced chromatic brand accent (see Brand Commitments).
+- A second accent, or Ember spent on anything but the committed action and focus
+  (see Brand Commitments).
 
 ## Evidence on Hand
 
@@ -211,7 +217,9 @@ about commercial traction may be asserted.
 - Keyboard-navigable workflow (real buttons everywhere; the phase stepper is a
   non-interactive presentational list).
 - Status never conveyed by color alone — pair severity color with a
-  label/icon. This is load-bearing now that the interface is achromatic.
+  label/icon. This is load-bearing: the interface spends colour on one accent
+  and on status glyphs only, so a glyph without its label is a glyph nobody
+  can read.
 - The field scene is one-handed on a phone: primary actions stay in the thumb
   zone, and a reviewer without publish rights must still reach their action
   there.

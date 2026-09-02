@@ -17,12 +17,16 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMail, lucidePlus, lucideX } from '@ng-icons/lucide';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupInviteMemberInput, SetupOrganizationRole } from '@features/organization/setup';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OnboardingMemberDraft } from './models';
 
@@ -39,8 +43,12 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
  * @description
  * The `invite_members` wizard step. Like the facilities step, it stages
  * invitation rows locally and emits the whole batch with {@link submitted}
- * only when the operator continues — an empty batch is a valid continue,
- * since the step is skippable.
+ * only when the operator sends it. A valid draft still in the fields is
+ * staged automatically first, so the common path is "type one address, send"
+ * with no explicit add. While the step is skippable and nothing has been
+ * typed or staged, the primary action closes and names the two ways out —
+ * add an address, or skip — rather than sending an empty batch; when the
+ * backend does not offer the skip, an empty batch stays a valid continue.
  *
  * No draft row is ever sent to the API on its own — staging is local state,
  * so it never touches a service (`ARCHITECTURE.md` §10.4). The wizard page
@@ -58,7 +66,17 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
  */
 @Component({
   selector: 'app-onboarding-members-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    FormField,
+    HlmButton,
+    HlmInput,
+    NgIcon,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+    ...HlmItemImports,
+    ...HlmSelectImports,
+  ],
+  providers: [provideIcons({ lucideMail, lucidePlus, lucideX })],
   templateUrl: './onboarding-members-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,6 +114,16 @@ export class OnboardingMembersForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property skippable
+   * @readonly
+   * @description Whether the backend currently lets this step be skipped, which renders the footer's skip control and closes an empty send.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -109,6 +137,16 @@ export class OnboardingMembersForm {
    */
   public readonly submitted: OutputEmitterRef<readonly SetupInviteMemberInput[]> =
     output<readonly SetupInviteMemberInput[]>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Relays the footer's skip request to the page.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -170,6 +208,48 @@ export class OnboardingMembersForm {
   /** Names a picked role on the closed select trigger. */
   protected readonly roleLabelOf: (value: string) => string = (value) =>
     this.roles().find((role) => role.id === value)?.name ?? '';
+
+  /**
+   * Property stagedRows
+   * @readonly
+   * @description The staged batch with each role id resolved to its name for the list.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly { email: string; roleName: string | null }[]>}
+   */
+  protected readonly stagedRows: Signal<
+    readonly { readonly email: string; readonly roleName: string | null }[]
+  > = computed(() =>
+    this.staged().map((row) => {
+      const roleId: string | null | undefined = row.roleIds?.[0];
+
+      return {
+        email: row.email,
+        roleName: typeof roleId === 'string' ? this.roleLabelOf(roleId) || null : null,
+      };
+    }),
+  );
+
+  /**
+   * Property gateReason
+   * @readonly
+   * @description Why the send is closed — nothing typed and nothing staged while the step can be skipped — or `null`.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly gateReason: Signal<string | null> = computed<string | null>(() => {
+    if (this.pending() || !this.skippable()) return null;
+    if (this.staged().length > 0 || this.model().email.trim() !== '') return null;
+
+    return $localize`:@@onboarding.membersForm.emptyGate:Add at least one email, or skip this step.`;
+  });
+
+  /** The footer's resting label. */
+  protected readonly submitLabel: string = $localize`:@@onboarding.membersForm.submit:Send invitations`;
+
+  /** The footer's label while the batch is being sent. */
+  protected readonly pendingLabel: string = $localize`:@@onboarding.membersForm.submitting:Sending…`;
   //#endregion
 
   //#region Methods
@@ -199,6 +279,21 @@ export class OnboardingMembersForm {
       },
     ]);
     this.model.set(EMPTY_VALUES);
+  }
+
+  /**
+   * Method removeMemberLabel
+   *
+   * @description Names one staged row's remove button after the row itself,
+   * so several "Remove" buttons stay distinguishable to assistive technology.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @param {string} email - The staged row's email.
+   * @returns {string} The localized accessible name.
+   */
+  protected removeMemberLabel(email: string): string {
+    return $localize`:@@onboarding.membersForm.removeNamed:Remove ${email}:email:`;
   }
 
   /**
@@ -236,7 +331,7 @@ export class OnboardingMembersForm {
   protected submit(event: Event): void {
     event.preventDefault();
 
-    if (this.pending()) return;
+    if (this.pending() || this.gateReason() !== null) return;
 
     if (!this.draftForm().invalid()) {
       this.addMember();

@@ -22,6 +22,8 @@
 
 @theme {
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --font-sans:
     'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
@@ -58,70 +60,87 @@ router-outlet {
   color-scheme: light;
 
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --success: oklch(0.723 0.219 149.579);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.64 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.64 0 0);
+  --background: oklch(0.985 0.003 80);
+  --foreground: oklch(0.18 0.006 60);
+  --card: oklch(0.995 0.002 80);
+  --card-foreground: oklch(0.18 0.006 60);
+  --popover: oklch(0.995 0.002 80);
+  --popover-foreground: oklch(0.18 0.006 60);
+  --primary: oklch(0.646 0.194 41.1);
+  --primary-foreground: oklch(0.18 0.006 60);
+  --secondary: oklch(0.955 0.005 80);
+  --secondary-foreground: oklch(0.18 0.006 60);
+  --muted: oklch(0.955 0.005 80);
+  --muted-foreground: oklch(0.5 0.012 70);
+  --accent: oklch(0.955 0.01 65);
+  --accent-foreground: oklch(0.18 0.006 60);
+  --destructive: oklch(0.577 0.245 27.3);
+  --success: oklch(0.596 0.145 163.2);
+  --warning: oklch(0.666 0.179 58.3);
+  --info: oklch(0.609 0.126 221.7);
+  --border: oklch(0.91 0.006 80);
+  --input: oklch(0.91 0.006 80);
+  --ring: oklch(0.646 0.194 41.1);
+  --chart-1: oklch(0.646 0.194 41.1);
+  --chart-2: oklch(0.666 0.179 58.3);
+  --chart-3: oklch(0.596 0.145 163.2);
+  --chart-4: oklch(0.609 0.126 221.7);
+  --chart-5: oklch(0.58 0.2 293);
+  --chart-6: oklch(0.6 0.21 17);
+  --sidebar: oklch(0.975 0.004 80);
+  --sidebar-foreground: oklch(0.18 0.006 60);
+  --sidebar-primary: oklch(0.646 0.194 41.1);
+  --sidebar-primary-foreground: oklch(0.18 0.006 60);
+  --sidebar-accent: oklch(0.945 0.01 65);
+  --sidebar-accent-foreground: oklch(0.18 0.006 60);
+  --sidebar-border: oklch(0.91 0.006 80);
+  --sidebar-ring: oklch(0.646 0.194 41.1);
 }
 
 /*
  * spartan generates `:root.dark`; this app switches on `html[data-theme="dark"]`
  * — the attribute `ThemeService` writes, and the one `@custom-variant dark`
- * above already targets. Only the selector differs; the values are spartan's.
+ * above already targets. The values are the "Ember" palette (DESIGN.md §Colors):
+ * dark is the Bloc 3 deck verbatim, light is that deck inverted on warm paper.
  */
 html[data-theme='dark'] {
   color-scheme: dark;
 
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --success: oklch(0.792 0.209 151.711);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.985 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.155 0.004 286);
+  --foreground: oklch(0.967 0.004 91);
+  --card: oklch(0.195 0.005 286);
+  --card-foreground: oklch(0.967 0.004 91);
+  --popover: oklch(0.195 0.005 286);
+  --popover-foreground: oklch(0.967 0.004 91);
+  --primary: oklch(0.705 0.187 47.6);
+  --primary-foreground: oklch(0.155 0.004 286);
+  --secondary: oklch(0.258 0.009 286);
+  --secondary-foreground: oklch(0.967 0.004 91);
+  --muted: oklch(0.225 0.007 286);
+  --muted-foreground: oklch(0.767 0.012 90);
+  --accent: oklch(0.245 0.01 60);
+  --accent-foreground: oklch(0.967 0.004 91);
+  --destructive: oklch(0.711 0.166 22.2);
+  --success: oklch(0.773 0.153 163.2);
+  --warning: oklch(0.837 0.164 84.4);
+  --info: oklch(0.797 0.134 211.5);
+  --border: oklch(0.258 0.009 286);
+  --input: oklch(0.324 0.012 286);
+  --ring: oklch(0.705 0.187 47.6);
+  --chart-1: oklch(0.705 0.187 47.6);
+  --chart-2: oklch(0.837 0.164 84.4);
+  --chart-3: oklch(0.773 0.153 163.2);
+  --chart-4: oklch(0.797 0.134 211.5);
+  --chart-5: oklch(0.709 0.159 293.5);
+  --chart-6: oklch(0.719 0.169 13.4);
+  --sidebar: oklch(0.155 0.004 286);
+  --sidebar-foreground: oklch(0.967 0.004 91);
+  --sidebar-primary: oklch(0.705 0.187 47.6);
+  --sidebar-primary-foreground: oklch(0.155 0.004 286);
+  --sidebar-accent: oklch(0.225 0.008 60);
+  --sidebar-accent-foreground: oklch(0.967 0.004 91);
+  --sidebar-border: oklch(0.258 0.009 286);
+  --sidebar-ring: oklch(0.705 0.187 47.6);
 }
 
 @layer base {

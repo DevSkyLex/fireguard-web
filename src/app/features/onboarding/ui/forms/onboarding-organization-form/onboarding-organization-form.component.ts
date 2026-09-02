@@ -12,9 +12,9 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@core/api';
+import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { storeErrorMessage } from '@features/onboarding/utils';
 import type { SetupCreateOrganizationInput } from '@features/organization/setup';
-import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { OnboardingOrganizationFormDraft } from './models';
@@ -54,7 +54,7 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-organization-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
   templateUrl: './onboarding-organization-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +80,16 @@ export class OnboardingOrganizationForm {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
+  /**
+   * Property skippable
+   * @readonly
+   * @description Whether the backend currently lets this step be skipped. Always false here — the organization is the one required step — but every step form shares the footer contract.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly skippable: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -93,9 +103,25 @@ export class OnboardingOrganizationForm {
    */
   public readonly submitted: OutputEmitterRef<SetupCreateOrganizationInput> =
     output<SetupCreateOrganizationInput>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Relays the footer's skip request to the page.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
+  /** The footer's resting label — the step's verb, not a generic "Continue". */
+  protected readonly submitLabel: string = $localize`:@@onboarding.orgForm.submit:Create organization`;
+
+  /** The footer's label while the organization is being created. */
+  protected readonly pendingLabel: string = $localize`:@@onboarding.orgForm.submitting:Creating…`;
+
   /** The edited draft. */
   protected readonly model: WritableSignal<OnboardingOrganizationFormDraft> =
     signal<OnboardingOrganizationFormDraft>(EMPTY_VALUES);

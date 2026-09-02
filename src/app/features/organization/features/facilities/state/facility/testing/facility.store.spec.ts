@@ -309,45 +309,6 @@ describe('FacilityStore', () => {
     });
   });
 
-  describe('ensureParentOptionsLoaded', () => {
-    it('should load parent options in the browser when idle', async () => {
-      store.ensureParentOptionsLoaded('org-1');
-      await flushEffects();
-
-      expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
-    });
-
-    it('should not load parent options while a list request is already pending or succeeded', async () => {
-      store.load({ organizationId: 'org-1' });
-      await flushEffects();
-      mockFacilityService.list.mockClear();
-
-      store.ensureParentOptionsLoaded('org-1');
-      await flushEffects();
-
-      expect(mockFacilityService.list).not.toHaveBeenCalled();
-    });
-
-    it('should not load parent options outside the browser', async () => {
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          FacilityStore,
-          { provide: Dispatcher, useValue: mockDispatcher },
-          { provide: FacilityService, useValue: mockFacilityService },
-          { provide: ActiveFacilityStore, useValue: mockActiveFacilityStore },
-          { provide: PLATFORM_ID, useValue: 'server' },
-        ],
-      });
-      const serverStore = TestBed.inject(FacilityStore);
-
-      serverStore.ensureParentOptionsLoaded('org-1');
-      await flushEffects();
-
-      expect(mockFacilityService.list).not.toHaveBeenCalled();
-    });
-  });
-
   describe('ensureFacilityDescendantsLoaded', () => {
     it('should skip the guarded load when descendants are already loaded', async () => {
       store.ensureFacilityDescendantsLoaded({ organizationId: 'org-1', facilityId: 'facility-1' });

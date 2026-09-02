@@ -38,8 +38,6 @@ import { ActiveFacilityStore } from '../active-facility/active-facility.store';
 import { facilityStoreEvents } from './events';
 import type { FacilityState } from './models';
 
-const FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE = 200;
-
 function toChildFacilityIdsByParent(
   rootFacilityId: string,
   descendants: readonly FacilityOutput[],
@@ -557,35 +555,6 @@ export const FacilityStore = signalStore(
 
       return {
         // ── Facility List ──────────────────────────────────────────────────────
-
-        /**
-         * Method ensureParentOptionsLoaded
-         *
-         * @description
-         * Loads facility parent options for browser-side create and move flows.
-         * This data is secondary UI state and must not run during SSR.
-         *
-         * @since 2.1.0
-         *
-         * @param {string} organizationId - Organization owning the facility list.
-         *
-         * @returns {void}
-         */
-        ensureParentOptionsLoaded(organizationId: string): void {
-          if (!isPlatformBrowser(platformId)) {
-            return;
-          }
-
-          const callState = store.listCallState();
-          if (callState.status === 'pending' || callState.status === 'success') {
-            return;
-          }
-
-          loadFn({
-            organizationId,
-            options: { itemsPerPage: FACILITY_PARENT_OPTIONS_ITEMS_PER_PAGE },
-          });
-        },
 
         /**
          * Method load

@@ -624,9 +624,16 @@ describe('FacilityDetailPage', () => {
     it('should open the confirmation before deleting, and delete only once confirmed', async () => {
       await createPage();
 
-      renderPageActions()
-        .querySelector('[data-testid="facility-detail-delete"]')
-        ?.dispatchEvent(new MouseEvent('click'));
+      // Delete lives in the header's overflow menu; the header itself renders the
+      // "Add sub-facility" primary, the QR secondary and the menu trigger only.
+      const actions: HTMLElement = renderPageActions();
+      expect(
+        actions.querySelector('[data-testid="facility-detail-new-sub-facility"]'),
+      ).not.toBeNull();
+      expect(actions.querySelector('[data-testid="facility-detail-menu"]')).not.toBeNull();
+      expect(actions.querySelector('[data-testid="facility-detail-delete"]')).toBeNull();
+
+      fixture.componentInstance['requestDelete']();
       await fixture.whenStable();
 
       expect(remove).not.toHaveBeenCalled();

@@ -251,14 +251,31 @@
         <button
           hlmBtn
           type="button"
-          variant="outline"
-          class="min-w-0 shrink max-sm:min-h-11"
-          data-testid="equipment-decommission"
+          variant="ghost"
+          size="icon-sm"
+          align="end"
+          class="max-sm:size-11"
+          data-testid="equipment-detail-menu"
           [disabled]="store.isChangingLifecycle()"
-          (click)="onDecommission()"
+          [hlmDropdownMenuTrigger]="moreMenu"
         >
-          <span class="truncate" i18n="@@equipment.decommission">Decommission</span>
+          <ng-icon name="lucideEllipsis" aria-hidden="true" />
+          <span class="sr-only" i18n="@@equipment.detail.moreActions">More actions</span>
         </button>
+
+        <ng-template #moreMenu>
+          <hlm-dropdown-menu class="w-56">
+            <button
+              hlmDropdownMenuItem
+              variant="destructive"
+              data-testid="equipment-decommission"
+              (click)="onDecommission()"
+            >
+              <ng-icon name="lucideArchive" aria-hidden="true" />
+              <span i18n="@@equipment.decommission">Decommission</span>
+            </button>
+          </hlm-dropdown-menu>
+        </ng-template>
       }
     </div>
   }

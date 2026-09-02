@@ -31,6 +31,7 @@ import {
   lucidePlus,
   lucideQrCode,
   lucideTrash2,
+  lucideEllipsis,
 } from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
@@ -74,6 +75,7 @@ import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-forma
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -190,6 +192,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
 @Component({
   selector: 'app-facility-detail-page',
   imports: [
+    ...HlmDropdownMenuImports,
     OrgDatePipe,
     NgIcon,
     RouterLink,
@@ -227,6 +230,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
       lucidePlus,
       lucideQrCode,
       lucideTrash2,
+      lucideEllipsis,
     }),
   ],
   templateUrl: './facility-detail-page.component.html',

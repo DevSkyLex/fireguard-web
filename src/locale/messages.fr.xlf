@@ -30,6 +30,22 @@
         <source> required</source>
         <target> obligatoire</target>
       </trans-unit>
+      <trans-unit id="equipment.detail.moreActions" datatype="html">
+        <source>More actions</source>
+        <target>Plus d’actions</target>
+      </trans-unit>
+      <trans-unit id="facility.detail.moreActions" datatype="html">
+        <source>More actions</source>
+        <target>Plus d’actions</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.newFromTemplate" datatype="html">
+        <source>New intervention from a template</source>
+        <target>Nouvelle intervention depuis un modèle</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.newFromTemplateLabel" datatype="html">
+        <source>Start from a template</source>
+        <target>Partir d’un modèle</target>
+      </trans-unit>
       <trans-unit id="facility.createSheet.header" datatype="html">
         <source>Register a facility</source>
         <target>Enregistrer un établissement</target>

@@ -308,10 +308,12 @@
     variant="outline"
     class="min-w-0 shrink max-sm:min-h-11"
     data-testid="calendar-subscribe"
+    i18n-aria-label="@@calendar.subscribeButton"
+    aria-label="Subscribe (iCal)"
     (click)="feedSubscribeDialogVisible.set(true)"
   >
     <ng-icon name="lucideRss" aria-hidden="true" />
-    <span class="truncate" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
+    <span class="truncate max-sm:hidden" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
   </button>
 
   @if (canWriteEvents()) {
@@ -320,10 +322,12 @@
       type="button"
       class="min-w-0 shrink max-sm:min-h-11"
       data-testid="calendar-new-event"
+      i18n-aria-label="@@calendar.newEvent"
+      aria-label="New event"
       (click)="openCreateDialog()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate" i18n="@@calendar.newEvent">New event</span>
+      <span class="truncate max-sm:hidden" i18n="@@calendar.newEvent">New event</span>
     </button>
   }
 </ng-template>

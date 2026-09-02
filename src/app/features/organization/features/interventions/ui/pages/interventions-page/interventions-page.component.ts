@@ -44,6 +44,7 @@ import {
   lucideUser,
   lucideUserCog,
   lucideWrench,
+  lucideChevronDown,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
@@ -135,6 +136,7 @@ import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmPopoverImports } from '@shared/ui/popover';
@@ -143,6 +145,7 @@ import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggle } from '@shared/ui/toggle';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import {
   InterventionCalendarStore,
   type InterventionCalendarStoreType,
@@ -389,6 +392,8 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    HlmButtonGroup,
+    ...HlmToggleGroupImports,
     GateReasonDirective,
     NgIcon,
     EmptyState,
@@ -451,6 +456,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
       lucideUserCog,
       lucideWrench,
       lucideTimer,
+      lucideChevronDown,
     }),
   ],
   templateUrl: './interventions-page.component.html',
@@ -646,11 +652,8 @@ export class InterventionsPage {
    * revision nested it inside `<hlm-tabs>` so `hlm-tabs-list`'s
    * `hlmTabsTrigger` buttons could resolve `BrnTabs` through Angular DI —
    * `<hlm-tabs>` is already driven from the outside via `[tab]="activeView()"`,
-   * so the internal triggers were never load-bearing for panel switching,
-   * only for their own DI. That placement made the template's declaring
-   * view depend on `<hlm-tabs>`'s own subtree, which is far more volatile
-   * than the page root; the tab selector below is a hand-rolled
-   * `role="tablist"`/`role="tab"` control that calls {@link switchView}
+   * so the header carries a spartan `hlm-toggle-group` (single, non-nullable)
+   * that calls {@link switchView}; a `null` change (no item pressed) is ignored
    * directly, needs no `BrnTabs` injector, and can safely sit at the root
    * where nothing recreates it. Its `id`/`aria-controls` pairs
    * (`brn-tabs-label-<view>` / `brn-tabs-content-<view>`) reproduce the
@@ -1599,7 +1602,9 @@ export class InterventionsPage {
    * @param {string} tab - The activated tab id (`list`/`board`/`calendar`/`recurrences`).
    * @returns {void}
    */
-  protected switchView(tab: string): void {
+  protected switchView(tab: string | readonly string[] | null | undefined): void {
+    if (typeof tab !== 'string') return;
+
     const view: InterventionView =
       tab === 'board' || tab === 'calendar' || tab === 'recurrences' ? tab : 'list';
 

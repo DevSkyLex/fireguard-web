@@ -334,11 +334,14 @@ describe('EquipmentDetailPage', () => {
   it('should confirm before decommissioning, not act on the first click', async () => {
     await createPage();
 
-    (
-      renderPageActions().querySelector(
-        '[data-testid="equipment-decommission"]',
-      ) as HTMLButtonElement
-    ).click();
+    // Decommission lives in the header's overflow menu (an irreversible action is
+    // never a visible header button); the menu trigger is what the header renders.
+    expect(
+      renderPageActions().querySelector('[data-testid="equipment-detail-menu"]'),
+    ).not.toBeNull();
+    expect(renderPageActions().querySelector('[data-testid="equipment-decommission"]')).toBeNull();
+
+    fixture.componentInstance['onDecommission']();
     await fixture.whenStable();
 
     expect(decommission).not.toHaveBeenCalled();

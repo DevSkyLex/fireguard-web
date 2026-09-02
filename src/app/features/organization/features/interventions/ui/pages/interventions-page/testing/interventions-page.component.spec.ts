@@ -1239,6 +1239,23 @@ describe('InterventionsPage', () => {
       expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
     });
 
+    it('should turn "New intervention" into a split button once templates exist', async () => {
+      fixture = await createPage();
+      const planningOptions = TestBed.inject(InterventionPlanningOptionsStore) as unknown as {
+        templates: WritableSignal<readonly { id: string; name: string }[]>;
+      };
+      planningOptions.templates.set([{ id: 't-1', name: 'Quarterly extinguisher round' }]);
+      await fixture.whenStable();
+      const header: HTMLElement = renderPageActions();
+
+      // The only header split button in the app: its items are variants of the
+      // primary verb (DESIGN.md "Header actions" rule 3).
+      expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
+      expect(
+        header.querySelector('[data-testid="interventions-new-from-template"]'),
+      ).not.toBeNull();
+    });
+
     it('should keep no toolbar, mine toggle or filters toggle on the Recurrences tab', async () => {
       fixture = await createPage({ view: 'recurrences' });
       const root = fixture.nativeElement as HTMLElement;

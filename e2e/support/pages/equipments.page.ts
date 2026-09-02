@@ -35,6 +35,7 @@ export class EquipmentsPage {
   public readonly detailLoading: Locator = this.page.getByTestId('equipment-detail-loading');
   public readonly lifecycleBand: Locator = this.page.getByTestId('equipment-lifecycle-band');
   public readonly primaryAction: Locator = this.page.getByTestId('equipment-primary-action');
+  public readonly moreMenu: Locator = this.page.getByTestId('equipment-detail-menu');
   public readonly decommissionAction: Locator = this.page.getByTestId('equipment-decommission');
   public readonly brandField: Locator = this.page.getByTestId('equipment-field-brand');
 

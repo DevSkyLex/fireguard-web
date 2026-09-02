@@ -171,6 +171,8 @@ test.describe('Equipment detail', () => {
     });
 
     await equipments.gotoDetail(E2E_ORGANIZATION_ID, E2E_EQUIPMENT_ID);
+    // Irreversible, so it lives in the header's overflow menu, never as a visible button.
+    await equipments.moreMenu.click();
     await equipments.decommissionAction.click();
 
     const dialog = page.getByTestId('equipment-decommission-dialog');
@@ -196,7 +198,9 @@ test.describe('Equipment detail', () => {
     await expect(equipments.detailRoot).toBeVisible();
     await expect(equipments.lifecycleBand).toBeVisible();
     await expect(equipments.primaryAction).toHaveText(/Maintenance/i);
+    await equipments.moreMenu.click();
     await expect(equipments.decommissionAction).toBeVisible();
+    await page.keyboard.press('Escape');
 
     // Both status badges carry an icon alongside the label — never colour alone.
     const statusTags = page.locator('app-equipment-status-tag');

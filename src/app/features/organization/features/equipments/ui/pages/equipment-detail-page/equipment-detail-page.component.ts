@@ -25,6 +25,8 @@ import {
   lucideMapPin,
   lucidePencil,
   lucideWrench,
+  lucideArchive,
+  lucideEllipsis,
 } from '@ng-icons/lucide';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -57,6 +59,7 @@ import { resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -135,6 +138,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
 @Component({
   selector: 'app-equipment-detail-page',
   imports: [
+    ...HlmDropdownMenuImports,
     HlmCardTitle,
     NgIcon,
     RouterLink,
@@ -154,7 +158,15 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
   providers: [
     FacilityOptionsStore,
 
-    provideIcons({ lucideCircleAlert, lucideDownload, lucideMapPin, lucidePencil, lucideWrench }),
+    provideIcons({
+      lucideCircleAlert,
+      lucideDownload,
+      lucideMapPin,
+      lucidePencil,
+      lucideWrench,
+      lucideArchive,
+      lucideEllipsis,
+    }),
   ],
   templateUrl: './equipment-detail-page.component.html',
   host: { class: 'block' },

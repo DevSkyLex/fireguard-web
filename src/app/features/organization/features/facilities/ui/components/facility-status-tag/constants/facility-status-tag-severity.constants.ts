@@ -16,9 +16,9 @@ import type { FacilityStatusTagSeverity } from '@features/organization/features/
  * @type {Readonly<Record<FacilityStatusTagSeverity, string>>}
  */
 export const FACILITY_STATUS_TAG_ICON_CLASS: Readonly<Record<FacilityStatusTagSeverity, string>> = {
-  neutral: 'text-neutral-500 dark:text-neutral-400',
-  info: 'text-blue-500 dark:text-blue-400',
+  neutral: 'text-muted-foreground',
+  info: 'text-info',
   success: 'text-success',
-  warning: 'text-amber-500 dark:text-amber-400',
-  danger: 'text-red-500 dark:text-red-400',
+  warning: 'text-warning',
+  danger: 'text-destructive',
 };

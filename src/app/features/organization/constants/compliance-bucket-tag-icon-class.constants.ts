@@ -6,10 +6,9 @@
  * compliance badge's **icon**, and on nothing else — the badge itself stays
  * `outline`, transparent ground and muted text, mirroring
  * `facilities/ui/components/facility-status-tag`'s glyph rule
- * (`DESIGN.md`). The theme carries no `--warning`/`--danger` token, so a
- * private literal Tailwind pair is the sanctioned exception
- * (`ARCHITECTURE.md` §2.8) — the same pair `FACILITY_STATUS_TAG_ICON_CLASS`
- * already uses.
+ * (`DESIGN.md`). Values are the theme's status tokens, which flip with the
+ * appearance on their own — the same map `FACILITY_STATUS_TAG_ICON_CLASS`
+ * keeps for itself (`ARCHITECTURE.md` §2.8).
  *
  * @since 1.0.0
  *
@@ -19,7 +18,7 @@ export const COMPLIANCE_BUCKET_TAG_ICON_CLASS: Readonly<
   Record<'success' | 'warning' | 'danger' | 'neutral', string>
 > = {
   success: 'text-success',
-  warning: 'text-amber-500 dark:text-amber-400',
-  danger: 'text-red-500 dark:text-red-400',
-  neutral: 'text-neutral-500 dark:text-neutral-400',
+  warning: 'text-warning',
+  danger: 'text-destructive',
+  neutral: 'text-muted-foreground',
 };

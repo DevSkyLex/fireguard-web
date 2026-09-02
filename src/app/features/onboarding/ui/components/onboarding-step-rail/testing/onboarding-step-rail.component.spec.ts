@@ -80,4 +80,37 @@ describe('OnboardingStepRail', () => {
 
     expect(element.textContent).toContain('Blocked');
   });
+
+  it('should read a step blocked only by its order as not started', async () => {
+    // The backend reports every step after the active one as `blocked` until
+    // the active one is done; that is the normal shape of the flow, not a
+    // failure, so the rail must not paint four red rows on first render.
+    fixture.componentRef.setInput('steps', [
+      stepOf('create_organization', 'pending'),
+      stepOf('select_plan', 'blocked'),
+    ]);
+    fixture.componentRef.setInput('activeStepKey', 'create_organization');
+    await fixture.whenStable();
+
+    const rows: HTMLLIElement[] = Array.from(element.querySelectorAll('li'));
+
+    expect(rows[1].textContent).toContain('Not started');
+    expect(rows[1].textContent).not.toContain('Blocked');
+  });
+
+  it('should only spell out the sublabel and status on the active step', async () => {
+    fixture.componentRef.setInput('steps', [
+      stepOf('create_organization', 'completed'),
+      stepOf('select_plan', 'pending'),
+    ]);
+    fixture.componentRef.setInput('activeStepKey', 'select_plan');
+    await fixture.whenStable();
+
+    const rows: HTMLLIElement[] = Array.from(element.querySelectorAll('li'));
+
+    expect(rows[0].textContent).not.toContain('Your structure');
+    expect(rows[0].querySelector('.sr-only')?.textContent).toContain('Completed');
+    expect(rows[1].textContent).toContain('Your subscription');
+    expect(rows[1].querySelector('.sr-only')).toBeNull();
+  });
 });

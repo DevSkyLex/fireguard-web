@@ -19,6 +19,7 @@ import {
   type OrganizationOutputFixture,
   type RegisterOutputFixture,
   type UserProfileOutputFixture,
+  type TrustDeviceOutputFixture,
 } from '../fixtures/api-fixtures';
 import type { ApiErrorFixture } from '../fixtures/api-fixtures';
 import type {
@@ -370,6 +371,23 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(`${API_BASE_URL}/api/auth/mfa/verify`, async (route) => {
       await fulfillJson(route, 200, response);
+    });
+  }
+
+  /**
+   * Mocks `POST /api/trusted-devices` — the device-trust request `AuthStore`
+   * issues after a successful MFA verify when the operator ticked "Trust this
+   * device". The real backend answers with a cookie the mock cannot set, so a
+   * spec proves the request left, not that the next login skips MFA.
+   */
+  public async mockTrustDevice(response: TrustDeviceOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/trusted-devices`, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, response);
     });
   }
 

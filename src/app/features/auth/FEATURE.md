@@ -52,7 +52,9 @@ component under `ui/forms/` (`ARCHITECTURE.md` §10.4) that owns its own model a
 `submitted` — no page builds a form, and no form calls a store.
 
 `ui/forms/otp-form/` is shared by the three verification screens (registration, MFA, password
-reset). Its `showResend` input exists because a TOTP challenge has no delivery to repeat. Its
+reset). Its `showResend` input exists because a TOTP challenge has no delivery to repeat; its
+`showTrustDevice` input (off by default) adds the "Trust this device for 30 days" checkbox, which
+only `MfaVerifyPage` turns on because only the MFA screen has a session to bind a device to. Its
 `serverError` and `resendAvailableIn` inputs render the failed verify/resend call and run the
 local resend-cooldown countdown; the owning stores keep the cooldown as an absolute
 `resendAvailableAt` timestamp fed by the API's `mfa_resend_in`/`canResendIn` on success and by
@@ -153,5 +155,12 @@ every surface at once.
 - A user with an active TOTP (authenticator app) enrollment (`features/account`) gets
   `mfa_method: 'totp'` and `mfa_destination: 'Authenticator App'` at login. TOTP challenges have
   no delivery counterpart to resend — the backend rejects `POST /api/auth/mfa/resend` for a
-  `totp` challenge with `totp_not_resendable` (400), so `MfaVerificationPage` hides the resend
-  affordance (`OtpVerificationForm`'s `showResend` input) whenever `AuthStore.mfaMethod() === 'totp'`.
+  `totp` challenge with `totp_not_resendable` (400), so `MfaVerifyPage` hides the resend
+  affordance (`OtpForm`'s `showResend` input) whenever `AuthStore.mfaMethod() === 'totp'`.
+- **Device trust is requested on the MFA screen and acted on after the verify.** `MfaVerifyPage`
+  hands the checkbox value to `ActiveTrustedDeviceStore.setPendingTrustDevice` before calling
+  `AuthStore.mfaVerify`; on success `AuthStore` calls `ActiveTrustedDeviceStore.trustDevice()`,
+  which issues `POST /api/trusted-devices` with no body. The `trusted_device` cookie is set by
+  the backend (HttpOnly, 30 days) and is what makes `LoginHandler` skip MFA next time; the SSR
+  cookie-forward interceptor (`core/http`) already carries it on server renders. The flag is
+  cleared by the store whenever the session ends.

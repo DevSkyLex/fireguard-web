@@ -405,7 +405,7 @@ consumed by any UI in this pass.
 `ui/components/facility-plan-overlay` (`FacilityPlanOverlay`) renders the
 overlay, projected into `app-plan-viewer`'s `overlayTemplate` from the Plans
 tab so it inherits pan/zoom through the DOM. Zones are hatch-filled SVG
-polygons (achromatic per `PRODUCT.md` — zones carry no status colour) with a
+polygons (neutral per `DESIGN.md`'s glyph rule — zones carry no status colour) with a
 name label at the polygon centroid (`utils/polygon-centroid`, a pure area-
 weighted formula with a vertex-average fallback for a degenerate shape);
 each is a focusable, keyboard-activatable SVG `<a role="button">` (Enter/Space)

@@ -1,5 +1,5 @@
 <div
-  class="relative isolate flex h-full flex-col justify-between overflow-hidden bg-primary px-10 py-12 text-primary-foreground xl:px-14"
+  class="relative isolate flex h-full flex-col justify-between overflow-hidden bg-foreground px-10 py-12 text-background xl:px-14 dark:bg-card dark:text-card-foreground"
 >
   <div
     class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07]"
@@ -13,7 +13,7 @@
 
   <div class="flex items-center gap-3">
     <div
-      class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 ring-1 ring-primary-foreground/15"
+      class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30"
     >
       <ng-icon name="lucideFlame" class="text-xl" aria-hidden="true" />
     </div>
@@ -29,7 +29,7 @@
         Fire-safety work that survives the field.
       </h2>
       <p
-        class="text-base leading-relaxed text-pretty text-primary-foreground/70"
+        class="text-base leading-relaxed text-pretty text-background/70 dark:text-card-foreground/70"
         i18n="@@auth.showcase.subhead"
       >
         Plan interventions, carry them out on site, and publish the report — for every facility you
@@ -41,13 +41,15 @@
       @for (point of proofPoints; track point.label) {
         <li class="flex gap-4">
           <div
-            class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/10"
+            class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/10 text-primary dark:bg-card-foreground/10"
           >
             <ng-icon [name]="point.icon" class="text-base" aria-hidden="true" />
           </div>
           <div class="flex flex-col gap-1">
             <p class="text-sm font-medium">{{ point.label }}</p>
-            <p class="text-sm leading-relaxed text-pretty text-primary-foreground/60">
+            <p
+              class="text-sm leading-relaxed text-pretty text-background/60 dark:text-card-foreground/60"
+            >
               {{ point.detail }}
             </p>
           </div>
@@ -56,7 +58,10 @@
     </ul>
   </div>
 
-  <p class="text-xs text-primary-foreground/50" i18n="@@auth.showcase.footnote">
+  <p
+    class="text-xs text-background/50 dark:text-card-foreground/50"
+    i18n="@@auth.showcase.footnote"
+  >
     Built for the people who sign the compliance report.
   </p>
 </div>

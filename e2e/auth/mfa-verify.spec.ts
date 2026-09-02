@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { loginOutput } from '../support/fixtures/api-fixtures';
+import {
+  loginOutput,
+  trustDeviceOutput,
+  type LoginOutputFixture,
+} from '../support/fixtures/api-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 
@@ -15,9 +19,13 @@ const MFA_CHALLENGE_RESPONSE = loginOutput({
 });
 
 /** Signs in through the real login flow, which is the only way the client-side `mfaGuard` lets `/auth/mfa-verify` render. */
-async function reachMfaVerify(api: ApiMock, auth: AuthPages): Promise<void> {
+async function reachMfaVerify(
+  api: ApiMock,
+  auth: AuthPages,
+  challenge: LoginOutputFixture = MFA_CHALLENGE_RESPONSE,
+): Promise<void> {
   await api.mockUnauthenticatedSession();
-  await api.mockLogin(MFA_CHALLENGE_RESPONSE);
+  await api.mockLogin(challenge);
 
   await auth.gotoLogin();
   await auth.login('e2e.user@fireguard.test', 'Passw0rd!');
@@ -39,10 +47,49 @@ test.describe('MFA verification', () => {
     await expect(page).not.toHaveURL(/\/auth\/mfa-verify$/, { timeout: 10_000 });
   });
 
-  test('resends the code on request', async ({ page }) => {
+  test('trusts the device when the operator asks for it', async ({ page }) => {
     const api = new ApiMock(page);
     const auth = new AuthPages(page);
     await reachMfaVerify(api, auth);
+
+    await api.mockMfaVerify(loginOutput());
+    await api.mockSessionData();
+    await api.mockTrustDevice(trustDeviceOutput());
+
+    const trustRequest = page.waitForRequest(
+      (request) => request.url().endsWith('/api/trusted-devices') && request.method() === 'POST',
+    );
+    await auth.otpTrustDevice.click();
+    await auth.submitOtp('123456');
+
+    await trustRequest;
+    await expect(page).not.toHaveURL(/\/auth\/mfa-verify$/, { timeout: 10_000 });
+  });
+
+  test('does not trust the device unless asked', async ({ page }) => {
+    const api = new ApiMock(page);
+    const auth = new AuthPages(page);
+    await reachMfaVerify(api, auth);
+
+    await api.mockMfaVerify(loginOutput());
+    await api.mockSessionData();
+    let trustRequests = 0;
+    await page.route(/\/api\/trusted-devices$/, async (route) => {
+      trustRequests += 1;
+      await route.fulfill({ status: 201, contentType: 'application/json', body: '{}' });
+    });
+
+    await expect(auth.otpTrustDevice).toBeVisible();
+    await auth.submitOtp('123456');
+
+    await expect(page).not.toHaveURL(/\/auth\/mfa-verify$/, { timeout: 10_000 });
+    expect(trustRequests).toBe(0);
+  });
+
+  test('resends the code on request', async ({ page }) => {
+    const api = new ApiMock(page);
+    const auth = new AuthPages(page);
+    await reachMfaVerify(api, auth, loginOutput({ ...MFA_CHALLENGE_RESPONSE, mfa_resend_in: 0 }));
     await api.mockMfaResend(
       loginOutput({
         access_token: '',

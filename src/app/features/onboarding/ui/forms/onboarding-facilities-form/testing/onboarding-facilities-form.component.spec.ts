@@ -29,7 +29,7 @@ describe('OnboardingFacilitiesForm', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('should refuse an empty continue and show the near-form message instead', async () => {
+  it('should refuse an empty submit and let the required-field errors name what is missing', async () => {
     const emitted: Array<readonly SetupCreateFacilityInput[]> = [];
     fixture.componentInstance.submitted.subscribe(
       (value: readonly SetupCreateFacilityInput[]): void => {
@@ -40,7 +40,26 @@ describe('OnboardingFacilitiesForm', () => {
     await submit();
 
     expect(emitted).toEqual([]);
-    expect(element.querySelector('[data-testid="onboarding-facilities-empty"]')).not.toBeNull();
+    expect(element.textContent).toContain('Facility type is required.');
+    expect(element.textContent).toContain('Name is required.');
+  });
+
+  it('should name the primary action after what a submit would create', async () => {
+    const submitButton = (): HTMLButtonElement =>
+      element.querySelector('[data-testid="onboarding-facilities-submit"]') as HTMLButtonElement;
+
+    expect(submitButton().textContent).toContain('Create facility');
+
+    await setDraft({ type: 'site', name: 'HQ', address: '' });
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    await setDraft({ type: 'building', name: 'Annex', address: '' });
+
+    expect(submitButton().textContent).toContain('Create facilities');
+  });
+
+  it('should never render a skip control — the backend does not let this step be skipped', () => {
+    expect(element.querySelector('[data-testid="onboarding-wizard-skip"]')).toBeNull();
   });
 
   it('should stage a valid draft row automatically when the operator continues', async () => {
@@ -76,15 +95,17 @@ describe('OnboardingFacilitiesForm', () => {
     expect(emitted).toEqual([]);
   });
 
-  it('should clear the empty-batch message once a row is staged', async () => {
-    await submit();
-    expect(element.querySelector('[data-testid="onboarding-facilities-empty"]')).not.toBeNull();
-
-    await setDraft({ type: 'site', name: 'Main warehouse', address: '' });
+  it('should summarize a staged row with its type and address', async () => {
+    await setDraft({ type: 'site', name: 'Main warehouse', address: '12 Quai des Docks' });
     (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
     await fixture.whenStable();
 
-    expect(element.querySelector('[data-testid="onboarding-facilities-empty"]')).toBeNull();
+    const staged: string | undefined = element.querySelector(
+      '[data-testid="onboarding-facilities-staged"]',
+    )?.textContent;
+
+    expect(staged).toContain('Main warehouse');
+    expect(staged).toContain('Site · 12 Quai des Docks');
   });
 
   it('should stage a row, clear the draft, and submit the staged batch', async () => {

@@ -35,6 +35,7 @@ export class AuthPages {
   public readonly otpCode: Locator = this.page.locator('#otp-code');
   public readonly otpSubmit: Locator = this.page.getByTestId('otp-submit');
   public readonly otpResend: Locator = this.page.getByTestId('otp-resend');
+  public readonly otpTrustDevice: Locator = this.page.getByTestId('otp-trust-device');
 
   public async gotoLogin(): Promise<void> {
     await this.page.goto('/auth/login');

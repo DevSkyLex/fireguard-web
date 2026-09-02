@@ -9,9 +9,13 @@
     }
 
     <hlm-field>
+      <label hlmFieldLabel id="onboarding-plan-label" i18n="@@onboarding.planForm.choose">
+        Choose a plan
+      </label>
       <hlm-radio-group
         class="flex flex-col gap-2"
         [formField]="planForm.planKey"
+        aria-labelledby="onboarding-plan-label"
         data-testid="onboarding-plan-group"
       >
         @for (row of rows(); track row.key) {

@@ -282,6 +282,21 @@ export class OnboardingMembersForm {
   }
 
   /**
+   * Method removeMemberLabel
+   *
+   * @description Names one staged row's remove button after the row itself,
+   * so several "Remove" buttons stay distinguishable to assistive technology.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @param {string} email - The staged row's email.
+   * @returns {string} The localized accessible name.
+   */
+  protected removeMemberLabel(email: string): string {
+    return $localize`:@@onboarding.membersForm.removeNamed:Remove ${email}:email:`;
+  }
+
+  /**
    * Method removeMember
    *
    * @description

@@ -275,6 +275,21 @@ export class OnboardingFacilitiesForm {
   }
 
   /**
+   * Method removeFacilityLabel
+   *
+   * @description Names one staged row's remove button after the row itself,
+   * so several "Remove" buttons stay distinguishable to assistive technology.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @param {string} name - The staged row's name.
+   * @returns {string} The localized accessible name.
+   */
+  protected removeFacilityLabel(name: string): string {
+    return $localize`:@@onboarding.facilitiesForm.removeNamed:Remove ${name}:name:`;
+  }
+
+  /**
    * Method removeFacility
    *
    * @description

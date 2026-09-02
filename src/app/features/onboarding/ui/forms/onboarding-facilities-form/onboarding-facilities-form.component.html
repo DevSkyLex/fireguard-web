@@ -27,11 +27,11 @@
                 size="icon-sm"
                 class="max-sm:size-11"
                 [attr.data-testid]="'onboarding-facilities-remove-' + i"
+                [attr.aria-label]="removeFacilityLabel(row.name)"
                 [disabled]="pending()"
                 (click)="removeFacility(i)"
               >
                 <ng-icon name="lucideX" aria-hidden="true" />
-                <span class="sr-only" i18n="@@onboarding.facilitiesForm.remove">Remove</span>
               </button>
             </hlm-item-actions>
           </li>

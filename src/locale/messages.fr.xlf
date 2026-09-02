@@ -730,6 +730,10 @@
         <source>Continue to payment</source>
         <target>Continuer vers le paiement</target>
       </trans-unit>
+      <trans-unit id="onboarding.planForm.choose" datatype="html">
+        <source>Choose a plan</source>
+        <target>Choisir un plan</target>
+      </trans-unit>
       <trans-unit id="onboarding.planForm.currentPlan" datatype="html">
         <source>Current plan</source>
         <target>Plan actuel</target>
@@ -822,9 +826,9 @@
         <source>The equipment could not be registered.</source>
         <target>L'équipement n'a pas pu être enregistré.</target>
       </trans-unit>
-      <trans-unit id="onboarding.facilitiesForm.remove" datatype="html">
-        <source>Remove</source>
-        <target>Retirer</target>
+      <trans-unit id="onboarding.facilitiesForm.removeNamed" datatype="html">
+        <source>Remove <x id="name" equiv-text="${name}"/></source>
+        <target>Retirer <x id="name" equiv-text="${name}"/></target>
       </trans-unit>
       <trans-unit id="onboarding.facilitiesForm.capacity" datatype="html">
         <source>You can stage up to 5 facilities at once.</source>
@@ -890,9 +894,9 @@
         <source>Area</source>
         <target>Secteur</target>
       </trans-unit>
-      <trans-unit id="onboarding.membersForm.remove" datatype="html">
-        <source>Remove</source>
-        <target>Retirer</target>
+      <trans-unit id="onboarding.membersForm.removeNamed" datatype="html">
+        <source>Remove <x id="email" equiv-text="${email}"/></source>
+        <target>Retirer <x id="email" equiv-text="${email}"/></target>
       </trans-unit>
       <trans-unit id="onboarding.membersForm.email" datatype="html">
         <source>Email</source>

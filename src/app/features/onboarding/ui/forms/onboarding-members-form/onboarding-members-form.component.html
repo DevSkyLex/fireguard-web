@@ -29,11 +29,11 @@
                 size="icon-sm"
                 class="max-sm:size-11"
                 [attr.data-testid]="'onboarding-members-remove-' + i"
+                [attr.aria-label]="removeMemberLabel(row.email)"
                 [disabled]="pending()"
                 (click)="removeMember(i)"
               >
                 <ng-icon name="lucideX" aria-hidden="true" />
-                <span class="sr-only" i18n="@@onboarding.membersForm.remove">Remove</span>
               </button>
             </hlm-item-actions>
           </li>

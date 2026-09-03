@@ -96,7 +96,13 @@ describe('LoginForm', () => {
     } satisfies LoginFormValues);
   });
 
-  it('should disable submission while a sign-in attempt is in flight', async () => {
+  it('should block submission while a sign-in attempt is in flight, without losing focus', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+
+    await type(fixture, '#login-email', 'ada@example.com');
+    await type(fixture, '#login-password', 'Str0ng!Passw0rd');
+
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();
 
@@ -104,7 +110,57 @@ describe('LoginForm', () => {
       'button[type="submit"]',
     ) as HTMLButtonElement;
 
-    expect(submit.disabled).toBe(true);
+    // Natively disabling the focused button would blur it to <body> with no
+    // announcement, which strands the user mid-request. It stays focusable.
+    expect(submit.disabled).toBe(false);
+    expect(submit.getAttribute('aria-disabled')).toBe('true');
+    expect(submit.getAttribute('aria-busy')).toBe('true');
+
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit'),
+    );
+    await fixture.whenStable();
+
+    // The guard, not the attribute, is what prevents the double submit.
+    expect(submitted).not.toHaveBeenCalled();
+  });
+
+  it('should drop the alert while retrying so an identical failure announces again', async () => {
+    const failure = {
+      error: new Error('Invalid credentials.'),
+      message: 'Invalid credentials.',
+      code: 401,
+      retryable: false,
+      timestamp: Date.now(),
+    };
+
+    fixture.componentRef.setInput('serverError', failure);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="login-server-error"]'),
+    ).not.toBeNull();
+
+    // role="alert" only announces on insertion or text mutation. Two identical
+    // failures in a row would rewrite the same string into a mounted node and
+    // stay silent, so the region unmounts for the duration of the retry.
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[data-testid="login-server-error"]')).toBeNull();
+
+    fixture.componentRef.setInput('pending', false);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="login-server-error"]'),
+    ).not.toBeNull();
+  });
+
+  it('should give the remember-me id to the control the label points at', () => {
+    const control = fixture.nativeElement.querySelector('#login-remember') as HTMLElement;
+
+    // hlm-checkbox's host is display:contents; a bare id would land on that
+    // non-rendering wrapper instead of the real <button role="checkbox">.
+    expect(control).not.toBeNull();
+    expect(control.getAttribute('role')).toBe('checkbox');
   });
 
   it('should render the server error message when a sign-in attempt failed', async () => {

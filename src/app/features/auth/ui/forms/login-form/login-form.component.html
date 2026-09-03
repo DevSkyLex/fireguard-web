@@ -1,7 +1,12 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
-    @if (serverError(); as error) {
-      <div role="alert" data-testid="login-server-error" class="text-sm text-destructive">
+    @if (!pending() && serverError(); as error) {
+      <div
+        role="alert"
+        aria-atomic="true"
+        data-testid="login-server-error"
+        class="text-sm text-destructive"
+      >
         <p>
           @if (error.message; as message) {
             {{ message }}
@@ -58,9 +63,9 @@
       }
     </hlm-field>
 
-    <label class="flex items-center gap-2 text-sm text-muted-foreground">
+    <label class="flex items-center gap-2 text-sm text-muted-foreground" for="login-remember">
       <hlm-checkbox
-        id="login-remember"
+        inputId="login-remember"
         data-testid="login-remember"
         [formField]="loginForm.rememberMe"
       />
@@ -70,9 +75,9 @@
     <button
       hlmBtn
       type="submit"
-      class="w-full max-sm:min-h-11"
+      class="min-h-11 w-full aria-disabled:pointer-events-none aria-disabled:opacity-50"
       data-testid="login-submit"
-      [disabled]="pending()"
+      [attr.aria-disabled]="pending() ? 'true' : null"
       [attr.aria-busy]="pending() ? 'true' : null"
       aria-live="polite"
     >

@@ -62,7 +62,10 @@ export class LoginForm {
    * @readonly
    *
    * @description
-   * Whether a sign-in attempt is in flight, which disables the submit control.
+   * Whether a sign-in attempt is in flight. It marks the submit control
+   * `aria-disabled` and `aria-busy` — never natively `disabled` — and hides the
+   * server error until the attempt completes, so an identical repeated failure
+   * remounts the alert and is announced again.
    *
    * @access public
    * @since 1.0.0
@@ -155,13 +158,22 @@ export class LoginForm {
    * Marks the form touched so every failing rule becomes visible, then emits
    * only if it is valid.
    *
+   * Guards the in-flight case itself rather than letting the template set the
+   * native `disabled` attribute: disabling the focused submit button blurs it
+   * to `<body>` with no announcement, which strands a keyboard or screen-reader
+   * user exactly when a request is running. The button stays focusable and
+   * carries `aria-disabled`; this early return is what actually prevents the
+   * double submit.
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.2.0
    *
    * @returns {void}
    */
   protected submit(event: Event): void {
     event.preventDefault();
+
+    if (this.pending()) return;
 
     this.loginForm().markAsTouched();
 

@@ -28,7 +28,7 @@
   </hlm-sidebar>
 
   <main hlmSidebarInset id="dashboard-main" class="min-w-0 outline-none">
-    <header class="flex h-12 shrink-0 items-center gap-2 px-4">
+    <header class="flex h-12 shrink-0 items-center gap-2 px-4 md:px-6">
       <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
 
       <div class="mr-2 flex h-4 items-center">
@@ -54,7 +54,7 @@
       tabindex="-1"
       class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      <div class="flex min-h-0 flex-1 flex-col px-0">
+      <div class="flex min-h-0 flex-1 flex-col">
         <router-outlet />
       </div>
     </div>

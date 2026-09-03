@@ -58,7 +58,7 @@ with no spec file at all means the tsconfigs regressed, not that the code has no
 
 `Grep` stays right for what is not a symbol: a literal string, a route path, a convention swept
 over a tree — and for `*.md`, which no symbol index reads. **A cold answer is not an answer**: a
-thin or empty first result means *not indexed yet* — repeat the call until the count stops
+thin or empty first result means _not indexed yet_ — repeat the call until the count stops
 growing, and never record "no consumers" from a first call. If Serena is unavailable, fall back
 to `Grep` and **say so in your report**.
 
@@ -118,7 +118,7 @@ cd fireguard-sso-web && codex exec -m gpt-5.6-luna --sandbox read-only -o "$OUT"
 ```
 
 **Always, before you report.** You are read-only, so the challenge costs nothing but time,
-and a missed finding costs more. Run it *after* you have your own findings — you want
+and a missed finding costs more. Run it _after_ you have your own findings — you want
 disagreement, not anchoring.
 
 The `</dev/null` is **not optional**: without it `codex exec` waits on stdin for an EOF that

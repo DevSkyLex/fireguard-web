@@ -25,6 +25,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import type { EquipmentCreateFormDraft } from './models';
 
 /** A blank draft. */
@@ -82,9 +83,10 @@ function trimmed(value: string): string | undefined {
     HlmInput,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    HlmSheetFooter,
   ],
   templateUrl: './equipment-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentCreateForm {

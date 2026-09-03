@@ -30,6 +30,7 @@ import { HlmDatePicker, HlmDatePickerTrigger } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { CalendarEventDraft, CalendarEventFormValues } from './models';
@@ -112,9 +113,10 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
     ...HlmFieldImports,
     ...HlmSelectImports,
     ...HlmTextareaImports,
+    HlmSheetFooter,
   ],
   templateUrl: './calendar-event-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarEventForm {

@@ -37,6 +37,7 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 import type { FacilityCreateFormDraft } from './models';
 
@@ -144,10 +145,11 @@ function parsedLevelIndex(value: string): number | undefined {
     ...HlmComboboxImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    HlmSheetFooter,
   ],
   providers: [provideIcons({ lucideMapPin })],
   templateUrl: './facility-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreateForm {

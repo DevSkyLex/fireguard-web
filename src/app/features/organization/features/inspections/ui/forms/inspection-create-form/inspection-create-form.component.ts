@@ -28,6 +28,7 @@ import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import type { InspectionCreateFormDraft } from './models';
 
@@ -86,9 +87,10 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
     ...HlmDatePickerImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    HlmSheetFooter,
   ],
   templateUrl: './inspection-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionCreateForm {

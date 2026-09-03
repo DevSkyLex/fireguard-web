@@ -19,6 +19,7 @@ import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { OrganizationTeamCreateFormDraft } from './models';
 
@@ -56,9 +57,10 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
     HlmInput,
     ...HlmFieldImports,
     ...HlmTextareaImports,
+    HlmSheetFooter,
   ],
   templateUrl: './organization-team-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationTeamCreateForm {

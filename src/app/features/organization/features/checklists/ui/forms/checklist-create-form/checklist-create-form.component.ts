@@ -23,6 +23,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 
 /** Matches `CreateChecklistInput.name`'s server-side bound (`Assert\Length(max: 255)`). */
 const NAME_MAX_LENGTH = 255;
@@ -71,9 +72,17 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  */
 @Component({
   selector: 'app-checklist-create-form',
-  imports: [RequiredMarker, FormField, HlmButton, HlmCheckbox, HlmInput, ...HlmFieldImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmCheckbox,
+    HlmInput,
+    ...HlmFieldImports,
+    HlmSheetFooter,
+  ],
   templateUrl: './checklist-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecklistCreateForm {

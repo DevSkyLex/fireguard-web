@@ -31,6 +31,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { OrganizationRoleCreateFormDraft } from './models';
 
@@ -159,9 +160,10 @@ function permissionDomainLabelOf(domain: string): string {
     HlmInput,
     ...HlmFieldImports,
     ...HlmTextareaImports,
+    HlmSheetFooter,
   ],
   templateUrl: './organization-role-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationRoleCreateForm {

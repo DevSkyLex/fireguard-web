@@ -1,5 +1,5 @@
-<form novalidate (submit)="submit($event)">
-  <hlm-field-group>
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
       <div
         role="alert"
@@ -55,33 +55,33 @@
         <hlm-field-error>{{ createForm.description().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
-
-    <div class="flex flex-wrap items-center justify-end gap-2">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="organization-team-create-cancel"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@common.cancel">Cancel</span>
-      </button>
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="organization-team-create-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@org.teams.form.submitting">Creating…</span>
-        } @else {
-          <span i18n="@@org.teams.form.submit">Create team</span>
-        }
-      </button>
-    </div>
   </hlm-field-group>
+
+  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:min-h-11"
+      data-testid="organization-team-create-cancel"
+      (click)="cancelled.emit()"
+    >
+      <span i18n="@@common.cancel">Cancel</span>
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="max-sm:min-h-11"
+      data-testid="organization-team-create-submit"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending() ? 'true' : null"
+      aria-live="polite"
+    >
+      @if (pending()) {
+        <span i18n="@@org.teams.form.submitting">Creating…</span>
+      } @else {
+        <span i18n="@@org.teams.form.submit">Create team</span>
+      }
+    </button>
+  </hlm-sheet-footer>
 </form>

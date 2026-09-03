@@ -23,6 +23,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSheetFooter } from '@shared/ui/sheet';
 import type { ChannelCreateDraft, NewChannelFormDraft } from './models';
 
 /** Matches `CreateChannelInput.name`'s server-side bounds. */
@@ -83,9 +84,10 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
     HlmInput,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    HlmSheetFooter,
   ],
   templateUrl: './channel-create-form.component.html',
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelCreateForm {

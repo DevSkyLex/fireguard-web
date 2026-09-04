@@ -144,44 +144,62 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@equipment.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to equipment."
-      i18n-description="@@equipment.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@equipment.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@equipment.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to equipment.
+        </p>
+      </div>
+    </div>
   } @else if (store.listCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load equipment"
-      i18n-title="@@equipment.list.errorTitle"
-      description="The equipment could not be loaded. Check your connection and try again."
-      i18n-description="@@equipment.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="equipments-retry" (click)="reload()">
-        <span i18n="@@equipment.list.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@equipment.list.errorTitle">Couldn't load equipment</p>
+        <p hlmEmptyDescription i18n="@@equipment.list.errorText">
+          The equipment could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="equipments-retry" (click)="reload()">
+          <span i18n="@@equipment.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (!store.isLoadingEquipment() && items().length === 0) {
-    <app-empty-state
-      [icon]="hasSearchOrFilters() ? 'lucideSearch' : 'lucidePackage'"
-      title="No equipment found"
-      i18n-title="@@equipment.table.emptyTitle"
-      description="Adjust your search or filters, or register the assets you track."
-      i18n-description="@@equipment.table.emptyDesc"
-    >
-      @if (hasSearchOrFilters()) {
-        <button hlmBtn variant="outline" (click)="clearFilters()">
-          <span i18n="@@common.clearFilters">Clear filters</span>
-        </button>
-      } @else if (canCreate()) {
-        <button hlmBtn type="button" (click)="openCreate()">
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@equipment.newButton">New equipment</span>
-        </button>
-      }
-    </app-empty-state>
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        @if (hasSearchOrFilters() ? 'lucideSearch' : 'lucidePackage'; as iconName) {
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon [name]="iconName" aria-hidden="true" />
+          </div>
+        }
+        <p hlmEmptyTitle i18n="@@equipment.table.emptyTitle">No equipment found</p>
+        <p hlmEmptyDescription i18n="@@equipment.table.emptyDesc">
+          Adjust your search or filters, or register the assets you track.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (hasSearchOrFilters()) {
+          <button hlmBtn variant="outline" (click)="clearFilters()">
+            <span i18n="@@common.clearFilters">Clear filters</span>
+          </button>
+        } @else if (canCreate()) {
+          <button hlmBtn type="button" (click)="openCreate()">
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span i18n="@@equipment.newButton">New equipment</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     <app-equipment-table
       [items]="items()"

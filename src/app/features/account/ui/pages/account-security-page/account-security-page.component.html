@@ -1,17 +1,28 @@
 <div id="account-security" class="flex h-full flex-col gap-6 p-4 md:p-6">
   <div class="flex max-w-2xl flex-col gap-6">
     @if (hasProfileError()) {
-      <app-error-state
-        icon="lucideTriangleAlert"
-        title="Couldn't load your account"
-        i18n-title="@@account.security.errorTitle"
-        description="Your security settings can't be shown until we know who you are."
-        i18n-description="@@account.security.errorDescription"
-      >
-        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retryProfile()">
-          <span i18n="@@account.security.retry">Retry</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@account.security.errorTitle">Couldn't load your account</p>
+          <p hlmEmptyDescription i18n="@@account.security.errorDescription">
+            Your security settings can't be shown until we know who you are.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11"
+            (click)="retryProfile()"
+          >
+            <span i18n="@@account.security.retry">Retry</span>
+          </button>
+        </div>
+      </div>
     } @else if (!profileReady()) {
       <div
         class="flex flex-col gap-4"

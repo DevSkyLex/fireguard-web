@@ -29,9 +29,9 @@ import type {
 import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import { isCompact } from '@shared/breakpoint';
-import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { equipmentPlanDetail, equipmentPlanLabel } from '../../../utils';
 import { FacilityPlanItemList, type PlanItemListOption } from '../facility-plan-item-list';
@@ -77,7 +77,7 @@ import { FacilityStatusTag } from '../facility-status-tag';
  * close and would otherwise drop focus to `body`.
  *
  * When the loaded overlay carries neither a zone nor a pin, the detail area
- * shows `app-empty-state` instead, explaining the plan has nothing drawn on
+ * shows the Spartan `hlmEmpty` composition instead, explaining the plan has nothing drawn on
  * it yet — the state this tab had no name for before.
  *
  * Renders as an `hlm-card` at and above `sm`, an `hlm-sheet` (bottom side)
@@ -97,9 +97,9 @@ import { FacilityStatusTag } from '../facility-status-tag';
 @Component({
   selector: 'app-facility-plan-panel',
   imports: [
-    NgTemplateOutlet,
     NgIcon,
-    EmptyState,
+    ...HlmEmptyImports,
+    NgTemplateOutlet,
     FacilityPlanItemList,
     FacilityStatusTag,
     HlmButton,

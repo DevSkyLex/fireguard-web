@@ -79,6 +79,25 @@ describe('InplaceField', () => {
     expect(control()).toBeNull();
   });
 
+  it('should not take focus when mounted closed', () => {
+    expect(document.activeElement).not.toBe(trigger());
+  });
+
+  it('should preserve focus moved outside before closing', async () => {
+    host.editing.set(true);
+    await fixture.whenStable();
+    const external: HTMLButtonElement = document.createElement('button');
+    document.body.append(external);
+    try {
+      external.focus();
+      host.editing.set(false);
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(external);
+    } finally {
+      external.remove();
+    }
+  });
+
   it('should ask the host to open when the trigger is activated', () => {
     trigger().click();
 

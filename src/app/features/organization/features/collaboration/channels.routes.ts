@@ -9,9 +9,9 @@ import { channelTitleResolver } from './http/resolvers/channel-title';
  * @description
  * The channels workspace, mounted under one organization.
  *
- * Master-detail, mirroring `COLLABORATION_ROUTES`: the channel list is the
- * parent and the open channel its child, so moving between channels leaves
- * the list alone rather than rebuilding and refetching it.
+ * The parent owns the outlet and its empty state; ChannelsPanel contributes
+ * the list through the dashboard sidebar extension. Channel changes preserve
+ * that panel, and both surfaces use the dashboard-provided ChannelsStore.
  *
  * The permission guard sits on the parent only. It re-runs on an organization
  * switch — the route params change and the router re-evaluates — and

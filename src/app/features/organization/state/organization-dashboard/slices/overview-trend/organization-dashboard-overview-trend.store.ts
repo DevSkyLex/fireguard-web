@@ -73,7 +73,7 @@ function createOverviewTrendStore() {
      */
     withQueryState<OrganizationDashboardOverviewTrendResource>(),
     withDashboardFilterState(),
-    withState(getDashboardInitialFilterDraftState()),
+    withState({ ...getDashboardInitialFilterDraftState(), activated: false }),
     //#endregion
 
     //#region Methods
@@ -90,6 +90,10 @@ function createOverviewTrendStore() {
      */
     withMethods(
       (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /** Enables browser-only queries after the analysis tab is first opened. */
+        activate(): void {
+          patchState(store, { activated: true });
+        },
         /**
          * Method load
          *
@@ -282,7 +286,7 @@ function createOverviewTrendStore() {
 
       return {
         loadParams: computed<OrganizationDashboardTrendResourceParams | undefined>(() => {
-          if (!isPlatformBrowser(platformId)) return undefined;
+          if (!store.activated() || !isPlatformBrowser(platformId)) return undefined;
 
           const organization: ReturnType<typeof activeOrganizationStore.selectedOrganization> =
             activeOrganizationStore.selectedOrganization();

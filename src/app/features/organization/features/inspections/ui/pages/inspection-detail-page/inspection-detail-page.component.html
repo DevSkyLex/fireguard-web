@@ -179,24 +179,29 @@
       <hlm-skeleton class="h-64 w-full max-w-2xl" />
     </div>
   } @else {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="This inspection could not be opened"
-      i18n-title="@@inspection.detail.loadFailedTitle"
-      [description]="activeInspectionStore.getError()?.message ?? null"
-      data-testid="inspection-detail-load-failed"
-    >
-      <button
-        hlmBtn
-        type="button"
-        class="max-sm:min-h-11"
-        data-testid="inspection-detail-retry"
-        (click)="retryLoad()"
-        i18n="@@common.tryAgain"
-      >
-        Try again
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert" data-testid="inspection-detail-load-failed">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@inspection.detail.loadFailedTitle">
+          This inspection could not be opened
+        </p>
+        <p hlmEmptyDescription>{{ activeInspectionStore.getError()?.message ?? null }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="inspection-detail-retry"
+          (click)="retryLoad()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
   }
 </div>
 

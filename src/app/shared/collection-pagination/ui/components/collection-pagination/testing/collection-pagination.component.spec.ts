@@ -1,13 +1,16 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { CollectionPagination } from '../collection-pagination.component';
 
 describe('CollectionPagination', () => {
   let fixture: ComponentFixture<CollectionPagination>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(CollectionPagination);
     fixture.componentRef.setInput('page', 2);
@@ -25,6 +28,37 @@ describe('CollectionPagination', () => {
 
   it('should render the page indicator', () => {
     expect(byTestId('widgets-page-indicator')?.textContent).toContain('Page 2 of 5');
+  });
+
+  it.each([
+    [1, 20, [1, 2, 3, 4, 5]],
+    [10, 20, [8, 9, 10, 11, 12]],
+    [20, 20, [16, 17, 18, 19, 20]],
+    [2, 3, [1, 2, 3]],
+    [1, 0, [1]],
+  ])('should show a bounded page window at page %i of %i', async (page, pageCount, expected) => {
+    fixture.componentRef.setInput('page', page);
+    fixture.componentRef.setInput('pageCount', pageCount);
+    await fixture.whenStable();
+
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll(
+      '[data-testid^="widgets-page-number-"]',
+    );
+    expect(Array.from(buttons, (button) => Number(button.textContent?.trim()))).toEqual(expected);
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent.trim()).toBe(
+      String(page),
+    );
+  });
+
+  it('should emit the chosen page and leave the current page unchanged until the host updates it', () => {
+    const emitted: number[] = [];
+    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
+
+    byTestId('widgets-page-number-2')?.click();
+    byTestId('widgets-page-number-4')?.click();
+
+    expect(emitted).toEqual([4]);
+    expect(fixture.componentInstance.page()).toBe(2);
   });
 
   it('should render the row count', () => {

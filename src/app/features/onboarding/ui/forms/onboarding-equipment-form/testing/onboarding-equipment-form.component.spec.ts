@@ -13,6 +13,18 @@ describe('OnboardingEquipmentForm', () => {
     await fixture.whenStable();
   };
 
+  beforeAll(() =>
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {}
+      },
+    ),
+  );
+  afterAll(() => vi.unstubAllGlobals());
+
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
@@ -60,12 +72,12 @@ describe('OnboardingEquipmentForm', () => {
     ]);
   });
 
-  it('should attach the only created facility through a pre-selected select that names it', async () => {
+  it('should show the only facility as a summary and attach it automatically', async () => {
     fixture.componentRef.setInput('facilities', [{ id: 'facility-1', name: 'HQ', type: 'site' }]);
     await fixture.whenStable();
 
     const trigger: HTMLElement | null = element.querySelector(
-      '[data-testid="onboarding-equipment-facility"]',
+      '[data-testid="onboarding-equipment-facility-summary"]',
     );
     expect(trigger).not.toBeNull();
     expect(trigger?.textContent).toContain('HQ · Site');
@@ -87,7 +99,7 @@ describe('OnboardingEquipmentForm', () => {
     expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-1' }]);
   });
 
-  it('should offer a facility select pre-selected on the first when several were created', async () => {
+  it('should require an explicit facility choice when several exist', async () => {
     fixture.componentRef.setInput('facilities', [
       { id: 'facility-1', name: 'HQ', type: 'site' },
       { id: 'facility-2', name: 'Annex', type: 'building' },
@@ -99,7 +111,7 @@ describe('OnboardingEquipmentForm', () => {
     );
 
     expect(trigger).not.toBeNull();
-    expect(trigger?.textContent).toContain('HQ');
+    expect(fixture.componentInstance['equipmentForm'].facilityId().value()).toBe('');
 
     const emitted: SetupCreateEquipmentInput[] = [];
     fixture.componentInstance.submitted.subscribe((value: SetupCreateEquipmentInput): void => {
@@ -115,7 +127,11 @@ describe('OnboardingEquipmentForm', () => {
 
     await submit();
 
-    expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-1' }]);
+    expect(emitted).toEqual([]);
+    expect(element.textContent).toContain('Select the facility for this equipment.');
+    fixture.componentInstance['equipmentForm'].facilityId().value.set('facility-2');
+    await submit();
+    expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-2' }]);
   });
 
   it('should surface the API rejection above the form', async () => {

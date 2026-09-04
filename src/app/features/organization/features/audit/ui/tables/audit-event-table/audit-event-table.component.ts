@@ -24,7 +24,6 @@ import {
   lucideUpload,
   lucideWebhook,
   lucideWrench,
-  lucideFileText,
 } from '@ng-icons/lucide';
 import type {
   AuditActionTagDescriptor,
@@ -36,12 +35,12 @@ import {
   resolveAuditSubjectRoute,
 } from '@features/organization/features/audit/utils';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmTableImports } from '@shared/ui/table';
 
@@ -63,7 +62,9 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28',
  * module icon and label, and the subject (linked to its record when the
  * subject type has a known route, plain otherwise). Each row's own trailing
  * button expands a second row holding the event's `metadata` as a compact
- * key/value list, collapsed by default.
+ * key/value list, collapsed by default. Events without metadata render no
+ * disclosure control, and technical identifiers are humanized before they
+ * reach the reader.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service; the page owns loading, filtering and paging. Which rows are
@@ -78,17 +79,16 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28',
   selector: 'app-audit-event-table',
   imports: [
     NgTemplateOutlet,
-    EmptyState,
     OrgDatePipe,
     CollectionSurface,
     RouterLink,
     NgIcon,
+    HlmBadge,
     HlmButton,
     ...HlmTableImports,
   ],
   providers: [
     provideIcons({
-      lucideFileText,
       lucideBox,
       lucideBuilding,
       lucideBuilding2,
@@ -205,6 +205,26 @@ export class AuditEventTable {
   }
 
   /**
+   * Method subjectLabelOf
+   * @method subjectLabelOf
+   *
+   * @description
+   * Converts an API subject identifier such as `calendar_feed_token` into
+   * a readable label while preserving a neutral dash for subject-less
+   * journal entries.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {AuditEventOutput} item - The rendered event.
+   *
+   * @returns {string} The readable subject label or an em dash.
+   */
+  protected subjectLabelOf(item: AuditEventOutput): string {
+    return item.subjectType ? this.humanizeIdentifier(item.subjectType) : '—';
+  }
+
+  /**
    * Method metadataEntriesOf
    * @description The event's `metadata` object, flattened to renderable key/value pairs.
    * @access protected
@@ -214,6 +234,73 @@ export class AuditEventTable {
    */
   protected metadataEntriesOf(item: AuditEventOutput): ReadonlyArray<[string, unknown]> {
     return Object.entries(item.metadata);
+  }
+
+  /**
+   * Method hasMetadata
+   * @method hasMetadata
+   *
+   * @description
+   * Reports whether expanding an event would reveal useful content. This
+   * keeps empty audit records free from a misleading disclosure action.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {AuditEventOutput} item - The rendered event.
+   *
+   * @returns {boolean} `true` when at least one metadata field exists.
+   */
+  protected hasMetadata(item: AuditEventOutput): boolean {
+    return this.metadataEntriesOf(item).length > 0;
+  }
+
+  /**
+   * Method metadataLabelOf
+   * @method metadataLabelOf
+   *
+   * @description Converts a backend metadata key into a readable field label.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {string} key - The backend metadata key.
+   *
+   * @returns {string} The humanized field label.
+   */
+  protected metadataLabelOf(key: string): string {
+    return this.humanizeIdentifier(key);
+  }
+
+  /**
+   * Method metadataValueOf
+   * @method metadataValueOf
+   *
+   * @description
+   * Formats the backend's allowlisted scalar metadata without exposing
+   * JavaScript placeholders such as `null` or `[object Object]`.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {unknown} value - The metadata value supplied by the API.
+   *
+   * @returns {string} A stable reader-facing representation.
+   */
+  protected metadataValueOf(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'boolean') {
+      return value ? $localize`:@@common.yes:Yes` : $localize`:@@common.no:No`;
+    }
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (Array.isArray(value))
+      return value.map((entry: unknown): string => String(entry)).join(', ');
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '—';
+    }
   }
 
   /**
@@ -236,12 +323,14 @@ export class AuditEventTable {
    * @param {string} id - The rendered event's id.
    * @returns {void}
    */
-  protected toggleExpanded(id: string): void {
+  protected toggleExpanded(item: AuditEventOutput): void {
+    if (!this.hasMetadata(item)) return;
+
     const next: Set<string> = new Set(this.expandedIds());
-    if (next.has(id)) {
-      next.delete(id);
+    if (next.has(item.id)) {
+      next.delete(item.id);
     } else {
-      next.add(id);
+      next.add(item.id);
     }
     this.expandedIds.set(next);
   }
@@ -268,6 +357,30 @@ export class AuditEventTable {
     return this.isExpanded(item.id)
       ? $localize`:@@audit.table.collapseNamed:Hide details for ${label}:label: at ${occurredAt}:occurredAt:`
       : $localize`:@@audit.table.expandNamed:Show details for ${label}:label: at ${occurredAt}:occurredAt:`;
+  }
+
+  /**
+   * Method humanizeIdentifier
+   * @method humanizeIdentifier
+   *
+   * @description
+   * Turns snake-case, kebab-case and dotted transport identifiers into a
+   * sentence label while keeping the conversion local to audit rendering.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {string} value - The transport identifier to transform.
+   *
+   * @returns {string} A sentence-cased label.
+   */
+  private humanizeIdentifier(value: string): string {
+    const words: string = value
+      .replace(/[._-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return words.length === 0 ? '—' : words.charAt(0).toUpperCase() + words.slice(1);
   }
   //#endregion
 }

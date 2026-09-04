@@ -56,17 +56,24 @@
   }
 
   @if (hasError()) {
-    <app-error-state
-      icon="lucideTriangleAlert"
-      title="Couldn't load your notifications"
-      i18n-title="@@account.notifications.errorTitle"
-      description="The feed couldn't be fetched. Anything already listed is still shown below."
-      i18n-description="@@account.notifications.errorDescription"
-    >
-      <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
-        <span i18n="@@account.notifications.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.notifications.errorTitle">
+          Couldn't load your notifications
+        </p>
+        <p hlmEmptyDescription i18n="@@account.notifications.errorDescription">
+          The feed couldn't be fetched. Anything already listed is still shown below.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
+          <span i18n="@@account.notifications.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   }
 
   @if (loading() && notifications().length === 0) {
@@ -79,13 +86,17 @@
       }
     </ul>
   } @else if (notifications().length === 0 && !hasError()) {
-    <app-empty-state
-      icon="lucideBell"
-      title="Nothing here yet"
-      i18n-title="@@account.notifications.emptyTitle"
-      description="Notifications about your organizations and your work will show up here."
-      i18n-description="@@account.notifications.emptyDescription"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideBell" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.notifications.emptyTitle">Nothing here yet</p>
+        <p hlmEmptyDescription i18n="@@account.notifications.emptyDescription">
+          Notifications about your organizations and your work will show up here.
+        </p>
+      </div>
+    </div>
   } @else {
     <ul class="flex flex-col gap-2">
       @for (notification of notifications(); track notification.id) {

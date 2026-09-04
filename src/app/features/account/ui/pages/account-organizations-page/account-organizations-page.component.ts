@@ -12,15 +12,15 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBuilding2 } from '@ng-icons/lucide';
 import { AccountLeaveOrganizationDialog } from '@features/account/ui/dialogs/account-leave-organization-dialog';
 import type { OrganizationOutput } from '@features/organization/models';
 import { MY_ORGANIZATIONS_PORT, type MyOrganizationsPort } from '@features/organization/ports';
 import { OrganizationAvatar } from '@features/organization/ui/components';
-import { EmptyState } from '@shared/empty-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
@@ -49,8 +49,9 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-account-organizations-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     AccountLeaveOrganizationDialog,
-    EmptyState,
     OrganizationAvatar,
     HlmBadge,
     HlmButton,

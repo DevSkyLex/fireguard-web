@@ -1,0 +1,315 @@
+<ng-template #row let-channel>
+  <a
+    hlmItem
+    size="xs"
+    routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground"
+    #active="routerLinkActive"
+    [routerLink]="[channelsRouteBase(), channel.id]"
+    [attr.aria-current]="active.isActive ? 'page' : null"
+    [attr.title]="channel.name"
+    class="h-7 min-h-7 min-w-0 flex-1 flex-nowrap gap-2 rounded-md border-0 px-2 py-1 text-muted-foreground hover:text-foreground max-lg:h-11 max-lg:min-h-11 [a]:hover:bg-sidebar-accent"
+    data-testid="channels-row"
+  >
+    <ng-icon name="lucideHash" class="shrink-0 text-sm text-muted-foreground" aria-hidden="true" />
+    <span
+      class="min-w-0 flex-1 truncate text-sm"
+      [class.font-semibold]="channel.unreadCount > 0 || active.isActive"
+      [class.text-foreground]="channel.unreadCount > 0"
+      >{{ channel.name }}</span
+    >
+    @if (channel.unreadCount > 0) {
+      <span
+        hlmBadge
+        variant="secondary"
+        class="h-5 min-w-5 shrink-0 justify-center px-1.5 text-[0.625rem] tabular-nums"
+      >
+        <span class="sr-only">{{ unreadLabelFor(channel) }}</span>
+        <span aria-hidden="true">{{ channel.unreadCount }}</span>
+      </span>
+    }
+  </a>
+</ng-template>
+
+<div class="flex min-h-0 flex-1 flex-col" data-testid="channels-list">
+  <div class="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-3">
+    <h2 class="text-base font-semibold" i18n="@@channels.page.title">Channels</h2>
+    @if (canCreate()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        class="max-lg:size-11"
+        data-testid="channels-new"
+        i18n-aria-label="@@channels.page.new"
+        aria-label="New channel"
+        (click)="createDialogVisible.set(true)"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+      </button>
+    }
+  </div>
+
+  <div class="shrink-0 px-3 py-3">
+    <hlm-input-group class="h-9 max-lg:h-11">
+      <hlm-input-group-addon
+        ><ng-icon name="lucideSearch" aria-hidden="true"
+      /></hlm-input-group-addon>
+      <input
+        #search
+        hlmInputGroupInput
+        type="search"
+        class="max-lg:h-11"
+        data-testid="channels-search"
+        placeholder="Search channels..."
+        i18n-placeholder="@@channels.page.searchPlaceholder"
+        aria-label="Search channels..."
+        i18n-aria-label="@@channels.page.searchPlaceholder"
+        [value]="searchQuery()"
+        (input)="onSearchQueryChanged(search.value)"
+      />
+    </hlm-input-group>
+  </div>
+
+  <nav
+    cdkDropList
+    [attr.aria-busy]="channels.isReorganizing()"
+    [cdkDropListSortingDisabled]="true"
+    (cdkDropListDropped)="dropChannel($event)"
+    class="min-h-0 flex-1 overflow-y-auto px-2 pb-3"
+    aria-label="Channels"
+    i18n-aria-label="@@channels.page.title"
+  >
+    <ng-template #branch let-items>
+      @for (channel of items; track channel.id) {
+        @let children = childrenOf(channel.id);
+        <li hlmCollapsible [expanded]="true" class="min-w-0">
+          <div
+            cdkDrag
+            [cdkDragData]="channel.id"
+            [cdkDragDisabled]="!canCreate() || channels.isReorganizing() || channels.isMutating()"
+            [cdkDragStartDelay]="{ touch: 300, mouse: 0 }"
+            (cdkDragStarted)="draggedChannelId.set(channel.id)"
+            (cdkDragMoved)="trackDrop($event)"
+            [attr.data-channel-parent]="channel.id"
+            [class.bg-sidebar-accent]="
+              draggedChannelId() &&
+              dropParentId() === channel.id &&
+              canMoveTo(draggedChannelId()!, channel.id)
+            "
+            [class.ring-1]="
+              draggedChannelId() &&
+              dropParentId() === channel.id &&
+              canMoveTo(draggedChannelId()!, channel.id)
+            "
+            class="group/channel flex min-w-0 items-center gap-0.5 rounded-md ring-border [&.cdk-drag-placeholder]:opacity-30 [&.cdk-drag-preview]:pointer-events-none [&.cdk-drag-preview]:translate-y-8 [&.cdk-drag-preview]:bg-background [&.cdk-drag-preview]:opacity-80 [&.cdk-drag-preview]:shadow-md"
+          >
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
+            @if (canCreate()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="shrink-0 text-muted-foreground opacity-0 group-hover/channel:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-lg:size-11 max-lg:opacity-100"
+                [attr.aria-label]="moveLabel(channel)"
+                [hlmDropdownMenuTrigger]="moveMenu"
+                align="end"
+                [disabled]="channels.isReorganizing() || channels.isMutating()"
+                data-testid="channel-move-menu"
+              >
+                <ng-icon name="lucideGripVertical" class="text-sm" aria-hidden="true" />
+              </button>
+              <ng-template #moveMenu>
+                <hlm-dropdown-menu class="max-h-72 w-56 overflow-y-auto">
+                  <button
+                    hlmDropdownMenuItem
+                    [disabled]="!canMoveTo(channel.id, null)"
+                    (click)="moveChannel(channel.id, null)"
+                  >
+                    <ng-icon name="lucideCornerUpLeft" class="text-sm" aria-hidden="true" />
+                    <span i18n="@@channels.panel.topLevel">Top level</span>
+                  </button>
+                  @for (destination of channels.channelEntities(); track destination.id) {
+                    @if (canMoveTo(channel.id, destination.id)) {
+                      <button hlmDropdownMenuItem (click)="moveChannel(channel.id, destination.id)">
+                        <ng-icon name="lucideHash" class="text-sm" aria-hidden="true" />
+                        <span class="truncate">{{ destination.name }}</span>
+                      </button>
+                    }
+                  }
+                </hlm-dropdown-menu>
+              </ng-template>
+            }
+            @if (children.length > 0) {
+              <button
+                hlmBtn
+                hlmCollapsibleTrigger
+                variant="ghost"
+                size="icon-sm"
+                class="group shrink-0 text-muted-foreground aria-expanded:bg-transparent max-lg:size-11"
+                data-testid="channels-children-toggle"
+                [attr.aria-label]="subchannelsLabel(channel)"
+              >
+                <ng-icon
+                  name="lucideChevronDown"
+                  class="text-sm group-data-[state=closed]:-rotate-90"
+                  aria-hidden="true"
+                />
+              </button>
+            }
+          </div>
+          @if (children.length > 0) {
+            <ul hlmCollapsibleContent class="ms-4 mt-0.5 flex flex-col gap-0.5 border-s ps-2">
+              <ng-container *ngTemplateOutlet="branch; context: { $implicit: children }" />
+            </ul>
+          }
+        </li>
+      }
+    </ng-template>
+    @if (isLoading()) {
+      <div
+        class="flex flex-col gap-2"
+        role="status"
+        aria-label="Loading channels"
+        i18n-aria-label="@@channels.page.loadingAria"
+      >
+        @for (item of [0, 1, 2, 3, 4]; track item) {
+          <div class="flex h-7 items-center gap-2 px-2 max-lg:h-11">
+            <hlm-skeleton class="size-4" /><hlm-skeleton class="h-3 w-32" />
+          </div>
+        }
+      </div>
+    } @else if (loadErrorMessage(); as message) {
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@channels.page.loadErrorTitle">Channels could not be loaded</p>
+          <p hlmEmptyDescription>{{ message }}</p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            type="button"
+            class="max-lg:min-h-11"
+            data-testid="channels-retry"
+            (click)="reload()"
+          >
+            <span i18n="@@channels.page.retry">Retry</span>
+          </button>
+        </div>
+      </div>
+    } @else if (channels.channelEntities().length === 0) {
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideHash" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@channels.page.emptyTitle">No channels yet</p>
+          <p hlmEmptyDescription i18n="@@channels.page.emptyDescription">
+            Create one to start a group conversation.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          @if (canCreate()) {
+            <button
+              hlmBtn
+              type="button"
+              class="max-lg:min-h-11"
+              data-testid="channels-empty-create"
+              (click)="createDialogVisible.set(true)"
+            >
+              <span i18n="@@channels.page.emptyCreate">Create channel</span>
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (searchQuery().trim()) {
+      @if (visibleChannels().length > 0) {
+        <ul class="flex flex-col gap-0.5" data-testid="channels-search-results">
+          @for (channel of visibleChannels(); track channel.id) {
+            <li class="flex min-w-0">
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
+            </li>
+          }
+        </ul>
+      } @else {
+        <p
+          class="px-2 py-6 text-center text-sm text-muted-foreground"
+          role="status"
+          i18n="@@channels.panel.noResults"
+        >
+          No channels match your search.
+        </p>
+      }
+    } @else {
+      @if (favoriteChannels().length > 0) {
+        <section hlmCollapsible [expanded]="true" class="mb-4 block">
+          <h3>
+            <button
+              hlmBtn
+              hlmCollapsibleTrigger
+              variant="ghost"
+              size="sm"
+              class="group mb-1 h-8 w-full justify-start gap-1 px-1 text-xs font-medium text-muted-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground max-lg:h-11"
+              data-testid="channels-favorites-toggle"
+            >
+              <ng-icon
+                name="lucideChevronDown"
+                class="text-sm group-data-[state=closed]:-rotate-90"
+                aria-hidden="true"
+              />
+              {{ favoritesHeading() }}
+            </button>
+          </h3>
+          <ul hlmCollapsibleContent class="flex flex-col gap-0.5" data-testid="channels-favorites">
+            @for (channel of favoriteChannels(); track channel.id) {
+              <li class="flex min-w-0">
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: channel }" />
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="block">
+        <h3
+          class="mb-1 flex h-8 items-center px-2 text-xs font-medium text-muted-foreground max-lg:h-11"
+        >
+          {{ allChannelsHeading() }}
+        </h3>
+        @if (draggedChannelId(); as draggedId) {
+          <div
+            data-channel-parent=""
+            data-testid="channels-drop-root"
+            class="mb-2 flex min-h-10 items-center gap-2 rounded-md border border-dashed border-border px-2 text-xs text-muted-foreground"
+            [class.bg-sidebar-accent]="dropParentId() === null && canMoveTo(draggedId, null)"
+          >
+            <ng-icon name="lucideCornerUpLeft" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.panel.topLevel">Top level</span>
+          </div>
+        }
+        <ul class="flex flex-col gap-0.5" data-testid="channels-tree">
+          <ng-container *ngTemplateOutlet="branch; context: { $implicit: visibleRootChannels() }" />
+        </ul>
+      </section>
+    }
+  </nav>
+  <p
+    class="shrink-0 px-3 pb-2 text-xs text-muted-foreground empty:hidden"
+    role="status"
+    aria-live="polite"
+  >
+    {{ moveStatus() }}
+  </p>
+</div>
+
+<app-channel-create-dialog
+  [visible]="createDialogVisible()"
+  [parentOptions]="rootChannelOptions()"
+  [pending]="channels.isMutating()"
+  (visibleChange)="createDialogVisible.set($event)"
+  (submitted)="submitCreate($event)"
+/>

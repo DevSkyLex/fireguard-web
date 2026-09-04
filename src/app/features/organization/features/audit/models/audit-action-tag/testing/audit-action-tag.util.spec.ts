@@ -16,7 +16,7 @@ describe('resolveAuditActionTag', () => {
 
     expect(descriptor.module).toBe('facility');
     expect(descriptor.icon).toBe('lucideBuilding2');
-    expect(descriptor.label).toBe('facility something new');
+    expect(descriptor.label).toBe('Facility something new');
   });
 
   it('should fall back to the "other" module for an id with no recognizable prefix', () => {
@@ -24,14 +24,14 @@ describe('resolveAuditActionTag', () => {
 
     expect(descriptor.module).toBe('other');
     expect(descriptor.icon).toBe('lucideTag');
-    expect(descriptor.label).toBe('unknown module some action');
+    expect(descriptor.label).toBe('Unknown module some action');
   });
 
   it('should not throw on an action id carrying no dot at all', () => {
     const descriptor = resolveAuditActionTag('malformed');
 
     expect(descriptor.module).toBe('other');
-    expect(descriptor.label).toBe('malformed');
+    expect(descriptor.label).toBe('Malformed');
   });
 });
 

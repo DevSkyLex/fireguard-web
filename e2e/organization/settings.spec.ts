@@ -47,6 +47,12 @@ test.describe('Organization settings', () => {
 
     await expect(settings.usageTab).toHaveAttribute('data-state', 'active');
     await expect(page.getByTestId('organization-usage-row-members')).toBeVisible();
+    await expect(page.getByTestId('organization-usage-row-members')).toContainText(
+      'Active members count toward this limit',
+    );
+    await expect(page.getByTestId('organization-usage-row-members')).toContainText(
+      '23 available before the plan limit',
+    );
   });
 
   test('lazy-loads subscription data only once the Subscription tab is activated', async ({
@@ -59,8 +65,71 @@ test.describe('Organization settings', () => {
     await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
     await api.mockOrganizationSubscription(E2E_ORGANIZATION_ID, organizationSubscriptionOutput());
     await api.mockOrganizationInvoices(E2E_ORGANIZATION_ID, [invoiceOutput()]);
-    await api.mockBillingPricing(E2E_PLAN_PRICING);
-    await api.mockPlans([planOutput()]);
+    await api.mockBillingPricing([
+      ...E2E_PLAN_PRICING,
+      {
+        '@id': '/api/billing/pricing/max',
+        '@type': 'PlanPricing',
+        planKey: 'max',
+        currency: 'eur',
+        monthlyAmount: 9900,
+        yearlyAmount: 99000,
+      },
+    ]);
+    await api.mockPlans([
+      planOutput({
+        '@id': '/api/plans/e2e-plan-free',
+        id: 'e2e-plan-free',
+        key: 'free',
+        name: 'Free',
+        description: 'Get started with the essentials.',
+        limits: { members: 5, facilities: 2, equipment: 50 },
+        quotas: [
+          { resource: 'members', label: 'Members', limit: 5, summary: 'Up to 5 members' },
+          { resource: 'facilities', label: 'Facilities', limit: 2, summary: 'Up to 2 facilities' },
+          { resource: 'equipment', label: 'Equipment', limit: 50, summary: 'Up to 50 equipment' },
+          {
+            resource: 'inspections',
+            label: 'Inspections',
+            limit: 100,
+            summary: 'Up to 100 inspections',
+          },
+        ],
+        sortOrder: 0,
+        isDefault: true,
+      }),
+      planOutput(),
+      planOutput({
+        '@id': '/api/plans/e2e-plan-max',
+        id: 'e2e-plan-max',
+        key: 'max',
+        name: 'Max',
+        description: 'For large organizations.',
+        limits: { members: 250, facilities: 125, equipment: 10000 },
+        quotas: [
+          { resource: 'members', label: 'Members', limit: 250, summary: 'Up to 250 members' },
+          {
+            resource: 'facilities',
+            label: 'Facilities',
+            limit: 125,
+            summary: 'Up to 125 facilities',
+          },
+          {
+            resource: 'equipment',
+            label: 'Equipment',
+            limit: 10000,
+            summary: 'Up to 10,000 equipment',
+          },
+          {
+            resource: 'inspections',
+            label: 'Inspections',
+            limit: 25000,
+            summary: 'Up to 25,000 inspections',
+          },
+        ],
+        sortOrder: 2,
+      }),
+    ]);
     const settings = new OrganizationSettingsPage(page);
 
     await settings.goto(E2E_ORGANIZATION_ID);
@@ -74,6 +143,12 @@ test.describe('Organization settings', () => {
     await subscriptionRequest;
     await expect(settings.billingPortalButton).toBeVisible();
     await expect(page.getByTestId('organization-plan-card-pro')).toBeVisible();
+    await expect(page.getByTestId('organization-plan-card-max')).toContainText(
+      'Everything in Pro, plus:',
+    );
+    await page.getByRole('button', { name: 'Annual' }).click();
+    await expect(page.getByTestId('organization-plan-card-free')).toContainText('Free');
+    await expect(page.getByTestId('organization-plan-card-max')).toContainText(/€990\.00\/year/);
     await expect(settings.invoiceRows).toHaveCount(1);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/settings-subscription-light-desktop.png` });
   });

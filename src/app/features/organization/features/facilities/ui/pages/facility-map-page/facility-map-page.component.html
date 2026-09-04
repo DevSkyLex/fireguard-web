@@ -9,7 +9,7 @@
           >Compliance</label
         >
         <hlm-switch
-          id="facility-map-compliance-toggle"
+          inputId="facility-map-compliance-toggle"
           data-testid="facility-map-compliance-toggle"
           [checked]="store.complianceVisible()"
           (checkedChange)="onComplianceLayerToggled($event)"
@@ -49,14 +49,18 @@
   </div>
 
   @if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
-    <app-empty-state
-      class="flex-1"
-      icon="lucideMap"
-      title="No facilities on the map yet"
-      i18n-title="@@facility.map.emptyTitle"
-      description="The map fills in as facilities get placed. Add coordinates from a facility's Information tab or when creating one."
-      i18n-description="@@facility.map.emptyDesc"
-    />
+    <div hlmEmpty class="flex-1">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideMap" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.map.emptyTitle">No facilities on the map yet</p>
+        <p hlmEmptyDescription i18n="@@facility.map.emptyDesc">
+          The map fills in as facilities get placed. Add coordinates from a facility's Information
+          tab or when creating one.
+        </p>
+      </div>
+    </div>
   } @else {
     @if (store.unplacedCount() > 0) {
       <p

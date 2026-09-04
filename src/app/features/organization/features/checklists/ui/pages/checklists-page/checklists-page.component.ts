@@ -51,10 +51,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
 import { ChecklistArchiveDialog } from '../../dialogs/checklist-archive-dialog';
@@ -107,6 +106,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
   selector: 'app-checklists-page',
   imports: [
     NgIcon,
+    ...HlmEmptyImports,
     ChecklistArchiveDialog,
     ChecklistCreateSheet,
     ChecklistEditDialog,
@@ -117,8 +117,6 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
-    EmptyState,
-    ErrorState,
     HlmButton,
     ...HlmToggleGroupImports,
   ],

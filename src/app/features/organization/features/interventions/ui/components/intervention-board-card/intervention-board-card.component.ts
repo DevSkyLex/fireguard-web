@@ -1,4 +1,3 @@
-import { CdkDrag } from '@angular/cdk/drag-drop';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,10 +13,10 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideEllipsis } from '@ng-icons/lucide';
 import {
   resolveInterventionTag,
-  type InterventionOutput,
   type InterventionStatus,
 } from '@features/organization/features/interventions/models';
-import { isInterventionBoardMoveAllowed } from '@features/organization/features/interventions/utils';
+import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
+import { resolveInterventionBoardMoveReason } from '@features/organization/features/interventions/utils';
 import { GateReasonDirective } from '@shared/gate-reason';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -25,11 +24,10 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
-import type { InterventionBoardCardViewModel } from '../intervention-board/models';
 import { InterventionTag } from '../intervention-tag';
 
 /**
@@ -37,25 +35,11 @@ import { InterventionTag } from '../intervention-tag';
  * @class InterventionBoardCard
  *
  * @description
- * One card in `InterventionBoard`'s Kanban board: the `FG-{number}`
- * reference, a link to the detail page, the priority tag, the due date
- * (overdue-styled, icon + colour, never colour alone), the responsible
- * member's avatar and name when resolved, and any labels the intervention
- * carries.
- *
- * The card is the pointer-drag surface (`cdkDrag`, host template), but drag
- * is an enhancement, never the only path: the "Move to…" menu offers the
- * same status moves by click or keyboard, gated by the same
- * {@link isInterventionBoardMoveAllowed} `InterventionBoard`'s own
- * `cdkDropListEnterPredicate` calls, so the two paths can never disagree
- * about what is legal — mirroring
- * `InterventionTable`'s row menu, including its disabled-with-title pattern
- * for the one identity-restricted move (withdrawing a submission).
- *
- * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls no
- * service; {@link moveRequested} is the only write path out, bubbled through
- * `InterventionBoard` to `InterventionsPage`, which decides whether to call
- * `InterventionStore.transition`.
+ * Domain-owned card content projected into shared Board: reference, title,
+ * deadline and responsible member, with plain labels and non-default priority only. Native card slots keep
+ * the action separate from long titles. Board owns pointer dragging; this card
+ * supplies the equivalent keyboard/menu path using the same feature policy.
+ * It emits a status request and never calls a store or a service.
  *
  * @version 1.0.0
  *
@@ -65,16 +49,15 @@ import { InterventionTag } from '../intervention-tag';
   selector: 'app-intervention-board-card',
   imports: [
     GateReasonDirective,
-    CdkDrag,
     OrgDatePipe,
     RouterLink,
     NgIcon,
     InterventionTag,
     HlmButton,
-    HlmBadge,
     ...HlmSpinnerImports,
     ...HlmAvatarImports,
     ...HlmDropdownMenuImports,
+    ...HlmCardImports,
   ],
   providers: [provideIcons({ lucideCircleAlert, lucideEllipsis })],
   templateUrl: './intervention-board-card.component.html',
@@ -98,6 +81,20 @@ export class InterventionBoardCard {
   public readonly canTransition: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property currentMemberIri
+   * @readonly
+   *
+   * @description
+   * Active organization member used by the same execution membership policy as pointer drops.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly currentMemberIri: InputSignal<string | null> = input<string | null>(null);
+
+  /**
    * Whether this card's own transition is currently in flight — drag-locked
    * entirely and the menu disabled, since its cached `allowedTransitions`
    * describe the pre-transition state until the server entity lands.
@@ -116,8 +113,21 @@ export class InterventionBoardCard {
   //#endregion
 
   //#region Properties
-  /** The reason a gated "Move to…" entry shows on its `title`. */
-  protected readonly withdrawOnlyReason: string = $localize`:@@intervention.board.withdrawOnly:Only the responsible can withdraw this submission.`;
+  /**
+   * Property hasDistinctPriority
+   * @readonly
+   *
+   * @description
+   * Shows only non-default priority so ordinary cards keep their operational details prominent.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasDistinctPriority: Signal<boolean> = computed(
+    () => this.item().intervention.priority !== 'normal',
+  );
 
   /** The menu trigger's accessible name while the card's own transition is in flight. */
   protected readonly updatingReason: string = $localize`:@@intervention.board.cardUpdating:This card is updating.`;
@@ -156,39 +166,43 @@ export class InterventionBoardCard {
   }
 
   /**
-   * Method isMoveGated
-   * @description Whether a target is legal per {@link isInterventionBoardMoveAllowed} — the same check the page's drop predicate applies.
+   * Method moveBlockedReason
+   * @method moveBlockedReason
+   *
+   * @description
+   * Explains the same transition and membership restrictions as the page's drop predicate.
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
+   *
    * @param {InterventionStatus} target - The offered status target.
-   * @returns {boolean} True when the entry must render disabled.
+   * @returns {string | null} The visible reason for disabling the entry, or null.
    */
-  protected isMoveGated(target: InterventionStatus): boolean {
-    return !isInterventionBoardMoveAllowed(this.item().intervention, target);
+  protected moveBlockedReason(target: InterventionStatus): string | null {
+    return resolveInterventionBoardMoveReason(
+      this.item().intervention,
+      target,
+      this.currentMemberIri(),
+    );
   }
 
   /**
    * Method requestMove
-   * @description Emits {@link moveRequested} for a legal target only.
+   * @method requestMove
+   *
+   * @description
+   * Emits a move request only after rechecking the current transition and membership policy.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionStatus} target - The offered status target.
    * @returns {void}
    */
   protected requestMove(target: InterventionStatus): void {
-    if (this.isMoveGated(target)) return;
+    if (!this.canTransition() || this.locked() || this.moveBlockedReason(target) !== null) return;
     this.moveRequested.emit(target);
   }
 
-  /**
-   * Method dragData
-   * @description The card's own intervention, carried by `cdkDrag` as `cdkDragData` for the page's drop predicate and drop handler.
-   * @access protected
-   * @since 1.0.0
-   * @returns {InterventionOutput} The card's intervention.
-   */
-  protected dragData(): InterventionOutput {
-    return this.item().intervention;
-  }
   //#endregion
 }

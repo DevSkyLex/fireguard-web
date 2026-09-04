@@ -13,7 +13,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
   lucideCircleDot,
@@ -27,13 +27,16 @@ import type {
   ApprovalRequestOutput,
   ApprovalStatus,
 } from '@features/organization/features/approvals/models';
+import { resolveApprovalTag } from '@features/organization/features/approvals/models';
 import {
   ApprovalRequestsStore,
   type ApprovalRequestsStoreType,
 } from '@features/organization/features/approvals/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
+  MEMBER_DIRECTORY_PORT,
   REGIONAL_FORMATTING_PORT,
+  type MemberDirectoryPort,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
 import {
@@ -42,14 +45,13 @@ import {
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { ApprovalStatusTag } from '../../components/approval-status-tag';
 import {
   ApprovalDecisionDialog,
@@ -81,15 +83,13 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * `app-collection-filter-bar` (`@shared/collection-filters`) carries the
  * status and action-type narrowings as editable chips above the request grid
  * and the shared decision dialog gated `organization.approvals.decide`. The
- * status chip keeps its `hlm-toggle-group` of `app-approval-status-tag`
- * options as its value control — the same control the toolbar used to render
- * directly — so the raw enum never leaks into the template; there is no
- * popover to drive open on a boolean-shaped toggle group, so it carries no
- * `state`/`stateChanged` wiring. The action-type chip's value control is
- * `app-collection-filter-select` (`@shared/collection-filters`), sourced
- * from the catalog endpoint and, unlike the status chip, wired to
- * {@link fieldPopoverState}/{@link onFieldPopoverStateChanged} so it opens
- * itself the instant "Action type" is picked from the bar's "+ Filter" menu
+ * status chip uses the shared single-value selector and projects
+ * `app-approval-status-tag` into its option and selected-value templates, so
+ * the raw enum never leaks into the template. The action-type chip uses the
+ * same `app-collection-filter-select` (`@shared/collection-filters`), sourced
+ * from the catalog endpoint. Both controls are wired to
+ * {@link fieldPopoverState}/{@link onFieldPopoverStateChanged} so each opens
+ * itself the instant it is picked from the bar's "+ Filter" menu
  * — the same contract every other chip on this page's sibling collection
  * pages already honours; its two-entry catalog needs no popover search.
  * Both fields are genuinely optional at the wire
@@ -111,8 +111,8 @@ type ApprovalFilterKey = 'status' | 'actionType';
 @Component({
   selector: 'app-approvals-page',
   imports: [
-    EmptyState,
-    ErrorState,
+    NgIcon,
+    ...HlmEmptyImports,
     ApprovalStatusTag,
     ApprovalRequestTable,
     ApprovalDecisionDialog,
@@ -122,7 +122,6 @@ type ApprovalFilterKey = 'status' | 'actionType';
     CollectionPagination,
     CollectionToolbar,
     HlmButton,
-    ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({ lucideCircleAlert, lucideCircleDot, lucideLock, lucideShieldCheck, lucideTag }),
@@ -154,6 +153,10 @@ export class ApprovalsPage {
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
+  /** Member directory used only to turn approval actor references into names. */
+  private readonly memberDirectory: MemberDirectoryPort =
+    inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
+
   /**
    * Property regionalFormatting
    * @readonly
@@ -165,6 +168,19 @@ export class ApprovalsPage {
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
+  /**
+   * Property memberLabelOf
+   * @readonly
+   *
+   * @description Resolves an approval requester or decider through the organization member directory.
+   *
+   * @access protected
+   * @since 1.3.0
+   * @type {(memberId: string) => string}
+   */
+  protected readonly memberLabelOf: (memberId: string) => string = (memberId: string): string =>
+    this.memberDirectory.displayNameFor(memberId);
+
   /** The list and decision dataset, provided by this route. */
   protected readonly store: ApprovalRequestsStoreType =
     inject<ApprovalRequestsStoreType>(ApprovalRequestsStore);
@@ -174,8 +190,13 @@ export class ApprovalsPage {
     OrganizationPermissionService,
   );
 
-  /** Every status chip offered by the status field's value control. */
-  protected readonly statusValues: readonly ApprovalStatus[] = STATUS_VALUES;
+  /** Every status offered by the status field's single-value selector. */
+  protected readonly statusOptions: readonly CollectionFilterOption[] = STATUS_VALUES.map(
+    (status: ApprovalStatus): CollectionFilterOption => ({
+      value: status,
+      label: resolveApprovalTag(status).label,
+    }),
+  );
 
   /**
    * Property status
@@ -328,6 +349,7 @@ export class ApprovalsPage {
       const pageSize: number = this.pageSize();
 
       untracked((): void => {
+        this.memberDirectory.ensureLoaded(organizationId);
         this.store.load({
           organizationId,
           options: { page, itemsPerPage: pageSize },
@@ -365,19 +387,17 @@ export class ApprovalsPage {
    * Method applyStatus
    *
    * @description
-   * Narrows the list to one status, from the status chip's toggle group, or
-   * clears it to `null` (every status) when the group deselects — either the
-   * active button clicked again (`nullable`) or the chip's own remove
-   * button, which routes here through {@link onFieldRemoved}.
+   * Narrows the list to one status from the status chip's single-value
+   * selector, or clears it to `null` through the chip's remove button.
    *
    * @access protected
    * @since 1.0.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   * @param {string | null | undefined} value - The selector's emitted value.
    * @returns {void}
    */
-  protected applyStatus(value: string | readonly string[] | null | undefined): void {
-    if (Array.isArray(value) || value === undefined) return;
-    if (value !== null && !this.statusValues.includes(value as ApprovalStatus)) return;
+  protected applyStatus(value: string | null | undefined): void {
+    if (value === undefined) return;
+    if (value !== null && !STATUS_VALUES.includes(value as ApprovalStatus)) return;
 
     this.page.set(1);
     this.status.set(value as ApprovalStatus | null);
@@ -400,30 +420,32 @@ export class ApprovalsPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether the "Action type" chip's `app-collection-filter-select` should currently render open — true only while {@link openFilterKey} is `'actionType'`. The "Status" chip's `hlm-toggle-group` has no popover to drive, so this is never called for it.
+   * @description Whether one filter chip's `app-collection-filter-select` should currently render open.
    * @access protected
    * @since 1.2.0
+   * @param {ApprovalFilterKey} key - The field whose selector state is requested.
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
-  protected fieldPopoverState(): BrnOverlayState {
-    return this.openFilterKey() === 'actionType' ? 'open' : 'closed';
+  protected fieldPopoverState(key: ApprovalFilterKey): BrnOverlayState {
+    return this.openFilterKey() === key ? 'open' : 'closed';
   }
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with the "Action type" chip's own value control.
+   * @description Keeps {@link openFilterKey} in sync with one chip's value control.
    * @access protected
    * @since 1.2.0
+   * @param {ApprovalFilterKey} key - The field whose selector changed state.
    * @param {BrnOverlayState} state - Its next state.
    * @returns {void}
    */
-  protected onFieldPopoverStateChanged(state: BrnOverlayState): void {
+  protected onFieldPopoverStateChanged(key: ApprovalFilterKey, state: BrnOverlayState): void {
     if (state === 'open') {
-      this.openFilterKey.set('actionType');
+      this.openFilterKey.set(key);
       return;
     }
 
-    if (this.openFilterKey() === 'actionType') this.openFilterKey.set(null);
+    if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
   /**

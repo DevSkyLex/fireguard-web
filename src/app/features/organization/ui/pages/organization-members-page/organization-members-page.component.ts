@@ -67,12 +67,11 @@ import {
 import { StatTile } from '@features/organization/ui/components';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -213,10 +212,9 @@ type OrganizationMembersKpiTile = {
 @Component({
   selector: 'app-organization-members-page',
   imports: [
-    HlmCardTitle,
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
+    HlmCardTitle,
     HlmButton,
     CollectionPagination,
     CollectionSearchBox,
@@ -702,6 +700,29 @@ export class OrganizationMembersPage {
       this.statusFilter() !== 'all' ||
       this.roleFilter() !== null,
   );
+
+  /**
+   * Property roleFilterLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the role filter's transport value to reader-facing text for
+   * the closed Spartan select trigger. A stale or not-yet-resolved role id
+   * degrades to "Unknown role" so an internal UUID is never exposed while
+   * roles load or after a bookmarked role has been removed.
+   *
+   * @access protected
+   * @since 2.1.0
+   * @type {(value: string) => string}
+   */
+  protected readonly roleFilterLabelOf: (value: string) => string = (value: string): string => {
+    if (value === 'all') return $localize`:@@org.members.roleFilterAll:All roles`;
+
+    return (
+      this.store.roles().find((role): boolean => role.id === value)?.name ??
+      $localize`:@@org.members.roleFilterUnknown:Unknown role`
+    );
+  };
 
   /** Fallback text for the action-error banner when the backend sent no message. */
   protected readonly actionErrorFallback: string = $localize`:@@org.members.actionErrorFallback:The action could not be completed.`;

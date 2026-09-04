@@ -27,6 +27,7 @@ import {
   type InviteOrganizationMemberInput,
   type OrganizationInvitationOutput,
   type OrganizationMemberOutput,
+  type OrganizationRoleOutput,
 } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationQuotaStore } from '@features/organization/state';
@@ -115,6 +116,7 @@ describe('OrganizationMembersPage', () => {
   let mutationError: Signal<StoreError | null>;
   let isMutating: Signal<boolean>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
+  let roles: WritableSignal<readonly OrganizationRoleOutput[]>;
   let load: ReturnType<typeof vi.fn>;
   let loadMembers: ReturnType<typeof vi.fn>;
   let loadInvitations: ReturnType<typeof vi.fn>;
@@ -180,7 +182,7 @@ describe('OrganizationMembersPage', () => {
               memberEntityMap,
               invitations: computed(() => []),
               activeInvitations,
-              roles: signal([]),
+              roles,
               invitationLinks: signal({}),
               membersTotal,
               membersActiveTotal,
@@ -236,6 +238,7 @@ describe('OrganizationMembersPage', () => {
       ORGANIZATION_PERMISSION.ROLES_READ,
       ORGANIZATION_PERMISSION.ROLES_MANAGE,
     ]);
+    roles = signal<readonly OrganizationRoleOutput[]>([]);
     load = vi.fn();
     loadMembers = vi.fn();
     loadInvitations = vi.fn();
@@ -264,6 +267,21 @@ describe('OrganizationMembersPage', () => {
       roleId: 'role-7',
     });
     expect(loadMembers).not.toHaveBeenCalled();
+  });
+
+  it('should render a role name instead of its id in the role filter trigger', async () => {
+    roleIdParam = '7c99e153-c6f0-470b-9711-1719cbc421d2';
+    roles.set([
+      {
+        id: roleIdParam,
+        name: 'Safety manager',
+      } as OrganizationRoleOutput,
+    ]);
+    await createPage();
+
+    const trigger: HTMLElement | null = byTestId('organization-members-role-filter');
+    expect(trigger?.textContent).toContain('Safety manager');
+    expect(trigger?.textContent).not.toContain(roleIdParam);
   });
 
   it('should load exactly the resources the routed member’s permissions allow', async () => {

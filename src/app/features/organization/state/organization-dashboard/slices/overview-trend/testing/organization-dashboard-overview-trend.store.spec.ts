@@ -67,7 +67,18 @@ describe('OverviewTrendStore', () => {
     store = TestBed.inject(OverviewTrendStore);
   });
 
-  it('should auto-load the three overview trend resources', async () => {
+  it('defers queries until analysis is activated and does not reload on reactivation', async () => {
+    await flushEffects();
+    expect(mockOrganizationService.getDashboardInspectionsTrend).not.toHaveBeenCalled();
+    store.activate();
+    await flushEffects();
+    store.activate();
+    await flushEffects();
+    expect(mockOrganizationService.getDashboardInspectionsTrend).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads the three overview trend resources after activation', async () => {
+    store.activate();
     await flushEffects();
 
     expect(mockOrganizationService.getDashboardInspectionsTrend).toHaveBeenCalledTimes(1);

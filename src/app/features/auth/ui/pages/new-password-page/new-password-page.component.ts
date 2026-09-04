@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 
 /**
@@ -22,7 +23,7 @@ import { PageHeading } from '@shared/page-heading';
  */
 @Component({
   selector: 'app-new-password-page',
-  imports: [NewPasswordForm, PageHeading],
+  imports: [RouterLink, NewPasswordForm, PageHeading],
   templateUrl: './new-password-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,7 +57,16 @@ export class NewPasswordPage {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /** @description Reads the validated destination shared by the authentication steps. */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   //#endregion
+
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
 
   //#region Lifecycle
   /**
@@ -80,7 +90,9 @@ export class NewPasswordPage {
     if (!isDone) return;
 
     untracked((): void => {
-      void this.router.navigate(['/auth/login']);
+      void this.router.navigate(['/auth/login'], {
+        queryParams: { returnUrl: this.returnUrl || undefined },
+      });
     });
   });
   //#endregion

@@ -34,7 +34,7 @@ export type OrganizationTrendChartNoticeVariant = 'muted' | 'error';
  * (`ARCHITECTURE.md` §2.9/§7).
  *
  * The caller registers `icon` with `provideIcons()` so this concept pulls in
- * no icon set of its own, matching `EmptyState`'s / `ErrorState`'s
+ * no icon set of its own, matching the Spartan `Empty` composition's
  * convention.
  *
  * The host's `role` tracks {@link variant} rather than a fixed `status`: a

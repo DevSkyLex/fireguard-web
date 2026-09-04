@@ -27,10 +27,12 @@ import {
   HlmSidebarWrapper,
 } from '@shared/ui/sidebar';
 import { DashboardPageHeader } from './components';
+import type { SidebarExtensionContribution } from './models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
+  DASHBOARD_SIDEBAR_EXTENSION_SLOT,
   DASHBOARD_SIDEBAR_FOOTER_SLOT,
   DASHBOARD_SIDEBAR_HEADER_SLOT,
   DASHBOARD_SIDEBAR_NAV_SLOT,
@@ -41,10 +43,10 @@ import {
  * @class DashboardLayout
  *
  * @description
- * The application shell, built on spartan's `inset` sidebar variant: the sidebar
- * keeps the page canvas while the main column floats above it as a rounded card,
- * carrying the sidebar trigger, the page tools and the routed outlet. A
- * mono-active contextual panel repeats that card on the right.
+ * The application shell, built on spartan's standard sidebar variant. The main
+ * column fills its available area without outer gutters, rounded corners or
+ * shadow, carrying the sidebar trigger, page tools and routed outlet. The
+ * contextual panel is flush on desktop and remains an overlay on mobile.
  *
  * Everything it renders comes from slots, so the shell knows no feature. The
  * sidebar itself is spartan's — collapse state, its cookie, the Ctrl/Cmd+B
@@ -53,6 +55,8 @@ import {
  *
  * The shell never scrolls: it is `overflow-hidden` and each column owns its own
  * scroller, so a pinned toolbar stays put while its content moves.
+ * An exclusive sidebar extension can add a column between navigation and content.
+ * Below 1024px its owner chooses whether that column or routed content is visible.
  *
  * The 48px header is sized to the 32px control rhythm, not to hold a title:
  * that lives in `DashboardPageHeader`, a second band beneath it carrying the
@@ -103,6 +107,38 @@ import {
 })
 export class DashboardLayout {
   //#region Properties
+  /**
+   * Property sidebarExtensionContributions
+   * @readonly
+   *
+   * @description
+   * Feature-owned candidates for the contextual navigation column.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {readonly SidebarExtensionContribution[]}
+   */
+  private readonly sidebarExtensionContributions: readonly SidebarExtensionContribution[] =
+    inject<SidebarExtensionContribution[]>(DASHBOARD_SIDEBAR_EXTENSION_SLOT, { optional: true }) ??
+    [];
+
+  /**
+   * Property sidebarExtension
+   * @readonly
+   *
+   * @description
+   * Active extension, resolved without any feature-specific shell logic.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<SidebarExtensionContribution | null>}
+   */
+  protected readonly sidebarExtension: Signal<SidebarExtensionContribution | null> = computed(() =>
+    resolveExclusiveSlot(this.sidebarExtensionContributions),
+  );
+
   /**
    * Property sidebarHeader
    * @readonly
@@ -228,6 +264,21 @@ export class DashboardLayout {
     viewChild<ElementRef<HTMLElement>>('content');
 
   /**
+   * Property extensionContent
+   * @readonly
+   *
+   * @description
+   * Alternate skip-link target when the extension replaces main content on mobile.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly extensionContent: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('extensionContent');
+
+  /**
    * Property toggleSidebarLabel
    * @readonly
    *
@@ -249,7 +300,7 @@ export class DashboardLayout {
    * @method skipToContent
    *
    * @description
-   * Moves focus to the main column, bypassing the whole sidebar.
+   * Moves focus to the visible content, including a mobile extension replacing main.
    *
    * The anchor's own default is suppressed: the document declares
    * `<base href="/">`, so following a bare fragment resolves against the base
@@ -264,7 +315,11 @@ export class DashboardLayout {
    */
   protected skipToContent(event: Event): void {
     event.preventDefault();
-    this.content()?.nativeElement.focus();
+    const mainContent = this.content()?.nativeElement;
+    const target = mainContent?.getClientRects().length
+      ? mainContent
+      : (this.extensionContent()?.nativeElement ?? mainContent);
+    target?.focus();
   }
   //#endregion
 }

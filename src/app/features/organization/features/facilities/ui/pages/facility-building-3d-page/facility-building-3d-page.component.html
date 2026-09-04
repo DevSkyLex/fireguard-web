@@ -23,64 +23,99 @@
       <hlm-skeleton class="h-full w-full flex-1" />
     </div>
   } @else if (store.queryHasError()) {
-    <app-error-state
+    <div
+      hlmEmpty
+      role="alert"
       class="flex flex-1 flex-col items-center justify-center"
-      icon="lucideTriangleAlert"
-      title="Couldn't load the building model"
-      i18n-title="@@facility.building3d.errorTitle"
-      [description]="store.queryError()?.message ?? null"
       data-testid="facility-3d-error"
     >
-      <button hlmBtn type="button" (click)="retryLoad()">
-        <span i18n="@@facility.building3d.errorRetry">Retry</span>
-      </button>
-    </app-error-state>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.building3d.errorTitle">
+          Couldn't load the building model
+        </p>
+        <p hlmEmptyDescription>{{ store.queryError()?.message ?? null }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn type="button" (click)="retryLoad()">
+          <span i18n="@@facility.building3d.errorRetry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (store.isEmpty()) {
-    <app-empty-state
+    <div
+      hlmEmpty
       class="flex flex-1 flex-col items-center justify-center"
-      icon="lucideBoxes"
-      title="This building has no floors yet"
-      i18n-title="@@facility.building3d.emptyTitle"
-      description="Add a floor from the record's Plans tab to see it here."
-      i18n-description="@@facility.building3d.emptyDesc"
       data-testid="facility-3d-empty"
     >
-      @if (canWrite()) {
-        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
-          <span i18n="@@facility.building3d.emptyCta">Go to Plans</span>
-        </a>
-      }
-    </app-empty-state>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideBoxes" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.building3d.emptyTitle">This building has no floors yet</p>
+        <p hlmEmptyDescription i18n="@@facility.building3d.emptyDesc">
+          Add a floor from the record's Plans tab to see it here.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (canWrite()) {
+          <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+            <span i18n="@@facility.building3d.emptyCta">Go to Plans</span>
+          </a>
+        }
+      </div>
+    </div>
   } @else if (store.hasNoGeometry()) {
-    <app-empty-state
+    <div
+      hlmEmpty
       class="flex flex-1 flex-col items-center justify-center"
-      icon="lucideBoxes"
-      title="No floor has a drawn plan yet"
-      i18n-title="@@facility.building3d.noGeometryTitle"
-      description="The 3D view is built from the outlines drawn on each floor's plan. Draw them from the record's Plans tab and they will appear here."
-      i18n-description="@@facility.building3d.noGeometryDesc"
       data-testid="facility-3d-no-geometry"
     >
-      @if (canWrite()) {
-        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
-          <span i18n="@@facility.building3d.noGeometryCta">Go to Plans</span>
-        </a>
-      }
-    </app-empty-state>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideBoxes" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.building3d.noGeometryTitle">
+          No floor has a drawn plan yet
+        </p>
+        <p hlmEmptyDescription i18n="@@facility.building3d.noGeometryDesc">
+          The 3D view is built from the outlines drawn on each floor's plan. Draw them from the
+          record's Plans tab and they will appear here.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (canWrite()) {
+          <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+            <span i18n="@@facility.building3d.noGeometryCta">Go to Plans</span>
+          </a>
+        }
+      </div>
+    </div>
   } @else if (!webglSupported()) {
-    <app-empty-state
+    <div
+      hlmEmpty
       class="flex flex-1 flex-col items-center justify-center"
-      icon="lucideMonitorOff"
-      title="This device can't render the 3D view"
-      i18n-title="@@facility.building3d.unsupportedTitle"
-      description="Your browser doesn't support WebGL. View the 2D floor plan instead."
-      i18n-description="@@facility.building3d.unsupportedDesc"
       data-testid="facility-3d-unsupported"
     >
-      <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
-        <span i18n="@@facility.building3d.unsupportedPlanLink">View 2D plan</span>
-      </a>
-    </app-empty-state>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideMonitorOff" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.building3d.unsupportedTitle">
+          This device can't render the 3D view
+        </p>
+        <p hlmEmptyDescription i18n="@@facility.building3d.unsupportedDesc">
+          Your browser doesn't support WebGL. View the 2D floor plan instead.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+          <span i18n="@@facility.building3d.unsupportedPlanLink">View 2D plan</span>
+        </a>
+      </div>
+    </div>
   } @else {
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="flex flex-wrap items-center gap-2">

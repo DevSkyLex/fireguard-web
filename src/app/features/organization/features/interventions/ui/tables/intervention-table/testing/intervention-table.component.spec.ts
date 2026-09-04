@@ -156,7 +156,10 @@ describe('InterventionTable', () => {
     await fixture.whenStable();
 
     expect(element.querySelectorAll('thead th').length).toBe(before - 2);
-    expect(element.textContent).not.toContain('Warehouse B');
+    expect(element.querySelector('table')?.textContent).not.toContain('Warehouse B');
+    expect(element.querySelector('[data-testid="intervention-table-card"]')?.textContent).toContain(
+      'Warehouse B',
+    );
     expect(
       element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag').length,
     ).toBe(2);

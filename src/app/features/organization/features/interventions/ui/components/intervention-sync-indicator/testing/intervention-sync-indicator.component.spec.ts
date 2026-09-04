@@ -83,7 +83,9 @@ describe('InterventionSyncIndicator', () => {
 
     expect(trigger()?.getAttribute('aria-label')).toBe('Offline, changes queued locally');
     expect(trigger()?.querySelector('[data-testid="intervention-sync-blocked-count"]')).toBeNull();
-    expect(trigger()?.querySelector('[data-testid="intervention-sync-pending-count"]')).toBeNull();
+    expect(
+      trigger()?.querySelector('[data-testid="intervention-sync-pending-count"]')?.textContent,
+    ).toContain('3');
   });
 
   it('should read as blocked ahead of syncing or pending, with a destructive count', async () => {

@@ -20,7 +20,7 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import { serverMessagesOf } from '@shared/form-feedback';
-import { PersonOption } from '@shared/person-option';
+
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -31,6 +31,7 @@ import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionWorkItemFormValues } from './models';
 
+import { HlmItemImports } from '@shared/ui/item';
 /** The kinds of field work an item can record. */
 const ACTION_VALUES: ReadonlyArray<InterventionWorkItemAction> = [
   'site_setup',
@@ -67,12 +68,12 @@ const EMPTY_VALUES: InterventionWorkItemFormValues = {
 @Component({
   selector: 'app-intervention-work-item-form',
   imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
     RequiredMarker,
-    PersonOption,
     FormField,
     HlmButton,
     InterventionTag,
-    ...HlmAvatarImports,
     ...HlmComboboxImports,
     ...HlmFieldImports,
     ...HlmSelectImports,

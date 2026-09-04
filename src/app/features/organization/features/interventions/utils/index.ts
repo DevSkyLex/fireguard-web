@@ -1,7 +1,10 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
 export { toUtcMidnight } from './intervention-date-only/intervention-date-only.utils';
 export { resolveCommandTransitionTarget } from './intervention-command-target/intervention-command-target.utils';
-export { isInterventionBoardMoveAllowed } from './intervention-board-move/intervention-board-move.utils';
+export {
+  isInterventionBoardMoveAllowed,
+  resolveInterventionBoardMoveReason,
+} from './intervention-board-move/intervention-board-move.utils';
 export {
   buildInterventionExportOptions,
   buildInterventionListOptions,

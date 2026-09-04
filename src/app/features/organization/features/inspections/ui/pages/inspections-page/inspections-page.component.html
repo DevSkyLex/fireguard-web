@@ -113,44 +113,62 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@inspection.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to inspections."
-      i18n-description="@@inspection.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@inspection.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@inspection.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to inspections.
+        </p>
+      </div>
+    </div>
   } @else if (store.listCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load inspections"
-      i18n-title="@@inspection.list.errorTitle"
-      description="The inspections could not be loaded. Check your connection and try again."
-      i18n-description="@@inspection.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="inspections-retry" (click)="reload()">
-        <span i18n="@@inspection.list.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@inspection.list.errorTitle">Couldn't load inspections</p>
+        <p hlmEmptyDescription i18n="@@inspection.list.errorText">
+          The inspections could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="inspections-retry" (click)="reload()">
+          <span i18n="@@inspection.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (!store.isLoadingInspections() && items().length === 0) {
-    <app-empty-state
-      [icon]="hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'"
-      title="No inspections found"
-      i18n-title="@@inspection.table.emptyTitle"
-      description="Adjust your filters, or open the inspections your team carries out."
-      i18n-description="@@inspection.table.emptyDesc"
-    >
-      @if (hasSearchOrFilters()) {
-        <button hlmBtn variant="outline" (click)="clearFilters()">
-          <span i18n="@@common.clearFilters">Clear filters</span>
-        </button>
-      } @else if (canCreate()) {
-        <button hlmBtn type="button" (click)="openCreate()">
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@inspection.newButton">New inspection</span>
-        </button>
-      }
-    </app-empty-state>
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        @if (hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'; as iconName) {
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon [name]="iconName" aria-hidden="true" />
+          </div>
+        }
+        <p hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</p>
+        <p hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
+          Adjust your filters, or open the inspections your team carries out.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (hasSearchOrFilters()) {
+          <button hlmBtn variant="outline" (click)="clearFilters()">
+            <span i18n="@@common.clearFilters">Clear filters</span>
+          </button>
+        } @else if (canCreate()) {
+          <button hlmBtn type="button" (click)="openCreate()">
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span i18n="@@inspection.newButton">New inspection</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     <app-inspection-table
       [items]="items()"
@@ -174,31 +192,59 @@
 </div>
 
 <ng-template #pageActions>
-  <a
-    hlmBtn
-    variant="outline"
-    class="min-w-0 shrink max-sm:min-h-11"
-    data-testid="inspections-analytics-link"
-    i18n-aria-label="@@inspection.analyticsButton"
-    aria-label="Analytics"
-    [routerLink]="[...listRouteBase(), 'analytics']"
-  >
-    <ng-icon name="lucideChartColumn" aria-hidden="true" />
-    <span class="truncate max-sm:hidden" i18n="@@inspection.analyticsButton">Analytics</span>
-  </a>
   @if (canCreate()) {
-    <button
+    <div hlmButtonGroup>
+      <button
+        hlmBtn
+        type="button"
+        class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+        data-testid="inspections-new"
+        i18n-aria-label="@@inspection.newButton"
+        aria-label="New inspection"
+        (click)="openCreate()"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span class="truncate max-sm:hidden" i18n="@@inspection.newButton">New inspection</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        size="icon"
+        align="end"
+        class="max-sm:min-h-11 max-sm:min-w-11"
+        data-testid="inspections-actions-menu"
+        i18n-aria-label="@@inspection.analyticsButton"
+        aria-label="Analytics"
+        [hlmDropdownMenuTrigger]="inspectionActions"
+      >
+        <ng-icon name="lucideChevronDown" aria-hidden="true" />
+      </button>
+    </div>
+    <ng-template #inspectionActions>
+      <hlm-dropdown-menu>
+        <a
+          hlmDropdownMenuItem
+          data-testid="inspections-analytics-link"
+          [routerLink]="[...listRouteBase(), 'analytics']"
+        >
+          <ng-icon name="lucideChartColumn" aria-hidden="true" />
+          <span i18n="@@inspection.analyticsButton">Analytics</span>
+        </a>
+      </hlm-dropdown-menu>
+    </ng-template>
+  } @else {
+    <a
       hlmBtn
-      type="button"
+      variant="outline"
       class="min-w-0 shrink max-sm:min-h-11"
-      data-testid="inspections-new"
-      i18n-aria-label="@@inspection.newButton"
-      aria-label="New inspection"
-      (click)="openCreate()"
+      data-testid="inspections-analytics-link"
+      i18n-aria-label="@@inspection.analyticsButton"
+      aria-label="Analytics"
+      [routerLink]="[...listRouteBase(), 'analytics']"
     >
-      <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@inspection.newButton">New inspection</span>
-    </button>
+      <ng-icon name="lucideChartColumn" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@inspection.analyticsButton">Analytics</span>
+    </a>
   }
 </ng-template>
 

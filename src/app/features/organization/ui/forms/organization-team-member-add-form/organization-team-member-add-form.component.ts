@@ -12,12 +12,14 @@ import {
 } from '@angular/core';
 import type { AddTeamMemberInput, MemberSelectOption } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
-import { PersonOption } from '@shared/person-option';
+
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /** The value standing in for "no member picked" in the combobox — a member id is never an empty string. */
 const NO_PICK_VALUE: string = '';
 
@@ -45,7 +47,14 @@ const NO_PICK_VALUE: string = '';
  */
 @Component({
   selector: 'app-organization-team-member-add-form',
-  imports: [HlmButton, HlmInput, PersonOption, ...HlmComboboxImports, ...HlmFieldImports],
+  imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    HlmButton,
+    HlmInput,
+    ...HlmComboboxImports,
+    ...HlmFieldImports,
+  ],
   templateUrl: './organization-team-member-add-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

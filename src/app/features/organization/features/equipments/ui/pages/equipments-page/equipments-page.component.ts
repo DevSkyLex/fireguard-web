@@ -69,9 +69,8 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
@@ -122,10 +121,9 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
 @Component({
   selector: 'app-equipments-page',
   imports: [
-    EquipmentCreateSheet,
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
+    EquipmentCreateSheet,
     EquipmentKpiStrip,
     EquipmentStatusTag,
     EquipmentTable,

@@ -124,13 +124,12 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardTitle } from '@shared/ui/card';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmKbd } from '@shared/ui/kbd';
 import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -265,12 +264,12 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
-    HlmCardTitle,
-    HlmKbd,
     NgIcon,
+    ...HlmEmptyImports,
+    InterventionDiscussionSheet,
+    ...HlmCollapsibleImports,
+    HlmKbd,
     NgTemplateOutlet,
-    EmptyState,
-    ErrorState,
     HlmButton,
     HlmSeparator,
     HlmSkeleton,
@@ -283,7 +282,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionChangeList,
     InterventionAbandonDialog,
     InterventionConfirmDialog,
-    InterventionDiscussionSheet,
     InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
@@ -825,18 +823,8 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Whether the rail lays out as a wide side column (`vertical`,
-   * `hlm-tabs-list`) or a horizontally-scrollable row above the tab content
-   * on narrower ones (`horizontal`, `hlm-paginated-tabs-list` — brain's own
-   * overflow pattern for a tab row that doesn't fit, in place of wrapping) —
-   * driven by {@link detailColumns}' measured width crossing 1152px
-   * (`@6xl/detail`), not a viewport media query: the shell sidebar is
-   * collapsible, so the wrapper's real width varies independently of the
-   * viewport. The same `data-orientation` attribute that already switches
-   * `hlm-tabs`' internal flex axis and keyboard handling drives the
-   * responsive collapse, rather than fighting its variant-scoped classes
-   * with an unconditional override. Starts `horizontal` (server/pre-hydration
-   * default) and upgrades once the browser measures the wrapper.
+   * Sections retain a horizontal native line-tab order at every width.
+   * The tab strip alone scrolls when its contents exceed the available width.
    *
    * @access protected
    * @since 4.5.0
@@ -866,6 +854,18 @@ export class InterventionDetailPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly propertiesRailVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * @description
+   * About starts open on the first desktop measurement. Subsequent resizes keep
+   * the user's choice and never hide a focused description editor.
+   * @access protected
+   * @since 6.6.0
+   * @type {WritableSignal<boolean | undefined>}
+   */
+  protected readonly aboutExpanded: WritableSignal<boolean | undefined> = signal<
+    boolean | undefined
+  >(undefined);
 
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
@@ -1051,6 +1051,25 @@ export class InterventionDetailPage {
 
   /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
   protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Activity stays collapsed until the operator opens it or chooses Discussion. */
+  protected readonly activityExpanded: WritableSignal<boolean> = signal<boolean>(false);
+
+  /** Activity region used only after the explicit Discussion action. */
+  private readonly activityContent: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild('activityContent');
+
+  /** Reveals the activity and moves the keyboard cursor into its comment field. */
+  protected openActivity(): void {
+    this.setLinkedTab('overview');
+    this.activityExpanded.set(true);
+    setTimeout((): void => {
+      const field: HTMLTextAreaElement | null | undefined =
+        this.activityContent()?.nativeElement.querySelector('textarea');
+      field?.scrollIntoView?.({ block: 'nearest' });
+      field?.focus({ preventScroll: true });
+    });
+  }
 
   /**
    * Property canDiscuss
@@ -2701,7 +2720,10 @@ export class InterventionDetailPage {
 
   /** Returns to the list. */
   protected navigateToList(): void {
-    void this.router.navigate(['/organizations', this.organizationId(), 'interventions']);
+    void this.router.navigate(['/organizations', this.organizationId(), 'interventions'], {
+      queryParams: { tab: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /**
@@ -2758,8 +2780,9 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   private applyDetailColumnsWidth(width: number): void {
-    this.linkedTabsOrientation.set(width >= 1152 ? 'vertical' : 'horizontal');
+    this.linkedTabsOrientation.set('horizontal');
     this.propertiesRailVisible.set(width >= 896);
+    this.aboutExpanded.update((expanded: boolean | undefined): boolean => expanded ?? width >= 896);
   }
 
   /**
@@ -2948,12 +2971,10 @@ export class InterventionDetailPage {
   private navigateToNeighbour(interventionId: string | null): void {
     if (interventionId === null) return;
 
-    void this.router.navigate([
-      '/organizations',
-      this.organizationId(),
-      'interventions',
-      interventionId,
-    ]);
+    void this.router.navigate(
+      ['/organizations', this.organizationId(), 'interventions', interventionId],
+      { queryParamsHandling: 'preserve' },
+    );
   }
   //#endregion
 }

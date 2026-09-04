@@ -22,6 +22,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChartColumn,
+  lucideChevronDown,
   lucideCircleAlert,
   lucideCircleDot,
   lucideClipboardCheck,
@@ -69,9 +70,10 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroup } from '@shared/ui/button-group';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import { InspectionCreateSheet } from '../../sheets/inspection-create-sheet';
@@ -115,7 +117,9 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
  * first page.
  *
  * Its title lives in the shell breadcrumb; "New inspection" registers on the
- * shell header through `PageActionsService`. The status/result chips' own
+ * shell header through `PageActionsService`. A native Spartan split button
+ * groups creation with an Analytics menu; read-only viewers retain the direct
+ * Analytics link. The status/result chips' own
  * value controls are `app-collection-filter-select`
  * (`@shared/collection-filters`), the generic single-value control the
  * intervention list's own chips already draw.
@@ -127,11 +131,10 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
 @Component({
   selector: 'app-inspections-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     RouterLink,
     InspectionCreateSheet,
-    NgIcon,
-    EmptyState,
-    ErrorState,
     InspectionStatusTag,
     InspectionTable,
     CollectionFilterBar,
@@ -141,6 +144,8 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
+    HlmButtonGroup,
+    ...HlmDropdownMenuImports,
     HlmSpinner,
   ],
   providers: [
@@ -149,6 +154,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     provideIcons({
       lucideLock,
       lucideChartColumn,
+      lucideChevronDown,
       lucideCircleAlert,
       lucideCircleDot,
       lucideClipboardCheck,

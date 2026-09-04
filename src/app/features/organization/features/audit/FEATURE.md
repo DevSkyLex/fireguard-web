@@ -34,7 +34,7 @@ references it.
   admin holds it via the `organization.*` wildcard — so the sidebar entry
   and this route are both invisible to most members. There is no detail
   route: every entry renders inline, in the table's own expandable
-  metadata row.
+  metadata row when the backend supplied metadata.
 
 ## State and Data Access
 
@@ -82,8 +82,10 @@ poll or refresh a row from.
   its `subjectId`, renders plain. `null` never becomes a broken link.
 - **Metadata renders only what the backend allowlists.** `metadata` is a
   per-action projection of ids, enums, booleans and counts — the table
-  renders it as a flat key/value list and applies no further filtering,
-  since the backend has already excluded free text and PII by construction.
+  renders it as a compact, humanized key/value list and applies no further
+  filtering, since the backend has already excluded free text and PII by
+  construction. A metadata-free event has no disclosure control: expanding
+  a row must always reveal useful information.
 - A `403` on `AuditEventsStore.listCallState` renders `AuditPage`'s distinct
   "You need the audit permission" empty state, never the generic error
   state — `organization.audit.read` being absent from the default member

@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 a11y"
+  short_description: 'Perform a read-only accessibility review of FireGuard templates'
+  default_prompt: 'Use $fg-web-a11y for the requested FireGuard Web task.'

@@ -30,7 +30,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
-import { PersonOption } from '@shared/person-option';
+
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -38,11 +38,13 @@ import {
 } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
 import { InterventionTag } from '../intervention-tag';
 
+import { HlmItemImports } from '@shared/ui/item';
 /**
  * Constant LABEL_PREVIEW_COUNT
  * @const LABEL_PREVIEW_COUNT
@@ -101,14 +103,15 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
-    PersonOption,
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    ...HlmCollapsibleImports,
     OrgDatePipe,
     NgIcon,
     RouterLink,
     HlmButton,
     InplaceField,
     InterventionTag,
-    ...HlmAvatarImports,
     ...HlmComboboxImports,
     ...HlmDatePickerImports,
     ...HlmSelectImports,

@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBookmark, lucideBookmarkX } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideBookmark, lucideBookmarkX } from '@ng-icons/lucide';
 import type {
   ConversationOutput,
   MessageOutput,
@@ -23,9 +23,8 @@ import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import type { SavedMessageItem } from './models';
 
@@ -49,8 +48,11 @@ import type { SavedMessageItem } from './models';
  */
 @Component({
   selector: 'app-saved-messages-page',
-  imports: [NgIcon, RouterLink, EmptyState, ErrorState, HlmButton, HlmSkeleton],
-  providers: [SavedMessagesStore, provideIcons({ lucideBookmark, lucideBookmarkX })],
+  imports: [NgIcon, ...HlmEmptyImports, RouterLink, HlmButton, HlmSkeleton],
+  providers: [
+    SavedMessagesStore,
+    provideIcons({ lucideArrowLeft, lucideBookmark, lucideBookmarkX }),
+  ],
   templateUrl: './saved-messages-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col overflow-y-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,

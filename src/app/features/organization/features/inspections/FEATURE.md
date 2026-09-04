@@ -41,7 +41,11 @@ period selector mirrors the dashboard Trends presets (7d/30d/90d/12m,
 default 30d) plus **All time**, resolved to inclusive ISO 8601 `from`/`to`
 bounds on `createdAt`. It sits under the same pathless
 `organization.inspection.read` guard as the rest of the feature and is
-reached from the index's **Analytics** page action.
+reached from the index's **Analytics** action in the native Spartan creation
+split-button menu. Viewers without create permission retain a direct Analytics
+link. Filter operator presentation and supported-choice validation belong to
+the shared collection-filter shell; this feature declares only its supported
+status/result catalogs and owns their query mapping.
 
 Inspection detail routes **seed** active inspection context without blocking
 activation: `inspectionResolver` fires the fetch into `ActiveInspectionStore`

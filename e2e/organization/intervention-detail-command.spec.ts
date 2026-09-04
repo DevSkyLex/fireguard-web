@@ -16,8 +16,7 @@ import { InterventionDetailPage } from '../support/pages/intervention-detail.pag
  * the whole band was gated on `canPublish`.
  */
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/a35735d3-97bd-4e28-99cd-082456b11e86/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'test-results/uiux-final-20260903';
 
 const PLANNED_ID = 'e2e-command-planned';
 const SUBMITTED_ID = 'e2e-command-submitted';

@@ -362,41 +362,48 @@
             <hlm-skeleton class="h-24 w-full" />
           </div>
         } @else if (plans.listCallState().status === 'error' && plans.orderedPlans().length === 0) {
-          <app-error-state
-            icon="lucideCircleAlert"
-            title="Couldn't load the floor plans"
-            i18n-title="@@facility.plans.errorTitle"
-            [description]="plans.listCallState().error?.message ?? null"
-            data-testid="facility-plans-error"
-          >
-            <button hlmBtn type="button" (click)="retryPlansLoad()">
-              <span i18n="@@facility.plans.errorRetry">Retry</span>
-            </button>
-          </app-error-state>
+          <div hlmEmpty role="alert" data-testid="facility-plans-error">
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon" class="text-destructive">
+                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@facility.plans.errorTitle">Couldn't load the floor plans</p>
+              <p hlmEmptyDescription>{{ plans.listCallState().error?.message ?? null }}</p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn type="button" (click)="retryPlansLoad()">
+                <span i18n="@@facility.plans.errorRetry">Retry</span>
+              </button>
+            </div>
+          </div>
         } @else if (plans.orderedPlans().length === 0) {
-          <app-empty-state
-            icon="lucideMap"
-            title="No floor plan yet"
-            i18n-title="@@facility.plans.emptyTitle"
-            description="Upload an image to give this facility a floor plan."
-            i18n-description="@@facility.plans.emptyDescription"
-            data-testid="facility-plans-empty"
-          >
-            @if (canWrite()) {
-              <app-facility-plan-list
-                [plans]="plans.orderedPlans()"
-                [selectedPlanId]="plans.selectedPlan()?.id ?? null"
-                [canManage]="canWrite()"
-                [uploading]="plans.isUploading()"
-                [settingPrimaryId]="plans.settingPrimaryId()"
-                [deletingId]="plans.deletingId()"
-                (planSelected)="onPlanSelected($event)"
-                (filePicked)="onPlanFilePicked($event)"
-                (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
-                (deleteRequested)="onPlanDeleteRequested($event)"
-              />
-            }
-          </app-empty-state>
+          <div hlmEmpty data-testid="facility-plans-empty">
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideMap" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@facility.plans.emptyTitle">No floor plan yet</p>
+              <p hlmEmptyDescription i18n="@@facility.plans.emptyDescription">
+                Upload an image to give this facility a floor plan.
+              </p>
+            </div>
+            <div hlmEmptyContent>
+              @if (canWrite()) {
+                <app-facility-plan-list
+                  [plans]="plans.orderedPlans()"
+                  [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+                  [canManage]="canWrite()"
+                  [uploading]="plans.isUploading()"
+                  [settingPrimaryId]="plans.settingPrimaryId()"
+                  [deletingId]="plans.deletingId()"
+                  (planSelected)="onPlanSelected($event)"
+                  (filePicked)="onPlanFilePicked($event)"
+                  (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+                  (deleteRequested)="onPlanDeleteRequested($event)"
+                />
+              }
+            </div>
+          </div>
         } @else {
           <div class="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
             <div class="flex min-h-0 flex-1 flex-col gap-2">
@@ -558,24 +565,29 @@
       <hlm-skeleton class="h-64 w-full" />
     </div>
   } @else {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="This facility could not be opened"
-      i18n-title="@@facility.detail.loadFailedTitle"
-      [description]="activeFacilityStore.getError()?.message ?? null"
-      data-testid="facility-detail-load-failed"
-    >
-      <button
-        hlmBtn
-        type="button"
-        class="max-sm:min-h-11"
-        data-testid="facility-detail-retry"
-        (click)="retryLoad()"
-        i18n="@@common.tryAgain"
-      >
-        Try again
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert" data-testid="facility-detail-load-failed">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.detail.loadFailedTitle">
+          This facility could not be opened
+        </p>
+        <p hlmEmptyDescription>{{ activeFacilityStore.getError()?.message ?? null }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="facility-detail-retry"
+          (click)="retryLoad()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
   }
 </div>
 

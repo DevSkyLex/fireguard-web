@@ -33,6 +33,15 @@ describe('renderMessageBodyHtml', () => {
     ).toContain('>@Jean</span></strong></p>');
   });
 
+  it('uses a distinct semantic surface in light mode while preserving dark bubble contrast', () => {
+    const rendered = renderMessageBodyHtml(`@{${UUID}}`, { [UUID]: 'Jean' }, 'member');
+
+    expect(rendered).toContain('bg-primary/15');
+    expect(rendered).toContain('ring-primary/30');
+    expect(rendered).toContain('dark:bg-current/10');
+    expect(rendered).toContain('dark:text-inherit');
+  });
+
   it('falls back to a neutral label rather than exposing the id', () => {
     expect(renderMessageBodyHtml(`@{${UUID}}`, {}, 'member')).toContain('>@member</span>');
   });

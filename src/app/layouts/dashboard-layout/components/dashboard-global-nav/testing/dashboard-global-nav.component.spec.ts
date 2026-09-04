@@ -10,7 +10,13 @@ describe('DashboardGlobalNav', () => {
   let permissions: WritableSignal<ReadonlyArray<string>>;
 
   /**
-   * The rendered rows, in order, whether or not they lead anywhere.
+   * Function rows
+   * @function rows
+   *
+   * @description
+   * Reads rendered navigation labels in display order.
+   *
+   * @returns {readonly string[]} The visible destination labels.
    */
   function rows(): readonly string[] {
     return Array.from(
@@ -71,9 +77,5 @@ describe('DashboardGlobalNav', () => {
     expect(fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-badge"]').length).toBe(
       1,
     );
-  });
-
-  it('should sit at the bottom of the column', () => {
-    expect((fixture.nativeElement as HTMLElement).classList).toContain('mt-auto');
   });
 });

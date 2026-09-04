@@ -150,7 +150,7 @@ describe('OrganizationTeamsPage', () => {
     await createPage();
 
     expect(root().querySelector('app-organization-team-table')).not.toBeNull();
-    expect(root().querySelector('app-empty-state')).toBeNull();
+    expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).toBeNull();
   });
 
   it('should render the table with its loading input while the first load is pending', async () => {
@@ -161,7 +161,7 @@ describe('OrganizationTeamsPage', () => {
     const table = root().querySelector('app-organization-team-table');
 
     expect(table).not.toBeNull();
-    expect(root().querySelector('app-empty-state')).toBeNull();
+    expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).toBeNull();
   });
 
   it('should render the error state and retry from it once the list call fails', async () => {
@@ -170,7 +170,7 @@ describe('OrganizationTeamsPage', () => {
     listError = signal<StoreError | null>(error);
     await createPage();
 
-    const errorState = root().querySelector('app-error-state');
+    const errorState = root().querySelector('[data-slot="empty"][role="alert"]');
     expect(errorState).not.toBeNull();
     expect(errorState?.textContent).toContain('Network down');
 
@@ -215,7 +215,7 @@ describe('OrganizationTeamsPage', () => {
     teams = signal<readonly TeamOutput[]>([]);
     await createPage();
 
-    expect(root().querySelector('app-empty-state')).not.toBeNull();
+    expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).not.toBeNull();
     expect(root().querySelector('app-organization-team-table')).toBeNull();
   });
 
@@ -224,7 +224,7 @@ describe('OrganizationTeamsPage', () => {
     permissions = signal<ReadonlyArray<string>>([]);
     await createPage();
 
-    expect(root().querySelector('app-empty-state button')).toBeNull();
+    expect(root().querySelector('[data-slot="empty"]:not([role="alert"]) button')).toBeNull();
   });
 
   it('should gate the shell header’s create action on TEAMS_WRITE', async () => {

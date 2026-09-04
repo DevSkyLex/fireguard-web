@@ -556,13 +556,6 @@ export const AssistantStore = signalStore(
           patchState(store, { panelOpen: false });
         },
 
-        /**
-         * Opens or releases the column, which is what the header control does.
-         */
-        togglePanel(): void {
-          patchState(store, { panelOpen: !store.panelOpen() });
-        },
-
         loadThread,
         connect,
       };

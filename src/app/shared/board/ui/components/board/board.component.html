@@ -1,0 +1,174 @@
+<div class="flex min-h-80 min-w-0 flex-1 flex-col gap-2">
+  <p aria-live="polite" aria-atomic="true" class="sr-only" data-testid="board-live-region">
+    {{ liveMessage() }}
+  </p>
+
+  @if (canScrollLeft() || canScrollRight()) {
+    <div
+      class="flex shrink-0 items-center justify-between gap-3"
+      data-testid="board-scroll-controls"
+    >
+      <span class="text-xs text-muted-foreground" i18n="@@board.scrollHint">Browse columns</span>
+      <div class="flex gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          class="max-sm:min-h-11 max-sm:min-w-11"
+          data-testid="board-scroll-left"
+          aria-label="Show earlier columns"
+          i18n-aria-label="@@board.scrollLeft"
+          [disabled]="!canScrollLeft()"
+          [attr.aria-controls]="boardId()"
+          (click)="scrollColumns(-1)"
+        >
+          <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          class="max-sm:min-h-11 max-sm:min-w-11"
+          data-testid="board-scroll-right"
+          aria-label="Show later columns"
+          i18n-aria-label="@@board.scrollRight"
+          [disabled]="!canScrollRight()"
+          [attr.aria-controls]="boardId()"
+          (click)="scrollColumns(1)"
+        >
+          <ng-icon name="lucideChevronRight" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  }
+
+  <div
+    #scroller
+    [id]="boardId()"
+    role="region"
+    [attr.aria-label]="label()"
+    tabindex="0"
+    class="min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden rounded-lg pb-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    data-testid="board"
+    (scroll)="updateScrollAffordance()"
+  >
+    <div #track class="flex h-full min-h-72 w-max gap-3">
+      @for (column of columns(); track column.id) {
+        @let dropState = dropStates().get(column.id);
+        <section
+          class="relative flex h-full min-h-0 w-[min(20rem,calc(100vw-3rem))] shrink-0 flex-col rounded-lg border border-border bg-muted/30 data-[drop-state=allowed]:border-muted-foreground/50 sm:w-80"
+          [class.cursor-not-allowed]="dropState === 'blocked'"
+          [attr.aria-labelledby]="columnId(column.id) + '-heading'"
+          [attr.aria-describedby]="
+            dropState === 'allowed' || dropState === 'blocked'
+              ? columnId(column.id) + '-drop-hint'
+              : null
+          "
+          [attr.data-drop-state]="dropState"
+          data-testid="board-column"
+          [attr.data-column-id]="column.id"
+        >
+          <div
+            class="flex min-h-12 shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2"
+          >
+            <h2
+              [id]="columnId(column.id) + '-heading'"
+              class="min-w-0 text-sm font-medium wrap-anywhere"
+            >
+              @if (columnHeaderTemplate(); as header) {
+                <ng-container
+                  [ngTemplateOutlet]="header.template"
+                  [ngTemplateOutletContext]="{ $implicit: column }"
+                />
+              } @else {
+                {{ column.label }}
+              }
+            </h2>
+            <hlm-badge
+              variant="secondary"
+              class="shrink-0 tabular-nums"
+              data-testid="board-column-count"
+              [attr.aria-label]="countLabel(column)"
+              >{{ column.items.length }}</hlm-badge
+            >
+          </div>
+          <div
+            cdkDropList
+            [id]="columnId(column.id)"
+            [cdkDropListData]="column.id"
+            [cdkDropListConnectedTo]="dropListIds()"
+            [cdkDropListEnterPredicate]="canDrop"
+            [cdkDropListSortingDisabled]="true"
+            (cdkDropListDropped)="onDropped($event)"
+            class="flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-2 overflow-y-auto overscroll-y-contain p-2"
+            [class.opacity-40]="dropState === 'blocked'"
+            data-testid="board-column-list"
+          >
+            @for (item of column.items; track item.id) {
+              <div
+                cdkDrag
+                [cdkDragData]="item"
+                [cdkDragDisabled]="dragDisabled(item, column)"
+                [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+                (cdkDragStarted)="onDragStarted(item)"
+                (cdkDragEnded)="draggedItemId.set(null)"
+                class="min-w-0 shrink-0 rounded-xl [&.cdk-drag-placeholder]:opacity-30 [&.cdk-drag-preview]:shadow-lg"
+                [attr.data-board-item-id]="item.id"
+                data-testid="board-item"
+              >
+                @if (cardTemplate(); as card) {
+                  <ng-container
+                    [ngTemplateOutlet]="card.template"
+                    [ngTemplateOutletContext]="cardContext(item, column)"
+                  />
+                } @else {
+                  <div
+                    class="rounded-lg border border-border bg-card p-3 text-sm wrap-anywhere text-card-foreground"
+                  >
+                    {{ item.label }}
+                  </div>
+                }
+              </div>
+            } @empty {
+              <p
+                class="px-3 py-6 text-center text-sm text-muted-foreground"
+                data-testid="board-column-empty"
+              >
+                {{ emptyLabel() }}
+              </p>
+            }
+          </div>
+          @if (dropState === 'allowed' || dropState === 'blocked') {
+            <div
+              [id]="columnId(column.id) + '-drop-hint'"
+              class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-center text-xs font-medium text-foreground shadow-sm"
+              data-testid="board-drop-hint"
+            >
+              @if (dropState === 'allowed') {
+                <ng-icon
+                  name="lucideCircleCheck"
+                  class="shrink-0 text-success"
+                  aria-hidden="true"
+                />
+                <span i18n="@@board.dropAllowed">Drop here</span>
+              } @else {
+                <ng-icon
+                  name="lucideBan"
+                  class="shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                @if (dropBlockedReason(column.id); as reason) {
+                  <span>{{ reason }}</span>
+                } @else {
+                  <span i18n="@@board.dropBlocked">Cannot move here</span>
+                }
+              }
+            </div>
+          }
+        </section>
+      }
+    </div>
+  </div>
+</div>

@@ -190,6 +190,13 @@ export class OrganizationSetupService {
     ).pipe(map(() => undefined));
   }
 
+  /** @description Lists all persisted sites as setup summaries so an activation resumed after reload can attach equipment. */
+  public listFacilities(organizationId: string): Observable<readonly SetupFacilitySummary[]> {
+    return this.facilityService
+      .listAll(organizationId)
+      .pipe(map((facilities) => facilities.map(({ id, name, type }) => ({ id, name, type }))));
+  }
+
   /**
    * Method createFacilities
    *

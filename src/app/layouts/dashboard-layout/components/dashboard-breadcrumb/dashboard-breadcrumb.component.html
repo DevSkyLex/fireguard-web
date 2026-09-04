@@ -11,10 +11,38 @@
       </a>
     </li>
 
-    @for (item of items(); track $index) {
-      <li hlmBreadcrumbSeparator></li>
+    @if (intermediateItems().length > 0) {
+      <li hlmBreadcrumbSeparator class="sm:hidden"></li>
+      <li hlmBreadcrumbItem class="sm:hidden">
+        <button
+          type="button"
+          class="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          data-testid="dashboard-breadcrumb-more"
+          [hlmDropdownMenuTrigger]="intermediateMenu"
+        >
+          <hlm-breadcrumb-ellipsis
+            i18n-srOnlyText="@@dashboard.breadcrumb.more"
+            srOnlyText="More pages"
+          />
+        </button>
+        <ng-template #intermediateMenu>
+          <hlm-dropdown-menu>
+            @for (item of intermediateItems(); track $index) {
+              @if (item.routerLink) {
+                <a hlmDropdownMenuItem [routerLink]="item.routerLink">{{ item.label }}</a>
+              } @else {
+                <span hlmDropdownMenuItem [disabled]="true">{{ item.label }}</span>
+              }
+            }
+          </hlm-dropdown-menu>
+        </ng-template>
+      </li>
+    }
 
-      <li hlmBreadcrumbItem class="min-w-0">
+    @for (item of items(); track $index; let last = $last) {
+      <li hlmBreadcrumbSeparator [class.max-sm:hidden]="!last"></li>
+
+      <li hlmBreadcrumbItem class="min-w-0" [class.max-sm:hidden]="!last">
         @if (item.current || !item.routerLink) {
           <span
             hlmBreadcrumbPage

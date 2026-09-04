@@ -61,20 +61,9 @@ const SPLIT_COLUMN_MIN_WIDTH_CLASS: Record<SplitWidth, string> = {
  * @class SplitLayout
  *
  * @description
- * Two-column shell for the entry flows — sign in, register, onboarding: a
- * branded showcase panel on the left and the routed form column on the right.
- *
- * It owns the frame and nothing else. The panel, the floating header and the
- * footer are all slots, so the same shell dresses differently per route
- * through `provideSplitLayoutSlots()`. With nothing contributed the showcase is
- * not rendered and the form column takes the full width. When it is rendered
- * the panel keeps its half of the viewport from `lg` up while the form column
- * still needs a floor: {@link columnClass} derives it from {@link splitWidth}
- * so the widest allowed form always fits before the panel is asked to give up
- * any of its half, exactly as {@link contentClass} derives the form's own cap
- * — a one-field auth form and the onboarding wizard's plan step do not want
- * the same width, so the mounting route decides (`data.splitWidth`, bound
- * through `withComponentInputBinding()`).
+ * A shared entry shell with either a full-height presentation column or a compact
+ * progress rail. Route data controls the desktop composition, form width and
+ * vertical placement; mobile keeps its single scrollable form column.
  *
  * @version 1.1.0
  *
@@ -94,6 +83,12 @@ const SPLIT_COLUMN_MIN_WIDTH_CLASS: Record<SplitWidth, string> = {
 export class SplitLayout {
   //#region Inputs
   /**
+   * @description Route-owned desktop composition: a presentation panel for entry pages,
+   * or the default compact rail for guided workflows. Missing route data keeps the rail.
+   */
+  public readonly splitShowcase: InputSignal<'panel' | 'rail'> = input<'panel' | 'rail'>('rail');
+
+  /**
    * Property splitWidth
    * @readonly
    *
@@ -108,9 +103,40 @@ export class SplitLayout {
    * @type {InputSignal<SplitWidth>}
    */
   public readonly splitWidth: InputSignal<SplitWidth> = input<SplitWidth>('md');
+  /**
+   * Property splitAlign
+   * @readonly
+   *
+   * @description
+   * Route-owned desktop placement. Growing forms opt into start alignment;
+   * an omitted or undefined route value retains centered entry forms.
+   *
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<'start' | 'center'>}
+   */
+  public readonly splitAlign: InputSignal<'start' | 'center'> = input<'start' | 'center'>('center');
   //#endregion
 
   //#region Properties
+  /** @description Bounds the desktop presentation so the two columns remain related on wide screens. */
+  protected readonly layoutClass: Signal<string> = computed((): string =>
+    hlm(
+      'mx-auto flex h-dvh w-full overflow-hidden bg-background text-foreground',
+      this.splitShowcase() === 'panel' && 'lg:max-w-[1600px]',
+    ),
+  );
+
+  /** @description Sizes the contributed content according to the mounting route, without knowing its feature. */
+  protected readonly showcaseClass: Signal<string> = computed((): string =>
+    hlm(
+      'hidden min-w-0 shrink-0 overflow-y-auto text-foreground lg:order-first lg:grid',
+      this.splitShowcase() === 'panel'
+        ? 'border-r border-border bg-muted/50 lg:w-[42%] xl:w-[44%]'
+        : 'border-r border-border bg-muted/40 lg:w-64 xl:w-72',
+    ),
+  );
+
   /**
    * Property showcaseContributions
    * @readonly
@@ -208,7 +234,11 @@ export class SplitLayout {
    * @type {Signal<string>}
    */
   protected readonly contentClass: Signal<string> = computed((): string =>
-    hlm('mx-auto flex w-full flex-col', SPLIT_WIDTH_CLASS[this.resolvedSplitWidth()]),
+    hlm(
+      'mx-auto flex w-full min-w-0 shrink-0 flex-col',
+      this.splitAlign() === 'start' ? 'lg:pt-8' : 'sm:my-auto',
+      SPLIT_WIDTH_CLASS[this.resolvedSplitWidth()],
+    ),
   );
 
   /**
@@ -226,7 +256,7 @@ export class SplitLayout {
    */
   protected readonly columnClass: Signal<string> = computed((): string =>
     hlm(
-      'relative flex min-h-dvh flex-1 flex-col',
+      'relative flex min-h-0 min-w-0 flex-1 flex-col',
       SPLIT_COLUMN_MIN_WIDTH_CLASS[this.resolvedSplitWidth()],
     ),
   );

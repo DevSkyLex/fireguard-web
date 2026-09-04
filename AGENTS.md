@@ -1,5 +1,29 @@
 # Agent Instructions
 
+## Codex tooling
+
+For Codex, read [.codex/workflow.md](.codex/workflow.md) and the matching entries in
+[.codex/rules.md](.codex/rules.md) before editing. Custom skills are self-contained in
+`.agents/skills/`; native subagents live in `.codex/agents/`. Setup and validation are
+documented in [.codex/README.md](.codex/README.md). Codex does not need `.claude/` procedures.
+
+For every task that creates, changes, reviews, or tests presentation code, load the official
+`spartan` skill from [.agents/skills/spartan/SKILL.md](.agents/skills/spartan/SKILL.md) together
+with the applicable FireGuard skill. This includes components, forms, overlays, navigation,
+tables, charts, responsive behavior, styling, accessibility, and browser verification. Read only
+the Spartan rule files relevant to the task. FireGuard's architecture, Signal Forms requirement,
+`DESIGN.md`, installed Helm sources, and feature contracts remain authoritative.
+
+The upstream `impeccable` and `ui-ux-pro-max` skills are installed separately. When using
+them, read [.codex/third-party-skills.md](.codex/third-party-skills.md): the user's native
+Spartan requirement, DESIGN.md and project architecture remain authoritative. Do not
+generate a competing design system or change the palette/stack from generic suggestions.
+
+Do not read or write secret environment files (except `.env.example`/`.env.dist`),
+API `config/jwt/`, or web `src/environments/environment*.ts`. Do not hand-edit
+generated/dependency trees or installed third-party skill payloads. Preserve user changes
+and the existing Claude setup. Do not run automatic nested `codex exec` challenges.
+
 These instructions are mandatory for AI agents working in this repository. They are
 imported by [CLAUDE.md](CLAUDE.md) and apply to any assistant, not one vendor's.
 

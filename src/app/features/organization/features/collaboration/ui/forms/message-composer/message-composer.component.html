@@ -49,13 +49,16 @@
       </ul>
     }
 
-    <div hlmInputGroup class="rounded-2xl">
+    <div
+      hlmInputGroup
+      class="rounded-2xl border-border/80 bg-card shadow-sm transition-shadow focus-within:shadow-md dark:bg-card/95"
+    >
       <textarea
         hlmInputGroupTextarea
         #field
         rows="1"
         data-testid="message-composer-input"
-        class="max-h-40 min-h-9"
+        class="max-h-40 min-h-14 px-4 pt-3 pb-1 text-[0.9375rem] leading-6"
         i18n-aria-label="@@messages.composer.label"
         aria-label="Message"
         role="combobox"
@@ -71,7 +74,11 @@
         (click)="onFieldChanged()"
       ></textarea>
 
-      <div hlmInputGroupAddon align="block-end" class="justify-between">
+      <div
+        hlmInputGroupAddon
+        align="block-end"
+        class="justify-between border-t border-border/60 px-3 py-2"
+      >
         @if (remaining() !== null) {
           <span
             class="text-xs tabular-nums"
@@ -93,7 +100,7 @@
           size="icon-sm"
           variant="default"
           type="submit"
-          class="shrink-0 rounded-full max-sm:size-11"
+          class="ml-auto size-9 shrink-0 rounded-full max-sm:size-11"
           data-testid="message-composer-send"
           i18n-aria-label="@@messages.composer.send"
           aria-label="Send message"

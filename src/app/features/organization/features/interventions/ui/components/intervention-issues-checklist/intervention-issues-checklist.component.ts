@@ -19,6 +19,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmItemImports } from '@shared/ui/item';
 import { InterventionTag } from '../intervention-tag';
 import { resolveInterventionIssueTarget } from './utils/intervention-issue-target/intervention-issue-target.utils';
 
@@ -51,7 +52,7 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
  */
 @Component({
   selector: 'app-intervention-issues-checklist',
-  imports: [NgIcon, HlmButton, InterventionTag, ...HlmCollapsibleImports],
+  imports: [...HlmItemImports, NgIcon, HlmButton, InterventionTag, ...HlmCollapsibleImports],
   providers: [provideIcons({ lucideChevronDown, lucideChevronRight, lucideCircleCheck })],
   templateUrl: './intervention-issues-checklist.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

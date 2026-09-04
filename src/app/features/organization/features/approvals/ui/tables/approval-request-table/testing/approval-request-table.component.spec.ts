@@ -77,8 +77,18 @@ describe('ApprovalRequestTable', () => {
 
   it('should give each row a distinct, non-identical accessible name for its Approve and Reject buttons', async () => {
     fixture.componentRef.setInput('items', [
-      request({ id: 'request-1', actionType: 'equipment_decommission', subjectId: 'equipment-1' }),
-      request({ id: 'request-2', actionType: 'nc_waiver', subjectId: 'nc-1' }),
+      request({
+        id: 'request-1',
+        actionType: 'equipment_decommission',
+        subjectId: 'equipment-1',
+        createdAt: '2026-01-18T00:00:00+00:00',
+      }),
+      request({
+        id: 'request-2',
+        actionType: 'nc_waiver',
+        subjectId: 'nc-1',
+        createdAt: '2026-01-19T00:00:00+00:00',
+      }),
     ]);
     fixture.componentRef.setInput('canDecide', true);
     await fixture.whenStable();
@@ -97,8 +107,9 @@ describe('ApprovalRequestTable', () => {
     const secondApproveLabel = approveButtons[1].getAttribute('aria-label');
     const firstRejectLabel = rejectButtons[0].getAttribute('aria-label');
 
-    expect(firstApproveLabel).toContain('equipment-1');
-    expect(secondApproveLabel).toContain('nc-1');
+    expect(firstApproveLabel).toContain('2026-01-18');
+    expect(secondApproveLabel).toContain('2026-01-19');
+    expect(firstApproveLabel).not.toContain('equipment-1');
     expect(firstApproveLabel).not.toBe(secondApproveLabel);
     expect(firstApproveLabel).not.toBe(firstRejectLabel);
   });
@@ -150,6 +161,30 @@ describe('ApprovalRequestTable', () => {
 
     expect(rows[0].querySelector('a')).not.toBeNull();
     expect(rows[1].querySelector('a')).toBeNull();
-    expect(rows[1].textContent).toContain('nc-1');
+    expect(rows[0].textContent).toContain('Equipment record');
+    expect(rows[1].textContent).toContain('Non-conformity record');
+    expect(rows[1].textContent).not.toContain('nc-1');
+  });
+
+  it('should resolve requester and decider member ids without rendering transport values', async () => {
+    fixture.componentRef.setInput('memberLabelOf', (memberId: string): string =>
+      memberId === 'member-1' ? 'Amélie Rousseau' : 'Marc Dubois',
+    );
+    fixture.componentRef.setInput('items', [
+      request({
+        status: 'approved',
+        decisionByMemberId: 'member-2',
+        decisionByUserId: 'user-2',
+      }),
+    ]);
+    await fixture.whenStable();
+
+    const row = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="approval-request-table-row"]',
+    );
+    expect(row?.textContent).toContain('Amélie Rousseau');
+    expect(row?.textContent).toContain('Marc Dubois');
+    expect(row?.textContent).not.toContain('member-1');
+    expect(row?.textContent).not.toContain('user-2');
   });
 });

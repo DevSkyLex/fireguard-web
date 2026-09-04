@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 service"
+  short_description: 'Build or change FireGuard transport services, behavioral servic'
+  default_prompt: 'Use $fg-web-service for the requested FireGuard Web task.'

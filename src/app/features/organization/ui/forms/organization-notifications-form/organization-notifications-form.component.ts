@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { disabled, form, FormField, type FieldTree } from '@angular/forms/signals';
 import type { OrganizationNotificationSettings } from '@features/organization/models';
-import { HlmField, HlmFieldGroup, HlmFieldLabel } from '@shared/ui/field';
+import { HlmField, HlmFieldDescription, HlmFieldGroup, HlmFieldLabel } from '@shared/ui/field';
 import { HlmSwitch } from '@shared/ui/switch';
 
 /**
@@ -38,7 +38,7 @@ import { HlmSwitch } from '@shared/ui/switch';
  */
 @Component({
   selector: 'app-organization-notifications-form',
-  imports: [FormField, HlmField, HlmFieldGroup, HlmFieldLabel, HlmSwitch],
+  imports: [FormField, HlmField, HlmFieldDescription, HlmFieldGroup, HlmFieldLabel, HlmSwitch],
   templateUrl: './organization-notifications-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

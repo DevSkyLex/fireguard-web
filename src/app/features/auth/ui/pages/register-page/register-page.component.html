@@ -1,4 +1,4 @@
-<div id="register-page" class="flex w-full flex-col gap-6">
+<div id="register-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
   <app-page-heading
     heading="Create your account"
     i18n-heading="@@auth.register.title"
@@ -12,11 +12,14 @@
     (submitted)="register($event)"
   />
 
-  <p class="text-center text-sm text-muted-foreground">
+  <p
+    class="flex flex-wrap items-center justify-center gap-x-1 border-t border-border pt-4 text-center text-sm text-muted-foreground"
+  >
     <span i18n="@@auth.register.haveAccount">Already have an account?</span>
     <a
-      class="ml-1 font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      class="inline-flex min-h-11 items-center justify-center rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       routerLink="/auth/login"
+      [queryParams]="{ returnUrl: returnUrl || undefined }"
       i18n="@@auth.register.signIn"
       >Sign in</a
     >

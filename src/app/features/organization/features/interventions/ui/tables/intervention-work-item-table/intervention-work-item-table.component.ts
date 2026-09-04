@@ -33,12 +33,12 @@ import {
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
@@ -78,9 +78,9 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
 @Component({
   selector: 'app-intervention-work-item-table',
   imports: [
-    CollectionSurface,
     NgIcon,
-    EmptyState,
+    ...HlmEmptyImports,
+    CollectionSurface,
     HlmBadge,
     HlmToggle,
     InterventionTag,

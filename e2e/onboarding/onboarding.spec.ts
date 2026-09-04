@@ -8,10 +8,10 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
-const SCREENSHOT_DIR = 'test-results/screenshots';
+const SCREENSHOT_DIR = 'test-results/uiux-final-20260903';
 
 test.describe('Onboarding wizard first step', () => {
-  test('renders the create-organization form inside the split shell on desktop, with the branded showcase panel', async ({
+  test('renders the create-organization form inside the split shell on desktop, with the compact showcase panel', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -23,10 +23,12 @@ test.describe('Onboarding wizard first step', () => {
 
     await expect(onboarding.shellRoot).toBeVisible();
     await expect(onboarding.orgNameInput).toBeVisible();
+    await expect(onboarding.orgSlugInput).toBeHidden();
+    await page.getByRole('button', { name: 'Customize the workspace address' }).click();
     await expect(onboarding.orgSlugInput).toBeVisible();
     await expect(onboarding.orgSubmit).toBeVisible();
     await expect(onboarding.showcasePanel).toBeVisible();
-    await expect(onboarding.showcasePanel.getByText('FireGuard')).toBeVisible();
+    await expect(onboarding.showcasePanel.getByText('Fireguard')).toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/onboarding-first-step-light-desktop.png` });
   });

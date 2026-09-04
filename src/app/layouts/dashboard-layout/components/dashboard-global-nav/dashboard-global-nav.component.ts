@@ -28,8 +28,8 @@ import type { DashboardGlobalNavRow } from './models';
  * shell stable — the bottom of the column is the same on an organization page
  * and on a global one, and only the organization block above it comes and goes.
  *
- * Pinned to the bottom (`mt-auto` on the host, which is the flex child of the
- * sidebar's scrolling body) because these are utilities rather than the work.
+ * The native sidebar footer groups these utilities with collaboration links
+ * above the account menu, independently of the scrolling organization navigation.
  *
  * Layout-owned rather than feature-owned because nothing here has a business
  * owner: these are the shell's own destinations (`ARCHITECTURE.md` §8.2). A
@@ -62,7 +62,6 @@ import type { DashboardGlobalNavRow } from './models';
   ],
   providers: [provideIcons({ lucideLifeBuoy })],
   templateUrl: './dashboard-global-nav.component.html',
-  host: { class: 'mt-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardGlobalNav {

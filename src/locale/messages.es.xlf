@@ -706,7 +706,7 @@
         <source>Try again</source>
         <target>Inténtalo de nuevo</target>
       </trans-unit>
-      <trans-unit id="route.maintenance" datatype="html">
+      <trans-unit id="route.maintenanceMode" datatype="html">
         <source>Under maintenance</source>
         <target>En mantenimiento</target>
       </trans-unit>
@@ -1079,8 +1079,8 @@
         <target><x id="done"/> de <x id="total"/> completados</target>
       </trans-unit>
       <trans-unit id="onboarding.showcase.brand" datatype="html">
-        <source>FireGuard</source>
-        <target>FireGuard</target>
+        <source>Fireguard</source>
+        <target>Fireguard</target>
       </trans-unit>
       <trans-unit id="onboarding.showcase.subhead" datatype="html">
         <source>A few steps to get your organization ready.</source>
@@ -8819,12 +8819,12 @@
         <target>Tipo de acción</target>
       </trans-unit>
       <trans-unit id="approvals.table.approveActionNamed" datatype="html">
-        <source>Approve <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
-        <target>Aprobar la solicitud <x id="actionType" equiv-text="actionType"/> para <x id="subjectId" equiv-text="item.subjectId"/></target>
+        <source>Approve <x id="actionType" equiv-text="actionType"/> request from <x id="createdAt" equiv-text="item.createdAt"/></source>
+        <target>Aprobar la solicitud <x id="actionType" equiv-text="actionType"/> del <x id="createdAt" equiv-text="item.createdAt"/></target>
       </trans-unit>
       <trans-unit id="approvals.table.rejectActionNamed" datatype="html">
-        <source>Reject <x id="actionType" equiv-text="actionType"/> request for <x id="subjectId" equiv-text="item.subjectId"/></source>
-        <target>Rechazar la solicitud <x id="actionType" equiv-text="actionType"/> para <x id="subjectId" equiv-text="item.subjectId"/></target>
+        <source>Reject <x id="actionType" equiv-text="actionType"/> request from <x id="createdAt" equiv-text="item.createdAt"/></source>
+        <target>Rechazar la solicitud <x id="actionType" equiv-text="actionType"/> del <x id="createdAt" equiv-text="item.createdAt"/></target>
       </trans-unit>
       <trans-unit id="org.settings.approval.requireApprovalLabel" datatype="html">
         <source> Require approval </source>
@@ -11077,6 +11077,486 @@
       <trans-unit id="inspection.analytics.equipmentTypes.empty" datatype="html">
         <source>No equipment type has open non-conformities.</source>
         <target>Ningún tipo de equipo tiene no conformidades abiertas.</target>
+      </trans-unit>
+      <trans-unit id="auth.passwordReset.failed" datatype="html">
+        <source> The request could not be completed. Check your information and try again. </source>
+        <target>No se pudo completar la solicitud. Comprueba tus datos e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.noMatchingFacility" datatype="html">
+        <source>No matching facility.</source>
+        <target>No hay ningún sitio coincidente.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.facilityRequired" datatype="html">
+        <source>Select the facility for this equipment.</source>
+        <target>Selecciona el sitio de este equipo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.batch.prepared" datatype="html">
+        <source> Prepared: <x id="INTERPOLATION" equiv-text="{{ staged().length }}"/> </source>
+        <target>Preparados: <x id="INTERPOLATION" equiv-text="{{ staged().length }}"/></target>
+      </trans-unit>
+      <trans-unit id="onboarding.batch.saved" datatype="html">
+        <source>Saved</source>
+        <target>Guardado</target>
+      </trans-unit>
+      <trans-unit id="onboarding.batch.failed" datatype="html">
+        <source>Needs retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.batch.edit" datatype="html">
+        <source>Edit row</source>
+        <target>Editar fila</target>
+      </trans-unit>
+      <trans-unit id="onboarding.orgForm.customizeAddress" datatype="html">
+        <source> Customize the workspace address </source>
+        <target>Personalizar la dirección del espacio de trabajo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.progressDetails" datatype="html">
+        <source>Details</source>
+        <target>Detalles</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.progressLabel" datatype="html">
+        <source>Activation progress</source>
+        <target>Progreso de la activación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.lifecycleFailed" datatype="html">
+        <source> This step could not be updated. Your saved information is still available. </source>
+        <target>No se pudo actualizar este paso. La información guardada sigue disponible.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.retry" datatype="html">
+        <source> Try again </source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.catalogLoading" datatype="html">
+        <source>Loading available choices…</source>
+        <target>Cargando las opciones disponibles…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.catalogFailed" datatype="html">
+        <source> The available choices could not be loaded. </source>
+        <target>No se pudieron cargar las opciones disponibles.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.noPlans" datatype="html">
+        <source> No plan is available yet. Refresh the catalog to continue. </source>
+        <target>Todavía no hay ningún plan disponible. Actualiza el catálogo para continuar.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.refreshCatalog" datatype="html">
+        <source> Refresh choices </source>
+        <target>Actualizar opciones</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.rollbackFailed" datatype="html">
+        <source> The previous step could not be restored. Try again. </source>
+        <target>No se pudo restaurar el paso anterior. Inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.startFailed" datatype="html">
+        <source> Your activation could not be loaded. Try again to continue. </source>
+        <target>No se pudo cargar tu activación. Inténtalo de nuevo para continuar.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.loading" datatype="html">
+        <source>Loading activation</source>
+        <target>Cargando la activación</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.stepPosition" datatype="html">
+        <source>Step <x id="position" equiv-text="position"/> of <x id="total" equiv-text="total"/></source>
+        <target>Paso <x id="position" equiv-text="position"/> de <x id="total" equiv-text="total"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.prop.moreDetails" datatype="html">
+        <source>More details</source>
+        <target>Más detalles</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.label.offline" datatype="html">
+        <source>Offline</source>
+        <target>Sin conexión</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.label.blocked" datatype="html">
+        <source>Sync blocked</source>
+        <target>Sincronización bloqueada</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.label.syncing" datatype="html">
+        <source>Syncing</source>
+        <target>Sincronizando</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.label.pending" datatype="html">
+        <source>Pending sync</source>
+        <target>Sincronización pendiente</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.checkResult" datatype="html">
+        <source>Check result</source>
+        <target>Comprobar el resultado</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.identity" datatype="html">
+        <source>Intervention</source>
+        <target>Intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.optionalPlanning" datatype="html">
+        <source>Planning (optional)</source>
+        <target>Planificación (opcional)</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.tabs.work" datatype="html">
+        <source>Work</source>
+        <target>Trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.activity.disclosure" datatype="html">
+        <source>Activity</source>
+        <target>Actividad</target>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.teamChat" datatype="html">
+        <source>Team chat</source>
+        <target>Chat del equipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.moreOptions" datatype="html">
+        <source>More options</source>
+        <target>Más opciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.workQueues" datatype="html">
+        <source>Work queues</source>
+        <target>Colas de trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.queueOverdue" datatype="html">
+        <source>Overdue</source>
+        <target>Vencidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.queueCorrections" datatype="html">
+        <source>Corrections</source>
+        <target>Correcciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.queueReview" datatype="html">
+        <source>To review</source>
+        <target>Para revisar</target>
+      </trans-unit>
+      <trans-unit id="intervention.createSheet.modeLabel" datatype="html">
+        <source>Creation method</source>
+        <target>Método de creación</target>
+      </trans-unit>
+      <trans-unit id="intervention.createSheet.blank" datatype="html">
+        <source>Blank</source>
+        <target>En blanco</target>
+      </trans-unit>
+      <trans-unit id="intervention.createSheet.template" datatype="html">
+        <source>Template</source>
+        <target>Plantilla</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.templateFieldsHint" datatype="html">
+        <source> Type, priority and due date come from the template. You can set the site, responsible and start date here. </source>
+        <target>El tipo, la prioridad y la fecha límite proceden de la plantilla. Aquí puedes definir el sitio, el responsable y la fecha de inicio.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tabs.aria" datatype="html">
+        <source>Dashboard sections</source>
+        <target>Secciones del panel</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tabs.overview" datatype="html">
+        <source>Overview</source>
+        <target>Vista general</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.tabs.analysis" datatype="html">
+        <source>Analysis</source>
+        <target>Análisis</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.gettingStarted.title" datatype="html">
+        <source>Prepare your next intervention</source>
+        <target>Prepara tu próxima intervención</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.gettingStarted.description" datatype="html">
+        <source>Your workspace is ready. Plan the work to carry out on site.</source>
+        <target>Tu espacio de trabajo está listo. Planifica el trabajo que se realizará en el sitio.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.gettingStarted.create" datatype="html">
+        <source>Create an intervention</source>
+        <target>Crear una intervención</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.gettingStarted.browse" datatype="html">
+        <source>View interventions</source>
+        <target>Ver intervenciones</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.opening" datatype="html">
+        <source>Opening your workspace…</source>
+        <target>Abriendo tu espacio de trabajo…</target>
+      </trans-unit>
+      <trans-unit id="org.invitationAccept.acceptErrorDescription" datatype="html">
+        <source>Please try again. If this invitation is no longer valid, ask your administrator for a new one.</source>
+        <target>Inténtalo de nuevo. Si esta invitación ya no es válida, pide una nueva a tu administrador.</target>
+      </trans-unit>
+      <trans-unit id="auth.showcase.workspace" datatype="html">
+        <source>Your field operations workspace</source>
+        <target>Tu espacio de trabajo para las operaciones de campo</target>
+      </trans-unit>
+<trans-unit id="auth.email.label" datatype="html">
+<source>Email address</source>
+<target>Correo electrónico</target>
+</trans-unit>
+<trans-unit id="auth.email.placeholder" datatype="html">
+<source>you@company.com</source>
+<target>tu@empresa.com</target>
+</trans-unit>
+<trans-unit id="auth.email.required" datatype="html">
+<source>Enter your email address</source>
+<target>Introduce tu correo electrónico</target>
+</trans-unit>
+<trans-unit id="auth.email.invalid" datatype="html">
+<source>Enter a valid email address</source>
+<target>Introduce un correo electrónico válido</target>
+</trans-unit>
+<trans-unit id="auth.password.label" datatype="html">
+<source>Password</source>
+<target>Contraseña</target>
+</trans-unit>
+<trans-unit id="auth.login.passwordPlaceholder" datatype="html">
+<source>Your password</source>
+<target>Tu contraseña</target>
+</trans-unit>
+<trans-unit id="auth.login.submitting" datatype="html">
+<source>Signing in…</source>
+<target>Iniciando sesión…</target>
+</trans-unit>
+<trans-unit id="auth.login.passwordRequired" datatype="html">
+<source>Enter your password</source>
+<target>Introduce tu contraseña</target>
+</trans-unit>
+<trans-unit id="auth.password.placeholder" datatype="html">
+<source>At least 8 characters</source>
+<target>Al menos 8 caracteres</target>
+</trans-unit>
+<trans-unit id="auth.passwordConfirmation.label" datatype="html">
+<source>Repeat password</source>
+<target>Repite la contraseña</target>
+</trans-unit>
+<trans-unit id="auth.passwordConfirmation.placeholder" datatype="html">
+<source>Repeat your password</source>
+<target>Repite tu contraseña</target>
+</trans-unit>
+<trans-unit id="auth.newPassword.submitting" datatype="html">
+<source>Saving…</source>
+<target>Guardando…</target>
+</trans-unit>
+<trans-unit id="auth.otp.submitting" datatype="html">
+<source>Verifying…</source>
+<target>Verificando…</target>
+</trans-unit>
+<trans-unit id="auth.otp.submit" datatype="html">
+<source>Verify</source>
+<target>Verificar</target>
+</trans-unit>
+<trans-unit id="auth.otp.resending" datatype="html">
+<source>Sending a new code…</source>
+<target>Enviando un nuevo código…</target>
+</trans-unit>
+<trans-unit id="auth.otp.pattern" datatype="html">
+<source>The code is <x id="length" equiv-text="OTP_LENGTH"/> digits</source>
+<target>El código tiene <x id="length" equiv-text="OTP_LENGTH"/> dígitos</target>
+</trans-unit>
+<trans-unit id="auth.firstName.label" datatype="html">
+<source>First name</source>
+<target>Nombre</target>
+</trans-unit>
+<trans-unit id="auth.firstName.placeholder" datatype="html">
+<source>Ada</source>
+<target>Ada</target>
+</trans-unit>
+<trans-unit id="auth.lastName.label" datatype="html">
+<source>Last name</source>
+<target>Apellidos</target>
+</trans-unit>
+<trans-unit id="auth.lastName.placeholder" datatype="html">
+<source>Lovelace</source>
+<target>Lovelace</target>
+</trans-unit>
+<trans-unit id="auth.register.submitting" datatype="html">
+<source>Creating your account…</source>
+<target>Creando tu cuenta…</target>
+</trans-unit>
+<trans-unit id="auth.firstName.required" datatype="html">
+<source>Enter your first name</source>
+<target>Introduce tu nombre</target>
+</trans-unit>
+<trans-unit id="auth.lastName.required" datatype="html">
+<source>Enter your last name</source>
+<target>Introduce tus apellidos</target>
+</trans-unit>
+<trans-unit id="auth.forgotPassword.backToSignIn" datatype="html">
+<source>Back to sign in</source>
+<target>Volver al inicio de sesión</target>
+</trans-unit>
+<trans-unit id="auth.login.register" datatype="html">
+<source>Create one</source>
+<target>Crea una cuenta</target>
+</trans-unit>
+<trans-unit id="auth.mfa.sentTo" datatype="html">
+<source>We sent a code to</source>
+<target>Hemos enviado un código a</target>
+</trans-unit>
+<trans-unit id="auth.mfa.authenticator" datatype="html">
+<source> Enter the code from your authenticator app. </source>
+<target>Introduce el código de tu aplicación de autenticación.</target>
+</trans-unit>
+<trans-unit id="auth.register.signIn" datatype="html">
+<source>Sign in</source>
+<target>Inicia sesión</target>
+</trans-unit>
+<trans-unit id="auth.password.required" datatype="html">
+<source>Enter a password</source>
+<target>Introduce una contraseña</target>
+</trans-unit>
+<trans-unit id="auth.password.minLength" datatype="html">
+<source>Use at least <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> characters</source>
+<target>Usa al menos <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> caracteres</target>
+</trans-unit>
+<trans-unit id="auth.passwordConfirmation.required" datatype="html">
+<source>Repeat the password</source>
+<target>Repite la contraseña</target>
+</trans-unit>
+<trans-unit id="auth.passwordConfirmation.mismatch" datatype="html">
+<source>The two passwords do not match</source>
+<target>Las contraseñas no coinciden</target>
+</trans-unit>
+<trans-unit id="auth.showcase.lifecycle.label" datatype="html">
+<source>One thread per intervention</source>
+<target>Un seguimiento continuo por intervención</target>
+</trans-unit>
+<trans-unit id="auth.showcase.lifecycle.detail" datatype="html">
+<source>Plan it, run it in the field, publish the report — without re-entering anything.</source>
+<target>Planifica, trabaja sobre el terreno y publica el informe sin volver a introducir los datos.</target>
+</trans-unit>
+<trans-unit id="auth.showcase.offline.label" datatype="html">
+<source>Works with no signal</source>
+<target>Funciona sin cobertura</target>
+</trans-unit>
+<trans-unit id="auth.showcase.offline.detail" datatype="html">
+<source>Boiler rooms and basements included. Work saves on the device and syncs when the network returns.</source>
+<target>También en salas de calderas y sótanos. El trabajo se guarda en el dispositivo y se sincroniza al recuperar la conexión.</target>
+</trans-unit>
+<trans-unit id="auth.showcase.estate.label" datatype="html">
+<source>Your whole estate, one place</source>
+<target>Todo tu parque en un solo lugar</target>
+</trans-unit>
+<trans-unit id="auth.showcase.estate.detail" datatype="html">
+<source>Sites, equipment and inspections stay linked, so a serial number is enough to find the history.</source>
+<target>Los sitios, equipos e inspecciones permanecen vinculados: basta un número de serie para consultar el historial.</target>
+</trans-unit>
+<trans-unit id="onboarding.membersForm.editNamed" datatype="html">
+<source>Edit <x id="email" equiv-text="email"/></source>
+<target>Editar <x id="email" equiv-text="email"/></target>
+</trans-unit>
+<trans-unit id="onboarding.facilitiesForm.editNamed" datatype="html">
+<source>Edit <x id="name" equiv-text="name"/></source>
+<target>Editar <x id="name" equiv-text="name"/></target>
+</trans-unit>
+      <trans-unit id="auth.email.sending" datatype="html">
+        <source>Sending code…</source>
+        <target>Enviando el código…</target>
+      </trans-unit>
+      <trans-unit id="board.label" datatype="html">
+        <source>Board</source>
+        <target>Tablero</target>
+      </trans-unit>
+      <trans-unit id="board.emptyColumn" datatype="html">
+        <source>No items.</source>
+        <target>No hay elementos.</target>
+      </trans-unit>
+      <trans-unit id="board.scrollHint" datatype="html">
+        <source>Browse columns</source>
+        <target>Explorar columnas</target>
+      </trans-unit>
+      <trans-unit id="board.scrollLeft" datatype="html">
+        <source>Show earlier columns</source>
+        <target>Mostrar columnas anteriores</target>
+      </trans-unit>
+      <trans-unit id="board.scrollRight" datatype="html">
+        <source>Show later columns</source>
+        <target>Mostrar columnas siguientes</target>
+      </trans-unit>
+      <trans-unit id="board.columnCount" datatype="html">
+        <source><x id="count" equiv-text="column.items.length"/> items in <x id="column" equiv-text="column.label"/></source>
+        <target><x id="count" equiv-text="column.items.length"/> elementos en <x id="column" equiv-text="column.label"/></target>
+      </trans-unit>
+      <trans-unit id="board.moveRequested" datatype="html">
+        <source>Move requested for <x id="item" equiv-text="item.label"/> to <x id="column" equiv-text="column.label"/>.</source>
+        <target>Movimiento solicitado de <x id="item" equiv-text="item.label"/> a <x id="column" equiv-text="column.label"/>.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.label" datatype="html">
+        <source>Interventions by status</source>
+        <target>Intervenciones por estado</target>
+      </trans-unit>
+      <trans-unit id="board.dropAllowed" datatype="html">
+        <source>Drop here</source>
+        <target>Soltar aquí</target>
+      </trans-unit>
+      <trans-unit id="board.dropBlocked" datatype="html">
+        <source>Cannot move here</source>
+        <target>Movimiento no permitido</target>
+      </trans-unit>
+      <trans-unit id="board.dragStarted" datatype="html">
+        <source>Moving <x id="item" equiv-text="item.label"/>. Available destinations: <x id="destinations" equiv-text="destinations"/>.</source>
+        <target>Moviendo <x id="item" equiv-text="item.label"/>. Destinos disponibles: <x id="destinations" equiv-text="destinations"/>.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.transitionUnavailable" datatype="html">
+        <source>This transition is not available from the current status.</source>
+        <target>Esta transición no está disponible desde el estado actual.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.submitOnly" datatype="html">
+        <source>Only the responsible member can submit this intervention for review.</source>
+        <target>Solo el responsable puede enviar esta intervención para revisión.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.executionMembersOnly" datatype="html">
+        <source>Only the responsible member or a participant can perform this transition.</source>
+        <target>Solo el responsable o un participante pueden realizar esta transición.</target>
+      </trans-unit>
+      <trans-unit id="messages.panel.search" datatype="html">
+        <source>Search conversations</source>
+        <target>Buscar conversaciones</target>
+      </trans-unit>
+      <trans-unit id="messages.panel.noResults" datatype="html">
+        <source>No matching conversations.</source>
+        <target>No hay conversaciones coincidentes.</target>
+      </trans-unit>
+      <trans-unit id="messages.panel.conversations" datatype="html">
+        <source>Conversations</source>
+        <target>Conversaciones</target>
+      </trans-unit>
+      <trans-unit id="route.messages" datatype="html">
+        <source>Messages</source>
+        <target>Mensajes</target>
+      </trans-unit>
+      <trans-unit id="messages.conversation.back" datatype="html">
+        <source>Back to conversations</source>
+        <target>Volver a las conversaciones</target>
+      </trans-unit>
+      <trans-unit id="messages.page.noneOpenTitle" datatype="html">
+        <source>No conversation open</source>
+        <target>Selecciona una conversación</target>
+      </trans-unit>
+      <trans-unit id="messages.page.noneOpenDescription" datatype="html">
+        <source>Select a conversation or start a new message.</source>
+        <target>Selecciona una conversación o inicia un nuevo mensaje.</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.noResults" datatype="html">
+        <source>No channels match your search.</source>
+        <target>Ningún canal coincide con su búsqueda.</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.subchannels" datatype="html">
+        <source>Subchannels of #<x id="name" equiv-text="channel.name"/></source>
+        <target>Subcanales de #<x id="name" equiv-text="channel.name"/></target>
+      </trans-unit>
+      <trans-unit id="collaboration.nav.title" datatype="html">
+        <source>Collaboration</source>
+        <target>Colaboración</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.move" datatype="html">
+        <source>Move #<x id="name" equiv-text="channel.name"/></source>
+        <target>Mover #<x id="name" equiv-text="channel.name"/></target>
+      </trans-unit>
+      <trans-unit id="channels.panel.topLevel" datatype="html">
+        <source>Top level</source>
+        <target>Nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.dropRoot" datatype="html">
+        <source>Drop here to move to the top level</source>
+        <target>Suelta aquí para mover al nivel superior</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.dropInside" datatype="html">
+        <source>Drop here to move inside this channel</source>
+        <target>Suelta aquí para mover dentro de este canal</target>
+      </trans-unit>
+      <trans-unit id="channels.panel.dropBlocked" datatype="html">
+        <source>This channel cannot be moved here</source>
+        <target>Este canal no se puede mover aquí</target>
       </trans-unit>
 </body>
   </file>

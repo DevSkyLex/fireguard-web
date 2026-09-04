@@ -23,3 +23,4 @@ export type { OrganizationNavigationCountersStoreType } from './organization-nav
 export { MyOrganizationsStore } from './my-organizations';
 export type { MyOrganizationsState } from './my-organizations';
 export { myOrganizationsStoreEvents } from './my-organizations';
+export { organizationInvitationAcceptStoreEvents } from './organization-invitation-accept';

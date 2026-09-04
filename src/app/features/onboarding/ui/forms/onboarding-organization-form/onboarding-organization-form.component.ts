@@ -15,6 +15,9 @@ import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import type { SetupCreateOrganizationInput } from '@features/organization/setup';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmButton } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { OnboardingOrganizationFormDraft } from './models';
@@ -54,7 +57,16 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-organization-form',
-  imports: [RequiredMarker, FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
+  imports: [
+    HlmButton,
+    ...HlmCollapsibleImports,
+    ...HlmAlertImports,
+    RequiredMarker,
+    FormField,
+    HlmInput,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+  ],
   templateUrl: './onboarding-organization-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

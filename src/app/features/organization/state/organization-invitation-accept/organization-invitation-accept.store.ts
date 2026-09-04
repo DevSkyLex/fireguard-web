@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import {
@@ -16,6 +17,7 @@ import type {
   OrganizationInvitationPreviewOutput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
+import { organizationInvitationAcceptStoreEvents } from './events';
 
 /**
  * State owned by the invitation acceptance workflow.
@@ -61,6 +63,7 @@ export const OrganizationInvitationAcceptStore = signalStore(
     (
       store,
       invitationService = inject<OrganizationInvitationService>(OrganizationInvitationService),
+      dispatcher = inject(Dispatcher),
     ) => ({
       /** Loads the public preview for an invitation token. */
       loadPreview: rxMethod<string>(
@@ -85,7 +88,15 @@ export const OrganizationInvitationAcceptStore = signalStore(
           exhaustMap((token) =>
             invitationService.accept({ token }).pipe(
               tapResponse({
-                next: (member) => patchState(store, { acceptCallState: successCallState(member) }),
+                next: (member) => {
+                  const organizationId: string | undefined = store.preview()?.organizationId;
+                  if (organizationId) {
+                    dispatcher.dispatch(
+                      organizationInvitationAcceptStoreEvents.acceptSucceeded({ organizationId }),
+                    );
+                  }
+                  patchState(store, { acceptCallState: successCallState(member) });
+                },
                 error: (error: unknown) =>
                   patchState(store, { acceptCallState: errorCallState(toStoreError(error)) }),
               }),

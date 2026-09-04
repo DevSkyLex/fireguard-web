@@ -21,6 +21,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendarDays,
+  lucideChevronDown,
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
@@ -60,18 +61,21 @@ import {
   type CalendarEventDrop,
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { CalendarEntryList } from '../../components/calendar-entry-list';
 import { CalendarEventDeleteDialog } from '../../dialogs/calendar-event-delete-dialog';
+import {
+  CalendarEventDialog,
+  type CalendarEventFormValues,
+} from '../../dialogs/calendar-event-dialog';
 import { CalendarFeedSubscribeDialog } from '../../dialogs/calendar-feed-subscribe-dialog';
-import { CalendarEventSheet } from '../../sheets/calendar-event-sheet';
-import type { CalendarEventFormValues } from '../../sheets/calendar-event-sheet';
 
 /** How many facilities the event dialog's facility select offers, mirroring `equipment-detail-page`'s own facility picker. */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
@@ -141,7 +145,11 @@ type CalendarPageAgendaGroup = {
  * authenticated read that would immediately refetch after hydration
  * (ARCHITECTURE.md §12.5-3). The toolbar's "Subscribe (iCal)" button opens
  * the feed-token dialog (`CalendarFeedSubscribeDialog`), which owns its own
- * transport calls — this page only holds its visibility.
+ * transport calls — this page only holds its visibility. The selector occupies
+ * an independent toolbar column on desktop and its own row on mobile, so a
+ * changing period label never shifts it. Header actions use a native Spartan
+ * creation split button with Subscribe in its menu; read-only viewers retain
+ * the direct Subscribe action.
  *
  * @version 2.4.0
  *
@@ -150,15 +158,16 @@ type CalendarPageAgendaGroup = {
 @Component({
   selector: 'app-calendar-page',
   imports: [
-    EmptyState,
+    NgIcon,
+    ...HlmEmptyImports,
     Calendar,
     CalendarEntryList,
     CalendarEventDeleteDialog,
-    CalendarEventSheet,
+    CalendarEventDialog,
     CalendarFeedSubscribeDialog,
-    NgIcon,
-    ErrorState,
     HlmButton,
+    HlmButtonGroup,
+    ...HlmDropdownMenuImports,
     HlmSkeleton,
     ...HlmCardImports,
     ...HlmTabsImports,
@@ -172,6 +181,7 @@ type CalendarPageAgendaGroup = {
       lucideCircleAlert,
       lucidePlus,
       lucideCalendarDays,
+      lucideChevronDown,
       lucideRss,
     }),
   ],

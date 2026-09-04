@@ -68,14 +68,13 @@ import {
   type RegionalFormattingPort,
 } from '@features/organization/ports';
 import { isCompact } from '@shared/breakpoint';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { PlanViewer } from '@shared/plan-viewer';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -162,7 +161,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
  * document title follows through `TitleService`, and a load failure shows
- * `app-error-state` with a retry that re-runs {@link ActiveFacilityStore}'s
+ * the Spartan `hlmEmpty` error composition with a retry that re-runs {@link ActiveFacilityStore}'s
  * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
  * on an eternal skeleton or navigating them away silently. A route-scoped
  * {@link FacilityStore}
@@ -192,12 +191,11 @@ const IDLE_EDIT_STATE: FacilityEditState = {
 @Component({
   selector: 'app-facility-detail-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     ...HlmDropdownMenuImports,
     OrgDatePipe,
-    NgIcon,
     RouterLink,
-    EmptyState,
-    ErrorState,
     FacilityDeleteDialog,
     FacilityHierarchyChart,
     FacilityInformationPanel,
@@ -708,7 +706,7 @@ export class FacilityDetailPage {
    * Settles the open in-place field once its own write clears; once the
    * seeded record lands, re-sets the document title and loads the Overview
    * tab's summary plus (when the facility has children) its descendant
-   * subtree; a load failure is left to the template's `app-error-state`
+   * subtree; a load failure is left to the template's the Spartan `hlmEmpty` error composition
    * branch and {@link retryLoad} — the global feedback listener already
    * toasts the failure — returns to the list once a delete write succeeds —
    * and registers {@link pageActions}.

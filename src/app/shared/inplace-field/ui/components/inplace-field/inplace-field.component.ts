@@ -352,9 +352,13 @@ export class InplaceField {
 
   //#region Constructor
   constructor() {
+    let wasEditing: boolean = false;
+
     effect((): void => {
       const isEditing: boolean = this.editing();
       const host: HTMLElement | undefined = this.editor()?.nativeElement;
+      const closed: boolean = wasEditing && !isEditing;
+      wasEditing = isEditing;
 
       untracked((): void => {
         if (isEditing) {
@@ -362,7 +366,7 @@ export class InplaceField {
           return;
         }
 
-        this.restoreTriggerFocus();
+        if (closed) this.restoreTriggerFocus();
       });
     });
   }

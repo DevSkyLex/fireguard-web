@@ -19,52 +19,38 @@ This subfeature is responsible for:
 
 ## Routes
 
-**`InterventionsPage`** (`ui/pages/interventions-page/`) is the single
-`loadComponent:` for the whole index route — List, Board, Calendar and Recurrences are
-`hlm-tabs` (`@shared/ui/tabs`) over one page, not three routed leaves behind a
-shell. **11.0 retired that routed shell** (`InterventionsShellPage`,
-`InterventionsBoardPage`, `InterventionsCalendarPage`, the pathless route that
-nested them, and the `InterventionToolbarActions` `TemplateRef` slot the List
-tab used to hand its own controls up to the shell's toolbar). **13.0 then made
-each tab genuinely independent**: the tab selector no longer sits inside the
-toolbar — it renders in the dashboard shell's own header, registered through
-`PageActionsService` alongside "New intervention" (one `#pageActions`
-`ng-template`, since the service holds a single `TemplateRef`). That template
-is declared as a **sibling of `<hlm-tabs>`, at the page root**, and the
-selector is a hand-rolled `role="tablist"`/`role="tab"` control, not
-`hlm-tabs-list`/`hlmTabsTrigger`. An earlier revision nested it inside
-`<hlm-tabs>` instead, reasoning that its trigger buttons needed to be
-`BrnTabs`' DI descendants — true, but irrelevant, since `<hlm-tabs>` is
-already driven from the outside via `[tab]="activeView()"` and never needed
-its own internal triggers to switch panels. That placement made the
-template's declaring view a descendant of `<hlm-tabs>`'s own subtree instead
-of the page root, and a route navigation that keeps `InterventionsPage`
-alive (any `?view=`/filter/search change) went through
-`PageActionsService`'s then-`NavigationStart`-triggered clear without ever
-re-registering, since the page's `viewChild('pageActions')` reference never
-changed — the header's tab selector and "New intervention" vanished after
-the very first click and stayed gone until a hard reload. **14.0 fixed
-both**: the template moved back to the page root, and `PageActionsService`
-now clears a registration only on the owning page's own destruction, not on
-every navigation event (`core/page-actions/FEATURE.md`-adjacent — see
-`page-actions.service.ts`'s own class doc). The selector's `id`/
-`aria-controls` pairs (`brn-tabs-label-<view>`/`brn-tabs-content-<view>`)
-reproduce the exact strings `BrnTabsContent` computes internally for the
-still-`hlm-tabs`-driven panels, so a real tablist keeps controlling real
-tabpanels without sharing an injector with them. The toolbar itself is now
-per-tab: List and Board render search + "My interventions" + a filter bar +
-(List only) Display/Export/bulk-actions; Calendar renders "My interventions" +
-a filter bar but no search box, since neither `InterventionCalendarStore` nor
-`InterventionCalendarFilters` accepts one; Recurrences renders no toolbar at
-all — `@if (activeView() !== 'recurrences')` gates the whole
-`app-collection-toolbar` block. The active tab is the `view` route-bound input
-(`?view=board|calendar|recurrences`, absent ⇒ `list`), read into `activeView`
-and written back by `switchView` with `queryParamsHandling: 'merge'`, so every
-other filter param survives a tab switch. `/interventions/board` and
-`/interventions/calendar` still exist as addressable, bookmarkable URLs: each
-is a functional `redirectTo` (`interventions.routes.ts`) onto
-`/interventions?view=board|calendar`, preserving every other query param the
-incoming URL carried.
+The index route owns List, Board, Calendar and Recurrences in one page.
+List / Board / Calendar use a native `hlm-toggle-group` immediately before the
+collection toolbar. Recurrences remains addressable by `?view=recurrences`
+without a secondary menu entry in the collection. Creation remains in the shell header.
+Each view is a named section. Board, Calendar and Recurrences mount on first
+activation through `@defer` and remain mounted to retain their local context.
+All view changes merge query parameters. Board/calendar legacy paths retain
+their redirects. Row links, creation success and previous/next navigation
+preserve the list query; returning to the list removes only the detail tab.
+Sort, hidden columns and page size remain in their existing preference cookie.
+
+Search is offered only in List and Board; the filter catalog shows only fields
+the active view applies. Unused filter values survive view changes in the URL.
+The collection starts directly with its view selector and has no metric cards,
+statistics request, Analysis disclosure or separate queue-count shortcuts. Long intervention
+and site labels stay within their columns so the due date and row menu remain
+visible. Detail properties adapt to the content container; the secondary About
+disclosure starts open when its desktop rail is present and closed on mobile.
+Its initial state is chosen once; resizing preserves the user's disclosure choice
+and any active description editor.
+
+Creation is permission-gated on intervention planning, including `?create=1`.
+The sheet has mutually exclusive Blank and Template tabs, each exposing one
+form/footer; tab changes retain both drafts. Selecting a template from the
+header opens this sheet without a write. Confirmation keeps the existing
+create and instantiate commands separate. Template overrides are limited to
+name, site, responsible and planned start; inherited fields never become
+additional patch requests. Failures remain inline in the active form.
+
+The detail uses a native `hlm-tabs-list` with the `line` variant, a stable horizontal
+order and a named tablist. Only the tab strip scrolls on narrow screens. The first
+tab reads Work; its existing `overview` URL value remains valid.
 
 **The detail page's rail tab is addressable the same way.** `?tab=` binds to
 `InterventionDetailPage.tab`, seeds `activeLinkedTab` through a
@@ -75,7 +61,7 @@ where a reviewer decides: without it, "look at the proposed changes on FG-142"
 was not a link and every reload threw the reviewer back to Overview. Like
 `?view=`, it is not a history entry.
 
-`InterventionBoard` and `InterventionCalendar` (`ui/components/`) are
+`Board` (`@shared/board`) and `InterventionCalendar` (`ui/components/`) are
 presentational components `InterventionsPage` feeds through inputs and reads
 back through outputs — neither injects a store or calls a service
 (`ARCHITECTURE.md` §10.3); the page decides whether to call
@@ -92,7 +78,7 @@ component-scoped in this feature, since only a page may inject one, and this
 page now stands in for the three leaves that used to share that duty.
 `calendarMonth` starts `null` and the load effect no-ops until
 `InterventionCalendar` reports its first anchor, which only happens once the
-component exists — behind `hlmTabsContentLazy`, on the Calendar tab's first
+component exists — behind `@defer`, on the Calendar tab's first
 activation — so opening the page on List or Board never fetches the
 calendar's window.
 
@@ -418,7 +404,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   size defaults to its content size, and without `min-h-0` at every level the
   chain silently breaks and the browser falls back to scrolling the whole
   page instead of just the table. `InterventionTable`'s own `h-full`
-  scrollable shell then fills exactly what the header, KPI strip, views row,
+  scrollable shell then fills exactly what the header, views row,
   toolbar, chips row and footer leave. The sticky `thead` is `sticky top-0`
   on `hlmTableContainer` itself (`h-full overflow-y-auto`), not on a separate
   outer wrapper — `overflow-x-auto` (needed for wide tables) forces
@@ -430,30 +416,20 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
 - `/organizations/:organizationId/interventions/board` — the Kanban tab over
   the exact same dataset the List tab renders, resolving PRODUCT.md's "List /
   Board / Calendar over one shared dataset" promise for interventions
-  (`InterventionBoard`, `ui/components/intervention-board/`, fed by
+  (`Board`, `@shared/board`, fed by
   `InterventionsPage`). The URL is a functional `redirectTo` onto
   `/interventions?view=board` (11.0) — registered **before** `:interventionId`
   in `interventions.routes.ts`, a literal segment must be matched ahead of the
   param route, or every visit would resolve as a detail page for an
-  intervention id of `"board"`. `InterventionBoard` shares
+  intervention id of `"board"`. `Board` shares
   `InterventionsPage`'s own `InterventionStore` instead of a second copy of
   the dataset. Same permission gate as the list (inherited from the outer
   pathless parent).
 
-  **Tab switch (11.0: `hlm-tabs`, not a routed shell; 13.0: the selector moved
-  to the shell header; 14.0: the selector is hand-rolled, at the page root).**
-  A hand-rolled `role="tablist"`/`role="tab"` control, one button per tab,
-  renders once, registered through `PageActionsService` alongside "New
-  intervention" rather than inside `InterventionsPage`'s own toolbar row —
-  see "Routes" above for why one `#pageActions` template carries both, and
-  why it is no longer `hlm-tabs-list`/`hlmTabsTrigger`. Switching tabs calls
-  `InterventionsPage.switchView`, which writes `?view=`
-  with
-  `queryParamsHandling: 'merge'` — every other filter param survives
-  untouched, **except `status`**, dropped specifically when switching to the
-  Board: the board's columns are the statuses, so a `status` narrowing
-  travelling into it would either duplicate or contradict the column split —
-  `status` is the one field the three tabs disagree on.
+  **View switch.** The native toggle group sits before the collection toolbar.
+  `InterventionsPage.switchView` merges `?view=` into the URL. Filter values survive
+  view changes; each view applies only its documented subset. The Board ignores
+  a stored status filter because its columns already partition the statuses.
 
   **Columns and data.** One column per `InterventionStatus`, in workflow order
   (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
@@ -475,58 +451,59 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `status`, so the Board's own filter catalog never lists it and a `status`
   narrowing left active from the List renders no chip here (13.0).
 
-  **Filling and scrolling (14.0).** The seven fixed columns are always wider
-  than the content column, so the board is a horizontal scroller. Its tab
-  content is a `flex flex-col` so the board stretches to the column height
-  (columns reach the track, not the top third); the KPI strip and the analysis
-  disclosure render **only** on the List tab (`@if (activeView() === 'list')`)
-  — they summarise the list, they are not the board's or the calendar's
-  business, and on a phone they used to push the whole board below the fold.
-  The scroll track is a plain block (`overflow-x-auto`) wrapping one
-  `flex w-max` row: `w-max` is load-bearing — without it the inner row shrinks
-  to the viewport and the browser reports overflow it will not let you reach.
-  Two edge fades (`from-background` gradients, opacity-toggled on
-  `canScrollLeft`/`canScrollRight`) hint at hidden columns, and a prev/next
-  control pair sits **above** the columns rather than floating over them — a
-  button centred over a tall column is unclickable, the card underneath wins
-  the hit test. `canScrollLeft`/`canScrollRight` are recomputed from the
-  track's geometry on `(scroll)` and by a `ResizeObserver` (the column count is
-  fixed, so only the viewport width and the offset change what is hidden); the
-  buttons scroll by 80% of the viewport, `behavior: 'smooth'` unless
-  `prefers-reduced-motion`. **The smoothness lives in JS, never the CSS
-  `scroll-smooth` class** — that class makes even a direct `scrollLeft`
-  assignment animate, and a read straight after returns the pre-animation `0`,
-  which silently breaks any code that seeks the track programmatically.
+  **Generic board and visual layout.** `shared/board` owns `Board`, its typed
+  `BoardColumn` / `BoardItem` / `BoardMove` contracts, the `appBoardCard`
+  template marker, horizontal navigation and drag behavior. It imports no
+  feature code. `InterventionsPage` owns status ordering, grouping, labels,
+  pending flags and move policy, and projects `InterventionBoardCard` through
+  the typed slot. `appBoardColumnHeader` renders `InterventionTag` as a plain
+  icon-and-label heading, reusing the feature registry’s status icons and colors. The domain card and its view model remain feature-owned.
+  Cards omit normal priority, render labels without badge outlines and group the
+  responsible member and deadline in one compact row without a footer surface.
+  Column headers stay visible
+  while their card lists scroll vertically; horizontal scrolling stays inside
+  the board. Column navigation advances whole columns, respects reduced motion
+  and has 44px phone targets. Edge fades do not cover cards. Board instance
+  ids isolate drop zones; resize observation handles changing column counts
+  and deferred tab visibility and is disconnected on teardown.
 
   **Drag-drop legality — one function, two call sites.**
   `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is a
-  pure function of one card's `InterventionOutput`: the target must be in the
-  card's own server `allowedTransitions`, and — mirroring the detail page's
-  `transitionTargets()` gate — the one identity-restricted move, withdrawing a
-  submission (`submitted` → `in_progress`), additionally requires
-  `allowedActions.canWithdraw === true`. Both `InterventionBoard.canDrop` (the
-  `cdkDropListEnterPredicate`) and each card's own "Move to…" menu (the
-  keyboard/AT path) call the exact same function, so the two can never
-  disagree about what is legal. A card whose id is in
+  boolean facade over `resolveInterventionBoardMoveReason`: the target must be in the
+  card's server `allowedTransitions`. Execute transitions additionally require the
+  current member to be the responsible or a participant, matching the API's membership
+  guard; unresolved identity denies execution. Submit and withdraw respectively use
+  `allowedActions.canSubmit` and `allowedActions.canWithdraw`. Planning and review
+  transitions do not inherit the execution membership restriction.
+  Both the page-supplied `canMoveBoardItem` policy used by Board
+  and each card's own "Move to…" menu (the
+  keyboard/AT path) use this resolver, so the two can never
+  disagree about what is legal. During an active drag, Board marks every destination from that same current policy:
+  allowed columns offer a labeled drop hint; forbidden columns dim their contents
+  and show a prohibition icon and the feature-owned blocker before release. Shared
+  Board accepts an optional `moveBlockedReason` callback and otherwise keeps its generic hint.
+  The source stays neutral.
+  Releasing outside an accepted column emits no move, even after hovering a valid target.
+  A card whose id is in
   `store.transitioningInterventionIds()` is drag-disabled and its menu
   disabled entirely — its cached `allowedTransitions`/`revision` are stale
   mid-flight (`InterventionStore.transition`'s own doc already anticipates
   board drag-drop firing several transitions in quick succession). A drop or
-  a menu pick emits `InterventionBoard.moveRequested`; `InterventionsPage`'s
-  `applyTransition` — the same handler the List table's own row menu calls —
+  a menu pick emits `Board.moveRequested`; `InterventionsPage` translates it
+  through `onBoardMoveRequested` to `applyTransition` — the same handler the List table's own row menu calls —
   is the one place that actually calls
-  `InterventionStore.transition({ id, status, revision })`, trusting the
-  board already validated the move. The store's existing optimistic patch,
+  `InterventionStore.transition({ id, status, revision })`, rechecking the
+  feature move policy before dispatch. The store's existing optimistic patch,
   `If-Match` revision and rollback-plus-toast on failure serve the board
   exactly as they serve the list and detail pages.
 
   **Accessibility.** Drag is an enhancement, never the only path: every card
   carries a "Move to…" menu — the same pattern `InterventionTable`'s row menu
-  uses, including the disabled-with-title styling for the gated withdraw
+  uses, including a visible, aria-linked reason for a gated
   move — as the keyboard/AT equivalent, and the card's title is a real
   `routerLink` to the detail page. A visually-hidden `aria-live="polite"`
-  region announces "Moved `<name>` to `<status>`" the moment a move is
-  requested, reflecting the store's own optimistic patch.
+  region announces the requested move without claiming server success. Focus
+  returns to the card title after the optimistic update recreates it.
 
 - `/organizations/:organizationId/interventions/calendar` — the month-grid
   tab over the same dataset, the third and last leg of PRODUCT.md's "List /
@@ -542,7 +519,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   refit. Unlike the Board, this tab does **not** share `InterventionStore`:
   the List/Board pair reads one server page, the calendar reads a bounded
   date window — an incompatible shape for the same entity cache. The
-  component itself only mounts behind `hlmTabsContentLazy`, on the Calendar
+  component itself only mounts behind `@defer`, on the Calendar
   tab's first activation, and reports its displayed anchor to the page
   through `monthChanged` — `InterventionsPage`'s own load effect stays gated
   on that anchor being non-`null`, so opening the page on List or Board never
@@ -772,30 +749,9 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   refit into current standards, since it already used named `loadCallState`,
   `toStoreError` before `errorCallState`, and a dispatched `loadFailed` event
   on a genuine fetch failure.
-- `InterventionStatisticsStore` (5.3) — route-scoped (provided on the outer
-  pathless parent alongside `InterventionStore`, 11.0 — not component-scoped
-  in `InterventionsPage` any more, so it survives a future page split the way
-  the shared dataset already does), injected by `InterventionsPage`; one
-  `withQueryState` slice over `InterventionService.statistics`, backing the
-  KPI strip (`app-intervention-kpi-strip`, `ui/components/`), which renders
-  above the tabs and stays visible on all three. The snapshot is
-  **whole-organization, not filter-scoped** — the backend endpoint takes no
-  narrowing beyond `organization` — so the page reloads it only on an
-  organization switch, never on the List tab's own search/filter/sort/page
-  changes that reload `InterventionStore`, and never on a tab switch either.
-  There is no cross-store refresh on create/delete/transition either: the
-  strip is a coarse "state of the organization" snapshot, not a precise live
-  counter, and wiring it to every mutation would trade a simple,
-  obviously-correct reload trigger for a fragile one covering a case the KPI
-  strip's own purpose does not need.
-
-  **The same snapshot also backs `app-intervention-statistics-analysis`**
-  (`ui/components/`), a collapsed-by-default disclosure sitting directly under
-  the strip and rendering everything the four tiles do not: the priority
-  split, the top-ten sites and responsibles, and `averagePublicationDays`. It
-  had shipped complete and specced but **mounted nowhere** — its selector
-  appeared in no template in the repository — so a payload already fetched on
-  every organization switch went half-read. Mounting it costs no request.
+- `InterventionStatisticsStore` remains a statistics slice over
+  `InterventionService.statistics`; the collection route no longer provides,
+  injects or loads it. Neither the KPI strip nor Analysis mounts on this page.
 
 - `InterventionLabelStore` — component-scoped (provided in
   `InterventionDetailPage`); CRUD over the organization's intervention label
@@ -981,75 +937,27 @@ Internal code imports deep paths directly.
   built by `toMemberSelectOption` from `@features/organization/utils` —
   `InterventionPlanningOptionsStore` no longer carries a private mapper. Every
   member picker (assign dialog, properties grid, work-item form, create sheet,
-  recurrence form) renders `app-person-option` (`@shared/person-option`):
-  avatar, name, role. A trigger whose value left the option list reads a
+  recurrence form) renders Spartan `Item` and `Avatar` directly: avatar, name,
+  role. A trigger whose value left the option list reads a
   localized "Unknown member/site/label/target", never the IRI.
 
 ## Detail workspace composition
 
-The detail page (`ui/pages/intervention-detail-page`) is **tabbed again**, on
-direct instruction after a same-session correction to the 4.5 redesign this
-document originally described (see `### The rail is not the retired
-workspace tabs` for why this is not a reopening of the 3.0/4.0 retirements).
-The two-track wrapper is a named Tailwind v4 container (`@container/detail`),
-not a viewport media query — the shell sidebar is collapsible
-(`collapsible="icon"`), so the wrapper's real width diverges from the
-viewport by roughly 200px at a fixed breakpoint. The second grid track
-breaks out beside the first once the wrapper reaches 896px of container
-width (`@4xl/detail`, `InterventionDetailPage.propertiesRailVisible`); the
-rail inside the first track turns into its own vertical column once the
-wrapper reaches 1152px (`@6xl/detail`, `linkedTabsOrientation`) — both
-thresholds measured by a single `ResizeObserver` on the wrapper
-(`InterventionDetailPage.detailColumns`). Below 896px everything stacks in
-document order. Three regions, left to right once both thresholds are
-crossed:
+The detail uses a stable horizontal Spartan line tab list at every width:
+Work (`overview` in the URL), Changes, Attachments, Facilities, Equipment and
+Inspections. The native paginated tab list contains overflow within the bar.
+Operational editors (site, responsible, schedule and priority) precede the
+work and remain outside every tab; participants, labels and revision sit in
+a native secondary disclosure. Description, type and technical dates follow
+in the secondary information column. Status is stated once in the command band.
 
-1. **The rail** (`hlm-tabs-list`, `orientation="vertical"`, narrow, `w-fit`)
-   — six triggers: Overview, Changes, Attachments, Facilities, Equipment,
-   Inspections, every one but Overview carrying a live count
-   (`pendingChangesCount()`, `store.attachments().length`, then the three
-   `intervention.*Count` fields). It is the **first** grid track's own
-   internal flex layout (`<hlm-tabs orientation="vertical">` renders as a
-   flex row when vertical — brain's own mechanism for a side-rail, not a
-   page-level grid track of its own), not a fourth column.
-2. **The active tab's panel**, filling the rest of that same first track
-   (`flex-1` on `[hlmTabsContent]`, from the component). **Overview** holds
-   the readiness checklist, the mobile issues checklist, the work-item
-   table, the activity thread and the comment form. **Changes** and
-   **Attachments** each hold the one component that used to sit inside
-   Overview (`app-intervention-change-list` / `app-intervention-attachments`),
-   mounted lazily (`hlmTabsContentLazy`) on first activation — a DOM-mount
-   deferral only, since `InterventionWorkspaceStore` already loads both
-   with the rest of the workspace on entry. **Facilities / Equipment /
-   Inspections** each render one read-only `hlmTable`
-   (`InterventionFacilitiesTable`/`…EquipmentTable`/`…InspectionsTable`)
-   from `InterventionLinkedResourcesStore`, mounted lazily
-   (`hlmTabsContentLazy`) on first activation and kept mounted after — for
-   these three, the mount deferral also gates the sibling-feature fetch.
-3. **The second grid track — unchanged, and tab-independent.** The
-   properties card and, beneath it, the desktop issues checklist (`execute`
-   and `review` phases only): `sticky` (`top-32`, tuned against the band's
-   measured worst case) once the wrapper crosses 896px of container width
-   (`@4xl/detail:sticky`), in normal document flow below. Nothing here
-   reacts to which of the six tabs is active — see `### The rail is not the
-retired workspace tabs` for why that is the invariant that matters.
-
-The outer grid is `@4xl/detail:grid-cols-[minmax(0,1fr)_19rem]` — a container
-query, its own column 1rem narrower and its `gap-8` 1rem tighter than the
-wrapper's original `lg:grid-cols-[…_20rem] lg:gap-12`, reclaimed to widen the
-work-item table at the viewports the fixed breakpoint used to starve. The
-rail-plus-panel split still lives entirely inside `<hlm-tabs>`'s own flex
-layout in the first track, not in the outer grid-template.
-
-**The second track stays page-local — `DASHBOARD_PANEL_SLOT` was considered
-and declined (5.1).** The shell's panel slot is for shell-contextual rails; this
-column is route-record page content whose tab-independent visibility is an
-invariant of this document, with its own sticky behavior inside the page grid,
-independent of the status band that now serves the forward action at every
-width instead of a below-`lg` fallback. Migrating it would change the
-rendered geometry — a sixth layout redesign — and the slot has no production
-consumer to anchor against (collaboration explicitly declined it too). Do not
-relitigate this without a product-level reason.
+The Work panel starts with a compact readiness item group and the work items.
+A writable empty scope has one add action and no zero progress/count. Activity
+and its comment form remain mounted inside a collapsed native disclosure, so
+drafts are preserved. Discussion opens Work, expands that disclosure and focuses
+the comment after rendering. Blockers stay reachable from every tab through
+the command band. Their desktop/mobile placement retains the existing 896px
+container threshold and focus fallback.
 
 **Page decomposition (5.1) — behavior-frozen extractions, layout untouched.**
 The page component delegates to units that carry their own specs: the label
@@ -1085,33 +993,8 @@ then whichever panel is active, in document order) stacks above the
 properties/issues-checklist column, same order as before; the status band
 sits above both, outside this container, at every width.
 
-`InterventionDetailPage.linkedTabsOrientation` mirrors the wrapper's own
-measured width, not a viewport media query — a `ResizeObserver` on
-`#detailColumns` (`InterventionDetailPage.detailColumns`, attached from an
-`effect` reacting to the `viewChild` signal, since the wrapper only exists
-once the intervention has loaded; guarded on `globalThis.ResizeObserver` for
-SSR safety) flips it to `vertical` once the wrapper
-crosses 1152px (`@6xl/detail`) and to `horizontal` below, into `[orientation]`
-on `<hlm-tabs>`, driving the same signal that switches `hlm-tabs`' internal
-flex axis and keyboard handling. The same observer also drives
-`propertiesRailVisible` at the lower 896px threshold (`@4xl/detail`): the
-second grid track breaks out before the rail itself turns vertical, which is
-why `focusIssuesChecklist` reads `propertiesRailVisible`, not
-`linkedTabsOrientation`, to pick the visible checklist copy. `linkedTabsOrientation`
-also still picks which list component the template renders: `hlm-tabs-list`
-at `vertical`, brain's `hlm-paginated-tabs-list` (previous/next chevrons over
-a horizontally-scrolling row) at `horizontal` — its own overflow pattern for
-a tab row that doesn't fit its container, rather than letting the six
-triggers wrap onto a second line and overlap the content below. The six
-`hlmTabsTrigger` buttons live once, in a shared `#linkedTabTriggers`
-`ng-template` projected into whichever list is active via `ngTemplateOutlet`,
-so the two list shapes never duplicate the trigger markup or its i18n ids.
-`hlm-paginated-tabs-list` only shows its chevrons once the row's `scrollWidth`
-actually exceeds its container — otherwise the six triggers just fit and
-scroll natively. Trade-off, stated plainly: the `ResizeObserver` only
-connects client-side, so the very first paint (SSR and pre-hydration) always
-renders `horizontal`/`false`, upgrading once the browser measures the
-wrapper — a one-time layout adjustment on desktop loads.
+The container observer only determines the visible issues checklist; tab
+orientation and keyboard direction stay horizontal throughout resizing.
 
 1. **Header** — the intervention's name is the shell breadcrumb's `<h1>`
    (`interventionTitleResolver`, `data.title`), not an in-page band. Discussion
@@ -1157,19 +1040,10 @@ activity-thread`, and the comment-form block.
 7. **Facilities / Equipment / Inspections tabs** — one `hlmTable` each, read
    for the intervention's own linked records, no pagination, no row actions
    (see the tables' own component docs for the column sets).
-8. **Properties card** (second grid track, top) — `app-intervention-
-properties-grid` inside an `hlmCard`, always mounted, tab-independent.
-   Activating a getting-started item for `site`, `responsible` or `schedule`
-   opens its in-place editor directly; there is no disclosure to expand
-   first, because the card is never collapsed.
-9. **Desktop issues checklist** (second grid track, beneath the properties
-   card, `execute`/`review` only, `@max-4xl/detail:hidden`) —
-   `app-intervention-issues-checklist`, the same component the Overview
-   tab's mobile copy renders; each viewport sees exactly one of the two,
-   picked by `propertiesRailVisible`. The second track as a whole —
-   properties card and this checklist together — is what stays `sticky`
-   (`top-32`, tuned against the band's measured worst case) once the wrapper
-   crosses 896px of container width (`@4xl/detail:sticky`).
+8. **Operational properties** precede the status band and remain mounted.
+   Readiness actions open their matching editor directly.
+9. **Secondary information and desktop issues** occupy the second track;
+   mobile issues stay in Work and the visible instance receives focus.
 10. **Prev/next footer** — unchanged.
 
 Activating the getting-started item for missing scope (`workItems`) switches
@@ -1559,15 +1433,13 @@ The indicator's trigger deliberately keeps the retired component's
 every existing sync locator — e2e specs and page objects included — survives
 the migration unchanged.
 
-### Discussion sits beside the activity thread, not inside it
+### Activity and team chat
 
-The header's Discussion button (6.2, gated on `organization.messaging.read`) opens a right-anchored
-sheet holding collaboration's `SubjectDiscussion` — live team messaging, Mercure-backed, the same
-surface a channel or a direct conversation renders. It is a different thing from
-`app-intervention-activity-thread`: the activity thread is the system record (status changes,
-field-work events) plus the intervention's own comments, append-only and part of the compliance
-history; the discussion is ephemeral team chatter that never becomes part of that record. Neither
-absorbs the other.
+The primary Discussion action opens the activity disclosure and focuses the
+intervention comment. The existing Mercure-backed `SubjectDiscussion` remains
+available as Team chat in the secondary menu, gated on messaging read, and
+loads only when opened. Team messages and the compliance activity remain
+distinct records; neither is copied into the other.
 
 ### Comment mentions
 
@@ -1587,8 +1459,10 @@ failure); a post in flight reads as `aria-busy` with a "Posting…" label.
 
 ### Attachments and field capture
 
-`app-intervention-attachments` (between Changes and Activity) lists the
-intervention's files and offers a picker plus a camera capture whose images the
+`app-intervention-attachments` lists synced and queued files with native Spartan
+Attachment primitives, preserving per-file actions and offline metadata. Its
+picker actions stack below the caption on narrow screens. It offers a picker
+plus a camera capture whose images the
 page shrinks through `InterventionPhotoCompressorService` before upload. Picks
 are pre-checked against the backend's MIME whitelist (images + PDF), the
 **25-file cardinality cap**
@@ -1915,25 +1789,21 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   a tenth filter field, or changing which fields a tab honours, means updating
   that `Record`'s entry in the same change, or the new field silently reads as
   honoured everywhere.
-- **`InterventionBoard` and `InterventionCalendar` inject no store and call no
+- **`Board` and `InterventionCalendar` inject no store and call no
   service (11.0, `ARCHITECTURE.md` §10.3).** Only `InterventionsPage` may —
   a Board move is emitted as `moveRequested` and the page decides whether to
   call `InterventionStore.transition`; the Calendar's own store is provided
   and driven entirely by the page, the component only reporting its anchor
-  through `monthChanged`. Do not add an `inject()` to either component — it
+  through `monthChanged`. Do not add store or transport injection to either component — it
   is what keeps a table, a board and a calendar interchangeable dumb renderers
   instead of three more places that can independently misread the URL.
 - **The detail page is never nested under `InterventionsPage`'s tabs.** It
   sits as the outer pathless parent's other child, specifically so it never
   inherits the collection chrome (search box, filter bar, tab list) that has
   no meaning on a single intervention's workspace.
-- **The KPI strip spans all three tabs; it is not list-only.** It renders
-  above `hlm-tabs`, backed by the route-scoped `InterventionStatisticsStore`
-  (provided on the outer pathless parent, not component-scoped in
-  `InterventionsPage` — 11.0), reloaded only on an organization switch, never
-  on a tab switch or on any of the List tab's own search/filter/sort/page
-  changes. Do not gate its rendering on `activeView()` — the figures describe
-  the collection, not one tab's rendering of it.
+- **Collection views have no metrics strip.** List, Board, Calendar and Recurrences
+  start with their controls and results; opening or switching views does not
+  fetch the organization-wide intervention statistics.
 - **The Calendar tab places an intervention by `plannedStartAt ?? dueAt`,
   never by `dueAt` alone.** `listCalendarWindow`, `InterventionCalendarStore`
   and `InterventionCalendar` must agree on this one anchor — placing it
@@ -2024,8 +1894,8 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   The poll itself is **bounded** (~2 minutes) and its exhaustion is
   **recoverable, not terminal** (5.3): a publication stuck server-side past
   the bound surfaces as a distinct timed-out state — "still running in the
-  background" with a single-shot "Check again" (`recheck()`, one re-read of
-  the publication, no new poll) — never as a spinner that outlives the
+  background" with a single-shot "Check result" (`recheck()`, one re-read of
+  the publication, no new poll) — and a Close action that does not imply cancellation — never as a spinner that outlives the
   operator's patience, a false success, or a dead-end failure for a write
   that may yet complete. Past ~30 seconds the in-flight copy switches to a
   still-working variant so a long publication reads as long, not frozen. A
@@ -2072,13 +1942,13 @@ client action`).
 - Intervention pages orchestrate intervention services and intervention stores.
 - Intervention route pages live under `ui/pages/`.
 - **The board's drag-drop legality has exactly one implementation.**
-  `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) is the
-  sole authority both `InterventionBoard.canDrop` (the
-  `cdkDropListEnterPredicate`) and `InterventionBoardCard`'s own "Move to…"
-  menu call — a second, independently-computed legality check on either side
-  is what would let the two silently disagree. The one rule it encodes:
-  target ∈ the card's own `allowedTransitions`, plus `allowedActions.canWithdraw`
-  for `submitted` → `in_progress`.
+  `resolveInterventionBoardMoveReason` and its boolean facade
+  `isInterventionBoardMoveAllowed` (`utils/intervention-board-move/`) are the
+  shared authority for the page's `canMoveBoardItem` policy (passed to
+  shared `Board`) and `InterventionBoardCard`'s own "Move to…"
+  menu — a second, independently-computed legality check on either side
+  would let the two silently disagree. Server-legal transitions remain subject to
+  execution membership and the advertised submit/withdraw capabilities.
 - **Drag is an enhancement, never the only path**, on the same house rule
   `shared/tree` established: every board card carries a "Move to…" menu
   offering the identical set of legal moves, so the workflow is fully
@@ -2221,4 +2091,4 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   moved out of the Overview tab into their own lazily-mounted tabs in the
   same change — see `### The rail is not the retired workspace tabs` for
   what that narrows on top of the action-box/command-bar retirement.
-- The list header's view switch is a spartan `hlm-toggle-group` (the hand-rolled `role="tablist"` is retired); "New intervention" becomes a split button (`hlmButtonGroup` + `hlmDropdownMenuTrigger`) whose menu instantiates one of `InterventionPlanningOptionsStore.templates` directly — the only header split button in the app, because its items are variants of the primary verb (`DESIGN.md` "Header actions").
+- The list header's view switch is a spartan `hlm-toggle-group` (the hand-rolled `role="tablist"` is retired); "New intervention" becomes a split button (`hlmButtonGroup` + `hlmDropdownMenuTrigger`) whose menu selects one of `InterventionPlanningOptionsStore.templates` in the creation sheet for confirmation — the only header split button in the app, because its items are variants of the primary verb (`DESIGN.md` "Header actions").

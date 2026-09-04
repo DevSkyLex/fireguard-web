@@ -60,11 +60,16 @@
 
   @if (store.queryHasError()) {
     <div class="flex flex-col items-center gap-3 py-10" data-testid="inspection-analytics-error">
-      <app-error-state
-        icon="lucideTriangleAlert"
-        title="The analytics could not be loaded."
-        i18n-title="@@inspection.analytics.loadError"
-      />
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@inspection.analytics.loadError">
+            The analytics could not be loaded.
+          </p>
+        </div>
+      </div>
       <button
         hlmBtn
         type="button"
@@ -169,11 +174,16 @@
             }
           </div>
         } @else if (isSnapshotEmpty()) {
-          <app-empty-state
-            icon="lucideCircleCheck"
-            title="No non-conformities in this period."
-            i18n-title="@@inspection.analytics.severity.empty"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@inspection.analytics.severity.empty">
+                No non-conformities in this period.
+              </p>
+            </div>
+          </div>
         } @else {
           @for (row of severityRows(); track row.severity) {
             <div
@@ -223,11 +233,16 @@
               }
             </div>
           } @else if ((store.queryData()?.byFacility ?? []).length === 0) {
-            <app-empty-state
-              icon="lucideCircleCheck"
-              title="No facility has open non-conformities."
-              i18n-title="@@inspection.analytics.facilities.empty"
-            />
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@inspection.analytics.facilities.empty">
+                  No facility has open non-conformities.
+                </p>
+              </div>
+            </div>
           } @else {
             <div class="w-full overflow-x-auto rounded-md border border-border">
               <table hlmTable data-testid="inspection-analytics-facilities-table">
@@ -289,11 +304,16 @@
               }
             </div>
           } @else if ((store.queryData()?.byEquipmentType ?? []).length === 0) {
-            <app-empty-state
-              icon="lucideCircleCheck"
-              title="No equipment type has open non-conformities."
-              i18n-title="@@inspection.analytics.equipmentTypes.empty"
-            />
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@inspection.analytics.equipmentTypes.empty">
+                  No equipment type has open non-conformities.
+                </p>
+              </div>
+            </div>
           } @else {
             <div class="w-full overflow-x-auto rounded-md border border-border">
               <table hlmTable data-testid="inspection-analytics-equipment-types-table">

@@ -35,7 +35,16 @@
       [class.flex-row-reverse]="entry.isOwn"
       [class.self-end]="entry.isOwn"
     >
-      <div hlmBubble [variant]="bubbleVariant()" [class.opacity-60]="entry.status === 'pending'">
+      <div
+        hlmBubble
+        [variant]="bubbleVariant()"
+        [class]="
+          entry.isOwn && !entry.isDeleted
+            ? '*:data-[slot=bubble-content]:border *:data-[slot=bubble-content]:border-border *:data-[slot=bubble-content]:bg-white *:data-[slot=bubble-content]:text-black'
+            : ''
+        "
+        [class.opacity-60]="entry.status === 'pending'"
+      >
         <div hlmBubbleContent [class.border-dashed]="entry.isDeleted">
           @if (entry.isDeleted) {
             <span class="italic">{{ deletedLabel }}</span>

@@ -1,22 +1,26 @@
-<div id="login-page" class="flex w-full flex-col gap-6">
+<div id="login-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
   <app-page-heading
     heading="Sign in"
     i18n-heading="@@auth.login.title"
-    description="Access your FireGuard workspace."
+    description="Access your Fireguard workspace."
     i18n-description="@@auth.login.subtitle"
   />
 
   <app-login-form
     [pending]="authStore.isLoggingIn()"
+    [returnUrl]="returnUrl"
     [serverError]="authStore.loginError()"
     (submitted)="login($event)"
   />
 
-  <p class="text-center text-sm text-muted-foreground">
+  <p
+    class="flex flex-wrap items-center justify-center gap-x-1 border-t border-border pt-4 text-center text-sm text-muted-foreground"
+  >
     <span i18n="@@auth.login.noAccount">No account yet?</span>
     <a
-      class="ml-1 font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      class="inline-flex min-h-11 items-center justify-center rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       routerLink="/auth/register"
+      [queryParams]="{ returnUrl: returnUrl || undefined }"
       i18n="@@auth.login.register"
       >Create one</a
     >

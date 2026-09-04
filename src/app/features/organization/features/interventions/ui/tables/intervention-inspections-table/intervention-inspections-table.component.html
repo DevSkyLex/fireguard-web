@@ -53,24 +53,29 @@
     }
   </ng-container>
 
-  <app-error-state
-    surfaceError
-    icon="lucideCircleAlert"
-    title="Linked inspections could not be loaded"
-    i18n-title="@@intervention.linked.inspections.errorTitle"
-    [description]="error() ?? ''"
-    data-testid="intervention-inspections-error"
-  />
+  <div hlmEmpty role="alert" surfaceError data-testid="intervention-inspections-error">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon" class="text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.inspections.errorTitle">
+        Linked inspections could not be loaded
+      </p>
+      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+    </div>
+  </div>
 
-  <app-empty-state
-    surfaceEmpty
-    icon="lucideClipboardCheck"
-    title="No linked inspections"
-    i18n-title="@@intervention.linked.inspections.emptyTitle"
-    description="No inspection is linked to this intervention yet."
-    i18n-description="@@intervention.linked.inspections.emptyDesc"
-    data-testid="intervention-inspections-empty"
-  />
+  <div hlmEmpty surfaceEmpty data-testid="intervention-inspections-empty">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.inspections.emptyTitle">No linked inspections</p>
+      <p hlmEmptyDescription i18n="@@intervention.linked.inspections.emptyDesc">
+        No inspection is linked to this intervention yet.
+      </p>
+    </div>
+  </div>
 </app-collection-surface>
 
 @if (totalItems() > items().length) {

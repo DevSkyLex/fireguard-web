@@ -14,11 +14,14 @@
       }
     </div>
   } @else if (items().length === 0) {
-    <app-empty-state
-      icon="lucideShieldPlus"
-      title="No roles found."
-      i18n-title="@@org.team.noResults"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideShieldPlus" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</p>
+      </div>
+    </div>
   } @else {
     <section class="flex flex-col gap-3">
       <h2 hlmCardTitle>{{ systemRolesHeading() }}</h2>
@@ -35,13 +38,17 @@
       <h2 hlmCardTitle>{{ customRolesHeading() }}</h2>
       @if (customItems().length === 0) {
         @if (canManage()) {
-          <app-empty-state
-            icon="lucideShieldPlus"
-            title="No custom roles yet"
-            i18n-title="@@org.team.noCustomRolesTitle"
-            description="Create a role to grant a tailored set of permissions beyond the built-in roles."
-            i18n-description="@@org.team.noCustomRolesDescription"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideShieldPlus" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.team.noCustomRolesTitle">No custom roles yet</p>
+              <p hlmEmptyDescription i18n="@@org.team.noCustomRolesDescription">
+                Create a role to grant a tailored set of permissions beyond the built-in roles.
+              </p>
+            </div>
+          </div>
         }
       } @else {
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

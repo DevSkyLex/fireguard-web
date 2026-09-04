@@ -1,16 +1,22 @@
-<div hlmCard>
-  <div hlmCardHeader>
-    <h3 hlmCardTitle i18n="@@intervention.gettingStarted.title">Getting started</h3>
-    <p hlmCardDescription i18n="@@intervention.checklist.readyToPlan">Ready to plan</p>
+<section aria-labelledby="intervention-readiness-title">
+  <div class="mb-2">
+    <h3
+      id="intervention-readiness-title"
+      class="text-sm font-medium"
+      i18n="@@intervention.checklist.readyToPlan"
+    >
+      Ready to plan
+    </h3>
   </div>
 
-  <div hlmCardContent>
-    <div hlmItemGroup>
+  <div>
+    <div hlmItemGroup class="grid gap-1 sm:grid-cols-2">
       @for (item of items(); track item.id) {
         <button
           hlmItem
           type="button"
-          [variant]="item.done ? 'muted' : 'outline'"
+          variant="default"
+          size="xs"
           class="min-h-11 text-start"
           data-testid="intervention-getting-started-item"
           [disabled]="item.done"
@@ -36,4 +42,4 @@
       }
     </div>
   </div>
-</div>
+</section>

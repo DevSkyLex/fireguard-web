@@ -26,9 +26,8 @@ import { DashboardPageActions } from '../dashboard-page-actions';
  *
  * Its horizontal padding mirrors the `p-4 md:p-6` every routed page applies
  * to its own root, so the title starts on the same vertical line as the
- * content below it. The band carries no bottom border: the spacing alone
- * separates it from the content, keeping the shell free of a rule that cut
- * across the inset surface.
+ * content below it. A bottom border separates the subtle neutral background from content,
+ * using the muted surface token at quarter opacity to gently lift the band in dark mode.
  *
  * @version 1.1.0
  *

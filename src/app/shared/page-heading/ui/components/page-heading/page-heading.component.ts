@@ -22,7 +22,7 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
  * ```html
  * <app-page-heading
  *   heading="Sign in"
- *   description="Access your FireGuard workspace."
+ *   description="Access your Fireguard workspace."
  * />
  * ```
  *

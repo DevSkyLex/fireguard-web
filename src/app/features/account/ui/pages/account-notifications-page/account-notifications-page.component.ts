@@ -10,7 +10,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBellOff, lucideTriangleAlert } from '@ng-icons/lucide';
 import type {
   NotificationPreferenceOutput,
@@ -23,9 +23,8 @@ import {
   type AccountNotificationPreferenceRow,
   type AccountNotificationPreferenceToggle,
 } from '@features/account/ui/forms/account-notification-preferences-form';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { ACCOUNT_NOTIFICATIONS_TAB_IDS } from './constants';
@@ -56,10 +55,10 @@ import type { AccountNotificationsTabId } from './models';
 @Component({
   selector: 'app-account-notifications-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     AccountNotificationList,
     AccountNotificationPreferencesForm,
-    EmptyState,
-    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmTabsImports,

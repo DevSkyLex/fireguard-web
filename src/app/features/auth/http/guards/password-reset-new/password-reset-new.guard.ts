@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, type GuardResult, type MaybeAsync, Router } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Password Reset New Guard
@@ -16,7 +17,7 @@ import { PasswordResetStore } from '@features/auth/state';
  * @returns {GuardResult} True if user can access new password page, otherwise
  * a UrlTree redirecting to the appropriate step in the password reset flow.
  */
-export const passwordResetNewGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const passwordResetNewGuard: CanActivateFn = (route): MaybeAsync<GuardResult> => {
   /**
    * Constant passwordResetStore
    * @const passwordResetStore
@@ -44,6 +45,8 @@ export const passwordResetNewGuard: CanActivateFn = (): MaybeAsync<GuardResult> 
    * @var {Router}
    */
   const router: Router = inject<Router>(Router);
+  const returnUrl: string = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+  const queryParams = { returnUrl: returnUrl || undefined };
 
   /**
    * Constant token
@@ -69,11 +72,9 @@ export const passwordResetNewGuard: CanActivateFn = (): MaybeAsync<GuardResult> 
    */
   const code: string | null = passwordResetStore.verificationCode();
 
-  // If token is missing, redirect to forgot password page
-  if (!token) return router.createUrlTree(['/auth/password-reset/forgot']);
+  if (!token) return router.createUrlTree(['/auth/password-reset/forgot'], { queryParams });
 
-  // If code is missing, redirect to verification page
-  if (!code) return router.createUrlTree(['/auth/password-reset/verify']);
+  if (!code) return router.createUrlTree(['/auth/password-reset/verify'], { queryParams });
 
   return true;
 };

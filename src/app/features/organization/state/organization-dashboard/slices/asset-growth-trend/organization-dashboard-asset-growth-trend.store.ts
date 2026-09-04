@@ -121,7 +121,7 @@ function createAssetGrowthTrendStore() {
      */
     withQueryState<OrganizationDashboardAssetGrowthData>(),
     withDashboardFilterState(),
-    withState(getDashboardInitialFilterDraftState()),
+    withState({ ...getDashboardInitialFilterDraftState(), activated: false }),
     withState({
       selectedEquipmentType: null as OrganizationDashboardEquipmentType | null,
       selectedEquipmentStatus: null as OrganizationDashboardEquipmentStatus | null,
@@ -147,6 +147,10 @@ function createAssetGrowthTrendStore() {
      */
     withMethods(
       (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
+        /** Enables browser-only queries after the analysis tab is first opened. */
+        activate(): void {
+          patchState(store, { activated: true });
+        },
         load: rxMethod<OrganizationDashboardAssetGrowthParams | undefined>(
           pipe(
             switchMap((params) => {
@@ -433,7 +437,7 @@ function createAssetGrowthTrendStore() {
 
       return {
         loadParams: computed<OrganizationDashboardAssetGrowthParams | undefined>(() => {
-          if (!isPlatformBrowser(platformId)) return undefined;
+          if (!store.activated() || !isPlatformBrowser(platformId)) return undefined;
 
           const includeEquipment: boolean = store.canReadEquipment();
           const includeFacilities: boolean = store.canReadFacilities();

@@ -14,7 +14,7 @@ export class InterventionsBoardPage {
   public constructor(private readonly page: Page) {}
 
   public readonly root: Locator = this.page.locator('#interventions-board');
-  public readonly columns: Locator = this.page.getByTestId('intervention-board-column');
+  public readonly columns: Locator = this.page.getByTestId('board-column');
   public readonly cards: Locator = this.page.getByTestId('intervention-board-card');
 
   public async goto(organizationId: string): Promise<void> {
@@ -23,7 +23,7 @@ export class InterventionsBoardPage {
 
   /** The column for a given `InterventionStatus`, e.g. `"planned"`. */
   public column(status: string): Locator {
-    return this.page.locator(`[data-testid="intervention-board-column"][data-status="${status}"]`);
+    return this.page.locator(`[data-testid="board-column"][data-column-id="${status}"]`);
   }
 
   /** The card whose title contains `name`, wherever it currently is. */
@@ -50,5 +50,5 @@ export class InterventionsBoardPage {
   }
 
   /** The visually-hidden `aria-live="polite"` region announcing the last optimistic move. */
-  public readonly liveRegion: Locator = this.page.getByTestId('intervention-board-live-region');
+  public readonly liveRegion: Locator = this.page.getByTestId('board-live-region');
 }

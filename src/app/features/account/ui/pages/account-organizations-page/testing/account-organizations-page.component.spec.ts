@@ -106,7 +106,9 @@ describe('AccountOrganizationsPage', () => {
     isLoadingOrganizations.set(false);
     await createPage();
 
-    expect(fixture.nativeElement.querySelector('app-empty-state')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])'),
+    ).not.toBeNull();
   });
 
   it('should open the leave dialog for the picked organization, resetting the leave operation', async () => {

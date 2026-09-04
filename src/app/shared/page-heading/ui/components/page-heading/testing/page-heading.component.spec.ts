@@ -41,12 +41,12 @@ describe('PageHeading', () => {
   });
 
   it('should render the description when given', async () => {
-    fixture.componentRef.setInput('description', 'Access your FireGuard workspace.');
+    fixture.componentRef.setInput('description', 'Access your Fireguard workspace.');
     await fixture.whenStable();
 
     const description: HTMLParagraphElement = fixture.nativeElement.querySelector('p');
 
-    expect(description.textContent?.trim()).toBe('Access your FireGuard workspace.');
+    expect(description.textContent?.trim()).toBe('Access your Fireguard workspace.');
     expect(description.className).toBe('text-sm text-muted-foreground');
   });
 

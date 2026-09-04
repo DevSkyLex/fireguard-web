@@ -8,7 +8,10 @@
     [tab]="granularity()"
     (tabActivated)="onGranularityTabActivated($event)"
   >
-    <div class="flex shrink-0 flex-wrap items-center gap-3" data-testid="calendar-toolbar">
+    <div
+      class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]"
+      data-testid="calendar-toolbar"
+    >
       <button
         hlmBtn
         type="button"
@@ -49,7 +52,7 @@
       </div>
 
       <span
-        class="truncate text-base font-semibold text-foreground capitalize"
+        class="col-span-2 min-w-0 truncate text-base font-semibold text-foreground capitalize sm:col-span-1"
         data-testid="calendar-toolbar-period"
         aria-live="polite"
       >
@@ -57,6 +60,7 @@
       </span>
 
       <hlm-tabs-list
+        class="col-span-2 justify-self-start max-sm:h-auto sm:col-span-1 sm:justify-self-end"
         data-testid="calendar-granularity-toggle"
         aria-label="Change period view"
         i18n-aria-label="@@calendar.granularityToggleLabel"
@@ -82,25 +86,34 @@
     </div>
 
     @if (listForbidden()) {
-      <app-empty-state
-        icon="lucideLock"
-        title="Not available with your permissions"
-        i18n-title="@@calendar.forbiddenTitle"
-        description="Ask an organization admin to grant you read access to the calendar."
-        i18n-description="@@calendar.forbiddenDesc"
-      />
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideLock" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@calendar.forbiddenTitle">Not available with your permissions</p>
+          <p hlmEmptyDescription i18n="@@calendar.forbiddenDesc">
+            Ask an organization admin to grant you read access to the calendar.
+          </p>
+        </div>
+      </div>
     } @else if (loadFailed()) {
-      <app-error-state
-        icon="lucideCircleAlert"
-        title="Couldn't load the calendar"
-        i18n-title="@@calendar.errorTitle"
-        description="The calendar feed could not be loaded. Check your connection and try again."
-        i18n-description="@@calendar.errorText"
-      >
-        <button hlmBtn variant="outline" data-testid="calendar-retry" (click)="reload()">
-          <span i18n="@@common.tryAgain">Try again</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@calendar.errorTitle">Couldn't load the calendar</p>
+          <p hlmEmptyDescription i18n="@@calendar.errorText">
+            The calendar feed could not be loaded. Check your connection and try again.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button hlmBtn variant="outline" data-testid="calendar-retry" (click)="reload()">
+            <span i18n="@@common.tryAgain">Try again</span>
+          </button>
+        </div>
+      </div>
     } @else {
       @switch (granularity()) {
         @case ('month') {
@@ -130,11 +143,14 @@
                 </div>
                 <div hlmCardContent class="flex flex-col gap-2">
                   @if (dayItems().length === 0) {
-                    <app-empty-state
-                      icon="lucideCalendarDays"
-                      title="Nothing scheduled this day."
-                      i18n-title="@@calendar.dayEmpty"
-                    />
+                    <div hlmEmpty>
+                      <div hlmEmptyHeader>
+                        <div hlmEmptyMedia variant="icon">
+                          <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+                        </div>
+                        <p hlmEmptyTitle i18n="@@calendar.dayEmpty">Nothing scheduled this day.</p>
+                      </div>
+                    </div>
                   } @else {
                     <app-calendar-entry-list
                       [items]="dayItems()"
@@ -253,11 +269,14 @@
             @if (store.isQueryLoading() && store.items().length === 0) {
               <hlm-skeleton class="h-48 w-full" />
             } @else if (dayViewItems().length === 0) {
-              <app-empty-state
-                icon="lucideCalendarDays"
-                title="Nothing scheduled this day."
-                i18n-title="@@calendar.dayEmpty"
-              />
+              <div hlmEmpty>
+                <div hlmEmptyHeader>
+                  <div hlmEmptyMedia variant="icon">
+                    <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+                  </div>
+                  <p hlmEmptyTitle i18n="@@calendar.dayEmpty">Nothing scheduled this day.</p>
+                </div>
+              </div>
             } @else {
               <app-calendar-entry-list
                 [items]="dayViewItems()"
@@ -273,7 +292,7 @@
     }
   </hlm-tabs>
 
-  <app-calendar-event-sheet
+  <app-calendar-event-dialog
     [visible]="eventDialogVisible()"
     [pending]="isEventWritePending()"
     [serverError]="eventWriteError()"
@@ -302,32 +321,59 @@
 </div>
 
 <ng-template #pageActions>
-  <button
-    hlmBtn
-    type="button"
-    variant="outline"
-    class="min-w-0 shrink max-sm:min-h-11"
-    data-testid="calendar-subscribe"
-    i18n-aria-label="@@calendar.subscribeButton"
-    aria-label="Subscribe (iCal)"
-    (click)="feedSubscribeDialogVisible.set(true)"
-  >
-    <ng-icon name="lucideRss" aria-hidden="true" />
-    <span class="truncate max-sm:hidden" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
-  </button>
-
   @if (canWriteEvents()) {
+    <div hlmButtonGroup>
+      <button
+        hlmBtn
+        type="button"
+        class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+        data-testid="calendar-new-event"
+        i18n-aria-label="@@calendar.newEvent"
+        aria-label="New event"
+        (click)="openCreateDialog()"
+      >
+        <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span class="truncate max-sm:hidden" i18n="@@calendar.newEvent">New event</span>
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        size="icon"
+        align="end"
+        class="max-sm:min-h-11 max-sm:min-w-11"
+        data-testid="calendar-actions-menu"
+        i18n-aria-label="@@calendar.subscribeButton"
+        aria-label="Subscribe (iCal)"
+        [hlmDropdownMenuTrigger]="calendarActions"
+      >
+        <ng-icon name="lucideChevronDown" aria-hidden="true" />
+      </button>
+    </div>
+    <ng-template #calendarActions>
+      <hlm-dropdown-menu>
+        <button
+          hlmDropdownMenuItem
+          data-testid="calendar-subscribe"
+          (click)="feedSubscribeDialogVisible.set(true)"
+        >
+          <ng-icon name="lucideRss" aria-hidden="true" />
+          <span i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
+        </button>
+      </hlm-dropdown-menu>
+    </ng-template>
+  } @else {
     <button
       hlmBtn
       type="button"
+      variant="outline"
       class="min-w-0 shrink max-sm:min-h-11"
-      data-testid="calendar-new-event"
-      i18n-aria-label="@@calendar.newEvent"
-      aria-label="New event"
-      (click)="openCreateDialog()"
+      data-testid="calendar-subscribe"
+      i18n-aria-label="@@calendar.subscribeButton"
+      aria-label="Subscribe (iCal)"
+      (click)="feedSubscribeDialogVisible.set(true)"
     >
-      <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@calendar.newEvent">New event</span>
+      <ng-icon name="lucideRss" aria-hidden="true" />
+      <span class="truncate max-sm:hidden" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
     </button>
   }
 </ng-template>

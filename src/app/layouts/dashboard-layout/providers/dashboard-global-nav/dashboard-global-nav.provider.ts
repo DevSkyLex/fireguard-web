@@ -6,9 +6,8 @@ import { DashboardGlobalNav } from '../../components';
  * @function withDashboardGlobalNav
  *
  * @description
- * Contributes {@link DashboardGlobalNav} to the shell's sidebar-nav slot, last:
- * it is the part of the navigation that no organization owns, so it sits under
- * the work rather than above it, and stays when the work is not there.
+ * Contributes global utilities to the sidebar footer after collaboration links
+ * and before the account menu. They remain available without an organization.
  *
  * It is the shell's own chrome rather than a feature's, but it still goes
  * through the slot, so a route that composes its sidebar differently simply
@@ -21,14 +20,14 @@ import { DashboardGlobalNav } from '../../components';
  *
  * @example
  * ```typescript
- * provideDashboardLayoutSlots({ sidebarNav: [withDashboardGlobalNav()] })
+ * provideDashboardLayoutSlots({ sidebarFooter: [withDashboardGlobalNav(), withAccountMenu()] })
  * ```
  */
 export function withDashboardGlobalNav(): AdditiveSlotFeature {
   return {
     useFactory: () => ({
       id: 'dashboard-global-nav',
-      order: 90,
+      order: 5,
       component: DashboardGlobalNav,
     }),
   };

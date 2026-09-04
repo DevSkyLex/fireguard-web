@@ -19,12 +19,14 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
 import type { StoreError } from '@core/request-state';
-import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
+import type { BillingInterval, PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationPlanChangeDialog } from '../../dialogs/organization-plan-change-dialog';
 import type { OrganizationPlanRow } from './models';
 
@@ -32,27 +34,39 @@ import type { OrganizationPlanRow } from './models';
  * Function priceLabelOf
  *
  * @description
- * Formats a plan's monthly price from the pricing catalog, or the localized
- * "Free" label when the plan carries no priced entry or a zero amount.
+ * Formats a plan's selected recurring price from the pricing catalog, or the localized
+ * "Free" label when the free plan carries no priced entry or a zero amount.
  * Formats against the app's own `LOCALE_ID` rather than `Intl`'s runtime
  * default, which drifts between a developer machine, CI and production.
  *
  * @param {PlanOutput} plan - The catalog plan.
  * @param {ReadonlyArray<PlanPricingOutput>} pricing - The pricing catalog.
  * @param {string} localeId - The active Angular locale.
+ * @param {BillingInterval} interval - Billing cadence selected for comparison.
  *
- * @returns {string} The formatted monthly price label.
+ * @returns {string} The formatted price label for the selected billing cadence.
  */
 function priceLabelOf(
   plan: PlanOutput,
   pricing: ReadonlyArray<PlanPricingOutput>,
   localeId: string,
+  interval: BillingInterval,
 ): string {
   const entry: PlanPricingOutput | undefined = pricing.find((p) => p.planKey === plan.key);
-  const amount: number | null | undefined = entry?.monthlyAmount;
+  const amount: number | null | undefined =
+    interval === 'year' ? entry?.yearlyAmount : entry?.monthlyAmount;
 
-  if (entry === undefined || amount === null || amount === undefined || amount === 0) {
+  if (
+    plan.key.toLowerCase() === 'free' &&
+    (amount === null || amount === undefined || amount === 0)
+  ) {
     return $localize`:@@org.settings.plan.free:Free`;
+  }
+
+  if (entry === undefined || amount === null || amount === undefined) {
+    return interval === 'year'
+      ? $localize`:@@org.settings.plan.notAvailableYearly:Not available annually`
+      : $localize`:@@org.settings.plan.notAvailableMonthly:Not available monthly`;
   }
 
   const formatted: string = new Intl.NumberFormat(localeId, {
@@ -60,7 +74,9 @@ function priceLabelOf(
     currency: entry.currency,
   }).format(amount / 100);
 
-  return $localize`:@@org.settings.plan.perMonth:${formatted}:price:/month`;
+  return interval === 'year'
+    ? $localize`:@@org.settings.plan.perYear:${formatted}:price:/year`
+    : $localize`:@@org.settings.plan.perMonth:${formatted}:price:/month`;
 }
 
 /**
@@ -102,9 +118,11 @@ function priceLabelOf(
     NgIcon,
     HlmBadge,
     HlmButton,
+    HlmSeparator,
     HlmSkeleton,
     OrganizationPlanChangeDialog,
     ...HlmCardImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [OrganizationPlanStore, provideIcons({ lucideCheck })],
   templateUrl: './organization-plan-selector.component.html',
@@ -258,6 +276,21 @@ export class OrganizationPlanSelector implements OnInit {
   protected readonly changeSucceeded: Signal<boolean> = this.planStore.changePlanSucceeded;
 
   /**
+   * Property billingInterval
+   * @readonly
+   *
+   * @description
+   * Cadence currently used to compare catalog prices.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<BillingInterval>}
+   */
+  protected readonly billingInterval: WritableSignal<BillingInterval> =
+    signal<BillingInterval>('month');
+
+  /**
    * Property rows
    * @readonly
    * @description Each catalog plan joined with its formatted price and current-plan marker.
@@ -270,15 +303,19 @@ export class OrganizationPlanSelector implements OnInit {
   >(() => {
     const currentId: string | null = this.currentPlanId();
 
-    return this.planStore.plans().map((plan: PlanOutput): OrganizationPlanRow => ({
-      id: plan.id,
-      key: plan.key,
-      name: plan.name,
-      description: plan.description ?? null,
-      priceLabel: priceLabelOf(plan, this.pricing(), this.localeId),
-      quotas: plan.quotas,
-      isCurrent: plan.id === currentId,
-    }));
+    return this.planStore
+      .plans()
+      .map((plan: PlanOutput, index: number, plans): OrganizationPlanRow => ({
+        id: plan.id,
+        key: plan.key,
+        name: plan.name,
+        description: plan.description ?? null,
+        priceLabel: priceLabelOf(plan, this.pricing(), this.localeId, this.billingInterval()),
+        inheritedPlanName: index > 0 ? (plans[index - 1]?.name ?? null) : null,
+        quotas: plan.quotas,
+        isCurrent: plan.id === currentId,
+        isPopular: plan.key.toLowerCase() === 'pro',
+      }));
   });
 
   /**
@@ -332,6 +369,23 @@ export class OrganizationPlanSelector implements OnInit {
   //#endregion
 
   //#region Methods
+  /**
+   * Method selectBillingInterval
+   * @method selectBillingInterval
+   *
+   * @description
+   * Applies a valid single-value cadence emitted by the Spartan toggle group.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | readonly string[] | null | undefined} value - Toggle-group selection.
+   * @returns {void}
+   */
+  protected selectBillingInterval(value: string | readonly string[] | null | undefined): void {
+    if (value === 'month' || value === 'year') this.billingInterval.set(value);
+  }
+
   /**
    * Method requestChange
    * @method requestChange

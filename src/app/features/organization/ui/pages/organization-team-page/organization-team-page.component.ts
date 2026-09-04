@@ -36,8 +36,8 @@ import {
   type OrganizationTeamStoreType,
 } from '@features/organization/state/organization-team';
 import { StatTile } from '@features/organization/ui/components';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { OrganizationRoleGrid } from '../../dataviews/organization-role-grid';
 import { OrganizationRoleDeleteDialog } from '../../dialogs/organization-role-delete-dialog';
 import { OrganizationRoleCreateSheet } from '../../sheets/organization-role-create-sheet';
@@ -110,7 +110,7 @@ type OrganizationTeamKpiTile = {
   selector: 'app-organization-team-page',
   imports: [
     NgIcon,
-    ErrorState,
+    ...HlmEmptyImports,
     OrganizationRoleCreateSheet,
     OrganizationRoleDeleteDialog,
     OrganizationRoleGrid,

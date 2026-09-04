@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthStore, RegisterStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 
 /**
@@ -22,7 +23,7 @@ import { PageHeading } from '@shared/page-heading';
  */
 @Component({
   selector: 'app-register-verify-page',
-  imports: [OtpForm, PageHeading],
+  imports: [RouterLink, OtpForm, PageHeading],
   templateUrl: './register-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -69,7 +70,29 @@ export class RegisterVerifyPage {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /** @description Reads the validated destination shared by the authentication steps. */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   //#endregion
+
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
+
+  /** @description Replaces the URL challenge after resend so reloading never revives an expired challenge. */
+  private readonly syncChallenge = effect((): void => {
+    const token: string | null = this.registerStore.challengeToken();
+    if (!token || token === this.route.snapshot.queryParamMap.get('token')) return;
+    untracked((): void => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        replaceUrl: true,
+        queryParams: { token, returnUrl: this.returnUrl || undefined },
+      });
+    });
+  });
 
   //#region Lifecycle
   /**
@@ -87,7 +110,7 @@ export class RegisterVerifyPage {
     if (!this.authStore.isAuthenticated()) return;
 
     untracked((): void => {
-      void this.router.navigate(['/onboarding']);
+      void this.router.navigateByUrl(this.returnUrl || '/onboarding');
     });
   });
   //#endregion

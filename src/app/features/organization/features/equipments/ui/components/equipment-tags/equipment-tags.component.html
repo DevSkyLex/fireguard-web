@@ -8,14 +8,17 @@
 
   <div hlmCardContent class="flex flex-col gap-3">
     @if (tags().length === 0) {
-      <app-empty-state
-        icon="lucideTag"
-        title="No tags yet"
-        i18n-title="@@equipment.tags.emptyTitle"
-        description="Add a tag to help find and group this equipment."
-        i18n-description="@@equipment.tags.emptyDesc"
-        data-testid="equipment-tags-empty"
-      />
+      <div hlmEmpty data-testid="equipment-tags-empty">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideTag" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@equipment.tags.emptyTitle">No tags yet</p>
+          <p hlmEmptyDescription i18n="@@equipment.tags.emptyDesc">
+            Add a tag to help find and group this equipment.
+          </p>
+        </div>
+      </div>
     } @else {
       <ul class="flex flex-wrap gap-2" data-testid="equipment-tags-list">
         @for (tag of tags(); track tag.id) {

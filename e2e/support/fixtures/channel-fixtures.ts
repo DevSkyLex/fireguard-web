@@ -171,6 +171,19 @@ export function inspectorMessageOutput(
 export const E2E_INTERVENTION_CONVERSATION_ID = 'e2e-conv-intervention-1';
 
 export interface ConversationOutputFixture {
+  /**
+   * Property counterpartMember
+   * @readonly
+   *
+   * @description
+   * Counterpart IRI supplied by the direct-conversation list endpoint.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string | undefined}
+   */
+  readonly counterpartMember?: string;
   readonly '@id': string;
   readonly '@type': string;
   readonly id: string;

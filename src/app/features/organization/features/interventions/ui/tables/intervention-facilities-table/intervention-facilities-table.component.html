@@ -49,24 +49,29 @@
     }
   </ng-container>
 
-  <app-error-state
-    surfaceError
-    icon="lucideCircleAlert"
-    title="Linked facilities could not be loaded"
-    i18n-title="@@intervention.linked.facilities.errorTitle"
-    [description]="error() ?? ''"
-    data-testid="intervention-facilities-error"
-  />
+  <div hlmEmpty role="alert" surfaceError data-testid="intervention-facilities-error">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon" class="text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.facilities.errorTitle">
+        Linked facilities could not be loaded
+      </p>
+      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+    </div>
+  </div>
 
-  <app-empty-state
-    surfaceEmpty
-    icon="lucideMapPin"
-    title="No linked facilities"
-    i18n-title="@@intervention.linked.facilities.emptyTitle"
-    description="No facility is linked to this intervention yet."
-    i18n-description="@@intervention.linked.facilities.emptyDesc"
-    data-testid="intervention-facilities-empty"
-  />
+  <div hlmEmpty surfaceEmpty data-testid="intervention-facilities-empty">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideMapPin" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.facilities.emptyTitle">No linked facilities</p>
+      <p hlmEmptyDescription i18n="@@intervention.linked.facilities.emptyDesc">
+        No facility is linked to this intervention yet.
+      </p>
+    </div>
+  </div>
 </app-collection-surface>
 
 @if (totalItems() > items().length) {

@@ -192,7 +192,9 @@ describe('OrganizationRoleGrid', () => {
   it('should show a button-less custom empty-state only when custom roles are manageable', async () => {
     await render([role({ id: 'role-1', isSystem: true, name: 'Owner' })], { canManage: true });
 
-    const emptyState: HTMLElement | null = root().querySelector('app-empty-state');
+    const emptyState: HTMLElement | null = root().querySelector(
+      '[data-slot="empty"]:not([role="alert"])',
+    );
 
     expect(emptyState).not.toBeNull();
     expect(emptyState?.textContent).toContain('No custom roles yet');
@@ -202,7 +204,7 @@ describe('OrganizationRoleGrid', () => {
   it('should show no custom empty-state when the caller cannot manage roles', async () => {
     await render([role({ id: 'role-1', isSystem: true, name: 'Owner' })], { canManage: false });
 
-    expect(root().querySelector('app-empty-state')).toBeNull();
+    expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).toBeNull();
   });
 
   it('should draw skeleton cards while loading, and no data cards or sections', async () => {

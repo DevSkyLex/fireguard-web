@@ -17,10 +17,13 @@
         Loading teams…
       </p>
     } @else if (teams().length === 0) {
-      <app-empty-state
-        title="This organization has no teams yet."
-        i18n-title="@@intervention.team.assign.empty"
-      />
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@intervention.team.assign.empty">
+            This organization has no teams yet.
+          </p>
+        </div>
+      </div>
     } @else {
       <hlm-radio-group
         class="max-h-64 gap-1 overflow-y-auto"

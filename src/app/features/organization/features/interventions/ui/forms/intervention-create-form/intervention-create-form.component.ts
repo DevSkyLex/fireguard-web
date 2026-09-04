@@ -377,7 +377,7 @@ export class InterventionCreateForm {
 
     this.createForm().markAsTouched();
 
-    if (this.createForm().invalid()) return;
+    if (this.pending() || this.createForm().invalid()) return;
 
     const draft: InterventionCreateFormDraft = this.model();
     const [plannedStartAt, dueAt]: readonly [Date | null, Date | null] = draft.plannedRange ?? [

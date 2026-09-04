@@ -6,7 +6,7 @@ import type {
   InterventionOutput,
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
-import type { InterventionBoardCardViewModel } from '../../intervention-board/models';
+import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
 import { InterventionBoardCard } from '../intervention-board-card.component';
 
 const allowedActions = (
@@ -39,7 +39,7 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
     allowedTransitions: ['submitted', 'abandoned'],
     allowedActions: allowedActions(),
     site: null,
-    responsible: null,
+    responsible: '/api/organizations/org-1/members/member-1',
     participants: [],
     labels: [],
     priority: 'high',
@@ -90,6 +90,7 @@ describe('InterventionBoardCard', () => {
     fixture.componentRef.setInput('item', item());
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'interventions']);
     fixture.componentRef.setInput('canTransition', true);
+    fixture.componentRef.setInput('currentMemberIri', '/api/organizations/org-1/members/member-1');
     await fixture.whenStable();
 
     element = fixture.nativeElement as HTMLElement;
@@ -153,6 +154,30 @@ describe('InterventionBoardCard', () => {
       ?.click();
 
     expect(emitted).toEqual(['abandoned']);
+  });
+
+  it('explains why a member outside the intervention team cannot execute it', async () => {
+    fixture.componentRef.setInput(
+      'item',
+      item({
+        intervention: intervention({
+          status: 'planned',
+          allowedTransitions: ['in_progress', 'abandoned'],
+          responsible: '/api/organizations/org-1/members/other',
+        }),
+      }),
+    );
+    await fixture.whenStable();
+    await openMenu();
+    const gated = document.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-board-card-move"][data-status="in_progress"]',
+    );
+    expect(gated?.disabled).toBe(true);
+    const reasonId = gated?.getAttribute('aria-describedby');
+    expect(reasonId).toBeDefined();
+    expect(document.getElementById(reasonId ?? '')?.textContent).toContain(
+      'Only the responsible member or a participant can perform this transition.',
+    );
   });
 
   it('should not emit moveRequested for a gated target even when clicked', async () => {

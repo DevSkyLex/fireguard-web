@@ -54,17 +54,27 @@
   </div>
 
   @if (loadError()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load the calendar"
-      i18n-title="@@intervention.calendar.errorTitle"
-      description="The calendar could not be loaded. Check your connection and try again."
-      i18n-description="@@intervention.calendar.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="intervention-calendar-retry" (click)="reload()">
-        <span i18n="@@common.tryAgain">Try again</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.calendar.errorTitle">Couldn't load the calendar</p>
+        <p hlmEmptyDescription i18n="@@intervention.calendar.errorText">
+          The calendar could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="intervention-calendar-retry"
+          (click)="reload()"
+        >
+          <span i18n="@@common.tryAgain">Try again</span>
+        </button>
+      </div>
+    </div>
   } @else {
     <div
       class="hidden min-h-0 flex-1 flex-col gap-4 md:flex lg:grid lg:grid-cols-[2fr_1fr] lg:grid-rows-[minmax(0,1fr)]"

@@ -77,31 +77,41 @@
               <hlm-skeleton class="h-10 w-full" />
             </div>
           } @else if (preferencesStore.loadError() !== null) {
-            <app-error-state
-              icon="lucideTriangleAlert"
-              title="Couldn't load your notification preferences"
-              i18n-title="@@account.notificationPreferences.errorTitle"
-              description="They can't be shown or changed until they load."
-              i18n-description="@@account.notificationPreferences.errorDescription"
-              data-testid="notif-pref-error"
-            >
-              <button
-                hlmBtn
-                variant="outline"
-                size="sm"
-                class="max-sm:min-h-11"
-                (click)="loadPreferences()"
-              >
-                <span i18n="@@account.notificationPreferences.retry">Try again</span>
-              </button>
-            </app-error-state>
+            <div hlmEmpty role="alert" data-testid="notif-pref-error">
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon" class="text-destructive">
+                  <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@account.notificationPreferences.errorTitle">
+                  Couldn't load your notification preferences
+                </p>
+                <p hlmEmptyDescription i18n="@@account.notificationPreferences.errorDescription">
+                  They can't be shown or changed until they load.
+                </p>
+              </div>
+              <div hlmEmptyContent>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  (click)="loadPreferences()"
+                >
+                  <span i18n="@@account.notificationPreferences.retry">Try again</span>
+                </button>
+              </div>
+            </div>
           } @else if (rows().length === 0) {
-            <app-empty-state
-              icon="lucideBellOff"
-              title="No notification categories are available yet."
-              i18n-title="@@account.notificationPreferences.emptyCategories"
-              data-testid="notif-pref-empty"
-            />
+            <div hlmEmpty data-testid="notif-pref-empty">
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideBellOff" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@account.notificationPreferences.emptyCategories">
+                  No notification categories are available yet.
+                </p>
+              </div>
+            </div>
           } @else {
             <app-account-notification-preferences-form
               [rows]="rows()"

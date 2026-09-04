@@ -126,9 +126,21 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
     store = TestBed.inject(AssetGrowthTrendStore);
   });
 
+  it('defers queries until analysis is activated and does not reload on reactivation', async () => {
+    permissionState.canReadEquipment.set(true);
+    await flushEffects();
+    expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).not.toHaveBeenCalled();
+    store.activate();
+    await flushEffects();
+    store.activate();
+    await flushEffects();
+    expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledTimes(1);
+  });
+
   it('should load both trend resources and expose summary metrics and chart data', async () => {
     permissionState.canReadEquipment.set(true);
     permissionState.canReadFacilities.set(true);
+    store.activate();
     await flushEffects();
 
     expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledWith(
@@ -154,6 +166,7 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
 
   it('should load only the permitted trend resource when a single dimension is visible', async () => {
     permissionState.canReadEquipment.set(true);
+    store.activate();
     await flushEffects();
 
     expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledTimes(1);
@@ -181,9 +194,11 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
   it('should reload with compare disabled when compare mode changes', async () => {
     permissionState.canReadEquipment.set(true);
     permissionState.canReadFacilities.set(true);
+    store.activate();
     await flushEffects();
 
     store.setCompareEnabled(false);
+    store.activate();
     await flushEffects();
 
     expect(store.compareEnabled()).toBe(false);

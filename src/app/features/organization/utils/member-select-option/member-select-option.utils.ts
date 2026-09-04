@@ -6,7 +6,7 @@ import type { MemberSelectOption, OrganizationMemberOutput } from '@features/org
  *
  * @description
  * Maps a raw organization member to the option every member picker renders
- * through `app-person-option`: display name (falling back to the first/last
+ * through the Spartan `Item` / `Avatar` composition: display name (falling back to the first/last
  * pair, then the user id), initials, avatar and the joined role names. The
  * submitted `value` defaults to the member IRI the intervention endpoints
  * take; a caller whose endpoint wants the member id or the user id passes

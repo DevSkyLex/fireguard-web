@@ -17,9 +17,9 @@ import { form, FormField, required, type FieldTree } from '@angular/forms/signal
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmFieldImports } from '@shared/ui/field';
-import { HlmLabel } from '@shared/ui/label';
 import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 import type { OnboardingPlanDraft, OnboardingPlanSelection } from './models';
 
@@ -115,9 +115,9 @@ function priceLabelOf(
 @Component({
   selector: 'app-onboarding-plan-form',
   imports: [
+    ...HlmAlertImports,
     FormField,
     HlmBadge,
-    HlmLabel,
     OnboardingStepFooter,
     ...HlmFieldImports,
     ...HlmRadioGroupImports,

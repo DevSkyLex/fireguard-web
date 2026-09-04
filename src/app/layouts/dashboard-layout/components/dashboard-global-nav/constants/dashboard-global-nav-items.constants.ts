@@ -16,9 +16,8 @@ import type { DashboardGlobalNavItem } from '../models';
  * Only a **destination** belongs here. A capability that opens over the current
  * page instead of replacing it has no URL and no place in a navigation list;
  * the assistant left for the header's action cluster for exactly that reason.
- * Direct messages left for the same reason in the other direction: they follow
- * the reader rather than replace a page, so they are a standing `DirectMessagesNav`
- * sidebar contribution instead of a row here.
+ * Messages and Collaboration are organization-scoped destinations owned by
+ * the collaboration feature and contributed through `CollaborationNav`.
  *
  * @since 2.0.0
  *

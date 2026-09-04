@@ -66,13 +66,17 @@
             <hlm-skeleton class="h-14 w-full rounded-lg" />
           </div>
         } @else if (pinned().length === 0) {
-          <app-empty-state
-            icon="lucidePin"
-            title="Nothing pinned"
-            i18n-title="@@channels.info.pinnedEmptyTitle"
-            description="Pin a message from its menu to keep it here."
-            i18n-description="@@channels.info.pinnedEmptyDescription"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucidePin" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@channels.info.pinnedEmptyTitle">Nothing pinned</p>
+              <p hlmEmptyDescription i18n="@@channels.info.pinnedEmptyDescription">
+                Pin a message from its menu to keep it here.
+              </p>
+            </div>
+          </div>
         } @else {
           <ul class="flex flex-col gap-2" data-testid="channel-info-pinned">
             @for (item of pinned(); track item.id) {

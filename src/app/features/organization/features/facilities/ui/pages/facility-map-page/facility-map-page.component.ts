@@ -22,9 +22,9 @@ import {
   facilityToComplianceMapMarker,
   facilityToMapMarker,
 } from '@features/organization/features/facilities/utils';
-import { EmptyState } from '@shared/empty-state';
 import { Map, type MapMarker } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
@@ -44,7 +44,7 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
  * A discreet banner names how many facilities still lack coordinates
  * (`FacilityMapStore.unplacedCount`) and links back to the list, where they
  * can be found and placed. When no facility has coordinates at all, the map
- * itself is replaced by an `app-empty-state` explaining that it fills in as
+ * itself is replaced by an the Spartan `hlmEmpty` composition explaining that it fills in as
  * facilities get placed (`FEATURE.md` "Unplaced facilities affordance").
  *
  * An optional, off-by-default **compliance layer** (`FacilityMapStore.complianceVisible`)
@@ -72,9 +72,9 @@ import { FacilityComplianceWorstSites } from '../../components/facility-complian
 @Component({
   selector: 'app-facility-map-page',
   imports: [
-    RouterLink,
     NgIcon,
-    EmptyState,
+    ...HlmEmptyImports,
+    RouterLink,
     Map,
     HlmButton,
     HlmSkeleton,

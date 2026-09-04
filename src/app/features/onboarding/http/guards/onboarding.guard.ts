@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { map } from 'rxjs';
+import { resolveReturnUrl } from '@features/auth/utils';
 import type { OnboardingOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
 
@@ -24,15 +25,18 @@ import { OnboardingStore } from '@features/onboarding/state';
  * @return {MaybeAsync<GuardResult>} `true` when the wizard may open, or a
  * `UrlTree` redirecting to `/` when onboarding is already complete.
  */
-export const onboardingGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const onboardingGuard: CanActivateFn = (route): MaybeAsync<GuardResult> => {
   const onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
   const router: Router = inject<Router>(Router);
 
-  return onboardingStore
-    .ensureLoaded()
-    .pipe(
-      map((onboarding: OnboardingOutput | null): GuardResult =>
-        onboarding?.state === 'completed' ? router.createUrlTree(['/']) : true,
-      ),
-    );
+  return onboardingStore.ensureLoaded().pipe(
+    map((onboarding: OnboardingOutput | null): GuardResult => {
+      if (onboarding?.state !== 'completed') return true;
+      const returnUrl = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+      if (returnUrl) return router.parseUrl(returnUrl);
+      return onboarding.targetOrganizationId
+        ? router.createUrlTree(['/organizations', onboarding.targetOrganizationId])
+        : router.createUrlTree(['/']);
+    }),
+  );
 };

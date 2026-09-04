@@ -1,6 +1,6 @@
 @if (blockers().length > 0 || secondaryIssues().length > 0 || showClearNotice()) {
   <section
-    class="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-4"
+    class="flex flex-col gap-3"
     aria-label="Publication issues"
     i18n-aria-label="@@intervention.issues.title"
     data-testid="intervention-issues-checklist"
@@ -12,11 +12,11 @@
     }
 
     @if (blockers().length > 0) {
-      <ul class="flex flex-col gap-2">
+      <ul hlmItemGroup>
         @for (issue of blockers(); track issue['@id']) {
           <li>
             <button
-              hlmBtn
+              hlmItem
               type="button"
               variant="outline"
               class="h-auto min-h-11 w-full justify-between gap-2 text-start"
@@ -54,6 +54,8 @@
       >
         <button
           hlmCollapsibleTrigger
+          hlmBtn
+          variant="ghost"
           type="button"
           class="flex min-h-11 w-full items-center justify-between gap-2 text-sm text-muted-foreground"
           data-testid="intervention-issues-checklist-secondary-toggle"
@@ -68,13 +70,13 @@
         </button>
 
         <div hlmCollapsibleContent>
-          <ul class="flex flex-col gap-2 pt-2">
+          <ul hlmItemGroup class="pt-2">
             @for (issue of secondaryIssues(); track issue['@id']) {
               <li>
                 <button
-                  hlmBtn
+                  hlmItem
                   type="button"
-                  variant="ghost"
+                  variant="default"
                   class="h-auto min-h-11 w-full justify-between gap-2 text-start"
                   data-testid="intervention-issues-checklist-secondary-item"
                   (click)="activate(issue)"

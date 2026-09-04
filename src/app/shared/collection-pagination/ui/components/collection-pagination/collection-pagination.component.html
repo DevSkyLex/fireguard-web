@@ -34,7 +34,7 @@
 
     <nav hlmPagination [aria-label]="ariaNav" class="mx-0 w-auto">
       <ul hlmPaginationContent>
-        <li hlmPaginationItem>
+        <li hlmPaginationItem class="max-sm:hidden">
           <button
             hlmBtn
             type="button"
@@ -64,6 +64,21 @@
             <ng-icon name="lucideChevronLeft" aria-hidden="true" />
           </button>
         </li>
+        @for (pageNumber of pageNumbers(); track pageNumber) {
+          <li hlmPaginationItem [class.max-sm:hidden]="!compactPageNumbers().includes(pageNumber)">
+            <button
+              hlmPaginationLink
+              type="button"
+              size="icon-sm"
+              class="w-auto min-w-8 px-2 max-sm:h-11 max-sm:min-w-11"
+              [isActive]="pageNumber === page()"
+              [attr.data-testid]="testId('page-number-' + pageNumber)"
+              (click)="goToPage(pageNumber)"
+            >
+              {{ pageNumber }}
+            </button>
+          </li>
+        }
         <li hlmPaginationItem>
           <button
             hlmBtn
@@ -79,7 +94,7 @@
             <ng-icon name="lucideChevronRight" aria-hidden="true" />
           </button>
         </li>
-        <li hlmPaginationItem>
+        <li hlmPaginationItem class="max-sm:hidden">
           <button
             hlmBtn
             type="button"

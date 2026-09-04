@@ -420,7 +420,7 @@ export class InterventionLabelManageDialog {
    * @returns {string} A localized action label.
    */
   protected saveActionLabelOf(label: InterventionLabelOutput): string {
-    return $localize`:@@intervention.labels.manage.saveAria:Save ${label.name}:name:`;
+    return $localize`:@@intervention.labels.manage.saveAria:Save changes to ${label.name}:name:`;
   }
 
   /**

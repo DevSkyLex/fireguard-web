@@ -2,41 +2,76 @@ import type {
   InterventionOutput,
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
+import { capabilityForTransition } from '../intervention-status-transition/intervention-status-transition.utils';
 
 /**
  * Function isInterventionBoardMoveAllowed
  *
  * @description
- * Whether the Board (`ui/components/intervention-board/`) may drop a card
- * onto a given status column: the target must be one of the card's own
- * server-advertised `allowedTransitions` (`published` never appears there —
- * it is reached only through the publication flow, so its column is a
- * legal-looking lane that never accepts a drop) and, for the one
- * identity-restricted move the board offers a lane for — withdrawing a
- * submission (`submitted` → `in_progress`) — the card's own
- * `allowedActions.canWithdraw` must also be `true`, mirroring
- * `InterventionDetailPage`'s `transitionTargets()` gate
- * (`utils/intervention-capabilities/`). Used by both the drag-drop
- * `cdkDropListEnterPredicate` and the card's keyboard "Move to…" menu, so the
- * two paths can never disagree about what is offered.
+ * Applies the same transition and membership checks as the board's explanatory feedback.
+ * Execute transitions require the responsible member or a participant; submit and withdraw use server capabilities.
  *
  * @access public
  * @since 1.0.0
  *
  * @param {InterventionOutput} intervention - The card's own intervention.
  * @param {InterventionStatus} target - The column being dropped onto.
+ * @param {string | null} currentMemberIri - The active member's IRI, null until resolved.
  *
  * @returns {boolean} Whether the move is legal.
  */
 export function isInterventionBoardMoveAllowed(
   intervention: InterventionOutput,
   target: InterventionStatus,
+  currentMemberIri: string | null = null,
 ): boolean {
-  if (!intervention.allowedTransitions.includes(target)) return false;
+  return resolveInterventionBoardMoveReason(intervention, target, currentMemberIri) === null;
+}
 
-  if (intervention.status === 'submitted' && target === 'in_progress') {
-    return intervention.allowedActions?.canWithdraw === true;
+/**
+ * Function resolveInterventionBoardMoveReason
+ *
+ * @description
+ * Explains known transition and identity blockers before a drop or menu action.
+ * Membership mirrors the API's execute guard because allowedTransitions describes workflow states, not caller access.
+ *
+ * @access public
+ * @since 1.1.0
+ *
+ * @param {InterventionOutput} intervention - The current intervention and advertised capabilities.
+ * @param {InterventionStatus} target - The requested destination.
+ * @param {string | null} currentMemberIri - The active member's IRI, null until resolved.
+ * @returns {string | null} A localized blocker, or null when the move is permitted.
+ */
+export function resolveInterventionBoardMoveReason(
+  intervention: InterventionOutput,
+  target: InterventionStatus,
+  currentMemberIri: string | null,
+): string | null {
+  if (!intervention.allowedTransitions.includes(target)) {
+    return $localize`:@@intervention.board.transitionUnavailable:This transition is not available from the current status.`;
   }
 
-  return true;
+  if (intervention.status === 'submitted' && target === 'in_progress') {
+    return intervention.allowedActions?.canWithdraw === true
+      ? null
+      : $localize`:@@intervention.board.withdrawOnly:Only the responsible can withdraw this submission.`;
+  }
+
+  if (target === 'submitted') {
+    return intervention.allowedActions?.canSubmit === true
+      ? null
+      : $localize`:@@intervention.board.submitOnly:Only the responsible member can submit this intervention for review.`;
+  }
+
+  if (
+    capabilityForTransition(intervention.status, target) === 'execute' &&
+    (currentMemberIri === null ||
+      (intervention.responsible !== currentMemberIri &&
+        !intervention.participants.includes(currentMemberIri)))
+  ) {
+    return $localize`:@@intervention.board.executionMembersOnly:Only the responsible member or a participant can perform this transition.`;
+  }
+
+  return null;
 }

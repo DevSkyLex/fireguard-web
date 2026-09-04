@@ -7,6 +7,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import type { CollectionFilterOperator } from '../../../../models';
 import { FilterChip } from '../filter-chip.component';
 
@@ -131,6 +132,19 @@ describe('FilterChip', () => {
 
     expect(fixture.componentInstance.lastOperatorChange).toBe('contains');
   });
+
+  it.each([null, undefined, 'equals', 'notEquals'])(
+    'should ignore unchanged, empty or undeclared operator %s',
+    async (operator) => {
+      fixture.componentInstance.operatorOptions.set(['equals', 'contains']);
+      await fixture.whenStable();
+
+      fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', operator);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.lastOperatorChange).toBeNull();
+    },
+  );
 
   it('should keep the operator select and remove button focusable, aria-disabled, and inert while disabled', async () => {
     fixture.componentInstance.disabled.set(true);

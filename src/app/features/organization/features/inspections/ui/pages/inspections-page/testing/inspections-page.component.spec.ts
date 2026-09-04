@@ -227,7 +227,10 @@ describe('InspectionsPage', () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();
 
-    expect(renderPageActions().querySelector('[data-testid="inspections-new"]')).toBeNull();
+    const actions: HTMLElement = renderPageActions();
+    expect(actions.querySelector('[data-testid="inspections-new"]')).toBeNull();
+    expect(actions.querySelector('[data-testid="inspections-actions-menu"]')).toBeNull();
+    expect(actions.querySelector('[data-testid="inspections-analytics-link"]')).not.toBeNull();
   });
 
   it('should offer "New inspection" with the write permission', async () => {

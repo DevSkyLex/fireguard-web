@@ -1,17 +1,24 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group>
+  <hlm-field-group class="gap-5">
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="onboarding-facilities-error" class="text-sm text-destructive">
+      <div hlmAlert variant="destructive" data-testid="onboarding-facilities-error">
         @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
+          <p hlmAlertDescription>{{ message }}</p>
         }
       </div>
     }
 
     @if (staged().length > 0) {
-      <ul class="flex flex-col gap-2" data-testid="onboarding-facilities-staged">
-        @for (row of stagedRows(); track row.name; let i = $index) {
-          <li hlmItem variant="outline" size="sm">
+      <p class="text-sm font-medium" i18n="@@onboarding.batch.prepared">
+        Prepared: {{ staged().length }}
+      </p>
+      <ul
+        hlmItemGroup
+        class="gap-0 divide-y divide-border"
+        data-testid="onboarding-facilities-staged"
+      >
+        @for (row of stagedRows(); track $index; let i = $index) {
+          <li hlmItem size="sm" class="px-0">
             <hlm-item-media variant="icon">
               <ng-icon name="lucideMapPin" aria-hidden="true" />
             </hlm-item-media>
@@ -19,7 +26,28 @@
               <p hlmItemTitle>{{ row.name }}</p>
               <p hlmItemDescription>{{ row.summary }}</p>
             </hlm-item-content>
+            @if (row.completed) {
+              <span class="text-xs text-muted-foreground" i18n="@@onboarding.batch.saved"
+                >Saved</span
+              >
+            } @else if (row.failed) {
+              <span class="text-xs text-destructive" i18n="@@onboarding.batch.failed"
+                >Needs retry</span
+              >
+            }
             <hlm-item-actions>
+              <button
+                hlmBtn
+                variant="ghost"
+                size="icon-sm"
+                class="max-sm:size-11"
+                type="button"
+                [disabled]="pending() || row.completed"
+                (click)="editFacility(i)"
+                [attr.aria-label]="editFacilityLabel(row.name)"
+              >
+                <ng-icon name="lucidePencil" aria-hidden="true" />
+              </button>
               <button
                 hlmBtn
                 type="button"
@@ -28,7 +56,7 @@
                 class="max-sm:size-11"
                 [attr.data-testid]="'onboarding-facilities-remove-' + i"
                 [attr.aria-label]="removeFacilityLabel(row.name)"
-                [disabled]="pending()"
+                [disabled]="pending() || row.completed"
                 (click)="removeFacility(i)"
               >
                 <ng-icon name="lucideX" aria-hidden="true" />
@@ -44,49 +72,52 @@
         You can stage up to 5 facilities at once.
       </p>
     } @else {
-      <hlm-field>
-        <label hlmFieldLabel for="onboarding-facility-type"
-          ><span i18n="@@onboarding.facilitiesForm.type"> Type</span><app-required-marker
-        /></label>
-        <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
-          <hlm-select-trigger
-            buttonId="onboarding-facility-type"
-            class="w-full"
-            data-testid="onboarding-facility-type"
-          >
-            <hlm-select-value
-              placeholder="Select a facility type"
-              i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal>
-            <hlm-select-group>
-              @for (option of typeOptions; track option.value) {
-                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
-        <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
-      </hlm-field>
+      <div hlmFieldGroup class="grid items-start gap-4 sm:grid-cols-2">
+        <hlm-field>
+          <label hlmFieldLabel for="onboarding-facility-name"
+            ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
+          /></label>
+          <input
+            class="max-sm:min-h-11"
+            hlmInput
+            id="onboarding-facility-name"
+            #draftInput
+            type="text"
+            data-testid="onboarding-facility-name"
+            placeholder="Main warehouse"
+            i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
+            [formField]="draftForm.name"
+            [attr.aria-required]="true"
+          />
+          <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
+        </hlm-field>
 
-      <hlm-field>
-        <label hlmFieldLabel for="onboarding-facility-name"
-          ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
-        /></label>
-        <input
-          hlmInput
-          id="onboarding-facility-name"
-          type="text"
-          data-testid="onboarding-facility-name"
-          placeholder="Main warehouse"
-          i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
-          [formField]="draftForm.name"
-          [attr.aria-required]="true"
-        />
-        <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
-      </hlm-field>
-
+        <hlm-field>
+          <label hlmFieldLabel for="onboarding-facility-type"
+            ><span i18n="@@onboarding.facilitiesForm.type"> Type</span><app-required-marker
+          /></label>
+          <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
+            <hlm-select-trigger
+              buttonId="onboarding-facility-type"
+              class="w-full max-sm:min-h-11"
+              data-testid="onboarding-facility-type"
+            >
+              <hlm-select-value
+                placeholder="Select a facility type"
+                i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
+              />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (option of typeOptions; track option.value) {
+                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+          <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
+        </hlm-field>
+      </div>
       <hlm-field>
         <label
           hlmFieldLabel
@@ -96,6 +127,7 @@
           Address (optional)
         </label>
         <input
+          class="max-sm:min-h-11"
           hlmInput
           id="onboarding-facility-address"
           type="text"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 codex-challenge"
+  short_description: 'Provide a bounded read-only second opinion on FireGuard web wor'
+  default_prompt: 'Use $fg-web-codex-challenge for the requested FireGuard Web task.'

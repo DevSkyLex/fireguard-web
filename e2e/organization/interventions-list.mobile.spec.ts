@@ -64,14 +64,21 @@ async function gotoList(page: Parameters<typeof collectConsoleErrors>[0]): Promi
 }
 
 test.describe('Interventions list on a phone', () => {
-  test('renders the KPI strip from the statistics endpoint', async ({ page }) => {
+  test('starts with view controls and keeps the collection reachable without metric cards', async ({
+    page,
+  }) => {
     const consoleErrors = collectConsoleErrors(page);
     await gotoList(page);
 
-    // 9 open of 20 total: in_progress 3 + planned 5 + changes_requested 1.
-    await expect(page.getByTestId('intervention-kpi-strip-open')).toContainText('9');
-    await expect(page.getByTestId('intervention-kpi-strip-overdue')).toContainText('4');
-    await expect(page.getByTestId('intervention-kpi-strip-awaiting-review')).toContainText('2');
+    await expect(page.getByTestId('intervention-statistics-analysis-trigger')).toHaveCount(0);
+    await expect(page.getByTestId('intervention-kpi-strip')).toHaveCount(0);
+    await expect(page.getByTestId('intervention-view-toggle')).toBeInViewport();
+    await page.screenshot({
+      path: 'e2e/artifacts/interventions-summary/mobile.png',
+      animations: 'disabled',
+    });
+    await page.getByTestId('intervention-table-card').first().scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('intervention-table-card').first()).toBeInViewport();
     expect(consoleErrors).toEqual([]);
   });
 

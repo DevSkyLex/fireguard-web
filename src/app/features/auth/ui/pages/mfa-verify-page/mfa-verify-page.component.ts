@@ -12,6 +12,7 @@ import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
+import { HlmButton } from '@shared/ui/button';
 
 /**
  * Component MfaVerifyPage
@@ -39,7 +40,7 @@ import { PageHeading } from '@shared/page-heading';
  */
 @Component({
   selector: 'app-mfa-verify-page',
-  imports: [OtpForm, PageHeading],
+  imports: [HlmButton, OtpForm, PageHeading],
   templateUrl: './mfa-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -137,6 +138,12 @@ export class MfaVerifyPage {
   );
   //#endregion
 
+  /** @description The validated destination retained when restarting sign-in. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
+
   //#region Lifecycle
   /**
    * Property outcome
@@ -160,6 +167,16 @@ export class MfaVerifyPage {
   //#endregion
 
   //#region Methods
+  /** @description Clears the pending challenge before returning to sign-in, retaining the validated destination. */
+  protected restartSignIn(): void {
+    if (this.authStore.isVerifyingMfa() || this.authStore.isResendingMfa()) return;
+
+    this.authStore.clearMfaState();
+    void this.router.navigate(['/auth/login'], {
+      queryParams: { returnUrl: this.returnUrl || undefined },
+    });
+  }
+
   /**
    * Method verify
    * @method verify

@@ -10,13 +10,17 @@
       <hlm-skeleton class="h-16 w-full" />
     </div>
   } @else if (isEmpty()) {
-    <app-empty-state
-      icon="lucideBuilding2"
-      title="No organizations"
-      i18n-title="@@account.organizations.emptyTitle"
-      description="You are not a member of any organization yet."
-      i18n-description="@@account.organizations.emptyDescription"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideBuilding2" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.organizations.emptyTitle">No organizations</p>
+        <p hlmEmptyDescription i18n="@@account.organizations.emptyDescription">
+          You are not a member of any organization yet.
+        </p>
+      </div>
+    </div>
   } @else {
     <ul hlmItemGroup class="max-w-2xl">
       @for (organization of myOrganizations.organizations(); track organization.id) {

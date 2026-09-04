@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
 import { AuthStore } from '@features/auth/state';
 import { LoginPage } from '../login-page.component';
@@ -93,7 +93,7 @@ describe('LoginPage', () => {
     await fixture.whenStable();
 
     expect(navigate).toHaveBeenCalledWith(['/auth/mfa-verify'], {
-      queryParamsHandling: 'preserve',
+      queryParams: { returnUrl: undefined },
     });
   });
 
@@ -105,8 +105,45 @@ describe('LoginPage', () => {
     await fixture.whenStable();
 
     expect(navigate).toHaveBeenCalledWith(['/auth/mfa-verify'], {
-      queryParamsHandling: 'preserve',
+      queryParams: { returnUrl: undefined },
     });
     expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+  it('should carry the invitation destination through registration, recovery and MFA links', async () => {
+    const destination = '/invitations/invite-token';
+    const route = TestBed.inject(ActivatedRoute);
+    vi.spyOn(route.snapshot, 'queryParamMap', 'get').mockReturnValue(
+      convertToParamMap({ returnUrl: destination, extra: 'discard-me' }),
+    );
+    fixture.destroy();
+    fixture = TestBed.createComponent(LoginPage);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('a[href^="/auth/register"]')?.getAttribute('href')).toContain(
+      'returnUrl=%2Finvitations%2Finvite-token',
+    );
+    expect(
+      element.querySelector('a[href^="/auth/password-reset/forgot"]')?.getAttribute('href'),
+    ).toContain('returnUrl=%2Finvitations%2Finvite-token');
+    mfaRequired.set(true);
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith(['/auth/mfa-verify'], {
+      queryParams: { returnUrl: destination },
+    });
+  });
+
+  it('should discard an external return destination from authentication links', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    vi.spyOn(route.snapshot, 'queryParamMap', 'get').mockReturnValue(
+      convertToParamMap({ returnUrl: 'https://outside.example' }),
+    );
+    fixture.destroy();
+    fixture = TestBed.createComponent(LoginPage);
+    await fixture.whenStable();
+    expect(
+      (fixture.nativeElement as HTMLElement)
+        .querySelector('a[href^="/auth/register"]')
+        ?.getAttribute('href'),
+    ).toBe('/auth/register');
   });
 });

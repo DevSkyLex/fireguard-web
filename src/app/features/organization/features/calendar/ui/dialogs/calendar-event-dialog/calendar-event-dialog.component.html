@@ -1,0 +1,44 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-xl overflow-y-auto sm:max-w-xl"
+    data-testid="calendar-event-dialog"
+    [attr.data-dirty]="dirty()"
+  >
+    <hlm-dialog-header>
+      @if (editing()) {
+        <h3 hlmDialogTitle i18n="@@calendar.eventDialog.editTitle">Edit event</h3>
+        <p hlmDialogDescription i18n="@@calendar.eventDialog.editDescription">
+          Changes apply only to this standalone event.
+        </p>
+      } @else {
+        <h3 hlmDialogTitle i18n="@@calendar.eventDialog.createTitle">New event</h3>
+        <p hlmDialogDescription i18n="@@calendar.eventDialog.createDescription">
+          Adds a standalone event to the organization calendar.
+        </p>
+      }
+    </hlm-dialog-header>
+
+    <app-calendar-event-form
+      [visible]="visible()"
+      [pending]="pending()"
+      [serverError]="serverError()"
+      [editing]="editing()"
+      [facilityOptions]="facilityOptions()"
+      [initialStartsAt]="initialStartsAt()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

@@ -38,7 +38,7 @@ import { HlmButton } from '@shared/ui/button';
   selector: 'app-onboarding-step-footer',
   imports: [HlmButton, GateReasonDirective],
   templateUrl: './onboarding-step-footer.component.html',
-  host: { class: 'block' },
+  host: { class: 'sticky bottom-0 z-10 block bg-background' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingStepFooter {

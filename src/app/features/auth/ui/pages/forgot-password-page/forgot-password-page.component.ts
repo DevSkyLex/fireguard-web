@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { EmailRequestForm, type EmailRequestFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 
 /**
@@ -53,6 +54,9 @@ export class ForgotPasswordPage {
    */
   private readonly router: Router = inject<Router>(Router);
 
+  /** @description Reads the validated destination shared by the authentication steps. */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
+
   /**
    * Property submitLabel
    * @readonly
@@ -68,6 +72,12 @@ export class ForgotPasswordPage {
    */
   protected readonly submitLabel: string = $localize`:@@auth.forgotPassword.submit:Send reset code`;
   //#endregion
+
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
 
   //#region Lifecycle
   /**
@@ -86,7 +96,12 @@ export class ForgotPasswordPage {
     if (this.passwordResetStore.challengeToken() === null) return;
 
     untracked((): void => {
-      void this.router.navigate(['/auth/password-reset/verify']);
+      void this.router.navigate(['/auth/password-reset/verify'], {
+        queryParams: {
+          token: this.passwordResetStore.challengeToken(),
+          returnUrl: this.returnUrl || undefined,
+        },
+      });
     });
   });
   //#endregion

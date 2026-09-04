@@ -1,9 +1,9 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group>
+  <hlm-field-group class="gap-5">
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="onboarding-org-error" class="text-sm text-destructive">
+      <div hlmAlert variant="destructive" data-testid="onboarding-org-error">
         @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
+          <p hlmAlertDescription>{{ message }}</p>
         }
       </div>
     }
@@ -13,6 +13,7 @@
         ><span i18n="@@onboarding.orgForm.name"> Organization name</span><app-required-marker
       /></label>
       <input
+        class="max-sm:min-h-11"
         hlmInput
         id="onboarding-org-name"
         type="text"
@@ -25,20 +26,35 @@
       <hlm-field-error>{{ organizationForm.name().errors()[0]?.message }}</hlm-field-error>
     </hlm-field>
 
-    <hlm-field>
-      <label hlmFieldLabel for="onboarding-org-slug" i18n="@@onboarding.orgForm.slug">
-        URL slug (optional)
-      </label>
-      <input
-        hlmInput
-        id="onboarding-org-slug"
-        type="text"
-        data-testid="onboarding-org-slug"
-        placeholder="acme-fire-safety"
-        i18n-placeholder="@@onboarding.orgForm.slugPlaceholder"
-        [formField]="organizationForm.slug"
-      />
-    </hlm-field>
+    <hlm-collapsible>
+      <button
+        hlmBtn
+        hlmCollapsibleTrigger
+        variant="ghost"
+        type="button"
+        class="px-0 max-sm:min-h-11"
+        i18n="@@onboarding.orgForm.customizeAddress"
+      >
+        Customize the workspace address
+      </button>
+      <hlm-collapsible-content class="pt-3">
+        <hlm-field>
+          <label hlmFieldLabel for="onboarding-org-slug" i18n="@@onboarding.orgForm.slug">
+            URL slug (optional)
+          </label>
+          <input
+            class="max-sm:min-h-11"
+            hlmInput
+            id="onboarding-org-slug"
+            type="text"
+            data-testid="onboarding-org-slug"
+            placeholder="acme-fire-safety"
+            i18n-placeholder="@@onboarding.orgForm.slugPlaceholder"
+            [formField]="organizationForm.slug"
+          />
+        </hlm-field>
+      </hlm-collapsible-content>
+    </hlm-collapsible>
 
     <app-onboarding-step-footer
       [label]="submitLabel"

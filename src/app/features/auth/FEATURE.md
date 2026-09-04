@@ -21,6 +21,8 @@ This feature does not own user profile presentation or notification UX. Those be
 - Routes: `auth.routes.ts`
 - Public API: `index.ts`
 - Root provider: `providers/auth.provider.ts`
+- The `/auth` mounting route selects `SplitLayout`'s desktop `splitShowcase: 'panel'`;
+  mobile remains a single form column. The shell owns this presentation, not auth state.
 
 ## Routes
 
@@ -63,7 +65,7 @@ over propagating the `Retry-After` header through `HydraApiService`, which no ot
 
 **Backend submit failures surface inline in the owning form.** Each auth form takes a
 `serverError` input (`StoreError | null`) bound by its page to the store's error signal and
-renders the message as a `role="alert"` banner above the fields. The stores still dispatch
+renders a native `hlmAlert` above the fields. Recovery request and new-password failures are also wired inline. The stores still dispatch
 `StoreFailureEventPayload` events for the app-wide feedback queue, but the auth screens do not
 rely on it: a sign-in rejection must be visible exactly where the user is looking. Field-level
 errors stay next to the input that has to change.
@@ -118,6 +120,8 @@ every surface at once.
 
 ## Cross-Feature Dependencies
 
+- Publishes `resolveReturnUrl` through `@features/auth/utils` to onboarding for safe local
+  destinations when entering an already completed wizard or when activation has no target.
 - May coordinate with `features/account` during bootstrap and logout through the account-owned `USER_PROFILE_PORT` contract.
 - Must not move account-owned state or UI into auth just because auth initializes first.
 - **`features/account`'s `AccountSecurityPage` injects `SessionStore` and `TrustedDeviceStore`
@@ -150,8 +154,7 @@ every surface at once.
 - Password reset and MFA are auth workflows even when rendered in separate pages.
 - Registration creates a `pending_verification` account; the email-verification
   step (`/auth/register/verify`) activates it and auto-logs the user in by
-  applying the returned session to `AuthStore` (`applySession`), then routing to
-  `/onboarding`. Registration never creates an organization — onboarding owns that.
+  applying the returned session to `AuthStore` (`applySession`), then routing to the validated `returnUrl` when present, or `/onboarding` otherwise. Registration never creates an organization — onboarding owns that.
 - A user with an active TOTP (authenticator app) enrollment (`features/account`) gets
   `mfa_method: 'totp'` and `mfa_destination: 'Authenticator App'` at login. TOTP challenges have
   no delivery counterpart to resend — the backend rejects `POST /api/auth/mfa/resend` for a
@@ -164,3 +167,13 @@ every surface at once.
   the backend (HttpOnly, 30 days) and is what makes `LoginHandler` skip MFA next time; the SSR
   cookie-forward interceptor (`core/http`) already carries it on server renders. The flag is
   cleared by the store whenever the session ends.
+
+- Auth links, challenge transitions and guard redirects carry only the validated `returnUrl`,
+  preserving invitation intent without propagating unrelated parameters. External destinations
+  are rejected by `resolveReturnUrl`.
+- Registration and reset verification replace the challenge token in the URL after resend while
+  preserving the validated destination, so reloading uses the latest challenge. OTP entry, cooldown
+  and trust-device behavior remain unchanged; device trust is exposed only on the MFA screen.
+
+- MFA offers an explicit return to sign-in: clear the pending challenge before navigation,
+  preserve the validated destination, and keep the action unavailable while verification or resend is pending.

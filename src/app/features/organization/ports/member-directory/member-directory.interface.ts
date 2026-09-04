@@ -16,8 +16,8 @@ import type { MemberDirectoryEntry } from '@features/organization/models';
  *
  * Reading the directory needs `organization.members.read`, which messaging
  * permissions do **not** imply. {@link isAvailable} reports whether the
- * directory can be read at all; when it is false, callers must degrade rather
- * than show an error — the member simply keeps their id.
+ * directory can be read at all; when it is false, callers must degrade to a
+ * neutral member label rather than show an error or expose the transport id.
  *
  * Concrete implementation: `MemberDirectoryStore` in
  * `features/organization/state/member-directory/`.
@@ -79,7 +79,7 @@ export interface MemberDirectoryPort {
    *
    * @description
    * Best available label for a member reference, accepting either a bare id or
-   * a member IRI. Falls back to the trailing id segment.
+   * a member IRI. Falls back to a neutral localized label.
    *
    * @param {string} memberIdOrIri - Bare member UUID or member IRI.
    *

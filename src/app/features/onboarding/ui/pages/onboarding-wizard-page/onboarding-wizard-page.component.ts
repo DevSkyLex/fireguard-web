@@ -2,6 +2,8 @@ import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  untracked,
   computed,
   effect,
   inject,
@@ -9,10 +11,21 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import type { Observable } from 'rxjs';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, map, of, tap } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import {
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  errorCallState,
+  toStoreError,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
 import type { OnboardingStepKey, OnboardingStepOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
@@ -37,9 +50,12 @@ import {
   type SetupOrganizationRole,
 } from '@features/organization/setup';
 import { PageHeading } from '@shared/page-heading';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmProgressImports } from '@shared/ui/progress';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
-import type { OnboardingWizardActionState } from './models';
 
 /**
  * Function redirectToStripe
@@ -91,6 +107,10 @@ export function redirectToStripe(documentRef: Document, url: string): void {
 @Component({
   selector: 'app-onboarding-wizard-page',
   imports: [
+    ...HlmAlertImports,
+    ...HlmCollapsibleImports,
+    ...HlmProgressImports,
+    HlmSkeleton,
     HlmButton,
     HlmSpinner,
     OnboardingStepRail,
@@ -105,6 +125,52 @@ export function redirectToStripe(documentRef: Document, url: string): void {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingWizardPage {
+  /** @description Releases in-flight setup work when the route closes. */
+  private readonly destroyRef: DestroyRef = inject(DestroyRef);
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+
+  /** @description The lifecycle phases are separate from resource creation and remain locally retryable. */
+  protected readonly lifecycleError: Signal<StoreError | null> = computed(
+    () =>
+      this.store.startCallState().error ??
+      this.store.skipStepCallState().error ??
+      this.store.rollbackCallState().error,
+  );
+  protected readonly planCatalogCallState: WritableSignal<CallState<void>> =
+    signal(idleCallState());
+  protected readonly rolesCallState: WritableSignal<CallState<void>> = signal(idleCallState());
+  protected readonly facilitiesCallState: WritableSignal<CallState<void>> = signal(idleCallState());
+  protected readonly catalogError: Signal<StoreError | null> = computed(() => {
+    switch (this.currentStep()?.key) {
+      case 'select_plan':
+        return this.planCatalogCallState().error;
+      case 'invite_members':
+        return this.rolesCallState().error;
+      case 'create_first_equipment':
+        return this.facilitiesCallState().error;
+      default:
+        return null;
+    }
+  });
+  protected readonly completedInvitations: WritableSignal<readonly SetupInviteMemberInput[]> =
+    signal([]);
+  protected readonly completedFacilityDrafts: WritableSignal<readonly SetupCreateFacilityInput[]> =
+    signal([]);
+  protected readonly failedInvitations: WritableSignal<readonly string[]> = signal([]);
+  protected readonly failedFacilities: WritableSignal<readonly string[]> = signal([]);
+  private readonly createdSteps: Set<OnboardingStepKey> = new Set();
+  protected readonly stepNumberLabel: Signal<string> = computed(() => {
+    const position = Math.max(
+      1,
+      this.store.steps().findIndex((step) => step.key === this.store.nextStep()) + 1,
+    );
+    const total = this.store.progress().total;
+    return $localize`:@@onboarding.wizard.stepPosition:Step ${position}:position: of ${total}:total:`;
+  });
+  protected readonly progressValue: Signal<number> = computed(() => {
+    const { done, total } = this.store.progress();
+    return total > 0 ? (done / total) * 100 : 0;
+  });
   //#region Properties
   /**
    * Property store
@@ -286,7 +352,7 @@ export class OnboardingWizardPage {
   /**
    * Property createdFacilities
    * @readonly
-   * @description The facilities the `create_first_facility` step created, kept so `create_first_equipment` can attach the equipment to one of them. Empty when the facility step was skipped or the wizard resumed past it.
+   * @description The facilities the `create_first_facility` step created, kept so `create_first_equipment` can attach the equipment to one of them. Reloaded from setup when the wizard resumes at equipment.
    * @access protected
    * @since 1.0.0
    * @type {WritableSignal<readonly SetupFacilitySummary[]>}
@@ -303,18 +369,21 @@ export class OnboardingWizardPage {
    * @since 1.0.0
    * @type {WritableSignal<boolean>}
    */
-  protected readonly catalogPending: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly catalogPending: Signal<boolean> = computed(() =>
+    [this.planCatalogCallState(), this.rolesCallState(), this.facilitiesCallState()].some(
+      (state) => state.status === 'pending',
+    ),
+  );
 
   /**
    * Property actionState
    * @readonly
-   * @description The resource-creation phase's own pending/error pair (see {@link OnboardingWizardActionState}).
+   * @description The resource-creation phase's explicit request state.
    * @access protected
    * @since 1.0.0
-   * @type {WritableSignal<OnboardingWizardActionState>}
+   * @type {WritableSignal<CallState<void>>}
    */
-  protected readonly actionState: WritableSignal<OnboardingWizardActionState> =
-    signal<OnboardingWizardActionState>({ pending: false, error: null });
+  protected readonly actionState: WritableSignal<CallState<void>> = signal(idleCallState());
 
   /**
    * Property stepPending
@@ -325,7 +394,11 @@ export class OnboardingWizardPage {
    * @type {Signal<boolean>}
    */
   protected readonly stepPending: Signal<boolean> = computed(
-    () => this.actionState().pending || this.store.isExecutingStep() || this.store.isSkippingStep(),
+    () =>
+      this.actionState().status === 'pending' ||
+      this.store.isExecutingStep() ||
+      this.store.isSkippingStep() ||
+      this.store.isRollingBack(),
   );
 
   /**
@@ -350,21 +423,28 @@ export class OnboardingWizardPage {
         this.feedback.success(
           $localize`:@@onboarding.wizard.completed:Your organization is ready.`,
         );
-        void this.router.navigateByUrl('/');
+        const organizationId = this.store.targetOrganizationId();
+        const destination = organizationId
+          ? `/organizations/${organizationId}`
+          : resolveReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'), '/');
+        void this.router.navigateByUrl(destination);
       }
     });
 
     effect(() => {
-      const step: OnboardingStepOutput | null = this.currentStep();
-      if (step === null || this.catalogPending()) return;
-
-      if (step.key === 'select_plan' && this.plans().length === 0) {
-        this.loadPlanCatalog();
-      }
-
-      if (step.key === 'invite_members' && this.roles().length === 0) {
-        this.loadRoles();
-      }
+      const step = this.currentStep();
+      if (step === null) return;
+      if (step.key === 'select_plan' && this.planCatalogCallState().status === 'idle')
+        untracked(() => this.loadPlanCatalog());
+      if (step.key === 'invite_members' && this.rolesCallState().status === 'idle')
+        untracked(() => this.loadRoles());
+      if (step.key === 'create_first_equipment' && this.facilitiesCallState().status === 'idle')
+        untracked(() => this.loadFacilities());
+    });
+    effect(() => {
+      if (this.store.rollbackCallState().status !== 'success') return;
+      const step = this.currentStep();
+      if (step) this.createdSteps.delete(step.key);
     });
   }
   //#endregion
@@ -379,8 +459,7 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected submitOrganization(input: SetupCreateOrganizationInput): void {
-    this.confirmStep(
-      'create_organization',
+    this.confirmStep('create_organization', () =>
       this.organizationSetupService.createOrganization(input),
     );
   }
@@ -397,10 +476,22 @@ export class OnboardingWizardPage {
     const organizationId: string | null = this.store.targetOrganizationId();
     if (organizationId === null) return;
 
-    this.confirmStep(
-      'invite_members',
-      this.organizationSetupService.inviteMembers(organizationId, invitations),
+    if (this.stepPending()) return;
+    const remaining = invitations.filter(
+      (input) => !this.completedInvitations().some((done) => done.email === input.email),
     );
+    this.failedInvitations.set([]);
+    const requests = remaining.map((input) =>
+      this.organizationSetupService.inviteMembers(organizationId, [input]).pipe(
+        tap(() => this.completedInvitations.update((done) => [...done, input])),
+        map(() => null),
+        catchError((error: unknown) => {
+          this.failedInvitations.update((failed) => [...failed, input.email]);
+          return of(toStoreError(error));
+        }),
+      ),
+    );
+    this.confirmBatch('invite_members', requests);
   }
 
   /**
@@ -415,11 +506,23 @@ export class OnboardingWizardPage {
     const organizationId: string | null = this.store.targetOrganizationId();
     if (organizationId === null) return;
 
-    this.confirmStep(
-      'create_first_facility',
-      this.organizationSetupService.createFacilities(organizationId, facilities),
-      (created) => this.createdFacilities.set(created),
+    if (this.stepPending()) return;
+    const remaining = facilities.filter((input) => !this.completedFacilityDrafts().includes(input));
+    this.failedFacilities.set([]);
+    const requests = remaining.map((input) =>
+      this.organizationSetupService.createFacilities(organizationId, [input]).pipe(
+        tap((created) => {
+          this.completedFacilityDrafts.update((done) => [...done, input]);
+          this.createdFacilities.update((done) => [...done, ...created]);
+        }),
+        map(() => null),
+        catchError((error: unknown) => {
+          this.failedFacilities.update((failed) => [...failed, input.name]);
+          return of(toStoreError(error));
+        }),
+      ),
     );
+    this.confirmBatch('create_first_facility', requests);
   }
 
   /**
@@ -434,8 +537,7 @@ export class OnboardingWizardPage {
     const organizationId: string | null = this.store.targetOrganizationId();
     if (organizationId === null) return;
 
-    this.confirmStep(
-      'create_first_equipment',
+    this.confirmStep('create_first_equipment', () =>
       this.organizationSetupService.createEquipment(organizationId, input),
     );
   }
@@ -456,6 +558,7 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected submitPlan(selection: OnboardingPlanSelection): void {
+    if (this.stepPending()) return;
     if (!selection.requiresPayment) {
       this.store.executeStep({ stepKey: 'select_plan' });
       return;
@@ -464,20 +567,21 @@ export class OnboardingWizardPage {
     const organizationId: string | null = this.store.targetOrganizationId();
     if (organizationId === null) return;
 
-    this.actionState.set({ pending: true, error: null });
+    this.actionState.set(pendingCallState());
 
     this.billingService
       .createCheckoutSession(organizationId, {
         planKey: selection.planKey,
         interval: selection.interval,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (session) => {
-          this.actionState.set({ pending: false, error: null });
+          this.actionState.set(successCallState(undefined));
           redirectToStripe(this.document, session.url);
         },
         error: (error: unknown) => {
-          this.actionState.set({ pending: false, error });
+          this.actionState.set(errorCallState(toStoreError(error)));
         },
       });
   }
@@ -496,7 +600,7 @@ export class OnboardingWizardPage {
    */
   protected skipCurrentStep(): void {
     const step: OnboardingStepOutput | null = this.currentStep();
-    if (step === null) return;
+    if (step === null || !this.canSkip() || this.stepPending()) return;
 
     this.store.skipStep(step.key);
   }
@@ -514,6 +618,7 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected rollbackStep(): void {
+    if (!this.store.canRollback() || this.stepPending()) return;
     this.store.rollback();
   }
   //#endregion
@@ -532,28 +637,36 @@ export class OnboardingWizardPage {
    * @since 1.0.0
    *
    * @param {OnboardingStepKey} stepKey - The step being confirmed.
-   * @param {Observable<TResult>} resourceCreation - The setup-boundary call that creates the underlying resource.
+   * @param {() => Observable<TResult>} resourceCreation - The setup-boundary call that creates the underlying resource.
    * @param {(result: TResult) => void} [onCreated] - Invoked with the creation result before the step is confirmed.
    *
    * @returns {void}
    */
   private confirmStep<TResult>(
     stepKey: OnboardingStepKey,
-    resourceCreation: Observable<TResult>,
+    resourceCreation: () => Observable<TResult>,
     onCreated?: (result: TResult) => void,
   ): void {
-    this.actionState.set({ pending: true, error: null });
+    if (this.stepPending()) return;
+    if (this.createdSteps.has(stepKey)) {
+      this.store.executeStep({ stepKey });
+      return;
+    }
+    this.actionState.set(pendingCallState());
 
-    resourceCreation.subscribe({
-      next: (result: TResult) => {
-        this.actionState.set({ pending: false, error: null });
-        onCreated?.(result);
-        this.store.executeStep({ stepKey });
-      },
-      error: (error: unknown) => {
-        this.actionState.set({ pending: false, error });
-      },
-    });
+    resourceCreation()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result: TResult) => {
+          this.actionState.set(successCallState(undefined));
+          this.createdSteps.add(stepKey);
+          onCreated?.(result);
+          this.store.executeStep({ stepKey });
+        },
+        error: (error: unknown) => {
+          this.actionState.set(errorCallState(toStoreError(error)));
+        },
+      });
   }
 
   /**
@@ -564,45 +677,97 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   private loadPlanCatalog(): void {
-    this.catalogPending.set(true);
-
-    forkJoin({
-      plans: this.planService.listAvailable(),
-      pricing: this.billingService.getPricing(),
-    }).subscribe({
-      next: ({ plans, pricing }) => {
-        this.plans.set(plans.member);
-        this.pricing.set(pricing.member);
-        this.catalogPending.set(false);
-      },
-      error: () => {
-        this.catalogPending.set(false);
-      },
-    });
+    this.planCatalogCallState.set(pendingCallState());
+    forkJoin({ plans: this.planService.listAvailable(), pricing: this.billingService.getPricing() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ plans, pricing }) => {
+          this.plans.set(plans.member);
+          this.pricing.set(pricing.member);
+          this.planCatalogCallState.set(successCallState(undefined));
+        },
+        error: (error: unknown) =>
+          this.planCatalogCallState.set(errorCallState(toStoreError(error))),
+      });
   }
 
-  /**
-   * Method loadRoles
-   * @description Loads the target organization's assignable roles, once.
-   * @access private
-   * @since 1.0.0
-   * @returns {void}
-   */
+  /** @description Loads roles once; an empty catalog is a successful response. */
   private loadRoles(): void {
-    const organizationId: string | null = this.store.targetOrganizationId();
-    if (organizationId === null) return;
-
-    this.catalogPending.set(true);
-
-    this.organizationSetupService.listRoles(organizationId).subscribe({
-      next: (roles) => {
-        this.roles.set(roles);
-        this.catalogPending.set(false);
-      },
-      error: () => {
-        this.catalogPending.set(false);
-      },
-    });
+    const organizationId = this.store.targetOrganizationId();
+    if (!organizationId) return;
+    this.rolesCallState.set(pendingCallState());
+    this.organizationSetupService
+      .listRoles(organizationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (roles) => {
+          this.roles.set(roles);
+          this.rolesCallState.set(successCallState(undefined));
+        },
+        error: (error: unknown) => this.rolesCallState.set(errorCallState(toStoreError(error))),
+      });
   }
-  //#endregion
+
+  /** @description Restores persisted sites when resuming directly at equipment. */
+  private loadFacilities(): void {
+    const organizationId = this.store.targetOrganizationId();
+    if (!organizationId) return;
+    this.facilitiesCallState.set(pendingCallState());
+    this.organizationSetupService
+      .listFacilities(organizationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (facilities) => {
+          this.createdFacilities.set(facilities);
+          this.facilitiesCallState.set(successCallState(undefined));
+        },
+        error: (error: unknown) =>
+          this.facilitiesCallState.set(errorCallState(toStoreError(error))),
+      });
+  }
+
+  /** @description Explicit retries never depend on a catalog's item count. */
+  protected retryCatalog(): void {
+    if (this.catalogPending()) return;
+    switch (this.currentStep()?.key) {
+      case 'select_plan':
+        this.loadPlanCatalog();
+        break;
+      case 'invite_members':
+        this.loadRoles();
+        break;
+      case 'create_first_equipment':
+        this.loadFacilities();
+        break;
+    }
+  }
+
+  /** @description Retries the failed lifecycle command without creating a resource again. */
+  protected retryLifecycle(): void {
+    if (this.store.isBusy()) return;
+    if (this.store.startCallState().error) void this.store.initialize();
+    else if (this.store.skipStepCallState().error) this.skipCurrentStep();
+    else if (this.store.rollbackCallState().error) this.rollbackStep();
+    else this.store.load();
+  }
+
+  /** @description Awaits every row and confirms only when the full batch succeeded; successful rows stay recorded for retry. */
+  private confirmBatch(
+    stepKey: OnboardingStepKey,
+    requests: readonly Observable<StoreError | null>[],
+  ): void {
+    this.actionState.set(pendingCallState());
+    (requests.length ? forkJoin(requests) : of([]))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((errors) => {
+        const error = errors.find((item) => item !== null);
+        if (error) {
+          this.actionState.set(errorCallState(error));
+          return;
+        }
+        this.actionState.set(successCallState(undefined));
+        this.createdSteps.add(stepKey);
+        this.store.executeStep({ stepKey });
+      });
+  }
 }

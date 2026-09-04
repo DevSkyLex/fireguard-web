@@ -22,6 +22,6 @@ export const MAINTENANCE_ROUTES: Routes = [
       import('./ui/pages/maintenance-page/maintenance-page.component').then(
         (m) => m.MaintenancePage,
       ),
-    title: $localize`:@@route.maintenance:Under maintenance`,
+    title: $localize`:@@route.maintenanceMode:Under maintenance`,
   },
 ];

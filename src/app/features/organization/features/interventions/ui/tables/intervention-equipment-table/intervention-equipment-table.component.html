@@ -49,24 +49,29 @@
     }
   </ng-container>
 
-  <app-error-state
-    surfaceError
-    icon="lucideCircleAlert"
-    title="Linked equipment could not be loaded"
-    i18n-title="@@intervention.linked.equipment.errorTitle"
-    [description]="error() ?? ''"
-    data-testid="intervention-equipment-error"
-  />
+  <div hlmEmpty role="alert" surfaceError data-testid="intervention-equipment-error">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon" class="text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.equipment.errorTitle">
+        Linked equipment could not be loaded
+      </p>
+      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+    </div>
+  </div>
 
-  <app-empty-state
-    surfaceEmpty
-    icon="lucideWrench"
-    title="No linked equipment"
-    i18n-title="@@intervention.linked.equipment.emptyTitle"
-    description="No equipment is linked to this intervention yet."
-    i18n-description="@@intervention.linked.equipment.emptyDesc"
-    data-testid="intervention-equipment-empty"
-  />
+  <div hlmEmpty surfaceEmpty data-testid="intervention-equipment-empty">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideWrench" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.linked.equipment.emptyTitle">No linked equipment</p>
+      <p hlmEmptyDescription i18n="@@intervention.linked.equipment.emptyDesc">
+        No equipment is linked to this intervention yet.
+      </p>
+    </div>
+  </div>
 </app-collection-surface>
 
 @if (totalItems() > items().length) {

@@ -1,5 +1,5 @@
 <div id="organization-invitation-accept-page" class="mx-auto flex w-full max-w-md flex-col gap-6">
-  <span class="text-center text-sm font-medium text-muted-foreground">FireGuard</span>
+  <span class="text-center text-sm font-medium text-muted-foreground">Fireguard</span>
 
   <ng-template
     #statusCard
@@ -82,42 +82,9 @@
       "
     />
   } @else if (store.isAccepted()) {
-    <div hlmCard data-testid="organization-invitation-accept-success">
-      <div hlmCardContent class="flex flex-col items-center gap-3 py-2 text-center">
-        @if (store.preview(); as accepted) {
-          <app-organization-avatar
-            size="lg"
-            [name]="accepted.organizationName"
-            [logoUrl]="accepted.organizationLogoUrl"
-          />
-        } @else {
-          <div
-            class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
-          >
-            <ng-icon name="lucideCircleCheck" class="text-2xl" aria-hidden="true" />
-          </div>
-        }
-        <app-page-heading heading="You're in" i18n-heading="@@org.invitationAccept.acceptedTitle" />
-        <p hlmCardDescription i18n="@@org.invitationAccept.accepted">
-          You have joined the organization.
-        </p>
-      </div>
-      <div hlmCardFooter class="justify-center">
-        @if (store.preview(); as accepted) {
-          <a
-            hlmBtn
-            data-testid="organization-invitation-accept-open"
-            [routerLink]="['/organizations', accepted.organizationId]"
-          >
-            <span i18n="@@org.invitationAccept.openOrganization">Open</span>
-            {{ accepted.organizationName }}
-          </a>
-        } @else {
-          <a hlmBtn routerLink="/organizations" i18n="@@org.invitationAccept.goToOrganization">
-            Go to your workspace
-          </a>
-        }
-      </div>
+    <div hlmAlert role="status" data-testid="organization-invitation-accept-success">
+      <hlm-spinner />
+      <p hlmAlertTitle i18n="@@org.invitationAccept.opening">Opening your workspace…</p>
     </div>
   } @else if (store.preview(); as preview) {
     @if (preview.status === 'pending') {
@@ -188,7 +155,10 @@
               <p hlmAlertTitle i18n="@@org.invitationAccept.acceptErrorTitle">
                 We couldn't accept this invitation
               </p>
-              <p hlmAlertDescription>{{ store.acceptError()?.message }}</p>
+              <p hlmAlertDescription i18n="@@org.invitationAccept.acceptErrorDescription">
+                Please try again. If this invitation is no longer valid, ask your administrator for
+                a new one.
+              </p>
             </div>
           }
         </div>

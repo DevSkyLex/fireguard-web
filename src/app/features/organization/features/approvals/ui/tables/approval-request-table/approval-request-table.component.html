@@ -35,15 +35,15 @@
             <a
               class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               [routerLink]="route"
-              >{{ item.subjectId }}</a
+              >{{ subjectLabelOf(item) }}</a
             >
           } @else {
-            <span class="text-muted-foreground">{{ item.subjectId }}</span>
+            <span class="text-muted-foreground">{{ subjectLabelOf(item) }}</span>
           }
         </td>
 
         <td hlmTableCell class="whitespace-normal text-muted-foreground">
-          {{ item.requestedByUserId }}
+          {{ memberLabelOf()(item.requestedByMemberId) }}
         </td>
 
         <td hlmTableCell class="whitespace-normal">
@@ -114,10 +114,10 @@
 <ng-template #decisionDetail let-item="item">
   @if (isDecided(item)) {
     <div class="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
-      @if (item.decisionByUserId) {
+      @if (item.decisionByMemberId) {
         <span
           ><span i18n="@@approvals.table.decidedBy">Decided by</span>
-          {{ item.decisionByUserId }}</span
+          {{ memberLabelOf()(item.decisionByMemberId ?? '') }}</span
         >
       }
       @if (item.decisionNote) {

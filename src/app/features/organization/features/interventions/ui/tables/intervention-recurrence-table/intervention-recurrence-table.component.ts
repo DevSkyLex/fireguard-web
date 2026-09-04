@@ -7,7 +7,7 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCalendarClock, lucideCircleAlert } from '@ng-icons/lucide';
 import type {
   InterventionRecurrenceFrequency,
@@ -16,14 +16,13 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTableImports } from '@shared/ui/table';
 
@@ -40,7 +39,7 @@ import { HlmTableImports } from '@shared/ui/table';
  * and {@link activeToggled} — the owning page decides what a row's Delete
  * action means, including any confirmation.
  *
- * A failed fetch ({@link error}) renders `ErrorState` instead of the grid,
+ * A failed fetch ({@link error}) renders the Spartan `hlmEmpty` error composition instead of the grid,
  * the same treatment `InterventionFacilitiesTable` and its "Linked" siblings
  * give their own list failure.
  *
@@ -51,11 +50,11 @@ import { HlmTableImports } from '@shared/ui/table';
 @Component({
   selector: 'app-intervention-recurrence-table',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
     OrgDatePipe,
-    EmptyState,
-    ErrorState,
     HlmButton,
     HlmSwitch,
     ...HlmTableImports,

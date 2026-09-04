@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
 import { AuthStore, RegisterStore } from '@features/auth/state';
 import { RegisterVerifyPage } from '../register-verify-page.component';
@@ -16,6 +16,7 @@ describe('RegisterVerifyPage', () => {
     verifyError: WritableSignal<null>;
     resendError: WritableSignal<null>;
     resendAvailableIn: WritableSignal<number>;
+    challengeToken: WritableSignal<string | null>;
   };
   let navigate: MockInstance;
 
@@ -30,6 +31,7 @@ describe('RegisterVerifyPage', () => {
       verifyError: signal(null),
       resendError: signal(null),
       resendAvailableIn: signal(0),
+      challengeToken: signal(null),
     };
 
     TestBed.configureTestingModule({
@@ -41,7 +43,7 @@ describe('RegisterVerifyPage', () => {
       ],
     });
 
-    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(RegisterVerifyPage);
     await fixture.whenStable();
@@ -69,12 +71,42 @@ describe('RegisterVerifyPage', () => {
 
     // Registration never creates an organization — onboarding owns that, which
     // is why the destination is not the workspace.
-    expect(navigate).toHaveBeenCalledWith(['/onboarding']);
+    expect(navigate).toHaveBeenCalledWith('/onboarding');
   });
 
   it('should offer the resend control, since an emailed code can be sent again', () => {
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
 
     expect(buttons.length).toBe(2);
+  });
+  it('should return to the invitation after account verification', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    vi.spyOn(route.snapshot, 'queryParamMap', 'get').mockReturnValue(
+      convertToParamMap({ returnUrl: '/invitations/token' }),
+    );
+    fixture.destroy();
+    fixture = TestBed.createComponent(RegisterVerifyPage);
+    await fixture.whenStable();
+    isAuthenticated.set(true);
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith('/invitations/token');
+  });
+
+  it('should replace a resent challenge in the URL while preserving the destination', async () => {
+    const route = TestBed.inject(ActivatedRoute);
+    vi.spyOn(route.snapshot, 'queryParamMap', 'get').mockReturnValue(
+      convertToParamMap({ token: 'old-token', returnUrl: '/invitations/token' }),
+    );
+    const update = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.destroy();
+    fixture = TestBed.createComponent(RegisterVerifyPage);
+    await fixture.whenStable();
+    mockRegisterStore.challengeToken.set('new-token');
+    await fixture.whenStable();
+    expect(update).toHaveBeenCalledWith([], {
+      relativeTo: route,
+      replaceUrl: true,
+      queryParams: { token: 'new-token', returnUrl: '/invitations/token' },
+    });
   });
 });

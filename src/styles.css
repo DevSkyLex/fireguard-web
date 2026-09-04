@@ -10,12 +10,6 @@
 @import '@fontsource-variable/geist/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
 
-/* Tailwind v4 auto-detects its sources from the project root, so it also reads
-   the test code. Playwright page objects and specs hold CSS-selector strings
-   (`[data-testid="x"]:visible`) that the class extractor mistakes for an
-   arbitrary variant and compiles into malformed, dead rules — three
-   `css-syntax-error` build warnings today. Test code never contributes a real
-   utility class, so it is kept out of the scan. */
 @source not '../e2e';
 @source not './app/**/testing';
 @source not './**/*.spec.ts';
@@ -34,13 +28,28 @@
 
 @custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
 
+@utility scroll-fade-y {
+  --scroll-fade-size: 0.625rem;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size),
+    black calc(100% - var(--scroll-fade-size)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--scroll-fade-size),
+    black calc(100% - var(--scroll-fade-size)),
+    transparent
+  );
+}
+
 router-outlet {
   display: none;
 }
 
-/* No component may carry `styles`/`styleUrl` (CLAUDE.md rule 3), so an
-   app-wide print concern — printing only the open CDK overlay, e.g. the
-   facility QR dialog — lives here instead of scoped to one component. */
 @media print {
   body > *:not(.cdk-overlay-container) {
     display: none;
@@ -60,87 +69,82 @@ router-outlet {
   color-scheme: light;
 
   --radius: 0.625rem;
-  --background: oklch(0.985 0.003 80);
-  --foreground: oklch(0.18 0.006 60);
-  --card: oklch(0.995 0.002 80);
-  --card-foreground: oklch(0.18 0.006 60);
-  --popover: oklch(0.995 0.002 80);
-  --popover-foreground: oklch(0.18 0.006 60);
-  --primary: oklch(0.646 0.194 41.1);
-  --primary-foreground: oklch(0.18 0.006 60);
-  --secondary: oklch(0.955 0.005 80);
-  --secondary-foreground: oklch(0.18 0.006 60);
-  --muted: oklch(0.955 0.005 80);
-  --muted-foreground: oklch(0.5 0.012 70);
-  --accent: oklch(0.955 0.01 65);
-  --accent-foreground: oklch(0.18 0.006 60);
-  --destructive: oklch(0.577 0.245 27.3);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #ff6a00;
+  --primary-foreground: #000000;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.596 0.145 163.2);
   --warning: oklch(0.666 0.179 58.3);
   --info: oklch(0.609 0.126 221.7);
-  --border: oklch(0.91 0.006 80);
-  --input: oklch(0.91 0.006 80);
-  --ring: oklch(0.646 0.194 41.1);
-  --chart-1: oklch(0.646 0.194 41.1);
-  --chart-2: oklch(0.666 0.179 58.3);
-  --chart-3: oklch(0.596 0.145 163.2);
-  --chart-4: oklch(0.609 0.126 221.7);
-  --chart-5: oklch(0.58 0.2 293);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
   --chart-6: oklch(0.6 0.21 17);
-  --sidebar: oklch(0.975 0.004 80);
-  --sidebar-foreground: oklch(0.18 0.006 60);
-  --sidebar-primary: oklch(0.646 0.194 41.1);
-  --sidebar-primary-foreground: oklch(0.18 0.006 60);
-  --sidebar-accent: oklch(0.945 0.01 65);
-  --sidebar-accent-foreground: oklch(0.18 0.006 60);
-  --sidebar-border: oklch(0.91 0.006 80);
-  --sidebar-ring: oklch(0.646 0.194 41.1);
+  --sidebar: var(--background);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-/*
- * spartan generates `:root.dark`; this app switches on `html[data-theme="dark"]`
- * — the attribute `ThemeService` writes, and the one `@custom-variant dark`
- * above already targets. The values are the "Ember" palette (DESIGN.md §Colors):
- * dark is the Bloc 3 deck verbatim, light is that deck inverted on warm paper.
- */
+/* Neutral Spartan surfaces with the Fireguard primary use the existing theme switch. */
 html[data-theme='dark'] {
   color-scheme: dark;
 
-  --background: oklch(0.155 0.004 286);
-  --foreground: oklch(0.967 0.004 91);
-  --card: oklch(0.195 0.005 286);
-  --card-foreground: oklch(0.967 0.004 91);
-  --popover: oklch(0.195 0.005 286);
-  --popover-foreground: oklch(0.967 0.004 91);
-  --primary: oklch(0.705 0.187 47.6);
-  --primary-foreground: oklch(0.155 0.004 286);
-  --secondary: oklch(0.258 0.009 286);
-  --secondary-foreground: oklch(0.967 0.004 91);
-  --muted: oklch(0.225 0.007 286);
-  --muted-foreground: oklch(0.767 0.012 90);
-  --accent: oklch(0.245 0.01 60);
-  --accent-foreground: oklch(0.967 0.004 91);
-  --destructive: oklch(0.711 0.166 22.2);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: #ff850a;
+  --primary-foreground: #0a0a0a;
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.773 0.153 163.2);
   --warning: oklch(0.837 0.164 84.4);
   --info: oklch(0.797 0.134 211.5);
-  --border: oklch(0.258 0.009 286);
-  --input: oklch(0.324 0.012 286);
-  --ring: oklch(0.705 0.187 47.6);
-  --chart-1: oklch(0.705 0.187 47.6);
-  --chart-2: oklch(0.837 0.164 84.4);
-  --chart-3: oklch(0.773 0.153 163.2);
-  --chart-4: oklch(0.797 0.134 211.5);
-  --chart-5: oklch(0.709 0.159 293.5);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
   --chart-6: oklch(0.719 0.169 13.4);
-  --sidebar: oklch(0.155 0.004 286);
-  --sidebar-foreground: oklch(0.967 0.004 91);
-  --sidebar-primary: oklch(0.705 0.187 47.6);
-  --sidebar-primary-foreground: oklch(0.155 0.004 286);
-  --sidebar-accent: oklch(0.225 0.008 60);
-  --sidebar-accent-foreground: oklch(0.967 0.004 91);
-  --sidebar-border: oklch(0.258 0.009 286);
-  --sidebar-ring: oklch(0.705 0.187 47.6);
+  --sidebar: var(--background);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: color-mix(in oklab, var(--muted) 60%, var(--background));
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -149,6 +153,52 @@ html[data-theme='dark'] {
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  @media (forced-colors: none) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent) transparent;
+    }
+
+    *:focus-visible {
+      scrollbar-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent) transparent;
+    }
+
+    @media (hover: hover) {
+      *:hover {
+        scrollbar-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent) transparent;
+      }
+    }
+
+    @supports not (scrollbar-width: thin) {
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track,
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        border: 2px solid transparent;
+        border-radius: 999px;
+        background: color-mix(in oklch, var(--muted-foreground) 30%, transparent);
+        background-clip: padding-box;
+      }
+
+      :focus-visible::-webkit-scrollbar-thumb {
+        background-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+      }
+
+      @media (hover: hover) {
+        :hover::-webkit-scrollbar-thumb {
+          background-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+        }
+      }
+    }
   }
 }
 

@@ -62,14 +62,6 @@
           <ng-icon name="lucideShieldCheck" aria-hidden="true" />
           <span i18n="@@org.settings.tabs.compliance">Compliance</span>
         </button>
-        <button
-          hlmTabsTrigger="assistant"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-assistant"
-        >
-          <ng-icon name="lucideBot" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.assistant">Assistant</span>
-        </button>
         @if (canDelete()) {
           <button
             hlmTabsTrigger="danger"
@@ -144,7 +136,7 @@
         </ng-template>
       </div>
 
-      <div hlmTabsContent="subscription" class="max-w-3xl">
+      <div hlmTabsContent="subscription" class="max-w-6xl">
         <ng-template hlmTabsContentLazy>
           <div class="flex flex-col gap-8">
             <div hlmCard>
@@ -300,13 +292,22 @@
                   <p hlmAlertDescription>{{ error.message }}</p>
                 </div>
               } @else if (billingStore.invoices().length === 0) {
-                <app-empty-state
-                  icon="lucideReceipt"
-                  title="No invoices yet"
-                  i18n-title="@@org.settings.subscription.invoicesEmptyTitle"
-                  description="Invoices appear here once the organization has been billed."
-                  i18n-description="@@org.settings.subscription.invoicesEmptyDescription"
-                />
+                <div hlmEmpty>
+                  <div hlmEmptyHeader>
+                    <div hlmEmptyMedia variant="icon">
+                      <ng-icon name="lucideReceipt" aria-hidden="true" />
+                    </div>
+                    <p hlmEmptyTitle i18n="@@org.settings.subscription.invoicesEmptyTitle">
+                      No invoices yet
+                    </p>
+                    <p
+                      hlmEmptyDescription
+                      i18n="@@org.settings.subscription.invoicesEmptyDescription"
+                    >
+                      Invoices appear here once the organization has been billed.
+                    </p>
+                  </div>
+                </div>
               } @else {
                 <ul hlmItemGroup>
                   @for (invoice of billingStore.invoices(); track invoice.id) {
@@ -427,20 +428,10 @@
         </ng-template>
       </div>
 
-      <div hlmTabsContent="assistant" class="max-w-3xl">
-        <ng-template hlmTabsContentLazy>
-          <app-organization-assistant-form
-            [assistant]="assistantSeed()"
-            [pending]="settingsStore.isSaving()"
-            (submitted)="saveAssistant($event)"
-          />
-        </ng-template>
-      </div>
-
       @if (canDelete()) {
         <div hlmTabsContent="danger" class="max-w-3xl">
           <ng-template hlmTabsContentLazy>
-            <div class="flex flex-col gap-6">
+            <div class="flex flex-col gap-3">
               @if (canSuspend() || canRestore()) {
                 <div hlmCard>
                   <div hlmCardHeader>

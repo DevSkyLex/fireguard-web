@@ -36,12 +36,15 @@
 
 <ng-template #body>
   @if (hasNoContent()) {
-    <app-empty-state
-      icon="lucideShapes"
-      [title]="noContentTitle"
-      [description]="noContentDescription"
-      data-testid="facility-plan-no-content"
-    />
+    <div hlmEmpty data-testid="facility-plan-no-content">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideShapes" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle>{{ noContentTitle }}</p>
+        <p hlmEmptyDescription>{{ noContentDescription }}</p>
+      </div>
+    </div>
   } @else {
     @if (selectedZone(); as zone) {
       <div

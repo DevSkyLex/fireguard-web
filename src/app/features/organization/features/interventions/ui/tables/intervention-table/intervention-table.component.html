@@ -90,7 +90,9 @@
 
         <td hlmTableCell>
           <a
-            class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="line-clamp-2 max-w-64 rounded-sm font-medium whitespace-normal text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [title]="item.intervention.name"
+            queryParamsHandling="preserve"
             [routerLink]="[...detailRouteBase(), item.intervention.id]"
             >{{ item.intervention.name }}</a
           >
@@ -115,7 +117,9 @@
         }
 
         @if (isVisible(column.SITE)) {
-          <td hlmTableCell class="text-muted-foreground">{{ item.siteName }}</td>
+          <td hlmTableCell class="text-muted-foreground">
+            <span class="block max-w-36 truncate" [title]="item.siteName">{{ item.siteName }}</span>
+          </td>
         }
 
         @if (isVisible(column.DUE)) {
@@ -144,19 +148,25 @@
   <ng-container surfaceCards>
     @for (item of items(); track item.intervention.id) {
       <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        hlmItem
+        variant="outline"
+        class="flex flex-col items-stretch gap-1"
         data-testid="intervention-table-card"
       >
         <div class="flex items-start gap-2">
           @if (selectionMode()) {
-            <div class="flex size-11 shrink-0 items-center justify-center">
+            <label
+              class="flex size-11 shrink-0 items-center justify-center"
+              [for]="'intervention-mobile-select-' + item.intervention.id"
+            >
               <hlm-checkbox
                 data-testid="intervention-table-row-select"
+                [inputId]="'intervention-mobile-select-' + item.intervention.id"
                 [checked]="isSelected(item.intervention.id)"
                 [aria-label]="selectRowLabel(item.intervention.name)"
                 (checkedChange)="toggleRow(item.intervention.id, $event)"
               />
-            </div>
+            </label>
           }
 
           <div class="flex min-w-0 flex-1 flex-col">
@@ -165,6 +175,7 @@
             >
             <a
               class="line-clamp-2 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring max-sm:-my-1.5 max-sm:py-3"
+              queryParamsHandling="preserve"
               [routerLink]="[...detailRouteBase(), item.intervention.id]"
               >{{ item.intervention.name }}</a
             >
@@ -173,7 +184,10 @@
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+        @if (item.siteName) {
+          <p class="truncate text-xs text-muted-foreground">{{ item.siteName }}</p>
+        }
+        <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <app-intervention-tag kind="status" [value]="item.intervention.status" />
 
           @if (item.intervention.dueAt) {
@@ -220,7 +234,11 @@
 
   <ng-template #rowMenu>
     <hlm-dropdown-menu class="w-52">
-      <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item.intervention.id]">
+      <a
+        hlmDropdownMenuItem
+        queryParamsHandling="preserve"
+        [routerLink]="[...detailRouteBase(), item.intervention.id]"
+      >
         <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
         <span i18n="@@intervention.list.rowOpen">Open</span>
       </a>

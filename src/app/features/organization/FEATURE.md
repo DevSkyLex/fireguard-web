@@ -10,19 +10,8 @@ This feature is responsible for:
 - organization member, invitation, role, and settings (general & branding) data,
 - organization subscription plan selection and plan-driven resource quotas (usage meters),
 - organization billing (Stripe-hosted Checkout / customer Portal and invoice history),
-- the organization landing page ("Dashboard"), merging the retired Today and
-  Statistics pages into one tabbed surface: an **Overview** tab with named
-  work queues holding real interventions — overdue, sent back, awaiting
-  review, and waiting to sync (the last read from the local outbox) — above
-  them a fixed near-term KPI row and the backend's alert feed (counts only),
-  and below them a "Recently updated" interventions list; and a **Trends**
-  tab with facility, equipment and inspection KPI cards, their
-  period-over-period deltas, a non-conformity severity breakdown, and four
-  trend charts (inspections, non-conformities opened/resolved, equipment
-  and facilities added). Both tabs read the **same** component-scoped
-  `DashboardStore` copy — merging the two source pages into one route
-  removed the second, duplicate fetch of the aggregate `/dashboard` payload
-  the two pages each held before,
+- the organization landing page ("Dashboard"), with four operational indicators and
+  period-scoped trends backed by a single `DashboardStore` instance,
 - organization-scoped permission helpers derived from the active member access payload,
 - organization overview pages,
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
@@ -68,9 +57,8 @@ This feature does not own generic shell composition or account-level user identi
   must not pick again (redirect-loop breaker set by failing guards). There is
   no organization list page; switching happens through the sidebar switcher.
 - `/organizations/:organizationId` — the landing "Dashboard" page (`ui/pages/organization-dashboard-page`),
-  merging the retired Today and Statistics pages into an **Overview** tab (work queues, near-term
-  KPIs, alert feed, recent interventions) and a **Trends** tab (KPI deltas, severity breakdown,
-  trend charts), selected with `hlm-tabs`, `overview` by default. The landing guard redirects a
+  showing aggregate operational metrics and trend charts directly, without an organization
+  identity block or Overview/Analysis tabs. The landing guard redirects a
   member who can read neither interventions nor the dashboard to their first permitted destination
 - `/organizations/:organizationId/assets` — the estate explorer, on three
   first-level axes: **by site** (the facility hierarchy on the left, via
@@ -182,7 +170,7 @@ This feature does not own generic shell composition or account-level user identi
     (`redirectToOrganizationMembersTab`, `organization.routes.ts`) preserving every incoming
     query param, mirroring `interventions.routes.ts`'s `redirectToInterventionView`.
 - `/organizations/:organizationId/members/:memberId` — another member's profile, read-only
-- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, compliance, assistant, danger zone; gated by `organization.settings.write`)
+- `/organizations/:organizationId/settings` (tabbed via `?tab=`: general & branding, subscription, usage, notifications, regional & formats, compliance, danger zone; gated by `organization.settings.write`). Assistant runtime policy is not operator-editable from this route.
 - `/organizations/invitations/accept` — public invitation landing page; the
   route is mounted at the **app root** (outside the auth-guarded dashboard
   shell, in `app.routes.ts`) so a logged-out invitee can preview the invitation
@@ -259,18 +247,21 @@ the current period ends rather than implying an immediate cutoff) renders while 
 active and not already scheduled to cancel; Resume (a direct button, no dialog — it undoes Cancel)
 renders once `cancelAtPeriodEnd` is true. Both call `OrganizationBillingStore.cancelSubscription`/
 `resumeSubscription`, gated by the same `organization.settings.write` the tab's other controls need.
+The plan comparison uses the native Spartan single-value toggle group to switch between monthly and
+annual catalog pricing. Each higher tier states that it includes the preceding tier and renders its
+server-provided quota summaries with check marks; the UI does not invent additional entitlements.
 
-**Compliance, automation and assistant policy** (`OrganizationSettings.compliance` /
-`.automation` / `.assistant`) are persisted the same way, through the Compliance and Assistant
-tabs' own `OrganizationComplianceForm`, `OrganizationAutomationForm` and
-`OrganizationAssistantForm`, each calling `OrganizationSettingsStore.save` with only its own
-section. The two `compliance` maps (`nonConformitySlaDays`, `inspectionPeriodicityDefaults`)
+**Compliance and automation policy** (`OrganizationSettings.compliance` /
+`.automation`) are persisted through the Compliance tab's own
+`OrganizationComplianceForm` and `OrganizationAutomationForm`, each calling
+`OrganizationSettingsStore.save` with only its own section. Assistant runtime policy remains an
+API-owned contract and is intentionally absent from the operator settings surface. The two
+`compliance` maps (`nonConformitySlaDays`, `inspectionPeriodicityDefaults`)
 carry EFFECTIVE values — catalog defaults overlaid with the organization's customizations — and
 the API names which keys are customized (`customizedSlaSeverities`,
 `customizedPeriodicityTypes`); the Compliance tab renders every key the seed returns rather than
 a hard-coded severity or equipment-type list, save for the periodicity picker's five-option
-duration catalog (`P1M`/`P3M`/`P6M`/`P1Y`/`P2Y`). The assistant's `model` override renders as
-read-only text — there is no operator-published model catalog for a picker yet. **The four-eyes
+duration catalog (`P1M`/`P3M`/`P6M`/`P1Y`/`P2Y`). **The four-eyes
 approval policy (`OrganizationSettings.approval`) is now editable**, through
 `OrganizationApprovalForm` at the bottom of the Compliance tab — one rule row per action type from
 the `approvals` subfeature's action-type catalog (enabled, minimum approver role, and — `nc_waiver`
@@ -290,12 +281,12 @@ Primary stores:
 - `OrganizationPlanStore` (scoped to the `OrganizationPlanSelector` in the settings Subscription tab; self-service plan change)
 - `OrganizationQuotaStore` (root-provided; active organization quota usage feeding the settings Usage tab and the create-flow quota checks)
 - `OrganizationBillingStore` (component-scoped to the settings Subscription tab; current subscription, plan pricing, hosted Stripe Checkout / Portal, invoice history, and cancel/resume — both gated by `organization.settings.write` on the backend, same as Checkout/Portal)
-- `OrganizationDashboardStore` (aggregate slice: KPI cards plus the per-metric trend stores under `state/organization-dashboard/slices/`; component-scoped **once** to the landing Dashboard page, which reads it across the whole page — the overview counts, the alert feed and the recent-interventions list for the KPI strip and work-queue column, the health rates, comparison block and severity breakdown for the Trends section. Before the Today/Statistics merge each page held its own copy, fetching the aggregate `/dashboard` payload twice; one page now means one fetch)
+- `OrganizationDashboardStore` is provided once by the dashboard page for aggregate operational metrics, comparisons and severity counts. The page activates its period-scoped trend slices on entry; trend queries run only in the browser.
 - `FacilityTreeStore` (owned by the facilities subfeature, component-scoped to the assets explorer; the site hierarchy, loaded one branch at a time)
 - `OrganizationAssetsPaneStore` (component-scoped to the assets explorer; the right pane's equipment and inspections, facility-scoped or organization-wide depending on the active axis. Reuses `EquipmentService`/`InspectionService` from the equipments/inspections subfeatures' `data-access` barrels rather than duplicating transport — it is a read-only preview, not the surface those subfeatures own)
 - `ComplianceExplorerStore` (component-scoped to the assets explorer's compliance axis; named `CallState` fields — the tree, the selected/organization-wide summary, the safety-register export, the archived-snapshot list, the archive write, and the per-row snapshot download (plus `downloadingSnapshotId` flagging the row in flight) — since they are unrelated requests. `archiveRegister` `exhaustMap`s so a double click cannot race the write; the page reloads the snapshot list from its success-toast effect. Owns the `flattenComplianceTree` mapping onto the shared `Tree` shape, exposed as `roots`/`childrenByParent` computeds)
-- `OrganizationTodayStore` (component-scoped to the landing Dashboard page's work-queues column; the work queues. Two independent `CallState` fields: the collection-backed queues, and the unsynced queue read from the local outbox so it still renders offline. Replaces the count-only `OrganizationAttentionStore`)
-- `OverviewTrendStore`, `AssetGrowthTrendStore` (component-scoped to the landing Dashboard page's Trends section; combined trend datasets for the four charts — see `state/organization-dashboard/slices/`. Both load unconditionally on mount, correct now that the Trends section always renders on this single-scroll page)
+- `OrganizationTodayStore` remains an intervention queue slice; the dashboard no longer provides or loads it.
+- `OverviewTrendStore`, `AssetGrowthTrendStore` (component-scoped to the landing Dashboard page's Trends section; combined trend datasets for the four charts — see `state/organization-dashboard/slices/`. Both activate when the dashboard mounts and only query in the browser)
 - `OrganizationSettingsStore` (component-scoped to the settings page; general & branding mutations, logo upload and removal, and the danger-zone actions — archive, restore, suspend, ownership transfer and leaving the organization. One named `CallState` per action, since several are offered side by side and a shared one would leak an error between controls. Refreshes `ActiveOrganizationStore` on every mutation that returns an organization)
 - `OrganizationMembersStore` (component-scoped to the members page; members & invitations as `withEntities` collections, roles, role assignments, invite/resend/revoke, single & bulk member removal, and the per-invitation accept-link map. `loadMembers` re-issues the server-side roster query with the page's search, status filter and ordering (`joinedAt`/`displayName`, restored from `OrganizationMemberListPreferencesService`'s cookie), so `membersTotal` — the "Total members" KPI — tracks the current filter, while `membersActiveTotal` — the "Active" KPI — is a fixed organization-wide snapshot fetched once per `load`; keep that split when touching either. Pending invitations are paginated server-side (`INVITATIONS_PAGE_SIZE`, `loadInvitations`): the invitations endpoint's `status` filter accepts exactly one value, so the pending-invitations card's own universe — pending and expired only — is fetched as a paginated `pending` query plus one unpaginated, "cheap" `expired` query (`fetchActiveInvitations`), combined into one page and one `invitationsTotal`; `invitationsTotal` is adjusted locally on invite/revoke rather than refetched)
 - `OrganizationTeamStore` (component-scoped to the roles page; roles and the permission catalog)
@@ -339,9 +330,9 @@ limit quantities.
 - Enforcement is **strict and backend-owned**: each create flow (member add/invite, facility,
   equipment, inspection) asserts the quota before persisting and returns **HTTP 409** when the cap
   is reached. There is no frontend route gating.
-- The settings **Usage** tab (`OrganizationUsagePanel`) renders meter bars
-  (used / limit per resource, with percentages and unlimited rows), driven by
-  `OrganizationQuotaStore`.
+- The settings **Usage** tab (`OrganizationUsagePanel`) explains what each resource counts, renders
+  meter bars (used / limit and remaining capacity per resource, with percentages and unlimited
+  rows), and explains what happens at the limit. It is driven by `OrganizationQuotaStore`.
 - Plan cards consume `PlanOutput.quotas`: a backend-built list of `{ resource, label, limit, summary }`
   where `summary` is a ready-made sentence (e.g. "Up to 125 facilities" / "Unlimited inspections")
   phrased server-side in `OrganizationQuotaResource::summarize`, so the UI never re-derives the wording.
@@ -398,6 +389,13 @@ These contracts are the stable boundaries for approved consumers:
   `withOrganizationSwitcher()`, and the organization navigation to the top of its sidebar-nav slot
   through `withOrganizationNav()`. Both are slot contribution factories — the shell renders the
   component without importing it, and never learns that an organization exists.
+- collaboration publishes `withCollaborationNav()` for the Messages and Collaboration
+  destinations in the sidebar footer, replacing `withDirectMessagesNav()`
+  and `withDirectMessagesSidebarExtension()` / `withChannelsSidebarExtension()` for
+  route-exclusive lists. Organization providers re-export them and
+  `provideChannelsWorkspace()`, which shares channel state at the dashboard route.
+  Contributions implement the public extension contract; access, URLs and loading
+  remain collaboration-owned.
 - a shell contributes the global search — the header magnifier and its Ctrl+K / Cmd+K command
   palette (`OrganizationGlobalSearch`, `ui/components/organization-global-search/`) — to its
   header-actions slot through `withGlobalSearch()`, ahead of the assistant toggle. The palette
@@ -410,23 +408,22 @@ These contracts are the stable boundaries for approved consumers:
   inspection to their detail routes; a non-conformity to the inspections index, because it has
   no detail page and its hit carries no owning-inspection id. The component renders nothing
   without an active organization, and spartan's command primitive supplies the combobox/listbox
-  ARIA contract; a polite live region announces the settled result count, and closing hands
-  focus back to the trigger.
+  ARIA contract. Its large viewport-bounded dialog keeps a visible scope explanation, rich idle,
+  loading, error and no-result states, grouped result counts, and persistent keyboard guidance;
+  a polite live region announces the settled result count, and closing hands focus back to the
+  trigger.
 
-`navigation/` is the single source for what the sidebar lists and, once it returns, what the
-landing guard falls back to: `ORGANIZATION_NAVIGATION_ITEMS` carries each destination's required
-permissions, and `buildOrganizationNavigation()` resolves the sections the active member may
-actually reach. Route visibility and fallback behaviour cannot diverge because both read this list.
+`navigation/` owns the organization body destinations and permission-filtered sections.
+Collaboration owns its footer destinations through its public contribution factory.
+Route guards enforce access independently.
 
-**Direct messages are the one destination listed by the shell's bottom block rather than here;
-channels are listed here.** Direct conversations are scoped to one organization on the API —
-`organization` is required on every call, the permissions are `organization.messaging.*`, and the
-Mercure topic is per organization — but they follow the reader rather than the workspace, so the
-row sits under Support with the other utilities. Channels are the opposite case: they are
-organization workspaces, so their row lives in `navigation/` with the other organization sections,
-behind the same `organization.messaging.read` floor. The shell completes its route with `ORGANIZATION_CONTEXT_PORT.selectedOrganizationId()`
-and withholds it entirely from a member without `organization.messaging.read`; the permission
-constant still comes from this feature's public API, so the gate cannot drift from the guard.
+Sidebar destinations stay at one level within their section, with no nested sub-navigation.
+
+**Messages and Collaboration are feature-owned footer destinations above Support.** Both
+require `organization.messaging.read`, including namespace wildcard grants. Collaboration
+derives their URLs through the organization context port. Their respective conversation and
+channel lists mount only on matching routes in the sidebar extension and prime secondary data
+browser-only. The shell does not resolve organization routes or permissions itself.
 
 **The assistant is in neither list.** It is not a destination — it has no URL and opens over the
 current page — so it is a single control in the header's action cluster, published by the
@@ -509,53 +506,34 @@ store never calls the API without the permission — the request would be a guar
   (`utils/member-select-option/`) — the one shape and the one mapper for a
   member in a picker; the caller picks what `value` submits (member IRI by
   default, member id for a team roster, user id for an ownership transfer).
-  Rendered by `app-person-option` (`@shared/person-option`) in the team
-  member-add form, the transfer-ownership dialog and every intervention picker.
+  Rendered directly with Spartan `Item` and `Avatar` in the team member-add form, the
+  transfer-ownership dialog and every intervention picker.
 
 ## UI Conventions
 
-**Dashboard (`organization-dashboard-page`) merges the retired Today and Statistics pages into one
-continuous scroll**, not `hlm-tabs` and not two route-level pages behind a redirect: an identity row,
-a single deduplicated KPI strip, the work queues, the alert feed and "Recently updated"
-interventions, then a Trends section with its own period preset / compare-to-previous-period header,
-a non-conformity severity breakdown and four trend charts. Every KPI tile reads `DashboardStore`
-alone, never the period-scoped `OverviewTrendStore`/`AssetGrowthTrendStore` the Trends section's
-period selector governs — the KPI strip therefore holds regardless of that selector's position on
-the page, and the header actions template (`PageActionsService`) carries only "New intervention"; the
-period toggle and compare switch sit in the Trends section's own header, next to the charts and
-"vs previous period" summary lines they actually scope, rather than in the shell header where they
-would imply filtering the whole page. `OverviewTrendStore` and `AssetGrowthTrendStore` load
-unconditionally on mount, which is correct now that the trend charts always render on this single
-page — the earlier tabbed layout carried the same unconditional load as a known defect, since it
-fetched behind a tab a visitor might never open. The old `/statistics` route survives only as a
-`redirectTo: ''`.
+- Entity identifiers remain transport values. Every select, combobox, badge,
+  table cell and closed trigger resolves an entity id through its loaded
+  display label; unresolved or stale ids use a neutral domain fallback and
+  never expose a UUID to the operator.
 
-**`shared/chart`'s `LineChart` moved off `@swimlane/ngx-charts` onto Chart.js**, wired through
-`ng2-charts`' `BaseChartDirective` (`canvas[baseChart]`) rather than a hand-rolled canvas
-integration — `ng2-charts`' peer range covers this app's Angular major, and its directive already
-guards its own browser-only work, matching this wrapper's own `isPlatformBrowser` skeleton fallback.
-This closes the gap the ngx-charts era could not: ngx-charts painted gridlines, tick typography and
-tooltip chrome through its own internal SVG/DOM classes, reachable only via a global CSS selector —
-closed on both sides, since `src/styles.css` is guarded to theme tokens only (`CLAUDE.md` rule 3)
-and a component `styleUrl` is banned outright (`ARCHITECTURE.md` §1.1). Chart.js takes all three as
-first-class `ChartOptions` (`scales.*.grid`, `scales.*.ticks`, `plugins.tooltip`), so
-`utils/chart-grid-colors` resolves them as literal, theme-appropriate colours the same way
-`utils/chart-color-scheme` already resolved the dataset palette — both read `ThemePort.resolvedTheme`
-rather than the DOM, so a live appearance switch recolors an already-rendered chart. The retired
-`BarChart` sibling had no consumer beyond its own spec and was deleted rather than ported. Chart.js'
-own controllers/scales/plugins are registered once, app-wide, in `app.config.ts`'s `provideCharts()` —
-only the subset `LineChart` uses (`LineController`, `LineElement`, `PointElement`, `LinearScale`,
-`CategoryScale`, `Filler`, `Legend`, `Tooltip`), not `withDefaultRegisterables()`'s full bundle.
+**Dashboard (`organization-dashboard-page`)** displays four compact operational metrics:
+open interventions, open non-conformities (including overdue count), closed inspections and
+equipment under maintenance. It omits the organization identity block, work queues, recent
+activity and Overview/Analysis tabs. The shell retains the permission-gated creation action.
+Trend stores activate on entry and only fetch in the browser. Period and comparison controls
+apply to trends, not aggregate metrics. The old `/statistics` route still redirects here.
 
-**Every section is `hlmCard`, application-wide** — not only on the Dashboard, where this decision
-started. "Your work queues", "Also worth a look" and "Recently updated" were the first to move off a
-bare `app-page-section`; the equipment and intervention detail panels (attachments, tags, maintenance
-history, activity, proposed changes, work items) followed, each having hand-rebuilt a card header in
-slightly different Tailwind. They share the `hlmCard`/`hlmCardHeader`/`hlmCardContent` primitives with
-the Trends charts and with `app-stat-tile` (`ui/components/stat-tile`), which
-`app-intervention-kpi-strip` already builds on. `shared/page-section` is deleted rather than kept as an
-unused second answer, and `DESIGN.md` §The Working Surface Rule is amended to match — it previously
-said the opposite.
+**Charts use the official Spartan Chart primitive**, generated by the Spartan CLI with
+`@tanstack/angular-charts` and `@tanstack/charts`. `shared/chart` adapts generic named series
+to native line/area marks, legend and tooltip. It reserves height during SSR/loading, exposes
+empty data explicitly and uses semantic CSS tokens for live theme changes. Chart.js,
+ng2-charts, their application providers and their color/data adapters are retired.
+The unused smoothing/gradient inputs are retired; native straight lines preserve sample values.
+
+**Native Spartan composition is application-wide.** Autonomous surfaces use the
+complete `hlmCard` anatomy. Fieldsets, item groups and separators group related
+content without nested cards; native empty states remain unframed. No second
+section-shell abstraction replaces Spartan primitives.
 
 `app-stat-tile` renders its figure at one size — `text-2xl font-semibold` — whatever inputs it is
 given. It used to switch to `text-3xl font-bold` when a caption was passed, which put the same kind of
@@ -568,11 +546,10 @@ recipe, `app-collection-pagination` (`@shared/collection-pagination`), one toolb
 `app-collection-toolbar` (`@shared/collection-toolbar`), one search box,
 `app-collection-search-box` (also `@shared/collection-toolbar`), one editable filter-chip row,
 `app-collection-filter-bar` and its `app-filter-chip` shell (`@shared/collection-filters`), and
-one boundary for the three empty/error idioms spartan offers: `hlm-empty` with a dashed border
-(`border border-dashed`) is a **page-level empty slot** (nothing loaded, no rows to show);
-`app-empty-state` (`@shared/empty-state`) is an **in-card or in-section empty slot** nested
-inside a larger page; `app-error-state` (`@shared/error-state`) is **every list's error state**,
-never `hlm-empty` re-tinted to look like a failure.
+one boundary for the native Spartan `Empty` states. The same `hlmEmpty` anatomy serves page-level,
+in-card and in-section empty slots; spacing and optional borders belong to the owning surface.
+Failures use `role="alert"`, a destructive media treatment and an optional retry action while
+keeping the native anatomy.
 
 **The five collection components moved to `shared/` on a deliberate uniformity bet, not on
 today's locality.** At the time of the move every consumer still lived under
@@ -813,3 +790,9 @@ Backend endpoints exist for these; no frontend model, service method or store do
   tests each of those units carries today (`fg-web-test-writer`).
 - Teams and custom roles are created in a sheet (`organization-team-create-sheet`, `organization-role-create-sheet`), not a dialog: a record the operator opens next takes the sheet surface (`DESIGN.md` "Action Surfaces" rules 2–3). The invite, member-add and transfer flows stay dialogs — they act on existing records.
 - **Both sheets gate dismissal while their form is dirty.** `OrganizationTeamCreateForm` / `OrganizationRoleCreateForm` report their own dirtiness through `dirtyChanged` (the role form also counts a checked permission, since the checklist has no bound `[formField]` for `createForm().dirty()` to see); each sheet holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
+
+**Invitation acceptance continuity.** `organization/setup` publishes
+`organizationInvitationAcceptStoreEvents.acceptSucceeded({ organizationId })` only after the server
+accepts membership. Organization list caches refresh and onboarding invalidates
+its cached record before guards reload access. The acceptance page then opens
+the joined organization directly; accepting the invitation remains explicit.

@@ -45,6 +45,9 @@ export class OnboardingPage {
   public readonly equipmentTypeTrigger: Locator = this.page.getByTestId(
     'onboarding-equipment-type',
   );
+  public readonly equipmentFacilitySummary: Locator = this.page.getByTestId(
+    'onboarding-equipment-facility-summary',
+  );
   public readonly equipmentFacilityTrigger: Locator = this.page.getByTestId(
     'onboarding-equipment-facility',
   );

@@ -49,6 +49,8 @@ Thumbs.db
 /playwright-report/
 /playwright/.cache/
 /e2e/artifacts/
+/e2e/test-results-*/
+/debug.log
 
 # Impeccable (état local de l'outillage design)
 /.impeccable/live/

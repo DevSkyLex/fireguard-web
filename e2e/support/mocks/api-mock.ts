@@ -1431,6 +1431,29 @@ export class ApiMock {
   }
 
   /**
+   * Method mockChannelParent
+   * @method mockChannelParent
+   *
+   * @description
+   * Stubs the hierarchy write independently from detail and list reads.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ChannelOutputFixture} channel - Saved channel returned by the API.
+   * @returns {Promise<void>}
+   */
+  public async mockChannelParent(channel: ChannelOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp('/api/channels/' + channel.id + '/parent(\\?.*)?$'),
+      async (route) => {
+        await fulfillJson(route, 200, channel);
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/channels/{channelId}/participants` — the channel
    * conversation page's roster, read by `ChannelParticipantsStore`.
    */
@@ -2263,6 +2286,74 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(new RegExp(`/api/maintenance/schedules(\\?.*)?$`), async (route) => {
       await fulfillJson(route, 200, hydraCollection(schedules));
+    });
+  }
+
+  /**
+   * Method mockDirectConversationList
+   * @method mockDirectConversationList
+   *
+   * @description
+   * Supplies the paged direct-message list used by the sidebar extension.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ReadonlyArray<ConversationOutputFixture>} conversations - Organization conversations.
+   * @returns {Promise<void>} Resolves when the route is registered.
+   */
+  public async mockDirectConversationList(
+    conversations: ReadonlyArray<ConversationOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/direct-conversations(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(conversations));
+    });
+  }
+
+  /**
+   * Method mockDirectConversationOpen
+   * @method mockDirectConversationOpen
+   *
+   * @description
+   * Resolves the member picker's get-or-create conversation request.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ConversationOutputFixture} conversation - Opened conversation.
+   * @returns {Promise<void>} Resolves when the route is registered.
+   */
+  public async mockDirectConversationOpen(conversation: ConversationOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/direct-conversations$/, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 200, conversation);
+    });
+  }
+
+  /**
+   * Method mockSavedMessages
+   * @method mockSavedMessages
+   *
+   * @description
+   * Supplies organization-scoped bookmarks for the messaging extension entry.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ReadonlyArray<MessageOutputFixture>} messages - Saved messages.
+   * @returns {Promise<void>} Resolves when the route is registered.
+   */
+  public async mockSavedMessages(
+    messages: ReadonlyArray<MessageOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/saved-messages(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(messages));
     });
   }
 }

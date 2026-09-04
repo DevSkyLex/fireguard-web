@@ -89,33 +89,46 @@
   </ng-template>
 
   @if (store.isForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="You need the audit permission"
-      i18n-title="@@audit.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to the audit journal."
-      i18n-description="@@audit.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@audit.list.forbiddenTitle">You need the audit permission</p>
+        <p hlmEmptyDescription i18n="@@audit.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to the audit journal.
+        </p>
+      </div>
+    </div>
   } @else if (store.hasListError()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load the audit journal"
-      i18n-title="@@audit.list.errorTitle"
-      description="The audit journal could not be loaded. Check your connection and try again."
-      i18n-description="@@audit.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="audit-retry" (click)="reload()">
-        <span i18n="@@audit.list.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@audit.list.errorTitle">Couldn't load the audit journal</p>
+        <p hlmEmptyDescription i18n="@@audit.list.errorText">
+          The audit journal could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="audit-retry" (click)="reload()">
+          <span i18n="@@audit.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (!store.isLoading() && items().length === 0) {
-    <app-empty-state
-      icon="lucideHistory"
-      title="No audit events"
-      i18n-title="@@audit.list.emptyTitle"
-      description="No activity matches this filter yet."
-      i18n-description="@@audit.list.emptyDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideHistory" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@audit.list.emptyTitle">No audit events</p>
+        <p hlmEmptyDescription i18n="@@audit.list.emptyDesc">
+          No activity matches this filter yet.
+        </p>
+      </div>
+    </div>
   } @else {
     <app-audit-event-table
       [regionalFormatting]="regionalFormatting()"

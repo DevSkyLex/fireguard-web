@@ -63,6 +63,8 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
  * feature — it injects its collaborators directly rather than taking them as
  * inputs (ARCHITECTURE.md: "Layouts may render feature-owned widgets through
  * public APIs").
+ * On small screens the accessible icon button keeps its count badge and moves
+ * the text label into the popover, preserving space for the shell's other controls.
  *
  * @version 1.0.0
  *
@@ -235,6 +237,22 @@ export class InterventionSyncIndicator {
    *
    * @type {Signal<string>}
    */
+  protected readonly triggerLabel: Signal<string> = computed(() => {
+    switch (this.state()) {
+      case 'offline':
+        return $localize`:@@intervention.sync.label.offline:Offline`;
+      case 'blocked':
+        return $localize`:@@intervention.sync.label.blocked:Sync blocked`;
+      case 'syncing':
+        return $localize`:@@intervention.sync.label.syncing:Syncing`;
+      case 'pending':
+        return $localize`:@@intervention.sync.label.pending:Pending sync`;
+      default:
+        return $localize`:@@intervention.sync.upToDate:Up to date`;
+    }
+  });
+
+  /** Complete state announcement including counts for assistive technology. */
   protected readonly triggerAriaLabel: Signal<string> = computed<string>(() => {
     switch (this.state()) {
       case 'offline':

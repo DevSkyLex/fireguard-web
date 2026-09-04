@@ -29,9 +29,9 @@ import { AccountEmailChangeDialog } from '@features/account/ui/dialogs/account-e
 import { AccountPasswordForm, type AccountEmailChangeFormValues } from '@features/account/ui/forms';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
 import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -58,17 +58,17 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-account-security-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     AccountDeactivateDialog,
     AccountEmailChangeDialog,
     AccountMfaPanel,
     AccountPasswordForm,
     AccountSessionsPanel,
     AccountTrustedDevicesPanel,
-    ErrorState,
     HlmButton,
     ...HlmCardImports,
     HlmSkeleton,
-    NgIcon,
   ],
   providers: [
     AccountDeactivationStore,

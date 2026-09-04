@@ -14,9 +14,9 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { TeamOutput } from '@features/organization/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 
 /**
@@ -43,7 +43,7 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
  */
 @Component({
   selector: 'app-intervention-team-assign-dialog',
-  imports: [EmptyState, HlmButton, ...HlmDialogImports, ...HlmRadioGroupImports],
+  imports: [...HlmEmptyImports, HlmButton, ...HlmDialogImports, ...HlmRadioGroupImports],
   templateUrl: './intervention-team-assign-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

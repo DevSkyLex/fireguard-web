@@ -1,12 +1,12 @@
 <header
-  class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4"
+  class="flex h-12 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-4"
   data-testid="channel-conversation-header"
 >
   <a
     hlmBtn
     variant="ghost"
     size="icon"
-    class="size-8 shrink-0 max-sm:size-11 md:hidden"
+    class="size-11 shrink-0 lg:hidden"
     data-testid="channel-conversation-back"
     i18n-aria-label="@@channels.room.back"
     aria-label="Back to channels"
@@ -15,41 +15,41 @@
     <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
   </a>
 
-  <div class="flex min-w-0 flex-1 flex-col">
-    <span
-      class="truncate text-sm font-semibold text-foreground"
-      data-testid="channel-conversation-name"
-    >
-      {{ channelName() }}
-    </span>
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      size="sm"
-      class="h-auto w-fit gap-1 self-start p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground hover:underline max-sm:min-h-11"
-      data-testid="channel-conversation-participants-count"
-      [attr.aria-label]="participantsButtonLabel()"
-      (click)="participantsSheetVisible.set(true)"
-    >
-      {{ participantCount() }}
-      <span i18n="@@channels.room.participantsCount">participants</span>
-    </button>
-  </div>
-
+  <span
+    class="min-w-0 flex-1 truncate text-sm font-semibold text-foreground"
+    data-testid="channel-conversation-name"
+    [attr.title]="channelName()"
+    >{{ channelName() }}</span
+  >
   <button
     hlmBtn
     type="button"
     variant="ghost"
-    size="icon-sm"
-    class="shrink-0 max-sm:size-11"
-    data-testid="channel-conversation-favorite"
-    [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
-    [attr.aria-pressed]="isFavorite()"
-    [disabled]="favoritePending()"
-    (click)="toggleFavorite()"
+    size="sm"
+    class="h-9 shrink-0 gap-1.5 px-2 text-muted-foreground max-lg:h-11"
+    data-testid="channel-conversation-participants-count"
+    [attr.aria-label]="participantsButtonLabel()"
+    (click)="participantsSheetVisible.set(true)"
   >
-    <ng-icon name="lucideStar" class="text-base" aria-hidden="true" />
+    <span hlmAvatarGroup aria-hidden="true">
+      @for (participant of participantAvatars(); track participant.memberId) {
+        <hlm-avatar
+          size="sm"
+          [attr.title]="participant.displayName"
+          data-testid="channel-header-avatar"
+        >
+          @if (participant.avatarUrl; as url) {
+            <img hlmAvatarImage [src]="url" alt="" />
+          }
+          <span hlmAvatarFallback class="text-[10px]">{{ participant.initials }}</span>
+        </hlm-avatar>
+      } @empty {
+        <ng-icon name="lucideUsers" class="text-base" />
+      }
+    </span>
+    @if (participantCount() > 3) {
+      <span class="text-xs tabular-nums" aria-hidden="true">+{{ participantCount() - 3 }}</span>
+    }
   </button>
 
   <button
@@ -57,7 +57,27 @@
     type="button"
     variant="ghost"
     size="icon-sm"
-    class="shrink-0 max-sm:size-11"
+    class="shrink-0 max-lg:size-11"
+    data-testid="channel-conversation-favorite"
+    [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
+    [attr.aria-pressed]="isFavorite()"
+    [disabled]="favoritePending()"
+    (click)="toggleFavorite()"
+  >
+    <ng-icon
+      name="lucideStar"
+      class="text-base"
+      [class.text-primary]="isFavorite()"
+      aria-hidden="true"
+    />
+  </button>
+
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="icon-sm"
+    class="shrink-0 max-lg:size-11"
     id="channel-conversation-actions-trigger"
     data-testid="channel-conversation-actions"
     [hlmDropdownMenuTrigger]="actionsMenu"

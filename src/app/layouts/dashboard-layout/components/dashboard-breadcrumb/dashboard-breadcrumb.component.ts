@@ -1,16 +1,22 @@
-import { ChangeDetectionStrategy, Component, inject, type Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideHouse } from '@ng-icons/lucide';
 import { BreadcrumbService, type BreadcrumbItem } from '@core/breadcrumb';
 import {
   HlmBreadcrumb,
+  HlmBreadcrumbEllipsis,
   HlmBreadcrumbItem,
   HlmBreadcrumbLink,
   HlmBreadcrumbList,
   HlmBreadcrumbPage,
   HlmBreadcrumbSeparator,
 } from '@shared/ui/breadcrumb';
+import {
+  HlmDropdownMenu,
+  HlmDropdownMenuItem,
+  HlmDropdownMenuTrigger,
+} from '@shared/ui/dropdown-menu';
 
 /**
  * Component DashboardBreadcrumb
@@ -26,8 +32,8 @@ import {
  * which is how the organization landing page avoids repeating the workspace
  * name the switcher already shows.
  *
- * The trail truncates rather than wraps: the header is one row, and pushing the
- * tool cluster off the card is worse than eliding a middle segment.
+ * On narrow screens the trail keeps home and the current page visible while
+ * moving intermediate levels into a native Spartan dropdown menu.
  *
  * @version 1.0.0
  *
@@ -48,11 +54,15 @@ import {
     RouterLink,
     NgIcon,
     HlmBreadcrumb,
+    HlmBreadcrumbEllipsis,
     HlmBreadcrumbItem,
     HlmBreadcrumbLink,
     HlmBreadcrumbList,
     HlmBreadcrumbPage,
     HlmBreadcrumbSeparator,
+    HlmDropdownMenu,
+    HlmDropdownMenuItem,
+    HlmDropdownMenuTrigger,
   ],
   providers: [provideIcons({ lucideHouse })],
   templateUrl: './dashboard-breadcrumb.component.html',
@@ -102,5 +112,21 @@ export class DashboardBreadcrumb {
    * @type {Signal<BreadcrumbItem[]>}
    */
   protected readonly items: Signal<BreadcrumbItem[]> = this.breadcrumb.items;
+
+  /**
+   * Property intermediateItems
+   * @readonly
+   *
+   * @description
+   * Ancestor levels collapsed into the narrow-screen ellipsis menu.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<BreadcrumbItem[]>}
+   */
+  protected readonly intermediateItems: Signal<BreadcrumbItem[]> = computed(() =>
+    this.items().slice(0, -1),
+  );
   //#endregion
 }

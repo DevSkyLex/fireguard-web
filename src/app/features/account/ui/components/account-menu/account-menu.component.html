@@ -7,7 +7,7 @@
         i18n-aria-label="@@account.menu.loading"
         aria-label="Loading your account"
       >
-        <hlm-skeleton class="size-8 shrink-0 rounded-lg" />
+        <hlm-skeleton class="size-8 shrink-0 rounded-full" />
         <div class="grid flex-1 gap-1.5">
           <hlm-skeleton class="h-3.5 w-24" />
           <hlm-skeleton class="h-3 w-28" />
@@ -22,19 +22,18 @@
         hlmSidebarMenuButton
         size="lg"
         id="account-menu-trigger"
+        class="group-data-[collapsible=icon]:rounded-full hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent"
         [hlmDropdownMenuTrigger]="menu"
         [side]="menuSide()"
         align="end"
       >
-        <hlm-avatar class="size-8 shrink-0">
+        <hlm-avatar
+          class="size-8 shrink-0 ring-4 ring-transparent transition-[opacity,box-shadow] group-hover/menu-button:opacity-80 group-hover/menu-button:ring-sidebar-accent group-active/menu-button:ring-sidebar-accent"
+        >
           @if (avatarUrl(); as pictureUrl) {
             <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
           }
-          <span
-            hlmAvatarFallback
-            class="bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
-            >{{ initials() }}</span
-          >
+          <span hlmAvatarFallback class="text-xs font-semibold">{{ initials() }}</span>
         </hlm-avatar>
 
         <div class="grid flex-1 text-left text-sm leading-tight">
@@ -57,11 +56,7 @@
             @if (avatarUrl(); as pictureUrl) {
               <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
             }
-            <span
-              hlmAvatarFallback
-              class="bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground"
-              >{{ initials() }}</span
-            >
+            <span hlmAvatarFallback class="text-xs font-semibold">{{ initials() }}</span>
           </hlm-avatar>
           <div class="grid flex-1 leading-tight">
             <span class="truncate font-medium text-foreground">{{ displayName() }}</span>

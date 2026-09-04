@@ -31,7 +31,6 @@ describe('AssistantToggle', () => {
   let isAvailable: WritableSignal<boolean>;
   let panelOpen: WritableSignal<boolean>;
   let messages: WritableSignal<readonly unknown[]>;
-  let toggleCalls: number;
   let newThreadCalls: number;
 
   /** The rendered control, or `null` when the widget renders nothing. */
@@ -43,7 +42,6 @@ describe('AssistantToggle', () => {
     isAvailable = signal<boolean>(true);
     panelOpen = signal<boolean>(false);
     messages = signal<readonly unknown[]>([]);
-    toggleCalls = 0;
     newThreadCalls = 0;
 
     TestBed.configureTestingModule({
@@ -57,10 +55,6 @@ describe('AssistantToggle', () => {
             messages,
             startNewThread: (): void => {
               newThreadCalls += 1;
-            },
-            togglePanel: (): void => {
-              toggleCalls += 1;
-              panelOpen.update((open: boolean): boolean => !open);
             },
             openPanel: (): void => panelOpen.set(true),
             closePanel: (): void => panelOpen.set(false),
@@ -85,14 +79,13 @@ describe('AssistantToggle', () => {
     expect(control()).toBeNull();
   });
 
-  it('should open and close the panel', async () => {
+  it('should open from the native trigger and close from the native sheet control', async () => {
     control()?.click();
     await fixture.whenStable();
 
-    expect(toggleCalls).toBe(1);
     expect(panelOpen()).toBe(true);
 
-    control()?.click();
+    (document.querySelector('[data-slot="sheet-close"]') as HTMLButtonElement | null)?.click();
     await fixture.whenStable();
 
     expect(panelOpen()).toBe(false);
@@ -115,7 +108,7 @@ describe('AssistantToggle', () => {
     await fixture.whenStable();
 
     expect(panel()).not.toBeNull();
-    expect(panel()?.closest('#assistant-sheet')).not.toBeNull();
+    expect(panel()?.closest('[data-slot="sheet-content"]')).not.toBeNull();
   });
 
   it('should name the sheet through its own header title', async () => {
@@ -125,9 +118,7 @@ describe('AssistantToggle', () => {
     const title: HTMLElement | null = document.querySelector('[data-slot="sheet-title"]');
 
     expect(title?.textContent?.trim()).toBe('Assistant');
-    expect(document.querySelector('#assistant-sheet')?.getAttribute('data-slot')).toBe(
-      'sheet-content',
-    );
+    expect(title?.closest('[data-slot="sheet-content"]')).not.toBeNull();
   });
 
   it('should offer a new thread only once the conversation has turns', async () => {

@@ -130,15 +130,29 @@ const AUDIT_ACTION_LABELS: Record<AuditActionId, string> = {
 
 /**
  * Function humanizeAuditActionId
+ * @function humanizeAuditActionId
  *
- * @description Turns an unrecognized raw action id into a readable fallback label.
+ * @description
+ * Turns an unrecognized raw action id into a sentence-cased fallback label,
+ * normalizing every transport separator so newly introduced backend actions
+ * remain visually consistent with registered labels.
+ *
  * @access private
- * @since 1.0.0
+ * @since 1.1.0
+ *
  * @param {string} value - The raw action id.
- * @returns {string} The id with its module prefix and separators turned into spaced words.
+ *
+ * @returns {string} A sentence-cased label with normalized spacing.
  */
 function humanizeAuditActionId(value: string): string {
-  return value.replace('.', ' ').replace(/_/g, ' ');
+  const words: string = value
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return words.length === 0
+    ? $localize`:@@audit.action.unknown:Unknown action`
+    : words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /**

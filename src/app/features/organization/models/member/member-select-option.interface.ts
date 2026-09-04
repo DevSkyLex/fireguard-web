@@ -6,7 +6,7 @@
  * An organization member as a picker offers it: the value a form submits
  * (a member IRI, a member id or a user id — the caller decides), the
  * display name, the role line, and what the avatar needs. Built by
- * `toMemberSelectOption`; rendered by `app-person-option`. `label` mirrors
+ * `toMemberSelectOption`; rendered by the Spartan `Item` / `Avatar` composition. `label` mirrors
  * `displayName` so the option satisfies the plain `{ label, value }` shape
  * generic pickers expect.
  *

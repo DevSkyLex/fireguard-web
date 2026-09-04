@@ -19,8 +19,6 @@ import type {
   TeamOutput,
 } from '@features/organization/models';
 import { toMemberSelectOption } from '@features/organization/utils';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -30,6 +28,7 @@ import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { OrganizationTeamMemberAddForm } from '../../forms/organization-team-member-add-form';
@@ -85,10 +84,9 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 @Component({
   selector: 'app-organization-team-members-sheet',
   imports: [
-    OrgDatePipe,
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
+    OrgDatePipe,
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,

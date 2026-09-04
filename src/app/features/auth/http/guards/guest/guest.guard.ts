@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Guest Guard
@@ -17,7 +18,7 @@ import { AuthStore } from '@features/auth/state';
  * @returns {GuardResult} True if user can access guest route, otherwise
  * a UrlTree redirecting to the appropriate route based on auth state.
  */
-export const guestGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const guestGuard: CanActivateFn = (route): MaybeAsync<GuardResult> => {
   /**
    * Constant authStore
    * @const authStore
@@ -40,15 +41,14 @@ export const guestGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
    * @var {Router}
    */
   const router: Router = inject<Router>(Router);
+  const returnUrl: string = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+  const queryParams = { returnUrl: returnUrl || undefined };
 
-  // If MFA is required, redirect to MFA verification flow
   if (authStore.mfaRequired()) {
-    return router.createUrlTree(['/auth/mfa-verify']);
+    return router.createUrlTree(['/auth/mfa-verify'], { queryParams });
   }
 
-  // Allow access if user is not authenticated
   if (!authStore.isAuthenticated()) return true;
 
-  // Redirect authenticated users to root
-  return router.createUrlTree(['/']);
+  return returnUrl ? router.parseUrl(returnUrl) : router.createUrlTree(['/']);
 };

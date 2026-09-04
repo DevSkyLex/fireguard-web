@@ -9,14 +9,17 @@
     <hlm-skeleton class="h-24 w-full" />
   </div>
 } @else if (isEmpty()) {
-  <app-empty-state
-    icon="lucideCircleCheck"
-    title="No non-conformities recorded"
-    i18n-title="@@inspection.nc.list.emptyTitle"
-    description="Nothing was flagged during this inspection."
-    i18n-description="@@inspection.nc.list.emptyDescription"
-    data-testid="non-conformity-list-empty"
-  />
+  <div hlmEmpty data-testid="non-conformity-list-empty">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@inspection.nc.list.emptyTitle">No non-conformities recorded</p>
+      <p hlmEmptyDescription i18n="@@inspection.nc.list.emptyDescription">
+        Nothing was flagged during this inspection.
+      </p>
+    </div>
+  </div>
 } @else {
   <ul class="flex flex-col gap-3" data-testid="non-conformity-list">
     @for (nc of nonConformities(); track nc.id) {

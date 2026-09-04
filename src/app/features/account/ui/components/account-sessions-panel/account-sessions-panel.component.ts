@@ -23,10 +23,10 @@ import {
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { SessionOutput } from '@features/auth/models';
-import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -69,9 +69,9 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-account-sessions-panel',
   imports: [
-    DatePipe,
     NgIcon,
-    ErrorState,
+    ...HlmEmptyImports,
+    DatePipe,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

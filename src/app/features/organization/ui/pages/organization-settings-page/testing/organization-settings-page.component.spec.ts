@@ -289,6 +289,13 @@ describe('OrganizationSettingsPage', () => {
     expect(fixture.componentInstance['activeTab']()).toBe('general');
   });
 
+  it('should not expose the assistant policy as an operator settings tab', async () => {
+    await createPage('assistant');
+
+    expect(fixture.componentInstance['activeTab']()).toBe('general');
+    expect(byTestId('org-settings-tab-assistant')).toBeNull();
+  });
+
   it('should fall back from the danger tab when the member holds no delete permission', async () => {
     permissions.set([]);
     await createPage('danger');
@@ -314,7 +321,6 @@ describe('OrganizationSettingsPage', () => {
       'notifications',
       'regional',
       'compliance',
-      'assistant',
     ]) {
       expect(byTestId(`org-settings-tab-${tabId}`)?.querySelector('ng-icon')).not.toBeNull();
     }
@@ -338,24 +344,22 @@ describe('OrganizationSettingsPage', () => {
     expect(fixture.nativeElement.querySelector('hlm-paginated-tabs-list')).not.toBeNull();
   });
 
-  it('should share the same max-width across every tab, including subscription', async () => {
+  it('should give plan comparison more room than the settings forms', async () => {
     await createPage();
 
-    for (const tabId of [
-      'general',
-      'subscription',
-      'usage',
-      'notifications',
-      'regional',
-      'compliance',
-      'assistant',
-    ]) {
+    for (const tabId of ['general', 'usage', 'notifications', 'regional', 'compliance']) {
       const content: HTMLElement | null = fixture.nativeElement.querySelector(
         `[hlmtabscontent="${tabId}"]`,
       );
 
       expect(content?.className).toContain('max-w-3xl');
     }
+
+    const subscriptionContent: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[hlmtabscontent="subscription"]',
+    );
+
+    expect(subscriptionContent?.className).toContain('max-w-6xl');
   });
 
   it('should render the current-plan section as a card', async () => {
@@ -479,24 +483,7 @@ describe('OrganizationSettingsPage', () => {
     });
   });
 
-  it('should save the assistant form scoped to the active organization', async () => {
-    await createPage();
-
-    fixture.componentInstance['saveAssistant']({
-      enabled: true,
-      temperature: 0.5,
-      includeBusinessContext: false,
-    });
-
-    expect(save).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      input: {
-        assistant: { enabled: true, temperature: 0.5, includeBusinessContext: false },
-      },
-    });
-  });
-
-  it('should default the compliance, automation, approval and assistant seeds for an organization with no settings', async () => {
+  it('should default the compliance, automation and approval seeds for an organization with no settings', async () => {
     selectedOrganization.set(organization({ settings: undefined }));
     await createPage();
 
@@ -508,12 +495,6 @@ describe('OrganizationSettingsPage', () => {
       actionRules: {},
       allowSelfApproval: false,
       approvalTtlDays: 14,
-    });
-    expect(fixture.componentInstance['assistantSeed']()).toEqual({
-      enabled: false,
-      model: null,
-      temperature: 0.2,
-      includeBusinessContext: true,
     });
   });
 

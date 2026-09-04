@@ -15,13 +15,20 @@ const MENTION_PATTERN =
   /(?:@|&#64;)\{([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}/g;
 
 /**
- * Chip styling, written as one literal so Tailwind's scanner keeps every class.
+ * Constant MENTION_CLASS
+ * @const MENTION_CLASS
  *
- * `class` is the only attribute that survives both ends of the round trip: the
- * API's allow-list gives `span` no attributes at all, so this is applied here,
- * on the way to the DOM, never stored.
+ * @description
+ * A semantic mention chip with an explicit light-theme surface and outline.
+ * Dark bubbles keep inheriting their own text color so sent messages retain
+ * the contrast supplied by the bubble primitive. Literal utilities remain
+ * discoverable by Tailwind.
+ *
+ * @since 1.0.0
+ * @type {string}
  */
-const MENTION_CLASS = 'rounded-sm bg-primary/15 px-1 font-medium text-foreground';
+const MENTION_CLASS =
+  'inline-block max-w-full align-baseline rounded-md bg-primary/15 px-1.5 py-0.5 font-semibold text-foreground ring-1 ring-inset ring-primary/30 box-decoration-clone dark:bg-current/10 dark:text-inherit dark:ring-current/15';
 
 /**
  * Function renderMessageBodyHtml

@@ -13,7 +13,12 @@
     "tmp/**",
     ".build-check-*/**",
     ".impeccable/**",
-    ".claude/worktrees/**"
+    ".claude/worktrees/**",
+    ".agents/skills/impeccable/**",
+    ".agents/skills/ui-ux-pro-max/**",
+    ".agents/skills/spartan/**",
+    "src/app/shared/ui/**",
+    "e2e/test-results-*/**"
   ],
   "sortImports": {
     "internalPattern": [

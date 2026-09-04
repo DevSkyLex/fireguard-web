@@ -285,6 +285,14 @@ describe('InterventionDetailPage', () => {
   const byTestId = (id: string): HTMLElement =>
     root().querySelector(`[data-testid="${id}"]`) as HTMLElement;
 
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      public observe(): void {}
+      public unobserve(): void {}
+      public disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+  });
+
   beforeEach(() => {
     current = signal<InterventionOutput | null>(intervention());
     workItems = signal<readonly InterventionWorkItemOutput[]>([]);
@@ -1165,7 +1173,9 @@ describe('InterventionDetailPage', () => {
 
       byTestId('intervention-detail-next').click();
 
-      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'z']);
+      expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'z'], {
+        queryParamsHandling: 'preserve',
+      });
     });
 
     it('should hide itself on a deep link, rather than lying about a position', async () => {
@@ -1435,7 +1445,7 @@ describe('InterventionDetailPage', () => {
     it('should open the sheet from the checklist rather than dead-ending on the button', async () => {
       fixture = await createPage();
 
-      (byTestId('intervention-work-items-add') as HTMLButtonElement).click();
+      (byTestId('intervention-work-items-empty-add') as HTMLButtonElement).click();
       await fixture.whenStable();
 
       expect(inBody('intervention-work-item-sheet')).not.toBeNull();
@@ -1456,7 +1466,7 @@ describe('InterventionDetailPage', () => {
     it('should send an item with only the fields the planner filled', async () => {
       fixture = await createPage();
 
-      (byTestId('intervention-work-items-add') as HTMLButtonElement).click();
+      (byTestId('intervention-work-items-empty-add') as HTMLButtonElement).click();
       await fixture.whenStable();
       (
         inBody('intervention-work-item-sheet').querySelector('form') as HTMLFormElement
@@ -1479,7 +1489,9 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ status: 'in_progress' }));
       fixture = await createPage();
 
-      expect(root().querySelector('[data-testid="intervention-work-items-add"]')).not.toBeNull();
+      expect(
+        root().querySelector('[data-testid="intervention-work-items-empty-add"]'),
+      ).not.toBeNull();
     });
 
     it('should offer no add affordance once the server stops advertising mutable work items', async () => {
@@ -1616,16 +1628,24 @@ describe('InterventionDetailPage', () => {
       expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeNull();
     });
 
-    it('should open the discussion sheet and defer the thread load until then', async () => {
+    it('should open the activity and focus the comment from Discussion', async () => {
       fixture = await createPage();
-
-      expect(openSubjectThread).not.toHaveBeenCalled();
-
-      byPageActionsTestId('intervention-detail-discussion-trigger')?.dispatchEvent(
-        new Event('click'),
-      );
+      expect(fixture.componentInstance['activityExpanded']()).toBe(false);
+      const trigger = byPageActionsTestId('intervention-detail-discussion-trigger');
+      document.body.appendChild(root());
+      trigger?.click();
       await fixture.whenStable();
+      await new Promise<void>((resolve) => setTimeout(resolve));
+      expect(fixture.componentInstance['activityExpanded']()).toBe(true);
+      expect(document.activeElement?.getAttribute('data-testid')).toBe('intervention-comment-body');
+      expect(openSubjectThread).not.toHaveBeenCalled();
+    });
 
+    it('should retain live team messaging in the secondary menu', async () => {
+      fixture = await createPage();
+      expect(openSubjectThread).not.toHaveBeenCalled();
+      fixture.componentInstance['discussionSheetVisible'].set(true);
+      await fixture.whenStable();
       expect(openSubjectThread).toHaveBeenCalledWith({
         organization: 'org-1',
         subjectType: 'intervention',

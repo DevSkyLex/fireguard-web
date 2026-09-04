@@ -73,8 +73,8 @@ Everything below it carries no affordance at all, because none of it can be chan
 address has no self-service endpoint, and the roles are granted by an administrator.
 
 `features/organization` renders another member's profile at
-`/organizations/:organizationId/members/:memberId`, sharing only `@shared/identity-summary` with
-this one — the sameness a reader sees is that component, not a shared parent.
+`/organizations/:organizationId/members/:memberId`, sharing only Spartan `Item` and `Avatar`
+primitives with this one; no application wrapper sits between the pages and those primitives.
 
 ## State and Data Access
 
@@ -127,9 +127,9 @@ Page-scoped workflow stores (provided by the page, so an abandoned edit does not
   `<table>`; the in-flight lock deliberately does **not** use the schema's `disabled()` — natively
   disabling the focused switch mid-save drops keyboard focus (WCAG 2.4.3), so the fields stay
   enabled, `aria-disabled` marks the lock, and the commit handler plus the store's `exhaustMap`
-  gate the race. Load failures render `@shared/error-state` (with retry) and an empty catalog
-  renders `@shared/empty-state`, inside a polite live region — the toast stays the message
-  channel.
+  gate the race. Load failures render Spartan `Empty` with `role="alert"` and a retry action; an
+  empty catalog renders the same native primitive without alert semantics, inside a polite live
+  region. The toast stays the message channel.
 
 Services:
 

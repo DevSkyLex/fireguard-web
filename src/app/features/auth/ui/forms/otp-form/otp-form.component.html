@@ -1,8 +1,8 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (serverError(); as error) {
-      <div role="alert" data-testid="otp-server-error" class="text-sm text-destructive">
-        <p>
+      <div hlmAlert variant="destructive" class="break-words" data-testid="otp-server-error">
+        <p hlmAlertDescription>
           @if (error.message; as message) {
             {{ message }}
           } @else {
@@ -44,9 +44,12 @@
     </hlm-field>
 
     @if (showTrustDevice()) {
-      <label class="flex items-center gap-2 text-sm text-muted-foreground">
+      <label
+        for="otp-trust-device"
+        class="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground max-sm:min-h-11"
+      >
         <hlm-checkbox
-          id="otp-trust-device"
+          inputId="otp-trust-device"
           data-testid="otp-trust-device"
           [formField]="otpForm.trustDevice"
         />
@@ -57,13 +60,14 @@
     <button
       hlmBtn
       type="submit"
-      class="w-full max-sm:min-h-11"
+      class="h-auto min-h-11 w-full whitespace-normal"
       data-testid="otp-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"
       aria-live="polite"
     >
       @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
         <span i18n="@@auth.otp.submitting">Verifying…</span>
       } @else {
         <span i18n="@@auth.otp.submit">Verify</span>
@@ -76,12 +80,13 @@
         type="button"
         variant="ghost"
         size="sm"
-        class="w-full max-sm:min-h-11"
+        class="h-auto min-h-11 w-full whitespace-normal"
         data-testid="otp-resend"
         [disabled]="resending() || cooldownRemaining() > 0"
         (click)="resent.emit()"
       >
         @if (resending()) {
+          <hlm-spinner aria-hidden="true" />
           <span i18n="@@auth.otp.resending">Sending a new code…</span>
         } @else if (cooldownRemaining() > 0) {
           <span data-testid="otp-resend-cooldown" i18n="@@auth.otp.resendIn"

@@ -1,4 +1,16 @@
 <header class="flex h-12 shrink-0 items-center gap-2 border-b px-3 md:px-4">
+  <a
+    hlmBtn
+    variant="ghost"
+    size="icon"
+    class="size-11 shrink-0 lg:hidden"
+    routerLink=".."
+    data-testid="saved-messages-back"
+    i18n-aria-label="@@messages.conversation.back"
+    aria-label="Back to conversations"
+  >
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+  </a>
   <ng-icon name="lucideBookmark" class="text-base text-muted-foreground" aria-hidden="true" />
   <h2
     class="text-sm font-medium text-muted-foreground"
@@ -12,23 +24,27 @@
 <div class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 px-3.5 py-4 md:px-6">
   @if (loadErrorMessage(); as message) {
     <div class="my-auto py-6">
-      <app-error-state
-        icon="lucideBookmark"
-        title="Couldn't load saved messages"
-        i18n-title="@@messages.saved.errorTitle"
-        [description]="message"
-      >
-        <button
-          hlmBtn
-          variant="outline"
-          size="sm"
-          type="button"
-          data-testid="saved-messages-retry"
-          (click)="reload()"
-        >
-          <span i18n="@@messages.saved.retry">Try again</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideBookmark" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@messages.saved.errorTitle">Couldn't load saved messages</p>
+          <p hlmEmptyDescription>{{ message }}</p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="saved-messages-retry"
+            (click)="reload()"
+          >
+            <span i18n="@@messages.saved.retry">Try again</span>
+          </button>
+        </div>
+      </div>
     </div>
   } @else if (saved.isLoading() && items().length === 0) {
     <div class="flex flex-col gap-3" aria-hidden="true">
@@ -38,13 +54,17 @@
     </div>
   } @else if (items().length === 0) {
     <div class="my-auto">
-      <app-empty-state
-        icon="lucideBookmark"
-        title="Nothing saved yet"
-        i18n-title="@@messages.saved.emptyTitle"
-        description="Save a message from its menu to find it again here."
-        i18n-description="@@messages.saved.emptyDescription"
-      />
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideBookmark" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@messages.saved.emptyTitle">Nothing saved yet</p>
+          <p hlmEmptyDescription i18n="@@messages.saved.emptyDescription">
+            Save a message from its menu to find it again here.
+          </p>
+        </div>
+      </div>
     </div>
   } @else {
     <ul class="flex flex-col gap-2" data-testid="saved-messages-list">

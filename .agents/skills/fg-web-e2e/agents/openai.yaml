@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 e2e"
+  short_description: 'Reproduce or validate FireGuard UI behavior in a real browser: '
+  default_prompt: 'Use $fg-web-e2e for the requested FireGuard Web task.'

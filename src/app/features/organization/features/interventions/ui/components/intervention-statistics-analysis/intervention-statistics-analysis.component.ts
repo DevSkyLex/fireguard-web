@@ -17,9 +17,9 @@ import type {
   InterventionSiteStatisticOutput,
   InterventionStatisticsOutput,
 } from '@features/organization/features/interventions/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { InterventionTag } from '../intervention-tag';
 
 /** The priority ladder, in the order the breakdown lists it. */
@@ -53,7 +53,14 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  */
 @Component({
   selector: 'app-intervention-statistics-analysis',
-  imports: [EmptyState, NgIcon, RouterLink, HlmButton, InterventionTag, ...HlmCollapsibleImports],
+  imports: [
+    NgIcon,
+    ...HlmEmptyImports,
+    RouterLink,
+    HlmButton,
+    InterventionTag,
+    ...HlmCollapsibleImports,
+  ],
   providers: [provideIcons({ lucideChevronDown, lucideChartLine })],
   templateUrl: './intervention-statistics-analysis.component.html',
   host: { class: 'block' },

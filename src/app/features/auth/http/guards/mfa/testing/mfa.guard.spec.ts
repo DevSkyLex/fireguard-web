@@ -1,6 +1,6 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
+import { convertToParamMap, Router, UrlTree } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
 import { mfaGuard } from '../mfa.guard';
 
@@ -12,7 +12,9 @@ describe('mfaGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
-  const route = {} as unknown as Parameters<typeof mfaGuard>[0];
+  const route = { queryParamMap: convertToParamMap({}) } as unknown as Parameters<
+    typeof mfaGuard
+  >[0];
   const state = {} as unknown as Parameters<typeof mfaGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
@@ -46,7 +48,9 @@ describe('mfaGuard', () => {
 
     const result = runGuard();
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 
   it('should redirect authenticated users to root in browser', () => {
@@ -76,6 +80,8 @@ describe('mfaGuard', () => {
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 });

@@ -1,8 +1,17 @@
-import { computed, inject } from '@angular/core';
+import { computed, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withMethods,
+  withHooks,
+  withState,
+} from '@ngrx/signals';
 import { removeEntity, setAllEntities, withEntities } from '@ngrx/signals/entities';
-import { Dispatcher } from '@ngrx/signals/events';
+import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
@@ -18,6 +27,7 @@ import {
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
+import { organizationInvitationAcceptStoreEvents } from '../organization-invitation-accept/events';
 import { myOrganizationsStoreEvents } from './events';
 import type { MyOrganizationsState } from './models';
 
@@ -202,6 +212,21 @@ export const MyOrganizationsStore = signalStore(
       },
     }),
   ),
+  withHooks((store) => {
+    const events = inject(Events);
+    const destroyRef = inject(DestroyRef);
+    return {
+      /** Refreshes a previously requested membership list after accepting an invitation. */
+      onInit(): void {
+        events
+          .on(organizationInvitationAcceptStoreEvents.acceptSucceeded)
+          .pipe(takeUntilDestroyed(destroyRef))
+          .subscribe(() => {
+            if (store.listCallState().status !== 'idle') store.loadOrganizations();
+          });
+      },
+    };
+  }),
 );
 
 /**

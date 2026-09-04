@@ -106,10 +106,10 @@ describe('OrganizationInvitationAcceptPage', () => {
     accept = vi.fn();
   });
 
-  it('should show the FireGuard mark above the card', async () => {
+  it('should show the Fireguard mark above the card', async () => {
     await render(undefined);
 
-    expect(fixture.nativeElement.textContent).toContain('FireGuard');
+    expect(fixture.nativeElement.textContent).toContain('Fireguard');
   });
 
   it('should show the missing-token card and never request a preview without one', async () => {
@@ -239,7 +239,8 @@ describe('OrganizationInvitationAcceptPage', () => {
     );
 
     expect(alert).not.toBeNull();
-    expect(alert?.textContent).toContain('This invitation was just revoked.');
+    expect(alert?.textContent).toContain('Please try again.');
+    expect(alert?.textContent).not.toContain('This invitation was just revoked.');
   });
 
   it.each([
@@ -257,18 +258,13 @@ describe('OrganizationInvitationAcceptPage', () => {
     expect(card?.textContent).toContain(badgeText);
   });
 
-  it('should show the success card with a link to the joined organization', async () => {
+  it('should open the accepted organization without a second confirmation', async () => {
     previewSignal.set(preview('pending'));
     isAccepted.set(true);
     await render('tok-1');
-    const link: HTMLAnchorElement | null = fixture.nativeElement.querySelector(
-      '[data-testid="organization-invitation-accept-open"]',
-    );
-
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1']);
     expect(
-      fixture.nativeElement.querySelector('[data-testid="organization-invitation-accept-success"]'),
-    ).not.toBeNull();
-    expect(link).not.toBeNull();
-    expect(link?.getAttribute('href')).toBe('/organizations/org-1');
+      fixture.nativeElement.querySelector('[data-testid="organization-invitation-accept-open"]'),
+    ).toBeNull();
   });
 });

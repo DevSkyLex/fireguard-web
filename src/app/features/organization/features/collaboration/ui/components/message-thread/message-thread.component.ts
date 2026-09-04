@@ -16,16 +16,15 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMessageSquare } from '@ng-icons/lucide';
 import type {
   MessageReactionToggle,
   MessageThreadEntry,
   MessageView,
 } from '@features/organization/features/collaboration/models';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarker, HlmMarkerContent } from '@shared/ui/marker';
 import { HlmMessageGroup } from '@shared/ui/message';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -80,8 +79,8 @@ const BOTTOM_SLACK_PX = 64;
 @Component({
   selector: 'app-message-thread',
   imports: [
-    EmptyState,
-    ErrorState,
+    NgIcon,
+    ...HlmEmptyImports,
     HlmButton,
     HlmMarker,
     HlmMarkerContent,

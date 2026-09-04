@@ -5,11 +5,7 @@ import type { Locator, Page } from '@playwright/test';
  *
  * @description
  * Wraps the organization landing route (`/organizations/:organizationId`),
- * merging the retired Today and Statistics page objects behind one
- * continuous page: a single deduplicated KPI row, the alert strip, work
- * queues and "Recently updated" interventions, then a Trends section with
- * its own period preset toggle, compare switch, severity breakdown and
- * trend chart cards.
+ * with compact operational metrics and native Spartan charts.
  */
 export class OrganizationDashboardPage {
   public constructor(private readonly page: Page) {}
@@ -23,15 +19,6 @@ export class OrganizationDashboardPage {
   });
 
   public readonly kpiSection: Locator = this.page.getByTestId('org-dashboard-kpis');
-  public readonly alertsSection: Locator = this.page.getByTestId('org-today-alerts');
-  public readonly allClearState: Locator = this.page.getByText('Nothing is blocking');
-  public readonly errorState: Locator = this.page.getByText("Couldn't load your work queues");
-  public readonly recentInterventionsCard: Locator = this.page.getByTestId(
-    'org-today-recent-interventions',
-  );
-  public readonly recentInterventionRows: Locator = this.page.getByTestId(
-    'org-today-recent-intervention',
-  );
   public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
   public readonly syncIndicatorLastSynced: Locator = this.page.getByTestId(
     'intervention-sync-last-synced',
@@ -72,38 +59,6 @@ export class OrganizationDashboardPage {
     return this.page.getByTestId(`org-dashboard-kpi-${id}`);
   }
 
-  /** Locates one alert row by its backend-defined code. */
-  public alertRow(code: string): Locator {
-    return this.page.getByTestId(`org-today-alert-${code}`);
-  }
-
-  /** Locates one named queue's wrapper (`overdue`, `changes-requested`, `awaiting-review`, `unsynced`). */
-  public queue(id: string): Locator {
-    return this.page.getByTestId(`org-today-queue-${id}`);
-  }
-
-  /** The whole-row link of one deep-linked queue (`overdue`, `changes-requested`, `awaiting-review`) — there is no per-intervention preview for these. */
-  public queueRowLink(id: string): Locator {
-    return this.queue(id).getByRole('link');
-  }
-
-  /** Opens one deep-linked queue's whole-row link, navigating to the filtered interventions list. */
-  public async openQueueRow(id: string): Promise<void> {
-    await this.queueRowLink(id).click();
-  }
-
-  /** Opens one "Recently updated" row by its intervention name. */
-  public async openRecentIntervention(interventionName: string): Promise<void> {
-    await this.recentInterventionsCard
-      .getByRole('link', { name: new RegExp(interventionName) })
-      .click();
-  }
-
-  /** Retries the work queues after their error state renders. */
-  public async retryQueues(): Promise<void> {
-    await this.page.getByRole('button', { name: 'Retry' }).click();
-  }
-
   /** Locates one severity breakdown row by its severity value (`critical`, `high`, `medium`, `low`). */
   public severityRow(severity: string): Locator {
     return this.page.getByTestId(`org-statistics-severity-${severity}`);
@@ -119,8 +74,8 @@ export class OrganizationDashboardPage {
     await this.compareSwitch.click();
   }
 
-  /** The rendered Chart.js `<canvas>` inside one trend chart card — the proof the chart actually mounted, since Chart.js paints to a canvas surface with no inspectable series markup. */
-  public chartCanvas(card: Locator): Locator {
-    return card.getByTestId('line-chart-canvas');
+  /** The native SVG plot inside a trend card. */
+  public chartSvg(card: Locator): Locator {
+    return card.getByTestId('line-chart').locator('svg').first();
   }
 }

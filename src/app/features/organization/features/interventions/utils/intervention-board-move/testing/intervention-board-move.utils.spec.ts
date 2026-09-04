@@ -2,7 +2,10 @@ import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
 } from '@features/organization/features/interventions/models';
-import { isInterventionBoardMoveAllowed } from '../intervention-board-move.utils';
+import {
+  isInterventionBoardMoveAllowed,
+  resolveInterventionBoardMoveReason,
+} from '../intervention-board-move.utils';
 
 function allowedActions(
   overrides: Partial<InterventionAllowedActionsOutput> = {},
@@ -60,6 +63,65 @@ function buildIntervention(overrides: Partial<InterventionOutput> = {}): Interve
 }
 
 describe('isInterventionBoardMoveAllowed', () => {
+  const memberIri = '/api/organizations/org-1/members/member-1';
+
+  it.each([
+    { responsible: memberIri, participants: [], allowed: true },
+    {
+      responsible: '/api/organizations/org-1/members/other',
+      participants: [memberIri],
+      allowed: true,
+    },
+    { responsible: '/api/organizations/org-1/members/other', participants: [], allowed: false },
+    { responsible: undefined, participants: [], allowed: false },
+  ])(
+    'checks execution membership before offering a server-legal move: $allowed',
+    ({ responsible, participants, allowed }) => {
+      const intervention = buildIntervention({
+        status: 'planned',
+        allowedTransitions: ['in_progress', 'abandoned'],
+        responsible,
+        participants,
+      });
+      expect(isInterventionBoardMoveAllowed(intervention, 'in_progress', memberIri)).toBe(allowed);
+      expect(isInterventionBoardMoveAllowed(intervention, 'abandoned', memberIri)).toBe(allowed);
+    },
+  );
+
+  it('denies execution until the active member is known and explains the blocker', () => {
+    const intervention = buildIntervention({
+      status: 'planned',
+      allowedTransitions: ['in_progress'],
+      responsible: memberIri,
+    });
+    expect(isInterventionBoardMoveAllowed(intervention, 'in_progress', null)).toBe(false);
+    expect(resolveInterventionBoardMoveReason(intervention, 'in_progress', null)).toBe(
+      'Only the responsible member or a participant can perform this transition.',
+    );
+  });
+
+  it('keeps review abandonment available to a non-participant', () => {
+    const intervention = buildIntervention({
+      status: 'changes_requested',
+      allowedTransitions: ['in_progress', 'abandoned'],
+    });
+    expect(isInterventionBoardMoveAllowed(intervention, 'abandoned', memberIri)).toBe(true);
+    expect(isInterventionBoardMoveAllowed(intervention, 'in_progress', memberIri)).toBe(false);
+  });
+
+  it.each([true, false])(
+    'uses canSubmit rather than participant membership for submission: %s',
+    (canSubmit) => {
+      const intervention = buildIntervention({
+        status: 'in_progress',
+        allowedTransitions: ['submitted'],
+        participants: [memberIri],
+        allowedActions: allowedActions({ canSubmit }),
+      });
+      expect(isInterventionBoardMoveAllowed(intervention, 'submitted', memberIri)).toBe(canSubmit);
+    },
+  );
+
   it('should deny a target absent from allowedTransitions', () => {
     const intervention = buildIntervention({ status: 'draft', allowedTransitions: ['planned'] });
 

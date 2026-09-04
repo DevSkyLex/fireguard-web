@@ -14,7 +14,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideActivity,
   lucideCalendarDays,
@@ -49,11 +49,10 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { AuditEventTable } from '../../tables/audit-event-table';
 
 /** How long typing settles before the search reaches the wire. */
@@ -153,8 +152,8 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
 @Component({
   selector: 'app-audit-page',
   imports: [
-    EmptyState,
-    ErrorState,
+    NgIcon,
+    ...HlmEmptyImports,
     AuditEventTable,
     CollectionFilterBar,
     CollectionFilterDateRange,

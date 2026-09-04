@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 quality"
+  short_description: 'Run the scoped FireGuard quality checks: formatting, lint, Angu'
+  default_prompt: 'Use $fg-web-quality for the requested FireGuard Web task.'

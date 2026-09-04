@@ -18,6 +18,8 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
 import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -71,6 +73,8 @@ function trimmed(value: string): string | undefined {
 @Component({
   selector: 'app-onboarding-equipment-form',
   imports: [
+    ...HlmComboboxImports,
+    ...HlmAlertImports,
     RequiredMarker,
     FormField,
     HlmInput,
@@ -166,6 +170,10 @@ export class OnboardingEquipmentForm {
   protected readonly equipmentForm: FieldTree<OnboardingEquipmentFormDraft> = form(
     this.model,
     (path) => {
+      required(path.facilityId, {
+        when: () => this.facilities().length > 0,
+        message: $localize`:@@onboarding.equipmentForm.facilityRequired:Select the facility for this equipment.`,
+      });
       required(path.type, {
         message: $localize`:@@onboarding.equipmentForm.typeRequired:Equipment type is required.`,
       });
@@ -239,7 +247,8 @@ export class OnboardingEquipmentForm {
       const current: string = this.model().facilityId;
       if (facilities.some((facility) => facility.id === current)) return;
 
-      const firstId: string = facilities[0].id;
+      const firstId: string = facilities.length === 1 ? facilities[0].id : '';
+      if (current === firstId) return;
       this.model.update((draft) => ({ ...draft, facilityId: firstId }));
     });
   }

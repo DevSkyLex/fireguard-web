@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 arch-review"
+  short_description: 'Perform a read-only FireGuard frontend architecture review of o'
+  default_prompt: 'Use $fg-web-arch-review for the requested FireGuard Web task.'

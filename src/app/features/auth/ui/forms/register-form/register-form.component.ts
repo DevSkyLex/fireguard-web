@@ -13,9 +13,11 @@ import type { StoreError } from '@core/request-state';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { RegisterFormValues } from './models';
 
 /**
@@ -38,7 +40,16 @@ import type { RegisterFormValues } from './models';
  */
 @Component({
   selector: 'app-register-form',
-  imports: [RequiredMarker, FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [
+    ...HlmAlertImports,
+    RequiredMarker,
+    FormField,
+    PasswordInput,
+    HlmButton,
+    HlmSpinner,
+    HlmInput,
+    ...HlmFieldImports,
+  ],
   templateUrl: './register-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,39 @@
+# FireGuard Codex. Run python .codex/scripts/configure.py after moving this checkout.
+# Preserve the user model, sandbox, approvals and project trust.
+
+web_search = "live"
+[mcp_servers."context7"]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+cwd = "G:/Projets/fireguard/fireguard-sso-web"
+startup_timeout_sec = 60
+
+[mcp_servers."angular"]
+command = "npx"
+args = ["--no-install", "ng", "mcp", "--read-only"]
+cwd = "G:/Projets/fireguard/fireguard-sso-web"
+startup_timeout_sec = 60
+
+[mcp_servers."spartan"]
+command = "npx"
+args = ["-y", "@spartan-ng/mcp"]
+cwd = "G:/Projets/fireguard/fireguard-sso-web"
+startup_timeout_sec = 60
+
+[mcp_servers."playwright"]
+command = "npx"
+args = ["-y", "@playwright/mcp"]
+cwd = "G:/Projets/fireguard/fireguard-sso-web"
+startup_timeout_sec = 60
+
+[mcp_servers."serena-web"]
+command = "serena"
+args = [
+  "start-mcp-server",
+  "--context",
+  "ide",
+  "--project",
+  "G:/Projets/fireguard/fireguard-sso-web",
+]
+cwd = "G:/Projets/fireguard/fireguard-sso-web"
+startup_timeout_sec = 120

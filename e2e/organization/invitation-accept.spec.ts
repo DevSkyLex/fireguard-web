@@ -13,8 +13,7 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { OrganizationInvitationAcceptPage } from '../support/pages/organization-invitation-accept.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard/8ab87c77-49b6-4d36-a37e-080efde2fd91/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'test-results/uiux-final-20260903';
 
 test.describe('Invitation accept preview', () => {
   test('renders the pending invitation card with organization, inviter, invited email and expiry', async ({
@@ -77,7 +76,7 @@ test.describe('Invitation accept preview', () => {
 });
 
 test.describe('Invitation accept flow', () => {
-  test('accepts the invitation as a signed-in visitor and shows the success card linking to the organization', async ({
+  test('accepts the invitation and opens the joined organization without an extra confirmation', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -91,12 +90,8 @@ test.describe('Invitation accept flow', () => {
 
     await invitationAccept.accept();
 
-    await expect(invitationAccept.success).toBeVisible();
-    await expect(invitationAccept.success).toContainText('E2E Organization');
-    await expect(invitationAccept.openOrganizationLink).toHaveAttribute(
-      'href',
-      `/organizations/${E2E_ORGANIZATION_ID}`,
-    );
+    await expect(page).toHaveURL(`/organizations/${E2E_ORGANIZATION_ID}`);
+    await expect(invitationAccept.openOrganizationLink).toHaveCount(0);
   });
 
   test('shows a destructive alert without leaving the card when acceptance fails', async ({
@@ -115,7 +110,7 @@ test.describe('Invitation accept flow', () => {
 
     await expect(invitationAccept.acceptError).toBeVisible();
     await expect(invitationAccept.acceptError).toContainText(
-      'This invitation was revoked by an administrator.',
+      'Please try again. If this invitation is no longer valid, ask your administrator for a new one.',
     );
     await expect(invitationAccept.acceptError.locator('svg')).toBeVisible();
     await expect(invitationAccept.card).toBeVisible();

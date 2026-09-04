@@ -5,6 +5,7 @@ import { firstValueFrom, Subject, of, throwError } from 'rxjs';
 import { authStoreEvents } from '@features/auth';
 import { OnboardingService } from '@features/onboarding/data-access';
 import type { OnboardingOutput, OnboardingStepOutput } from '@features/onboarding/models';
+import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { OnboardingStore } from '../onboarding.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -521,6 +522,22 @@ describe('OnboardingStore', () => {
 
       store = TestBed.inject(OnboardingStore);
     };
+
+    it('should invalidate onboarding and its hydration handoff after explicit invitation acceptance', async () => {
+      configureWithRealDispatcher();
+      mockOnboardingService.get.mockReturnValue(of(onboarding));
+      await firstValueFrom(store.ensureLoaded());
+      const key = makeStateKey<OnboardingOutput | null>('organization-onboarding');
+      const transfer = TestBed.inject(TransferState);
+      transfer.set(key, onboarding);
+      TestBed.inject(Dispatcher).dispatch(
+        organizationInvitationAcceptStoreEvents.acceptSucceeded({ organizationId: 'invited-org' }),
+      );
+      expect(store.onboarding()).toBeNull();
+      expect(transfer.hasKey(key)).toBe(false);
+      await firstValueFrom(store.ensureLoaded());
+      expect(mockOnboardingService.get).toHaveBeenCalledTimes(2);
+    });
 
     it('should drop the previous user record when the session ends', async () => {
       configureWithRealDispatcher();

@@ -90,7 +90,8 @@ export class InterventionDetailPage {
 
   /** Opens the live discussion sheet from the detail page's header trigger. */
   public async openDiscussion(): Promise<void> {
-    await this.discussionTrigger.click();
+    await this.page.getByTestId('intervention-detail-menu').click();
+    await this.page.getByTestId('intervention-detail-team-chat').click();
   }
 
   /** Writes and sends one message through the discussion sheet's composer. */

@@ -131,7 +131,9 @@ describe('FacilityMapPage', () => {
   it('shows the empty state when no facility has coordinates', async () => {
     fixture = await createPage();
 
-    expect(fixture.nativeElement.querySelector('app-empty-state')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])'),
+    ).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-map')).toBeNull();
   });
 
@@ -151,7 +153,9 @@ describe('FacilityMapPage', () => {
         label: 'Headquarters',
       },
     ]);
-    expect(fixture.nativeElement.querySelector('app-empty-state')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])'),
+    ).toBeNull();
   });
 
   it('navigates to the facility record when a marker is selected', async () => {

@@ -32,7 +32,7 @@ import { OnboardingStepRail } from '@features/onboarding/ui/components';
   selector: 'app-onboarding-showcase',
   imports: [OnboardingStepRail],
   templateUrl: './onboarding-showcase.component.html',
-  host: { class: 'flex h-full flex-col justify-center bg-muted px-10 py-12 xl:px-14' },
+  host: { class: 'flex h-full flex-col bg-muted px-6 pt-28 pb-8' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingShowcase {

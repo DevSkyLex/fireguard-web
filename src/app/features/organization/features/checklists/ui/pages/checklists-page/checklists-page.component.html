@@ -60,39 +60,55 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@checklists.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to checklists."
-      i18n-description="@@checklists.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@checklists.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@checklists.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to checklists.
+        </p>
+      </div>
+    </div>
   } @else if (store.listCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load checklists"
-      i18n-title="@@checklists.list.errorTitle"
-      description="The checklists could not be loaded. Check your connection and try again."
-      i18n-description="@@checklists.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="checklists-retry" (click)="reload()">
-        <span i18n="@@checklists.list.retry">Retry</span>
-      </button>
-    </app-error-state>
-  } @else if (!store.isLoadingChecklists() && items().length === 0) {
-    <app-empty-state
-      icon="lucideListChecks"
-      title="No checklists"
-      i18n-title="@@checklists.list.emptyTitle"
-      description="No checklist templates match this filter."
-      i18n-description="@@checklists.list.emptyDesc"
-    >
-      @if (canWrite()) {
-        <button hlmBtn data-testid="checklists-empty-new" (click)="openCreateDialog()">
-          <span i18n="@@checklists.list.new">New checklist</span>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@checklists.list.errorTitle">Couldn't load checklists</p>
+        <p hlmEmptyDescription i18n="@@checklists.list.errorText">
+          The checklists could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="checklists-retry" (click)="reload()">
+          <span i18n="@@checklists.list.retry">Retry</span>
         </button>
-      }
-    </app-empty-state>
+      </div>
+    </div>
+  } @else if (!store.isLoadingChecklists() && items().length === 0) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideListChecks" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@checklists.list.emptyTitle">No checklists</p>
+        <p hlmEmptyDescription i18n="@@checklists.list.emptyDesc">
+          No checklist templates match this filter.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (canWrite()) {
+          <button hlmBtn data-testid="checklists-empty-new" (click)="openCreateDialog()">
+            <span i18n="@@checklists.list.new">New checklist</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     <app-checklist-table
       [regionalFormatting]="regionalFormatting()"

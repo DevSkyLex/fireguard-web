@@ -38,9 +38,8 @@ import {
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { isCompact } from '@shared/breakpoint';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { FacilityBuilding3dRoomPanel } from '../../components/facility-building-3d-room-panel';
 import { FacilityBuilding3dScene } from '../../components/facility-building-3d-scene';
@@ -55,7 +54,7 @@ import { FacilityBuilding3dScene } from '../../components/facility-building-3d-s
  * orchestrates {@link FacilityBuilding3dStore}'s browser-only `loadModel`
  * and renders one of five states: a full-frame skeleton while the model is
  * unresolved (also the exact SSR output, since the store's fetch never
- * fires on the server), `app-error-state` with a retry, `app-empty-state`
+ * fires on the server), the Spartan `hlmEmpty` error composition with a retry, the Spartan `hlmEmpty` composition
  * when the building has no floors, a dedicated incompatible-device state
  * when this browser lacks WebGL, and — once loaded and WebGL-capable —
  * `app-facility-building-3d-scene` (P1) beside a toolbar wired to the store
@@ -110,10 +109,9 @@ import { FacilityBuilding3dScene } from '../../components/facility-building-3d-s
 @Component({
   selector: 'app-facility-building-3d-page',
   imports: [
-    RouterLink,
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
+    RouterLink,
     FacilityBuilding3dScene,
     FacilityBuilding3dRoomPanel,
     HlmButton,

@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * MFA Guard
@@ -16,7 +17,7 @@ import { AuthStore } from '@features/auth/state';
  * @returns {GuardResult} True if user can access MFA verification page, otherwise
  * a UrlTree redirecting to the appropriate route based on auth state and MFA requirements.
  */
-export const mfaGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const mfaGuard: CanActivateFn = (route): MaybeAsync<GuardResult> => {
   /**
    * Constant authStore
    * @const authStore
@@ -40,15 +41,14 @@ export const mfaGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
    * @var {Router}
    */
   const router: Router = inject<Router>(Router);
+  const returnUrl: string = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+  const queryParams = { returnUrl: returnUrl || undefined };
 
-  // If already authenticated, redirect to root
   if (authStore.isAuthenticated()) {
-    return router.createUrlTree(['/']);
+    return returnUrl ? router.parseUrl(returnUrl) : router.createUrlTree(['/']);
   }
 
-  // If MFA is required, allow access
   if (authStore.mfaRequired()) return true;
 
-  // Otherwise, redirect to login
-  return router.createUrlTree(['/auth/login']);
+  return router.createUrlTree(['/auth/login'], { queryParams });
 };

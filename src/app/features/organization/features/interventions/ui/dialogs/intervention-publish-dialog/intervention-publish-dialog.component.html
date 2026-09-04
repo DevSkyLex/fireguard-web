@@ -29,7 +29,6 @@
       <div
         hlmAlert
         variant="destructive"
-        class="border-destructive/30 bg-destructive/5"
         role="alert"
         data-testid="intervention-detail-publish-error"
       >
@@ -74,20 +73,19 @@
             [disabled]="publishing()"
             (click)="recheckRequested.emit()"
           >
-            <span i18n="@@intervention.publish.recheck">Check again</span>
+            <span i18n="@@intervention.publish.checkResult">Check result</span>
           </button>
         }
       </div>
     }
 
     <hlm-alert-dialog-footer>
-      <button
-        hlmAlertDialogCancel
-        class="max-sm:min-h-11"
-        [disabled]="publishing()"
-        i18n="@@common.cancel"
-      >
-        Cancel
+      <button hlmAlertDialogCancel class="max-sm:min-h-11" [disabled]="publishing()">
+        @if (publicationTimedOut()) {
+          <span i18n="@@common.close">Close</span>
+        } @else {
+          <span i18n="@@common.cancel">Cancel</span>
+        }
       </button>
       @if (!publicationTimedOut()) {
         <button

@@ -81,6 +81,7 @@ import {
   type MemberSelectOption,
   type SelectOption,
 } from '@features/organization/features/interventions/models';
+import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
@@ -101,6 +102,8 @@ import { buildInterventionDuplicatePrefill } from '@features/organization/featur
 import {
   buildInterventionExportOptions,
   buildInterventionListOptions,
+  isInterventionBoardMoveAllowed,
+  resolveInterventionBoardMoveReason,
   parseInterventionListFilters,
   serializeInterventionListFilters,
 } from '@features/organization/features/interventions/utils';
@@ -115,6 +118,13 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import {
+  Board,
+  BoardCardDirective,
+  BoardColumnHeaderDirective,
+  type BoardColumn,
+  type BoardMove,
+} from '@shared/board';
 import type { CalendarFirstDayOfWeek } from '@shared/calendar';
 import {
   type CollectionFilterField,
@@ -130,8 +140,6 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
@@ -139,11 +147,11 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSpinner } from '@shared/ui/spinner';
-import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggle } from '@shared/ui/toggle';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import {
@@ -158,15 +166,8 @@ import {
   InterventionRecurrenceStore,
   type InterventionRecurrenceStoreType,
 } from '../../../state/intervention-recurrence';
-import {
-  InterventionStatisticsStore,
-  type InterventionStatisticsStoreType,
-} from '../../../state/intervention-statistics';
-import { InterventionBoard } from '../../components/intervention-board';
-import type { InterventionBoardCardViewModel } from '../../components/intervention-board/models';
+import { InterventionBoardCard } from '../../components/intervention-board-card';
 import { InterventionCalendar } from '../../components/intervention-calendar';
-import { InterventionKpiStrip } from '../../components/intervention-kpi-strip';
-import { InterventionStatisticsAnalysis } from '../../components/intervention-statistics-analysis';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAssignDialog } from '../../dialogs/intervention-assign-dialog';
 import { InterventionBulkDeleteDialog } from '../../dialogs/intervention-bulk-delete-dialog';
@@ -181,6 +182,7 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
+import { INTERVENTION_BOARD_COLUMNS } from './constants/intervention-board-columns.constants';
 import type { InterventionListItemViewModel } from './models';
 
 /** How close a deadline must be to count as "due soon". */
@@ -294,27 +296,19 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * @class InterventionsPage
  *
  * @description
- * Route entry page for the organization's interventions
- * (`/organizations/:organizationId/interventions`): the KPI strip, a
- * per-tab toolbar (search box, "My interventions", a filter bar scoped to
- * that tab's own honoured fields — List, Board and Calendar each carry
- * their own subset, Recurrences carries none at all), and each tab's own
- * surface — the table with its Display popover and row/bulk actions on
- * List, the Kanban board on Board, the month grid on Calendar — plus the
- * sheets and dialogs any of the three can open. The tab selector itself is
- * not part of the toolbar: it renders in the dashboard shell's own header,
- * registered through {@link pageActions} alongside "New intervention". It is
- * a hand-rolled `role="tablist"`/`role="tab"` control rather than
- * `hlm-tabs-list`/`hlmTabsTrigger` — see that property's own doc for why.
+ * Route entry page for the organization’s interventions. A native toggle group
+ * selects List, Board or Calendar above the shared search/filter controls.
+ * Creation is a single sheet with blank
+ * and template modes, reached from the header’s primary action.
  *
  * **One page, three tabs, replacing three routes.** `InterventionsShellPage`,
  * `InterventionsBoardPage` and `InterventionsCalendarPage` are retired: the
- * List/Board/Calendar switcher is now `hlm-tabs` (`@shared/ui/tabs`) instead
- * of a routed `<router-outlet />`, and `InterventionBoard`/
- * `InterventionCalendar` (`ui/components/`) are presentational components
+ * List/Board/Calendar switcher is a native `hlm-toggle-group` instead
+ * of a routed `<router-outlet />`, and shared `Board` plus the feature-owned
+ * `InterventionCalendar` are presentational components
  * this page feeds, not pages of their own — a table, a board or a calendar
  * never injects a store (`ARCHITECTURE.md` §10.3), and one physical page
- * means the toolbar, the KPI strip and the filter bar are built once instead
+ * means the toolbar and the filter bar are built once instead
  * of coordinated across three components through a `TemplateRef` slot. The
  * active tab is **not** local component state: it is the `view` route-bound
  * input (`?view=board|calendar`, absent ⇒ `list`), read into
@@ -337,7 +331,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * driven back by its `monthChanged`/`reloadRequested` outputs.
  * {@link calendarMonth} starts `null` and the load effect no-ops until
  * `InterventionCalendar` reports its first anchor, which only happens once
- * it exists — behind `hlmTabsContentLazy`, on the Calendar tab's first
+ * it exists — behind `@defer`, on the Calendar view's first
  * activation — so visiting List or Board first never fetches the calendar's
  * window.
  *
@@ -392,23 +386,23 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     HlmButtonGroup,
     ...HlmToggleGroupImports,
     GateReasonDirective,
-    NgIcon,
-    EmptyState,
-    ErrorState,
     HlmBadge,
     HlmButton,
     HlmSpinner,
     HlmToggle,
     InterventionAssignDialog,
-    InterventionBoard,
+    Board,
+    BoardCardDirective,
+    BoardColumnHeaderDirective,
+    InterventionBoardCard,
     InterventionBulkDeleteDialog,
     InterventionCalendar,
     InterventionCreateSheet,
-    InterventionKpiStrip,
-    InterventionStatisticsAnalysis,
     InterventionRecurrenceDeleteDialog,
     InterventionRecurrenceSheet,
     InterventionRecurrenceTable,
@@ -428,7 +422,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     ...HlmPopoverImports,
     ...HlmSelectImports,
     ...HlmSeparatorImports,
-    ...HlmTabsImports,
   ],
   providers: [
     InterventionCalendarStore,
@@ -549,7 +542,6 @@ export class InterventionsPage {
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
-  /** The KPI strip's organization-wide snapshot. Reloaded only on an organization switch — the figures describe the collection, not one tab's rendering of it. */
   /**
    * Property selectionMode
    * @readonly
@@ -567,9 +559,6 @@ export class InterventionsPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly selectionMode: WritableSignal<boolean> = signal<boolean>(false);
-
-  protected readonly statisticsStore: InterventionStatisticsStoreType =
-    inject<InterventionStatisticsStoreType>(InterventionStatisticsStore);
 
   /** The organization's recurring intervention schedules, backing the Recurrences tab. */
   protected readonly recurrenceStore: InterventionRecurrenceStoreType =
@@ -769,6 +758,9 @@ export class InterventionsPage {
   /** Whether the creation sheet is open. */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /** The header menu prepares a template in the sheet before any API mutation. */
+  protected readonly createTemplateId: WritableSignal<string | null> = signal<string | null>(null);
+
   /** What the recurrence sheet is open on: `'create'`, an existing row for edit, `null` for closed. */
   protected readonly recurrenceTarget: WritableSignal<InterventionRecurrenceFormTarget> =
     signal<InterventionRecurrenceFormTarget>(null);
@@ -929,6 +921,11 @@ export class InterventionsPage {
       null,
   );
 
+  /** Creation and its URL entry point share the planning permission. */
+  protected readonly canCreate: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
+  );
+
   /** Whether the member may duplicate an intervention. */
   protected readonly canDuplicate: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
@@ -970,6 +967,99 @@ export class InterventionsPage {
       .interventionList()
       .map((intervention: InterventionOutput) => this.toBoardCardViewModel(intervention)),
   );
+
+  /**
+   * Property boardColumns
+   * @readonly
+   *
+   * @description
+   * Projects workflow grouping and pending flags into the generic board contract.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @type {Signal<readonly BoardColumn<InterventionBoardCardViewModel, InterventionStatus>[]>}
+   */
+  protected readonly boardColumns: Signal<
+    readonly BoardColumn<InterventionBoardCardViewModel, InterventionStatus>[]
+  > = computed(() => {
+    const items = this.boardItems();
+    const pending = this.store.transitioningInterventionIds();
+    return INTERVENTION_BOARD_COLUMNS.map((status) => ({
+      id: status,
+      label: resolveInterventionTag('status', status).label,
+      items: items
+        .filter((item) => item.intervention.status === status)
+        .map((item) => ({
+          id: item.intervention.id,
+          label: item.intervention.name,
+          data: item,
+          disabled: pending.includes(item.intervention.id),
+        })),
+    }));
+  });
+
+  /**
+   * Method canMoveBoardItem
+   * @method canMoveBoardItem
+   *
+   * @description
+   * Applies the feature’s permission, pending-state and transition policy to board moves.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @param {InterventionBoardCardViewModel} item - The candidate intervention card.
+   * @param {InterventionStatus} status - The requested status.
+   * @returns {boolean}
+   */
+  protected readonly canMoveBoardItem = (
+    item: InterventionBoardCardViewModel,
+    status: InterventionStatus,
+  ): boolean =>
+    this.canTransition() &&
+    !this.store.transitioningInterventionIds().includes(item.intervention.id) &&
+    isInterventionBoardMoveAllowed(item.intervention, status, this.memberIri());
+
+  /**
+   * Method boardMoveBlockedReason
+   * @method boardMoveBlockedReason
+   *
+   * @description
+   * Supplies feature-owned transition and membership explanations to the generic board.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @param {InterventionBoardCardViewModel} item - The dragged intervention.
+   * @param {InterventionStatus} status - The candidate destination.
+   * @returns {string | null}
+   */
+  protected readonly boardMoveBlockedReason = (
+    item: InterventionBoardCardViewModel,
+    status: InterventionStatus,
+  ): string | null =>
+    resolveInterventionBoardMoveReason(item.intervention, status, this.memberIri());
+
+  /**
+   * Method onBoardMoveRequested
+   * @method onBoardMoveRequested
+   *
+   * @description
+   * Translates the generic board request into the existing optimistic transition flow.
+   *
+   * @access protected
+   * @since 15.0.0
+   *
+   * @param {BoardMove<InterventionBoardCardViewModel, InterventionStatus>} event - The validated board move request.
+   * @returns {void}
+   */
+  protected onBoardMoveRequested(
+    event: BoardMove<InterventionBoardCardViewModel, InterventionStatus>,
+  ): void {
+    if (!this.canMoveBoardItem(event.item, event.columnId)) return;
+    this.applyTransition({ intervention: event.item.intervention, status: event.columnId });
+  }
 
   /** How many pages the whole server-side List collection fills — at least one, so the footer never reads "Page 1 of 0". */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
@@ -1403,14 +1493,6 @@ export class InterventionsPage {
 
     effect((): void => {
       const organizationId: string = this.organizationId();
-
-      untracked((): void => {
-        this.statisticsStore.load(organizationId);
-      });
-    });
-
-    effect((): void => {
-      const organizationId: string = this.organizationId();
       untracked((): void => {
         this.planningOptions.loadCreationOptions(organizationId);
       });
@@ -1539,6 +1621,10 @@ export class InterventionsPage {
 
       untracked((): void => {
         if (!requested || !isPlatformBrowser(this.platformId)) return;
+        if (!this.canCreate()) {
+          this.navigateQuery({ create: null });
+          return;
+        }
 
         this.createSheetVisible.set(true);
         this.navigateQuery({ create: null });
@@ -1565,7 +1651,9 @@ export class InterventionsPage {
 
         this.createSheetVisible.set(false);
         this.store.clearCreatedIntervention();
-        void this.router.navigate([...this.detailRouteBase(), createdId]);
+        void this.router.navigate([...this.detailRouteBase(), createdId], {
+          queryParamsHandling: 'preserve',
+        });
       });
     });
 
@@ -1704,12 +1792,15 @@ export class InterventionsPage {
 
   /** Opens the creation sheet blank — drops any prefill a previous "Duplicate" left behind. */
   protected openCreate(): void {
+    if (!this.canCreate()) return;
+    this.createTemplateId.set(null);
     this.duplicatePrefill.set(null);
     this.createSheetVisible.set(true);
   }
 
   /** Opens the creation sheet prefilled from a row's own "Duplicate" entry. */
   protected requestDuplicate(intervention: InterventionOutput): void {
+    this.createTemplateId.set(null);
     this.duplicatePrefill.set(buildInterventionDuplicatePrefill(intervention));
     this.createSheetVisible.set(true);
   }
@@ -1738,6 +1829,14 @@ export class InterventionsPage {
   /** Hands the chosen template, plus whichever overrides the sheet drafted, to the store. */
   protected instantiateFromTemplate(request: InterventionTemplateInstantiateRequest): void {
     this.store.instantiateFromTemplate(request);
+  }
+
+  /** Opens the template mode without creating until the operator confirms the form. */
+  protected openTemplateCreate(templateId: string): void {
+    if (!this.canCreate()) return;
+    this.duplicatePrefill.set(null);
+    this.createTemplateId.set(templateId);
+    this.createSheetVisible.set(true);
   }
 
   /** Moves an intervention to the status a List row's menu or a Board card's move requested. The store owns the optimistic patch, the `If-Match` revision and the rollback. */

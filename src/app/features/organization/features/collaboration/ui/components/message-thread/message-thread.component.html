@@ -11,23 +11,27 @@
   <div class="mx-auto flex w-full max-w-3xl flex-1 flex-col">
     @if (errorMessage(); as message) {
       <div class="my-auto py-6">
-        <app-error-state
-          icon="lucideMessageSquare"
-          title="Couldn't load this conversation"
-          i18n-title="@@messages.thread.errorTitle"
-          [description]="message"
-        >
-          <button
-            hlmBtn
-            variant="outline"
-            size="sm"
-            type="button"
-            data-testid="message-thread-retry"
-            (click)="loadRetried.emit()"
-          >
-            <span i18n="@@messages.thread.retryLoad">Try again</span>
-          </button>
-        </app-error-state>
+        <div hlmEmpty role="alert">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon" class="text-destructive">
+              <ng-icon name="lucideMessageSquare" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@messages.thread.errorTitle">Couldn't load this conversation</p>
+            <p hlmEmptyDescription>{{ message }}</p>
+          </div>
+          <div hlmEmptyContent>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="message-thread-retry"
+              (click)="loadRetried.emit()"
+            >
+              <span i18n="@@messages.thread.retryLoad">Try again</span>
+            </button>
+          </div>
+        </div>
       </div>
     } @else if (loading() && entries().length === 0) {
       <div class="flex flex-1 flex-col justify-end gap-3 py-6" aria-hidden="true">
@@ -37,13 +41,17 @@
       </div>
     } @else if (entries().length === 0) {
       <div class="my-auto">
-        <app-empty-state
-          icon="lucideMessageSquare"
-          title="No messages yet"
-          i18n-title="@@messages.thread.emptyTitle"
-          description="Say hello to start the conversation."
-          i18n-description="@@messages.thread.emptyDescription"
-        />
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideMessageSquare" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@messages.thread.emptyTitle">No messages yet</p>
+            <p hlmEmptyDescription i18n="@@messages.thread.emptyDescription">
+              Say hello to start the conversation.
+            </p>
+          </div>
+        </div>
       </div>
     } @else {
       <div class="flex flex-1 flex-col gap-4 pt-4 pb-2">

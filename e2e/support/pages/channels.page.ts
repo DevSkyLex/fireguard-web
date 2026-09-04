@@ -17,7 +17,7 @@ export class ChannelsPage {
   public readonly rows: Locator = this.page.getByTestId('channels-row');
   public readonly newButton: Locator = this.page.getByTestId('channels-new');
   public readonly searchInput: Locator = this.page.getByTestId('channels-search');
-  public readonly newDialog: Locator = this.page.getByTestId('channel-create-sheet');
+  public readonly newDialog: Locator = this.page.getByTestId('channel-create-dialog');
   public readonly newNameInput: Locator = this.page.getByTestId('channel-create-name');
   public readonly newSubmit: Locator = this.page.getByTestId('channel-create-submit');
 

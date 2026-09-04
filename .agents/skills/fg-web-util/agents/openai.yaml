@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 util"
+  short_description: 'Create or change pure FireGuard helpers, constants or option se'
+  default_prompt: 'Use $fg-web-util for the requested FireGuard Web task.'

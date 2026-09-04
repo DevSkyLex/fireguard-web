@@ -1,4 +1,5 @@
 export { OrganizationSetupService } from './organization-setup.service';
+export { organizationInvitationAcceptStoreEvents } from '@features/organization/state';
 export type {
   SetupCreateEquipmentInput,
   SetupCreateFacilityInput,

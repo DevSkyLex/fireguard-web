@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { Events } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { OrganizationInvitationService } from '@features/organization/data-access';
 import type {
   OrganizationInvitationPreviewOutput,
   OrganizationMemberOutput,
 } from '@features/organization/models';
+import { organizationInvitationAcceptStoreEvents } from '../events';
 import { OrganizationInvitationAcceptStore } from '../organization-invitation-accept.store';
 
 const flush = async (): Promise<void> => {
@@ -71,6 +73,20 @@ describe('OrganizationInvitationAcceptStore', () => {
     expect(invitationService.accept).toHaveBeenCalledWith({ token: 'tok-1' });
     expect(store.isAccepted()).toBe(true);
     expect(store.isAcceptError()).toBe(false);
+  });
+
+  it('publishes the joined organization only after successful acceptance', async () => {
+    const accepted = vi.fn();
+    const subscription = TestBed.inject(Events)
+      .on(organizationInvitationAcceptStoreEvents.acceptSucceeded)
+      .subscribe(accepted);
+    store.loadPreview('tok-1');
+    store.accept('tok-1');
+    await flush();
+    expect(accepted).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { organizationId: 'org-1' } }),
+    );
+    subscription.unsubscribe();
   });
 
   it('records an acceptance failure', async () => {

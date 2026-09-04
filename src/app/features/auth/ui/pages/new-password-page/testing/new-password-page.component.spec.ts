@@ -93,6 +93,8 @@ describe('NewPasswordPage', () => {
     challengeToken.set(null);
     await fixture.whenStable();
 
-    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(navigate).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 });

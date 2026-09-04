@@ -66,10 +66,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -123,11 +122,10 @@ type FacilityLayout = 'list' | 'grid';
 @Component({
   selector: 'app-facilities-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     RouterLink,
     FacilityCreateSheet,
-    NgIcon,
-    EmptyState,
-    ErrorState,
     FacilityGrid,
     FacilityTable,
     CollectionFilterBar,

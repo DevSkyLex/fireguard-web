@@ -91,7 +91,9 @@ describe('PasswordResetVerifyPage', () => {
     // Nothing is sent yet: the API validates the code and the new password in
     // one call, so this step only records what the final screen will need.
     expect(mockPasswordResetStore.setVerificationCode).toHaveBeenCalledWith('123456');
-    expect(navigate).toHaveBeenCalledWith(['/auth/password-reset/new']);
+    expect(navigate).toHaveBeenCalledWith(['/auth/password-reset/new'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 
   it('should forward a resend request', async () => {
@@ -100,5 +102,15 @@ describe('PasswordResetVerifyPage', () => {
     fixture.componentInstance['resend']();
 
     expect(mockPasswordResetStore.resend).toHaveBeenCalledTimes(1);
+  });
+  it('should replace a rotated reset token without adding a history entry', async () => {
+    const fixture = await createPage('old-token');
+    challengeToken.set('new-token');
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith([], {
+      relativeTo: TestBed.inject(ActivatedRoute),
+      replaceUrl: true,
+      queryParams: { token: 'new-token', returnUrl: undefined },
+    });
   });
 });

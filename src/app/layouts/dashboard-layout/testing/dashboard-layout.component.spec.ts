@@ -4,12 +4,14 @@ import { provideRouter } from '@angular/router';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
 import { DashboardLayout } from '../dashboard-layout.component';
+import type { SidebarExtensionContribution } from '../models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
   DASHBOARD_SIDEBAR_FOOTER_SLOT,
   DASHBOARD_SIDEBAR_HEADER_SLOT,
+  DASHBOARD_SIDEBAR_EXTENSION_SLOT,
   DASHBOARD_SIDEBAR_NAV_SLOT,
 } from '../slots';
 
@@ -37,7 +39,7 @@ async function render(providers: unknown[] = []): Promise<ComponentFixture<Dashb
     imports: [DashboardLayout],
     providers: [
       provideRouter([]),
-      { provide: ENV_CONFIG, useValue: { appName: 'FireGuard' } },
+      { provide: ENV_CONFIG, useValue: { appName: 'Fireguard' } },
       ...(providers as never[]),
     ],
   }).compileComponents();
@@ -60,20 +62,23 @@ describe('DashboardLayout', () => {
     expect(element.querySelector('#dashboard-panel')).toBeNull();
   });
 
-  it('dresses the sidebar as spartan inset', async () => {
+  it('uses the standard sidebar variant for a flush content column', async () => {
     const fixture = await render();
     const sidebar: HTMLElement | null = fixture.nativeElement.querySelector('hlm-sidebar');
 
-    // The inset variant is the shell's look, not a detail: it is what turns the
-    // main column into a floating card over a `bg-sidebar` canvas.
-    expect(sidebar?.getAttribute('data-variant')).toBe('inset');
+    expect(sidebar?.getAttribute('data-variant')).toBe('sidebar');
   });
 
-  it('omits the sidebar header and footer while nothing is contributed to them', async () => {
+  it('keeps the brand without header contributions and omits an empty footer', async () => {
     const fixture = await render();
     const element: HTMLElement = fixture.nativeElement;
 
-    expect(element.querySelector('[data-slot="sidebar-header"]')).toBeNull();
+    expect(
+      element
+        .querySelector('[data-slot="sidebar-header"] #dashboard-sidebar-brand img')
+        ?.getAttribute('alt'),
+    ).toBe('Fireguard');
+    expect(element.querySelector('[data-slot="sidebar-header"] app-slot-outlet')).toBeNull();
     expect(element.querySelector('[data-slot="sidebar-footer"]')).toBeNull();
     // The nav body is always rendered: it is the sidebar's scroll container.
     expect(element.querySelector('[data-slot="sidebar-content"]')).not.toBeNull();
@@ -107,6 +112,37 @@ describe('DashboardLayout', () => {
     const fixture = await render([{ provide: DASHBOARD_PANEL_SLOT, useValue: [panel(10, false)] }]);
 
     expect(fixture.nativeElement.querySelector('#dashboard-panel')).toBeNull();
+  });
+
+  it('mounts only the highest priority active extension and releases its column', async () => {
+    const active = signal(false);
+    const contribution: SidebarExtensionContribution = {
+      id: 'messages',
+      component: PanelStub,
+      priority: 20,
+      active,
+      label: 'Messages',
+      mobileVisible: signal(true),
+    };
+    const fixture = await render([
+      {
+        provide: DASHBOARD_SIDEBAR_EXTENSION_SLOT,
+        useValue: [
+          { ...contribution, id: 'fallback', priority: 10, component: NavStub },
+          contribution,
+        ],
+      },
+    ]);
+    expect(fixture.nativeElement.querySelector('#dashboard-sidebar-extension')).toBeNull();
+    active.set(true);
+    await fixture.whenStable();
+    const extension = fixture.nativeElement.querySelector('#dashboard-sidebar-extension');
+    expect(extension.getAttribute('aria-label')).toBe('Messages');
+    expect(extension.querySelector('#panel-stub')).not.toBeNull();
+    expect(extension.querySelector('#nav-stub')).toBeNull();
+    active.set(false);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('#dashboard-sidebar-extension')).toBeNull();
   });
 
   it('moves focus to the routed content column from the skip link without navigating', async () => {

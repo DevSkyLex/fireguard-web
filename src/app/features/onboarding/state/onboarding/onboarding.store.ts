@@ -41,6 +41,7 @@ import type {
   OnboardingStepOutput,
   StartOnboardingInput,
 } from '@features/onboarding/models';
+import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { onboardingStoreEvents } from './events';
 import type { OnboardingStoreState } from './models';
 
@@ -445,6 +446,8 @@ export const OnboardingStore = signalStore(
                   patchState(store, {
                     onboarding: response,
                     executeStepCallState: successCallState(response),
+                    skipStepCallState: idleCallState(),
+                    rollbackCallState: idleCallState(),
                   });
                 },
                 error: (error: unknown) => {
@@ -487,6 +490,8 @@ export const OnboardingStore = signalStore(
                   patchState(store, {
                     onboarding: response,
                     skipStepCallState: successCallState(response),
+                    executeStepCallState: idleCallState(),
+                    rollbackCallState: idleCallState(),
                   });
                 },
                 error: (error: unknown) => {
@@ -528,6 +533,8 @@ export const OnboardingStore = signalStore(
                   patchState(store, {
                     onboarding: response,
                     rollbackCallState: successCallState(response),
+                    executeStepCallState: idleCallState(),
+                    skipStepCallState: idleCallState(),
                   });
                 },
                 error: (error: unknown) => {
@@ -557,6 +564,7 @@ export const OnboardingStore = signalStore(
        * @author Valentin FORTIN <contact@valentin-fortin.pro>
        */
       clear(): void {
+        transferState.remove(ONBOARDING_TRANSFER_KEY);
         patchState(store, INITIAL_ONBOARDING_STATE);
       },
 
@@ -660,7 +668,7 @@ export const OnboardingStore = signalStore(
      */
     onInit(store, events = inject<Events>(Events)): void {
       events
-        .on(authStoreEvents.sessionEnded)
+        .on(authStoreEvents.sessionEnded, organizationInvitationAcceptStoreEvents.acceptSucceeded)
         .pipe(takeUntilDestroyed())
         .subscribe(() => {
           store.clear();

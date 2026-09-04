@@ -81,7 +81,9 @@ type CollectionSurfaceSlot = 'error' | 'empty' | 'surface';
  *     <tr surfaceRows hlmTableRow>…</tr>
  *   }
  *   <div surfaceCards>…</div>
- *   <app-empty-state surfaceEmpty title="No interventions" />
+ *   <div hlmEmpty surfaceEmpty>
+ *     <div hlmEmptyTitle>No interventions</div>
+ *   </div>
  * </app-collection-surface>
  * ```
  *

@@ -78,7 +78,7 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
  * editing.
  *
  * Presentational: it validates and emits {@link submitted}; the hosting
- * `CalendarEventSheet` forwards it untouched and the page calls the store
+ * `CalendarEventDialog` forwards it untouched and the page calls the store
  * (`ARCHITECTURE.md` §10.5). Reports its own dirtiness through
  * {@link dirtyChanged} so the hosting sheet can gate dismissal on it, in
  * both create and edit mode.

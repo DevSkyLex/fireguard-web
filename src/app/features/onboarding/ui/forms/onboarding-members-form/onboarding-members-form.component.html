@@ -1,17 +1,20 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group>
+  <hlm-field-group class="gap-5">
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="onboarding-members-error" class="text-sm text-destructive">
+      <div hlmAlert variant="destructive" data-testid="onboarding-members-error">
         @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
+          <p hlmAlertDescription>{{ message }}</p>
         }
       </div>
     }
 
     @if (staged().length > 0) {
-      <ul class="flex flex-col gap-2" data-testid="onboarding-members-staged">
-        @for (row of stagedRows(); track row.email; let i = $index) {
-          <li hlmItem variant="outline" size="sm">
+      <p class="text-sm font-medium" i18n="@@onboarding.batch.prepared">
+        Prepared: {{ staged().length }}
+      </p>
+      <ul hlmItemGroup class="gap-0 divide-y divide-border" data-testid="onboarding-members-staged">
+        @for (row of stagedRows(); track $index; let i = $index) {
+          <li hlmItem size="sm" class="px-0">
             <hlm-item-media variant="icon">
               <ng-icon name="lucideMail" aria-hidden="true" />
             </hlm-item-media>
@@ -21,7 +24,28 @@
                 <p hlmItemDescription>{{ roleName }}</p>
               }
             </hlm-item-content>
+            @if (row.completed) {
+              <span class="text-xs text-muted-foreground" i18n="@@onboarding.batch.saved"
+                >Saved</span
+              >
+            } @else if (row.failed) {
+              <span class="text-xs text-destructive" i18n="@@onboarding.batch.failed"
+                >Needs retry</span
+              >
+            }
             <hlm-item-actions>
+              <button
+                hlmBtn
+                variant="ghost"
+                size="icon-sm"
+                class="max-sm:size-11"
+                type="button"
+                [disabled]="pending() || row.completed"
+                (click)="editMember(i)"
+                [attr.aria-label]="editMemberLabel(row.email)"
+              >
+                <ng-icon name="lucidePencil" aria-hidden="true" />
+              </button>
               <button
                 hlmBtn
                 type="button"
@@ -30,7 +54,7 @@
                 class="max-sm:size-11"
                 [attr.data-testid]="'onboarding-members-remove-' + i"
                 [attr.aria-label]="removeMemberLabel(row.email)"
-                [disabled]="pending()"
+                [disabled]="pending() || row.completed"
                 (click)="removeMember(i)"
               >
                 <ng-icon name="lucideX" aria-hidden="true" />
@@ -41,49 +65,53 @@
       </ul>
     }
 
-    <hlm-field>
-      <label hlmFieldLabel for="onboarding-member-email"
-        ><span i18n="@@onboarding.membersForm.email"> Email</span><app-required-marker
-      /></label>
-      <input
-        hlmInput
-        id="onboarding-member-email"
-        type="email"
-        data-testid="onboarding-member-email"
-        placeholder="jordan@example.com"
-        i18n-placeholder="@@onboarding.membersForm.emailPlaceholder"
-        [formField]="draftForm.email"
-        [attr.aria-required]="true"
-      />
-      <hlm-field-error>{{ draftForm.email().errors()[0]?.message }}</hlm-field-error>
-    </hlm-field>
-
-    @if (roles().length > 0) {
+    <div hlmFieldGroup class="grid items-start gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <hlm-field>
-        <label hlmFieldLabel for="onboarding-member-role" i18n="@@onboarding.membersForm.role">
-          Role (optional)
-        </label>
-        <hlm-select [itemToString]="roleLabelOf" [formField]="draftForm.roleId">
-          <hlm-select-trigger
-            buttonId="onboarding-member-role"
-            class="w-full"
-            data-testid="onboarding-member-role"
-          >
-            <hlm-select-value
-              placeholder="No role"
-              i18n-placeholder="@@onboarding.membersForm.rolePlaceholder"
-            />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal>
-            <hlm-select-group>
-              @for (role of roles(); track role.id) {
-                <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+        <label hlmFieldLabel for="onboarding-member-email"
+          ><span i18n="@@onboarding.membersForm.email"> Email</span><app-required-marker
+        /></label>
+        <input
+          class="max-sm:min-h-11"
+          hlmInput
+          id="onboarding-member-email"
+          #draftInput
+          type="email"
+          data-testid="onboarding-member-email"
+          placeholder="jordan@example.com"
+          i18n-placeholder="@@onboarding.membersForm.emailPlaceholder"
+          [formField]="draftForm.email"
+          [attr.aria-required]="true"
+        />
+        <hlm-field-error>{{ draftForm.email().errors()[0]?.message }}</hlm-field-error>
       </hlm-field>
-    }
+
+      @if (roles().length > 0) {
+        <hlm-field>
+          <label hlmFieldLabel for="onboarding-member-role" i18n="@@onboarding.membersForm.role">
+            Role (optional)
+          </label>
+          <hlm-select [itemToString]="roleLabelOf" [formField]="draftForm.roleId">
+            <hlm-select-trigger
+              buttonId="onboarding-member-role"
+              class="w-full max-sm:min-h-11"
+              data-testid="onboarding-member-role"
+            >
+              <hlm-select-value
+                placeholder="No role"
+                i18n-placeholder="@@onboarding.membersForm.rolePlaceholder"
+              />
+            </hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (role of roles(); track role.id) {
+                  <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        </hlm-field>
+      }
+    </div>
 
     <div>
       <button

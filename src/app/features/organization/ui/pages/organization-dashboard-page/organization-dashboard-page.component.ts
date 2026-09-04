@@ -11,7 +11,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBellRing,
@@ -42,30 +42,22 @@ import {
   type InspectionStatusTagDescriptor,
   type NonConformitySeverity,
 } from '@features/organization/features/inspections/models';
-import type {
-  InterventionOutput,
-  InterventionUnsyncedEntry,
-} from '@features/organization/features/interventions/models';
-import { InterventionTag } from '@features/organization/features/interventions/ui/components';
+
 import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardGranularity,
-  type OrganizationDashboardRecentIntervention,
 } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
-  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
-  type RegionalFormattingPort,
 } from '@features/organization/ports';
 import {
   AssetGrowthTrendStore,
   DashboardStore,
   OverviewTrendStore,
 } from '@features/organization/state/organization-dashboard';
-import { OrganizationTodayStore } from '@features/organization/state/organization-today';
+
 import {
-  OrganizationTodayQueue,
   OrganizationTrendChartNotice,
   StatTile,
   type StatTileBadge,
@@ -74,49 +66,30 @@ import {
   type StatTileLink,
   type StatTileTone,
 } from '@features/organization/ui/components';
-import { OrganizationAvatar } from '@features/organization/ui/components';
+
 import {
-  getOrganizationDashboardHealthComparisonDelta,
-  getOrganizationDashboardHealthValue,
   getOrganizationDashboardNonConformitySeverityBreakdown,
   getOrganizationDashboardOverviewMetricValue,
-  getOrganizationInitials,
   mapAlignedDashboardTrendSeriesToChartSeries,
 } from '@features/organization/utils';
 import { LineChart, type ChartSeries } from '@shared/chart';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
-import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
-import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
-import { HlmBadge } from '@shared/ui/badge';
+
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
+
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
-import { ORGANIZATION_DASHBOARD_ALERT_TAG_ICON_CLASS } from './constants/organization-dashboard-alert-tag-icon-class.constants';
-import { resolveOrganizationDashboardAlertTag } from './models';
 
 /**
  * Type OrganizationDashboardKpiTile
  *
  * @description
- * View-model for one cell of the page's single KPI row, which folds the
- * retired Today and Statistics tabs' two rows into one deduplicated strip.
- * Every value reads from `DashboardStore`'s own aggregate payload, never from
- * the period-scoped `OverviewTrendStore`/`AssetGrowthTrendStore` — so every
- * cell's number and delta hold regardless of the Trends section's period
- * selector below it. `tone` is `destructive` only for `open-non-conformities`
- * when the overview also reports an overdue count above zero — every other
- * cell stays neutral, and severity is always paired with the tile's
- * {@link icon} rather than carried by colour alone. `badge` states that same
- * overdue count, or "On track" once it reaches zero. `caption` and
- * `description` fill the tile's footer zone with a stable fact about what the
- * number means, the same footer treatment `InterventionKpiTile` uses — never
- * a fabricated trend.
+ * View-model for one compact operational metric from the aggregate dashboard payload.
+ * Period controls affect the charts only; the overdue badge qualifies open findings.
  *
  * @since 1.0.0
  */
@@ -129,26 +102,6 @@ type OrganizationDashboardKpiTile = {
   readonly delta: StatTileDelta | null;
   readonly tone: StatTileTone;
   readonly badge: StatTileBadge | null;
-  readonly caption: string;
-  readonly description: string;
-};
-
-/**
- * Type OrganizationDashboardAlertRow
- *
- * @description
- * View-model for one row of the dashboard's backend-computed alert feed.
- * `link` is `null` when the code names nothing this app can navigate to yet,
- * which keeps the row a plain sentence instead of a dead link.
- *
- * @since 1.0.0
- */
-type OrganizationDashboardAlertRow = {
-  readonly code: string;
-  readonly message: string;
-  readonly icon: string;
-  readonly iconClass: string;
-  readonly link: StatTileLink | null;
 };
 
 /**
@@ -185,34 +138,9 @@ type OrganizationDashboardSeverityEntry = {
  * @class OrganizationDashboardPage
  *
  * @description
- * The organization's landing route, merging the retired Today and Statistics
- * pages into one continuous scroll (`ARCHITECTURE.md` §8.3): an identity row,
- * a single deduplicated KPI strip, the work queues, the backend's alert feed
- * and "Recently updated" interventions, then a Trends section — its own
- * period preset / compare-to-previous-period controls, a non-conformity
- * severity breakdown and four trend charts. Every KPI tile reads the
- * component-scoped `DashboardStore` copy of the aggregate `/dashboard`
- * payload, never the period-scoped trend stores, so the strip's numbers hold
- * regardless of the Trends section's period selector below it.
- *
- * The page owns all orchestration: it holds every store, resolves
- * permissions, localizes rows and performs navigation; its children only
- * render (`ARCHITECTURE.md` §10.1). `OverviewTrendStore` and
- * `AssetGrowthTrendStore` load unconditionally on mount — correct now that
- * the trend charts always render on this single page, unlike the retired
- * tabbed layout where the same unconditional load fetched data behind a tab
- * a visitor might never open.
- *
- * The page's title is now the shell's own `DashboardPageHeader`, sourced
- * from the route's `title`; this page renders no title band of its own.
- * `app-organization-page-header` is retired — the org identity it used to
- * carry (avatar, plan, status, member count) is still shown nowhere else, so
- * it stays as a page-local lead row above the KPI strip, built from the same
- * `organizationContext` this page already reads. The header actions
- * template, registered on the shell through `PageActionsService`, carries
- * only "New intervention": the period toggle and compare switch sit in the
- * Trends section's own header instead, next to the charts they actually
- * govern.
+ * The organization landing shows four operational indicators and period-scoped trends.
+ * Browser-only trend stores activate when the dashboard mounts; all panels
+ * share the same aggregate dashboard store.
  *
  * @version 1.0.0
  *
@@ -221,25 +149,14 @@ type OrganizationDashboardSeverityEntry = {
 @Component({
   selector: 'app-organization-dashboard-page',
   imports: [
-    OrgDatePipe,
     NgIcon,
-    RouterLink,
-    EmptyState,
-    ErrorState,
-    HlmAvatar,
-    HlmAvatarFallback,
-    HlmAvatarImage,
-    HlmBadge,
+    ...HlmEmptyImports,
     HlmButton,
     HlmSkeleton,
-    OrganizationAvatar,
     HlmSwitch,
-    InterventionTag,
     LineChart,
-    OrganizationTodayQueue,
     OrganizationTrendChartNotice,
     StatTile,
-    ...HlmAlertImports,
     ...HlmCardImports,
     ...HlmFieldImports,
     ...HlmProgressImports,
@@ -247,7 +164,6 @@ type OrganizationDashboardSeverityEntry = {
   ],
   providers: [
     DashboardStore,
-    OrganizationTodayStore,
     OverviewTrendStore,
     AssetGrowthTrendStore,
     provideIcons({
@@ -276,57 +192,18 @@ type OrganizationDashboardSeverityEntry = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardPage {
-  //#region Properties — shared
-  /** The active organization's regional formatting context port. */
-  private readonly regionalFormattingPort: RegionalFormattingPort =
-    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
-
-  /**
-   * Property regionalFormatting
-   * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<RegionalFormatSettings>}
-   */
-  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
-    this.regionalFormattingPort.regionalFormatting;
-
   /** The routed organization, used to name the page and to build destinations. */
   protected readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
-  /** The identity row's avatar fallback, empty until the organization resolves. */
-  protected readonly organizationInitials: Signal<string> = computed((): string => {
-    const organization = this.organizationContext.selectedOrganization();
-
-    return organization ? getOrganizationInitials(organization.name) : '';
-  });
-
-  /** The identity row's status badge, shown only when the organization is resolved and its status is not the desirable `active` one. */
-  protected readonly organizationStatusLabel: Signal<string | null> = computed(
-    (): string | null => {
-      const status = this.organizationContext.selectedOrganization()?.status;
-
-      if (!status || status === 'active') return null;
-
-      return status.replace(/_/g, ' ');
-    },
-  );
-
-  /** The identity row's muted "N member(s)" line, `null` before the organization resolves. */
-  protected readonly organizationMemberCountLabel: Signal<string | null> = computed(
-    (): string | null => {
-      const count = this.organizationContext.selectedOrganization()?.memberCount;
-
-      if (count === null || count === undefined) return null;
-      if (count === 1) return $localize`:@@org.dashboard.memberCountOne:1 member`;
-
-      return $localize`:@@org.dashboard.memberCountMany:${count}:count: members`;
-    },
-  );
-
-  /** Owns the aggregate `/dashboard` payload the whole page reads from: overview counts, health rates, the alert feed, the recent-interventions list and the previous-period comparison. */
+  /**
+   * Property dashboardStore
+   * @readonly
+   * @description Owns the aggregate metrics, comparisons and severity breakdown.
+   * @access protected
+   * @since 1.0.0
+   * @type {DashboardStore}
+   */
   protected readonly dashboardStore: DashboardStore = inject<DashboardStore>(DashboardStore);
 
   /** Organization-owned helper exposing reactive permission checks. */
@@ -336,7 +213,14 @@ export class OrganizationDashboardPage {
   /** Used to open an intervention or a filtered list. */
   private readonly router: Router = inject<Router>(Router);
 
-  /** Whether the caller may read interventions — gates the queues, the "open interventions" KPI tile and the recent interventions list, all sourced from that collection. */
+  /**
+   * Property canReadInterventions
+   * @readonly
+   * @description Gates the open-interventions metric using the collection read permission.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
   protected readonly canReadInterventions: Signal<boolean> = computed((): boolean =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
   );
@@ -360,8 +244,7 @@ export class OrganizationDashboardPage {
    * @description
    * The page's single, deduplicated KPI row: open interventions
    * (permission-gated), open non-conformities, completed inspections,
-   * equipment under maintenance, registered facilities, tracked equipment
-   * and the non-conformity resolution rate. Every figure and its delta read
+   * and equipment under maintenance. Every figure and its delta read
    * `DashboardStore` alone — none of them derive from the period-scoped
    * `OverviewTrendStore`/`AssetGrowthTrendStore` the Trends section's period
    * selector governs, so this row stays accurate independent of that
@@ -375,8 +258,6 @@ export class OrganizationDashboardPage {
   protected readonly kpiTiles: Signal<readonly OrganizationDashboardKpiTile[]> = computed(() => {
     const data = this.dashboardStore.queryData();
     const overview = data?.overview;
-    const health = data?.health;
-    const comparison = data?.comparison;
     const organizationId: string | null = this.organizationContext.selectedOrganizationId();
     const interventionsLink: StatTileLink | null = organizationId
       ? ['/organizations', organizationId, 'interventions']
@@ -387,19 +268,11 @@ export class OrganizationDashboardPage {
     const equipmentsLink: StatTileLink | null = organizationId
       ? ['/organizations', organizationId, 'equipments']
       : null;
-    const facilitiesLink: StatTileLink | null = organizationId
-      ? ['/organizations', organizationId, 'facilities']
-      : null;
     const overdueNonConformities: number | null = getOrganizationDashboardOverviewMetricValue(
       overview,
       'nonConformities',
       'overdue',
     );
-    const resolutionRate: number | null = getOrganizationDashboardHealthValue(
-      health,
-      'nonConformityResolutionRate',
-    );
-
     const tiles: OrganizationDashboardKpiTile[] = [];
 
     if (this.canReadInterventions()) {
@@ -413,8 +286,6 @@ export class OrganizationDashboardPage {
         delta: null,
         tone: 'neutral',
         badge: null,
-        caption: $localize`:@@org.today.kpi.openInterventions.caption:Currently open`,
-        description: $localize`:@@org.today.kpi.openInterventions.context:Planned, in progress, or sent back for changes`,
       });
     }
 
@@ -443,13 +314,6 @@ export class OrganizationDashboardPage {
                   tone: 'neutral',
                 }
               : null,
-        caption:
-          overdueNonConformities !== null && overdueNonConformities > 0
-            ? $localize`:@@org.today.kpi.openNonConformities.caption.pastDue:Past due date`
-            : overdueNonConformities === 0
-              ? $localize`:@@org.today.kpi.openNonConformities.caption.none:Nothing overdue`
-              : $localize`:@@org.today.kpi.openNonConformities.caption.default:Open findings`,
-        description: $localize`:@@org.today.kpi.openNonConformities.context:From inspections, not yet resolved`,
       },
       {
         id: 'inspections-completed',
@@ -461,8 +325,6 @@ export class OrganizationDashboardPage {
         delta: this.toComparisonDelta(this.dashboardStore.inspectionsComparison(), true),
         tone: 'neutral',
         badge: null,
-        caption: $localize`:@@org.today.kpi.inspectionsCompleted.caption:Finished this period`,
-        description: $localize`:@@org.today.kpi.inspectionsCompleted.context:Closed inspections compared to the previous period`,
       },
       {
         id: 'equipment-under-maintenance',
@@ -475,131 +337,11 @@ export class OrganizationDashboardPage {
         delta: null,
         tone: 'neutral',
         badge: null,
-        caption: $localize`:@@org.today.kpi.equipmentUnderMaintenance.caption:Out of service`,
-        description: $localize`:@@org.today.kpi.equipmentUnderMaintenance.context:Equipment currently flagged for maintenance`,
-      },
-      {
-        id: 'facilities',
-        label: $localize`:@@org.statistics.kpi.facilities:Facilities`,
-        value: this.dashboardStore.facilityCount() ?? '—',
-        caption: $localize`:@@org.statistics.kpi.facilities.caption:Registered facilities`,
-        description: $localize`:@@org.statistics.kpi.facilities.context:Sites currently tracked across your organization`,
-        icon: 'lucideBuilding2',
-        delta: this.toComparisonDelta(this.dashboardStore.facilitiesComparison(), true),
-        link: facilitiesLink,
-        tone: 'neutral',
-        badge: null,
-      },
-      {
-        id: 'equipment',
-        label: $localize`:@@org.statistics.kpi.equipment:Equipment`,
-        value: this.dashboardStore.equipmentCount() ?? '—',
-        caption: $localize`:@@org.statistics.kpi.equipment.caption:Tracked equipment`,
-        description: $localize`:@@org.statistics.kpi.equipment.context:Assets currently registered across your facilities`,
-        icon: 'lucideWrench',
-        delta: this.toComparisonDelta(this.dashboardStore.equipmentComparison(), true),
-        link: equipmentsLink,
-        tone: 'neutral',
-        badge: null,
-      },
-      {
-        id: 'resolution-rate',
-        label: $localize`:@@org.statistics.kpi.resolutionRate:Non-conformity resolution rate`,
-        value: resolutionRate !== null ? `${Math.round(resolutionRate)}%` : '—',
-        caption: $localize`:@@org.statistics.kpi.resolutionRate.caption:Resolution rate`,
-        description: $localize`:@@org.statistics.kpi.resolutionRate.context:Share of non-conformities resolved this period`,
-        icon: 'lucideShieldCheck',
-        tone: 'neutral',
-        badge: null,
-        delta: this.toHealthComparisonDelta(
-          getOrganizationDashboardHealthComparisonDelta(comparison, 'nonConformityResolutionRate'),
-          true,
-        ),
-        link: null,
       },
     );
 
     return tiles;
   });
-  //#endregion
-
-  //#region Properties — work queues and alerts
-  /** Component-scoped store owning the work queues, network and local alike. */
-  protected readonly store: OrganizationTodayStore =
-    inject<OrganizationTodayStore>(OrganizationTodayStore);
-
-  /** The severity-to-colour map for the alert strip's icons. */
-  protected readonly alertIconClass: typeof ORGANIZATION_DASHBOARD_ALERT_TAG_ICON_CLASS =
-    ORGANIZATION_DASHBOARD_ALERT_TAG_ICON_CLASS;
-
-  /** Interventions still holding queued local operations, flattened to the shape the queue component renders. */
-  protected readonly unsynced: Signal<readonly InterventionOutput[]> = computed(
-    (): readonly InterventionOutput[] =>
-      this.store
-        .unsynced()
-        .map((entry: InterventionUnsyncedEntry): InterventionOutput => entry.intervention),
-  );
-
-  /** Secondary line of the unsynced queue: how many local changes are queued. */
-  protected readonly unsyncedNotes: Signal<Readonly<Record<string, string>>> = computed(
-    (): Readonly<Record<string, string>> => {
-      const notes: Record<string, string> = {};
-
-      for (const entry of this.store.unsynced()) {
-        notes[entry.intervention.id] =
-          $localize`:@@org.today.pendingChanges:${entry.pendingCount}:count: changes waiting to sync`;
-      }
-
-      return notes;
-    },
-  );
-
-  /** The nearest planned intervention still ahead, shown once nothing is waiting so the all-clear points somewhere. */
-  protected readonly nextUpcoming: Signal<InterventionOutput | undefined> = computed(
-    (): InterventionOutput | undefined => this.store.upcoming().items[0],
-  );
-
-  /**
-   * Property alertRows
-   * @readonly
-   *
-   * @description
-   * The dashboard's backend-computed alert feed, resolved through the page's
-   * alert-code registry into a localized, count-aware sentence per row.
-   * Severity is never carried by colour alone: the icon and its tint are
-   * paired with the label in the same sentence.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<readonly OrganizationDashboardAlertRow[]>}
-   */
-  protected readonly alertRows: Signal<readonly OrganizationDashboardAlertRow[]> = computed(
-    (): readonly OrganizationDashboardAlertRow[] => {
-      const organizationId: string | null = this.organizationContext.selectedOrganizationId();
-
-      return this.dashboardStore.alerts().map((alert): OrganizationDashboardAlertRow => {
-        const code: string = typeof alert.code === 'string' ? alert.code : '';
-        const count: number = typeof alert.count === 'number' ? alert.count : 0;
-        const descriptor = resolveOrganizationDashboardAlertTag(code);
-
-        return {
-          code,
-          icon: descriptor.icon,
-          iconClass: this.alertIconClass[descriptor.severity],
-          message: this.formatAlertMessage(code, count, descriptor.label),
-          link: this.alertLinkFor(code, organizationId),
-        };
-      });
-    },
-  );
-
-  /** The dashboard's most recently updated interventions, empty while the caller lacks {@link canReadInterventions} — the backend omits the field entirely in that case. */
-  protected readonly recentInterventions: Signal<
-    readonly OrganizationDashboardRecentIntervention[]
-  > = computed((): readonly OrganizationDashboardRecentIntervention[] =>
-    this.dashboardStore.recentInterventions(),
-  );
   //#endregion
 
   //#region Properties — trends
@@ -764,12 +506,14 @@ export class OrganizationDashboardPage {
   //#region Lifecycle
   /**
    * Constructor
+   * @constructor
    *
    * @description
-   * Wires the Trends section's period selector to both trend stores so a preset
+   * Activates browser-only trends on entry and wires the Trends section's period selector to both trend stores so a preset
    * or compare-toggle change refetches every trend chart in one place, and
    * registers {@link pageActions}.
    *
+   * @access public
    * @since 1.0.0
    */
   public constructor() {
@@ -777,45 +521,9 @@ export class OrganizationDashboardPage {
 
     effect(() => {
       this.applyPeriodToTrendStores(this.selectedPeriod(), this.compareToPreviousPeriod());
+      this.overviewTrendStore.activate();
+      this.assetGrowthTrendStore.activate();
     });
-  }
-  //#endregion
-
-  //#region Methods — work queues and alerts
-  /**
-   * Method retryQueues
-   *
-   * @description
-   * Re-runs both queue requests after a failure: the local queue loads
-   * separately so it survives a network failure, and a retry that left it
-   * behind would leave the page half-refreshed.
-   *
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected retryQueues(): void {
-    const organizationId: string | undefined = this.store.loadParams();
-
-    this.store.load(organizationId);
-    this.store.loadUnsynced(organizationId);
-  }
-
-  /**
-   * Method openIntervention
-   * @description Opens one intervention's record.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionOutput | OrganizationDashboardRecentIntervention} intervention - The intervention picked.
-   * @returns {void}
-   */
-  protected openIntervention(
-    intervention: InterventionOutput | OrganizationDashboardRecentIntervention,
-  ): void {
-    const organizationId: string | null = this.organizationContext.selectedOrganizationId();
-    if (organizationId === null) return;
-
-    void this.router.navigate(['/organizations', organizationId, 'interventions', intervention.id]);
   }
 
   /**
@@ -838,20 +546,6 @@ export class OrganizationDashboardPage {
     void this.router.navigate(['/organizations', organizationId, 'interventions'], {
       queryParams: { create: '1' },
     });
-  }
-
-  /**
-   * Method responsibleInitials
-   * @description The avatar fallback for a recent intervention's responsible member, empty when none is assigned.
-   * @access protected
-   * @since 1.0.0
-   * @param {OrganizationDashboardRecentIntervention} intervention - The recent intervention row.
-   * @returns {string} Up to two uppercase initials, or an empty string.
-   */
-  protected responsibleInitials(intervention: OrganizationDashboardRecentIntervention): string {
-    return intervention.responsibleName
-      ? getOrganizationInitials(intervention.responsibleName)
-      : '';
   }
   //#endregion
 
@@ -916,58 +610,6 @@ export class OrganizationDashboardPage {
   protected retryAssetGrowthTrend(): void {
     this.assetGrowthTrendStore.load(this.assetGrowthTrendStore.loadParams());
   }
-  //#endregion
-
-  //#region Internals
-  /**
-   * Method formatAlertMessage
-   * @description Composes one alert row's localized, count-aware sentence. An unrecognized code falls back to the registry's label with the raw count.
-   * @access private
-   * @since 1.0.0
-   * @param {string} code - Raw alert `code`.
-   * @param {number} count - The alert's `count`.
-   * @param {string} fallbackLabel - The registry's humanized label for an unrecognized code.
-   * @returns {string} The localized sentence.
-   */
-  private formatAlertMessage(code: string, count: number, fallbackLabel: string): string {
-    switch (code) {
-      case 'critical_non_conformities_open':
-        return $localize`:@@org.today.alerts.criticalNonConformitiesOpen:${count}:count: critical non-conformities still open`;
-      case 'non_conformities_overdue':
-        return $localize`:@@org.today.alerts.nonConformitiesOverdue:${count}:count: non-conformities overdue`;
-      case 'expired_invitations':
-        return $localize`:@@org.today.alerts.expiredInvitations:${count}:count: invitations expired`;
-      case 'equipment_under_maintenance':
-        return $localize`:@@org.today.alerts.equipmentUnderMaintenance:${count}:count: equipment items under maintenance`;
-      default:
-        return $localize`:@@org.today.alerts.generic:${fallbackLabel}:label: (${count}:count:)`;
-    }
-  }
-
-  /**
-   * Method alertLinkFor
-   * @description Resolves the section an alert code is actually about. A code with no evident destination resolves to `null`, which the template renders as a plain, non-clickable row rather than guessing.
-   * @access private
-   * @since 1.0.0
-   * @param {string} code - Raw alert `code`.
-   * @param {string | null} organizationId - The routed organization, or `null` before it resolves.
-   * @returns {StatTileLink | null} The destination, or `null` when none is evident.
-   */
-  private alertLinkFor(code: string, organizationId: string | null): StatTileLink | null {
-    if (organizationId === null) return null;
-
-    switch (code) {
-      case 'critical_non_conformities_open':
-      case 'non_conformities_overdue':
-        return ['/organizations', organizationId, 'inspections'];
-      case 'expired_invitations':
-        return ['/organizations', organizationId, 'members'];
-      case 'equipment_under_maintenance':
-        return ['/organizations', organizationId, 'equipments'];
-      default:
-        return null;
-    }
-  }
 
   /**
    * Method toComparisonDelta
@@ -989,28 +631,6 @@ export class OrganizationDashboardPage {
     const magnitude: number = Math.abs(Number(entry.value ?? 0));
 
     if (!Number.isFinite(magnitude)) return null;
-
-    return { value: magnitude, direction, positiveIsGood };
-  }
-
-  /**
-   * Method toHealthComparisonDelta
-   * @description Converts a health metric's period-over-period delta (percentage points) into the `StatTileDelta` shape `app-stat-tile` accepts.
-   * @access private
-   * @since 1.0.0
-   * @param {{ readonly delta: number; readonly direction: string } | null} entry - The health metric's comparison delta.
-   * @param {boolean} positiveIsGood - Whether `up` is the desirable direction for this metric.
-   * @returns {StatTileDelta | null} The tile delta, or `null` when no comparison is available.
-   */
-  private toHealthComparisonDelta(
-    entry: { readonly delta: number; readonly direction: string } | null,
-    positiveIsGood: boolean,
-  ): StatTileDelta | null {
-    if (!entry) return null;
-
-    const direction: StatTileDeltaDirection =
-      entry.direction === 'up' ? 'up' : entry.direction === 'down' ? 'down' : 'flat';
-    const magnitude: number = Math.round(Math.abs(entry.delta) * 10) / 10;
 
     return { value: magnitude, direction, positiveIsGood };
   }

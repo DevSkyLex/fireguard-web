@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 feature"
+  short_description: 'Scaffold or extend FireGuard feature ownership, routing, public'
+  default_prompt: 'Use $fg-web-feature for the requested FireGuard Web task.'

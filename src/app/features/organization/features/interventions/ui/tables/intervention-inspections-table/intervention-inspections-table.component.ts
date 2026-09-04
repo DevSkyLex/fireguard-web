@@ -16,8 +16,6 @@ import { lucideCircleAlert, lucideCircleDotDashed, lucideClipboardCheck } from '
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { resolveInterventionTag } from '@features/organization/features/interventions/models';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
@@ -26,6 +24,7 @@ import {
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
@@ -52,13 +51,12 @@ import { InterventionTag } from '../../components/intervention-tag';
 @Component({
   selector: 'app-intervention-inspections-table',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
     OrgDatePipe,
-    NgIcon,
     RouterLink,
-    EmptyState,
-    ErrorState,
     HlmBadge,
     HlmButton,
     InterventionTag,

@@ -6,37 +6,46 @@
   </p>
 
   @if (store.listCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load teams"
-      i18n-title="@@org.teams.errorTitle"
-      [description]="store.listError()?.message ?? null"
-    >
-      <button
-        hlmBtn
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="organization-teams-retry"
-        (click)="reload()"
-      >
-        <span i18n="@@org.teams.retry">Try again</span>
-      </button>
-    </app-error-state>
-  } @else if (!store.isLoading() && store.teams().length === 0) {
-    <app-empty-state
-      icon="lucideUsersRound"
-      title="No teams yet"
-      i18n-title="@@org.teams.emptyTitle"
-      description="Create a named group of members to assign to interventions."
-      i18n-description="@@org.teams.emptyText"
-    >
-      @if (canWrite()) {
-        <button hlmBtn class="max-sm:min-h-11" (click)="openCreateDialog()">
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@org.teams.createButton">New team</span>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@org.teams.errorTitle">Couldn't load teams</p>
+        <p hlmEmptyDescription>{{ store.listError()?.message ?? null }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          class="max-sm:min-h-11"
+          data-testid="organization-teams-retry"
+          (click)="reload()"
+        >
+          <span i18n="@@org.teams.retry">Try again</span>
         </button>
-      }
-    </app-empty-state>
+      </div>
+    </div>
+  } @else if (!store.isLoading() && store.teams().length === 0) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideUsersRound" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@org.teams.emptyTitle">No teams yet</p>
+        <p hlmEmptyDescription i18n="@@org.teams.emptyText">
+          Create a named group of members to assign to interventions.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (canWrite()) {
+          <button hlmBtn class="max-sm:min-h-11" (click)="openCreateDialog()">
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span i18n="@@org.teams.createButton">New team</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     <app-organization-team-table
       [items]="store.teams()"

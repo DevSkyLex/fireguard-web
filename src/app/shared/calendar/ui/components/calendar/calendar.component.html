@@ -50,7 +50,7 @@
   </div>
 
   <div class="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
-    <table brnCalendarGrid class="w-full table-fixed border-separate border-spacing-0">
+    <table brnCalendarGrid class="h-full w-full table-fixed border-separate border-spacing-0">
       <thead class="sticky top-0 z-10 bg-background">
         <tr>
           <th
@@ -81,7 +81,7 @@
                 brnCalendarCellButton
                 hlmBtn
                 variant="ghost"
-                class="group/day relative flex h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-10 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:h-24 sm:gap-1.5 sm:p-1.5 md:h-28"
+                class="group/day relative flex h-full min-h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-10 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:min-h-24 sm:gap-1.5 sm:p-1.5 md:min-h-28"
                 data-testid="calendar-day"
                 [date]="day"
                 [attr.data-day]="iso"

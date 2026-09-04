@@ -28,47 +28,106 @@
     </p>
   }
 
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+    <p class="text-sm text-muted-foreground" i18n="@@org.settings.plan.billingCadenceHelp">
+      Compare prices using your preferred billing frequency.
+    </p>
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      variant="outline"
+      size="sm"
+      [value]="billingInterval()"
+      data-testid="organization-plan-billing-interval"
+      aria-label="Billing frequency"
+      i18n-aria-label="@@org.settings.plan.billingCadenceAria"
+      (valueChange)="selectBillingInterval($event)"
+    >
+      <button hlmToggleGroupItem value="month" i18n="@@org.settings.plan.monthly">Monthly</button>
+      <button hlmToggleGroupItem value="year" i18n="@@org.settings.plan.yearly">Annual</button>
+    </hlm-toggle-group>
+  </div>
+
+  <div class="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
     @for (row of rows(); track row.id) {
-      <div hlmCard class="gap-3" [attr.data-testid]="'organization-plan-card-' + row.key">
-        <div hlmCardHeader class="gap-1">
-          <div class="flex items-center justify-between gap-2">
-            <h3 hlmCardTitle>{{ row.name }}</h3>
+      <div hlmCard class="relative w-full" [attr.data-testid]="'organization-plan-card-' + row.key">
+        @if (row.isPopular) {
+          <div
+            class="pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-primary/10 to-transparent"
+            aria-hidden="true"
+          ></div>
+          <div
+            class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary/20 via-primary to-primary/20"
+            aria-hidden="true"
+          ></div>
+        }
+
+        <div hlmCardHeader class="gap-2" [class.pt-5]="row.isPopular">
+          <h3 hlmCardTitle class="text-base">{{ row.name }}</h3>
+          <div hlmCardAction class="flex flex-wrap items-center justify-end gap-1.5">
+            @if (row.isPopular) {
+              <span hlmBadge data-testid="organization-plan-popular">
+                <span i18n="@@org.settings.plan.popular">Most popular</span>
+              </span>
+            }
             @if (row.isCurrent) {
-              <span hlmBadge variant="outline" class="gap-1 text-foreground">
-                <ng-icon name="lucideCheck" class="text-success" aria-hidden="true" />
+              <span hlmBadge variant="secondary" class="gap-1 text-secondary-foreground">
+                <ng-icon name="lucideCheck" aria-hidden="true" />
                 <span i18n="@@org.settings.plan.current">Current plan</span>
               </span>
             }
           </div>
-          <p hlmCardDescription>{{ row.priceLabel }}</p>
-        </div>
-        <div hlmCardContent class="flex flex-col gap-3">
+          <p class="text-2xl font-semibold tracking-tight text-foreground">{{ row.priceLabel }}</p>
           @if (row.description; as description) {
-            <p class="text-sm text-muted-foreground">{{ description }}</p>
-          }
-          @if (row.quotas.length > 0) {
-            <ul class="flex flex-col gap-1 text-sm text-foreground">
-              @for (quota of row.quotas; track quota.resource) {
-                <li>{{ quota.summary }}</li>
-              }
-            </ul>
+            <p hlmCardDescription class="min-h-10 leading-5">{{ description }}</p>
           }
         </div>
-        <div hlmCardFooter>
-          @if (!row.isCurrent) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="w-full max-sm:min-h-11"
-              [disabled]="isChanging()"
-              (click)="requestChange(row)"
-            >
+
+        <div hlmCardContent class="flex flex-col gap-4">
+          <hlm-separator />
+
+          <button
+            hlmBtn
+            type="button"
+            size="lg"
+            class="min-h-11 w-full"
+            [variant]="row.isPopular && !row.isCurrent ? 'default' : 'outline'"
+            [disabled]="row.isCurrent || isChanging()"
+            (click)="requestChange(row)"
+          >
+            @if (row.isCurrent) {
+              <ng-icon name="lucideCheck" aria-hidden="true" />
+              <span i18n="@@org.settings.plan.current">Current plan</span>
+            } @else {
               <span i18n="@@org.settings.plan.switch">Switch to this plan</span>
-            </button>
-          }
+            }
+          </button>
+
+          <div class="flex flex-col gap-3 pt-1">
+            <p class="text-sm font-medium text-foreground">
+              @if (row.inheritedPlanName; as inheritedPlanName) {
+                <span i18n="@@org.settings.plan.includesPrevious">
+                  Everything in {{ inheritedPlanName }}, plus:
+                </span>
+              } @else {
+                <span i18n="@@org.settings.plan.includes">Included:</span>
+              }
+            </p>
+            @if (row.quotas.length > 0) {
+              <ul class="flex flex-col gap-2.5 text-sm text-muted-foreground">
+                @for (quota of row.quotas; track quota.resource) {
+                  <li class="flex items-start gap-2.5">
+                    <ng-icon
+                      name="lucideCheck"
+                      class="mt-0.5 shrink-0 text-success"
+                      aria-hidden="true"
+                    />
+                    <span>{{ quota.summary }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
         </div>
       </div>
     }

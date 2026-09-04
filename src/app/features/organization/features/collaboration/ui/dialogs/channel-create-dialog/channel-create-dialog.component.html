@@ -1,0 +1,31 @@
+<hlm-dialog
+  [state]="dialogState()"
+  [disableClose]="pending()"
+  (stateChanged)="onStateChanged($event)"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto sm:max-w-md"
+    data-testid="channel-create-dialog"
+    [attr.data-dirty]="dirty()"
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@channels.newDialog.title">New channel</h3>
+    </hlm-dialog-header>
+
+    <app-channel-create-form
+      [visible]="visible()"
+      [parentOptions]="parentOptions()"
+      [pending]="pending()"
+      (submitted)="onFormSubmitted($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>
+
+<app-unsaved-changes-dialog
+  [state]="unsavedChangesDialogState()"
+  (confirmed)="onUnsavedChangesConfirmed()"
+  (dismissed)="onUnsavedChangesDismissed()"
+/>

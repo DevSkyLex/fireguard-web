@@ -16,10 +16,15 @@
               [tooltip]="link.label"
             >
               <ng-icon [name]="link.icon" aria-hidden="true" />
-              <span>{{ link.label }}</span>
+              <span class="min-w-0 truncate">{{ link.label }}</span>
               @if (counterOf(link.counterKey); as count) {
                 @if (count > 0) {
-                  <span hlmBadge variant="secondary" [attr.aria-label]="counterLabelOf(count)">
+                  <span
+                    hlmBadge
+                    variant="secondary"
+                    class="ms-auto shrink-0 group-data-[collapsible=icon]:hidden"
+                    [attr.aria-label]="counterLabelOf(count)"
+                  >
                     {{ count }}
                   </span>
                 }

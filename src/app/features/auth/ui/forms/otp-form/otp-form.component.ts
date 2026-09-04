@@ -25,6 +25,7 @@ import {
 import { BrnInputOtp } from '@spartan-ng/brain/input-otp';
 import type { StoreError } from '@core/request-state';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -34,6 +35,7 @@ import {
   HlmInputOtpSeparator,
   HlmInputOtpSlot,
 } from '@shared/ui/input-otp';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { OtpFormValues } from './models';
 
 /**
@@ -94,10 +96,12 @@ const OTP_LENGTH = 6;
 @Component({
   selector: 'app-otp-form',
   imports: [
+    ...HlmAlertImports,
     RequiredMarker,
     FormField,
     BrnInputOtp,
     HlmButton,
+    HlmSpinner,
     HlmCheckbox,
     HlmInputOtp,
     HlmInputOtpGroup,

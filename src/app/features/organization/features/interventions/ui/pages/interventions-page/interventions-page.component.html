@@ -1,16 +1,4 @@
 <div id="interventions" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
-  @if (
-    activeView() === 'list' &&
-    (statisticsStore.queryData() !== null || statisticsStore.isQueryLoading())
-  ) {
-    <app-intervention-kpi-strip
-      class="shrink-0"
-      [statistics]="statisticsStore.queryData()"
-      [loading]="statisticsStore.isQueryLoading()"
-      [baseRoute]="detailRouteBase()"
-    />
-  }
-
   @if (store.servedFromLocalCache()) {
     <div
       class="flex shrink-0 items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3 py-2.5"
@@ -30,15 +18,81 @@
     </div>
   }
 
-  @if (activeView() === 'list' && statisticsStore.queryData() !== null) {
-    <app-intervention-statistics-analysis
-      class="shrink-0"
-      [statistics]="statisticsStore.queryData()"
-      [organizationId]="organizationId()"
-    />
-  }
-
   <ng-template #pageActions>
+    @if (canCreate()) {
+      @if (planningOptions.templates().length > 0) {
+        <div hlmButtonGroup>
+          <button
+            hlmBtn
+            type="button"
+            class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+            data-testid="interventions-new"
+            i18n-aria-label="@@intervention.list.newButton"
+            aria-label="New intervention"
+            (click)="openCreate()"
+          >
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+              >New intervention</span
+            >
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            size="icon"
+            align="end"
+            class="max-sm:min-h-11 max-sm:min-w-11"
+            data-testid="interventions-new-from-template"
+            [disabled]="store.isInstantiatingFromTemplate()"
+            [hlmDropdownMenuTrigger]="templateMenu"
+          >
+            <ng-icon name="lucideChevronDown" aria-hidden="true" />
+            <span class="sr-only" i18n="@@intervention.list.newFromTemplate"
+              >New intervention from a template</span
+            >
+          </button>
+        </div>
+
+        <ng-template #templateMenu>
+          <hlm-dropdown-menu class="w-64">
+            <hlm-dropdown-menu-group aria-labelledby="interventions-template-menu-label">
+              <hlm-dropdown-menu-label
+                id="interventions-template-menu-label"
+                i18n="@@intervention.list.newFromTemplateLabel"
+                >Start from a template</hlm-dropdown-menu-label
+              >
+              @for (template of planningOptions.templates(); track template.id) {
+                <button
+                  hlmDropdownMenuItem
+                  [attr.data-testid]="'interventions-new-from-template-' + template.id"
+                  (click)="openTemplateCreate(template.id)"
+                >
+                  <span class="truncate">{{ template.name }}</span>
+                </button>
+              }
+            </hlm-dropdown-menu-group>
+          </hlm-dropdown-menu>
+        </ng-template>
+      } @else {
+        <button
+          hlmBtn
+          type="button"
+          class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+          data-testid="interventions-new"
+          i18n-aria-label="@@intervention.list.newButton"
+          aria-label="New intervention"
+          (click)="openCreate()"
+        >
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+            >New intervention</span
+          >
+        </button>
+      }
+    }
+  </ng-template>
+
+  <div class="flex flex-wrap items-center justify-between gap-2">
     <hlm-toggle-group
       type="single"
       [nullable]="false"
@@ -74,90 +128,15 @@
       >
         <span i18n="@@intervention.board.viewCalendar">Calendar</span>
       </button>
-      @if (canReadRecurrences()) {
-        <button
-          hlmToggleGroupItem
-          value="recurrences"
-          class="max-sm:min-h-11"
-          data-testid="interventions-tab-recurrences"
-        >
-          <span i18n="@@intervention.recurrences.tab">Recurrences</span>
-        </button>
-      }
     </hlm-toggle-group>
-
-    @if (planningOptions.templates().length > 0) {
-      <div hlmButtonGroup>
-        <button
-          hlmBtn
-          type="button"
-          class="min-w-0 shrink max-sm:min-h-11"
-          data-testid="interventions-new"
-          i18n-aria-label="@@intervention.list.newButton"
-          aria-label="New intervention"
-          (click)="openCreate()"
-        >
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
-            >New intervention</span
-          >
-        </button>
-        <button
-          hlmBtn
-          type="button"
-          size="icon"
-          align="end"
-          class="max-sm:min-h-11"
-          data-testid="interventions-new-from-template"
-          [disabled]="store.isInstantiatingFromTemplate()"
-          [hlmDropdownMenuTrigger]="templateMenu"
-        >
-          <ng-icon name="lucideChevronDown" aria-hidden="true" />
-          <span class="sr-only" i18n="@@intervention.list.newFromTemplate"
-            >New intervention from a template</span
-          >
-        </button>
-      </div>
-
-      <ng-template #templateMenu>
-        <hlm-dropdown-menu class="w-64">
-          <hlm-dropdown-menu-group aria-labelledby="interventions-template-menu-label">
-            <hlm-dropdown-menu-label
-              id="interventions-template-menu-label"
-              i18n="@@intervention.list.newFromTemplateLabel"
-              >Start from a template</hlm-dropdown-menu-label
-            >
-            @for (template of planningOptions.templates(); track template.id) {
-              <button
-                hlmDropdownMenuItem
-                [attr.data-testid]="'interventions-new-from-template-' + template.id"
-                (click)="instantiateFromTemplate({ templateId: template.id })"
-              >
-                <span class="truncate">{{ template.name }}</span>
-              </button>
-            }
-          </hlm-dropdown-menu-group>
-        </hlm-dropdown-menu>
-      </ng-template>
-    } @else {
-      <button
-        hlmBtn
-        type="button"
-        class="min-w-0 shrink max-sm:min-h-11"
-        data-testid="interventions-new"
-        i18n-aria-label="@@intervention.list.newButton"
-        aria-label="New intervention"
-        (click)="openCreate()"
-      >
-        <ng-icon name="lucidePlus" aria-hidden="true" />
-        <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
-          >New intervention</span
-        >
-      </button>
-    }
-  </ng-template>
-
-  <hlm-tabs [tab]="activeView()" class="flex min-h-0 flex-1 flex-col gap-4">
+  </div>
+  <div
+    [class]="
+      activeView() === 'list'
+        ? 'flex min-h-96 flex-1 flex-col gap-4 max-sm:min-h-0 max-sm:flex-none'
+        : 'flex min-h-96 flex-1 flex-col gap-4 max-sm:flex-none'
+    "
+  >
     @if (activeView() !== 'recurrences') {
       <app-collection-toolbar>
         <div toolbarStart class="flex items-center gap-2">
@@ -791,53 +770,84 @@
       />
     </ng-template>
 
-    <div hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4 max-sm:flex-none">
+    <section
+      [class]="
+        activeView() === 'list' ? 'flex min-h-0 flex-1 flex-col gap-4 max-sm:flex-none' : 'hidden'
+      "
+      aria-label="List"
+      i18n-aria-label="@@intervention.board.viewList"
+    >
       @if (listForbidden()) {
-        <app-empty-state
-          icon="lucideLock"
-          title="Not available with your permissions"
-          i18n-title="@@intervention.list.forbiddenTitle"
-          description="Ask an organization admin to grant you read access to interventions."
-          i18n-description="@@intervention.list.forbiddenDesc"
-        />
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideLock" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@intervention.list.forbiddenTitle">
+              Not available with your permissions
+            </p>
+            <p hlmEmptyDescription i18n="@@intervention.list.forbiddenDesc">
+              Ask an organization admin to grant you read access to interventions.
+            </p>
+          </div>
+        </div>
       } @else if (hasError()) {
-        <app-error-state
-          icon="lucideCircleAlert"
-          title="Couldn't load the interventions"
-          i18n-title="@@intervention.list.errorTitle"
-          description="The interventions could not be loaded. Check your connection and try again."
-          i18n-description="@@intervention.list.errorText"
-        >
-          <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
-            <span i18n="@@intervention.list.retry">Try again</span>
-          </button>
-        </app-error-state>
+        <div hlmEmpty role="alert">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon" class="text-destructive">
+              <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@intervention.list.errorTitle">
+              Couldn't load the interventions
+            </p>
+            <p hlmEmptyDescription i18n="@@intervention.list.errorText">
+              The interventions could not be loaded. Check your connection and try again.
+            </p>
+          </div>
+          <div hlmEmptyContent>
+            <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
+              <span i18n="@@intervention.list.retry">Try again</span>
+            </button>
+          </div>
+        </div>
       } @else if (!store.isLoadingInterventions() && items().length === 0) {
         @if (hasSearch()) {
-          <app-empty-state
-            icon="lucideSearch"
-            title="No matching intervention"
-            i18n-title="@@intervention.list.searchEmptyHeading"
-            description="Try a different search term, or clear the search to see every intervention."
-            i18n-description="@@intervention.list.searchEmptyDescription"
-          >
-            <button hlmBtn variant="outline" (click)="clearSearch()">
-              <span i18n="@@intervention.list.clearSearch">Clear search</span>
-            </button>
-          </app-empty-state>
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideSearch" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@intervention.list.searchEmptyHeading">
+                No matching intervention
+              </p>
+              <p hlmEmptyDescription i18n="@@intervention.list.searchEmptyDescription">
+                Try a different search term, or clear the search to see every intervention.
+              </p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn variant="outline" (click)="clearSearch()">
+                <span i18n="@@intervention.list.clearSearch">Clear search</span>
+              </button>
+            </div>
+          </div>
         } @else {
-          <app-empty-state
-            icon="lucideClipboardList"
-            title="No interventions yet"
-            i18n-title="@@intervention.list.emptyTitle"
-            description="Create your first intervention to start planning field work."
-            i18n-description="@@intervention.list.emptyDescription"
-          >
-            <button hlmBtn (click)="openCreate()">
-              <ng-icon name="lucidePlus" aria-hidden="true" />
-              <span i18n="@@intervention.list.newButtonShort">New</span>
-            </button>
-          </app-empty-state>
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideClipboardList" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@intervention.list.emptyTitle">No interventions yet</p>
+              <p hlmEmptyDescription i18n="@@intervention.list.emptyDescription">
+                Create your first intervention to start planning field work.
+              </p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn (click)="openCreate()">
+                <ng-icon name="lucidePlus" aria-hidden="true" />
+                <span i18n="@@intervention.list.newButtonShort">New</span>
+              </button>
+            </div>
+          </div>
         }
       } @else {
         <app-intervention-table
@@ -874,23 +884,53 @@
           (pageSizeChanged)="setPageSize($event)"
         />
       }
-    </div>
+    </section>
 
-    <div hlmTabsContent="board" class="flex min-h-0 flex-1 flex-col">
-      <ng-template hlmTabsContentLazy>
-        <app-intervention-board
-          [regionalFormatting]="regionalFormatting()"
-          [items]="boardItems()"
-          [canTransition]="canTransition()"
-          [transitioningIds]="store.transitioningInterventionIds()"
-          [detailRouteBase]="detailRouteBase()"
-          (moveRequested)="applyTransition($event)"
-        />
-      </ng-template>
-    </div>
+    <section
+      [class]="
+        activeView() === 'board'
+          ? 'flex min-h-96 flex-1 flex-col max-sm:h-[min(36rem,75dvh)] max-sm:flex-none'
+          : 'hidden'
+      "
+      aria-label="Board"
+      i18n-aria-label="@@intervention.board.viewBoard"
+    >
+      @defer (when activeView() === 'board') {
+        <app-board
+          boardId="interventions-board"
+          label="Interventions by status"
+          i18n-label="@@intervention.board.label"
+          emptyLabel="No interventions."
+          i18n-emptyLabel="@@intervention.board.columnEmpty"
+          [columns]="boardColumns()"
+          [canMove]="canMoveBoardItem"
+          [moveBlockedReason]="boardMoveBlockedReason"
+          (moveRequested)="onBoardMoveRequested($event)"
+        >
+          <ng-template [appBoardColumnHeader]="boardColumns()" let-column>
+            <app-intervention-tag kind="status" [value]="column.id" asOption />
+          </ng-template>
+          <ng-template [appBoardCard]="boardColumns()" let-card let-move="move">
+            <app-intervention-board-card
+              [regionalFormatting]="regionalFormatting()"
+              [item]="card.data"
+              [canTransition]="canTransition()"
+              [currentMemberIri]="memberIri()"
+              [locked]="!!card.disabled"
+              [detailRouteBase]="detailRouteBase()"
+              (moveRequested)="move($event)"
+            />
+          </ng-template>
+        </app-board>
+      }
+    </section>
 
-    <div hlmTabsContent="calendar" class="min-h-0 flex-1">
-      <ng-template hlmTabsContentLazy>
+    <section
+      [class]="activeView() === 'calendar' ? 'min-h-0 flex-1' : 'hidden'"
+      aria-label="Calendar"
+      i18n-aria-label="@@intervention.board.viewCalendar"
+    >
+      @defer (when activeView() === 'calendar') {
         <app-intervention-calendar
           [firstDayOfWeek]="firstDayOfWeek()"
           [interventions]="calendarStore.interventions()"
@@ -902,12 +942,16 @@
           (monthChanged)="onCalendarMonthChanged($event)"
           (reloadRequested)="calendarReload()"
         />
-      </ng-template>
-    </div>
+      }
+    </section>
 
     @if (canReadRecurrences()) {
-      <div hlmTabsContent="recurrences" class="flex min-h-0 flex-1 flex-col gap-4">
-        <ng-template hlmTabsContentLazy>
+      <section
+        [class]="activeView() === 'recurrences' ? 'flex min-h-0 flex-1 flex-col gap-4' : 'hidden'"
+        aria-label="Recurrences"
+        i18n-aria-label="@@intervention.recurrences.tab"
+      >
+        @defer (when activeView() === 'recurrences') {
           <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <p
               class="max-w-prose text-sm text-muted-foreground"
@@ -943,14 +987,16 @@
             (removed)="requestRecurrenceDelete($event)"
             (activeToggled)="toggleRecurrenceActive($event)"
           />
-        </ng-template>
-      </div>
+        }
+      </section>
     }
-  </hlm-tabs>
+  </div>
 </div>
 
 <app-intervention-create-sheet
   [visible]="createSheetVisible()"
+  [initialTemplateId]="createTemplateId()"
+  [templateServerError]="store.instantiateFromTemplateError()"
   [pending]="store.isCreating()"
   [serverError]="store.createError()"
   [siteOptions]="planningOptions.sites()"

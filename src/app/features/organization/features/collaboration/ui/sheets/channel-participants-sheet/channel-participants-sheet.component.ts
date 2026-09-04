@@ -14,10 +14,10 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideUserMinus, lucideUserPlus, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { MemberDirectoryEntry } from '@features/organization/models';
-import { EmptyState } from '@shared/empty-state';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -66,7 +66,7 @@ import type { ChannelParticipantView } from './models';
   selector: 'app-channel-participants-sheet',
   imports: [
     NgIcon,
-    EmptyState,
+    ...HlmEmptyImports,
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,

@@ -102,24 +102,29 @@
     }
   </ng-container>
 
-  <app-error-state
-    surfaceError
-    icon="lucideCircleAlert"
-    title="Recurrences could not be loaded"
-    i18n-title="@@intervention.recurrences.errorTitle"
-    [description]="error() ?? ''"
-    data-testid="intervention-recurrences-error"
-  />
+  <div hlmEmpty role="alert" surfaceError data-testid="intervention-recurrences-error">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon" class="text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.recurrences.errorTitle">
+        Recurrences could not be loaded
+      </p>
+      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+    </div>
+  </div>
 
-  <app-empty-state
-    surfaceEmpty
-    icon="lucideCalendarClock"
-    title="No recurrences yet."
-    i18n-title="@@intervention.recurrences.empty"
-    description="Recurring schedules periodically draft a new intervention from a template."
-    i18n-description="@@intervention.recurrences.emptyDesc"
-    data-testid="intervention-recurrences-empty"
-  />
+  <div hlmEmpty surfaceEmpty data-testid="intervention-recurrences-empty">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideCalendarClock" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@intervention.recurrences.empty">No recurrences yet.</p>
+      <p hlmEmptyDescription i18n="@@intervention.recurrences.emptyDesc">
+        Recurring schedules periodically draft a new intervention from a template.
+      </p>
+    </div>
+  </div>
 </app-collection-surface>
 
 <ng-template #activeToggle let-recurrence="recurrence" let-suffix="suffix">

@@ -39,6 +39,7 @@ import {
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionListItemViewModel } from '../../pages/interventions-page/models';
@@ -102,6 +103,7 @@ import {
     InterventionTag,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
+    ...HlmItemImports,
   ],
   providers: [
     provideIcons({

@@ -2,19 +2,18 @@
   class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4"
   data-testid="direct-conversation-header"
 >
-  <button
+  <a
     hlmBtn
-    type="button"
     variant="ghost"
     size="icon"
-    class="size-8 shrink-0 md:hidden"
+    class="size-11 shrink-0 lg:hidden"
     data-testid="direct-conversation-back"
     i18n-aria-label="@@messages.conversation.back"
     aria-label="Back to conversations"
-    (click)="sidebar.setOpenMobile(true)"
+    [routerLink]="messagesRouteBase()"
   >
     <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
-  </button>
+  </a>
 
   <hlm-avatar class="size-8 shrink-0">
     @if (counterpartAvatarUrl(); as avatarUrl) {

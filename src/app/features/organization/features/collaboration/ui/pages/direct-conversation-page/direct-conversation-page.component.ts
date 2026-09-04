@@ -12,6 +12,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
 import type { StoreError } from '@core/request-state';
@@ -42,7 +43,6 @@ import {
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
-import { HlmSidebarService } from '@shared/ui/sidebar';
 import { MessageThread } from '../../components/message-thread';
 import { MessageDeleteDialog } from '../../dialogs/message-delete-dialog';
 import { MessageEditDialog } from '../../dialogs/message-edit-dialog';
@@ -79,6 +79,7 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 @Component({
   selector: 'app-direct-conversation-page',
   imports: [
+    RouterLink,
     NgIcon,
     HlmAvatar,
     HlmAvatarFallback,
@@ -475,20 +476,21 @@ export class DirectConversationPage {
   );
 
   /**
-   * Property sidebar
+   * Property messagesRouteBase
    * @readonly
    *
    * @description
-   * The shell column, opened by the phone's back control: the conversations
-   * live there now, so returning to them is opening the sheet rather than
-   * navigating up — the route above holds only a placeholder.
+   * Messaging index shown by the back control below desktop width.
+   * Navigating there replaces the thread with the conversation-list extension.
    *
    * @access protected
    * @since 2.0.0
    *
-   * @type {HlmSidebarService}
+   * @type {Signal<string>}
    */
-  protected readonly sidebar: HlmSidebarService = inject<HlmSidebarService>(HlmSidebarService);
+  protected readonly messagesRouteBase: Signal<string> = computed(
+    () => `/organizations/${this.organizationContext.selectedOrganizationId() ?? ''}/messages`,
+  );
 
   /**
    * Property loadErrorMessage

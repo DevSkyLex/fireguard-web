@@ -1,13 +1,28 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
+    @if (!pending() && serverError()) {
+      <div
+        hlmAlert
+        variant="destructive"
+        class="break-words"
+        data-testid="email-request-server-error"
+      >
+        <p hlmAlertDescription i18n="@@auth.passwordReset.failed">
+          The request could not be completed. Check your information and try again.
+        </p>
+      </div>
+    }
     <hlm-field>
       <label hlmFieldLabel for="email-request-address"
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker
       /></label>
       <input
+        class="max-sm:min-h-11"
         hlmInput
         id="email-request-address"
         type="email"
+        autocapitalize="none"
+        spellcheck="false"
         autocomplete="email"
         inputmode="email"
         placeholder="you@company.com"
@@ -25,12 +40,18 @@
     <button
       hlmBtn
       type="submit"
-      class="w-full min-w-0 shrink max-sm:min-h-11"
+      class="h-auto min-h-11 w-full min-w-0 whitespace-normal"
       data-testid="email-request-submit"
+      aria-live="polite"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"
     >
-      <span class="truncate">{{ submitLabel() }}</span>
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+        <span i18n="@@auth.email.sending">Sending code…</span>
+      } @else {
+        <span>{{ submitLabel() }}</span>
+      }
     </button>
   </hlm-field-group>
 </form>

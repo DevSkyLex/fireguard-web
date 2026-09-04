@@ -84,6 +84,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     // Step 4 — facility: stage one explicitly through "Add facility", then Continue.
     await expect(onboarding.facilityNameInput).toBeVisible();
     const createdFacility = facilityOutput({ type: 'site', name: 'Main warehouse' });
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [createdFacility]);
     await api.mockFacilityCreate(E2E_ORGANIZATION_ID, createdFacility);
     await api.mockOnboardingStepExecute(
       'create_first_facility',
@@ -115,7 +116,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
       ]),
     );
 
-    await expect(onboarding.equipmentFacilityTrigger).toContainText('Main warehouse · Site');
+    await expect(onboarding.equipmentFacilitySummary).toContainText('Main warehouse · Site');
     await expect(onboarding.nextStepHint).toContainText('Last step');
     await onboarding.pickEquipmentType('Fire extinguisher');
     await onboarding.equipmentSerialInput.fill('SN-E2E-001');
@@ -145,6 +146,9 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     await expect(onboarding.skipButton).toHaveCount(0);
     await expect(onboarding.nextStepHint).toContainText('Next: First equipment');
 
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [
+      facilityOutput({ type: 'site', name: 'Main warehouse' }),
+    ]);
     const createRequest = page.waitForRequest(
       (request) => request.url().includes('/facilities') && request.method() === 'POST',
     );
@@ -193,4 +197,27 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     await onboarding.memberEmailInput.fill('jordan@example.com');
     await expect(onboarding.membersSubmit).toBeEnabled();
   });
+});
+
+test('returns focus to the draft when editing a prepared invitation or site', async ({ page }) => {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession();
+  await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, []);
+  await api.mockOnboarding(onboardingAt('invite_members', ['create_organization', 'select_plan']));
+  const onboarding = new OnboardingPage(page);
+  await onboarding.goto();
+  await onboarding.memberEmailInput.fill('operator@example.com');
+  await onboarding.memberAddButton.click();
+  await page.getByRole('button', { name: 'Edit operator@example.com', exact: true }).click();
+  await expect(onboarding.memberEmailInput).toBeFocused();
+  await expect(onboarding.memberEmailInput).toHaveValue('operator@example.com');
+
+  await api.mockOnboarding(
+    onboardingAt('create_first_facility', ['create_organization', 'select_plan', 'invite_members']),
+  );
+  await onboarding.goto();
+  await onboarding.addFacility({ type: 'Site', name: 'Main warehouse' });
+  await page.getByRole('button', { name: 'Edit Main warehouse', exact: true }).click();
+  await expect(onboarding.facilityNameInput).toBeFocused();
+  await expect(onboarding.facilityNameInput).toHaveValue('Main warehouse');
 });

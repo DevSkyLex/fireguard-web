@@ -1,15 +1,19 @@
 <section hlmCard>
   <div hlmCardHeader>
     <h2 hlmCardTitle i18n="@@intervention.detail.checklist">Work items</h2>
-    <p hlmCardDescription i18n="@@intervention.wit.caption">
-      The tasks to complete during this intervention, tracked one by one.
-    </p>
+    @if (items().length > 0) {
+      <p hlmCardDescription i18n="@@intervention.wit.caption">
+        The tasks to complete during this intervention, tracked one by one.
+      </p>
+    }
 
     <div hlmCardAction class="flex items-center gap-3">
-      <span class="text-sm text-muted-foreground tabular-nums">
-        {{ doneCount() }}/{{ items().length }}
-      </span>
-      @if (canAdd()) {
+      @if (items().length > 0 && !showProgress()) {
+        <span class="text-sm text-muted-foreground tabular-nums"
+          >{{ doneCount() }}/{{ items().length }}</span
+        >
+      }
+      @if (canAdd() && items().length > 0) {
         <button
           hlmBtn
           type="button"
@@ -28,15 +32,15 @@
   </div>
 
   <div hlmCardContent class="flex flex-col gap-3">
-    @if (showProgress()) {
+    @if (showProgress() && totalCount() > 0) {
       <div class="flex flex-col gap-1" data-testid="intervention-work-items-progress">
         <div class="flex items-center justify-between gap-2">
           <span class="text-sm font-medium text-foreground" i18n="@@intervention.wit.progressLabel"
             >Progress</span
           >
-          <span class="text-sm text-muted-foreground tabular-nums">
-            {{ completedCount() }}/{{ totalCount() }}
-          </span>
+          <span class="text-sm text-muted-foreground tabular-nums"
+            >{{ completedCount() }}/{{ totalCount() }}</span
+          >
         </div>
         <hlm-progress [value]="progressPercent()" [attr.aria-label]="progressLabel()">
           <hlm-progress-indicator />
@@ -441,39 +445,43 @@
           }
         </ng-container>
 
-        <app-empty-state
-          surfaceEmpty
-          icon="lucideFilterX"
-          title="No work items match this filter"
-          i18n-title="@@intervention.wit.filteredEmptyTitle"
-          description="Try another chip, or clear the filter to see the whole scope."
-          i18n-description="@@intervention.wit.filteredEmptyDesc"
-          data-testid="intervention-work-items-filtered-empty"
-        />
+        <div hlmEmpty surfaceEmpty data-testid="intervention-work-items-filtered-empty">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideFilterX" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@intervention.wit.filteredEmptyTitle">
+              No work items match this filter
+            </p>
+            <p hlmEmptyDescription i18n="@@intervention.wit.filteredEmptyDesc">
+              Try another chip, or clear the filter to see the whole scope.
+            </p>
+          </div>
+        </div>
       </app-collection-surface>
     } @else {
-      <app-empty-state
-        icon="lucideListChecks"
-        title="No work items yet"
-        i18n-title="@@intervention.wit.emptyTitle"
-        [description]="emptyDescription()"
-        data-testid="intervention-work-items-empty"
-      >
-        @if (canAdd()) {
-          <button
-            hlmBtn
-            type="button"
-            size="sm"
-            class="max-sm:min-h-11"
-            data-testid="intervention-work-items-empty-add"
-            [disabled]="busy()"
-            (click)="addRequested.emit()"
-          >
-            <ng-icon name="lucidePlus" aria-hidden="true" />
-            <span i18n="@@intervention.wit.newItem">New item</span>
-          </button>
-        }
-      </app-empty-state>
+      <div hlmEmpty data-testid="intervention-work-items-empty">
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@intervention.wit.emptyTitle">No work items yet</p>
+          <p hlmEmptyDescription>{{ emptyDescription() }}</p>
+        </div>
+        <div hlmEmptyContent>
+          @if (canAdd()) {
+            <button
+              hlmBtn
+              type="button"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="intervention-work-items-empty-add"
+              [disabled]="busy()"
+              (click)="addRequested.emit()"
+            >
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              <span i18n="@@intervention.wit.newItem">New item</span>
+            </button>
+          }
+        </div>
+      </div>
     }
   </div>
 </section>

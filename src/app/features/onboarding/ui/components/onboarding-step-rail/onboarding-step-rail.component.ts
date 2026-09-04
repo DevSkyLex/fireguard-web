@@ -14,7 +14,7 @@ import {
   type OnboardingStepKey,
   type OnboardingStepOutput,
 } from '@features/onboarding/models';
-import { HlmProgress } from '@shared/ui/progress';
+import { HlmProgress, HlmProgressIndicator } from '@shared/ui/progress';
 import { ONBOARDING_STEP_RAIL_ICONS } from './constants/onboarding-step-rail-icons.constants';
 import { ONBOARDING_STEP_STATUS_TAG_ICON_CLASS } from './constants/onboarding-step-status-tag-severity.constants';
 import type { OnboardingStepRailRow } from './models';
@@ -50,7 +50,7 @@ import type { OnboardingStepRailRow } from './models';
  */
 @Component({
   selector: 'app-onboarding-step-rail',
-  imports: [NgIcon, HlmProgress],
+  imports: [HlmProgressIndicator, NgIcon, HlmProgress],
   providers: [provideIcons(ONBOARDING_STEP_RAIL_ICONS)],
   templateUrl: './onboarding-step-rail.component.html',
   host: { class: 'block' },

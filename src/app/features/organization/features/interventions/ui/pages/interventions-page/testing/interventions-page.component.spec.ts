@@ -39,7 +39,6 @@ import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/o
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
-import { InterventionStatisticsStore } from '../../../../state/intervention-statistics';
 import { InterventionRecurrenceDeleteDialog } from '../../../dialogs/intervention-recurrence-delete-dialog';
 import { InterventionRecurrenceTable } from '../../../tables/intervention-recurrence-table';
 import { InterventionsPage } from '../interventions-page.component';
@@ -255,6 +254,7 @@ describe('InterventionsPage', () => {
             isLoadingInterventions: signal(false),
             isCreating: signal(false),
             createError: signal(null),
+            instantiateFromTemplateError: signal(null),
             isInstantiatingFromTemplate: signal(false),
             assignCallState: signal({ status: 'idle' }),
           },
@@ -277,10 +277,6 @@ describe('InterventionsPage', () => {
         {
           provide: OrganizationMemberAccessStore,
           useValue: { profile: signal({ id: 'member-1' }) },
-        },
-        {
-          provide: InterventionStatisticsStore,
-          useValue: { load: vi.fn(), queryData: signal(null), isQueryLoading: signal(false) },
         },
         {
           provide: InterventionService,
@@ -429,6 +425,68 @@ describe('InterventionsPage', () => {
     expect(transition).toHaveBeenCalledWith({ id: 'i-9', status: 'planned', revision: 7 });
   });
 
+  it('should project workflow columns and pending items into the generic board', async () => {
+    interventionList.set([intervention({ id: 'board-item', status: 'planned' })]);
+    transitioningInterventionIds.set(['board-item']);
+    fixture = await createPage({ view: 'board' });
+    const columns = fixture.componentInstance['boardColumns']();
+    expect(columns.map((column) => column.id)).toEqual([
+      'draft',
+      'planned',
+      'in_progress',
+      'changes_requested',
+      'submitted',
+      'published',
+      'abandoned',
+    ]);
+    expect(columns[1].items[0]).toEqual(
+      expect.objectContaining({ id: 'board-item', disabled: true }),
+    );
+    expect(columns[1].items[0].data.intervention.status).toBe('planned');
+  });
+
+  it('should translate a legal generic move to the existing revision-aware transition', async () => {
+    fixture = await createPage({ view: 'board' });
+    const data = {
+      intervention: intervention({
+        id: 'board-item',
+        participants: ['/api/organizations/org-1/members/member-1'],
+        status: 'planned',
+        revision: 7,
+        allowedTransitions: ['in_progress'],
+      }),
+      isOverdue: false,
+      responsible: null,
+    };
+    fixture.componentInstance['onBoardMoveRequested']({ item: data, columnId: 'in_progress' });
+    expect(transition).toHaveBeenCalledWith({
+      id: 'board-item',
+      status: 'in_progress',
+      revision: 7,
+    });
+  });
+
+  it('should reject pending and identity-restricted board moves before calling the store', async () => {
+    fixture = await createPage({ view: 'board' });
+    const data = {
+      intervention: intervention({
+        id: 'board-item',
+        status: 'submitted',
+        allowedTransitions: ['in_progress'],
+      }),
+      isOverdue: false,
+      responsible: null,
+    };
+    fixture.componentInstance['onBoardMoveRequested']({ item: data, columnId: 'in_progress' });
+    expect(transition).not.toHaveBeenCalled();
+    transitioningInterventionIds.set(['board-item']);
+    fixture.componentInstance['onBoardMoveRequested']({
+      item: { ...data, intervention: { ...data.intervention, status: 'planned' } },
+      columnId: 'in_progress',
+    });
+    expect(transition).not.toHaveBeenCalled();
+  });
+
   it('should open the creation sheet once for ?create=1, then drop the param', async () => {
     fixture = await createPage({ create: '1' });
 
@@ -463,7 +521,9 @@ describe('InterventionsPage', () => {
     await fixture.whenStable();
 
     expect(clearCreated).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-1']);
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-1'], {
+      queryParamsHandling: 'preserve',
+    });
   });
 
   it('should navigate to the draft created from a template, the same as a manual create', async () => {
@@ -473,7 +533,9 @@ describe('InterventionsPage', () => {
     await fixture.whenStable();
 
     expect(clearCreated).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-2']);
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'interventions', 'new-2'], {
+      queryParamsHandling: 'preserve',
+    });
   });
 
   it('should show the failure state rather than an empty list when the load fails', async () => {
@@ -509,6 +571,15 @@ describe('InterventionsPage', () => {
       plannedStartAt: undefined,
       dueAt: undefined,
     });
+  });
+
+  it('should prepare a header template without creating it until confirmation', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openTemplateCreate']('template-1');
+    await fixture.whenStable();
+    expect(fixture.componentInstance['createTemplateId']()).toBe('template-1');
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(instantiateFromTemplate).not.toHaveBeenCalled();
   });
 
   it('should hand the picked template and its overrides straight to the store', async () => {
@@ -1205,12 +1276,12 @@ describe('InterventionsPage', () => {
       expect(root.querySelector('[data-testid="interventions-export"]')).toBeNull();
     });
 
-    it('should render the Recurrences tab trigger for a viewer with INTERVENTIONS_READ', async () => {
+    it('should omit queue shortcuts and the secondary menu', async () => {
       fixture = await createPage();
-
-      expect(
-        renderPageActions().querySelector('[data-testid="interventions-tab-recurrences"]'),
-      ).not.toBeNull();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="interventions-more-options"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-quick-filters"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-tab-recurrences"]')).toBeNull();
     });
 
     it('should hide the Recurrences tab trigger for a viewer without INTERVENTIONS_READ', async () => {
@@ -1226,15 +1297,16 @@ describe('InterventionsPage', () => {
   });
 
   describe('page header', () => {
-    it('should render the tab selector and "New intervention" through the shared page-actions template, on every tab', async () => {
+    it('should keep views above the collection and creation in the shared page header', async () => {
       fixture = await createPage({ view: 'recurrences' });
       const header: HTMLElement = renderPageActions();
 
-      expect(header.querySelector('[data-testid="intervention-view-toggle"]')).not.toBeNull();
-      expect(header.querySelector('[data-testid="intervention-view-toggle-list"]')).not.toBeNull();
-      expect(header.querySelector('[data-testid="intervention-view-toggle-board"]')).not.toBeNull();
+      const page = fixture.nativeElement as HTMLElement;
+      expect(header.querySelector('[data-testid="intervention-view-toggle"]')).toBeNull();
+      expect(page.querySelector('[data-testid="intervention-view-toggle-list"]')).not.toBeNull();
+      expect(page.querySelector('[data-testid="intervention-view-toggle-board"]')).not.toBeNull();
       expect(
-        header.querySelector('[data-testid="intervention-view-toggle-calendar"]'),
+        page.querySelector('[data-testid="intervention-view-toggle-calendar"]'),
       ).not.toBeNull();
       expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
     });
@@ -1284,6 +1356,35 @@ describe('InterventionsPage', () => {
   });
 
   describe('board', () => {
+    it('blocks execution outside the team and allows it for a participant before emitting a store write', async () => {
+      fixture = await createPage({ view: 'board' });
+      const blocked = {
+        intervention: intervention({
+          status: 'planned',
+          allowedTransitions: ['in_progress'],
+          responsible: '/api/organizations/org-1/members/other',
+          participants: [],
+        }),
+        responsible: null,
+        isOverdue: false,
+      };
+      expect(fixture.componentInstance['canMoveBoardItem'](blocked, 'in_progress')).toBe(false);
+      expect(fixture.componentInstance['boardMoveBlockedReason'](blocked, 'in_progress')).toContain(
+        'responsible member or a participant',
+      );
+      fixture.componentInstance['onBoardMoveRequested']({ item: blocked, columnId: 'in_progress' });
+      expect(transition).not.toHaveBeenCalled();
+      const allowed = {
+        ...blocked,
+        intervention: {
+          ...blocked.intervention,
+          participants: ['/api/organizations/org-1/members/member-1'],
+        },
+      };
+      expect(fixture.componentInstance['canMoveBoardItem'](allowed, 'in_progress')).toBe(true);
+      fixture.componentInstance['onBoardMoveRequested']({ item: allowed, columnId: 'in_progress' });
+      expect(transition).toHaveBeenCalledTimes(1);
+    });
     it('should load one large page, status excluded, while the Board tab is active', async () => {
       fixture = await createPage({ view: 'board' });
 

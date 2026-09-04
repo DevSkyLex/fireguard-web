@@ -23,10 +23,12 @@
     @for (item of items(); track item.id) {
       <tr hlmTableRow data-testid="audit-event-table-row">
         <td hlmTableCell>
-          <ng-container
-            [ngTemplateOutlet]="expandToggle"
-            [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-' + item.id }"
-          />
+          @if (hasMetadata(item)) {
+            <ng-container
+              [ngTemplateOutlet]="expandToggle"
+              [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-' + item.id }"
+            />
+          }
         </td>
 
         <td
@@ -52,12 +54,16 @@
         <td hlmTableCell class="whitespace-normal">
           @if (subjectRouteOf(item); as route) {
             <a
-              class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              hlmBadge
+              variant="outline"
+              class="rounded-md font-normal text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               [routerLink]="route"
-              >{{ item.subjectType }}</a
+              >{{ subjectLabelOf(item) }}</a
             >
           } @else if (item.subjectType) {
-            <span class="text-muted-foreground">{{ item.subjectType }}</span>
+            <span hlmBadge variant="outline" class="rounded-md font-normal text-muted-foreground">
+              {{ subjectLabelOf(item) }}
+            </span>
           } @else {
             <span class="text-muted-foreground" aria-hidden="true">—</span>
           }
@@ -86,18 +92,34 @@
             <ng-container [ngTemplateOutlet]="actionLabel" [ngTemplateOutletContext]="{ item }" />
           </span>
 
-          <ng-container
-            [ngTemplateOutlet]="expandToggle"
-            [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-card-' + item.id }"
-          />
+          @if (hasMetadata(item)) {
+            <ng-container
+              [ngTemplateOutlet]="expandToggle"
+              [ngTemplateOutletContext]="{ item, controls: 'audit-event-metadata-card-' + item.id }"
+            />
+          }
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 ps-1 text-xs text-muted-foreground">
           <span class="truncate">{{ actorLabelOf(item) }}</span>
 
           <span class="truncate tabular-nums">
             {{ item.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
           </span>
+
+          @if (item.subjectType) {
+            <span aria-hidden="true">·</span>
+            @if (subjectRouteOf(item); as route) {
+              <a
+                class="rounded-sm text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                [routerLink]="route"
+              >
+                {{ subjectLabelOf(item) }}
+              </a>
+            } @else {
+              <span>{{ subjectLabelOf(item) }}</span>
+            }
+          }
         </div>
 
         @if (isExpanded(item.id)) {
@@ -140,7 +162,7 @@
     [attr.aria-expanded]="isExpanded(item.id)"
     [attr.aria-controls]="controls"
     [attr.aria-label]="expandAriaLabelOf(item)"
-    (click)="toggleExpanded(item.id)"
+    (click)="toggleExpanded(item)"
   >
     <ng-icon
       name="lucideChevronDown"
@@ -152,20 +174,25 @@
 </ng-template>
 
 <ng-template #metadataPanel let-item="item">
-  @if (metadataEntriesOf(item).length === 0) {
-    <app-empty-state
-      icon="lucideFileText"
-      title="No additional details."
-      i18n-title="@@audit.table.metadataEmpty"
-    />
-  } @else {
-    <dl class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+  <div class="flex flex-col gap-2 py-1">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-medium text-foreground" i18n="@@audit.table.eventDetails">
+        Event details
+      </span>
+      <span hlmBadge variant="secondary" class="h-5 px-1.5 text-[0.6875rem] tabular-nums">
+        {{ metadataEntriesOf(item).length }}
+      </span>
+    </div>
+
+    <dl class="grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-3">
       @for (entry of metadataEntriesOf(item); track entry[0]) {
-        <div class="flex flex-col">
-          <dt class="text-xs text-muted-foreground">{{ entry[0] }}</dt>
-          <dd class="text-foreground">{{ entry[1] }}</dd>
+        <div class="min-w-0 rounded-md border border-border/70 bg-background/60 px-2.5 py-2">
+          <dt class="truncate text-xs text-muted-foreground">{{ metadataLabelOf(entry[0]) }}</dt>
+          <dd class="mt-0.5 font-medium break-words text-foreground">
+            {{ metadataValueOf(entry[1]) }}
+          </dd>
         </div>
       }
     </dl>
-  }
+  </div>
 </ng-template>

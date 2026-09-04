@@ -1,11 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideBuilding2,
-  lucideClipboardCheck,
-  lucideFlame,
-  lucideWifiOff,
-} from '@ng-icons/lucide';
+import { lucideBuilding2, lucideClipboardCheck, lucideWifiOff } from '@ng-icons/lucide';
 
 /**
  * Interface ShowcaseProofPoint
@@ -27,18 +22,8 @@ interface ShowcaseProofPoint {
  * @class SplitLayoutShowcase
  *
  * @description
- * The branded half of the public shell: what FireGuard is, in the few seconds
- * someone spends signing in.
- *
- * It is layout-local shell chrome rather than a feature widget — it knows no
- * business state and no route (`ARCHITECTURE.md` §8.2). It reaches the shell
- * through the showcase slot, so a route that wants a different panel can claim
- * the slot instead of editing this one.
- *
- * The panel deliberately inverts the surface (`bg-foreground text-background`
- * in light, the card ground in dark): contrast, not a flood of the Ember
- * accent, is what sets it apart from the form column — Ember is spent on the
- * mark and the proof-point glyphs only (`DESIGN.md` §Colors).
+ * Spacious neutral presentation for the entry shell. It names existing capabilities
+ * through the showcase slot without owning business state or navigation.
  *
  * @version 1.0.0
  *
@@ -49,16 +34,11 @@ interface ShowcaseProofPoint {
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * The decorative layer is `aria-hidden`: two soft pools of light that keep the
- * slab from reading as a flat rectangle, built from `currentColor` so they
- * follow the inverted foreground in either theme instead of hard-coding a hue.
- * `overflow-hidden` clips them and `isolate` gives them a stacking context, so
- * they cannot escape over the form column.
  */
 @Component({
   selector: 'app-split-layout-showcase',
   imports: [NgIcon],
-  providers: [provideIcons({ lucideBuilding2, lucideClipboardCheck, lucideFlame, lucideWifiOff })],
+  providers: [provideIcons({ lucideBuilding2, lucideClipboardCheck, lucideWifiOff })],
   templateUrl: './split-layout-showcase.component.html',
   host: { class: 'block h-full' },
   changeDetection: ChangeDetectionStrategy.OnPush,

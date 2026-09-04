@@ -13,10 +13,12 @@ import { RouterLink } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { LoginFormValues } from './models';
 
 /**
@@ -43,11 +45,13 @@ import type { LoginFormValues } from './models';
 @Component({
   selector: 'app-login-form',
   imports: [
+    ...HlmAlertImports,
     RequiredMarker,
     RouterLink,
     FormField,
     PasswordInput,
     HlmButton,
+    HlmSpinner,
     HlmCheckbox,
     HlmInput,
     ...HlmFieldImports,
@@ -56,6 +60,9 @@ import type { LoginFormValues } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginForm {
+  /** @description Safe destination supplied by the page for password recovery. */
+  public readonly returnUrl: InputSignal<string> = input<string>('');
+
   //#region Inputs
   /**
    * Property pending

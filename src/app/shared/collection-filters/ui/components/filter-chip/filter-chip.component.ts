@@ -42,7 +42,8 @@ import { collectionFilterOperatorLabel } from '../../../utils';
  * emits {@link operatorChanged} on a pick. Either way the label text comes
  * from `collectionFilterOperatorLabel` (`@shared/collection-filters`), never
  * a hardcoded string, so a field's operator vocabulary is entirely
- * feature-declared.
+ * feature-declared. Both fixed and editable operators share one centered segment
+ * in this shell, so pages and projected value controls never own its alignment.
  *
  * The value segment is deliberately not this component's concern: it is
  * projected content, so a page composes whatever control the field needs
@@ -95,7 +96,7 @@ import { collectionFilterOperatorLabel } from '../../../utils';
  * shadows it. The projected value control no longer renders or describes
  * this reason itself — see `app-collection-filter-select`'s own class doc.
  *
- * @version 3.5.0
+ * @version 3.6.0
  *
  * @example
  * ```html
@@ -485,7 +486,8 @@ export class FilterChip {
    * Reacts to the operator select's `valueChange`, which `hlm-select`
    * types as nullable for a clearable select — this one never clears, every
    * item maps to a real operator, so a `null`/`undefined` emission is
-   * unreachable and only ever guarded to satisfy that shared type.
+   * ignored. Only a changed operator in this field's declared vocabulary is
+   * emitted; stale or unsupported picks cannot reach the page.
    *
    * @access protected
    * @since 3.0.0
@@ -495,8 +497,9 @@ export class FilterChip {
    * @returns {void}
    */
   protected onOperatorPicked(operator: CollectionFilterOperator | null | undefined): void {
-    if (this.disabled()) return;
-    if (operator) this.operatorChanged.emit(operator);
+    if (this.disabled() || !operator || operator === this.operator()) return;
+    if (!this.operatorOptions().includes(operator)) return;
+    this.operatorChanged.emit(operator);
   }
 
   /**

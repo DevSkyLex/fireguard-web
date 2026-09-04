@@ -446,4 +446,22 @@ describe('ChannelConversationPage', () => {
       fixture.nativeElement.querySelector('[data-testid="message-composer-read-only"]'),
     ).not.toBeNull();
   });
+  it('limits header avatars to three while keeping the full roster available', async () => {
+    participants.set(
+      Array.from({ length: 5 }, (_, index) => ({
+        memberId: 'member-' + index,
+        source: 'direct',
+        addedAt: '2026-01-01',
+      })),
+    );
+    channelEntityMap.set({ 'channel-1': channel({ participantCount: 5 }) });
+    await createPage();
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="channel-header-avatar"]'),
+    ).toHaveLength(3);
+    expect(byTestId('channel-conversation-participants-count')?.textContent).toContain('+2');
+    expect(
+      byTestId('channel-conversation-participants-count')?.getAttribute('aria-label'),
+    ).toContain('5');
+  });
 });

@@ -30,19 +30,20 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
  * @description
  * The pagination band shared by every collection surface's list page: a
  * "N of M row(s) shown" status, a rows-per-page `hlm-select`, a "Page X of Y"
- * indicator, and first/previous/next/last navigation built on the vendored
+ * indicator, numbered pages, and first/previous/next/last navigation built on the vendored
  * `hlmPagination` primitives. Presentational (`ARCHITECTURE.md` §10.3) — it
  * injects no store and calls no service; the host page owns pagination state
- * and reacts to `pageChanged`/`pageSizeChanged`. Kept on the vendored
- * `hlmPagination`/`hlmPaginationItem` composition with event-emitting buttons
- * rather than `hlm-pagination-link`/`hlm-numbered-pagination`, which are
- * anchor- and query-param-oriented and do not fit page state living in a
- * `SignalStore`. Moved from `features/organization` to `shared` as a
+ * and reacts to `pageChanged`/`pageSizeChanged`. Native `hlmPaginationLink`
+ * buttons mark the current page without supplying a router link. Five page
+ * numbers surround the current page on desktop; three remain on small screens,
+ * where first/last shortcuts are hidden to retain comfortable touch targets.
+ * Both ranges render identically during SSR and hydration; CSS selects their
+ * visibility. Moved from `features/organization` to `shared` as a
  * deliberate uniformity bet, recorded in `organization/FEATURE.md` § UI
  * Conventions — the folder held only organization consumers at the time of
  * the move.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -161,6 +162,28 @@ export class CollectionPagination {
 
   //#region Properties
   /**
+   * Property pageNumbers
+   * @readonly
+   * @description Up to five consecutive pages surrounding the current page.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<readonly number[]>}
+   */
+  protected readonly pageNumbers: Signal<readonly number[]> = computed(() => this.pageWindow(5));
+
+  /**
+   * Property compactPageNumbers
+   * @readonly
+   * @description The three-page subset retained on narrow screens.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<readonly number[]>}
+   */
+  protected readonly compactPageNumbers: Signal<readonly number[]> = computed(() =>
+    this.pageWindow(3),
+  );
+
+  /**
    * Property rowCountLabel
    * @readonly
    * @description The localized "N of M row(s) shown" status text.
@@ -232,6 +255,25 @@ export class CollectionPagination {
   //#endregion
 
   //#region Methods
+  /**
+   * Method pageWindow
+   * @description Centers a bounded window on the current page, shifting it at either edge.
+   * @access private
+   * @since 2.1.0
+   * @param {number} limit - Maximum number of visible page numbers.
+   * @returns {readonly number[]} Consecutive pages, including page one for an empty collection.
+   */
+  private pageWindow(limit: number): readonly number[] {
+    const total: number = Math.max(1, this.pageCount());
+    const count: number = Math.min(limit, total);
+    const start: number = Math.max(
+      1,
+      Math.min(this.page() - Math.floor(count / 2), total - count + 1),
+    );
+
+    return Array.from({ length: count }, (_, index: number) => start + index);
+  }
+
   /**
    * Method testId
    * @description Builds a `<prefix>-<suffix>` `data-testid` value from {@link testIdPrefix}.

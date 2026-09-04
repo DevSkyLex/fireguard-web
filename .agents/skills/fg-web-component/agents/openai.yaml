@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 component"
+  short_description: 'Build an Angular component, page, form, table, dialog or sheet '
+  default_prompt: 'Use $fg-web-component for the requested FireGuard Web task.'

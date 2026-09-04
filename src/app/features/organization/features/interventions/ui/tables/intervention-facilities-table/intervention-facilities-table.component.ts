@@ -15,10 +15,9 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
@@ -59,12 +58,11 @@ const FACILITY_TYPE_LABEL: Readonly<Record<FacilityType, string>> = {
 @Component({
   selector: 'app-intervention-facilities-table',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
-    NgIcon,
     RouterLink,
-    EmptyState,
-    ErrorState,
     HlmBadge,
     HlmButton,
     InterventionTag,

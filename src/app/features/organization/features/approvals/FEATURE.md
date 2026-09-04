@@ -88,11 +88,16 @@ reference catalog, the same canonical-collection-bypass shape
 - A decide failure never closes the dialog; the reader sees the specific
   409/403 copy exactly where they took the action, mirroring the members
   roster's remove-confirm invariant (`organization/FEATURE.md`).
-- `subjectId` on `ApprovalRequestOutput` is a **bare id**, never an IRI. The
-  table links it to the gated resource's own detail route only for action
-  types with a known route (`equipment_decommission` → the equipments
-  subfeature); `nc_waiver` renders the bare reference, since no
-  non-conformity detail route exists yet — revisit once one does.
+- `subjectId` on `ApprovalRequestOutput` is a **bare id**, never an IRI, and
+  remains transport-only. The table names the subject from its action type
+  and links it to the gated resource's own detail route only when one exists
+  (`equipment_decommission` → the equipments subfeature). `nc_waiver` renders
+  "Non-conformity record" without a link until that feature has a detail
+  route; neither path exposes the bare id.
+- Requester and decider references resolve through `MEMBER_DIRECTORY_PORT`.
+  Readers without directory permission see "Unknown member" rather than a
+  UUID; the approvals list still loads because member-directory access is
+  supplementary and `ensureLoaded` is a permission-aware no-op.
 - No nav counter badge: the backend navigation-counters endpoint has no
   approvals count, and neither the sidebar nor this page fakes one
   client-side.

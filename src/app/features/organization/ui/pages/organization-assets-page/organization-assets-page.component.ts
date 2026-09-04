@@ -82,14 +82,13 @@ import {
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
 import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/organization/utils';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -137,12 +136,11 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 @Component({
   selector: 'app-organization-assets-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     OrgDatePipe,
     NgTemplateOutlet,
     RouterLink,
-    NgIcon,
-    EmptyState,
-    ErrorState,
     Tree,
     FacilityMoveDialog,
     EquipmentStatusTag,

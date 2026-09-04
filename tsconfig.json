@@ -73,7 +73,9 @@
       "@shared/ui/kbd": ["./src/app/shared/ui/kbd/src/index.ts"],
       "@shared/ui/item": ["./src/app/shared/ui/item/src/index.ts"],
       "@shared/ui/resizable": ["./src/app/shared/ui/resizable/src/index.ts"],
-      "@shared/ui/collapsible": ["./src/app/shared/ui/collapsible/src/index.ts"]
+      "@shared/ui/collapsible": ["./src/app/shared/ui/collapsible/src/index.ts"],
+      "@shared/ui/attachment": ["./src/app/shared/ui/attachment/src/index.ts"],
+      "@shared/ui/chart": ["./src/app/shared/ui/chart/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

@@ -1,67 +1,29 @@
-<div
-  class="relative isolate flex h-full flex-col justify-between overflow-hidden bg-foreground px-10 py-12 text-background xl:px-14 dark:bg-card dark:text-card-foreground"
->
-  <div
-    class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07]"
-    aria-hidden="true"
-    style="
-      background:
-        radial-gradient(60rem 40rem at 15% 0%, currentColor, transparent 60%),
-        radial-gradient(40rem 30rem at 90% 100%, currentColor, transparent 55%);
-    "
-  ></div>
-
-  <div class="flex items-center gap-3">
-    <div
-      class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30"
-    >
-      <ng-icon name="lucideFlame" class="text-xl" aria-hidden="true" />
-    </div>
-    <span class="text-lg font-semibold tracking-tight">FireGuard</span>
+<div class="flex min-h-full flex-col gap-8 p-8 text-foreground xl:p-12">
+  <div class="flex items-center gap-2.5">
+    <img src="favicon.svg" width="32" height="32" alt="" />
+    <span class="text-lg font-semibold tracking-tight">Fireguard</span>
   </div>
-
-  <div class="flex max-w-lg flex-col gap-10 py-10">
-    <div class="flex flex-col gap-4">
-      <h2
-        class="text-3xl leading-tight font-semibold tracking-tight text-balance xl:text-4xl"
-        i18n="@@auth.showcase.headline"
-      >
-        Fire-safety work that survives the field.
-      </h2>
-      <p
-        class="text-base leading-relaxed text-pretty text-background/70 dark:text-card-foreground/70"
-        i18n="@@auth.showcase.subhead"
-      >
-        Plan interventions, carry them out on site, and publish the report — for every facility you
-        are responsible for.
-      </p>
-    </div>
-
-    <ul class="flex flex-col gap-6">
+  <div class="my-auto flex w-full max-w-md flex-col gap-10 py-6">
+    <p
+      class="max-w-[18ch] text-3xl leading-tight font-semibold tracking-tight text-balance xl:text-4xl"
+      i18n="@@auth.showcase.workspace"
+    >
+      Your field operations workspace
+    </p>
+    <ul class="flex flex-col gap-7">
       @for (point of proofPoints; track point.label) {
         <li class="flex gap-4">
-          <div
-            class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/10 text-primary dark:bg-card-foreground/10"
-          >
-            <ng-icon [name]="point.icon" class="text-base" aria-hidden="true" />
-          </div>
+          <ng-icon
+            [name]="point.icon"
+            class="mt-0.5 shrink-0 text-lg text-muted-foreground"
+            aria-hidden="true"
+          />
           <div class="flex flex-col gap-1">
             <p class="text-sm font-medium">{{ point.label }}</p>
-            <p
-              class="text-sm leading-relaxed text-pretty text-background/60 dark:text-card-foreground/60"
-            >
-              {{ point.detail }}
-            </p>
+            <p class="text-sm leading-relaxed text-muted-foreground">{{ point.detail }}</p>
           </div>
         </li>
       }
     </ul>
   </div>
-
-  <p
-    class="text-xs text-background/50 dark:text-card-foreground/50"
-    i18n="@@auth.showcase.footnote"
-  >
-    Built for the people who sign the compliance report.
-  </p>
 </div>

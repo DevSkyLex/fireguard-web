@@ -34,12 +34,22 @@
                 [value]="option.value"
                 [attr.data-testid]="'intervention-assign-option-' + option.value"
               >
-                <app-person-option
-                  [name]="option.displayName"
-                  [secondary]="option.roleLabel"
-                  [avatarUrl]="option.avatarUrl"
-                  [initials]="option.initials"
-                />
+                <div hlmItem size="xs" class="min-w-0 border-0 p-0">
+                  <div hlmItemMedia>
+                    <hlm-avatar class="size-8 shrink-0">
+                      @if (option.avatarUrl; as pictureUrl) {
+                        <img hlmAvatarImage [src]="pictureUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                    </hlm-avatar>
+                  </div>
+                  <div hlmItemContent class="min-w-0">
+                    <div hlmItemTitle class="truncate">{{ option.displayName }}</div>
+                    @if (option.roleLabel; as line) {
+                      <div hlmItemDescription class="truncate text-xs">{{ line }}</div>
+                    }
+                  </div>
+                </div>
               </hlm-combobox-item>
             }
           </div>

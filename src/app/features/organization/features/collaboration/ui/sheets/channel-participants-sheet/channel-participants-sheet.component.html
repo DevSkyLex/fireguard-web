@@ -25,11 +25,14 @@
           </div>
         }
       } @else if (participants().length === 0) {
-        <app-empty-state
-          icon="lucideUsers"
-          title="No participants"
-          i18n-title="@@channels.participants.emptyTitle"
-        />
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideUsers" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@channels.participants.emptyTitle">No participants</p>
+          </div>
+        </div>
       } @else {
         <ul class="flex flex-col gap-1" data-testid="channel-participants-list">
           @for (participant of participants(); track participant.memberId) {

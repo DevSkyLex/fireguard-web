@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 test"
+  short_description: 'Write or repair FireGuard Angular unit/integration tests at the'
+  default_prompt: 'Use $fg-web-test for the requested FireGuard Web task.'

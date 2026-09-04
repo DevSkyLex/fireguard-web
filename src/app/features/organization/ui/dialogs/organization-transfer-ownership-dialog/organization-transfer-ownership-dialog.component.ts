@@ -17,12 +17,14 @@ import type {
   OrganizationTransferOwnershipConfirmedEvent,
   MemberSelectOption,
 } from '@features/organization/models';
-import { PersonOption } from '@shared/person-option';
+
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldLabel } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /** The value standing in for "no member picked" in the combobox — a userId is never an empty string. */
 const NO_CANDIDATE_VALUE = '';
 
@@ -61,7 +63,14 @@ const NO_CANDIDATE_VALUE = '';
  */
 @Component({
   selector: 'app-organization-transfer-ownership-dialog',
-  imports: [PersonOption, HlmFieldLabel, HlmInput, ...HlmAlertDialogImports, ...HlmComboboxImports],
+  imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    HlmFieldLabel,
+    HlmInput,
+    ...HlmAlertDialogImports,
+    ...HlmComboboxImports,
+  ],
   templateUrl: './organization-transfer-ownership-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

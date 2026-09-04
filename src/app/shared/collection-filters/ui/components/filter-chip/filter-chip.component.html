@@ -16,42 +16,46 @@
       <hlm-separator orientation="vertical" />
     </span>
 
-    @if (hasOperatorChoice()) {
-      <hlm-select
-        class="shrink-0"
-        [value]="operator()"
-        [itemToString]="operatorLabelOf"
-        (valueChange)="onOperatorPicked($event)"
-      >
-        <label [attr.for]="operatorTriggerId()" class="sr-only">{{ changeOperatorLabel() }}</label>
-        <hlm-select-trigger
-          size="sm"
-          [buttonId]="operatorTriggerId()"
-          class="flex h-full self-stretch rounded-none border-0 bg-transparent px-2 py-1 shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid aria-disabled:cursor-not-allowed max-sm:min-h-11 dark:bg-transparent [&:not(button)]:p-0"
-          [attr.data-testid]="operatorTestId()"
-          [attr.aria-disabled]="disabled()"
-          [ariaDisabled]="disabled()"
+    <span class="inline-flex shrink-0 items-center self-stretch text-muted-foreground">
+      @if (hasOperatorChoice()) {
+        <hlm-select
+          class="flex h-full items-center"
+          [value]="operator()"
+          [itemToString]="operatorLabelOf"
+          (valueChange)="onOperatorPicked($event)"
         >
-          <span class="whitespace-nowrap text-muted-foreground">{{
-            operatorLabelOf(operator())
-          }}</span>
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal class="w-fit">
-          <hlm-select-group>
-            @for (choice of operatorOptions(); track choice) {
-              <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-    } @else {
-      <span
-        class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
-        [attr.data-testid]="operatorTestId()"
-      >
-        {{ operatorLabelOf(operator()) }}
-      </span>
-    }
+          <label [attr.for]="operatorTriggerId()" class="sr-only">{{
+            changeOperatorLabel()
+          }}</label>
+          <hlm-select-trigger
+            size="sm"
+            [buttonId]="operatorTriggerId()"
+            class="flex h-full self-stretch rounded-none border-0 bg-transparent px-2 py-1 shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid aria-disabled:cursor-not-allowed max-sm:min-h-11 dark:bg-transparent [&:not(button)]:p-0"
+            [attr.data-testid]="operatorTestId()"
+            [attr.aria-disabled]="disabled()"
+            [ariaDisabled]="disabled()"
+          >
+            <span class="whitespace-nowrap text-muted-foreground">{{
+              operatorLabelOf(operator())
+            }}</span>
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-fit">
+            <hlm-select-group>
+              @for (choice of operatorOptions(); track choice) {
+                <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      } @else {
+        <span
+          class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
+          [attr.data-testid]="operatorTestId()"
+        >
+          {{ operatorLabelOf(operator()) }}
+        </span>
+      }
+    </span>
 
     <span class="flex h-3.5 shrink-0 items-center self-center">
       <hlm-separator orientation="vertical" />

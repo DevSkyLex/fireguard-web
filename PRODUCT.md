@@ -23,7 +23,7 @@ without ambiguity about what to do next.
 
 ## Product Purpose
 
-FireGuard is an organization-scoped platform for planning, executing and
+Fireguard is an organization-scoped platform for planning, executing and
 publishing field interventions (facilities, equipment, inspections). Success is
 an intervention that moves through its full workflow with zero data loss
 offline, clear blocker resolution, and an atomic publication that either fully
@@ -123,24 +123,18 @@ Two further mechanisms are equally true and support it, but do not lead:
 
 ## Brand Commitments
 
-- **Name:** FireGuard (`Fireguard Field Operations` as the installed PWA name).
+- **Name:** Fireguard (`Fireguard Field Operations` as the installed PWA name).
 - **Mark:** three stable blocks plus a 45°-pivoted "guard" square in Ember
   orange (`#F97316`), on a near-black rounded tile (`#0C0C0E`). It survives as
   `public/favicon.svg`, `favicon.ico` and the PWA icons (192/512, maskable).
   The geometry is the identity and is not open for redecoration; its colour
-  follows the palette. There is no in-app logo component today.
-- **Accent: "Ember".** The palette is derived from the Bloc 3 presentation
-  deck: a warm-neutral scale (warm paper and warm ink in light mode, the
-  deck's near-black and off-white in dark mode) with **one** orange accent —
-  `--primary: oklch(0.646 0.194 41.1)` light, `oklch(0.705 0.187 47.6)` dark —
-  whose foreground is ink in both modes. Ember is spent on the single
-  committed action and on keyboard focus, and nowhere else: not on hover
-  grounds, headings, links or badges. Browser chrome follows it
-  (`manifest.webmanifest` `theme_color`, the `index.html` `theme-color` meta:
-  `#EA580C`). The former indigo `#4f46e5` is retired entirely. Semantic
-  status colour (`--destructive`, `--warning`, `--success`, `--info`) is a
-  functional signal on a glyph, never a decoration. `DESIGN.md` §Colors holds
-  the values and the rules.
+  remains part of the existing brand assets.
+- **Theme:** official Spartan neutral surfaces, Nova style, in light and dark mode.
+  Primary controls use vivid orange (`#FF6A00` light / `#FF850A` dark) with
+  black text (`#000000` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and
+  application surfaces stay neutral. Browser/PWA chrome uses `#171717`.
+  Functional status colors and chart series remain labeled, never color-only.
+  `src/styles.css` and `DESIGN.md` hold the token and composition conventions.
 - **Type:** Geist Variable for UI, Geist Mono for code and identifiers
   (revision hashes, `FG-{number}` codes). Both are self-hosted via
   `@fontsource-variable` so they are offline-safe and cached by the service
@@ -149,27 +143,20 @@ Two further mechanisms are equally true and support it, but do not lead:
   **trustworthy, precise, efficient**. It should feel like a professional field
   tool that disappears into the task; closer to Linear/Stripe than to a
   consumer app.
-- **Binding visual rule:** hierarchy comes from rhythm, not boxes — and the
-  card is the section's shell, not its hierarchy. Sections are built on
-  `hlmCard`; what must vary is what happens _inside_ and _between_ them:
-  borderless headers, tinted secondary asides, divider lists, density, spacing.
-  A page whose sections differ only by their contents, with no internal
-  hierarchy and no rhythm between them, fails this rule whether or not it is
-  carded.
+- **Binding visual rule:** use native Spartan anatomy and variants. Autonomous
+  surfaces use `hlmCard`; related fields and rows use fieldsets, item groups and
+  separators. Prioritize the current task; avoid nested boxes and duplicated
+  headings, counters or primary actions.
 
 ## Anti-references
 
 - Consumer-app playfulness, mascots, or decorative illustration.
 - Dashboard "hero metric" templates: big gradient numbers with tiny labels.
-- Sections that are identical bordered boxes and nothing more — no internal
-  hierarchy, no rhythm between them. The objection is to the flatness, not to
-  the card: `hlmCard` is the section shell application-wide (see
-  `src/app/features/organization/FEATURE.md`), and `shared/page-section` was
-  deleted rather than kept as a second way to draw one.
+- Repeated bordered boxes without an information hierarchy or purpose.
 - Tiny uppercase tracked eyebrows above every section.
 - Gratuitous motion or page-load choreography that delays the task.
-- A second accent, or Ember spent on anything but the committed action and focus
-  (see Brand Commitments).
+- Feature-specific control palettes or a design system layered over Spartan;
+  the shared orange primary is the single application-wide brand accent.
 
 ## Evidence on Hand
 
@@ -188,7 +175,7 @@ Two further mechanisms are equally true and support it, but do not lead:
 
 **Absent — must never be fabricated**
 
-FireGuard is a **certification / portfolio build** (RNCP material sits beside
+Fireguard is a **certification / portfolio build** (RNCP material sits beside
 this repository). There are **no real customers, no pilot organizations, and no
 usage data**. Future work must not invent or imply client logos, testimonials,
 case studies, adoption or performance metrics, press mentions, ratings, or

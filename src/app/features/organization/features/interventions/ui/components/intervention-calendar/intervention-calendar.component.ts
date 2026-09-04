@@ -28,9 +28,9 @@ import {
   type CalendarDisplayEvent,
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InterventionCalendarEntryList } from '../intervention-calendar-entry-list';
 import { INTERVENTION_CALENDAR_EVENT_TONE } from './constants';
@@ -98,11 +98,11 @@ type InterventionCalendarAgendaGroup = {
 @Component({
   selector: 'app-intervention-calendar',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     RouterLink,
     Calendar,
     InterventionCalendarEntryList,
-    NgIcon,
-    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmCardImports,

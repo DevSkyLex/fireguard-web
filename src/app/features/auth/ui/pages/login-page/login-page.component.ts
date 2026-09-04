@@ -82,6 +82,12 @@ export class LoginPage {
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   //#endregion
 
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
+
   //#region Lifecycle
   /**
    * Property outcome
@@ -107,7 +113,7 @@ export class LoginPage {
     untracked((): void => {
       if (hasChallenge) {
         void this.router.navigate(['/auth/mfa-verify'], {
-          queryParamsHandling: 'preserve',
+          queryParams: { returnUrl: this.returnUrl || undefined },
         });
 
         return;

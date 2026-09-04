@@ -1,0 +1,38 @@
+@if (isVisible()) {
+  <div hlmSidebarGroup class="p-0">
+    <ul hlmSidebarMenu>
+      <li hlmSidebarMenuItem>
+        <a
+          hlmSidebarMenuButton
+          data-testid="direct-messages-nav-link"
+          routerLinkActive
+          #active="routerLinkActive"
+          [routerLink]="messagesRouteBase()"
+          [attr.data-active]="active.isActive ? 'true' : null"
+          [attr.aria-current]="active.isActive ? 'location' : null"
+          tooltip="Messages"
+          i18n-tooltip="@@route.messages"
+        >
+          <ng-icon name="lucideMessagesSquare" aria-hidden="true" />
+          <span i18n="@@route.messages">Messages</span>
+        </a>
+      </li>
+      <li hlmSidebarMenuItem>
+        <a
+          hlmSidebarMenuButton
+          data-testid="collaboration-nav-link"
+          routerLinkActive
+          #channelsActive="routerLinkActive"
+          [routerLink]="channelsRouteBase()"
+          [attr.data-active]="channelsActive.isActive ? 'true' : null"
+          [attr.aria-current]="channelsActive.isActive ? 'location' : null"
+          tooltip="Collaboration"
+          i18n-tooltip="@@collaboration.nav.title"
+        >
+          <ng-icon name="lucideUsersRound" aria-hidden="true" />
+          <span i18n="@@collaboration.nav.title">Collaboration</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+}

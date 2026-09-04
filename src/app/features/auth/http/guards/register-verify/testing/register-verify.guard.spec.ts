@@ -74,6 +74,8 @@ describe('registerVerifyGuard', () => {
     const result = runGuard(null);
 
     expect(result).toBe(registerUrlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/register']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/register'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 });

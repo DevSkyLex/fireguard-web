@@ -28,7 +28,7 @@ describe('OnboardingShowcase', () => {
   });
 
   it('should render the brand lockup and the step rail', () => {
-    expect(element.textContent).toContain('FireGuard');
+    expect(element.textContent).toContain('Fireguard');
     expect(element.querySelector('app-onboarding-step-rail')).not.toBeNull();
   });
 });

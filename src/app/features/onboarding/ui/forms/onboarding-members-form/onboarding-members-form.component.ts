@@ -2,6 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  afterNextRender,
+  inject,
+  Injector,
+  viewChild,
+  type ElementRef,
   input,
   output,
   signal,
@@ -18,11 +23,12 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMail, lucidePlus, lucideX } from '@ng-icons/lucide';
+import { lucideMail, lucidePlus, lucidePencil, lucideX } from '@ng-icons/lucide';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import type { SetupInviteMemberInput, SetupOrganizationRole } from '@features/organization/setup';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -67,6 +73,7 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
 @Component({
   selector: 'app-onboarding-members-form',
   imports: [
+    ...HlmAlertImports,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -77,12 +84,31 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
     ...HlmItemImports,
     ...HlmSelectImports,
   ],
-  providers: [provideIcons({ lucideMail, lucidePlus, lucideX })],
+  providers: [provideIcons({ lucideMail, lucidePlus, lucidePencil, lucideX })],
   templateUrl: './onboarding-members-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingMembersForm {
+  /** Draft input focus is restored only after an explicit row edit. */
+  private readonly draftInput = viewChild<ElementRef<HTMLInputElement>>('draftInput');
+  private readonly injector = inject(Injector);
+
+  /** Wait for the draft to reappear when editing a full batch. */
+  private focusDraft(): void {
+    afterNextRender(() => this.draftInput()?.nativeElement.focus(), { injector: this.injector });
+  }
+
+  /** Names the staged entry edited by this action. */
+  protected editMemberLabel(email: string): string {
+    return $localize`:@@onboarding.membersForm.editNamed:Edit ${email}:email:`;
+  }
+
+  /** @description Successful batch entries remain visible but cannot be edited or resubmitted. */
+  public readonly completed: InputSignal<readonly SetupInviteMemberInput[]> = input<
+    readonly SetupInviteMemberInput[]
+  >([]);
+  public readonly failed: InputSignal<readonly string[]> = input<readonly string[]>([]);
   //#region Inputs
   /**
    * Property roles
@@ -206,13 +232,20 @@ export class OnboardingMembersForm {
    * @type {Signal<readonly { email: string; roleName: string | null }[]>}
    */
   protected readonly stagedRows: Signal<
-    readonly { readonly email: string; readonly roleName: string | null }[]
+    readonly {
+      readonly email: string;
+      readonly roleName: string | null;
+      readonly completed: boolean;
+      readonly failed: boolean;
+    }[]
   > = computed(() =>
     this.staged().map((row) => {
       const roleId: string | null | undefined = row.roleIds?.[0];
 
       return {
         email: row.email,
+        completed: this.completed().includes(row),
+        failed: this.failed().includes(row.email),
         roleName: typeof roleId === 'string' ? this.roleLabelOf(roleId) || null : null,
       };
     }),
@@ -245,9 +278,8 @@ export class OnboardingMembersForm {
    * Method addMember
    *
    * @description
-   * Stages the current row and resets the draft. Disabled from the template
-   * whenever the row is invalid, so no error state ever needs to be cleared
-   * afterward.
+   * Stages the current row and resets both the draft and its interaction
+   * state, so the next empty invitation does not inherit validation errors.
    *
    * @access protected
    * @since 1.0.0
@@ -267,6 +299,7 @@ export class OnboardingMembersForm {
       },
     ]);
     this.model.set(EMPTY_VALUES);
+    this.draftForm().reset();
   }
 
   /**
@@ -298,6 +331,7 @@ export class OnboardingMembersForm {
    * @returns {void}
    */
   protected removeMember(index: number): void {
+    if (this.pending() || this.completed().includes(this.staged()[index])) return;
     this.staged.update((rows) => rows.filter((_, i) => i !== index));
   }
 
@@ -330,5 +364,22 @@ export class OnboardingMembersForm {
 
     this.submitted.emit(this.staged());
   }
+  /** @description Moves an unsent row back into the draft; preserves any valid draft already being entered. */
+  protected editMember(index: number): void {
+    const row = this.staged()[index];
+    if (!row || this.pending() || this.completed().includes(row)) return;
+    if (this.model().email.trim() !== '') {
+      if (this.draftForm().invalid()) {
+        this.draftForm().markAsTouched();
+        this.focusDraft();
+        return;
+      }
+      this.addMember();
+    }
+    this.removeMember(index);
+    this.model.set({ email: row.email, roleId: row.roleIds?.[0] ?? NO_ROLE });
+    this.focusDraft();
+  }
+
   //#endregion
 }

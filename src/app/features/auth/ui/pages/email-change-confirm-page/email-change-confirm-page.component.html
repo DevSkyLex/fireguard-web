@@ -1,4 +1,4 @@
-<div id="email-change-confirm-page" class="flex w-full flex-col gap-6">
+<div id="email-change-confirm-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
   @if (confirmStore.isConfirmed()) {
     <app-page-heading
       heading="Email address changed"
@@ -9,7 +9,7 @@
 
     <a
       hlmBtn
-      class="w-full max-sm:min-h-11"
+      class="h-auto min-h-11 w-full whitespace-normal"
       routerLink="/auth/login"
       data-testid="email-change-confirm-login"
     >
@@ -26,7 +26,7 @@
     <a
       hlmBtn
       variant="outline"
-      class="w-full max-sm:min-h-11"
+      class="h-auto min-h-11 w-full whitespace-normal"
       routerLink="/account/security"
       data-testid="email-change-confirm-request-again"
     >
@@ -52,7 +52,7 @@
       <a
         hlmBtn
         variant="outline"
-        class="w-full max-sm:min-h-11"
+        class="h-auto min-h-11 w-full whitespace-normal"
         routerLink="/account/security"
         data-testid="email-change-confirm-request-again"
       >
@@ -62,7 +62,7 @@
       <button
         hlmBtn
         type="button"
-        class="w-full max-sm:min-h-11"
+        class="h-auto min-h-11 w-full whitespace-normal"
         data-testid="email-change-confirm-submit"
         aria-live="polite"
         [disabled]="confirmStore.isConfirming()"

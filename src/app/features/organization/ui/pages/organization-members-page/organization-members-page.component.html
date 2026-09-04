@@ -177,6 +177,7 @@
                   <hlm-select
                     toolbarEnd
                     class="inline-block"
+                    [itemToString]="roleFilterLabelOf"
                     [value]="roleFilter() ?? 'all'"
                     (valueChange)="onRoleFilterChanged($event)"
                   >
@@ -203,65 +204,86 @@
               </app-collection-toolbar>
 
               @if (listForbidden()) {
-                <app-empty-state
-                  icon="lucideLock"
-                  title="Not available with your permissions"
-                  i18n-title="@@org.members.forbiddenTitle"
-                  description="Ask an organization admin to grant you read access to the member directory."
-                  i18n-description="@@org.members.forbiddenDesc"
-                />
+                <div hlmEmpty>
+                  <div hlmEmptyHeader>
+                    <div hlmEmptyMedia variant="icon">
+                      <ng-icon name="lucideLock" aria-hidden="true" />
+                    </div>
+                    <p hlmEmptyTitle i18n="@@org.members.forbiddenTitle">
+                      Not available with your permissions
+                    </p>
+                    <p hlmEmptyDescription i18n="@@org.members.forbiddenDesc">
+                      Ask an organization admin to grant you read access to the member directory.
+                    </p>
+                  </div>
+                </div>
               } @else if (store.loadCallState().status === 'error') {
-                <app-error-state
-                  icon="lucideCircleAlert"
-                  title="Couldn't load members"
-                  i18n-title="@@org.members.errorTitle"
-                  description="The members could not be loaded. Check your connection and try again."
-                  i18n-description="@@org.members.errorText"
-                >
-                  <button
-                    hlmBtn
-                    variant="outline"
-                    class="max-sm:min-h-11"
-                    data-testid="organization-members-retry"
-                    (click)="reload()"
-                  >
-                    <span i18n="@@org.members.retry">Retry</span>
-                  </button>
-                </app-error-state>
-              } @else if (!store.isLoading() && store.members().length === 0) {
-                @if (hasRosterFilters()) {
-                  <app-empty-state
-                    icon="lucideSearch"
-                    title="No members match"
-                    i18n-title="@@org.members.emptyFilteredTitle"
-                    description="Adjust your search or the status filter."
-                    i18n-description="@@org.members.emptyFilteredText"
-                  >
+                <div hlmEmpty role="alert">
+                  <div hlmEmptyHeader>
+                    <div hlmEmptyMedia variant="icon" class="text-destructive">
+                      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                    </div>
+                    <p hlmEmptyTitle i18n="@@org.members.errorTitle">Couldn't load members</p>
+                    <p hlmEmptyDescription i18n="@@org.members.errorText">
+                      The members could not be loaded. Check your connection and try again.
+                    </p>
+                  </div>
+                  <div hlmEmptyContent>
                     <button
                       hlmBtn
                       variant="outline"
                       class="max-sm:min-h-11"
-                      data-testid="organization-members-clear-filters"
-                      (click)="clearRosterFilters()"
+                      data-testid="organization-members-retry"
+                      (click)="reload()"
                     >
-                      <span i18n="@@common.clearFilters">Clear filters</span>
+                      <span i18n="@@org.members.retry">Retry</span>
                     </button>
-                  </app-empty-state>
-                } @else {
-                  <app-empty-state
-                    icon="lucideUsersRound"
-                    title="No members yet"
-                    i18n-title="@@org.members.emptyTitle"
-                    description="Invite someone to give them access to this organization."
-                    i18n-description="@@org.members.emptyText"
-                  >
-                    @if (canManageMembers()) {
-                      <button hlmBtn class="max-sm:min-h-11" (click)="openInviteDialog()">
-                        <ng-icon name="lucideMailPlus" aria-hidden="true" />
-                        <span i18n="@@org.members.inviteButton">Invite member</span>
+                  </div>
+                </div>
+              } @else if (!store.isLoading() && store.members().length === 0) {
+                @if (hasRosterFilters()) {
+                  <div hlmEmpty>
+                    <div hlmEmptyHeader>
+                      <div hlmEmptyMedia variant="icon">
+                        <ng-icon name="lucideSearch" aria-hidden="true" />
+                      </div>
+                      <p hlmEmptyTitle i18n="@@org.members.emptyFilteredTitle">No members match</p>
+                      <p hlmEmptyDescription i18n="@@org.members.emptyFilteredText">
+                        Adjust your search or the status filter.
+                      </p>
+                    </div>
+                    <div hlmEmptyContent>
+                      <button
+                        hlmBtn
+                        variant="outline"
+                        class="max-sm:min-h-11"
+                        data-testid="organization-members-clear-filters"
+                        (click)="clearRosterFilters()"
+                      >
+                        <span i18n="@@common.clearFilters">Clear filters</span>
                       </button>
-                    }
-                  </app-empty-state>
+                    </div>
+                  </div>
+                } @else {
+                  <div hlmEmpty>
+                    <div hlmEmptyHeader>
+                      <div hlmEmptyMedia variant="icon">
+                        <ng-icon name="lucideUsersRound" aria-hidden="true" />
+                      </div>
+                      <p hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</p>
+                      <p hlmEmptyDescription i18n="@@org.members.emptyText">
+                        Invite someone to give them access to this organization.
+                      </p>
+                    </div>
+                    <div hlmEmptyContent>
+                      @if (canManageMembers()) {
+                        <button hlmBtn class="max-sm:min-h-11" (click)="openInviteDialog()">
+                          <ng-icon name="lucideMailPlus" aria-hidden="true" />
+                          <span i18n="@@org.members.inviteButton">Invite member</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
                 }
               } @else {
                 <app-organization-member-table
@@ -300,31 +322,45 @@
                 <h2 hlmCardTitle>{{ pendingInvitationsHeading() }}</h2>
 
                 @if (store.loadCallState().status === 'error') {
-                  <app-error-state
-                    icon="lucideCircleAlert"
-                    title="Couldn't load invitations"
-                    i18n-title="@@org.invitations.errorTitle"
-                    description="The invitations could not be loaded. Check your connection and try again."
-                    i18n-description="@@org.invitations.errorText"
-                  >
-                    <button
-                      hlmBtn
-                      variant="outline"
-                      class="max-sm:min-h-11"
-                      data-testid="organization-invitations-retry"
-                      (click)="reload()"
-                    >
-                      <span i18n="@@org.members.retry">Retry</span>
-                    </button>
-                  </app-error-state>
+                  <div hlmEmpty role="alert">
+                    <div hlmEmptyHeader>
+                      <div hlmEmptyMedia variant="icon" class="text-destructive">
+                        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                      </div>
+                      <p hlmEmptyTitle i18n="@@org.invitations.errorTitle">
+                        Couldn't load invitations
+                      </p>
+                      <p hlmEmptyDescription i18n="@@org.invitations.errorText">
+                        The invitations could not be loaded. Check your connection and try again.
+                      </p>
+                    </div>
+                    <div hlmEmptyContent>
+                      <button
+                        hlmBtn
+                        variant="outline"
+                        class="max-sm:min-h-11"
+                        data-testid="organization-invitations-retry"
+                        (click)="reload()"
+                      >
+                        <span i18n="@@org.members.retry">Retry</span>
+                      </button>
+                    </div>
+                  </div>
                 } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
-                  <app-empty-state
-                    icon="lucideMailQuestion"
-                    title="No pending invitations"
-                    i18n-title="@@org.invitations.emptyTitle"
-                    description="Invitations you send will appear here until they are accepted, revoked or expire."
-                    i18n-description="@@org.invitations.emptyText"
-                  />
+                  <div hlmEmpty>
+                    <div hlmEmptyHeader>
+                      <div hlmEmptyMedia variant="icon">
+                        <ng-icon name="lucideMailQuestion" aria-hidden="true" />
+                      </div>
+                      <p hlmEmptyTitle i18n="@@org.invitations.emptyTitle">
+                        No pending invitations
+                      </p>
+                      <p hlmEmptyDescription i18n="@@org.invitations.emptyText">
+                        Invitations you send will appear here until they are accepted, revoked or
+                        expire.
+                      </p>
+                    </div>
+                  </div>
                 } @else {
                   <app-organization-invitation-table
                     [regionalFormatting]="regionalFormatting()"

@@ -67,6 +67,7 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
+import { HlmAvatar, HlmAvatarFallback, HlmAvatarGroup, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import {
   HlmDropdownMenu,
@@ -104,12 +105,10 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
  * thread machinery built for direct messages works here unchanged, pointed
  * at the channel's own id.
  *
- * `ChannelsStore` is injected rather than provided here: `ChannelsPage`
- * provides it, component-scoped, and this page — rendered through that
- * page's router-outlet — resolves the same instance, the way `AccountMenu`
- * and a routed page can share one root-provided store, just one level
- * shallower. That is what lets a rename or a favorite toggle made from this
- * room show up in the list without a refetch.
+ * The dashboard route provides ChannelsStore for both this room and the
+ * sidebar extension. Rename, hierarchy and favorite changes therefore update
+ * the same collection without rebuilding the navigation. Below 1024px the back
+ * link returns to the channel index, which shows the extension in place of the room.
  *
  * Favoriting calls `ConversationService` directly rather than through
  * `ChannelsStore`: the store's public surface is load, loadOne, create,
@@ -135,6 +134,10 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
     ChannelParticipantsSheet,
     ChannelEditDialog,
     HlmButton,
+    HlmAvatar,
+    HlmAvatarFallback,
+    HlmAvatarGroup,
+    HlmAvatarImage,
     HlmDropdownMenu,
     HlmDropdownMenuGroup,
     HlmDropdownMenuItem,
@@ -203,7 +206,7 @@ export class ChannelConversationPage {
    * @readonly
    *
    * @description
-   * The shared list/administration store, resolved from `ChannelsPage`.
+   * The list and administration state shared through the dashboard route injector.
    *
    * @access protected
    * @since 1.0.0
@@ -418,6 +421,35 @@ export class ChannelConversationPage {
           source: participant.source,
         };
       }),
+  );
+
+  /**
+   * Property participantAvatars
+   * @readonly
+   *
+   * @description
+   * Up to three participants represented in the header, with initials as a fallback.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<readonly (ChannelParticipantView & { readonly initials: string })[]>}
+   */
+  protected readonly participantAvatars: Signal<
+    readonly (ChannelParticipantView & { readonly initials: string })[]
+  > = computed(() =>
+    this.participantViews()
+      .slice(0, 3)
+      .map((participant) =>
+        Object.assign({}, participant, {
+          initials: participant.displayName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() ?? '')
+            .join(''),
+        }),
+      ),
   );
 
   /**

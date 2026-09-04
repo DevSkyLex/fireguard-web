@@ -134,39 +134,59 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@maintenance.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to maintenance schedules."
-      i18n-description="@@maintenance.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@maintenance.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@maintenance.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to maintenance schedules.
+        </p>
+      </div>
+    </div>
   } @else if (store.hasListError()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load maintenance schedules"
-      i18n-title="@@maintenance.list.errorTitle"
-      description="The schedules could not be loaded. Check your connection and try again."
-      i18n-description="@@maintenance.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="maintenance-retry" (click)="reload()">
-        <span i18n="@@maintenance.list.retry">Retry</span>
-      </button>
-    </app-error-state>
-  } @else if (!store.isLoading() && items().length === 0) {
-    <app-empty-state
-      [icon]="hasFilters() ? 'lucideCircleAlert' : 'lucidePackage'"
-      title="No maintenance schedules found"
-      i18n-title="@@maintenance.list.emptyTitle"
-      description="Adjust your filters, or track equipment to see its schedule here."
-      i18n-description="@@maintenance.list.emptyDesc"
-    >
-      @if (hasFilters()) {
-        <button hlmBtn variant="outline" (click)="clearFilters()">
-          <span i18n="@@common.clearFilters">Clear filters</span>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@maintenance.list.errorTitle">
+          Couldn't load maintenance schedules
+        </p>
+        <p hlmEmptyDescription i18n="@@maintenance.list.errorText">
+          The schedules could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="maintenance-retry" (click)="reload()">
+          <span i18n="@@maintenance.list.retry">Retry</span>
         </button>
-      }
-    </app-empty-state>
+      </div>
+    </div>
+  } @else if (!store.isLoading() && items().length === 0) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        @if (hasFilters() ? 'lucideCircleAlert' : 'lucidePackage'; as iconName) {
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon [name]="iconName" aria-hidden="true" />
+          </div>
+        }
+        <p hlmEmptyTitle i18n="@@maintenance.list.emptyTitle">No maintenance schedules found</p>
+        <p hlmEmptyDescription i18n="@@maintenance.list.emptyDesc">
+          Adjust your filters, or track equipment to see its schedule here.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (hasFilters()) {
+          <button hlmBtn variant="outline" (click)="clearFilters()">
+            <span i18n="@@common.clearFilters">Clear filters</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     <app-maintenance-schedule-table
       [regionalFormatting]="regionalFormatting()"

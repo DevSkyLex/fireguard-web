@@ -1,8 +1,8 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (serverError(); as error) {
-      <div role="alert" data-testid="register-server-error" class="text-sm text-destructive">
-        <p>
+      <div hlmAlert variant="destructive" class="break-words" data-testid="register-server-error">
+        <p hlmAlertDescription>
           @if (error.message; as message) {
             {{ message }}
           } @else {
@@ -12,12 +12,13 @@
       </div>
     }
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-5 min-[360px]:grid-cols-2 min-[360px]:gap-4">
       <hlm-field>
         <label hlmFieldLabel for="register-first-name"
           ><span i18n="@@auth.firstName.label">First name</span><app-required-marker
         /></label>
         <input
+          class="max-sm:min-h-11"
           hlmInput
           id="register-first-name"
           type="text"
@@ -41,6 +42,7 @@
           ><span i18n="@@auth.lastName.label">Last name</span><app-required-marker
         /></label>
         <input
+          class="max-sm:min-h-11"
           hlmInput
           id="register-last-name"
           type="text"
@@ -65,9 +67,12 @@
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker
       /></label>
       <input
+        class="max-sm:min-h-11"
         hlmInput
         id="register-email"
         type="email"
+        autocapitalize="none"
+        spellcheck="false"
         autocomplete="email"
         inputmode="email"
         placeholder="you@company.com"
@@ -93,6 +98,9 @@
         i18n-placeholder="@@auth.password.placeholder"
         [field]="registerForm.password"
       />
+      <hlm-field-description i18n="@@auth.password.pattern">
+        Include an upper case letter, a lower case letter, a digit and a symbol
+      </hlm-field-description>
       @if (registerForm.password().touched() && registerForm.password().invalid()) {
         <hlm-field-error>{{ registerForm.password().errors()[0].message }}</hlm-field-error>
       }
@@ -117,13 +125,14 @@
     <button
       hlmBtn
       type="submit"
-      class="w-full max-sm:min-h-11"
+      class="h-auto min-h-11 w-full whitespace-normal"
       data-testid="register-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"
       aria-live="polite"
     >
       @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
         <span i18n="@@auth.register.submitting">Creating your account…</span>
       } @else {
         <span i18n="@@auth.register.submit">Create account</span>

@@ -35,6 +35,7 @@ import {
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput, CreateOrganizationInput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
+import { organizationInvitationAcceptStoreEvents } from '../organization-invitation-accept/events';
 import { organizationSettingsStoreEvents } from '../organization-settings/events';
 import { organizationStoreEvents } from './events';
 import type { OrganizationArchiveRequest, OrganizationState } from './models';
@@ -580,6 +581,12 @@ export const OrganizationStore = signalStore(
        * @returns {void}
        */
       onInit(): void {
+        events
+          .on(organizationInvitationAcceptStoreEvents.acceptSucceeded)
+          .pipe(takeUntilDestroyed(destroyRef))
+          .subscribe(() => {
+            if (store.listCallState().status !== 'idle') store.loadOrganizations();
+          });
         events
           .on(organizationSettingsStoreEvents.organizationUpdated)
           .pipe(takeUntilDestroyed(destroyRef))

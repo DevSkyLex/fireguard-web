@@ -19,5 +19,4 @@ export type OrganizationSettingsTabId =
   | 'notifications'
   | 'regional'
   | 'compliance'
-  | 'assistant'
   | 'danger';

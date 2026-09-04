@@ -1,8 +1,9 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   OnboardingStepKey,
   OnboardingStepOutput,
@@ -10,7 +11,10 @@ import type {
 } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
 import { BillingService, PlanService } from '@features/organization/data-access';
-import { OrganizationSetupService } from '@features/organization/setup';
+import {
+  OrganizationSetupService,
+  type SetupCreateFacilityInput,
+} from '@features/organization/setup';
 import { OnboardingWizardPage, redirectToStripe } from '../onboarding-wizard-page.component';
 
 const stepOf = (key: OnboardingStepKey, status: OnboardingStepStatus): OnboardingStepOutput =>
@@ -36,6 +40,11 @@ const stepOf = (key: OnboardingStepKey, status: OnboardingStepStatus): Onboardin
 describe('OnboardingWizardPage', () => {
   let fixture: ComponentFixture<OnboardingWizardPage>;
   let storeMock: {
+    startCallState: WritableSignal<CallState<never>>;
+    skipStepCallState: WritableSignal<CallState<never>>;
+    rollbackCallState: WritableSignal<CallState<never>>;
+    loadError: WritableSignal<null>;
+    isBusy: WritableSignal<boolean>;
     onboarding: WritableSignal<unknown>;
     nextStep: WritableSignal<OnboardingStepKey | null>;
     steps: WritableSignal<readonly OnboardingStepOutput[]>;
@@ -60,6 +69,7 @@ describe('OnboardingWizardPage', () => {
     createFacilities: ReturnType<typeof vi.fn>;
     createEquipment: ReturnType<typeof vi.fn>;
     listRoles: ReturnType<typeof vi.fn>;
+    listFacilities: ReturnType<typeof vi.fn>;
   };
   let planServiceMock: { listAvailable: ReturnType<typeof vi.fn> };
   let billingServiceMock: {
@@ -71,6 +81,11 @@ describe('OnboardingWizardPage', () => {
 
   beforeEach(async () => {
     storeMock = {
+      startCallState: signal(idleCallState()),
+      skipStepCallState: signal(idleCallState()),
+      rollbackCallState: signal(idleCallState()),
+      loadError: signal(null),
+      isBusy: signal(false),
       onboarding: signal(null),
       nextStep: signal<OnboardingStepKey | null>('create_organization'),
       steps: signal<readonly OnboardingStepOutput[]>([stepOf('create_organization', 'pending')]),
@@ -95,6 +110,7 @@ describe('OnboardingWizardPage', () => {
       createFacilities: vi.fn().mockReturnValue(of(undefined)),
       createEquipment: vi.fn().mockReturnValue(of(undefined)),
       listRoles: vi.fn().mockReturnValue(of([])),
+      listFacilities: vi.fn().mockReturnValue(of([])),
     };
     planServiceMock = { listAvailable: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) };
     billingServiceMock = {
@@ -112,6 +128,10 @@ describe('OnboardingWizardPage', () => {
         { provide: PlanService, useValue: planServiceMock },
         { provide: BillingService, useValue: billingServiceMock },
         { provide: Router, useValue: routerMock },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
         { provide: FeedbackService, useValue: feedbackMock },
       ],
     });
@@ -225,6 +245,9 @@ describe('OnboardingWizardPage', () => {
   });
 
   it('should skip the active step through the store', () => {
+    storeMock.steps.set([
+      { ...stepOf('create_organization', 'pending'), skippable: true, skipAvailable: true },
+    ]);
     fixture.componentInstance['skipCurrentStep']();
 
     expect(storeMock.skipStep).toHaveBeenCalledWith('create_organization');
@@ -258,6 +281,91 @@ describe('OnboardingWizardPage', () => {
         '[data-testid="onboarding-wizard-next-step"]',
       )?.textContent,
     ).toContain('Last step');
+  });
+  it('should load an empty plan catalog once and allow an explicit refresh', async () => {
+    storeMock.nextStep.set('select_plan');
+    storeMock.steps.set([stepOf('select_plan', 'pending')]);
+    await fixture.whenStable();
+    expect(planServiceMock.listAvailable).toHaveBeenCalledTimes(1);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-catalog-empty"]',
+      ),
+    ).not.toBeNull();
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(planServiceMock.listAvailable).toHaveBeenCalledTimes(2);
+  });
+
+  it('should keep catalog failures visible without automatically retrying', async () => {
+    planServiceMock.listAvailable.mockReturnValue(throwError(() => ({ status: 503 })));
+    storeMock.nextStep.set('select_plan');
+    storeMock.steps.set([stepOf('select_plan', 'pending')]);
+    await fixture.whenStable();
+    expect(planServiceMock.listAvailable).toHaveBeenCalledTimes(1);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-catalog-error"]',
+      ),
+    ).not.toBeNull();
+    expect(fixture.componentInstance['catalogPending']()).toBe(false);
+  });
+
+  it('should reload persisted facilities when resuming at equipment', async () => {
+    const facilities = [{ id: 'saved-site', name: 'HQ', type: 'site' }];
+    organizationSetupServiceMock.listFacilities.mockReturnValue(of(facilities));
+    storeMock.targetOrganizationId.set('org-1');
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledWith('org-1');
+    expect(fixture.componentInstance['createdFacilities']()).toEqual(facilities);
+  });
+
+  it('should retry only failed facility rows and retain the successful summaries', () => {
+    storeMock.targetOrganizationId.set('org-1');
+    const drafts: readonly SetupCreateFacilityInput[] = [
+      { name: 'HQ', type: 'site' },
+      { name: 'Annex', type: 'building' },
+    ];
+    organizationSetupServiceMock.createFacilities.mockImplementation(
+      (_organizationId: string, rows: readonly SetupCreateFacilityInput[]) =>
+        rows[0].name === 'HQ'
+          ? of([{ id: 'hq', name: 'HQ', type: 'site' }])
+          : throwError(() => ({ status: 503 })),
+    );
+    fixture.componentInstance['submitFacilities'](drafts);
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['completedFacilityDrafts']()).toEqual([drafts[0]]);
+    expect(fixture.componentInstance['failedFacilities']()).toEqual(['Annex']);
+    organizationSetupServiceMock.createFacilities
+      .mockClear()
+      .mockReturnValue(of([{ id: 'annex', name: 'Annex', type: 'building' }]));
+    fixture.componentInstance['submitFacilities'](drafts);
+    expect(organizationSetupServiceMock.createFacilities).toHaveBeenCalledExactlyOnceWith('org-1', [
+      drafts[1],
+    ]);
+    expect(fixture.componentInstance['createdFacilities']().map((facility) => facility.id)).toEqual(
+      ['hq', 'annex'],
+    );
+    expect(storeMock.executeStep).toHaveBeenCalledWith({ stepKey: 'create_first_facility' });
+  });
+
+  it('should not recreate a resource when only confirmation needs retrying', () => {
+    fixture.componentInstance['submitOrganization']({ name: 'Acme' });
+    fixture.componentInstance['submitOrganization']({ name: 'Acme' });
+    expect(organizationSetupServiceMock.createOrganization).toHaveBeenCalledTimes(1);
+    expect(storeMock.executeStep).toHaveBeenCalledTimes(2);
+  });
+
+  it('should open the organization just activated even when an earlier destination exists', async () => {
+    vi.spyOn(TestBed.inject(ActivatedRoute).snapshot.queryParamMap, 'get').mockReturnValue(
+      '/organizations/previous-org',
+    );
+    storeMock.targetOrganizationId.set('new-org');
+    storeMock.isCompleted.set(true);
+    await fixture.whenStable();
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/organizations/new-org');
   });
 });
 

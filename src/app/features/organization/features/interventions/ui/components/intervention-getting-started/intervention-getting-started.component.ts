@@ -14,7 +14,6 @@ import type {
   InterventionReadinessItem,
   InterventionReadinessTarget,
 } from '@features/organization/features/interventions/models';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmItemImports } from '@shared/ui/item';
 
 /**
@@ -46,7 +45,7 @@ import { HlmItemImports } from '@shared/ui/item';
  */
 @Component({
   selector: 'app-intervention-getting-started',
-  imports: [NgIcon, ...HlmCardImports, ...HlmItemImports],
+  imports: [NgIcon, ...HlmItemImports],
   providers: [provideIcons({ lucideCheck, lucideCircle })],
   templateUrl: './intervention-getting-started.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

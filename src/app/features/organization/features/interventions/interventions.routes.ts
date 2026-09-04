@@ -6,7 +6,6 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { interventionTitleResolver } from './http/resolvers';
 import { InterventionStore } from './state';
 import { InterventionPlanningOptionsStore } from './state/intervention-planning-options';
-import { InterventionStatisticsStore } from './state/intervention-statistics';
 
 /**
  * Function redirectToInterventionView
@@ -54,7 +53,7 @@ function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'):
  * slot (`InterventionToolbarActions`). One physical `InterventionsPage`
  * replaced all of that: the tabs are `hlm-tabs`
  * (`@shared/ui/tabs`) over the `view` route-bound input rather than a
- * `<router-outlet />`, so the toolbar, the KPI strip and the eight-chip
+ * `<router-outlet />`, so the toolbar and the eight-chip
  * filter bar are built once, and the List's own controls render inline,
  * gated on the active tab, with no slot indirection. `/board` and
  * `/calendar` still exist as addressable, bookmarkable URLs: each is a
@@ -66,11 +65,10 @@ function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'):
  *
  * The three leaves share one pathless parent so `InterventionStore`,
  * `InterventionPlanningOptionsStore` (site/member/label options for the
- * filter bar) and `InterventionStatisticsStore` (the KPI strip), all bound
+ * filter bar), both bound
  * in its route-level `providers`, survive navigation across the index and
  * the detail page — the list, the board and the detail page's prev/next all
- * walk the same `orderedIds()`, with no second fetch, and the KPI figures
- * hold while switching tabs. The Calendar tab does **not** read
+ * walk the same `orderedIds()`, with no second fetch. The Calendar tab does **not** read
  * `InterventionStore`: it reads a bounded date window instead of one server
  * page, an incompatible shape for the same entity cache, so `InterventionsPage`
  * provides its own component-scoped `InterventionCalendarStore` instead
@@ -107,7 +105,7 @@ function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'):
 export const INTERVENTION_ROUTES: Routes = [
   {
     path: '',
-    providers: [InterventionStore, InterventionPlanningOptionsStore, InterventionStatisticsStore],
+    providers: [InterventionStore, InterventionPlanningOptionsStore],
     canActivate: [
       organizationPermissionGuard({
         permissions: [ORGANIZATION_PERMISSION.INTERVENTIONS_READ],

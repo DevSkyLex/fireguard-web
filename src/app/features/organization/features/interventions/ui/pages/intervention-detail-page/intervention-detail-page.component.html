@@ -43,6 +43,38 @@
       {{ metaLine() }}
     </p>
 
+    <section
+      class="flex flex-col gap-1"
+      aria-labelledby="intervention-detail-properties-title"
+      data-testid="intervention-detail-properties"
+    >
+      <h2
+        id="intervention-detail-properties-title"
+        class="sr-only"
+        i18n="@@intervention.sidebar.title"
+      >
+        Properties
+      </h2>
+
+      <app-intervention-properties-grid
+        [regionalFormatting]="regionalFormatting()"
+        [intervention]="intervention"
+        [organizationId]="organizationId()"
+        [siteOptions]="planningOptions.sites()"
+        [memberOptions]="planningOptions.members()"
+        [labelOptions]="planningOptions.labels()"
+        [canEditSchedule]="canEditSchedule()"
+        [canEditSite]="canEditSite()"
+        [canEditResponsible]="canEditResponsible()"
+        [canEditDetails]="canEditDetails()"
+        [canManageLabels]="canManageLabels()"
+        [editState]="editState()"
+        (detailsChanged)="onDetailsChanged($event)"
+        (editTargetChanged)="onEditTargetChanged($event)"
+        (manageLabelsRequested)="openManageLabels()"
+      />
+    </section>
+
     <app-intervention-status-band
       [status]="intervention.status"
       [phase]="phase()"
@@ -71,13 +103,7 @@
     }
 
     @if (pageError(); as message) {
-      <div
-        hlmAlert
-        variant="destructive"
-        class="border-destructive/30 bg-destructive/5"
-        role="alert"
-        data-testid="intervention-detail-error"
-      >
+      <div hlmAlert variant="destructive" role="alert" data-testid="intervention-detail-error">
         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
         <p hlmAlertTitle>{{ message }}</p>
         @if (store.loadFailed()) {
@@ -104,8 +130,8 @@
       >
         <hlm-tabs
           [tab]="activeLinkedTab()"
-          [orientation]="linkedTabsOrientation()"
-          class="min-w-0 flex-col items-stretch gap-4 @6xl/detail:flex-row @6xl/detail:items-start @6xl/detail:gap-8"
+          orientation="horizontal"
+          class="min-w-0 flex-col items-stretch gap-4"
           (tabActivated)="onLinkedTabActivated($event)"
         >
           <ng-template #linkedTabTriggers>
@@ -114,7 +140,7 @@
               class="max-sm:min-h-11"
               data-testid="intervention-tab-overview"
             >
-              <span i18n="@@intervention.linked.tabs.overview">Overview</span>
+              <span i18n="@@intervention.linked.tabs.work">Work</span>
             </button>
             <button
               hlmTabsTrigger="changes"
@@ -158,24 +184,19 @@
             </button>
           </ng-template>
 
-          @if (linkedTabsOrientation() === 'vertical') {
+          <div
+            class="min-w-0 overflow-x-auto overflow-y-hidden py-1"
+            data-testid="intervention-tabs-list"
+          >
             <hlm-tabs-list
               variant="line"
-              class="shrink-0 items-stretch @6xl/detail:sticky @6xl/detail:top-32"
+              class="flex min-h-11 max-sm:[&>button]:shrink-0"
               aria-label="Intervention sections"
               i18n-aria-label="@@intervention.linked.tabsAriaLabel"
             >
               <ng-container *ngTemplateOutlet="linkedTabTriggers" />
             </hlm-tabs-list>
-          } @else {
-            <hlm-paginated-tabs-list
-              variant="line"
-              class="w-full"
-              data-testid="intervention-tabs-list"
-            >
-              <ng-container *ngTemplateOutlet="linkedTabTriggers" />
-            </hlm-paginated-tabs-list>
-          }
+          </div>
 
           <div hlmTabsContent="overview" class="min-w-0">
             <div class="flex min-w-0 flex-col gap-6">
@@ -261,25 +282,48 @@
                 />
               </div>
 
-              <app-intervention-activity-thread
-                [activities]="store.activities()"
-                [members]="planningOptions.members()"
-                [loading]="activitiesLoading()"
-                [error]="activitiesError()"
-                [hasOlder]="store.hasOlderActivities()"
-                (olderRequested)="loadOlderActivities()"
-                (retryRequested)="reloadActivities()"
-              />
+              <hlm-collapsible
+                [expanded]="activityExpanded()"
+                (expandedChange)="activityExpanded.set($event)"
+              >
+                <button
+                  hlmCollapsibleTrigger
+                  hlmBtn
+                  variant="ghost"
+                  type="button"
+                  class="max-sm:min-h-11"
+                  data-testid="intervention-activity-toggle"
+                >
+                  <span i18n="@@intervention.activity.disclosure">Activity</span
+                  ><span class="tabular-nums">{{ store.activities().length }}</span>
+                </button>
+                <div
+                  hlmCollapsibleContent
+                  id="intervention-activity-content"
+                  #activityContent
+                  class="flex flex-col gap-4 pt-3"
+                >
+                  <app-intervention-activity-thread
+                    [activities]="store.activities()"
+                    [members]="planningOptions.members()"
+                    [loading]="activitiesLoading()"
+                    [error]="activitiesError()"
+                    [hasOlder]="store.hasOlderActivities()"
+                    (olderRequested)="loadOlderActivities()"
+                    (retryRequested)="reloadActivities()"
+                  />
 
-              <div class="border-t border-border pt-4">
-                <app-intervention-comment-form
-                  [pending]="commentPending()"
-                  [online]="online()"
-                  [serverError]="commentError()"
-                  [members]="planningOptions.members()"
-                  (submitted)="postComment($event)"
-                />
-              </div>
+                  <div class="border-t border-border pt-4">
+                    <app-intervention-comment-form
+                      [pending]="commentPending()"
+                      [online]="online()"
+                      [serverError]="commentError()"
+                      [members]="planningOptions.members()"
+                      (submitted)="postComment($event)"
+                    />
+                  </div>
+                </div>
+              </hlm-collapsible>
             </div>
           </div>
 
@@ -359,63 +403,37 @@
 
         <div class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-32">
           <section
+            hlmCollapsible
+            [expanded]="aboutExpanded() ?? false"
+            (expandedChange)="aboutExpanded.set($event)"
             class="flex flex-col gap-1"
             aria-labelledby="intervention-detail-about-title"
             data-testid="intervention-detail-about"
           >
-            <h2
-              hlmCardTitle
+            <button
+              hlmCollapsibleTrigger
+              hlmBtn
+              variant="ghost"
+              type="button"
               id="intervention-detail-about-title"
-              class="px-2"
+              class="justify-start max-sm:min-h-11"
               i18n="@@intervention.detail.aboutTitle"
             >
               About
-            </h2>
-
-            <app-intervention-about
-              [regionalFormatting]="regionalFormatting()"
-              [intervention]="intervention"
-              [canEditDetails]="canEditDetails()"
-              [editState]="editState()"
-              (detailsChanged)="onDetailsChanged($event)"
-              (editTargetChanged)="onEditTargetChanged($event)"
-            />
+            </button>
+            <div hlmCollapsibleContent>
+              <app-intervention-about
+                [regionalFormatting]="regionalFormatting()"
+                [intervention]="intervention"
+                [canEditDetails]="canEditDetails()"
+                [editState]="editState()"
+                (detailsChanged)="onDetailsChanged($event)"
+                (editTargetChanged)="onEditTargetChanged($event)"
+              />
+            </div>
           </section>
 
           <hlm-separator />
-
-          <section
-            class="flex flex-col gap-1"
-            aria-labelledby="intervention-detail-properties-title"
-            data-testid="intervention-detail-properties"
-          >
-            <h2
-              hlmCardTitle
-              id="intervention-detail-properties-title"
-              class="px-2"
-              i18n="@@intervention.sidebar.title"
-            >
-              Properties
-            </h2>
-
-            <app-intervention-properties-grid
-              [regionalFormatting]="regionalFormatting()"
-              [intervention]="intervention"
-              [organizationId]="organizationId()"
-              [siteOptions]="planningOptions.sites()"
-              [memberOptions]="planningOptions.members()"
-              [labelOptions]="planningOptions.labels()"
-              [canEditSchedule]="canEditSchedule()"
-              [canEditSite]="canEditSite()"
-              [canEditResponsible]="canEditResponsible()"
-              [canEditDetails]="canEditDetails()"
-              [canManageLabels]="canManageLabels()"
-              [editState]="editState()"
-              (detailsChanged)="onDetailsChanged($event)"
-              (editTargetChanged)="onEditTargetChanged($event)"
-              (manageLabelsRequested)="openManageLabels()"
-            />
-          </section>
 
           @if (phase() === 'execute' || phase() === 'review') {
             <div
@@ -473,52 +491,61 @@
       </div>
     }
   } @else if (store.loadFailed()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="This intervention could not be opened"
-      i18n-title="@@intervention.detail.loadFailedTitle"
-      [description]="store.error()"
-      data-testid="intervention-detail-load-failed"
-    >
-      <button
-        hlmBtn
-        type="button"
-        class="max-sm:min-h-11"
-        data-testid="intervention-detail-load-failed-retry"
-        (click)="retryLoad()"
-        i18n="@@common.tryAgain"
-      >
-        Try again
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        (click)="navigateToList()"
-      >
-        <span i18n="@@intervention.detail.backToList">Back to interventions</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert" data-testid="intervention-detail-load-failed">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.detail.loadFailedTitle">
+          This intervention could not be opened
+        </p>
+        <p hlmEmptyDescription>{{ store.error() }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          class="max-sm:min-h-11"
+          data-testid="intervention-detail-load-failed-retry"
+          (click)="retryLoad()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          (click)="navigateToList()"
+        >
+          <span i18n="@@intervention.detail.backToList">Back to interventions</span>
+        </button>
+      </div>
+    </div>
   } @else {
-    <app-empty-state
-      icon="lucideCompass"
-      title="Intervention not found"
-      i18n-title="@@intervention.detail.notFoundTitle"
-      description="This intervention does not exist, or you no longer have access to it."
-      i18n-description="@@intervention.detail.notFound"
-      data-testid="intervention-detail-not-found"
-    >
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        (click)="navigateToList()"
-      >
-        <span i18n="@@intervention.detail.backToList">Back to interventions</span>
-      </button>
-    </app-empty-state>
+    <div hlmEmpty data-testid="intervention-detail-not-found">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideCompass" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.detail.notFoundTitle">Intervention not found</p>
+        <p hlmEmptyDescription i18n="@@intervention.detail.notFound">
+          This intervention does not exist, or you no longer have access to it.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          (click)="navigateToList()"
+        >
+          <span i18n="@@intervention.detail.backToList">Back to interventions</span>
+        </button>
+      </div>
+    </div>
   }
 </div>
 
@@ -632,11 +659,11 @@
       size="sm"
       class="min-w-0 shrink max-sm:size-11"
       data-testid="intervention-detail-discussion-trigger"
-      aria-controls="intervention-discussion-sheet"
+      aria-controls="intervention-activity-content"
       i18n-aria-label="@@intervention.discussion.trigger"
       aria-label="Discussion"
-      [attr.aria-expanded]="discussionSheetVisible()"
-      (click)="discussionSheetVisible.set(true)"
+      [attr.aria-expanded]="activityExpanded()"
+      (click)="openActivity()"
     >
       <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
       <span class="truncate max-sm:hidden" i18n="@@intervention.discussion.trigger"
@@ -662,6 +689,18 @@
 
     <ng-template #moreMenu>
       <hlm-dropdown-menu class="w-56">
+        @if (canDiscuss()) {
+          <button
+            hlmDropdownMenuItem
+            type="button"
+            data-testid="intervention-detail-team-chat"
+            (click)="discussionSheetVisible.set(true)"
+            i18n="@@intervention.discussion.teamChat"
+          >
+            Team chat
+          </button>
+        }
+
         @if (transitionTargets().length > 0) {
           <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
             <hlm-dropdown-menu-label

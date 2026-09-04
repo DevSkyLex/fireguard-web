@@ -125,7 +125,7 @@ describe('OrganizationTeamMembersSheet', () => {
     let retried = 0;
     fixture.componentInstance.retryLoad.subscribe(() => retried++);
 
-    const errorState = sheet()?.querySelector('app-error-state');
+    const errorState = sheet()?.querySelector('[data-slot="empty"][role="alert"]');
     expect(errorState).not.toBeNull();
     expect(errorState?.textContent).toContain('Network down');
 
@@ -140,7 +140,7 @@ describe('OrganizationTeamMembersSheet', () => {
   it('should show the empty state once loaded with no members', async () => {
     await create({ members: [] });
 
-    expect(sheet()?.querySelector('app-empty-state')).not.toBeNull();
+    expect(sheet()?.querySelector('[data-slot="empty"]:not([role="alert"])')).not.toBeNull();
   });
 
   it('should exclude the current roster member from the add-member candidates', async () => {

@@ -16,10 +16,13 @@
     </hlm-dialog-header>
 
     @if (roles().length === 0) {
-      <app-empty-state
-        title="This organization has no roles defined yet."
-        i18n-title="@@org.rolesDialog.empty"
-      />
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@org.rolesDialog.empty">
+            This organization has no roles defined yet.
+          </p>
+        </div>
+      </div>
     } @else {
       <ul class="flex flex-col gap-3">
         @for (role of roles(); track role.id) {

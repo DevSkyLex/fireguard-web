@@ -21,7 +21,6 @@ import {
   lucideArrowRightLeft,
   lucideBan,
   lucideBell,
-  lucideBot,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideCircleX,
@@ -47,7 +46,6 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type {
   InvoiceOutput,
   OrganizationApprovalSettings,
-  OrganizationAssistantSettings,
   OrganizationAutomationSettings,
   OrganizationComplianceSettings,
   OrganizationMemberOutput,
@@ -62,11 +60,11 @@ import { OrganizationBillingStore } from '@features/organization/state/organizat
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { toMemberSelectOption } from '@features/organization/utils';
 import { AT_LEAST_LG, mediaQuery } from '@shared/breakpoint';
-import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -81,10 +79,6 @@ import {
   OrganizationApprovalForm,
   type OrganizationApprovalFormValues,
 } from '../../forms/organization-approval-form';
-import {
-  OrganizationAssistantForm,
-  type OrganizationAssistantFormValues,
-} from '../../forms/organization-assistant-form';
 import { OrganizationAutomationForm } from '../../forms/organization-automation-form';
 import {
   OrganizationComplianceForm,
@@ -122,7 +116,6 @@ const TAB_IDS: ReadonlyArray<OrganizationSettingsTabId> = [
   'notifications',
   'regional',
   'compliance',
-  'assistant',
   'danger',
 ];
 
@@ -209,24 +202,6 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
 };
 
 /**
- * Constant DEFAULT_ASSISTANT
- *
- * @description
- * Seeded when an organization has never persisted an AI-assistant policy of
- * its own. Mirrors the backend's `OrganizationAssistantDefaults` catalog:
- * disabled by default, since a conversation transcript is sent to the
- * inference backend once enabled.
- *
- * @since 1.0.0
- */
-const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
-  enabled: false,
-  model: null,
-  temperature: 0.2,
-  includeBusinessContext: true,
-};
-
-/**
  * Component OrganizationSettingsPage
  * @class OrganizationSettingsPage
  *
@@ -235,8 +210,8 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
  * `?tab=` query parameter (`FEATURE.md`) — general & branding, subscription,
  * usage, notifications, regional & formats, compliance (SLAs, inspection
  * periodicity, the automation toggle, and the editable four-eyes approval
- * policy form), assistant (AI-assistant policy), and a permission-gated
- * danger zone. Tab content is deferred with `hlmTabsContentLazy`, so
+ * policy form), and a permission-gated danger zone. Tab content is deferred
+ * with `hlmTabsContentLazy`, so
  * subscription data (Stripe subscription, pricing, invoices, and the plan
  * catalog owned by `OrganizationPlanSelector`) and the approval-policy
  * form's action-type catalog each load only once the reader opens their tab,
@@ -265,10 +240,9 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
   selector: 'app-organization-settings-page',
   imports: [
     NgIcon,
+    ...HlmEmptyImports,
     NgTemplateOutlet,
-    EmptyState,
     OrganizationApprovalForm,
-    OrganizationAssistantForm,
     OrganizationAutomationForm,
     OrganizationCancelSubscriptionDialog,
     OrganizationComplianceForm,
@@ -297,7 +271,6 @@ const DEFAULT_ASSISTANT: OrganizationAssistantSettings = {
       lucideArrowRightLeft,
       lucideBan,
       lucideBell,
-      lucideBot,
       lucideCircleAlert,
       lucideCircleCheck,
       lucideCircleX,
@@ -761,19 +734,6 @@ export class OrganizationSettingsPage {
    */
   protected readonly approvalSeed: Signal<OrganizationApprovalSettings> = computed(
     (): OrganizationApprovalSettings => this.organization()?.settings?.approval ?? DEFAULT_APPROVAL,
-  );
-
-  /**
-   * Property assistantSeed
-   * @readonly
-   * @description The active organization's AI-assistant policy, defaulted for an organization that has never persisted one.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<OrganizationAssistantSettings>}
-   */
-  protected readonly assistantSeed: Signal<OrganizationAssistantSettings> = computed(
-    (): OrganizationAssistantSettings =>
-      this.organization()?.settings?.assistant ?? DEFAULT_ASSISTANT,
   );
 
   /**
@@ -1460,28 +1420,6 @@ export class OrganizationSettingsPage {
     if (organizationId === null) return;
 
     this.settingsStore.save({ organizationId, input: { approval: values } });
-  }
-
-  /**
-   * Method saveAssistant
-   * @method saveAssistant
-   *
-   * @description
-   * Persists the AI-assistant policy. The read-only model override is never
-   * part of this payload.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {OrganizationAssistantFormValues} values - The edited policy.
-   *
-   * @returns {void}
-   */
-  protected saveAssistant(values: OrganizationAssistantFormValues): void {
-    const organizationId: string | null = this.organizationId();
-    if (organizationId === null) return;
-
-    this.settingsStore.save({ organizationId, input: { assistant: values } });
   }
 
   /**

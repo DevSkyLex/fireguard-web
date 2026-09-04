@@ -18,9 +18,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideShieldOff, lucideTrash2, lucideTriangleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { TrustedDeviceOutput } from '@features/auth/models';
-import { ErrorState } from '@shared/error-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -57,7 +57,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-account-trusted-devices-panel',
-  imports: [DatePipe, NgIcon, ErrorState, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
+  imports: [NgIcon, ...HlmEmptyImports, DatePipe, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
   providers: [provideIcons({ lucideShieldOff, lucideTrash2, lucideTriangleAlert })],
   templateUrl: './account-trusted-devices-panel.component.html',
   host: { class: 'block' },

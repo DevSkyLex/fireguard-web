@@ -30,7 +30,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
-import { PersonOption } from '@shared/person-option';
+
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -41,6 +41,8 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
 import type { InterventionRecurrenceFormDraft } from './models';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /** Shortest and longest a recurrence's name may be. */
 const NAME_MAX_LENGTH: number = 160;
 
@@ -105,8 +107,9 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
 @Component({
   selector: 'app-intervention-recurrence-form',
   imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
     RequiredMarker,
-    PersonOption,
     FormField,
     HlmButton,
     HlmInput,

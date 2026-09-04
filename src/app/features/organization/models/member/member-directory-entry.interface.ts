@@ -17,7 +17,7 @@
 export interface MemberDirectoryEntry {
   /** Bare member UUID — the key every messaging surface carries. */
   readonly memberId: string;
-  /** Never blank: falls back to the member id when the API sends no name. */
+  /** Never blank: falls back to a neutral localized label when the API sends no name. */
   readonly displayName: string;
   readonly avatarUrl?: string;
   /** Resolved role names, in API order. Empty when the member has no role. */

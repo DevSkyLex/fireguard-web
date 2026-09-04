@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
+import { convertToParamMap, Router, UrlTree } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
 import { guestGuard } from '../guest.guard';
 
@@ -11,7 +11,9 @@ describe('guestGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
-  const route = {} as unknown as Parameters<typeof guestGuard>[0];
+  const route = { queryParamMap: convertToParamMap({}) } as unknown as Parameters<
+    typeof guestGuard
+  >[0];
   const state = {} as unknown as Parameters<typeof guestGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
@@ -40,7 +42,9 @@ describe('guestGuard', () => {
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/mfa-verify']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/mfa-verify'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 
   it('should allow access when user is not authenticated', () => {

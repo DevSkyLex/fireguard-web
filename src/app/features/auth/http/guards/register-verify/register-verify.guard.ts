@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, type GuardResult, type MaybeAsync, Router } from '@angular/router';
 import { RegisterStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Register Verify Guard
@@ -42,6 +43,30 @@ export const registerVerifyGuard: CanActivateFn = (route): MaybeAsync<GuardResul
   const router: Router = inject<Router>(Router);
 
   /**
+   * Constant returnUrl
+   * @const returnUrl
+   *
+   * @description
+   * Return URL to redirect to after registration is complete. Resolved from the
+   * `returnUrl` query param, or defaults to an empty string.
+   *
+   * @var {string}
+   */
+  const returnUrl: string = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+
+  /**
+   * Constant queryParams
+   * @const queryParams
+   *
+   * @description
+   * Query parameters to pass to the registration page when redirecting. Includes
+   * the `returnUrl` if it was present in the original request.
+   *
+   * @var {Record<string, string | undefined>}
+   */
+  const queryParams: Record<string, string | undefined> = { returnUrl: returnUrl || undefined };
+
+  /**
    * Constant routeToken
    * @const routeToken
    *
@@ -72,5 +97,5 @@ export const registerVerifyGuard: CanActivateFn = (route): MaybeAsync<GuardResul
 
   if (storeToken) return true;
 
-  return router.createUrlTree(['/auth/register']);
+  return router.createUrlTree(['/auth/register'], { queryParams });
 };

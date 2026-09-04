@@ -115,9 +115,11 @@ export class InterventionsPage {
     await this.page.getByTestId(fieldTestId).click();
   }
 
-  /** Switches to the "Recurrences" tab. */
+  /** Opens the addressable recurrence view. */
   public async openRecurrences(): Promise<void> {
-    await this.recurrencesTrigger.click();
+    const url = new URL(this.page.url());
+    url.searchParams.set('view', 'recurrences');
+    await this.page.goto(url.toString());
   }
 
   /** Switches to the "Recurrences" tab and opens the create form sheet from its "New recurrence" button. */

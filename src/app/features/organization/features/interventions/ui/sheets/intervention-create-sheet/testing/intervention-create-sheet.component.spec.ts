@@ -292,4 +292,40 @@ describe('InterventionCreateSheet', () => {
     expect(emitted).toEqual([false]);
     expect(fixture.componentInstance['unsavedChangesDialogState']()).toBe('closed');
   });
+  it('should preserve the blank draft when switching creation modes', async () => {
+    fixture.componentRef.setInput('templates', templates);
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    const name = document.querySelector<HTMLInputElement>(
+      '[data-testid="intervention-create-name"]',
+    );
+    if (!name) throw new Error('The blank form must expose its name field');
+    name.value = 'Saved blank draft';
+    name.dispatchEvent(new Event('input'));
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-create-mode-template"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['creationMode']()).toBe('template');
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-create-mode-blank"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['creationMode']()).toBe('blank');
+    expect(
+      document.querySelector<HTMLInputElement>('[data-testid="intervention-create-name"]')?.value,
+    ).toBe('Saved blank draft');
+  });
+
+  it('should open the preselected template without submitting it', async () => {
+    const emitted = vi.fn();
+    fixture.componentInstance.templateInstantiated.subscribe(emitted);
+    fixture.componentRef.setInput('templates', templates);
+    fixture.componentRef.setInput('initialTemplateId', 'template-1');
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['creationMode']()).toBe('template');
+    expect(fixture.componentInstance['selectedTemplateId']()).toBe('template-1');
+    expect(emitted).not.toHaveBeenCalled();
+  });
 });

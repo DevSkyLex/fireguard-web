@@ -28,11 +28,11 @@ import {
   type InterventionQueuedAttachment,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
-import { EmptyState } from '@shared/empty-state';
+import { HlmAttachmentImports } from '@shared/ui/attachment';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
-import { HlmItemImports } from '@shared/ui/item';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
 /**
@@ -78,8 +78,8 @@ interface AttachmentFileMeta {
  * @class InterventionAttachments
  *
  * @description
- * The intervention's attached files: metadata rows (name, size, label,
- * upload date, a per-row download button), a file picker, a camera capture
+ * The intervention's attached files: native Spartan attachment rows (name, size, label,
+ * file type, a per-row download button), a file picker, a camera capture
  * button for field photo evidence, and a per-row delete button that emits
  * {@link deleteRequested} straight away — the page owns the confirmation
  * (`app-intervention-attachment-delete-dialog`) and locks the row through
@@ -119,11 +119,11 @@ interface AttachmentFileMeta {
   selector: 'app-intervention-attachments',
   imports: [
     NgIcon,
+    ...HlmEmptyImports,
     HlmButton,
-    EmptyState,
     ...HlmBadgeImports,
     ...HlmCardImports,
-    ...HlmItemImports,
+    ...HlmAttachmentImports,
     ...HlmSpinnerImports,
   ],
   providers: [

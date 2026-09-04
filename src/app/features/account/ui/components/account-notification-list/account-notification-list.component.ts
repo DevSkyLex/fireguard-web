@@ -11,10 +11,9 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBell, lucideCheck, lucideCheckCheck, lucideTriangleAlert } from '@ng-icons/lucide';
 import type { NotificationOutput } from '@features/account/models';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -65,7 +64,7 @@ const RELATIVE_UNITS: ReadonlyArray<{
  */
 @Component({
   selector: 'app-account-notification-list',
-  imports: [NgIcon, EmptyState, ErrorState, HlmBadge, HlmButton, HlmSkeleton],
+  imports: [NgIcon, ...HlmEmptyImports, HlmBadge, HlmButton, HlmSkeleton],
   providers: [provideIcons({ lucideBell, lucideCheck, lucideCheckCheck, lucideTriangleAlert })],
   templateUrl: './account-notification-list.component.html',
   host: { class: 'block' },

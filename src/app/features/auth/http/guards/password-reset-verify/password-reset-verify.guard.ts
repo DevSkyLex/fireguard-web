@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, type GuardResult, type MaybeAsync, Router } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Password Reset Verify Guard
@@ -42,6 +43,30 @@ export const passwordResetVerifyGuard: CanActivateFn = (route): MaybeAsync<Guard
   const router: Router = inject<Router>(Router);
 
   /**
+   * Constant returnUrl
+   * @const returnUrl
+   *
+   * @description
+   * Return URL to redirect to after password reset is complete. Resolved from the
+   * `returnUrl` query param, or defaults to an empty string.
+   *
+   * @var {string}
+   */
+  const returnUrl: string = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
+
+  /**
+   * Constant queryParams
+   * @const queryParams
+   *
+   * @description
+   * Query parameters to include in the redirect URL when navigating to the forgot password page.
+   * Includes the returnUrl if present, otherwise undefined.
+   *
+   * @var {object}
+   */
+  const queryParams: Record<string, string | undefined> = { returnUrl: returnUrl || undefined };
+
+  /**
    * Constant token
    * @const token
    *
@@ -65,15 +90,12 @@ export const passwordResetVerifyGuard: CanActivateFn = (route): MaybeAsync<Guard
    */
   const storeToken: string | null = passwordResetStore.challengeToken();
 
-  // If token is present in query params, store it and allow access
   if (routeToken) {
     if (routeToken !== storeToken) passwordResetStore.setChallengeToken(routeToken);
     return true;
   }
 
-  // If no token in query params, check existing store token
   if (storeToken) return true;
 
-  // If no token at all, redirect to forgot password page
-  return router.createUrlTree(['/auth/password-reset/forgot']);
+  return router.createUrlTree(['/auth/password-reset/forgot'], { queryParams });
 };

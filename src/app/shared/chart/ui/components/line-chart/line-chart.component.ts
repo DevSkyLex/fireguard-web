@@ -12,64 +12,46 @@ import {
   type InputSignalWithTransform,
   type Signal,
 } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChartLine } from '@ng-icons/lucide';
-import type { ChartData, ChartOptions } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
-import { THEME_PORT, type ThemePort } from '@core/theme';
-import { EmptyState } from '@shared/empty-state';
+import type { ChartOptions } from '@tanstack/angular-charts';
+import { areaY, colorLegend, defineChart, lineY } from '@tanstack/charts';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { scalePoint } from '@tanstack/charts/scales/point';
+import { HLM_CHART_THEME, HlmChartImports, hlmChartTooltip } from '@shared/ui/chart';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import type { ChartSeries } from '../../../models';
-import { resolveChartColorScheme, resolveChartGridColors, toChartJsLineData } from '../../../utils';
+
+/**
+ * Type LineChartDatum
+ * @type
+ * @description One named series value at a shared category; missing samples remain gaps.
+ * @since 3.0.0
+ */
+type LineChartDatum = {
+  readonly category: string;
+  readonly value: number | null;
+  readonly series: string;
+};
 
 /**
  * Component LineChart
  * @class LineChart
  *
  * @description
- * A multi-series line or area chart over time — a thin typed wrapper over
- * Chart.js (through `ng2-charts`' `BaseChartDirective`) so no caller touches
- * `ChartData`/`ChartOptions` directly. Generic by design: it names no domain
- * and takes only `ChartSeries[]` plus scalar display flags (`ARCHITECTURE.md`
- * §6.4). Replaces the retired `@swimlane/ngx-charts` wrapper of the same name
- * (`organization/FEATURE.md` § Dashboard) — Chart.js takes gridline colour,
- * tick typography and tooltip chrome as first-class options instead of
- * ngx-charts' unreachable internal SVG classes, which is what motivated the
- * move.
+ * Maps the application's generic time series to the official Spartan Chart primitive.
+ * Native SVG rendering, legend, focus and tooltip use Spartan's semantic theme tokens.
+ * Loading and server rendering reserve the plot height; empty data gets an explicit state.
  *
- * SSR-safe: a canvas element only mounts once `isPlatformBrowser` is true —
- * `ng2-charts` itself guards its browser-only work the same way, but a
- * height-sized skeleton is still rendered up front here so hydration causes
- * no layout shift. Until then — and while `loading` is set — that skeleton
- * holds the layout.
- *
- * Colour is resolved from `core/theme`'s `resolvedTheme` signal rather than
- * read off the DOM (`utils/chart-color-scheme`, `utils/chart-grid-colors`),
- * so a live appearance switch recolors an already-rendered chart the same
- * way the rest of the shell does — both the dataset palette and the
- * gridline/tick/tooltip chrome are computed signals over that same source,
- * and Chart.js is handed a fresh `data`/`options` object on every change, so
- * `BaseChartDirective` redraws in place. The legend renders series names as
- * compact centred pills with small circular swatches below the plot, so
- * colour is never the only way a series is told apart. Points stay hidden
- * at rest and reveal on hover with an enlarged hit radius, gridlines draw
- * on the horizontal axis only, and the tooltip is a themed rounded card
- * rather than Chart.js' default black box.
- *
- * @version 2.1.0
- *
- * @example
- * ```html
- * <app-line-chart [series]="trend()" [label]="'Inspections over time'" area smooth />
- * ```
- *
+ * @version 3.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-line-chart',
-  imports: [BaseChartDirective, EmptyState, HlmSkeleton],
+  imports: [NgIcon, ...HlmEmptyImports, HlmChartImports, HlmSkeleton],
   providers: [provideIcons({ lucideChartLine })],
-  host: { class: 'block' },
+  host: { class: 'block min-w-0' },
   templateUrl: './line-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -95,9 +77,7 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * The chart's accessible name — what it plots, in one sentence. Set on the
-   * chart's `role="img"` wrapper since the rendered canvas is hidden from
-   * assistive tech (`aria-hidden`) as too fine-grained to navigate usefully.
+   * The accessible name passed to Spartan's native chart surface.
    *
    * @access public
    * @since 1.0.0
@@ -111,10 +91,7 @@ export class LineChart {
    * @readonly
    *
    * @description
-   * The chart's height in pixels. Width fills the host. Unlike the retired
-   * ngx-charts wrapper, Chart.js' built-in legend draws inside this box
-   * (shrinking the plot area to fit) rather than past it, so no extra
-   * height needs reserving for it.
+   * Fixed plot height; the native chart measures its available width.
    *
    * @access public
    * @since 1.0.0
@@ -141,25 +118,6 @@ export class LineChart {
   >(true, { transform: booleanAttribute });
 
   /**
-   * Property smooth
-   * @readonly
-   *
-   * @description
-   * Whether the line curves through its points instead of connecting them
-   * with straight segments. Defaults to off: a straight segment never
-   * implies a value between two real points that the data does not contain.
-   *
-   * @access public
-   * @since 1.0.0
-   *
-   * @type {InputSignalWithTransform<boolean, BooleanInput>}
-   */
-  public readonly smooth: InputSignalWithTransform<boolean, BooleanInput> = input<
-    boolean,
-    BooleanInput
-  >(false, { transform: booleanAttribute });
-
-  /**
    * Property area
    * @readonly
    *
@@ -177,35 +135,11 @@ export class LineChart {
   >(false, { transform: booleanAttribute });
 
   /**
-   * Property gradient
-   * @readonly
-   *
-   * @description
-   * Fades an {@link area} fill from its series colour to transparent instead
-   * of a flat tint, through a Chart.js scriptable `backgroundColor` reading
-   * the canvas' own gradient API (`utils/chart-series-mapper`). Has no
-   * effect without {@link area}. Defaults on.
-   *
-   * @access public
-   * @since 1.2.0
-   *
-   * @type {InputSignalWithTransform<boolean, BooleanInput>}
-   */
-  public readonly gradient: InputSignalWithTransform<boolean, BooleanInput> = input<
-    boolean,
-    BooleanInput
-  >(true, { transform: booleanAttribute });
-
-  /**
    * Property showGridLines
    * @readonly
    *
    * @description
-   * Whether Chart.js draws the horizontal (y-axis) gridlines. The vertical
-   * gridlines are always off — a full cage reads as dated, and the x-axis
-   * ticks already mark each category. Defaults on for legibility; a caller
-   * plotting a single, self-explanatory series may turn it off for a
-   * quieter card.
+   * Whether the native value axis shows horizontal gridlines.
    *
    * @access public
    * @since 1.2.0
@@ -234,30 +168,13 @@ export class LineChart {
     boolean,
     BooleanInput
   >(false, { transform: booleanAttribute });
-  //#endregion
-
-  //#region Properties
-  /**
-   * Property themePort
-   * @readonly
-   *
-   * @description
-   * The app-wide appearance contract, read for its already-resolved
-   * `'light' | 'dark'` value.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ThemePort}
-   */
-  private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
   /**
    * Property isBrowser
    * @readonly
    *
    * @description
-   * Whether this instance runs on the browser platform. The canvas is
+   * Whether this instance runs on the browser platform. The chart is
    * mounted only when true; the server render shows the skeleton instead.
    *
    * @access protected
@@ -266,25 +183,6 @@ export class LineChart {
    * @type {boolean}
    */
   protected readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
-
-  /**
-   * Property animationsEnabled
-   * @readonly
-   *
-   * @description
-   * Whether Chart.js may animate its transitions. Chart.js defaults its
-   * `animation` option to on and never consults `prefers-reduced-motion`
-   * itself, so the wrapper reads the media query once (browser only) and
-   * disables the transitions for users who asked for reduced motion.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @type {boolean}
-   */
-  protected readonly animationsEnabled: boolean =
-    this.isBrowser &&
-    !(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
 
   /**
    * Property isEmpty
@@ -303,132 +201,6 @@ export class LineChart {
   );
 
   /**
-   * Property colorScheme
-   * @readonly
-   *
-   * @description
-   * The ordinal dataset palette for the currently resolved appearance,
-   * recomputed whenever the app's theme changes.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<readonly string[]>}
-   */
-  protected readonly colorScheme: Signal<readonly string[]> = computed<readonly string[]>(() =>
-    resolveChartColorScheme(this.themePort.resolvedTheme()),
-  );
-
-  /**
-   * Property gridColors
-   * @readonly
-   *
-   * @description
-   * The resolved gridline/tick/tooltip chrome colours for the currently
-   * resolved appearance, recomputed whenever the app's theme changes.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<ReturnType<typeof resolveChartGridColors>>}
-   */
-  protected readonly gridColors: Signal<ReturnType<typeof resolveChartGridColors>> = computed(() =>
-    resolveChartGridColors(this.themePort.resolvedTheme()),
-  );
-
-  /**
-   * Property chartData
-   * @readonly
-   *
-   * @description
-   * The series mapped to Chart.js' `ChartData<'line'>` shape.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<ChartData<'line'>>}
-   */
-  protected readonly chartData: Signal<ChartData<'line'>> = computed<ChartData<'line'>>(() =>
-    toChartJsLineData(this.series(), this.colorScheme(), this.area(), this.gradient()),
-  );
-
-  /**
-   * Property chartOptions
-   * @readonly
-   *
-   * @description
-   * The Chart.js options for this instance's current display flags and the
-   * resolved theme's chrome colours — grid lines, tick colour, legend and
-   * tooltip styling all live here instead of an unreachable stylesheet
-   * selector, which is the capability the move off ngx-charts was for
-   * (`organization/FEATURE.md` § Dashboard).
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<ChartOptions<'line'>>}
-   */
-  protected readonly chartOptions: Signal<ChartOptions<'line'>> = computed<ChartOptions<'line'>>(
-    () => {
-      const grid = this.gridColors();
-
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: this.animationsEnabled ? { duration: 700, easing: 'easeOutQuart' } : false,
-        animations: { radius: { duration: 0 } },
-        interaction: { mode: 'index', intersect: false },
-        elements: {
-          line: { tension: this.smooth() ? 0.35 : 0, capBezierPoints: true },
-          point: { hoverBorderWidth: 2 },
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: grid.tick, padding: 8, maxRotation: 0 },
-            border: { color: grid.border },
-          },
-          y: {
-            beginAtZero: true,
-            grid: { display: this.showGridLines(), color: grid.border, drawTicks: false },
-            ticks: { color: grid.tick, padding: 8, maxTicksLimit: 6 },
-            border: { display: false },
-          },
-        },
-        plugins: {
-          legend: {
-            display: this.showLegend(),
-            position: 'bottom',
-            align: 'center',
-            labels: {
-              color: grid.tick,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              boxWidth: 6,
-              boxHeight: 6,
-              padding: 16,
-              font: { size: 12, weight: 500 },
-            },
-          },
-          tooltip: {
-            backgroundColor: grid.tooltipBackground,
-            titleColor: grid.tooltipForeground,
-            bodyColor: grid.tooltipForeground,
-            borderColor: grid.border,
-            borderWidth: 1,
-            padding: 10,
-            cornerRadius: 10,
-            boxPadding: 6,
-            usePointStyle: true,
-            titleFont: { weight: 600 },
-            titleMarginBottom: 6,
-          },
-        },
-      };
-    },
-  );
-
-  /**
    * Property emptyTitle
    * @readonly
    *
@@ -441,5 +213,82 @@ export class LineChart {
    * @type {string}
    */
   protected readonly emptyTitle: string = $localize`:@@shared.chart.lineChart.empty.title:No data`;
-  //#endregion
+  /**
+   * Property chartOptions
+   * @readonly
+   * @description Aligns categories across series and configures the native Spartan plot.
+   * Missing samples are null rather than fabricated zeroes. Semantic CSS variables keep
+   * the plot and its tooltip synchronized with the current theme without DOM reads.
+   * @access protected
+   * @since 3.0.0
+   * @type {Signal<ChartOptions<LineChartDatum, string, number>>}
+   */
+  protected readonly chartOptions: Signal<ChartOptions<LineChartDatum, string, number>> = computed(
+    () => {
+      const normalized = this.series().map((series) => ({
+        name: series.name,
+        points: series.points.map((point) => ({
+          category:
+            point.label instanceof Date ? point.label.toISOString().slice(0, 10) : point.label,
+          value: Number.isFinite(point.value) ? point.value : null,
+        })),
+      }));
+      const categories = [
+        ...new Set(normalized.flatMap((series) => series.points.map((point) => point.category))),
+      ];
+      const rows: LineChartDatum[] = normalized.flatMap((series) => {
+        const values = new Map(series.points.map((point) => [point.category, point.value]));
+        return categories.map((category) => ({
+          category,
+          value: values.get(category) ?? null,
+          series: series.name,
+        }));
+      });
+      const channels = { x: 'category', y: 'value', z: 'series', color: 'series' } as const;
+      return {
+        definition: defineChart(
+          {
+            marks: [
+              ...(this.area() ? [areaY(rows, { ...channels, fillOpacity: 0.12 })] : []),
+              lineY(rows, { ...channels, strokeWidth: 2, points: true }),
+            ],
+            scales: {
+              x: { scale: scalePoint<string>().domain(categories).padding(0.3) },
+              y: {
+                scale: scaleLinear().domain([
+                  Math.min(0, ...rows.map((row) => row.value ?? 0)),
+                  Math.max(1, ...rows.map((row) => row.value ?? 0)),
+                ]),
+                nice: true,
+                grid: this.showGridLines(),
+              },
+            },
+            color: {
+              domain: normalized.map((series) => series.name),
+              range: HLM_CHART_THEME.palette,
+              ...(this.showLegend() ? { legend: colorLegend({ placement: 'bottom' }) } : {}),
+            },
+            theme: HLM_CHART_THEME,
+          },
+          {
+            focus: 'nearest-x',
+            tooltip: hlmChartTooltip<LineChartDatum, string, number>({
+              content: (points) => ({
+                title: points[0]?.xValue,
+                rows: [...new Map(points.map((point) => [point.datum.series, point])).values()].map(
+                  (point) => ({
+                    label: point.datum.series,
+                    value: String(point.yValue),
+                    color: point.color,
+                  }),
+                ),
+              }),
+            }),
+          },
+        ),
+        ariaLabel: this.label(),
+        height: this.height(),
+      };
+    },
+  );
 }

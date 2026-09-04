@@ -1,15 +1,19 @@
 <div id="organization-team" class="flex h-full flex-col gap-6 p-4 md:p-6">
   @if (store.loadCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Roles could not be loaded"
-      i18n-title="@@org.team.loadErrorTitle"
-      [description]="store.loadError()?.message ?? null"
-    >
-      <button hlmBtn type="button" data-testid="organization-team-retry" (click)="reload()">
-        <span i18n="@@org.team.retry">Try again</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@org.team.loadErrorTitle">Roles could not be loaded</p>
+        <p hlmEmptyDescription>{{ store.loadError()?.message ?? null }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn type="button" data-testid="organization-team-retry" (click)="reload()">
+          <span i18n="@@org.team.retry">Try again</span>
+        </button>
+      </div>
+    </div>
   } @else {
     <section class="grid grid-cols-1 gap-4 sm:grid-cols-3" data-testid="organization-team-kpis">
       @for (tile of kpiTiles(); track tile.id) {

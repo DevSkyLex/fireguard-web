@@ -14,22 +14,28 @@
 
       <div class="flex flex-col gap-4 px-4 pb-4">
         @if (membersError(); as message) {
-          <app-error-state
-            icon="lucideCircleAlert"
-            title="Couldn't load members"
-            i18n-title="@@org.teams.membersSheet.loadErrorTitle"
-            [description]="message"
-          >
-            <button
-              hlmBtn
-              variant="outline"
-              class="max-sm:min-h-11"
-              data-testid="organization-team-members-retry"
-              (click)="retryLoad.emit()"
-            >
-              <span i18n="@@org.teams.retry">Try again</span>
-            </button>
-          </app-error-state>
+          <div hlmEmpty role="alert">
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon" class="text-destructive">
+                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.teams.membersSheet.loadErrorTitle">
+                Couldn't load members
+              </p>
+              <p hlmEmptyDescription>{{ message }}</p>
+            </div>
+            <div hlmEmptyContent>
+              <button
+                hlmBtn
+                variant="outline"
+                class="max-sm:min-h-11"
+                data-testid="organization-team-members-retry"
+                (click)="retryLoad.emit()"
+              >
+                <span i18n="@@org.teams.retry">Try again</span>
+              </button>
+            </div>
+          </div>
         } @else if (loadingMembers() && rosterRows().length === 0) {
           <ul class="flex flex-col gap-2" aria-hidden="true">
             @for (row of skeletonRows; track row) {
@@ -40,13 +46,17 @@
             }
           </ul>
         } @else if (rosterRows().length === 0) {
-          <app-empty-state
-            icon="lucideUsersRound"
-            title="No members yet"
-            i18n-title="@@org.teams.membersSheet.emptyTitle"
-            description="Add an organization member below to get started."
-            i18n-description="@@org.teams.membersSheet.emptyText"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideUsersRound" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.teams.membersSheet.emptyTitle">No members yet</p>
+              <p hlmEmptyDescription i18n="@@org.teams.membersSheet.emptyText">
+                Add an organization member below to get started.
+              </p>
+            </div>
+          </div>
         } @else {
           <ul
             class="flex flex-col gap-1"

@@ -1,17 +1,14 @@
 @if (loading() || !isBrowser) {
   <hlm-skeleton class="w-full" [style.height.px]="height()" />
 } @else if (isEmpty()) {
-  <app-empty-state [title]="emptyTitle" icon="lucideChartLine" [style.height.px]="height()" />
-} @else {
-  <div class="w-full" [style.height.px]="height()" role="img" [attr.aria-label]="label()">
-    <canvas
-      baseChart
-      class="block h-full w-full"
-      aria-hidden="true"
-      data-testid="line-chart-canvas"
-      type="line"
-      [data]="chartData()"
-      [options]="chartOptions()"
-    ></canvas>
+  <div hlmEmpty [style.height.px]="height()">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon">
+        <ng-icon name="lucideChartLine" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle>{{ emptyTitle }}</p>
+    </div>
   </div>
+} @else {
+  <tanstack-chart hlmChart data-testid="line-chart" [options]="chartOptions()" />
 }

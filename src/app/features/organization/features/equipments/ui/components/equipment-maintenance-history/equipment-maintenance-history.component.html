@@ -19,14 +19,17 @@
         <hlm-skeleton class="h-12 w-full" />
       </div>
     } @else if (orderedLogs().length === 0) {
-      <app-empty-state
-        icon="lucideHistory"
-        title="No maintenance recorded yet"
-        i18n-title="@@equipment.maintenance.emptyTitle"
-        description="Status changes and interventions on this equipment will appear here."
-        i18n-description="@@equipment.maintenance.emptyDesc"
-        data-testid="equipment-maintenance-history-empty"
-      />
+      <div hlmEmpty data-testid="equipment-maintenance-history-empty">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideHistory" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@equipment.maintenance.emptyTitle">No maintenance recorded yet</p>
+          <p hlmEmptyDescription i18n="@@equipment.maintenance.emptyDesc">
+            Status changes and interventions on this equipment will appear here.
+          </p>
+        </div>
+      </div>
     } @else {
       <ul class="flex flex-col divide-y divide-border" data-testid="equipment-maintenance-log-list">
         @for (log of orderedLogs(); track log.id) {

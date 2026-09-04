@@ -45,6 +45,12 @@ const SUBJECT_ROUTE_BUILDERS: Readonly<
   ],
 };
 
+/** Reader-facing subject labels keyed by the approval action that owns the reference. */
+const SUBJECT_LABELS: Readonly<Record<string, string>> = {
+  equipment_decommission: $localize`:@@approvals.subject.equipment:Equipment record`,
+  nc_waiver: $localize`:@@approvals.subject.nonConformity:Non-conformity record`,
+};
+
 /**
  * Component ApprovalRequestTable
  * @class ApprovalRequestTable
@@ -145,6 +151,23 @@ export class ApprovalRequestTable {
   >((actionType) => actionType);
 
   /**
+   * Property memberLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves a member reference to a reader-facing name. The neutral default
+   * keeps this presentational component free from directory injection while
+   * guaranteeing that a raw identifier is never rendered.
+   *
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<(memberId: string) => string>}
+   */
+  public readonly memberLabelOf: InputSignal<(memberId: string) => string> = input<
+    (memberId: string) => string
+  >(() => $localize`:@@common.unknownMember:Unknown member`);
+
+  /**
    * Property regionalFormatting
    * @readonly
    * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
@@ -209,6 +232,27 @@ export class ApprovalRequestTable {
   }
 
   /**
+   * Method subjectLabelOf
+   * @method subjectLabelOf
+   *
+   * @description
+   * Names the gated domain record without exposing its transport identifier.
+   * Unknown future approval types retain a neutral, usable fallback.
+   *
+   * @access protected
+   * @since 1.3.0
+   *
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   *
+   * @returns {string} The subject's reader-facing domain label.
+   */
+  protected subjectLabelOf(item: ApprovalRequestOutput): string {
+    return (
+      SUBJECT_LABELS[item.actionType] ?? $localize`:@@approvals.subject.related:Related record`
+    );
+  }
+
+  /**
    * Method isDecided
    * @description Whether a row is past `pending` and so may carry a decision note, a decider and an execution error.
    * @access protected
@@ -225,7 +269,7 @@ export class ApprovalRequestTable {
    *
    * @description
    * The row's Approve button's accessible name, folding in the action-type
-   * label and the subject id so two rows never announce as the identical
+   * label and request timestamp so two rows never announce as the identical
    * "Approve request" — mirrors `MaintenanceScheduleTable.equipmentLinkAriaLabelOf`.
    *
    * @access protected
@@ -238,7 +282,7 @@ export class ApprovalRequestTable {
   protected approveAriaLabelOf(item: ApprovalRequestOutput): string {
     const actionType: string = this.actionTypeLabelOf()(item.actionType);
 
-    return $localize`:@@approvals.table.approveActionNamed:Approve ${actionType}:actionType: request for ${item.subjectId}:subjectId:`;
+    return $localize`:@@approvals.table.approveActionNamed:Approve ${actionType}:actionType: request from ${item.createdAt}:createdAt:`;
   }
 
   /**
@@ -246,7 +290,7 @@ export class ApprovalRequestTable {
    *
    * @description
    * The row's Reject button's accessible name, folding in the action-type
-   * label and the subject id, matching {@link approveAriaLabelOf}.
+   * label and request timestamp, matching {@link approveAriaLabelOf}.
    *
    * @access protected
    * @since 1.1.0
@@ -258,7 +302,7 @@ export class ApprovalRequestTable {
   protected rejectAriaLabelOf(item: ApprovalRequestOutput): string {
     const actionType: string = this.actionTypeLabelOf()(item.actionType);
 
-    return $localize`:@@approvals.table.rejectActionNamed:Reject ${actionType}:actionType: request for ${item.subjectId}:subjectId:`;
+    return $localize`:@@approvals.table.rejectActionNamed:Reject ${actionType}:actionType: request from ${item.createdAt}:createdAt:`;
   }
 
   /**

@@ -27,10 +27,9 @@ import {
   type NonConformityStatisticsStoreType,
 } from '@features/organization/features/inspections/state';
 import { StatTile } from '@features/organization/ui/components';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
@@ -113,8 +112,7 @@ const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'm
   selector: 'app-inspection-analytics-page',
   imports: [
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
     HlmButton,
     HlmCardImports,
     HlmProgressImports,

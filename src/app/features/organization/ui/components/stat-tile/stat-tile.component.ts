@@ -170,7 +170,7 @@ export class StatTile {
    *
    * @description
    * Optional registered lucide icon name for the metric itself, decorative.
-   * The caller registers it with `provideIcons()`, matching `EmptyState`'s
+   * The caller registers it with `provideIcons()`, matching the Spartan `Empty` composition's
    * convention so this tile pulls in no icon set of its own. Rendered in
    * the header action slot only, and only as the fallback once {@link badge}
    * and {@link delta} are both unset — the footer headline next to

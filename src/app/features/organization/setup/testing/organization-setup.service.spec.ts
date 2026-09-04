@@ -33,6 +33,7 @@ describe('OrganizationSetupService', () => {
     listAll: vi.fn(),
   };
   const facilityService = {
+    listAll: vi.fn(),
     create: vi.fn(),
   };
   const equipmentService = {
@@ -268,5 +269,14 @@ describe('OrganizationSetupService', () => {
       inspectorType: 'user',
       inspectorName: 'Inspector Gadget',
     });
+  });
+  it('should read all persisted facilities through the setup summary boundary', () => {
+    facilityService.listAll.mockReturnValue(
+      of([{ id: 'facility-1', name: 'HQ', type: 'site', address: 'Not needed by setup' }]),
+    );
+    service.listFacilities('org-1').subscribe((facilities) => {
+      expect(facilities).toEqual([{ id: 'facility-1', name: 'HQ', type: 'site' }]);
+    });
+    expect(facilityService.listAll).toHaveBeenCalledExactlyOnceWith('org-1');
   });
 });

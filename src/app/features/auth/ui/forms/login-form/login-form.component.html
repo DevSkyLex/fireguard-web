@@ -2,12 +2,13 @@
   <hlm-field-group>
     @if (!pending() && serverError(); as error) {
       <div
-        role="alert"
+        hlmAlert
+        variant="destructive"
+        class="break-words"
         aria-atomic="true"
         data-testid="login-server-error"
-        class="text-sm text-destructive"
       >
-        <p>
+        <p hlmAlertDescription>
           @if (error.message; as message) {
             {{ message }}
           } @else {
@@ -22,9 +23,12 @@
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker
       /></label>
       <input
+        class="max-sm:min-h-11"
         hlmInput
         id="login-email"
         type="email"
+        autocapitalize="none"
+        spellcheck="false"
         autocomplete="email"
         inputmode="email"
         placeholder="you@company.com"
@@ -40,17 +44,9 @@
     </hlm-field>
 
     <hlm-field>
-      <div class="flex items-center justify-between gap-2">
-        <label hlmFieldLabel for="login-password"
-          ><span i18n="@@auth.password.label">Password</span><app-required-marker
-        /></label>
-        <a
-          class="text-xs text-muted-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          routerLink="/auth/password-reset/forgot"
-          i18n="@@auth.login.forgotPassword"
-          >Forgot password?</a
-        >
-      </div>
+      <label hlmFieldLabel for="login-password"
+        ><span i18n="@@auth.password.label">Password</span><app-required-marker
+      /></label>
       <app-password-input
         inputId="login-password"
         autocomplete="current-password"
@@ -63,25 +59,38 @@
       }
     </hlm-field>
 
-    <label class="flex items-center gap-2 text-sm text-muted-foreground" for="login-remember">
-      <hlm-checkbox
-        inputId="login-remember"
-        data-testid="login-remember"
-        [formField]="loginForm.rememberMe"
-      />
-      <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
-    </label>
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <label
+        class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground max-sm:min-h-11"
+        for="login-remember"
+      >
+        <hlm-checkbox
+          inputId="login-remember"
+          data-testid="login-remember"
+          [formField]="loginForm.rememberMe"
+        />
+        <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
+      </label>
+      <a
+        class="inline-flex items-center rounded-sm text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+        routerLink="/auth/password-reset/forgot"
+        [queryParams]="{ returnUrl: returnUrl() || undefined }"
+        i18n="@@auth.login.forgotPassword"
+        >Forgot password?</a
+      >
+    </div>
 
     <button
       hlmBtn
       type="submit"
-      class="min-h-11 w-full aria-disabled:pointer-events-none aria-disabled:opacity-50"
+      class="h-auto min-h-11 w-full whitespace-normal aria-disabled:pointer-events-none aria-disabled:opacity-50"
       data-testid="login-submit"
       [attr.aria-disabled]="pending() ? 'true' : null"
       [attr.aria-busy]="pending() ? 'true' : null"
       aria-live="polite"
     >
       @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
         <span i18n="@@auth.login.submitting">Signing in…</span>
       } @else {
         <span i18n="@@auth.login.submit">Sign in</span>

@@ -25,27 +25,26 @@
   }
 
   <ng-template #statusChip>
-    <hlm-toggle-group
-      type="single"
-      [nullable]="true"
-      size="sm"
+    <app-collection-filter-select
+      [options]="statusOptions"
       [value]="status()"
-      data-testid="approvals-filter-status"
-      aria-label="Filter by status"
-      i18n-aria-label="@@approvals.filter.statusAriaLabel"
-      (valueChange)="applyStatus($event)"
-    >
-      @for (value of statusValues; track value) {
-        <button
-          hlmToggleGroupItem
-          class="max-sm:min-h-11"
-          [value]="value"
-          [attr.data-testid]="'approvals-filter-status-' + value"
-        >
-          <app-approval-status-tag [value]="value" asOption />
-        </button>
-      }
-    </hlm-toggle-group>
+      placeholder="Any status"
+      i18n-placeholder="@@approvals.filter.anyStatus"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@approvals.filter.noStatus"
+      accessibleName="Status"
+      i18n-accessibleName="@@approvals.filter.status"
+      triggerId="approvals-filter-status"
+      testId="approvals-filter-status"
+      [state]="fieldPopoverState('status')"
+      [optionTemplate]="statusOptionRow"
+      [valueTemplate]="statusOptionRow"
+      (valueChanged)="applyStatus($any($event))"
+      (stateChanged)="onFieldPopoverStateChanged('status', $event)"
+    />
+    <ng-template #statusOptionRow let-option>
+      <app-approval-status-tag [value]="option.value" asOption />
+    </ng-template>
   </ng-template>
 
   <ng-template #actionTypeChip>
@@ -60,40 +59,55 @@
       i18n-accessibleName="@@approvals.filter.actionType"
       triggerId="approvals-filter-action-type"
       testId="approvals-filter-action-type"
-      [state]="fieldPopoverState()"
+      [state]="fieldPopoverState('actionType')"
       (valueChanged)="applyActionType($any($event))"
-      (stateChanged)="onFieldPopoverStateChanged($event)"
+      (stateChanged)="onFieldPopoverStateChanged('actionType', $event)"
     />
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@approvals.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to approval requests."
-      i18n-description="@@approvals.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@approvals.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@approvals.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to approval requests.
+        </p>
+      </div>
+    </div>
   } @else if (store.hasListError()) {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load approval requests"
-      i18n-title="@@approvals.list.errorTitle"
-      description="The requests could not be loaded. Check your connection and try again."
-      i18n-description="@@approvals.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="approvals-retry" (click)="reload()">
-        <span i18n="@@approvals.list.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@approvals.list.errorTitle">Couldn't load approval requests</p>
+        <p hlmEmptyDescription i18n="@@approvals.list.errorText">
+          The requests could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="approvals-retry" (click)="reload()">
+          <span i18n="@@approvals.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (!store.isLoading() && items().length === 0) {
-    <app-empty-state
-      icon="lucideShieldCheck"
-      title="No approval requests"
-      i18n-title="@@approvals.list.emptyTitle"
-      description="Nothing is waiting on a decision for this filter."
-      i18n-description="@@approvals.list.emptyDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@approvals.list.emptyTitle">No approval requests</p>
+        <p hlmEmptyDescription i18n="@@approvals.list.emptyDesc">
+          Nothing is waiting on a decision for this filter.
+        </p>
+      </div>
+    </div>
   } @else {
     <app-approval-request-table
       [regionalFormatting]="regionalFormatting()"
@@ -102,6 +116,7 @@
       [canDecide]="canDecide()"
       [organizationId]="organizationId()"
       [actionTypeLabelOf]="actionTypeLabelOf"
+      [memberLabelOf]="memberLabelOf"
       (approveRequested)="openApprove($event)"
       (rejectRequested)="openReject($event)"
     />

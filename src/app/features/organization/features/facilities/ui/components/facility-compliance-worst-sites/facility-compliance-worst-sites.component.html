@@ -7,10 +7,13 @@
   <h2 class="text-sm font-medium text-muted-foreground">{{ regionLabel }}</h2>
 
   @if (rows().length === 0) {
-    <app-empty-state
-      title="No facilities have compliance data yet."
-      i18n-title="@@facility.map.compliance.worstSitesEmpty"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <p hlmEmptyTitle i18n="@@facility.map.compliance.worstSitesEmpty">
+          No facilities have compliance data yet.
+        </p>
+      </div>
+    </div>
   } @else {
     <ol class="flex flex-col gap-1">
       @for (row of rows(); track row.entry.facility.id) {

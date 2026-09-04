@@ -24,12 +24,12 @@ import {
   resolveInterventionActivityActor,
   resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
-import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmMessageImports } from '@shared/ui/message';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -161,8 +161,8 @@ const SKELETON_ROW_COUNT: number = 3;
 @Component({
   selector: 'app-intervention-activity-thread',
   imports: [
-    EmptyState,
     NgIcon,
+    ...HlmEmptyImports,
     HlmSkeleton,
     InterventionTag,
     ...HlmAvatarImports,

@@ -6,6 +6,7 @@
       class="rounded-md"
       data-testid="intervention-calendar-entry"
       [routerLink]="detailLinkOf(item)"
+      queryParamsHandling="preserve"
     >
       <div hlmItemContent>
         <span hlmItemTitle class="line-clamp-1">{{ numberLabelOf(item) }} {{ item.name }}</span>

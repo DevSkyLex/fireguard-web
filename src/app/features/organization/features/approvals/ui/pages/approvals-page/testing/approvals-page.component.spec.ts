@@ -10,7 +10,7 @@ import {
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
 import { ApprovalRequestsStore } from '@features/organization/features/approvals/state';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { MEMBER_DIRECTORY_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ApprovalsPage } from '../approvals-page.component';
 
@@ -32,6 +32,7 @@ describe('ApprovalsPage', () => {
   let resetDecideOperation: ReturnType<typeof vi.fn>;
   let decideCallState: WritableSignal<CallState>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let ensureDirectoryLoaded: ReturnType<typeof vi.fn>;
 
   const request: ApprovalRequestOutput = {
     '@id': '/api/organizations/org-1/approval-requests/request-1',
@@ -57,6 +58,7 @@ describe('ApprovalsPage', () => {
     resetDecideOperation = vi.fn();
     decideCallState = signal<CallState>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
+    ensureDirectoryLoaded = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -64,6 +66,17 @@ describe('ApprovalsPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: MEMBER_DIRECTORY_PORT,
+          useValue: {
+            byId: signal(new Map()),
+            isAvailable: signal(true),
+            isLoading: signal(false),
+            ensureLoaded: ensureDirectoryLoaded,
+            displayNameFor: (memberId: string): string =>
+              memberId === 'member-1' ? 'Amélie Rousseau' : 'Unknown member',
+          },
         },
         provideRouter([]),
         {
@@ -101,6 +114,7 @@ describe('ApprovalsPage', () => {
       }),
     );
     expect(loadActionTypes).toHaveBeenCalled();
+    expect(ensureDirectoryLoaded).toHaveBeenCalledWith('org-1');
   });
 
   it('should give the action-type filter a persistent, associated label once its chip is picked', async () => {
@@ -119,15 +133,19 @@ describe('ApprovalsPage', () => {
     expect(label.textContent).toContain('Action type');
   });
 
-  it('should narrow the list to the picked status chip', async () => {
+  it('should expose status through the generic selector and narrow to the picked value', async () => {
     fixture = await createPage();
     load.mockClear();
 
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="approvals-filter-status"]'),
+    ).not.toBeNull();
+
     (
-      fixture.nativeElement.querySelector(
-        '[data-testid="approvals-filter-status-approved"]',
-      ) as HTMLButtonElement
-    ).click();
+      fixture.componentInstance as unknown as {
+        applyStatus(value: string | null | undefined): void;
+      }
+    ).applyStatus('approved');
     await fixture.whenStable();
 
     expect(load).toHaveBeenCalledWith(

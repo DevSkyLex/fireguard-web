@@ -30,8 +30,20 @@ export function toDirectoryEntry(member: OrganizationMemberOutput): MemberDirect
 }
 
 /**
- * Best non-blank label for a member: their display name, then their full name,
- * then their email, then their id.
+ * Function resolveDisplayName
+ * @function resolveDisplayName
+ *
+ * @description
+ * Resolves the strongest non-blank member label: display name, full name,
+ * then email. A record lacking all three uses a neutral localized label so
+ * its internal identifier never becomes interface copy.
+ *
+ * @access private
+ * @since 1.1.0
+ *
+ * @param {OrganizationMemberOutput} member - Member returned by the organization API.
+ *
+ * @returns {string} A non-blank reader-facing label.
  */
 function resolveDisplayName(member: OrganizationMemberOutput): string {
   const displayName: string = (member.displayName ?? '').trim();
@@ -45,5 +57,5 @@ function resolveDisplayName(member: OrganizationMemberOutput): string {
 
   if (fullName.length > 0) return fullName;
 
-  return (member.email ?? '').trim() || member.id;
+  return (member.email ?? '').trim() || $localize`:@@common.unknownMember:Unknown member`;
 }

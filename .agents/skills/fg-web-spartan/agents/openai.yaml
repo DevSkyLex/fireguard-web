@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 spartan"
+  short_description: 'Build or refine FireGuard interfaces using installed Spartan No'
+  default_prompt: 'Use $fg-web-spartan for the requested FireGuard Web task.'

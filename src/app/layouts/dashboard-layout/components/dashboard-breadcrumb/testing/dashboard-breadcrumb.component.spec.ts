@@ -9,12 +9,20 @@ describe('DashboardBreadcrumb', () => {
   let items: WritableSignal<BreadcrumbItem[]>;
 
   /**
-   * The rendered steps after home, in order.
+   * Function steps
+   * @description Returns the rendered named breadcrumb levels in order.
+   * @access private
+   * @since 1.0.0
+   * @returns {readonly string[]}
    */
   function steps(): readonly string[] {
     return Array.from(
       fixture.nativeElement.querySelectorAll('li:not(:first-child)') as NodeListOf<HTMLElement>,
     )
+      .filter(
+        (step: HTMLElement): boolean =>
+          step.querySelector('[data-testid="dashboard-breadcrumb-more"]') === null,
+      )
       .map((step: HTMLElement): string => step.textContent?.trim() ?? '')
       .filter((text: string): boolean => text.length > 0);
   }
@@ -40,7 +48,6 @@ describe('DashboardBreadcrumb', () => {
   it('should always offer the way home', () => {
     const home = fixture.nativeElement.querySelector('a[href="/"]') as HTMLAnchorElement;
 
-    // A glyph, so it needs an accessible name of its own.
     expect(home).not.toBeNull();
     expect(home.getAttribute('aria-label')).toBe('Workspace home');
   });
@@ -59,10 +66,28 @@ describe('DashboardBreadcrumb', () => {
     expect(steps()).toEqual(['Interventions', 'FG-101']);
   });
 
-  /**
-   * The last step is where the user already is: a link back to the current
-   * page is noise, and screen readers announce it as a destination.
-   */
+  it('should expose intermediate levels through a narrow-screen ellipsis menu', async () => {
+    items.set([
+      { label: 'Acme Corp', routerLink: '/organizations/org-1', current: false },
+      { label: 'Interventions', routerLink: '/organizations/org-1/interventions', current: false },
+      { label: 'FG-101', current: true },
+    ]);
+    await fixture.whenStable();
+
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-breadcrumb-more"]',
+    ) as HTMLButtonElement;
+    expect(trigger.textContent?.trim()).toBe('More pages');
+
+    trigger.click();
+    await fixture.whenStable();
+
+    const menu = document.querySelector('[data-slot="dropdown-menu"]');
+    expect(menu?.textContent).toContain('Acme Corp');
+    expect(menu?.textContent).toContain('Interventions');
+    expect(menu?.textContent).not.toContain('FG-101');
+  });
+
   it('should link the steps behind the current one, and only those', async () => {
     items.set([
       { label: 'Interventions', routerLink: '/organizations/org-1/interventions', current: false },
@@ -86,10 +111,6 @@ describe('DashboardBreadcrumb', () => {
     expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
   });
 
-  /**
-   * The header is one row; pushing the tool cluster off the card is worse
-   * than eliding a long label.
-   */
   it('should truncate rather than wrap', () => {
     const list = fixture.nativeElement.querySelector('ol') as HTMLElement;
 
@@ -110,12 +131,6 @@ describe('DashboardBreadcrumb', () => {
     expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(0);
   });
 
-  /**
-   * `BreadcrumbService` never marks any item current when the deepest route
-   * suppressed its own breadcrumb (`organization-dashboard-page`'s own case) —
-   * only an ordinary, linked ancestor renders. The trail never carries an
-   * `<h1>` at all; `DashboardPageHeader` is the document's only heading.
-   */
   it('should render no current marker at all when no step is current', async () => {
     items.set([{ label: 'Acme Corp', routerLink: '/organizations/org-1', current: false }]);
     await fixture.whenStable();

@@ -13,7 +13,6 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import {
   HlmDialog,
@@ -23,6 +22,7 @@ import {
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import type { OrganizationMemberRoleToggle } from './models';
 
 /**
@@ -50,7 +50,7 @@ import type { OrganizationMemberRoleToggle } from './models';
 @Component({
   selector: 'app-organization-member-roles-dialog',
   imports: [
-    EmptyState,
+    ...HlmEmptyImports,
     HlmCheckbox,
     HlmDialog,
     HlmDialogContent,

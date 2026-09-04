@@ -92,7 +92,7 @@ test.describe('Form sheets confirm before discarding a dirty draft', () => {
     await detail.goto(E2E_ORGANIZATION_ID, interventionId);
     await expect(detail.root).toBeVisible();
 
-    await page.getByTestId('intervention-work-items-add').click();
+    await page.getByTestId('intervention-work-items-empty-add').click();
     const sheet = page.getByTestId('intervention-work-item-sheet');
     await expect(sheet).toBeVisible();
 

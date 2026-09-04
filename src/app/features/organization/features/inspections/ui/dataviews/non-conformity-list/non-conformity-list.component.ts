@@ -14,15 +14,15 @@ import {
   type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleCheck } from '@ng-icons/lucide';
 import type {
   NonConformityOutput,
   NonConformityStatus,
   NonConformityWaivePendingOutput,
 } from '@features/organization/features/inspections/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
@@ -99,8 +99,9 @@ function truncateDescription(description: string): string {
 @Component({
   selector: 'app-non-conformity-list',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     RouterLink,
-    EmptyState,
     InspectionStatusTag,
     HlmSkeleton,
     ...HlmAlertImports,

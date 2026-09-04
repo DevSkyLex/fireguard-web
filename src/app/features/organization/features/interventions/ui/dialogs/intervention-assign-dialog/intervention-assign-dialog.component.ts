@@ -18,13 +18,14 @@ import type {
   InterventionAssignSubmittedEvent,
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
-import { PersonOption } from '@shared/person-option';
+
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
 
+import { HlmItemImports } from '@shared/ui/item';
 /**
  * Component InterventionAssignDialog
  * @class InterventionAssignDialog
@@ -48,9 +49,9 @@ import { HlmFieldImports } from '@shared/ui/field';
 @Component({
   selector: 'app-intervention-assign-dialog',
   imports: [
-    PersonOption,
-    HlmButton,
     ...HlmAvatarImports,
+    ...HlmItemImports,
+    HlmButton,
     ...HlmComboboxImports,
     ...HlmDialogImports,
     ...HlmFieldImports,

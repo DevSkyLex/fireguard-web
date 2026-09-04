@@ -281,7 +281,7 @@ describe('AssistantStore', () => {
     expect(store.loadError()).toBeNull();
   });
 
-  it('claims and releases the contextual column', () => {
+  it('opens and closes the assistant sheet', () => {
     const store: AssistantStoreType = createStore();
 
     store.openPanel();
@@ -291,16 +291,6 @@ describe('AssistantStore', () => {
 
     store.closePanel();
 
-    expect(store.panelOpen()).toBe(false);
-  });
-
-  it('opens and closes the column from a single control', () => {
-    const store: AssistantStoreType = createStore();
-
-    store.togglePanel();
-    expect(store.panelOpen()).toBe(true);
-
-    store.togglePanel();
     expect(store.panelOpen()).toBe(false);
   });
 

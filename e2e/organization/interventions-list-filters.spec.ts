@@ -69,27 +69,27 @@ async function mockListPage(api: ApiMock): Promise<void> {
   await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
 }
 
-test.describe('Interventions list — statistics analysis', () => {
-  /*
-   * `InterventionStatisticsAnalysis` renders everything the KPI strip does not
-   * — the priority split, the top sites and responsibles, the average
-   * publication delay — from a payload the store already fetches on every
-   * organization switch. It shipped complete, specced, and mounted nowhere:
-   * its selector appeared in no template in the repository.
-   */
-  test('offers the analysis disclosure beside the KPI strip', async ({ page }) => {
+test.describe('Interventions list — collection controls', () => {
+  test('shows the collection without metric cards or an analysis disclosure', async ({ page }) => {
+    const statisticsRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/interventions/statistics'))
+        statisticsRequests.push(request.url());
+    });
     const api = new ApiMock(page);
     await mockListPage(api);
     const interventions = new InterventionsPage(page);
 
     await interventions.goto(E2E_ORGANIZATION_ID);
 
-    const trigger = page.getByTestId('intervention-statistics-analysis-trigger');
-    await expect(trigger).toBeVisible();
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-
-    await trigger.click();
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('intervention-statistics-analysis-trigger')).toHaveCount(0);
+    await expect(page.getByTestId('intervention-kpi-strip')).toHaveCount(0);
+    await expect(page.getByTestId('intervention-view-toggle')).toBeVisible();
+    expect(statisticsRequests).toEqual([]);
+    await page.screenshot({
+      path: 'e2e/artifacts/interventions-summary/desktop-no-metrics.png',
+      animations: 'disabled',
+    });
   });
 });
 

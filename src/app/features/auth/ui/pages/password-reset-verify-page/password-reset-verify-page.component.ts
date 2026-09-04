@@ -1,7 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, type OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  untracked,
+  type OnInit,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 
 /**
@@ -24,7 +32,7 @@ import { PageHeading } from '@shared/page-heading';
  */
 @Component({
   selector: 'app-password-reset-verify-page',
-  imports: [OtpForm, PageHeading],
+  imports: [RouterLink, OtpForm, PageHeading],
   templateUrl: './password-reset-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -74,6 +82,25 @@ export class PasswordResetVerifyPage implements OnInit {
   private readonly router: Router = inject<Router>(Router);
   //#endregion
 
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
+
+  /** @description Replaces the URL challenge after resend so reloading never revives an expired challenge. */
+  private readonly syncChallenge = effect((): void => {
+    const token: string | null = this.passwordResetStore.challengeToken();
+    if (!token || token === this.route.snapshot.queryParamMap.get('token')) return;
+    untracked((): void => {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        replaceUrl: true,
+        queryParams: { token, returnUrl: this.returnUrl || undefined },
+      });
+    });
+  });
+
   //#region Lifecycle
   /**
    * Method ngOnInit
@@ -118,7 +145,9 @@ export class PasswordResetVerifyPage implements OnInit {
   protected verify(values: OtpFormValues): void {
     this.passwordResetStore.setVerificationCode(values.code);
 
-    void this.router.navigate(['/auth/password-reset/new']);
+    void this.router.navigate(['/auth/password-reset/new'], {
+      queryParams: { returnUrl: this.returnUrl || undefined },
+    });
   }
 
   /**

@@ -1,26 +1,25 @@
 @if (store.isAvailable()) {
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="icon-sm"
-    class="max-sm:size-11"
-    data-testid="assistant-toggle"
-    aria-controls="assistant-sheet"
-    i18n-aria-label="@@workspace.assistant.toggle.aria"
-    aria-label="Assistant"
-    [attr.aria-expanded]="store.panelOpen()"
-    (click)="store.togglePanel()"
-  >
-    <ng-icon name="lucideSparkles" class="text-base" aria-hidden="true" />
-  </button>
-
   <hlm-sheet
+    id="assistant-sheet"
     side="right"
     [state]="store.panelOpen() ? 'open' : 'closed'"
     (stateChanged)="onSheetStateChanged($event)"
   >
-    <hlm-sheet-content *hlmSheetPortal id="assistant-sheet" class="overflow-hidden sm:max-w-xl!">
+    <button
+      hlmSheetTrigger
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      class="max-sm:size-11"
+      data-testid="assistant-toggle"
+      i18n-aria-label="@@workspace.assistant.toggle.aria"
+      aria-label="Assistant"
+    >
+      <ng-icon name="lucideSparkles" class="text-base" aria-hidden="true" />
+    </button>
+
+    <hlm-sheet-content *hlmSheetPortal class="overflow-hidden sm:max-w-xl!">
       <hlm-sheet-header class="flex-row items-center gap-2.5 pe-12">
         <span
           class="grid size-7 shrink-0 place-content-center rounded-md bg-primary/10 text-primary"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard \u00b7 store"
+  short_description: 'Create or refactor FireGuard NgRx SignalStore state with explic'
+  default_prompt: 'Use $fg-web-store for the requested FireGuard Web task.'

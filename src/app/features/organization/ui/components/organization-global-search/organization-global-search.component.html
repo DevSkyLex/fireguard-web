@@ -15,89 +15,206 @@
   >
     <ng-icon name="lucideSearch" class="text-base" aria-hidden="true" />
     <span class="max-sm:hidden" i18n="@@org.search.trigger.label">Search</span>
-    <kbd hlmKbd class="border border-border max-md:hidden md:ms-auto"
-      >{{ shortcutModifier() }} K</kbd
-    >
+    <kbd hlmKbdGroup class="max-md:hidden md:ms-auto">
+      <kbd hlmKbd>{{ shortcutModifier() }}</kbd>
+      <kbd hlmKbd>K</kbd>
+    </kbd>
   </button>
 
   <hlm-command-dialog
     [state]="open() ? 'open' : 'closed'"
     (stateChange)="onDialogStateChange($event)"
-    dialogContentClass="w-full sm:max-w-xl"
+    dialogContentClass="h-[min(34rem,calc(100svh-2rem))] w-[min(42rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-2xl"
+    showCloseButton
     title="Search this organization"
     i18n-title="@@org.search.dialog.title"
-    description="Search equipments, facilities, interventions, inspections and non-conformities"
+    description="Search equipment, facilities, interventions, inspections and non-conformities"
     i18n-description="@@org.search.dialog.description"
   >
     <hlm-command
-      class="max-h-[70vh]"
+      class="h-full max-h-none gap-0 rounded-xl p-0"
       data-testid="global-search-palette"
       [filter]="passThroughFilter"
       (searchChange)="onSearchChanged($event)"
     >
-      <hlm-command-input
-        placeholder="Search equipments, facilities, interventions…"
-        i18n-placeholder="@@org.search.input.placeholder"
-      />
+      <header class="flex shrink-0 items-start gap-3 border-b border-border px-4 py-3 pe-12">
+        <span
+          class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground"
+          aria-hidden="true"
+        >
+          <ng-icon name="lucideSearch" class="text-lg" />
+        </span>
+        <div class="min-w-0">
+          <h2 class="text-base font-semibold text-foreground" i18n="@@org.search.visibleTitle">
+            Search this organization
+          </h2>
+          <p class="mt-0.5 text-sm text-muted-foreground" i18n="@@org.search.visibleDescription">
+            Find operational records and open their detail page without leaving your current work.
+          </p>
+        </div>
+      </header>
+
+      <div class="shrink-0 border-b border-border px-4 py-2.5">
+        <hlm-command-input
+          class="[&_[data-slot=input-group]]:h-10! [&_[data-slot=input-group]]:bg-background! [&_[data-slot=input-group]]:px-1!"
+          placeholder="Search by name, reference, serial number or location…"
+          i18n-placeholder="@@org.search.input.placeholder"
+        />
+      </div>
 
       <span class="sr-only" role="status" aria-live="polite" data-testid="global-search-announce">
         {{ resultAnnouncement() }}
       </span>
 
-      <div hlmCommandList class="overflow-y-auto">
+      <div hlmCommandList class="max-h-none min-h-0 flex-1 overflow-y-auto px-2 py-2">
         @if (!termLongEnough()) {
-          <p
+          <div
             hlmCommandEmpty
-            class="px-3 text-muted-foreground"
+            class="flex min-h-52 flex-col items-center justify-center px-6 text-center"
             data-testid="global-search-hint"
-            i18n="@@org.search.hint"
           >
-            Type at least 2 characters to search.
-          </p>
+            <span
+              class="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideSearch" class="text-xl" />
+            </span>
+            @if (term().trim().length === 0) {
+              <p class="font-medium text-foreground" i18n="@@org.search.hintTitle">
+                Search across your workspace
+              </p>
+              <p
+                class="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground"
+                i18n="@@org.search.hintDescription"
+              >
+                Enter at least 2 characters to find equipment, facilities, interventions,
+                inspections and non-conformities.
+              </p>
+            } @else {
+              <p class="font-medium text-foreground" i18n="@@org.search.keepTypingTitle">
+                Add one more character
+              </p>
+              <p
+                class="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground"
+                i18n="@@org.search.keepTypingDescription"
+              >
+                Search starts after 2 characters so results stay relevant.
+              </p>
+            }
+            <div class="mt-5 flex max-w-lg flex-wrap justify-center gap-2" aria-hidden="true">
+              <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                <ng-icon name="lucidePackage" /> Equipment
+              </span>
+              <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                <ng-icon name="lucideBuilding2" /> Facilities
+              </span>
+              <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                <ng-icon name="lucideCompass" /> Interventions
+              </span>
+              <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                <ng-icon name="lucideClipboardList" /> Inspections
+              </span>
+              <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                <ng-icon name="lucideTriangleAlert" /> Non-conformities
+              </span>
+            </div>
+          </div>
         } @else if (store.isQueryLoading()) {
           <div
             hlmCommandEmpty
-            class="flex items-center justify-center gap-2 px-3 text-muted-foreground"
+            class="flex min-h-52 flex-col items-center justify-center gap-3 px-6 text-muted-foreground"
             data-testid="global-search-loading"
           >
-            <hlm-spinner class="size-4" aria-hidden="true" />
-            <span i18n="@@org.search.loading">Searching…</span>
+            <hlm-spinner class="size-5" aria-hidden="true" />
+            <div class="text-center">
+              <p class="font-medium text-foreground" i18n="@@org.search.loading">Searching…</p>
+              <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.search.loadingDescription">
+                Looking through your organization's operational records.
+              </p>
+            </div>
           </div>
         } @else if (store.queryHasError()) {
-          <p
+          <div
             hlmCommandEmpty
-            class="px-3 text-muted-foreground"
+            class="flex min-h-52 flex-col items-center justify-center px-6 text-center"
             data-testid="global-search-error"
-            i18n="@@org.search.error"
           >
-            The search failed. Type again to retry.
-          </p>
+            <span
+              class="mb-4 flex size-12 items-center justify-center rounded-xl bg-destructive/10 text-destructive"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideTriangleAlert" class="text-xl" />
+            </span>
+            <p class="font-medium text-foreground" i18n="@@org.search.errorTitle">
+              Search is temporarily unavailable
+            </p>
+            <p class="mt-1 max-w-md text-sm text-muted-foreground" i18n="@@org.search.error">
+              Change the search text to try again.
+            </p>
+          </div>
         } @else if (showNoResults()) {
-          <p
+          <div
             hlmCommandEmpty
-            class="px-3 text-muted-foreground"
+            class="flex min-h-52 flex-col items-center justify-center px-6 text-center"
             data-testid="global-search-empty"
-            i18n="@@org.search.noResults"
           >
-            No results for this search.
-          </p>
+            <span
+              class="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideSearch" class="text-xl" />
+            </span>
+            <p class="font-medium text-foreground" i18n="@@org.search.noResultsTitle">
+              No matching records
+            </p>
+            <p class="mt-1 max-w-md text-sm text-muted-foreground" i18n="@@org.search.noResults">
+              Try another name, reference, serial number or location.
+            </p>
+          </div>
         } @else {
+          <div class="flex items-center justify-between px-2 pt-1 pb-2">
+            <p class="text-xs text-muted-foreground" i18n="@@org.search.resultsSummary">
+              Results for “{{ term().trim() }}”
+            </p>
+            <span hlmBadge variant="secondary">
+              {{ store.hits().length }}
+              @if (store.hits().length === 1) {
+                <span i18n="@@org.search.resultSingular">result</span>
+              } @else {
+                <span i18n="@@org.search.resultPlural">results</span>
+              }
+            </span>
+          </div>
           @for (group of groups(); track group.type) {
-            <div hlmCommandGroup [attr.data-testid]="'global-search-group-' + group.type">
-              <span hlmCommandGroupLabel class="flex items-center gap-1.5">
+            <div
+              hlmCommandGroup
+              class="mb-1 rounded-lg border border-transparent"
+              [attr.data-testid]="'global-search-group-' + group.type"
+            >
+              <span hlmCommandGroupLabel class="flex w-full items-center gap-1.5">
                 <ng-icon [name]="group.icon" class="shrink-0" aria-hidden="true" />
                 {{ group.label }}
+                <span class="ms-auto tabular-nums">{{ group.hits.length }}</span>
               </span>
 
               @for (hit of group.hits; track hit.id) {
                 <button
                   hlmCommandItem
                   type="button"
+                  class="min-h-14 gap-3 px-3 py-2.5"
                   [value]="group.type + ':' + hit.id"
                   (selected)="onHitSelected(hit)"
                 >
-                  <span class="flex min-w-0 flex-col items-start">
-                    <span class="w-full truncate text-start">{{ hit.title }}</span>
+                  <span
+                    class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground group-data-selected/command-item:text-foreground"
+                    aria-hidden="true"
+                  >
+                    <ng-icon [name]="group.icon" class="text-base" />
+                  </span>
+                  <span class="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                    <span class="w-full truncate text-start font-medium text-foreground">
+                      {{ hit.title }}
+                    </span>
                     @if (hit.subtitle) {
                       <span class="w-full truncate text-start text-xs text-muted-foreground">
                         {{ hit.subtitle }}
@@ -105,7 +222,11 @@
                     }
                   </span>
                   @if (hit.extra) {
-                    <span class="ms-auto shrink-0 text-xs text-muted-foreground">
+                    <span
+                      hlmBadge
+                      variant="outline"
+                      class="ms-auto max-w-48 shrink-0 truncate max-sm:hidden"
+                    >
                       {{ hit.extra }}
                     </span>
                   }
@@ -115,6 +236,23 @@
           }
         }
       </div>
+
+      <footer
+        class="hidden shrink-0 items-center gap-4 border-t border-border px-4 py-2.5 text-xs text-muted-foreground sm:flex"
+      >
+        <span class="flex items-center gap-1.5">
+          <kbd hlmKbdGroup><kbd hlmKbd>↑</kbd><kbd hlmKbd>↓</kbd></kbd>
+          <span i18n="@@org.search.keyboard.navigate">Navigate</span>
+        </span>
+        <span class="flex items-center gap-1.5">
+          <kbd hlmKbd>Enter</kbd>
+          <span i18n="@@org.search.keyboard.open">Open</span>
+        </span>
+        <span class="ms-auto flex items-center gap-1.5">
+          <kbd hlmKbd>Esc</kbd>
+          <span i18n="@@org.search.keyboard.close">Close</span>
+        </span>
+      </footer>
     </hlm-command>
   </hlm-command-dialog>
 }

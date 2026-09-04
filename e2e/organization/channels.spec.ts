@@ -23,8 +23,7 @@ import { ApiMock } from '../support/mocks/api-mock';
 import { ChannelConversationPage } from '../support/pages/channel-conversation.page';
 import { ChannelsPage } from '../support/pages/channels.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard/92f41712-7d5f-443b-af9a-18c346a39be0/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'e2e/artifacts/channels-sidebar';
 
 test.describe('Channels list', () => {
   test('renders the favorites section, the one-level tree and an unread badge', async ({
@@ -48,7 +47,22 @@ test.describe('Channels list', () => {
     // "general" is both favorited and a root channel, so it renders once in
     // Favorites and again under All channels — 4 rows for 3 distinct channels.
     await expect(channels.rows).toHaveCount(4);
-    await expect(channels.favorites.getByLabel('2 unread')).toBeVisible();
+    await expect(channels.favorites.getByText('2 unread')).toBeVisible();
+    await expect(page.locator('#dashboard-sidebar-extension')).toContainText('inspections-urgent');
+    const disclosure = page.getByTestId('channels-children-toggle');
+    await disclosure.focus();
+    await page.keyboard.press('Enter');
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+    await expect(
+      channels.tree.getByRole('link', { name: 'inspections-urgent', exact: true }),
+    ).toBeHidden();
+    await channels.searchInput.fill('urgent');
+    await expect(channels.rows).toHaveCount(1);
+    await expect(channels.rows).toContainText('inspections-urgent');
+    await channels.searchInput.fill('missing');
+    await expect(page.getByText('No channels match your search.')).toBeVisible();
+    await channels.searchInput.fill('');
+    await expect(channels.rows).toHaveCount(4);
   });
 
   test('opens the new-channel dialog', async ({ page }) => {
@@ -223,6 +237,17 @@ test.describe('Channel conversation', () => {
     await conversation.goto(E2E_ORGANIZATION_ID, E2E_CHANNEL_ID);
 
     await expect(conversation.thread).toBeVisible();
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/channel-conversation-light-desktop.png` });
+    const extension = page.locator('#dashboard-sidebar-extension');
+    const main = page.locator('#dashboard-main');
+    await expect(extension).toBeVisible();
+    const selected = extension.getByTestId('channels-row').last();
+    await expect(selected).toHaveAttribute('aria-current', 'page');
+    const before = await extension.boundingBox();
+    if (!before) throw new Error('The channel extension must be visible.');
+    await main.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
+    await expect.poll(async () => (await extension.boundingBox())?.x).toBeLessThan(before.x);
+    await main.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
+    await expect.poll(async () => (await extension.boundingBox())?.x).toBe(before.x);
+    await page.screenshot({ path: SCREENSHOT_DIR + '/channel-conversation-light-desktop.png' });
   });
 });

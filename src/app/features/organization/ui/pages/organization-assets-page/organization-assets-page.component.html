@@ -63,13 +63,17 @@
           [class]="selectedFacilityId() === null ? 'max-lg:hidden' : ''"
         >
           @if (selectedFacilityId() === null) {
-            <app-empty-state
-              icon="lucideNetwork"
-              title="Select a site"
-              i18n-title="@@org.assets.selectPrompt.title"
-              description="Pick a facility from the hierarchy to see its equipment and inspections."
-              i18n-description="@@org.assets.selectPrompt.desc"
-            />
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideNetwork" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@org.assets.selectPrompt.title">Select a site</p>
+                <p hlmEmptyDescription i18n="@@org.assets.selectPrompt.desc">
+                  Pick a facility from the hierarchy to see its equipment and inspections.
+                </p>
+              </div>
+            </div>
           } @else {
             <button
               hlmBtn
@@ -104,21 +108,26 @@
             data-testid="assets-compliance-tree-panel"
           >
             @if (compliance.hasTreeError()) {
-              <app-error-state
-                icon="lucideCircleAlert"
-                title="Couldn't load the compliance hierarchy."
-                i18n-title="@@org.assets.compliance.treeError"
-                data-testid="assets-compliance-tree-error"
-              >
-                <button
-                  hlmBtn
-                  variant="outline"
-                  class="max-sm:min-h-11"
-                  (click)="retryComplianceTree()"
-                >
-                  <span i18n="@@common.tryAgain">Try again</span>
-                </button>
-              </app-error-state>
+              <div hlmEmpty role="alert" data-testid="assets-compliance-tree-error">
+                <div hlmEmptyHeader>
+                  <div hlmEmptyMedia variant="icon" class="text-destructive">
+                    <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                  </div>
+                  <p hlmEmptyTitle i18n="@@org.assets.compliance.treeError">
+                    Couldn't load the compliance hierarchy.
+                  </p>
+                </div>
+                <div hlmEmptyContent>
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    class="max-sm:min-h-11"
+                    (click)="retryComplianceTree()"
+                  >
+                    <span i18n="@@common.tryAgain">Try again</span>
+                  </button>
+                </div>
+              </div>
             } @else {
               <app-tree
                 ariaLabel="Compliance hierarchy"
@@ -137,13 +146,19 @@
             class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
           >
             @if (selectedComplianceFacilityId() === null) {
-              <app-empty-state
-                icon="lucideShieldCheck"
-                title="Select a site"
-                i18n-title="@@org.assets.compliance.selectPrompt.title"
-                description="Pick a facility from the hierarchy to see its compliance summary."
-                i18n-description="@@org.assets.compliance.selectPrompt.desc"
-              />
+              <div hlmEmpty>
+                <div hlmEmptyHeader>
+                  <div hlmEmptyMedia variant="icon">
+                    <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                  </div>
+                  <p hlmEmptyTitle i18n="@@org.assets.compliance.selectPrompt.title">
+                    Select a site
+                  </p>
+                  <p hlmEmptyDescription i18n="@@org.assets.compliance.selectPrompt.desc">
+                    Pick a facility from the hierarchy to see its compliance summary.
+                  </p>
+                </div>
+              </div>
             } @else {
               <ng-container *ngTemplateOutlet="complianceSummaryPane" />
             }
@@ -257,22 +272,28 @@
         </div>
 
         @if (pane.hasEquipmentError()) {
-          <app-error-state
-            icon="lucideCircleAlert"
-            title="Couldn't load equipment."
-            i18n-title="@@org.assets.equipment.error"
-            data-testid="assets-equipment-error"
-          >
-            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
-              <span i18n="@@common.tryAgain">Try again</span>
-            </button>
-          </app-error-state>
+          <div hlmEmpty role="alert" data-testid="assets-equipment-error">
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon" class="text-destructive">
+                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.assets.equipment.error">Couldn't load equipment.</p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+                <span i18n="@@common.tryAgain">Try again</span>
+              </button>
+            </div>
+          </div>
         } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
-          <app-empty-state
-            icon="lucideWrench"
-            title="No equipment in view."
-            i18n-title="@@org.assets.equipment.empty"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideWrench" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.assets.equipment.empty">No equipment in view.</p>
+            </div>
+          </div>
         } @else {
           <div hlmTableContainer class="rounded-md border border-border">
             <table hlmTable data-testid="assets-equipment-table">
@@ -316,22 +337,28 @@
         </h2>
 
         @if (pane.hasInspectionsError()) {
-          <app-error-state
-            icon="lucideCircleAlert"
-            title="Couldn't load inspections."
-            i18n-title="@@org.assets.inspections.error"
-            data-testid="assets-inspections-error"
-          >
-            <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
-              <span i18n="@@common.tryAgain">Try again</span>
-            </button>
-          </app-error-state>
+          <div hlmEmpty role="alert" data-testid="assets-inspections-error">
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon" class="text-destructive">
+                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.assets.inspections.error">Couldn't load inspections.</p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryPane()">
+                <span i18n="@@common.tryAgain">Try again</span>
+              </button>
+            </div>
+          </div>
         } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
-          <app-empty-state
-            icon="lucideClipboardList"
-            title="No inspections in view."
-            i18n-title="@@org.assets.inspections.empty"
-          />
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideClipboardList" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@org.assets.inspections.empty">No inspections in view.</p>
+            </div>
+          </div>
         } @else {
           <div hlmTableContainer class="rounded-md border border-border">
             <table hlmTable data-testid="assets-inspections-table">
@@ -411,16 +438,26 @@
     </h2>
 
     @if (compliance.hasSummaryError()) {
-      <app-error-state
-        icon="lucideCircleAlert"
-        title="Couldn't load the compliance summary."
-        i18n-title="@@org.assets.compliance.summaryError"
-        data-testid="assets-compliance-summary-error"
-      >
-        <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retryComplianceSummary()">
-          <span i18n="@@common.tryAgain">Try again</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert" data-testid="assets-compliance-summary-error">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@org.assets.compliance.summaryError">
+            Couldn't load the compliance summary.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            class="max-sm:min-h-11"
+            (click)="retryComplianceSummary()"
+          >
+            <span i18n="@@common.tryAgain">Try again</span>
+          </button>
+        </div>
+      </div>
     } @else if (compliance.isLoadingSummary() && compliance.summary() === null) {
       <div
         class="flex flex-col gap-2"
@@ -611,16 +648,21 @@
     </h2>
 
     @if (compliance.hasSnapshotsError()) {
-      <app-error-state
-        icon="lucideCircleAlert"
-        title="Couldn't load the archived registers."
-        i18n-title="@@org.assets.compliance.snapshotsError"
-        data-testid="assets-compliance-snapshots-error"
-      >
-        <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retrySnapshots()">
-          <span i18n="@@common.tryAgain">Try again</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert" data-testid="assets-compliance-snapshots-error">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@org.assets.compliance.snapshotsError">
+            Couldn't load the archived registers.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retrySnapshots()">
+            <span i18n="@@common.tryAgain">Try again</span>
+          </button>
+        </div>
+      </div>
     } @else if (compliance.isLoadingSnapshots() && compliance.snapshots().length === 0) {
       <div
         class="flex flex-col gap-2"

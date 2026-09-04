@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { RegisterInput } from '@features/auth/models';
 import { RegisterStore } from '@features/auth/state';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
+import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 
 /**
@@ -54,7 +55,16 @@ export class RegisterPage {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /** @description Reads the validated destination shared by the authentication steps. */
+  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   //#endregion
+
+  /** @description The safe destination carried by links and subsequent auth steps. */
+  protected readonly returnUrl: string = resolveReturnUrl(
+    this.route.snapshot.queryParamMap.get('returnUrl'),
+    '',
+  );
 
   //#region Lifecycle
   /**
@@ -76,7 +86,10 @@ export class RegisterPage {
 
     untracked((): void => {
       void this.router.navigate(['/auth/register/verify'], {
-        queryParams: { token: this.registerStore.challengeToken() },
+        queryParams: {
+          token: this.registerStore.challengeToken(),
+          returnUrl: this.returnUrl || undefined,
+        },
       });
     });
   });

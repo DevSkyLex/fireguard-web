@@ -1,9 +1,9 @@
-<div id="mfa-verify-page" class="flex w-full flex-col gap-6">
+<div id="mfa-verify-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
   <app-page-heading heading="Two-factor verification" i18n-heading="@@auth.mfa.title">
     @if (destination(); as sentTo) {
       <p class="text-sm text-muted-foreground">
         <span i18n="@@auth.mfa.sentTo">We sent a code to</span>
-        <span class="ml-1 font-medium text-foreground">{{ sentTo }}</span>
+        <span class="mt-1 block font-medium break-all text-foreground">{{ sentTo }}</span>
       </p>
     } @else {
       <p class="text-sm text-muted-foreground" i18n="@@auth.mfa.authenticator">
@@ -22,4 +22,20 @@
     (submitted)="verify($event)"
     (resent)="resend()"
   />
+
+  <p
+    class="flex flex-wrap items-center justify-center gap-x-1 border-t border-border pt-4 text-center text-sm text-muted-foreground"
+  >
+    <button
+      hlmBtn
+      type="button"
+      variant="link"
+      class="h-auto min-h-11 whitespace-normal text-foreground"
+      [disabled]="authStore.isVerifyingMfa() || authStore.isResendingMfa()"
+      (click)="restartSignIn()"
+      i18n="@@auth.forgotPassword.backToSignIn"
+    >
+      Back to sign in
+    </button>
+  </p>
 </div>

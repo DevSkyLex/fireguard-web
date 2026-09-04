@@ -13,7 +13,7 @@ describe('SplitLayoutShowcase', () => {
   });
 
   it('should name the product', () => {
-    expect(fixture.nativeElement.textContent).toContain('FireGuard');
+    expect(fixture.nativeElement.textContent).toContain('Fireguard');
   });
 
   it('should render one entry per proof point', () => {

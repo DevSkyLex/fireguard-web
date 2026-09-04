@@ -13,11 +13,11 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTag, lucideX } from '@ng-icons/lucide';
 import type { EquipmentTagOutput } from '@features/organization/features/equipments/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
 /** The value standing in for "no catalog item picked" in the combobox — a tag id is never an empty string. */
@@ -58,8 +58,8 @@ const NO_PICK_VALUE = '';
   selector: 'app-equipment-tags',
   imports: [
     NgIcon,
+    ...HlmEmptyImports,
     HlmButton,
-    EmptyState,
     ...HlmBadgeImports,
     ...HlmCardImports,
     ...HlmComboboxImports,

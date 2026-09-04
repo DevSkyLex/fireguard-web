@@ -45,7 +45,7 @@ describe('AuditEventTable', () => {
     const row = byTestId('audit-event-table-row');
     expect(row?.textContent).toContain('Jane Doe');
     expect(row?.textContent).toContain('Facility created');
-    expect(row?.textContent).toContain('facility');
+    expect(row?.textContent).toContain('Facility');
   });
 
   it('should render the actor fallback when actorDisplayName is absent', async () => {
@@ -61,7 +61,7 @@ describe('AuditEventTable', () => {
     fixture.componentRef.setInput('items', [event({ action: 'facility.something_new' })]);
     await fixture.whenStable();
 
-    expect(byTestId('audit-event-table-row')?.textContent).toContain('facility something new');
+    expect(byTestId('audit-event-table-row')?.textContent).toContain('Facility something new');
   });
 
   it('should link a known subject type and render a bare reference for an unknown one', async () => {
@@ -74,7 +74,7 @@ describe('AuditEventTable', () => {
     const rows = root().querySelectorAll('[data-testid="audit-event-table-row"]');
     expect(rows[0].querySelector('a')).not.toBeNull();
     expect(rows[1].querySelector('a')).toBeNull();
-    expect(rows[1].textContent).toContain('webhook_subscription');
+    expect(rows[1].textContent).toContain('Webhook subscription');
   });
 
   it('should render a plain dash when the event carries no subject', async () => {
@@ -102,14 +102,26 @@ describe('AuditEventTable', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('should render "No additional details." when metadata is empty', async () => {
+  it('should omit the disclosure action when metadata is empty', async () => {
     fixture.componentRef.setInput('items', [event({ metadata: {} })]);
+    await fixture.whenStable();
+
+    expect(byTestId('audit-event-table-expand')).toBeNull();
+    expect(root().textContent).not.toContain('Event details');
+  });
+
+  it('should humanize metadata labels and format boolean values', async () => {
+    fixture.componentRef.setInput('items', [
+      event({ metadata: { previous_status: 'draft', access_revoked: true } }),
+    ]);
     await fixture.whenStable();
 
     (byTestId('audit-event-table-expand') as HTMLButtonElement).click();
     await fixture.whenStable();
 
-    expect(root().textContent).toContain('No additional details.');
+    expect(root().textContent).toContain('Previous status');
+    expect(root().textContent).toContain('Access revoked');
+    expect(root().textContent).toContain('Yes');
   });
 
   it('should give each row a distinct, non-identical accessible name for its expand toggle', async () => {

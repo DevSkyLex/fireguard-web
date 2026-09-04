@@ -11,10 +11,17 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { setAllEntities, updateEntity, removeEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  setAllEntities,
+  upsertEntity,
+  updateEntity,
+  removeEntity,
+  removeAllEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { pipe, switchMap, exhaustMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -54,11 +61,10 @@ const INITIAL_STATE: ChannelsState = {
  * @description
  * Channel list and administration for one organization.
  *
- * Component-scoped: the sidebar and a channel-management page each want their
- * own filters, and neither should disturb the other. `load` drains every
- * server page up front (`ChannelService.listAll`) because the messaging API
- * has no server-side search — consumers filter the full, already-loaded set
- * in memory.
+ * Provided at the dashboard route so the sidebar extension and routed room share
+ * one collection. Organization changes clear the previous collection; secondary
+ * navigation loads in the browser. `load` drains every server page because the
+ * channel API has no server-side search.
  *
  * Two contract hazards are handled here rather than left to callers:
  * rows are keyed off the scalar `id` because `@id` is a Skolem genid
@@ -99,24 +105,50 @@ export const ChannelsStore = signalStore(
 
   withMethods((store, service = inject(ChannelService), dispatcher = inject(Dispatcher)) => ({
     /**
-     * Loads every channel the acting member participates in, walking the
-     * server-paginated collection to its end (`ChannelService.listAll`).
+     * Method load
+     * @method load
+     *
+     * @description
+     * Drains the channel list, clearing another organization's rows first. Changes
+     * made while the list is in flight take precedence over its older snapshot.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @param {ListChannelsQuery} query - Organization and optional archive filter.
+     * @returns {RxMethodRef} Request subscription.
      */
     load: rxMethod<ListChannelsQuery>(
       pipe(
-        tap((query: ListChannelsQuery) =>
+        tap((query: ListChannelsQuery) => {
+          if (store.organizationId() !== query.organization) {
+            patchState(store, removeAllEntities({ collection: 'channel' }), INITIAL_STATE);
+          }
           patchState(store, {
             organizationId: query.organization,
             includeArchived: query.isArchived ?? null,
             listCallState: pendingCallState(),
-          }),
-        ),
-        switchMap((query: ListChannelsQuery) =>
-          service.listAll(query).pipe(
+          });
+        }),
+        switchMap((query: ListChannelsQuery) => {
+          const previous = store.channelEntityMap();
+          return service.listAll(query).pipe(
             tapResponse({
               next: (channels: readonly ChannelOutput[]): void => {
-                patchState(store, setAllEntities([...channels], { collection: 'channel' }), {
-                  total: channels.length,
+                const current = store.channelEntityMap();
+                const merged = channels
+                  .filter((channel) => !previous[channel.id] || current[channel.id])
+                  .map((channel) =>
+                    current[channel.id] && current[channel.id] !== previous[channel.id]
+                      ? current[channel.id]
+                      : channel,
+                  );
+                const loadedIds = new Set(merged.map((channel) => channel.id));
+                for (const channel of store.channelEntities()) {
+                  if (!previous[channel.id] && !loadedIds.has(channel.id)) merged.push(channel);
+                }
+                patchState(store, setAllEntities(merged, { collection: 'channel' }), {
+                  total: merged.length,
                   listCallState: successCallState(null),
                 });
               },
@@ -130,14 +162,24 @@ export const ChannelsStore = signalStore(
                 );
               },
             }),
-          ),
-        ),
+          );
+        }),
       ),
     ),
 
     /**
-     * Reads one channel. This is the only endpoint that reports a real
-     * `unreadCount` — the list provider hard-codes it to zero.
+     * Method loadOne
+     * @method loadOne
+     *
+     * @description
+     * Reads authoritative channel detail even before the sidebar list arrives.
+     * Discards responses belonging to an organization the reader has left.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @param {string} channelId - Channel identifier.
+     * @returns {RxMethodRef} Request subscription.
      */
     loadOne: rxMethod<string>(
       pipe(
@@ -146,11 +188,12 @@ export const ChannelsStore = signalStore(
           service.get(channelId).pipe(
             tapResponse({
               next: (channel: ChannelOutput): void => {
-                patchState(
-                  store,
-                  updateEntity({ id: channel.id, changes: channel }, { collection: 'channel' }),
-                  { detailCallState: successCallState(channel) },
-                );
+                const organizationId = store.organizationId()?.split('/').at(-1);
+                if (organizationId && channel.organization.split('/').at(-1) !== organizationId)
+                  return;
+                patchState(store, upsertEntity(channel, { collection: 'channel' }), {
+                  detailCallState: successCallState(channel),
+                });
               },
               error: (error: unknown): void =>
                 patchState(store, { detailCallState: errorCallState(toStoreError(error)) }),
@@ -161,10 +204,18 @@ export const ChannelsStore = signalStore(
     ),
 
     /**
-     * Creates a channel.
+     * Method create
+     * @method create
      *
-     * The response is trusted here because the row is new: there is no better
-     * local data for its derived fields to clobber.
+     * @description
+     * Creates and inserts a channel before notifying the UI. The new row has no
+     * existing derived fields to overwrite, unlike responses to later mutations.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @param {CreateChannelInput} input - Organization and channel name.
+     * @returns {RxMethodRef} Request subscription.
      */
     create: rxMethod<CreateChannelInput>(
       pipe(
@@ -173,10 +224,23 @@ export const ChannelsStore = signalStore(
           service.create(input).pipe(
             tapResponse({
               next: (channel: ChannelOutput): void => {
-                patchState(store, { mutationCallState: successCallState(null) });
+                if (
+                  store.organizationId() &&
+                  input.organization.split('/').at(-1) !== store.organizationId()?.split('/').at(-1)
+                )
+                  return;
+                patchState(store, upsertEntity(channel, { collection: 'channel' }), {
+                  total: store.total() + (store.channelEntityMap()[channel.id] ? 0 : 1),
+                  mutationCallState: successCallState(null),
+                });
                 dispatcher.dispatch(channelsStoreEvents.created(channel));
               },
               error: (error: unknown): void => {
+                if (
+                  store.organizationId() &&
+                  input.organization.split('/').at(-1) !== store.organizationId()?.split('/').at(-1)
+                )
+                  return;
                 const storeError = toStoreError(error);
                 patchState(store, { mutationCallState: errorCallState(storeError) });
                 dispatcher.dispatch(
@@ -263,19 +327,28 @@ export const ChannelsStore = signalStore(
     ),
 
     /**
-     * Nests a channel under another, or detaches it.
+     * Method setParent
+     * @method setParent
      *
-     * Failures land on their own call state: a `409` here means the move would
-     * create a cycle or exceed the allowed depth, which is worth telling the
-     * member rather than reporting as a generic error.
+     * @description
+     * Saves one hierarchy change at a time without cancelling an accepted write.
+     * Preserves the tree on failure and ignores responses after an organization switch.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @param {{ readonly channelId: string; readonly input: SetChannelParentInput }} command - Channel and destination.
+     * @returns {RxMethodRef} Request subscription.
      */
     setParent: rxMethod<{ readonly channelId: string; readonly input: SetChannelParentInput }>(
       pipe(
-        tap(() => patchState(store, { hierarchyCallState: pendingCallState() })),
-        switchMap(({ channelId, input }) =>
-          service.setParent(channelId, input).pipe(
+        exhaustMap(({ channelId, input }) => {
+          const organizationId = store.organizationId();
+          patchState(store, { hierarchyCallState: pendingCallState() });
+          return service.setParent(channelId, input).pipe(
             tapResponse({
               next: (channel: ChannelOutput): void => {
+                if (store.organizationId() !== organizationId) return;
                 patchState(
                   store,
                   updateEntity(
@@ -286,6 +359,7 @@ export const ChannelsStore = signalStore(
                 );
               },
               error: (error: unknown): void => {
+                if (store.organizationId() !== organizationId) return;
                 const storeError = toStoreError(error);
                 patchState(store, { hierarchyCallState: errorCallState(storeError) });
                 dispatcher.dispatch(
@@ -295,8 +369,8 @@ export const ChannelsStore = signalStore(
                 );
               },
             }),
-          ),
-        ),
+          );
+        }),
       ),
     ),
 

@@ -56,6 +56,8 @@ describe('ForgotPasswordPage', () => {
     challengeToken.set('reset-token');
     await fixture.whenStable();
 
-    expect(navigate).toHaveBeenCalledWith(['/auth/password-reset/verify']);
+    expect(navigate).toHaveBeenCalledWith(['/auth/password-reset/verify'], {
+      queryParams: { token: 'reset-token', returnUrl: undefined },
+    });
   });
 });

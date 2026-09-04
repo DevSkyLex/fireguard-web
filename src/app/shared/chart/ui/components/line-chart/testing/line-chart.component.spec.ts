@@ -1,202 +1,122 @@
-import { PLATFORM_ID, provideZonelessChangeDetection, signal } from '@angular/core';
+import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
-import { THEME_PORT, type ThemePort } from '@core/theme';
-import type { ChartSeries } from '../../../../models';
 import { LineChart } from '../line-chart.component';
 
-/** A canvas drawing method that does nothing — every stubbed context method but the two `stubCanvasContext` gives a real shape. */
-function noop(): void {
-  return undefined;
-}
-
 /**
- * Canvas 2D contexts are not implemented by jsdom (`getContext` returns
- * `null` without the native `canvas` package installed). Chart.js only
- * calls a small, well-known surface of drawing methods and never inspects
- * their return value beyond `measureText`/`createLinearGradient`, so a
- * permissive no-op stub is enough to let a real `Chart` instance construct
- * and render without touching a native canvas backend.
+ * Class ChartResizeObserver
+ * @class ChartResizeObserver
+ * @description Supplies the observer API absent from the DOM test environment.
+ * @since 3.0.0
  */
-function buildStubContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
-  let context: CanvasRenderingContext2D;
-
-  const proxy = new Proxy(
-    {},
-    {
-      get: (_target: object, property: string | symbol): unknown => {
-        if (property === 'canvas') return canvas;
-        if (property === 'getContext')
-          return (id: string): CanvasRenderingContext2D | null => (id === '2d' ? context : null);
-        if (property === 'measureText') return (): { width: number } => ({ width: 0 });
-        if (property === 'createLinearGradient' || property === 'createRadialGradient') {
-          return (): { addColorStop: () => void } => ({ addColorStop: noop });
-        }
-
-        return noop;
-      },
-    },
-  ) as CanvasRenderingContext2D;
-
-  context = proxy;
-
-  return context;
-}
-
-function stubCanvasContext(): void {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
-    function (this: HTMLCanvasElement): CanvasRenderingContext2D {
-      return buildStubContext(this);
-    },
-  );
-}
-
-/** jsdom has no `ResizeObserver` implementation — Chart.js' responsive layout only needs it to exist, never to actually fire. */
-class StubResizeObserver {
-  public observe(): void {
-    return undefined;
-  }
-  public unobserve(): void {
-    return undefined;
-  }
-  public disconnect(): void {
-    return undefined;
-  }
-}
-
-/**
- * jsdom reports a zero-size host by default, which Chart.js' responsive
- * layout cannot build a scale from — stub a realistic layout instead.
- */
-function stubChartHostMeasurements(): void {
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-    width: 600,
-    height: 320,
-    top: 0,
-    left: 0,
-    bottom: 320,
-    right: 600,
-    x: 0,
-    y: 0,
-    toJSON: (): void => undefined,
-  } as DOMRect);
-}
-
-function series(): readonly ChartSeries[] {
-  return [
-    {
-      name: 'Inspections',
-      points: [
-        { label: 'Jan', value: 3 },
-        { label: 'Feb', value: 5 },
-      ],
-    },
-  ];
+class ChartResizeObserver {
+  /**
+   * Method observe
+   * @method observe
+   * @description Provides a no-op observer hook for the DOM test environment.
+   * @access public
+   * @since 3.0.0
+   * @returns {void}
+   */
+  public observe(): void {}
+  /**
+   * Method unobserve
+   * @method unobserve
+   * @description Provides a no-op observer hook for the DOM test environment.
+   * @access public
+   * @since 3.0.0
+   * @returns {void}
+   */
+  public unobserve(): void {}
+  /**
+   * Method disconnect
+   * @method disconnect
+   * @description Provides a no-op observer hook for the DOM test environment.
+   * @access public
+   * @since 3.0.0
+   * @returns {void}
+   */
+  public disconnect(): void {}
 }
 
 describe('LineChart', () => {
   let fixture: ComponentFixture<LineChart>;
-  let resolvedTheme: ReturnType<typeof signal<'light' | 'dark'>>;
-
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', ChartResizeObserver);
+  });
   afterEach(() => {
-    vi.restoreAllMocks();
-    fixture.nativeElement.remove();
+    TestBed.resetTestingModule();
+    vi.unstubAllGlobals();
   });
 
-  async function render(
-    platform: 'browser' | 'server' = 'browser',
-    initialSeries: readonly ChartSeries[] = series(),
-    theme: 'light' | 'dark' = 'light',
-  ): Promise<void> {
-    resolvedTheme = signal<'light' | 'dark'>(theme);
-
-    const themePort: Pick<ThemePort, 'resolvedTheme'> = { resolvedTheme };
-
-    stubChartHostMeasurements();
-    stubCanvasContext();
-    vi.stubGlobal('ResizeObserver', StubResizeObserver);
-
+  /**
+   * Function render
+   * @description Mounts representative series on the requested Angular platform.
+   * @access private
+   * @since 3.0.0
+   * @param {string} platform - Angular platform identifier.
+   * @returns {Promise<void>}
+   */
+  async function render(platform = 'browser'): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        provideNoopAnimations(),
-        provideCharts(withDefaultRegisterables()),
-        { provide: PLATFORM_ID, useValue: platform },
-        { provide: THEME_PORT, useValue: themePort },
-      ],
+      providers: [provideZonelessChangeDetection(), { provide: PLATFORM_ID, useValue: platform }],
     });
-
     fixture = TestBed.createComponent(LineChart);
-    document.body.append(fixture.nativeElement);
-    fixture.componentRef.setInput('series', initialSeries);
+    fixture.componentRef.setInput('series', [
+      {
+        name: 'Inspections',
+        points: [
+          { label: 'Jan', value: 3 },
+          { label: 'Feb', value: 5 },
+        ],
+      },
+    ]);
     fixture.componentRef.setInput('label', 'Inspections over time');
     await fixture.whenStable();
   }
 
-  it('renders the chart with role="img" and the given accessible label', async () => {
+  it('renders the native Spartan chart with its accessible name', async () => {
     await render();
-
-    const wrapper: HTMLElement | null = fixture.nativeElement.querySelector('div[role="img"]');
-
-    expect(wrapper).not.toBeNull();
-    expect(wrapper?.getAttribute('aria-label')).toBe('Inspections over time');
+    expect(fixture.nativeElement.querySelector('tanstack-chart[hlmChart]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('svg')?.getAttribute('aria-label')).toBe(
+      'Inspections over time',
+    );
+    expect(fixture.nativeElement.querySelector('canvas')).toBeNull();
   });
-
-  it('mounts a canvas element for the chart', async () => {
-    await render();
-
-    expect(fixture.nativeElement.querySelector('canvas[baseChart]')).not.toBeNull();
-  });
-
-  it('shows a skeleton instead of the chart while loading', async () => {
+  it('reserves space while loading', async () => {
     await render();
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
-
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('div[role="img"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tanstack-chart')).toBeNull();
   });
-
-  it('shows a skeleton instead of mounting the canvas on the server platform', async () => {
+  it('reserves space without mounting an interactive chart on the server', async () => {
     await render('server');
-
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('canvas[baseChart]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('tanstack-chart')).toBeNull();
   });
-
-  it('shows the empty state when no series carries a point', async () => {
+  it('reports empty data explicitly', async () => {
     await render();
-    fixture.componentRef.setInput('series', [{ name: 'Inspections', points: [] }]);
+    fixture.componentRef.setInput('series', []);
     await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('app-empty-state')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('div[role="img"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])')?.textContent,
+    ).toContain('No data');
   });
-
-  it('treats a series list with at least one point as non-empty', async () => {
-    await render('browser', [
-      { name: 'Empty', points: [] },
-      { name: 'Has data', points: [{ label: 'Jan', value: 1 }] },
+  it('renders all series labels in its native legend', async () => {
+    await render();
+    fixture.componentRef.setInput('series', [
+      {
+        name: 'Opened',
+        points: [
+          { label: 'Jan', value: 3 },
+          { label: 'Feb', value: 5 },
+        ],
+      },
+      { name: 'Resolved', points: [{ label: 'Feb', value: 2 }] },
     ]);
-
-    expect(fixture.nativeElement.querySelector('app-empty-state')).toBeNull();
-    expect(fixture.nativeElement.querySelector('div[role="img"]')).not.toBeNull();
-  });
-
-  it('sizes the host to the given height, with no extra reserve for the legend', async () => {
-    await render();
-    fixture.componentRef.setInput('height', 240);
     await fixture.whenStable();
-
-    const wrapper: HTMLElement | null = fixture.nativeElement.querySelector('div[role="img"]');
-
-    expect(wrapper?.style.height).toBe('240px');
-  });
-
-  it('mounts the chart the same way under the dark appearance', async () => {
-    await render('browser', series(), 'dark');
-
-    expect(fixture.nativeElement.querySelector('canvas[baseChart]')).not.toBeNull();
+    const chart = fixture.nativeElement.querySelector('tanstack-chart');
+    expect(chart.textContent).toContain('Opened');
+    expect(chart.textContent).toContain('Resolved');
   });
 });

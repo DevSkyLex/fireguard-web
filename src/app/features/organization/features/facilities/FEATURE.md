@@ -44,8 +44,8 @@ is a dedicated, full-space route — not a tab of `FacilityDetailPage` — over
 `FacilityBuilding3dStore` (`state/facility-building-3d`) and
 `FacilityService.getBuildingModel`. The page renders one of five states — a
 full-frame skeleton while the model is unresolved (also the exact SSR output,
-since the store's fetch is browser-only), `app-error-state` with a retry,
-`app-empty-state` when the building has no floors (a `FACILITIES_WRITE`-gated
+since the store's fetch is browser-only), the Spartan `hlmEmpty` error composition with a retry,
+the Spartan `hlmEmpty` composition when the building has no floors (a `FACILITIES_WRITE`-gated
 "Go to Plans" call to action), a dedicated incompatible-device state when this
 browser lacks WebGL (probed inline via
 `canvas.getContext('webgl2') ?? canvas.getContext('webgl')`, never a shared
@@ -250,7 +250,7 @@ This subfeature is the primitive's first consumer, in two places:
   how many facilities still lack coordinates (`loadUnplacedCount`, read from
   a single-item page's `totalItems` rather than a second full fetch) and
   links back to the list; when no facility has coordinates at all, an
-  `app-empty-state` replaces the map entirely. `facility.status` maps onto
+  the Spartan `hlmEmpty` composition replaces the map entirely. `facility.status` maps onto
   the primitive's severity-free vocabulary — `active` as `neutral`,
   `archived` as `muted` (`utils/facility-marker`) — since a facility carries
   no severity of its own.
@@ -308,7 +308,7 @@ This subfeature is the primitive's first consumer, in two places:
   read-only rows. **Plans** renders `ui/components/facility-plan-list`
   (upload, primary badge, per-row View/Set as primary/Delete menu) beside
   `@shared/plan-viewer`'s `app-plan-viewer` over `FacilityPlansStore`, with
-  `@shared/empty-state` when the facility has no floor plan yet. A header
+  Spartan `Empty` primitives when the facility has no floor plan yet. A header
   **Delete** action is danger, confirm-gated (`hlm-alert-dialog`), and
   `FACILITIES_WRITE`-gated.
 - `ui/components/facility-status-tag` — the `FacilityOutput.status` registry
@@ -505,9 +505,9 @@ stays a tab of `FacilityDetailPage`.
 - **A fourth Plans-tab state.** Alongside loading, "no floor plan uploaded",
   and the normal content view, `FacilityPlansStore.overlayCallState()`
   reaching `'success'` with `overlayHasContent()` still `false` now renders
-  `app-empty-state` inside the panel (`data-testid="facility-plan-no-content"`)
+  the Spartan `hlmEmpty` composition inside the panel (`data-testid="facility-plan-no-content"`)
   — a plan with nothing drawn on it used to render silently. The plan
-  **list** request failing also gained its own retryable `app-error-state`
+  **list** request failing also gained its own retryable Spartan `hlmEmpty` error composition
   (`data-testid="facility-plans-error"`), matching the 3D page's own
   load-failure state; it previously had none.
 - **`aria-live="polite"`** (`facility-plan-selection-announcement`)

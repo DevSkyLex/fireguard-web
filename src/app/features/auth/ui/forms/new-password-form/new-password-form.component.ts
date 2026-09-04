@@ -9,11 +9,14 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, type FieldTree } from '@angular/forms/signals';
+import type { StoreError } from '@core/request-state';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { NewPasswordFormValues } from './models';
 
 /**
@@ -36,11 +39,21 @@ import type { NewPasswordFormValues } from './models';
  */
 @Component({
   selector: 'app-new-password-form',
-  imports: [RequiredMarker, PasswordInput, HlmButton, ...HlmFieldImports],
+  imports: [
+    ...HlmAlertImports,
+    RequiredMarker,
+    PasswordInput,
+    HlmButton,
+    HlmSpinner,
+    ...HlmFieldImports,
+  ],
   templateUrl: './new-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewPasswordForm {
+  /** @description Request failures are displayed inline above the fields. */
+  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
+
   //#region Inputs
   /**
    * Property pending

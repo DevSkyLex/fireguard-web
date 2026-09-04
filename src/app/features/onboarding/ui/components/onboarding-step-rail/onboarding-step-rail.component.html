@@ -2,12 +2,16 @@
   <div class="flex items-center justify-between gap-3">
     <p class="text-xs font-medium text-muted-foreground">{{ progressLabel() }}</p>
   </div>
-  <hlm-progress [value]="progress().done" [max]="progress().total" aria-hidden="true" />
+  <hlm-progress
+    [value]="progress().total ? (progress().done / progress().total) * 100 : 0"
+    aria-hidden="true"
+    ><hlm-progress-indicator class="motion-reduce:transition-none"
+  /></hlm-progress>
 
   <ol class="flex flex-col">
     @for (row of rows(); track row.key; let isLast = $last) {
       <li
-        class="relative flex gap-3 pb-5 last:pb-0"
+        class="relative flex gap-3 pb-3 last:pb-0"
         [attr.aria-current]="row.isActive ? 'step' : null"
       >
         @if (!isLast) {

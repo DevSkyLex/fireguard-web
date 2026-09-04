@@ -5,7 +5,7 @@ import type { ChartPoint } from './chart-point.interface';
  *
  * @description
  * One named line or area — the shape every `shared/chart` component
- * accepts, so a caller never has to build Chart.js' own dataset shape
+ * accepts, so a caller never has to build the chart renderer's dataset shape
  * directly.
  *
  * @since 1.0.0

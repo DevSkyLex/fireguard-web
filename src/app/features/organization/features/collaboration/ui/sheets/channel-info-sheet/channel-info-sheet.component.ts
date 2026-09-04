@@ -13,10 +13,10 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePin, lucidePinOff, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { EmptyState } from '@shared/empty-state';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import type { ChannelParticipantView } from '../channel-participants-sheet';
@@ -62,7 +62,7 @@ import type { PinnedMessageItem } from './models';
   selector: 'app-channel-info-sheet',
   imports: [
     NgIcon,
-    EmptyState,
+    ...HlmEmptyImports,
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,

@@ -9,12 +9,23 @@
     Skip to content
   </a>
 
-  <hlm-sidebar variant="inset" collapsible="icon">
-    @if (sidebarHeader.length > 0) {
-      <hlm-sidebar-header>
+  <hlm-sidebar variant="sidebar" collapsible="icon">
+    <hlm-sidebar-header>
+      <div
+        id="dashboard-sidebar-brand"
+        class="flex h-10 shrink-0 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5"
+      >
+        <img src="favicon.svg" width="28" height="28" alt="Fireguard" class="shrink-0" />
+        <span
+          class="text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
+          aria-hidden="true"
+          >Fireguard</span
+        >
+      </div>
+      @if (sidebarHeader.length > 0) {
         <app-slot-outlet [contributions]="sidebarHeader" />
-      </hlm-sidebar-header>
-    }
+      }
+    </hlm-sidebar-header>
 
     <hlm-sidebar-content>
       <app-slot-outlet [contributions]="sidebarNav" />
@@ -27,7 +38,30 @@
     }
   </hlm-sidebar>
 
-  <main hlmSidebarInset id="dashboard-main" class="min-w-0 outline-none">
+  @if (sidebarExtension(); as extension) {
+    <aside
+      #extensionContent
+      id="dashboard-sidebar-extension"
+      tabindex="-1"
+      [attr.aria-label]="extension.label"
+      class="h-svh min-w-0 flex-1 flex-col overflow-hidden border-r bg-background outline-none lg:flex lg:w-80 lg:flex-none xl:w-88"
+      [class.flex]="extension.mobileVisible()"
+      [class.hidden]="!extension.mobileVisible()"
+    >
+      <div class="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
+        <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
+        <span class="text-sm font-semibold">Fireguard</span>
+      </div>
+      <ng-container *ngComponentOutlet="extension.component" />
+    </aside>
+  }
+
+  <main
+    hlmSidebarInset
+    id="dashboard-main"
+    class="min-w-0 outline-none"
+    [class.max-lg:hidden]="sidebarExtension()?.mobileVisible() === true"
+  >
     <header class="flex h-12 shrink-0 items-center gap-2 px-4 md:px-6">
       <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
 
@@ -52,7 +86,7 @@
       #content
       id="dashboard-content"
       tabindex="-1"
-      class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-b-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <div class="flex min-h-0 flex-1 flex-col">
         <router-outlet />
@@ -63,7 +97,7 @@
   @if (panel(); as contribution) {
     <aside
       id="dashboard-panel"
-      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:my-2 lg:me-2 lg:max-w-none lg:shadow-none lg:ring-1 lg:ring-foreground/10"
+      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:max-w-none lg:rounded-none lg:border-l lg:border-border lg:shadow-none"
       i18n-aria-label="@@dashboard.panel.aria"
       aria-label="Contextual panel"
     >

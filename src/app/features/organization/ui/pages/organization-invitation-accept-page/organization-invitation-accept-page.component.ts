@@ -310,6 +310,15 @@ export class OrganizationInvitationAcceptPage {
 
     this.store.loadPreview(token);
   });
+
+  /** Opens the accepted workspace; activation guards still decide whether it is ready. */
+  private readonly openAcceptedOrganization: EffectRef = effect((): void => {
+    if (!this.store.isAccepted()) return;
+    const organizationId: string | undefined = this.store.preview()?.organizationId;
+    void this.router.navigate(
+      organizationId ? ['/organizations', organizationId] : ['/organizations'],
+    );
+  });
   //#endregion
 
   //#region Methods

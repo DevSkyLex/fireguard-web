@@ -36,6 +36,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * @description
  * The sidebar footer: who is signed in, and the menu onto their own account.
  * The trailing ellipsis marks it as a control rather than a caption.
+ * Hover highlights only the circular avatar; the full row remains the click
+ * and keyboard target, with a circular focus shape when the sidebar is collapsed.
  *
  * It is the **only** way into the account: the account is not a destination of
  * the sidebar's navigation, which lists the work rather than the reader, so the

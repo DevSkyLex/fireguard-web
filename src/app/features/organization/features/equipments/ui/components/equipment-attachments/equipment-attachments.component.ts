@@ -15,10 +15,10 @@ import {
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { EquipmentAttachmentOutput } from '@features/organization/features/equipments/models';
-import { EmptyState } from '@shared/empty-state';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -59,8 +59,8 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
   selector: 'app-equipment-attachments',
   imports: [
     NgIcon,
+    ...HlmEmptyImports,
     HlmButton,
-    EmptyState,
     ...HlmBadgeImports,
     ...HlmCardImports,
     ...HlmItemImports,

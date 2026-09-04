@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
+import { convertToParamMap, Router, UrlTree } from '@angular/router';
 import { PasswordResetStore } from '@features/auth/state';
 import { passwordResetNewGuard } from '../password-reset-new.guard';
 
@@ -11,7 +11,9 @@ describe('passwordResetNewGuard', () => {
   };
 
   const urlTree = {} as UrlTree;
-  const route = {} as unknown as Parameters<typeof passwordResetNewGuard>[0];
+  const route = { queryParamMap: convertToParamMap({}) } as unknown as Parameters<
+    typeof passwordResetNewGuard
+  >[0];
   const state = {} as unknown as Parameters<typeof passwordResetNewGuard>[1];
 
   const runGuard = (): boolean | UrlTree => {
@@ -44,7 +46,9 @@ describe('passwordResetNewGuard', () => {
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/password-reset/forgot']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/password-reset/forgot'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 
   it('should redirect to verify page when verification code is missing', () => {
@@ -54,7 +58,9 @@ describe('passwordResetNewGuard', () => {
     const result = runGuard();
 
     expect(result).toBe(urlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/password-reset/verify']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/password-reset/verify'], {
+      queryParams: { returnUrl: undefined },
+    });
   });
 
   it('should allow access when token and code are present', () => {

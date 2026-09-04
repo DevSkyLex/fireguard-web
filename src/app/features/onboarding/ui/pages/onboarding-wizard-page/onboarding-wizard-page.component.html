@@ -1,12 +1,40 @@
-<div id="onboarding-wizard-page" class="flex flex-col gap-8">
+<div id="onboarding-wizard-page" class="flex min-w-0 flex-col gap-6">
   @if (currentStep(); as step) {
-    <div class="lg:hidden" data-testid="onboarding-wizard-step-rail">
-      <app-onboarding-step-rail
-        [steps]="store.steps()"
-        [activeStepKey]="store.nextStep()"
-        [progress]="store.progress()"
-      />
-    </div>
+    <hlm-collapsible
+      class="flex flex-col gap-2 lg:hidden"
+      data-testid="onboarding-wizard-step-rail"
+    >
+      <button
+        hlmBtn
+        hlmCollapsibleTrigger
+        variant="ghost"
+        type="button"
+        class="h-auto min-h-11 w-full justify-between gap-2 px-0 text-left"
+        data-testid="onboarding-progress-toggle"
+      >
+        <span class="text-sm text-muted-foreground"
+          >{{ stepNumberLabel() }} · {{ stepPresentation()?.label }}</span
+        >
+
+        <span class="shrink-0 text-xs" i18n="@@onboarding.wizard.progressDetails">Details</span>
+      </button>
+
+      <hlm-progress
+        [value]="progressValue()"
+        aria-label="Activation progress"
+        i18n-aria-label="@@onboarding.wizard.progressLabel"
+      >
+        <hlm-progress-indicator class="motion-reduce:transition-none" />
+      </hlm-progress>
+
+      <hlm-collapsible-content class="pt-3">
+        <app-onboarding-step-rail
+          [steps]="store.steps()"
+          [activeStepKey]="store.nextStep()"
+          [progress]="store.progress()"
+        />
+      </hlm-collapsible-content>
+    </hlm-collapsible>
 
     @if (stepPresentation(); as presentation) {
       <app-page-heading [heading]="presentation.label" [description]="presentation.description">
@@ -16,69 +44,174 @@
       </app-page-heading>
     }
 
-    @switch (step.key) {
-      @case ('create_organization') {
-        <app-onboarding-organization-form
-          [pending]="stepPending()"
-          [serverError]="stepError()"
-          [skippable]="canSkip()"
-          (submitted)="submitOrganization($event)"
-          (skipped)="skipCurrentStep()"
+    @if (lifecycleError()) {
+      <div hlmAlert variant="destructive" data-testid="onboarding-lifecycle-error">
+        <p hlmAlertDescription i18n="@@onboarding.wizard.lifecycleFailed">
+          This step could not be updated. Your saved information is still available.
+        </p>
+
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          type="button"
+          class="mt-3 max-sm:min-h-11"
+          (click)="retryLifecycle()"
+          i18n="@@onboarding.wizard.retry"
+        >
+          Try again
+        </button>
+      </div>
+    }
+
+    @if (catalogPending()) {
+      <div class="flex flex-col gap-4" role="status" data-testid="onboarding-catalog-loading">
+        <span class="sr-only" i18n="@@onboarding.wizard.catalogLoading"
+          >Loading available choices…</span
+        >
+
+        <hlm-skeleton class="h-11 w-full" /><hlm-skeleton class="h-11 w-full" /><hlm-skeleton
+          class="h-11 w-2/3"
         />
-      }
-      @case ('select_plan') {
-        <app-onboarding-plan-form
-          [plans]="plans()"
-          [pricing]="pricing()"
-          [pending]="stepPending()"
-          [serverError]="stepError()"
-          [skippable]="canSkip()"
-          (submitted)="submitPlan($event)"
-          (skipped)="skipCurrentStep()"
-        />
-      }
-      @case ('invite_members') {
-        <app-onboarding-members-form
-          [roles]="roles()"
-          [pending]="stepPending()"
-          [serverError]="stepError()"
-          [skippable]="canSkip()"
-          (submitted)="submitMembers($event)"
-          (skipped)="skipCurrentStep()"
-        />
-      }
-      @case ('create_first_facility') {
-        <app-onboarding-facilities-form
-          [pending]="stepPending()"
-          [serverError]="stepError()"
-          [skippable]="canSkip()"
-          (submitted)="submitFacilities($event)"
-          (skipped)="skipCurrentStep()"
-        />
-      }
-      @case ('create_first_equipment') {
-        <app-onboarding-equipment-form
-          [facilities]="createdFacilities()"
-          [pending]="stepPending()"
-          [serverError]="stepError()"
-          [skippable]="canSkip()"
-          (submitted)="submitEquipment($event)"
-          (skipped)="skipCurrentStep()"
-        />
+      </div>
+    } @else if (catalogError()) {
+      <div hlmAlert variant="destructive" data-testid="onboarding-catalog-error">
+        <p hlmAlertDescription i18n="@@onboarding.wizard.catalogFailed">
+          The available choices could not be loaded.
+        </p>
+
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mt-3 max-sm:min-h-11"
+          (click)="retryCatalog()"
+          i18n="@@onboarding.wizard.retry"
+        >
+          Try again
+        </button>
+        @if (canSkip()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            class="mt-3 max-sm:min-h-11"
+            data-testid="onboarding-wizard-skip"
+            [disabled]="stepPending()"
+            (click)="skipCurrentStep()"
+            i18n="@@onboarding.wizard.skip"
+          >
+            Skip for now
+          </button>
+        }
+      </div>
+    } @else if (step.key === 'select_plan' && plans().length === 0) {
+      <div hlmAlert data-testid="onboarding-catalog-empty">
+        <p hlmAlertDescription i18n="@@onboarding.wizard.noPlans">
+          No plan is available yet. Refresh the catalog to continue.
+        </p>
+
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mt-3 max-sm:min-h-11"
+          (click)="retryCatalog()"
+          i18n="@@onboarding.wizard.refreshCatalog"
+        >
+          Refresh choices
+        </button>
+        @if (canSkip()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            class="mt-3 max-sm:min-h-11"
+            data-testid="onboarding-wizard-skip"
+            [disabled]="stepPending()"
+            (click)="skipCurrentStep()"
+            i18n="@@onboarding.wizard.skip"
+          >
+            Skip for now
+          </button>
+        }
+      </div>
+    } @else {
+      @switch (step.key) {
+        @case ('create_organization') {
+          <app-onboarding-organization-form
+            [pending]="stepPending()"
+            [serverError]="stepError()"
+            [skippable]="canSkip()"
+            (submitted)="submitOrganization($event)"
+            (skipped)="skipCurrentStep()"
+          />
+        }
+
+        @case ('select_plan') {
+          <app-onboarding-plan-form
+            [plans]="plans()"
+            [pricing]="pricing()"
+            [pending]="stepPending()"
+            [serverError]="stepError()"
+            [skippable]="canSkip()"
+            (submitted)="submitPlan($event)"
+            (skipped)="skipCurrentStep()"
+          />
+        }
+
+        @case ('invite_members') {
+          <app-onboarding-members-form
+            [roles]="roles()"
+            [completed]="completedInvitations()"
+            [failed]="failedInvitations()"
+            [pending]="stepPending()"
+            [serverError]="stepError()"
+            [skippable]="canSkip()"
+            (submitted)="submitMembers($event)"
+            (skipped)="skipCurrentStep()"
+          />
+        }
+
+        @case ('create_first_facility') {
+          <app-onboarding-facilities-form
+            [completed]="completedFacilityDrafts()"
+            [failed]="failedFacilities()"
+            [pending]="stepPending()"
+            [serverError]="stepError()"
+            [skippable]="canSkip()"
+            (submitted)="submitFacilities($event)"
+            (skipped)="skipCurrentStep()"
+          />
+        }
+
+        @case ('create_first_equipment') {
+          <app-onboarding-equipment-form
+            [facilities]="createdFacilities()"
+            [pending]="stepPending()"
+            [serverError]="stepError()"
+            [skippable]="canSkip()"
+            (submitted)="submitEquipment($event)"
+            (skipped)="skipCurrentStep()"
+          />
+        }
       }
     }
   } @else if (store.isBlocked()) {
     <div
-      role="alert"
+      hlmAlert
+      variant="destructive"
       data-testid="onboarding-wizard-blocked"
-      class="flex flex-col gap-3 rounded-lg px-4 py-3 ring-1 ring-destructive/20"
+      class="flex flex-col gap-3"
     >
       <p class="text-sm font-medium text-destructive" i18n="@@onboarding.wizard.blocked">
         Your activation is blocked.
       </p>
+
       @if (store.blockedReason(); as reason) {
         <p class="text-sm text-muted-foreground">{{ reason }}</p>
       }
+
       @if (store.canRollback()) {
         <div class="flex justify-end">
           <button
@@ -93,8 +226,39 @@
         </div>
       }
     </div>
+
+    @if (lifecycleError()) {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription i18n="@@onboarding.wizard.rollbackFailed">
+          The previous step could not be restored. Try again.
+        </p>
+      </div>
+    }
+  } @else if (lifecycleError() || store.loadError()) {
+    <div hlmAlert variant="destructive" data-testid="onboarding-start-error">
+      <p hlmAlertDescription i18n="@@onboarding.wizard.startFailed">
+        Your activation could not be loaded. Try again to continue.
+      </p>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mt-3 max-sm:min-h-11"
+        (click)="retryLifecycle()"
+        i18n="@@onboarding.wizard.retry"
+      >
+        Try again
+      </button>
+    </div>
   } @else {
-    <div class="flex items-center justify-center py-16" data-testid="onboarding-wizard-loading">
+    <div
+      class="flex items-center justify-center py-16"
+      data-testid="onboarding-wizard-loading"
+      role="status"
+      aria-label="Loading activation"
+      i18n-aria-label="@@onboarding.wizard.loading"
+    >
       <hlm-spinner />
     </div>
   }

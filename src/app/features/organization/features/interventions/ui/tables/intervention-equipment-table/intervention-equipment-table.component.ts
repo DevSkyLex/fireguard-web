@@ -12,10 +12,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDotDashed, lucidePackage } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { CollectionSurface } from '@shared/collection-surface';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTag } from '../../components/intervention-tag';
 
@@ -43,12 +42,11 @@ import { InterventionTag } from '../../components/intervention-tag';
 @Component({
   selector: 'app-intervention-equipment-table',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
-    NgIcon,
     RouterLink,
-    EmptyState,
-    ErrorState,
     HlmBadge,
     HlmButton,
     InterventionTag,

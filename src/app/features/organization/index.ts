@@ -6,7 +6,10 @@ export { OrganizationPermissionService } from './access';
 export {
   provideCollaborationAssistant,
   withAssistantToggle,
-  withDirectMessagesNav,
+  withCollaborationNav,
+  withDirectMessagesSidebarExtension,
+  withChannelsSidebarExtension,
+  provideChannelsWorkspace,
   withGlobalSearch,
   withOrganizationNav,
   withOrganizationSwitcher,

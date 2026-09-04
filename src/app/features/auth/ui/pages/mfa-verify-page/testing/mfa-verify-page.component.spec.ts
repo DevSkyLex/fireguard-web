@@ -13,6 +13,7 @@ describe('MfaVerifyPage', () => {
   let mfaDestination: WritableSignal<string | null>;
   let mfaToken: WritableSignal<string | null>;
   let mockAuthStore: {
+    clearMfaState: ReturnType<typeof vi.fn>;
     mfaVerify: ReturnType<typeof vi.fn>;
     mfaResend: ReturnType<typeof vi.fn>;
     isVerifyingMfa: WritableSignal<boolean>;
@@ -35,6 +36,7 @@ describe('MfaVerifyPage', () => {
     mfaToken = signal<string | null>('pre-auth-token');
 
     mockAuthStore = {
+      clearMfaState: vi.fn(),
       mfaVerify: vi.fn(),
       mfaResend: vi.fn(),
       isVerifyingMfa: signal(false),
@@ -126,5 +128,30 @@ describe('MfaVerifyPage', () => {
     await fixture.whenStable();
 
     expect(navigateByUrl).toHaveBeenCalledWith('/');
+  });
+  it('clears the MFA challenge before navigating back to sign-in', () => {
+    const order: string[] = [];
+    mockAuthStore.clearMfaState.mockImplementation(() => order.push('clear'));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(async () => {
+      order.push('navigate');
+      return true;
+    });
+
+    fixture.componentInstance['restartSignIn']();
+
+    expect(order).toEqual(['clear', 'navigate']);
+    expect(navigate).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: undefined },
+    });
+  });
+
+  it('keeps the challenge while verification or resend is pending', () => {
+    mockAuthStore.isVerifyingMfa.set(true);
+    fixture.componentInstance['restartSignIn']();
+    mockAuthStore.isVerifyingMfa.set(false);
+    mockAuthStore.isResendingMfa.set(true);
+    fixture.componentInstance['restartSignIn']();
+
+    expect(mockAuthStore.clearMfaState).not.toHaveBeenCalled();
   });
 });

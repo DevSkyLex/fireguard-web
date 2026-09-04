@@ -15,7 +15,9 @@
     ".github/skills/**",
     ".github/hooks/**",
     "src/app/shared/ui/**",
-    "public/**"
+    "public/**",
+    ".agents/skills/impeccable/**",
+    ".agents/skills/ui-ux-pro-max/**"
   ],
   "categories": {
     "correctness": "error",

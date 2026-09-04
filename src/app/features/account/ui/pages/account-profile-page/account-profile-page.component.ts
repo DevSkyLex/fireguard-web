@@ -21,12 +21,15 @@ import { USER_LOCALE_OPTIONS } from '@features/account/options';
 import { AccountProfileEditStore, UserStore } from '@features/account/state';
 import { AccountAvatarPicker } from '@features/account/ui/components/account-avatar-picker';
 import { AccountProfileForm, type AccountProfileFormValues } from '@features/account/ui/forms';
-import { ErrorState } from '@shared/error-state';
-import { IdentitySummary } from '@shared/identity-summary';
+
+import { NgIcon } from '@ng-icons/core';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /**
  * Component AccountProfilePage
  * @class AccountProfilePage
@@ -47,10 +50,12 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-account-profile-page',
   imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    NgIcon,
+    ...HlmEmptyImports,
     AccountAvatarPicker,
     AccountProfileForm,
-    ErrorState,
-    IdentitySummary,
     HlmBadge,
     HlmButton,
     HlmSkeleton,

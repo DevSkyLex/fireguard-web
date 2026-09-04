@@ -1,14 +1,25 @@
-<div id="split-layout" class="flex min-h-dvh bg-background text-foreground">
+<div id="split-layout" [class]="layoutClass()">
   <div id="split-layout-column" [class]="columnClass()">
     @if (header.length > 0) {
-      <header
-        class="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-4 px-6 py-5 sm:px-8"
-      >
-        <app-slot-outlet [contributions]="header" />
+      <header class="flex shrink-0 items-center justify-between gap-4 px-6 py-3 sm:px-8 sm:py-4">
+        <div
+          id="split-layout-brand"
+          class="flex items-center gap-2.5"
+          [class.lg:hidden]="showcase() !== null"
+        >
+          <img src="favicon.svg" width="28" height="28" alt="" />
+          <span class="text-base font-semibold tracking-tight">Fireguard</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <app-slot-outlet [contributions]="header" />
+        </div>
       </header>
     }
 
-    <main id="split-layout-content" class="flex flex-1 flex-col justify-center px-6 py-16 sm:px-8">
+    <main
+      id="split-layout-content"
+      class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 max-sm:scroll-pb-28 sm:px-8 sm:py-10"
+    >
       <div id="split-layout-content-box" [class]="contentClass()">
         <router-outlet />
       </div>
@@ -22,10 +33,7 @@
   </div>
 
   @if (showcase(); as contribution) {
-    <aside
-      id="split-layout-showcase"
-      class="hidden bg-muted text-foreground lg:order-first lg:grid lg:w-1/2"
-    >
+    <aside id="split-layout-showcase" [class]="showcaseClass()">
       <ng-container *ngComponentOutlet="contribution.component" />
     </aside>
   }

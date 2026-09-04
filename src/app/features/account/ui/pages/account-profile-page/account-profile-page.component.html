@@ -1,17 +1,28 @@
 <div id="account-profile" class="flex h-full flex-col gap-6 p-4 md:p-6">
   <div class="flex max-w-2xl flex-col gap-6">
     @if (hasProfileError()) {
-      <app-error-state
-        icon="lucideTriangleAlert"
-        title="Couldn't load your account"
-        i18n-title="@@account.profile.errorTitle"
-        description="Your details can't be shown or edited until we know who you are."
-        i18n-description="@@account.profile.errorDescription"
-      >
-        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retryProfile()">
-          <span i18n="@@account.profile.retry">Retry</span>
-        </button>
-      </app-error-state>
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon" class="text-destructive">
+            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@account.profile.errorTitle">Couldn't load your account</p>
+          <p hlmEmptyDescription i18n="@@account.profile.errorDescription">
+            Your details can't be shown or edited until we know who you are.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="max-sm:min-h-11"
+            (click)="retryProfile()"
+          >
+            <span i18n="@@account.profile.retry">Retry</span>
+          </button>
+        </div>
+      </div>
     } @else if (!profileReady()) {
       <div
         class="flex flex-col gap-6"
@@ -35,12 +46,26 @@
       </div>
     } @else {
       <section class="flex flex-col gap-4">
-        <app-identity-summary
-          [name]="displayName()"
-          [initials]="userStore.initials() ?? ''"
-          [avatarUrl]="userStore.avatarUrlMedium()"
-          [secondary]="userStore.profile()?.email ?? null"
-        />
+        <div hlmItem class="min-w-0 border-0 p-0">
+          <div hlmItemMedia>
+            <hlm-avatar class="size-14 shrink-0 rounded-full">
+              @if (userStore.avatarUrlMedium(); as pictureUrl) {
+                <img hlmAvatarImage [src]="pictureUrl" alt="" />
+              }
+              <span
+                hlmAvatarFallback
+                class="rounded-full bg-muted text-sm font-semibold text-foreground"
+                >{{ userStore.initials() ?? '' }}</span
+              >
+            </hlm-avatar>
+          </div>
+          <div hlmItemContent class="min-w-0">
+            <div hlmItemTitle class="truncate text-base font-semibold">{{ displayName() }}</div>
+            @if (userStore.profile()?.email ?? null; as line) {
+              <div hlmItemDescription class="truncate text-sm break-all">{{ line }}</div>
+            }
+          </div>
+        </div>
 
         <app-account-avatar-picker
           [pending]="editStore.isUploadingAvatar()"

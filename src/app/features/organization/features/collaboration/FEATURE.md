@@ -33,16 +33,17 @@ and its published domain types.
 `organization.routes.ts` loads the route file **directly**, not through `index.ts`: the barrel also
 exports `MessagingSyncCoordinatorService`, which would then travel in this feature's lazy chunk.
 
-The feature owns its pages, and it contributes one shell widget: `DirectMessagesNav`, the
-conversation list, goes through `providers/direct-messages-nav` (`withDirectMessagesNav()`) into the
-dashboard layout's `sidebarNav` slot, below `withOrganizationNav()`. `organization/providers/index.ts`
-re-exports it from this feature's `providers/` folder directly — **not** through this feature's root
-`index.ts`, for the same reason `organization.routes.ts` loads `collaboration.routes.ts` directly:
-the root barrel also exports `MessagingSyncCoordinatorService`, and `app.routes.ts` wires
-`withDirectMessagesNav()` into the eagerly-loaded shell providers, where that service must not travel.
-A channel nav, a conversation-header strip and a contextual panel were designed for
-`layouts/workspace-layout` once; neither that layout nor those slots exist, and a future contribution
-for those still goes through `@shared/layout-slot` and the dashboard layout's own slot tokens.
+The feature owns its pages and sidebar widgets. `CollaborationNav` contributes Messages
+and Collaboration together through `withCollaborationNav()` in the sidebar footer, above Support; `DirectMessagesPanel` and `ChannelsPanel`
+contribute route-exclusive lists through `withDirectMessagesSidebarExtension()` and
+`withChannelsSidebarExtension()`, using the dashboard's `SidebarExtensionContribution`.
+Organization providers re-export these factories and `provideChannelsWorkspace()` directly,
+bypassing this feature's root barrel and its `MessagingSyncCoordinatorService`.
+The shell owns column geometry; collaboration owns activation, permissions, URLs and loading.
+The direct-message recipient picker uses a searchable Spartan command list in a popover
+anchored to the sidebar's compose button. It preserves conversation context, keyboard
+selection and viewport bounds; the panel owns opening the chosen conversation.
+`withCollaborationNav()` replaces the retired `withDirectMessagesNav()` public factory.
 
 ## Routes
 
@@ -51,39 +52,54 @@ switch, and guarding just the child would leave the list open to a member withou
 
 | Path                       | Surface                                                              |
 | -------------------------- | -------------------------------------------------------------------- |
-| `messages`                 | an empty-state placeholder, list in the sidebar                      |
+| `messages`                 | conversation list in the extension, desktop selection placeholder    |
 | `messages/saved`           | the reader's saved messages, one list, each item linking to its home |
-| `messages/:conversationId` | that direct conversation, list in the sidebar                        |
-| `channels`                 | the channel workspace: favorites, then a one-level tree              |
+| `messages/:conversationId` | direct conversation, with the list alongside it on desktop           |
+| `channels`                 | sidebar extension: favorites and a collapsible channel tree          |
 | `channels/:channelId`      | that channel — same thread/composer machinery as a DM page           |
 
 `messages/saved` is declared **before** `messages/:conversationId` — order is what keeps the
 literal segment from being swallowed as a conversation id. Its entry point is a fixed row at the
-top of `DirectMessagesNav`, where the rest of the messaging surface already lives.
+top of `DirectMessagesPanel`, alongside the conversation list.
 
 `channels.routes.ts` mirrors `collaboration.routes.ts`: master-detail under one
-`organization.messaging.read` guard, the child titled by `channelTitleResolver`. The channels row
-in the organization sidebar comes from `organization/navigation` — channels are organization
-workspaces, unlike direct messages, which follow the reader and stay in the shell's bottom block.
-`ChannelsPage` is the store host; the routed child reaches the same component-scoped
-`ChannelsStore` through the outlet's injector, the way `DirectConversationPage` reaches its stores.
+`organization.messaging.read` guard, the child titled by `channelTitleResolver`. The Collaboration footer link opens the unchanged channels route. Its permission decision and
+organization URL belong to CollaborationNav, alongside the Messages destination.
+`ChannelsPage` owns only the outlet and selection placeholder. `provideChannelsWorkspace()`
+provides `ChannelsStore` at the dashboard route so the extension and routed child share it.
+`ChannelsPanel` primes the list browser-only, once per organization; an organization switch
+clears cached rows before loading. Detail and mutations that settle during a list request take
+precedence over that older list response. A created channel enters the shared list immediately.
 
-**The conversation list lives in the dashboard sidebar (`DirectMessagesNav`), not in these routes.**
-It is contributed to the shell's `sidebarNav` slot and stands on every signed-in page, the way a
-mail client keeps its mailboxes: conversations follow the reader, not the page. It is gated on an
-open organization and on `organization.messaging.read` — **honouring a namespace wildcard**, since
-an owner holds `organization.*` and not the leaf grant — and it is the one owner of priming the
-conversation list and the member directory, being the only thing on screen for the whole surface.
+**Lists occupy the dashboard sidebar extension only on their messaging or channel routes.** The primary
+sidebar footer retains Messages and Collaboration links on other signed-in pages. Both require a selected organization
+and `organization.messaging.read`, including namespace wildcard grants. The messages contribution mounts
+`DirectMessagesPanel`, which primes the conversation list and member directory browser-only.
+`ensureLoaded` deduplicates queries across thread switches; no secondary list fetch is initiated
+by the primary navigation or by SSR.
 
-The cost is deliberate: the list is fetched on the first signed-in page rather than on arrival at
-`/messages`. That is what buys an unread count visible from anywhere, and it is one paged request
-per organization, deduplicated by `ensureLoaded`.
+At 1024px and wider, primary navigation, list and routed thread form three adjacent columns.
+Below that width, each messaging or channel index shows its list; child routes show the
+main content. Their back links navigate to the index. The primary sidebar keeps its native
+mobile sheet and desktop collapse independently.
 
-On a phone the conversation header's back control **opens the sidebar sheet** rather than
-navigating up. Going up leads to `messages`, which now holds only a placeholder — the
-conversations are in the sheet, so that is where "back to conversations" has to go.
+Channel rows use native items; favorites and nested subchannels are collapsible,
+while All channels remains a static heading. A parent remains a navigable channel
+with a separate disclosure button of the same height.
+Search matches loaded names without case or accents and shows flat results, including children
+whose parents do not match. Only actual API unread counts are shown; do not fabricate presence
+or voice channels. This hierarchy belongs to the extension, not the primary navigation.
 
-The child suppresses its breadcrumb (`data: { breadcrumb: false }`) because parent route data is
+Members with `organization.messaging.manage` may drag tree rows onto a channel or the
+top-level drop area. A native move menu provides the same action for keyboard and touch.
+Cycles, cross-organization moves, unchanged parents and moves exceeding two ancestor levels
+(including descendants) are blocked before submission. `PATCH /channels/{id}/parent` persists
+parent changes; the API exposes no sibling-order write, so sibling order remains server-owned.
+The tree changes after success, preserves its previous state on failure, and disables moves
+during an accepted write. Hierarchy writes are not cancelled by overlapping commands, and
+responses from a previous organization are ignored.
+
+The direct-conversation child suppresses its breadcrumb (`data: { breadcrumb: false }`) because parent route data is
 inherited and it would otherwise render "Messages / Messages". The counterpart's name cannot go
 there either — resolving it needs the whole conversation list _plus_ the member directory, more than
 a title resolver can ask for — so it lives in the conversation's own header.
@@ -308,7 +324,9 @@ Currently consumed by `features/interventions` (its own `FEATURE.md` records the
 ## Cross-Feature Dependencies
 
 - Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` wherever a unit needs the active
-  organization as a parameter — `DirectMessagesNav`, presence pinging, the assistant store.
+  organization as a parameter — messaging navigation and panel, presence pinging, the assistant store.
+- Consumes the parent's published `matchesOrganizationPermission` navigation helper for
+  identical leaf and namespace-wildcard checks in the messaging link and slot factory.
 - Consumes `MEMBER_DIRECTORY_PORT` to resolve member ids to names and avatars. It is bound in
   `organization.feature.ts`, so a root-provided store can see it; earlier notes here claiming
   otherwise described a route-scoped binding that no longer exists.
@@ -432,14 +450,18 @@ row's menu hides items the server would refuse; the server still re-checks every
 
 `@shared/chat` no longer exists, and it is not coming back: **spartan owns the chat vocabulary.**
 The components under `ui/` are compositions of vendored primitives, not new design:
+Sent message bubbles use white fill and black text in both themes, with a neutral outline
+in light mode. Deleted-message and delivery-state treatments remain independent.
 
-| Surface             | Built from                                                                                                                                                                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MessageRow`        | `hlmMessage` (`align`), `hlmMessageAvatar`, `hlmMessageContent`, `hlmMessageHeader`, `hlmMessageFooter`, `hlmBubble` / `hlmBubbleContent`                                                                                                       |
-| `MessageReactions`  | host is `hlmBubbleReactions`; chips are `hlmToggle`; picker is `popover`                                                                                                                                                                        |
-| `MessageThread`     | date rules are `hlmMarker` / `hlmMarkerContent`                                                                                                                                                                                                 |
-| `MessageComposer`   | card is `input-group` (`hlmInputGroupTextarea` + a `block-end` `hlmInputGroupAddon` + `hlmInputGroupButton`), hint is `hlmKbd`, read-only notice is `hlmAlert`, mention rows are `hlmItem`                                                      |
-| `DirectMessagesNav` | rows are `hlmSidebarMenuButton` (icon-rail tooltip, `hlmAvatar` leading element), unread count is `hlmSidebarMenuBadge`, "New message" is `hlmBtn` (`ghost`/`icon-sm`, matching the header's icon buttons), loading is `hlmSidebarMenuSkeleton` |
+| Surface               | Built from                                                                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MessageRow`          | `hlmMessage` (`align`), `hlmMessageAvatar`, `hlmMessageContent`, `hlmMessageHeader`, `hlmMessageFooter`, `hlmBubble` / `hlmBubbleContent`                                                  |
+| `MessageReactions`    | host is `hlmBubbleReactions`; chips are `hlmToggle`; picker is `popover`                                                                                                                   |
+| `MessageThread`       | date rules are `hlmMarker` / `hlmMarkerContent`                                                                                                                                            |
+| `MessageComposer`     | card is `input-group` (`hlmInputGroupTextarea` + a `block-end` `hlmInputGroupAddon` + `hlmInputGroupButton`), hint is `hlmKbd`, read-only notice is `hlmAlert`, mention rows are `hlmItem` |
+| `CollaborationNav`    | two `hlmSidebarMenuButton` links with native icon-rail tooltips                                                                                                                            |
+| `ChannelsPanel`       | `hlmItem` links, `hlmInputGroup` search, `hlmCollapsible` sections, neutral unread badges and the existing channel creation sheet                                                          |
+| `DirectMessagesPanel` | `hlmInputGroup` search, `hlmItem` links, `hlmAvatar`, `hlmBadge` unread counts, `hlmBtn` actions and `hlmSkeleton` loading rows                                                            |
 
 Anything missing is generated with `npx ng g @spartan-ng/cli:ui <name>` before it is written by
 hand — that is the rule, and the first pass at this feature broke it. **The CLI reformats
@@ -454,12 +476,11 @@ one pane's scrollbar and not the one beside it would have cost a documented depe
 buy an inconsistency. Re-generating `scroll-area` reinstates the dependency; that is a decision, not
 a detail.
 
-**`DirectMessagesNav` has no name filter.** Its predecessor, `DirectConversationList`, filtered the
-already-loaded rows client-side over `counterpartName`; the sidebar rail is narrower than that pane
-ever was, and a search field belongs beside a scrollable list, not an icon-collapsible one. The list
-is still capped at one page — the API pages direct conversations and nothing here asks for another
-page — so a name that has not been loaded will not be found either way. Revisit both when paging
-arrives.
+**The panel filters loaded counterpart names locally**, ignoring case and accents. The existing
+store loads one API page, so filtering does not search unloaded conversations or message bodies.
+Rows use the real last-message timestamp and unread count; the API exposes no last-message body
+preview here. Do not fabricate previews, presence or member names, or issue one thread request
+per list row to imitate those fields.
 
 **One deviation, and it is mechanical rather than visual.** The mention list is a local positioned
 overlay: `autocomplete` and `command` bind a combobox to an input's whole value, not to a caret
@@ -571,5 +592,10 @@ the panel nor its toggle renders.
   the store loads the full result in one go; the messaging API has no server-side search for
   channels, so filtering happens in memory over the already-loaded set rather than through the
   server. Do not read this as license to drain an unbounded collection elsewhere.
-- A channel is created in `channel-create-sheet` (a record the operator opens next), while channel edit, DM creation and message actions stay dialogs (`DESIGN.md` "Action Surfaces" rules 2–3).
-- **The sheet gates dismissal while the form is dirty.** `ChannelCreateForm` reports its own dirtiness through `dirtyChanged`; `channel-create-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
+- Channel creation uses the compact native `channel-create-dialog`; channel edits remain dialogs. Direct-message recipient selection uses an anchored popover.
+- **The creation dialog gates dismissal while the form is dirty.** `ChannelCreateForm` reports its own dirtiness through `dirtyChanged`; `channel-create-dialog` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
+
+The channel header uses a native avatar group showing at most three participants, with
+initials for missing pictures and an overflow count. Its button still opens the full roster.
+Rendered mentions inherit their bubble text color with a subtle neutral fill and inset outline,
+including sent white bubbles in dark mode. Labels remain escaped before HTML binding.

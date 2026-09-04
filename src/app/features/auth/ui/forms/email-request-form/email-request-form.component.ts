@@ -15,10 +15,13 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import type { StoreError } from '@core/request-state';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { EmailRequestFormValues } from './models';
 
 /**
@@ -42,11 +45,22 @@ import type { EmailRequestFormValues } from './models';
  */
 @Component({
   selector: 'app-email-request-form',
-  imports: [RequiredMarker, FormField, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [
+    ...HlmAlertImports,
+    RequiredMarker,
+    FormField,
+    HlmButton,
+    HlmSpinner,
+    HlmInput,
+    ...HlmFieldImports,
+  ],
   templateUrl: './email-request-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmailRequestForm {
+  /** @description Request failures are displayed inline above the fields. */
+  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
+
   //#region Inputs
   /**
    * Property pending

@@ -36,9 +36,9 @@ describe('toDirectoryEntry', () => {
     expect(toDirectoryEntry(member({ lastName: 'Rivet' })).displayName).toBe('Rivet');
   });
 
-  it('should fall back to the email, then to the id', () => {
+  it('should fall back to the email, then to a neutral label', () => {
     expect(toDirectoryEntry(member({ email: 'd@x.io' })).displayName).toBe('d@x.io');
-    expect(toDirectoryEntry(member()).displayName).toBe('mem-1');
+    expect(toDirectoryEntry(member()).displayName).toBe('Unknown member');
   });
 
   it('should treat a blank name as absent', () => {

@@ -1,16 +1,21 @@
 <section id="account-trusted-devices" class="flex flex-col gap-4">
   @if (loadError()) {
-    <app-error-state
-      icon="lucideTriangleAlert"
-      title="Couldn't load your trusted devices"
-      i18n-title="@@account.devices.errorTitle"
-      description="Your trusted devices can't be shown right now."
-      i18n-description="@@account.devices.errorDescription"
-    >
-      <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
-        <span i18n="@@account.devices.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.devices.errorTitle">Couldn't load your trusted devices</p>
+        <p hlmEmptyDescription i18n="@@account.devices.errorDescription">
+          Your trusted devices can't be shown right now.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
+          <span i18n="@@account.devices.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (loading()) {
     <div
       class="flex flex-col gap-3"

@@ -14,10 +14,13 @@ import type {
   OrganizationQuotaResource,
 } from '@features/organization/models';
 import { resolveQuotaStatus } from '@features/organization/utils';
-import { EmptyState } from '@shared/empty-state';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { ORGANIZATION_QUOTA_RESOURCE_LABELS } from './constants/organization-quota-resource-labels.constants';
+import {
+  ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS,
+  ORGANIZATION_QUOTA_RESOURCE_LABELS,
+} from './constants/organization-quota-resource-labels.constants';
 import { QUOTA_STATUS_TAG_ICON_CLASS } from './constants/quota-status-tag-icon-class.constants';
 import { resolveQuotaStatusTag, type OrganizationUsageRow } from './models';
 
@@ -60,7 +63,7 @@ const PERCENT_SCALE = 100;
  */
 @Component({
   selector: 'app-organization-usage-panel',
-  imports: [EmptyState, NgIcon, HlmSkeleton, ...HlmProgressImports],
+  imports: [NgIcon, ...HlmEmptyImports, HlmSkeleton, ...HlmProgressImports],
   providers: [provideIcons({ lucideCircleAlert, lucideGauge })],
   templateUrl: './organization-usage-panel.component.html',
   host: { class: 'block' },
@@ -137,12 +140,14 @@ export class OrganizationUsagePanel {
       return {
         resource,
         label: ORGANIZATION_QUOTA_RESOURCE_LABELS[resource],
+        description: ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS[resource],
         used: item.used,
         limit: item.limit,
         percent:
           hasLimit && item.limit !== null
             ? Math.min(PERCENT_SCALE, Math.round((item.used / item.limit) * PERCENT_SCALE))
             : null,
+        remaining: item.limit === null ? null : Math.max(0, item.limit - item.used),
         status: resolveQuotaStatusTag(resolveQuotaStatus(item.used, item.limit)),
       };
     }),

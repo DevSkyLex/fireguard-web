@@ -114,7 +114,7 @@
     <div class="flex items-center gap-2 px-2">
       <hlm-checkbox
         #archivedCheckboxHost
-        id="facilities-filter-archived"
+        inputId="facilities-filter-archived"
         data-testid="facilities-filter-archived"
         [checked]="includeArchived()"
         (checkedChange)="toggleIncludeArchived($event)"
@@ -126,44 +126,62 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <app-empty-state
-      icon="lucideLock"
-      title="Not available with your permissions"
-      i18n-title="@@facility.list.forbiddenTitle"
-      description="Ask an organization admin to grant you read access to facilities."
-      i18n-description="@@facility.list.forbiddenDesc"
-    />
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideLock" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.list.forbiddenTitle">
+          Not available with your permissions
+        </p>
+        <p hlmEmptyDescription i18n="@@facility.list.forbiddenDesc">
+          Ask an organization admin to grant you read access to facilities.
+        </p>
+      </div>
+    </div>
   } @else if (store.rootListCallState().status === 'error') {
-    <app-error-state
-      icon="lucideCircleAlert"
-      title="Couldn't load facilities"
-      i18n-title="@@facility.list.errorTitle"
-      description="The facilities could not be loaded. Check your connection and try again."
-      i18n-description="@@facility.list.errorText"
-    >
-      <button hlmBtn variant="outline" data-testid="facilities-retry" (click)="reload()">
-        <span i18n="@@facility.list.retry">Retry</span>
-      </button>
-    </app-error-state>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@facility.list.errorTitle">Couldn't load facilities</p>
+        <p hlmEmptyDescription i18n="@@facility.list.errorText">
+          The facilities could not be loaded. Check your connection and try again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn variant="outline" data-testid="facilities-retry" (click)="reload()">
+          <span i18n="@@facility.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
   } @else if (!store.isLoadingRootFacilities() && items().length === 0) {
-    <app-empty-state
-      [icon]="hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'"
-      title="No facilities found"
-      i18n-title="@@facility.list.emptyTitle"
-      description="Adjust your search or filters, or register the sites you track."
-      i18n-description="@@facility.list.emptyDesc"
-    >
-      @if (hasSearchOrFilters()) {
-        <button hlmBtn variant="outline" (click)="clearFilters()">
-          <span i18n="@@common.clearFilters">Clear filters</span>
-        </button>
-      } @else if (canCreate()) {
-        <button hlmBtn type="button" (click)="openCreate()">
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@facility.newButton">New facility</span>
-        </button>
-      }
-    </app-empty-state>
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        @if (hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'; as iconName) {
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon [name]="iconName" aria-hidden="true" />
+          </div>
+        }
+        <p hlmEmptyTitle i18n="@@facility.list.emptyTitle">No facilities found</p>
+        <p hlmEmptyDescription i18n="@@facility.list.emptyDesc">
+          Adjust your search or filters, or register the sites you track.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        @if (hasSearchOrFilters()) {
+          <button hlmBtn variant="outline" (click)="clearFilters()">
+            <span i18n="@@common.clearFilters">Clear filters</span>
+          </button>
+        } @else if (canCreate()) {
+          <button hlmBtn type="button" (click)="openCreate()">
+            <ng-icon name="lucidePlus" aria-hidden="true" />
+            <span i18n="@@facility.newButton">New facility</span>
+          </button>
+        }
+      </div>
+    </div>
   } @else {
     @if (layout() === 'list') {
       <app-facility-table

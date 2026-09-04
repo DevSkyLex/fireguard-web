@@ -9,7 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { provideIcons } from '@ng-icons/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLock } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
@@ -19,11 +19,13 @@ import {
   type MemberDirectoryPort,
   type OrganizationContextPort,
 } from '@features/organization/ports';
-import { EmptyState } from '@shared/empty-state';
-import { IdentitySummary } from '@shared/identity-summary';
+
 import { HlmBadge } from '@shared/ui/badge';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /**
  * Component OrganizationMemberProfilePage
  * @class OrganizationMemberProfilePage
@@ -58,7 +60,15 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-organization-member-profile-page',
-  imports: [RouterLink, EmptyState, IdentitySummary, HlmBadge, HlmSkeleton],
+  imports: [
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    NgIcon,
+    ...HlmEmptyImports,
+    RouterLink,
+    HlmBadge,
+    HlmSkeleton,
+  ],
   providers: [provideIcons({ lucideLock })],
   templateUrl: './organization-member-profile-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,5 +1,5 @@
 <section hlmCard data-testid="intervention-attachments">
-  <div hlmCardHeader>
+  <div hlmCardHeader class="max-sm:flex max-sm:flex-col">
     <h2 hlmCardTitle class="flex items-center gap-2">
       <span i18n="@@intervention.attachments.title">Attachments</span>
       @if (showCounter()) {
@@ -16,7 +16,7 @@
     </p>
 
     @if (canManage()) {
-      <div hlmCardAction class="flex flex-wrap items-center gap-2">
+      <div hlmCardAction class="flex flex-wrap items-center gap-2 max-sm:mt-2">
         <button
           hlmBtn
           type="button"
@@ -112,41 +112,33 @@
     }
 
     @if (attachments().length === 0 && queuedAttachments().length === 0) {
-      <app-empty-state
-        icon="lucidePaperclip"
-        title="No files attached yet"
-        i18n-title="@@intervention.attachments.emptyTitle"
-        [description]="emptyDescription()"
-        data-testid="intervention-attachments-empty"
-      />
+      <div hlmEmpty data-testid="intervention-attachments-empty">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@intervention.attachments.emptyTitle">No files attached yet</p>
+          <p hlmEmptyDescription>{{ emptyDescription() }}</p>
+        </div>
+      </div>
     } @else {
-      <ul hlmItemGroup>
+      <ul class="flex min-w-0 flex-col gap-2">
         @for (queued of queuedAttachments(); track queued.id) {
           <li
-            hlmItem
-            variant="outline"
-            size="sm"
-            class="rounded-md border-dashed transition-colors hover:bg-muted/50"
+            hlmAttachment
+            state="idle"
+            class="w-full flex-nowrap"
             data-testid="intervention-attachment-queued-row"
           >
-            <div
-              hlmItemMedia
-              variant="icon"
-              class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
-            >
-              <ng-icon [name]="iconOf(queued)" class="text-3xl" aria-hidden="true" />
-              @if (extensionOf(queued); as extension) {
-                <span
-                  hlmBadge
-                  class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
-                  aria-hidden="true"
-                  >{{ extension }}</span
-                >
-              }
+            <div hlmAttachmentMedia>
+              <ng-icon [name]="iconOf(queued)" aria-hidden="true" />
             </div>
-            <div hlmItemContent>
-              <span hlmItemTitle class="line-clamp-1">{{ queued.fileName }}</span>
-              <span hlmItemDescription>
+            <div hlmAttachmentContent>
+              <span hlmAttachmentTitle [title]="queued.fileName">{{ queued.fileName }}</span>
+              <span hlmAttachmentDescription class="break-words whitespace-normal">
+                @if (extensionOf(queued); as extension) {
+                  {{ extension }} ·
+                }
                 {{ sizeLabelOf(queued) }}
                 @if (queued.label) {
                   · {{ queued.label }}
@@ -165,10 +157,10 @@
                 </span>
               </span>
             </div>
-            <div hlmItemActions>
+            <div hlmAttachmentActions>
               @if (canManage()) {
                 <button
-                  hlmBtn
+                  hlmAttachmentAction
                   type="button"
                   variant="ghost"
                   size="icon-sm"
@@ -185,31 +177,18 @@
           </li>
         }
         @for (attachment of attachments(); track attachment.id) {
-          <li
-            hlmItem
-            variant="outline"
-            size="sm"
-            class="rounded-md transition-colors hover:bg-muted/50"
-            data-testid="intervention-attachment-row"
-          >
-            <div
-              hlmItemMedia
-              variant="icon"
-              class="relative text-muted-foreground group-has-data-[slot=item-description]/item:translate-y-0 group-has-data-[slot=item-description]/item:self-center"
-            >
-              <ng-icon [name]="iconOf(attachment)" class="text-3xl" aria-hidden="true" />
-              @if (extensionOf(attachment); as extension) {
-                <span
-                  hlmBadge
-                  class="absolute -right-1 -bottom-1 h-3.5 min-w-3.5 justify-center rounded-sm px-0.5 py-0 leading-none"
-                  aria-hidden="true"
-                  >{{ extension }}</span
-                >
-              }
+          <li hlmAttachment class="w-full flex-nowrap" data-testid="intervention-attachment-row">
+            <div hlmAttachmentMedia>
+              <ng-icon [name]="iconOf(attachment)" aria-hidden="true" />
             </div>
-            <div hlmItemContent>
-              <span hlmItemTitle class="line-clamp-1">{{ attachment.fileName }}</span>
-              <span hlmItemDescription>
+            <div hlmAttachmentContent>
+              <span hlmAttachmentTitle [title]="attachment.fileName">{{
+                attachment.fileName
+              }}</span>
+              <span hlmAttachmentDescription class="break-words whitespace-normal">
+                @if (extensionOf(attachment); as extension) {
+                  {{ extension }} ·
+                }
                 {{ sizeLabelOf(attachment) }}
                 @if (attachment.label) {
                   · {{ attachment.label }}
@@ -238,9 +217,9 @@
                 }
               </span>
             </div>
-            <div hlmItemActions>
+            <div hlmAttachmentActions>
               <button
-                hlmBtn
+                hlmAttachmentAction
                 type="button"
                 variant="ghost"
                 size="icon-sm"
@@ -263,7 +242,7 @@
               </button>
               @if (canManage()) {
                 <button
-                  hlmBtn
+                  hlmAttachmentAction
                   type="button"
                   variant="ghost"
                   size="icon-sm"

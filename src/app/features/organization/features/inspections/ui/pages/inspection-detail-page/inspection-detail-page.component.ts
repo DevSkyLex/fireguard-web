@@ -54,9 +54,9 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InspectionInformationPanel } from '../../components/inspection-information-panel';
@@ -96,7 +96,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
  * document title follows through `TitleService`, and a load failure shows
- * `app-error-state` with a retry that re-runs {@link ActiveInspectionStore}'s
+ * the Spartan `hlmEmpty` error composition with a retry that re-runs {@link ActiveInspectionStore}'s
  * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
  * on an eternal skeleton or navigating them away silently. A route-scoped
  * {@link InspectionStore} carries the update and lifecycle writes.
@@ -133,15 +133,15 @@ const IDLE_EDIT_STATE: InspectionEditState = {
 @Component({
   selector: 'app-inspection-detail-page',
   imports: [
-    HlmCardTitle,
     NgIcon,
+    ...HlmEmptyImports,
+    HlmCardTitle,
     RouterLink,
     InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
     NonConformityAddDialog,
     NonConformityList,
-    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmSpinnerImports,
@@ -437,7 +437,7 @@ export class InspectionDetailPage {
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
    * returned the neutral section label) — a load failure is left to the
-   * template's `app-error-state` branch and {@link retryLoad}, the global
+   * template's the Spartan `hlmEmpty` error composition branch and {@link retryLoad}, the global
    * feedback listener already toasts the failure — returns to the list once
    * a cancellation succeeds — `InspectionStore.cancel` removes the record,
    * so there is nothing left here to show — clears {@link pendingNonConformityId}

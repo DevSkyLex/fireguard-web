@@ -34,10 +34,9 @@ import {
   type RegionalFormattingPort,
 } from '@features/organization/ports';
 import { OrganizationTeamsStore } from '@features/organization/state/organization-teams';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { OrganizationTeamDeleteDialog } from '../../dialogs/organization-team-delete-dialog';
 import { OrganizationTeamEditDialog } from '../../dialogs/organization-team-edit-dialog';
 import { OrganizationTeamCreateSheet } from '../../sheets/organization-team-create-sheet';
@@ -83,8 +82,7 @@ import { OrganizationTeamTable } from '../../tables/organization-team-table';
   selector: 'app-organization-teams-page',
   imports: [
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
     HlmButton,
     OrganizationTeamCreateSheet,
     OrganizationTeamDeleteDialog,

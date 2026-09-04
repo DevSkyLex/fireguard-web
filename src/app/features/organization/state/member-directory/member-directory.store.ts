@@ -118,12 +118,15 @@ export const MemberDirectoryStore = signalStore(
 
         /**
          * Best available label for a member reference, accepting a bare id or
-         * an IRI.
+         * an IRI without exposing the transport identifier when unresolved.
          */
         displayNameFor(memberIdOrIri: string): string {
           const memberId: string = memberIdOrIri.slice(memberIdOrIri.lastIndexOf('/') + 1);
 
-          return store.byId().get(memberId)?.displayName ?? memberId;
+          return (
+            store.byId().get(memberId)?.displayName ??
+            $localize`:@@common.unknownMember:Unknown member`
+          );
         },
 
         /** Forces a reload of the currently loaded organization. */

@@ -2,12 +2,15 @@ import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/co
 import {
   type AdditiveSlotFeature,
   type ExclusiveSlotFeature,
+  type SlotFeature,
   provideSlotContributions,
 } from '@shared/layout-slot';
+import type { SidebarExtensionContribution } from '../../models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
+  DASHBOARD_SIDEBAR_EXTENSION_SLOT,
   DASHBOARD_SIDEBAR_FOOTER_SLOT,
   DASHBOARD_SIDEBAR_HEADER_SLOT,
   DASHBOARD_SIDEBAR_NAV_SLOT,
@@ -26,6 +29,19 @@ import {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface DashboardLayoutSlotsConfig {
+  /**
+   * Property sidebarExtension
+   * @readonly
+   *
+   * @description
+   * Exclusive contextual navigation beside the primary sidebar.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {readonly SlotFeature<SidebarExtensionContribution>[] | undefined}
+   */
+  readonly sidebarExtension?: readonly SlotFeature<SidebarExtensionContribution>[];
   /** Top of the sidebar. */
   readonly sidebarHeader?: readonly AdditiveSlotFeature[];
   /** Scrolling body of the sidebar. */
@@ -77,5 +93,6 @@ export function provideDashboardLayoutSlots(
     ...provideSlotContributions(DASHBOARD_HEADER_SLOT, config.header),
     ...provideSlotContributions(DASHBOARD_HEADER_ACTIONS_SLOT, config.headerActions),
     ...provideSlotContributions(DASHBOARD_PANEL_SLOT, config.panel),
+    ...provideSlotContributions(DASHBOARD_SIDEBAR_EXTENSION_SLOT, config.sidebarExtension),
   ]);
 }

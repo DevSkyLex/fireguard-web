@@ -56,10 +56,10 @@ import { FacilityOptionsStore } from '@features/organization/features/facilities
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { resolveCsvExportErrorDetail } from '@features/organization/utils';
-import { ErrorState } from '@shared/error-state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -98,7 +98,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * `equipmentResolver` (route `resolve`) seeds {@link ActiveEquipmentStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, and
- * a load failure shows `app-error-state` with a retry that re-runs
+ * a load failure shows the Spartan `hlmEmpty` error composition with a retry that re-runs
  * {@link ActiveEquipmentStore}'s resolve (`DESIGN.md` "Detail-page gating")
  * rather than leaving the operator on an eternal skeleton or navigating them
  * away silently. A route-scoped {@link EquipmentStore} carries the update and
@@ -138,9 +138,10 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
 @Component({
   selector: 'app-equipment-detail-page',
   imports: [
+    NgIcon,
+    ...HlmEmptyImports,
     ...HlmDropdownMenuImports,
     HlmCardTitle,
-    NgIcon,
     RouterLink,
     EquipmentAssignFacilityDialog,
     EquipmentAttachments,
@@ -149,7 +150,6 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     EquipmentMaintenanceHistory,
     EquipmentStatusTag,
     EquipmentTags,
-    ErrorState,
     HlmButton,
     HlmSkeleton,
     ...HlmSpinnerImports,
@@ -392,7 +392,7 @@ export class EquipmentDetailPage {
    * Settles the open in-place field once its own write clears, re-sets the
    * document title once the seeded record lands (the title resolver only
    * returned the neutral section label) — a load failure is left to the
-   * template's `app-error-state` branch and {@link retryLoad}, the global
+   * template's the Spartan `hlmEmpty` error composition branch and {@link retryLoad}, the global
    * feedback listener already toasts the failure — and registers
    * {@link pageActions}.
    *

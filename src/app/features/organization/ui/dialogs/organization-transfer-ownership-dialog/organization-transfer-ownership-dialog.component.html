@@ -46,12 +46,22 @@
                 [value]="candidate.value"
                 [attr.data-testid]="'organization-transfer-candidate-' + candidate.value"
               >
-                <app-person-option
-                  [name]="candidate.displayName"
-                  [secondary]="candidate.roleLabel"
-                  [avatarUrl]="candidate.avatarUrl"
-                  [initials]="candidate.initials"
-                />
+                <div hlmItem size="xs" class="min-w-0 border-0 p-0">
+                  <div hlmItemMedia>
+                    <hlm-avatar class="size-8 shrink-0">
+                      @if (candidate.avatarUrl; as pictureUrl) {
+                        <img hlmAvatarImage [src]="pictureUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">{{ candidate.initials }}</span>
+                    </hlm-avatar>
+                  </div>
+                  <div hlmItemContent class="min-w-0">
+                    <div hlmItemTitle class="truncate">{{ candidate.displayName }}</div>
+                    @if (candidate.roleLabel; as line) {
+                      <div hlmItemDescription class="truncate text-xs">{{ line }}</div>
+                    }
+                  </div>
+                </div>
               </hlm-combobox-item>
             }
           </div>

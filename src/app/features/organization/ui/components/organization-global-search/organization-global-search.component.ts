@@ -29,9 +29,10 @@ import {
   OrganizationSearchStore,
   type OrganizationSearchStoreType,
 } from '@features/organization/state/organization-search';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCommandImports } from '@shared/ui/command';
-import { HlmKbd } from '@shared/ui/kbd';
+import { HlmKbdImports } from '@shared/ui/kbd';
 import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
@@ -108,7 +109,7 @@ type OrganizationSearchGroupVm = {
  */
 @Component({
   selector: 'app-organization-global-search',
-  imports: [NgIcon, HlmButton, HlmCommandImports, HlmKbd, HlmSpinner],
+  imports: [NgIcon, HlmBadge, HlmButton, HlmCommandImports, ...HlmKbdImports, HlmSpinner],
   providers: [
     OrganizationSearchStore,
     provideIcons({
@@ -240,7 +241,7 @@ export class OrganizationGlobalSearch {
 
   /** Human group labels, keyed by hit type. */
   private readonly groupLabels: Readonly<Record<OrganizationSearchResultType, string>> = {
-    equipment: $localize`:@@org.search.group.equipment:Equipments`,
+    equipment: $localize`:@@org.search.group.equipment:Equipment`,
     facility: $localize`:@@org.search.group.facility:Facilities`,
     intervention: $localize`:@@org.search.group.intervention:Interventions`,
     inspection: $localize`:@@org.search.group.inspection:Inspections`,

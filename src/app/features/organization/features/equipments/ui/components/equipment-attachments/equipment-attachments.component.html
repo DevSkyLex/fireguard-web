@@ -40,14 +40,17 @@
 
   <div hlmCardContent class="flex flex-col gap-3">
     @if (attachments().length === 0) {
-      <app-empty-state
-        icon="lucidePaperclip"
-        title="No files attached yet"
-        i18n-title="@@equipment.attachments.emptyTitle"
-        description="Add photos or documents to keep with this equipment."
-        i18n-description="@@equipment.attachments.emptyDesc"
-        data-testid="equipment-attachments-empty"
-      />
+      <div hlmEmpty data-testid="equipment-attachments-empty">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucidePaperclip" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@equipment.attachments.emptyTitle">No files attached yet</p>
+          <p hlmEmptyDescription i18n="@@equipment.attachments.emptyDesc">
+            Add photos or documents to keep with this equipment.
+          </p>
+        </div>
+      </div>
     } @else {
       <ul hlmItemGroup>
         @for (attachment of attachments(); track attachment.id) {

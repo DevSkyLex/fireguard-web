@@ -22,8 +22,10 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
-import { PersonOption } from '@shared/person-option';
+import { serverMessagesOf } from '@shared/form-feedback';
+
 import { sheetSide } from '@shared/sheet-side';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
@@ -31,12 +33,15 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmTabsImports } from '@shared/ui/tabs';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import {
   InterventionCreateForm,
   type InterventionCreateFormValues,
 } from '../../forms/intervention-create-form';
 
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
 /**
  * Component InterventionCreateSheet
  * @class InterventionCreateSheet
@@ -69,7 +74,8 @@ import {
 @Component({
   selector: 'app-intervention-create-sheet',
   imports: [
-    PersonOption,
+    ...HlmAvatarImports,
+    ...HlmItemImports,
     InterventionCreateForm,
     UnsavedChangesDialog,
     HlmButton,
@@ -79,11 +85,31 @@ import {
     ...HlmFieldImports,
     ...HlmSelectImports,
     ...HlmSheetImports,
+    ...HlmTabsImports,
+    ...HlmAlertImports,
   ],
   templateUrl: './intervention-create-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateSheet {
+  /** Template selected by the collection menu before opening this sheet. */
+  /** Failure of the distinct template instantiation command. */
+  public readonly templateServerError: InputSignal<unknown> = input<unknown>(null);
+
+  public readonly initialTemplateId: InputSignal<string | null> = input<string | null>(null);
+
+  /** Only the active mode exposes a form and its submit action; both drafts remain mounted. */
+  protected readonly creationMode: WritableSignal<string> = signal<string>('blank');
+
+  /** Recoverable template failure, kept beside the template form. */
+  protected readonly templateError: Signal<string | null> = computed(
+    () =>
+      serverMessagesOf(
+        this.templateServerError(),
+        [],
+        $localize`:@@intervention.cf.createFailed:The intervention could not be created.`,
+      )[0] ?? null,
+  );
   //#region Inputs
   /**
    * Property visible
@@ -408,6 +434,15 @@ export class InterventionCreateSheet {
    */
   public constructor() {
     effect((): void => {
+      const templateId: string | null = this.initialTemplateId();
+      const visible: boolean = this.visible();
+      if (!visible) return;
+      untracked((): void => {
+        this.selectedTemplateId.set(templateId);
+        this.creationMode.set(templateId ? 'template' : 'blank');
+      });
+    });
+    effect((): void => {
       const isVisible: boolean = this.visible();
 
       untracked((): void => {
@@ -527,7 +562,7 @@ export class InterventionCreateSheet {
   protected confirmTemplateInstantiate(): void {
     const templateId: string | null = this.selectedTemplateId();
 
-    if (!templateId) return;
+    if (!templateId || this.pending() || this.instantiating()) return;
 
     const name: string = this.overrideName().trim();
 

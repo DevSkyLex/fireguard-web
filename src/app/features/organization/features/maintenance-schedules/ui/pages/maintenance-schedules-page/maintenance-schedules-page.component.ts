@@ -67,10 +67,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
-import { EmptyState } from '@shared/empty-state';
-import { ErrorState } from '@shared/error-state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-dialog';
@@ -155,8 +154,7 @@ interface MaintenanceScheduleFilters {
   selector: 'app-maintenance-schedules-page',
   imports: [
     NgIcon,
-    EmptyState,
-    ErrorState,
+    ...HlmEmptyImports,
     MaintenanceDueStatusTag,
     MaintenanceScheduleTable,
     MaintenanceOverrideDialog,

@@ -273,6 +273,25 @@ export class InterventionSyncCoordinatorService {
   }
 
   /**
+   * Method syncIntervention
+   * @method syncIntervention
+   * @description Awaits replay for one intervention before a publication or explicit operation retry.
+   * @access public
+   * @since 1.0.0
+   * @param {string} organizationId - Owning organization.
+   * @param {string} interventionId - Intervention to synchronize.
+   * @returns {Promise<void>} Resolves after replay and status refresh.
+   */
+  public async syncIntervention(organizationId: string, interventionId: string): Promise<void> {
+    if (this.connectivity.isOffline())
+      throw new Error(
+        $localize`:@@intervention.sync.connectBeforePublish:Connect before publishing this intervention.`,
+      );
+    await this.sync.replayOutbox(organizationId, interventionId);
+    await this.refreshStatus();
+  }
+
+  /**
    * Method syncAll
    * @method syncAll
    *

@@ -1,4 +1,4 @@
-<div id="calendar-page" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+<div id="calendar-page" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <div aria-live="polite" class="sr-only" data-testid="calendar-move-live-region">
     {{ moveAnnouncement() }}
   </div>
@@ -8,8 +8,40 @@
     [tab]="granularity()"
     (tabActivated)="onGranularityTabActivated($event)"
   >
+    <ng-template #pageTabs>
+      <hlm-paginated-tabs-list
+        variant="line"
+        class="w-full"
+        tabListClass="justify-start"
+        data-testid="calendar-granularity-toggle"
+        aria-label="Change period view"
+        i18n-aria-label="@@calendar.granularityToggleLabel"
+      >
+        <button
+          hlmTabsTrigger="month"
+          class="max-sm:min-h-11"
+          data-testid="calendar-granularity-month"
+        >
+          <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+          <span i18n="@@calendar.granularity.month">Month</span>
+        </button>
+        <button
+          hlmTabsTrigger="week"
+          class="max-sm:min-h-11"
+          data-testid="calendar-granularity-week"
+        >
+          <ng-icon name="lucideCalendarRange" aria-hidden="true" />
+          <span i18n="@@calendar.granularity.week">Week</span>
+        </button>
+        <button hlmTabsTrigger="day" class="max-sm:min-h-11" data-testid="calendar-granularity-day">
+          <ng-icon name="lucideCalendar1" aria-hidden="true" />
+          <span i18n="@@calendar.granularity.day">Day</span>
+        </button>
+      </hlm-paginated-tabs-list>
+    </ng-template>
+
     <div
-      class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]"
+      class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_auto_minmax(0,1fr)]"
       data-testid="calendar-toolbar"
     >
       <button
@@ -58,31 +90,6 @@
       >
         {{ periodLabel() }}
       </span>
-
-      <hlm-tabs-list
-        class="col-span-2 justify-self-start max-sm:h-auto sm:col-span-1 sm:justify-self-end"
-        data-testid="calendar-granularity-toggle"
-        aria-label="Change period view"
-        i18n-aria-label="@@calendar.granularityToggleLabel"
-      >
-        <button
-          hlmTabsTrigger="month"
-          class="max-sm:min-h-11"
-          data-testid="calendar-granularity-month"
-        >
-          <span i18n="@@calendar.granularity.month">Month</span>
-        </button>
-        <button
-          hlmTabsTrigger="week"
-          class="max-sm:min-h-11"
-          data-testid="calendar-granularity-week"
-        >
-          <span i18n="@@calendar.granularity.week">Week</span>
-        </button>
-        <button hlmTabsTrigger="day" class="max-sm:min-h-11" data-testid="calendar-granularity-day">
-          <span i18n="@@calendar.granularity.day">Day</span>
-        </button>
-      </hlm-tabs-list>
     </div>
 
     @if (listForbidden()) {
@@ -137,11 +144,19 @@
                 />
               }
 
-              <div hlmCard class="self-start lg:sticky lg:top-4">
-                <div hlmCardHeader>
+              <div
+                hlmCard
+                size="sm"
+                class="gap-0 bg-transparent py-0 shadow-none lg:h-full lg:min-h-0 dark:bg-transparent"
+                data-testid="calendar-selected-day-panel"
+              >
+                <div hlmCardHeader class="shrink-0 border-b border-border pt-3">
                   <h2 hlmCardTitle data-testid="calendar-day-heading">{{ selectedDayLabel() }}</h2>
                 </div>
-                <div hlmCardContent class="flex flex-col gap-2">
+                <div
+                  hlmCardContent
+                  class="flex flex-col p-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+                >
                   @if (dayItems().length === 0) {
                     <div hlmEmpty>
                       <div hlmEmptyHeader>

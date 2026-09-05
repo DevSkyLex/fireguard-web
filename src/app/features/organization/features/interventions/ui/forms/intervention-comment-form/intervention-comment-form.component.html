@@ -27,17 +27,17 @@
           aria-label="Members you can mention"
         >
           @for (member of mentionCandidates(); track member.value; let index = $index) {
-            <li
-              role="option"
-              [attr.aria-selected]="index === activeMention()"
-              [id]="'intervention-comment-mention-' + member.value"
-            >
+            <li role="none">
               <button
                 hlmItem
                 size="xs"
                 type="button"
+                role="option"
+                tabindex="-1"
                 class="w-full text-start"
                 data-testid="intervention-comment-mention-option"
+                [attr.aria-selected]="index === activeMention()"
+                [id]="'intervention-comment-mention-' + member.value"
                 [class.bg-accent]="index === activeMention()"
                 (mousedown)="$event.preventDefault(); acceptMention(member)"
               >
@@ -74,7 +74,7 @@
           [attr.aria-expanded]="mentionCandidates().length > 0"
           [attr.aria-activedescendant]="activeMentionId()"
           (keydown)="onKeydown($event)"
-          (input)="onFieldChanged()"
+          (input)="onFieldInput($event)"
           (keyup)="onFieldChanged()"
           (click)="onFieldChanged()"
         ></textarea>
@@ -100,24 +100,6 @@
         <hlm-field-error>{{ commentForm.body().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
-
-    @if (mentionedMembers().length > 0) {
-      <ul
-        class="flex flex-wrap items-center gap-1.5"
-        data-testid="intervention-comment-mention-chips"
-        i18n-aria-label="@@intervention.comment.mentionChipsLabel"
-        aria-label="Members who will be notified"
-      >
-        <li class="text-xs text-muted-foreground" i18n="@@intervention.comment.willNotify">
-          Will notify:
-        </li>
-        @for (member of mentionedMembers(); track member.value) {
-          <li hlmBadge variant="secondary" data-testid="intervention-comment-mention-chip">
-            {{ member.displayName }}
-          </li>
-        }
-      </ul>
-    }
 
     <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
       @if (!online() && !pending()) {

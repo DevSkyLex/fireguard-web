@@ -86,6 +86,14 @@ describe('ApprovalRequestService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should forward the shared free-text search option', () => {
+      service.list(organizationId, { search: 'extinguisher' }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === requestsUrl);
+      expect(req.request.params.get('search')).toBe('extinguisher');
+      req.flush(mockCollection([]));
+    });
+
     it('should propagate a request error untouched', () => {
       let captured: unknown;
 

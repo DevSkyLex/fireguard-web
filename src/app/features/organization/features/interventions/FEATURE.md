@@ -20,9 +20,10 @@ This subfeature is responsible for:
 ## Routes
 
 The index route owns List, Board, Calendar and Recurrences in one page.
-List / Board / Calendar use a native `hlm-toggle-group` immediately before the
-collection toolbar. Recurrences remains addressable by `?view=recurrences`
-without a secondary menu entry in the collection. Creation remains in the shell header.
+They use a native paginated Spartan tab list with `variant="line"`, projected
+beneath the title through `PageTabsService`. Recurrences remains addressable by
+`?view=recurrences` without a secondary menu entry in the collection. Creation
+remains in the shell header's action row.
 Each view is a named section. Board, Calendar and Recurrences mount on first
 activation through `@defer` and remain mounted to retain their local context.
 All view changes merge query parameters. Board/calendar legacy paths retain
@@ -32,13 +33,35 @@ Sort, hidden columns and page size remain in their existing preference cookie.
 
 Search is offered only in List and Board; the filter catalog shows only fields
 the active view applies. Unused filter values survive view changes in the URL.
-The collection starts directly with its view selector and has no metric cards,
+The collection starts directly with its toolbar because its view selector lives in the header, and has no metric cards,
 statistics request, Analysis disclosure or separate queue-count shortcuts. Long intervention
 and site labels stay within their columns so the due date and row menu remain
 visible. Detail properties adapt to the content container; the secondary About
 disclosure starts open when its desktop rail is present and closed on mobile.
 Its initial state is chosen once; resizing preserves the user's disclosure choice
 and any active description editor.
+
+The detail registers exceptional recording states and one native Spartan split button
+in the page header at every viewport. Its menu contains activity, saved operations,
+publication issues and the secondary actions. It has no second command band.
+The normal up-to-date state is omitted from the page header. Intervention status lives
+inside the same Properties grid as site, responsible, priority and schedule; status and priority
+use the shared intervention badge, and a read-only site name links directly to its facility record.
+The label catalog dialog composes Spartan field, item, empty-state and button-group primitives.
+Properties precede publication issues and About in the desktop rail; narrow screens
+place the rail after the work area. Activity and its composer are directly visible
+under Work, without a card or disclosure. The dashboard layout owns Tailwind's
+centred responsive `container` for both routed content and the page header; this
+page retains only its narrow-width gutter.
+Tab triggers are direct children of the native tabs list for keyboard navigation.
+Work rows lead with the target, then the action; provenance remains secondary.
+Known assignment restrictions disable execution and skipping before a request.
+Mutation feedback uses the existing toast service per request, while draft validation
+and recoverable loading states retain their local context. The progress bar has no
+additional divider underneath it.
+Comment mentions display the selected member's name in the draft and serialize to the
+API UUID token only on submit. The draft itself is sufficient confirmation, so no
+separate notification-chip summary is rendered.
 
 Creation is permission-gated on intervention planning, including `?create=1`.
 The sheet has mutually exclusive Blank and Template tabs, each exposing one
@@ -48,9 +71,9 @@ create and instantiate commands separate. Template overrides are limited to
 name, site, responsible and planned start; inherited fields never become
 additional patch requests. Failures remain inline in the active form.
 
-The detail uses a native `hlm-tabs-list` with the `line` variant, a stable horizontal
-order and a named tablist. Only the tab strip scrolls on narrow screens. The first
-tab reads Work; its existing `overview` URL value remains valid.
+The detail contributes a native paginated Spartan tab list with the `line`
+variant to the page header, in a stable horizontal order with a named tablist.
+The first tab reads Work; its existing `overview` URL value remains valid.
 
 **The detail page's rail tab is addressable the same way.** `?tab=` binds to
 `InterventionDetailPage.tab`, seeds `activeLinkedTab` through a
@@ -66,16 +89,10 @@ presentational components `InterventionsPage` feeds through inputs and reads
 back through outputs — neither injects a store or calls a service
 (`ARCHITECTURE.md` §10.3); the page decides whether to call
 `InterventionStore.transition` on a Board move, and owns the
-`InterventionCalendarStore` load the Calendar tab drives. The Board shares
-`InterventionsPage`'s own `InterventionStore` (`boardFilters` forces `status`
-to `null` — its columns are the narrowing — and its own load effect asks for
-one large page instead of the table's paginated window, both gated on
-`activeView` so the List and the Board never fight over the same cached
-page). The Calendar reads a bounded date window instead, an incompatible
-shape for the same entity cache, so `InterventionsPage` provides its own
-component-scoped `InterventionCalendarStore` — the one store still
-component-scoped in this feature, since only a page may inject one, and this
-page now stands in for the three leaves that used to share that duty.
+`InterventionCalendarStore` load the Calendar tab drives. The Board uses the private page-scoped
+`InterventionBoardStore`: each status owns its page, total, loading and error state,
+independent of the list cache. The Calendar owns a separate bounded date-window
+cache through `InterventionCalendarStore`.
 `calendarMonth` starts `null` and the load effect no-ops until
 `InterventionCalendar` reports its first anchor, which only happens once the
 component exists — behind `@defer`, on the Calendar tab's first
@@ -435,16 +452,10 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   (`INTERVENTION_BOARD_COLUMNS`), each labelled and counted through the
   existing `models/intervention-tag/` registry — never a second status
   vocabulary. `published` renders as a column (an intervention does end up
-  there) but is never a legal drop target, since `allowedTransitions` never
-  lists it (see Invariants). `InterventionsPage`'s own Board load effect
-  reuses the **same** `InterventionStore.load` single-server-page mechanism
-  the List effect uses — there is no new endpoint — asking for one large page
-  (200 rows, `BOARD_PAGE_SIZE`) so a typical organization's open work fits in
-  one load, distributed across every column; an organization past that count
-  sees only its first 200 (by `dueAt`), a stated trade-off over adding a
-  second, per-column pagination surface to a Kanban board. Both load effects
-  are gated on `activeView`, so the List and the Board never overwrite each
-  other's shape of the same cached page. The Board applies whatever filters
+  there). A publish request opens the detail confirmation rather than issuing a plain status PATCH.
+  `InterventionBoardStore` owns independent column queries, each using the existing list
+  endpoint with `status`, pages of 30, exact server totals and a local retry state.
+  Loading another column never replaces the list page or sibling columns. The Board applies filters
   (`status` excluded, via `boardFilters`) the incoming URL already carries,
   and shares the page's own eight-chip filter bar with the List and the
   Calendar — its entry in `INTERVENTION_VIEW_HONOURED_FILTER_KEYS` omits only
@@ -728,15 +739,16 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   resource's own page is already in flight; a failed `loadMore` leaves the
   rows already on screen untouched.
 
-- `InterventionPublicationStore` — component-scoped (provided in
-  `InterventionDetailPage`); the publication request+poll flow, one named
-  `publishCallState`. The store is a thin wrapper: `InterventionPublicationService`
-  keeps sole ownership of the POST-202 + bounded-poll timing, and the store only
-  normalizes the outcome (a terminal `failed` result and a rejected promise both
-  surface through `error()`) and dispatches `publishSucceeded` on a genuine
-  completion — the page subscribes to that event for the toast and the
-  skeleton-free `reload`. Component-scoped so a stale failure never leaks into
-  the next intervention's visit.
+- `InterventionPublicationStore` is component-scoped and separates publication launch,
+  restore and observation. `InterventionPublicationService.start` owns the POST;
+  `observe` owns bounded polling and `checkStatus` performs a single read. Persist
+  the identifier immediately after acceptance, scoped by account, organization and
+  intervention. A read failure or timeout retains the last known state and never
+  authorizes another POST. An initial response lost without an identifier is unknown;
+  recovery refreshes the intervention. Only confirmed completion emits `publishSucceeded`.
+- `InterventionOperationsStore` is component-scoped. The local operations sheet reads
+  one intervention, exposes per-operation failures and requires explicit confirmation
+  for a conflict retry or discard. It must never retry other interventions' conflicts.
 - `InterventionCalendarStore` — component-scoped (provided in
   `InterventionsPage`, since only a page may inject a store — 11.0); the
   interventions inside a bounded date window. One `load(request)` —
@@ -764,7 +776,9 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   schedules (`InterventionRecurrenceService`) via `withEntities`, backing the
   **Recurrences tab** of `InterventionsPage` (`?view=recurrences`). The tab
   renders `InterventionRecurrenceTable` (`ui/tables/`) full-width; the table
-  only reports edit/delete/toggle intents. Create and edit happen in
+  reports edit/delete/toggle intents; each row groups edit and delete under the
+  standard ellipsis menu. Recurrence creation lives in the page header's split
+  creation menu, while create and edit happen in
   `ui/sheets/intervention-recurrence-sheet` (540px, bottom drawer below `sm`),
   which hosts the Signal Forms `ui/forms/intervention-recurrence-form` and
   confirms a dirty close through `@shared/unsaved-changes`; delete confirms in
@@ -946,17 +960,17 @@ Internal code imports deep paths directly.
 The detail uses a stable horizontal Spartan line tab list at every width:
 Work (`overview` in the URL), Changes, Attachments, Facilities, Equipment and
 Inspections. The native paginated tab list contains overflow within the bar.
-Operational editors (site, responsible, schedule and priority) precede the
-work and remain outside every tab; participants, labels and revision sit in
+Operational editors (site, responsible, schedule and priority) occupy the right
+rail and remain outside every tab; participants, labels and revision sit in
 a native secondary disclosure. Description, type and technical dates follow
-in the secondary information column. Status is stated once in the command band.
+in the secondary information column. Status is stated once in Properties.
 
 The Work panel starts with a compact readiness item group and the work items.
 A writable empty scope has one add action and no zero progress/count. Activity
-and its comment form remain mounted inside a collapsed native disclosure, so
-drafts are preserved. Discussion opens Work, expands that disclosure and focuses
-the comment after rendering. Blockers stay reachable from every tab through
-the command band. Their desktop/mobile placement retains the existing 896px
+and its comment form remain mounted and directly visible, preserving drafts.
+The activity menu item opens Work and focuses the comment after rendering.
+Blockers stay reachable from every tab through the split button menu.
+Their desktop/mobile placement retains the existing 896px
 container threshold and focus fallback.
 
 **Page decomposition (5.1) — behavior-frozen extractions, layout untouched.**
@@ -990,8 +1004,7 @@ protected aliases over the factory's signals, so the template contract never
 changed during the decomposition. Below 896px of container width
 (`@4xl/detail`) the container drops to `flex flex-col`: `<hlm-tabs>` (rail,
 then whichever panel is active, in document order) stacks above the
-properties/issues-checklist column, same order as before; the status band
-sits above both, outside this container, at every width.
+properties/issues-checklist column; the command remains in the page header.
 
 The container observer only determines the visible issues checklist; tab
 orientation and keyboard direction stay horizontal throughout resizing.
@@ -1009,14 +1022,9 @@ orientation and keyboard direction stay horizontal throughout resizing.
    and falling back to `updatedAt` while the timeline is empty or still
    loading. Outside every section, so the last-touched summary needs no
    scroll to see.
-3. **Status band** (`app-intervention-status-band`) — outside `<hlm-tabs>` and
-   tab-independent, the host for the forward action at **every** viewport.
-   Sticky at `top-0` from `sm` up; **fixed at `bottom-0` below it**, inside the
-   safe area, with the page reserving `pb-32` so nothing hides under it. One
-   implementation, one host, a position that follows the thumb — the invariant
-   is about the number of addresses, not about where the band sits. See
-   `### One address, one implementation, one host`.
-4. **Page error alert** — the store's last unattributed failure.
+3. **Split command** — registered in the page header, independent of the active
+   tab and shared across viewport sizes. No bottom band or reserved bottom padding.
+4. **Page error alert** — recoverable loading failures; mutations use feedback toasts.
 5. **Overview tab** — `app-intervention-getting-started` (rendered only in
    `prepare`, while a prerequisite is still missing), the mobile issues
    checklist (`execute`/`review`, `@4xl/detail:hidden`), the work-items block (scan
@@ -1040,7 +1048,7 @@ activity-thread`, and the comment-form block.
 7. **Facilities / Equipment / Inspections tabs** — one `hlmTable` each, read
    for the intervention's own linked records, no pagination, no row actions
    (see the tables' own component docs for the column sets).
-8. **Operational properties** precede the status band and remain mounted.
+8. **Operational properties** start the right rail and remain mounted.
    Readiness actions open their matching editor directly.
 9. **Secondary information and desktop issues** occupy the second track;
    mobile issues stay in Work and the visible instance receives focus.
@@ -1136,7 +1144,7 @@ a verb. From `planned` the band now says **Start field work**.
 primary, gated on `canReview()` and a `submitted` status — not on `canPublish`.
 A reviewer without publish rights used to get an empty band, which `PRODUCT.md`
 forbids: their action must be reachable there. It opens the same
-`app-intervention-request-changes-sheet` the overflow menu does.
+`app-intervention-request-changes-dialog` the overflow menu does.
 
 ### The forward move has one gate
 
@@ -1562,20 +1570,16 @@ The dialog interposes on the `execute` phase's forward action
 work is actually resolved (the same gate `commandTransitionTarget` already
 applies) and the loaded intervention carries no signature yet, the click opens
 the dialog instead of dispatching the `submitted` transition directly. A
-"Skip" button and the dialog's own Escape/backdrop close both count as
-declining the nudge and submit unsigned — the backend does not mandate a
-signature, so nothing here should read as blocking. Confirming instead uploads
+"Submit without signature" button submits explicitly; Cancel, Escape and backdrop
+closure never submit. Signature remains optional. Confirming instead uploads
 the PNG through the workspace store's `uploadAttachment` with `kind:
 'signature'`; the submit transition is **not** dispatched inline — it chains
 off the store's `attachmentUploadSucceeded` event once the upload has actually
 landed (a page-local `signingSubmitPending` flag arms the chain and is cleared
 either by that event or by the write's own `attachmentWriteCallState` turning
 to error), so a failed upload never silently submits an unsigned intervention.
-One design note worth keeping: setting the dialog's `visible` input to `false`
-from the capture handler still flows back through `hlm-dialog`'s own close
-notification, so the page's dismiss handler is a no-op while
-`signingSubmitPending` is set — otherwise a successful capture would also fire
-an extra, unwanted unsigned submit.
+The dialog and drawing stay open until the upload succeeds; a failure preserves
+both the input and its inline error. Passive closure never dispatches a transition.
 
 Display: `app-intervention-publication-summary` gains a signed/unsigned line
 (icon + label, never colour alone) from `hasSignature`, rendered in both its
@@ -1590,7 +1594,7 @@ The store's former **single `mutationCallState` for every write** — and the
 page-side approximation it forced (`pendingWorkItemId`, a `settleWrite` driven
 by the global `saving`) — is retired. Every write concern has its own named
 call state, the in-place fields settle on `updateDetailsCallState` alone, each
-overlay (comment composer, add-work-item sheet, request-changes sheet) binds
+overlay (comment composer, add-work-item sheet, request-changes dialog) binds
 the call state of the write it actually performs, and per-row attribution for
 the concurrent `mergeMap` writes is the store's own `pendingWorkItemIds` /
 `pendingChangeIds` sets. Two writes in flight now each mark their own row, and
@@ -1708,7 +1712,7 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   that a **dirty** overlay confirms before closing, via the shared
   abandon-confirmation primitive. This supersedes the earlier "Cancel always
   closes: the guard is against losing work by accident, never against leaving
-  deliberately" doctrine still quoted in the create/request-changes sheet
+  deliberately" doctrine still quoted in the create/request-changes dialog
   docblocks — those docblocks are updated when the shared guard lands. A
   pristine overlay still closes freely; `disableClose` continues to cover
   in-flight requests. **The discussion sheet is the first sheet to implement
@@ -1900,8 +1904,8 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   that may yet complete. Past ~30 seconds the in-flight copy switches to a
   still-working variant so a long publication reads as long, not frozen. A
   genuine `failed` result still reports inline as before.
-- **The page's fixed elements never reorder (WCAG 2.4.3).** Header → meta →
-  status band → error alert → tab rail/panel → properties card → desktop
+- **The page's fixed elements never reorder (WCAG 2.4.3).** Header line tabs →
+  meta → status band → error alert → active panel → properties card → desktop
   issues checklist → prev/next never changes with phase — properties card and
   the issues checklist are the second column's own top-to-bottom order,
   unaffected by which of the six tabs is active. The band's position is fixed
@@ -2063,10 +2067,11 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   real, acknowledged trade-off this time: Work items, Changes, Attachments
   and Activity are behind the Overview tab, not on screen regardless of
   scroll position, which the 3.0/4.0 "one continuous flow" language
-  explicitly ruled out. `activeLinkedTab` and `linkedTabsOrientation`
-  replace the retired `activeTab`/`tabOrientation` pair, and
-  `InterventionLinkedResourceTabId` replaces the retired
-  `InterventionDetailTabId`.
+  explicitly ruled out. `activeLinkedTab` and
+  `InterventionLinkedResourceTabId` replace the retired
+  `activeTab`/`tabOrientation` pair and `InterventionDetailTabId`; the tab
+  list now stays horizontal in the page header and paginates when space is
+  constrained.
 - _"The phase's forward action is one implementation split across two
   viewport-gated hosts, `app-intervention-action-box` at `lg` and up and
   `app-intervention-command-bar` below it."_ Retired by this change:
@@ -2092,3 +2097,32 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   same change — see `### The rail is not the retired workspace tabs` for
   what that narrows on top of the action-box/command-bar retirement.
 - The list header's view switch is a spartan `hlm-toggle-group` (the hand-rolled `role="tablist"` is retired); "New intervention" becomes a split button (`hlmButtonGroup` + `hlmDropdownMenuTrigger`) whose menu selects one of `InterventionPlanningOptionsStore.templates` in the creation sheet for confirmation — the only header split button in the app, because its items are variants of the primary verb (`DESIGN.md` "Header actions").
+
+## Preparation and review interaction contracts
+
+- Create in a sheet; prepare in the dedicated intervention page. The work-item sheet and
+  correction-note dialog close only after a confirmed server write or durable local enqueue.
+- Plan readiness and its command use the same site, responsible, start and due requirements;
+  recommended work items are distinct from required server prerequisites.
+- Selection catalogues load independently with server search and pagination. Keep cached
+  selected labels across searches within the same organization; reset across organizations.
+- Work items use a compact native status filter. Desktop rows give target, action,
+  requirement, assignee, state and source their own columns; mobile keeps one tactile row.
+  Completed, skipped and remaining counts stay distinct.
+  A scan reveals and focuses the exact item even when the previous filter excluded it.
+- Changes expose proposed, rejected and applied states. Display proposed values only; the
+  API does not supply historical before-values. The three states use the same compact Spartan
+  status select as work items. Evidence remains readable from a work item.
+- Publication preflight awaits this intervention's local replay, checks remaining queued
+  work, and re-reads the intervention and issues before POST. Late responses for a departed
+  account, organization or intervention cannot initiate publication.
+- Bulk results preserve failed selections and readable identities. Retry only failed eligible
+  rows. Publication always goes through the individual confirmation.
+- Errors reading issues, attachments or local operations must not render as verified absence.
+
+Assignment dialogs retain their Signal Form draft until every submitted resource
+succeeds. Partial failures remain visible and retries exclude successful rows.
+Selected sites and members may be resolved by scoped individual reads independently
+of catalogue coverage; unresolved labels never clear the saved references.
+Outbox conflicts preserve the original local revision separately from the last
+verified server revision. An unsuccessful revision read is explicitly unknown.

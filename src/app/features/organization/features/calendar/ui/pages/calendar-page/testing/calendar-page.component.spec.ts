@@ -12,6 +12,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
@@ -55,6 +56,14 @@ class PageActionsHost {
 const renderPageActions = (): HTMLElement => {
   const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
   hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const renderPageTabs = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
   hostFixture.detectChanges();
 
   return hostFixture.nativeElement as HTMLElement;
@@ -133,6 +142,7 @@ describe('CalendarPage', () => {
     fixture = TestBed.createComponent(CalendarPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement).appendChild(renderPageTabs());
   }
 
   it('loads the current month window on arrival', async () => {

@@ -151,4 +151,28 @@ export interface InterventionWorkspaceState {
    * being tied to the main workspace fetch.
    */
   readonly activityCallState: CallState;
+  /**
+   * Property workItemErrors
+   * @readonly
+   * @description Failure attributed to the affected work item.
+   * @since 1.0.0
+   * @type {Readonly<Record<string, string | null>>}
+   */
+  readonly workItemErrors: Readonly<Record<string, string | null>>;
+  /**
+   * Property changeErrors
+   * @readonly
+   * @description Failure attributed to the affected proposed change.
+   * @since 1.0.0
+   * @type {Readonly<Record<string, string | null>>}
+   */
+  readonly changeErrors: Readonly<Record<string, string | null>>;
+  /**
+   * Property issuesCallState
+   * @readonly
+   * @description Freshness of publication issue verification.
+   * @since 1.0.0
+   * @type {CallState}
+   */
+  readonly issuesCallState: CallState;
 }

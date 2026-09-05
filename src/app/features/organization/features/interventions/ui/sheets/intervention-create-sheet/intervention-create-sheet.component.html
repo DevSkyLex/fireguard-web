@@ -22,7 +22,7 @@
       (tabActivated)="creationMode.set($event)"
       class="flex min-h-0 flex-1 flex-col"
     >
-      @if (templates().length > 0) {
+      @if (templates().length > 0 || catalogues().templates) {
         <hlm-tabs-list
           class="mx-4 shrink-0"
           aria-label="Creation method"
@@ -48,6 +48,9 @@
       }
       <div hlmTabsContent="blank" class="flex min-h-0 flex-1 flex-col">
         <app-intervention-create-form
+          [catalogues]="catalogues()"
+          (catalogueRequested)="catalogueRequested.emit($event)"
+          (catalogueSearched)="catalogueSearched.emit($event)"
           [pending]="pending() || instantiating()"
           [serverError]="serverError()"
           [siteOptions]="siteOptions()"
@@ -58,7 +61,7 @@
           (dirtyChanged)="formDirty.set($event)"
         />
       </div>
-      @if (templates().length > 0) {
+      @if (templates().length > 0 || catalogues().templates) {
         <div hlmTabsContent="template" class="flex min-h-0 flex-1 flex-col">
           <div
             class="min-h-0 flex-1 overflow-y-auto px-4 pb-4"
@@ -71,30 +74,37 @@
               Start from a template
             </p>
             <div class="mt-2 flex items-center gap-2">
-              <hlm-select
+              <hlm-combobox
                 [value]="selectedTemplateId()"
                 [itemToString]="templateLabelOf"
-                (valueChange)="selectedTemplateId.set($event ?? null)"
+                (valueChange)="selectedTemplateId.set($any($event) ?? null)"
+                (searchChange)="catalogueSearched.emit({ kind: 'templates', search: $event })"
               >
-                <hlm-select-trigger
-                  buttonId="intervention-create-template"
-                  class="w-full max-sm:min-h-11"
+                <hlm-combobox-input
+                  inputId="intervention-create-template"
                   data-testid="intervention-create-template-select"
-                >
-                  <hlm-select-value
-                    placeholder="Choose a template"
-                    i18n-placeholder="@@intervention.cf.templatePlaceholder"
-                  />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-group>
+                  placeholder="Choose a template"
+                  i18n-placeholder="@@intervention.cf.templatePlaceholder"
+                />
+                <hlm-combobox-content *hlmComboboxPortal>
+                  <hlm-combobox-empty i18n="@@intervention.catalogue.templateEmpty"
+                    >No matching template among the loaded options.</hlm-combobox-empty
+                  >
+                  <div hlmComboboxList>
                     @for (template of templates(); track template.id) {
-                      <hlm-select-item [value]="template.id">{{ template.name }}</hlm-select-item>
+                      <hlm-combobox-item [value]="template.id">{{
+                        template.name
+                      }}</hlm-combobox-item>
                     }
-                  </hlm-select-group>
-                </hlm-select-content>
-              </hlm-select>
+                  </div>
+                </hlm-combobox-content>
+              </hlm-combobox>
             </div>
+            <app-intervention-catalogue-status
+              kind="templates"
+              [state]="catalogues().templates"
+              (requested)="catalogueRequested.emit($event)"
+            />
             <p
               class="mt-1 text-xs text-muted-foreground"
               i18n="@@intervention.cf.templateFieldsHint"
@@ -140,6 +150,7 @@
                     [value]="overrideSite()"
                     [itemToString]="siteLabelOf"
                     (valueChange)="overrideSite.set($any($event) ?? null)"
+                    (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
                   >
                     <hlm-combobox-input
                       class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
@@ -161,6 +172,11 @@
                       </div>
                     </hlm-combobox-content>
                   </hlm-combobox>
+                  <app-intervention-catalogue-status
+                    kind="sites"
+                    [state]="catalogues().sites"
+                    (requested)="catalogueRequested.emit($event)"
+                  />
                 </hlm-field>
 
                 <hlm-field>
@@ -174,6 +190,7 @@
                     [value]="overrideResponsible()"
                     [itemToString]="memberLabelOf"
                     (valueChange)="overrideResponsible.set($any($event) ?? null)"
+                    (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
                   >
                     <hlm-combobox-input
                       class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
@@ -212,6 +229,11 @@
                       </div>
                     </hlm-combobox-content>
                   </hlm-combobox>
+                  <app-intervention-catalogue-status
+                    kind="members"
+                    [state]="catalogues().members"
+                    (requested)="catalogueRequested.emit($event)"
+                  />
                 </hlm-field>
 
                 <hlm-field>

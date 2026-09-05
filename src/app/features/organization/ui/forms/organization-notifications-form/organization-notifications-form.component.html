@@ -1,213 +1,335 @@
-<hlm-field-group>
-  <div class="flex flex-col gap-1">
-    <h2 class="text-base font-semibold text-foreground" i18n="@@org.settings.notifications.title">
+<hlm-field-group class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+  <header class="min-w-0">
+    <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.settings.notifications.title">
       Notification preferences
     </h2>
-    <p hlmFieldDescription i18n="@@org.settings.notifications.description">
+    <p hlmFieldDescription class="mt-1" i18n="@@org.settings.notifications.description">
       Choose how your organization receives operational updates and which events should notify
       members. Each change is saved immediately.
     </p>
+  </header>
+
+  <div class="flex min-w-0 flex-col gap-8">
+    <section class="flex flex-col gap-4">
+      <header class="min-w-0">
+        <h3
+          class="text-base font-semibold text-foreground"
+          i18n="@@org.settings.notifications.channelsTitle"
+        >
+          Delivery channels
+        </h3>
+        <p hlmFieldDescription class="mt-1" i18n="@@org.settings.notifications.channelsDescription">
+          Channels apply to every enabled event below. Turning one off leaves the other channel
+          active.
+        </p>
+      </header>
+
+      <div class="grid min-w-0 gap-3 sm:grid-cols-2">
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideMail" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-email"
+                i18n="@@org.settings.notifications.emailLabel"
+                >Email</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.emailDescription"
+              >
+                Send updates to each recipient's account email address.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-email"
+              [formField]="notificationsForm.emailEnabled"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideBell" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-in-app"
+                i18n="@@org.settings.notifications.inAppLabel"
+                >In-app</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.inAppDescription"
+              >
+                Show updates in the notification center while members use Fireguard.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-in-app"
+              [formField]="notificationsForm.inAppEnabled"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-4 border-t border-border pt-8">
+      <header class="min-w-0">
+        <h3
+          class="text-base font-semibold text-foreground"
+          i18n="@@org.settings.notifications.eventsTitle"
+        >
+          Events
+        </h3>
+        <p hlmFieldDescription class="mt-1" i18n="@@org.settings.notifications.eventsDescription">
+          Event switches decide which operational changes generate notifications through the enabled
+          channels.
+        </p>
+      </header>
+
+      <div class="grid min-w-0 gap-3 xl:grid-cols-2">
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideSend" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-intervention-published"
+                i18n="@@org.settings.notifications.interventionPublishedLabel"
+                >Intervention published</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.interventionPublishedDescription"
+              >
+                Notify relevant members when an intervention becomes final and available.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-intervention-published"
+              [formField]="notificationsForm.interventionPublished"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideUserRound" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-intervention-assigned"
+                i18n="@@org.settings.notifications.interventionAssignedLabel"
+                >Intervention assigned to me</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.interventionAssignedDescription"
+              >
+                Alert a member when they become responsible for an intervention.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-intervention-assigned"
+              [formField]="notificationsForm.interventionAssigned"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideClipboardCheck" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-inspection-due"
+                i18n="@@org.settings.notifications.inspectionDueLabel"
+                >Inspection due</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.inspectionDueDescription"
+              >
+                Warn assigned members when an inspection reaches its due date.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-inspection-due"
+              [formField]="notificationsForm.inspectionDue"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideCircleAlert" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-non-conformity-opened"
+                i18n="@@org.settings.notifications.nonConformityOpenedLabel"
+                >Non-conformity opened</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.nonConformityOpenedDescription"
+              >
+                Notify the operational team when an inspection records a new issue.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-non-conformity-opened"
+              [formField]="notificationsForm.nonConformityOpened"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideClock" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-non-conformity-sla-breached"
+                i18n="@@org.settings.notifications.nonConformitySlaBreachedLabel"
+                >Non-conformity past its resolution deadline</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.nonConformitySlaBreachedDescription"
+              >
+                Escalate an unresolved issue when its configured deadline is exceeded.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-non-conformity-sla-breached"
+              [formField]="notificationsForm.nonConformitySlaBreached"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideCalendarDays" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-weekly-digest"
+                i18n="@@org.settings.notifications.weeklyDigestLabel"
+                >Weekly summary email</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.weeklyDigestDescription"
+              >
+                Email a weekly overview of activity requiring attention.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-weekly-digest"
+              [formField]="notificationsForm.weeklyDigest"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+
+        <hlm-field class="rounded-lg border border-border bg-card/40 p-4 xl:col-span-2">
+          <div class="flex min-w-0 items-start gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon name="lucideUserPlus" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <label
+                hlmFieldLabel
+                for="org-notif-member-invited"
+                i18n="@@org.settings.notifications.memberInvitedLabel"
+                >Member invited</label
+              >
+              <p
+                hlmFieldDescription
+                class="mt-1"
+                i18n="@@org.settings.notifications.memberInvitedDescription"
+              >
+                Inform administrators when a new organization invitation is created.
+              </p>
+            </div>
+            <hlm-switch
+              class="mt-1 shrink-0"
+              inputId="org-notif-member-invited"
+              [formField]="notificationsForm.memberInvited"
+              (checkedChange)="commit()"
+            />
+          </div>
+        </hlm-field>
+      </div>
+    </section>
   </div>
-
-  <section class="flex flex-col gap-3">
-    <h2
-      class="text-sm font-medium text-muted-foreground"
-      i18n="@@org.settings.notifications.channelsTitle"
-    >
-      Delivery channels
-    </h2>
-    <p hlmFieldDescription i18n="@@org.settings.notifications.channelsDescription">
-      Channels apply to every enabled event below. Turning one off leaves the other channel active.
-    </p>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label hlmFieldLabel for="org-notif-email" i18n="@@org.settings.notifications.emailLabel"
-          >Email</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.emailDescription">
-          Send updates to each recipient's account email address.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-email"
-        [formField]="notificationsForm.emailEnabled"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label hlmFieldLabel for="org-notif-in-app" i18n="@@org.settings.notifications.inAppLabel"
-          >In-app</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.inAppDescription">
-          Show updates in the notification center while members use Fireguard.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-in-app"
-        [formField]="notificationsForm.inAppEnabled"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-  </section>
-
-  <section class="flex flex-col gap-3 border-t border-border pt-5">
-    <h2
-      class="text-sm font-medium text-muted-foreground"
-      i18n="@@org.settings.notifications.eventsTitle"
-    >
-      Events
-    </h2>
-    <p hlmFieldDescription i18n="@@org.settings.notifications.eventsDescription">
-      Event switches decide which operational changes generate notifications through the enabled
-      channels.
-    </p>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-intervention-published"
-          i18n="@@org.settings.notifications.interventionPublishedLabel"
-          >Intervention published</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.interventionPublishedDescription">
-          Notify relevant members when an intervention becomes final and available.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-intervention-published"
-        [formField]="notificationsForm.interventionPublished"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-intervention-assigned"
-          i18n="@@org.settings.notifications.interventionAssignedLabel"
-          >Intervention assigned to me</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.interventionAssignedDescription">
-          Alert a member when they become responsible for an intervention.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-intervention-assigned"
-        [formField]="notificationsForm.interventionAssigned"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-inspection-due"
-          i18n="@@org.settings.notifications.inspectionDueLabel"
-          >Inspection due</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.inspectionDueDescription">
-          Warn assigned members when an inspection reaches its due date.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-inspection-due"
-        [formField]="notificationsForm.inspectionDue"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-non-conformity-opened"
-          i18n="@@org.settings.notifications.nonConformityOpenedLabel"
-          >Non-conformity opened</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.nonConformityOpenedDescription">
-          Notify the operational team when an inspection records a new issue.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-non-conformity-opened"
-        [formField]="notificationsForm.nonConformityOpened"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-non-conformity-sla-breached"
-          i18n="@@org.settings.notifications.nonConformitySlaBreachedLabel"
-          >Non-conformity past its resolution deadline</label
-        >
-        <p
-          hlmFieldDescription
-          i18n="@@org.settings.notifications.nonConformitySlaBreachedDescription"
-        >
-          Escalate an unresolved issue when its configured deadline is exceeded.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-non-conformity-sla-breached"
-        [formField]="notificationsForm.nonConformitySlaBreached"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-weekly-digest"
-          i18n="@@org.settings.notifications.weeklyDigestLabel"
-          >Weekly summary email</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.weeklyDigestDescription">
-          Email a weekly overview of activity requiring attention.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-weekly-digest"
-        [formField]="notificationsForm.weeklyDigest"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal" class="justify-between">
-      <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <label
-          hlmFieldLabel
-          for="org-notif-member-invited"
-          i18n="@@org.settings.notifications.memberInvitedLabel"
-          >Member invited</label
-        >
-        <p hlmFieldDescription i18n="@@org.settings.notifications.memberInvitedDescription">
-          Inform administrators when a new organization invitation is created.
-        </p>
-      </div>
-      <hlm-switch
-        class="shrink-0"
-        inputId="org-notif-member-invited"
-        [formField]="notificationsForm.memberInvited"
-        (checkedChange)="commit()"
-      />
-    </hlm-field>
-  </section>
 </hlm-field-group>

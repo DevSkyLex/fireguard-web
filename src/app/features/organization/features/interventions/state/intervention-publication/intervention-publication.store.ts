@@ -1,10 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, DestroyRef, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, from, merge, pipe, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, from, merge, of, pipe, exhaustMap, switchMap, tap, timer } from 'rxjs';
 import { catchError, ignoreElements, takeUntil } from 'rxjs/operators';
 import {
   errorCallState,
@@ -13,11 +13,12 @@ import {
   pendingCallState,
   successCallState,
   toStoreError,
-  type StoreError,
 } from '@core/request-state';
+import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionOutput,
   PublicationOutput,
+  PublicationTracking,
 } from '@features/organization/features/interventions/models';
 import {
   InterventionPublicationService,
@@ -27,31 +28,9 @@ import { interventionPublicationStoreEvents } from './events';
 import type { InterventionPublicationState } from './models';
 
 /**
- * Constant LONG_RUNNING_THRESHOLD_MS
- * @const LONG_RUNNING_THRESHOLD_MS
- *
- * @description
- * How long a publish attempt stays pending before the confirmation swaps to
- * its "still working" copy — long enough that a normal publish never shows
- * it, short enough that an operator staring at the dialog gets reassurance
- * well before the poll's own ~2 minute bound.
- *
- * @since 1.1.0
- *
- * @type {number}
- */
-const LONG_RUNNING_THRESHOLD_MS = 30_000;
-
-//#region Initial State
-/**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
- *
- * @description
- * Idle publish call state — no request has been issued yet.
- *
+ * @description Idle state before loading account-bound recovery metadata.
  * @since 1.0.0
- *
  * @type {InterventionPublicationState}
  */
 const INITIAL_STATE: InterventionPublicationState = {
@@ -59,275 +38,351 @@ const INITIAL_STATE: InterventionPublicationState = {
   publicationId: null,
   longRunning: false,
   timedOut: false,
+  tracking: null,
+  storageError: null,
+  restoreCallState: idleCallState(),
 };
-//#endregion
 
 /**
  * Store InterventionPublicationStore
- * @const InterventionPublicationStore
- *
- * @description
- * Component-scoped NgRx SignalStore wrapping `InterventionPublicationService`:
- * one named `publishCallState` covers the whole request-and-poll round trip
- * the service already owns, so this store adds no timing of its own — it only
- * reports the service's promise as a `CallState`. A terminal `failed`
- * publication result (not a rejected request) is surfaced the same way as a
- * request failure, since both mean "nothing further proceeds until the
- * operator retries" from the confirmation's point of view.
- *
- * Scoped to the intervention detail page's providers, so a fresh attempt
- * starts idle on every visit rather than carrying a stale error across
- * interventions.
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @description Owns publication launch and observation independently. Accepted identifiers survive observation failures and page revisits.
+ * @since 1.0.0
  */
 export const InterventionPublicationStore = signalStore(
   withState<InterventionPublicationState>(INITIAL_STATE),
-
   withComputed((store) => ({
-    /**
-     * Computed publishing.
-     *
-     * @description
-     * True while the publish request and its poll are in flight.
-     */
-    publishing: computed<boolean>(() => isCallPending(store.publishCallState())),
-
-    /**
-     * Computed error.
-     *
-     * @description
-     * The last publish attempt's normalized failure message, or `null`.
-     */
-    error: computed<string | null>(() => store.publishCallState().error?.message ?? null),
+    publishing: computed(() => isCallPending(store.publishCallState())),
+    error: computed(() => store.publishCallState().error?.message ?? null),
+    unresolved: computed(
+      () =>
+        store.tracking() !== null &&
+        !['completed', 'failed'].includes(store.tracking()?.status ?? ''),
+    ),
   })),
-
   withMethods(
     (
       store,
-      dispatcher = inject<Dispatcher>(Dispatcher),
-      publication = inject<InterventionPublicationService>(InterventionPublicationService),
+      dispatcher = inject(Dispatcher),
+      publication = inject(InterventionPublicationService),
+      offline = inject(InterventionOfflineService),
       isBrowser = isPlatformBrowser(inject(PLATFORM_ID)),
-    ) => ({
+    ) => {
+      let scope = '';
+      let organization = '';
+      let interventionId = '';
+      let writeChain: Promise<void> = Promise.resolve();
+      inject(DestroyRef).onDestroy(() => {
+        scope = '';
+      });
+
       /**
-       * Method publish
-       * @method publish
-       *
-       * @description
-       * Submits the intervention for publication and awaits the service's
-       * bounded poll to a terminal result. Dispatches `publishSucceeded` only
-       * once the publication actually `completed`, so the page can reload the
-       * workspace, close the confirmation and toast without owning any of the
-       * request/poll mechanics itself.
-       *
-       * Runs a browser-only side timer alongside the request: past
-       * {@link LONG_RUNNING_THRESHOLD_MS} still pending, `longRunning` flips
-       * true; the timer is cancelled the moment the request settles either
-       * way, so it never fires after the fact. A
-       * {@link PublicationPollTimeoutError} is kept apart from every other
-       * rejection — it means the server is still working, not that anything
-       * failed, so it sets `timedOut` and keeps the publication id `recheck`
-       * needs instead of the generic request-failed message.
-       *
-       * @access public
+       * Function persist
+       * @description Serializes metadata writes so an older observation cannot overwrite a terminal result.
+       * @access private
        * @since 1.0.0
-       *
-       * @param {InterventionOutput} intervention - The intervention to publish.
-       *
-       * @returns {void} No return value — progress is observable through `publishing`/`error`/`longRunning`/`timedOut`.
+       * @param {PublicationTracking} tracking - Last observed state.
+       * @returns {Promise<void>}
        */
-      publish: rxMethod<InterventionOutput>(
-        pipe(
-          tap(() =>
-            patchState(store, {
-              publishCallState: pendingCallState(),
-              publicationId: null,
-              longRunning: false,
-              timedOut: false,
-            }),
-          ),
-          switchMap((intervention) => {
-            const result$ = from(publication.publish(intervention));
-            const longRunning$ = isBrowser
-              ? timer(LONG_RUNNING_THRESHOLD_MS).pipe(
-                  tap(() => patchState(store, { longRunning: true })),
-                  takeUntil(result$.pipe(catchError(() => EMPTY))),
-                  ignoreElements(),
-                )
-              : EMPTY;
-
-            return merge(
-              longRunning$,
-              result$.pipe(
-                tapResponse({
-                  next: (result: PublicationOutput): void => {
-                    if (result.status === 'failed') {
-                      const failure: StoreError = {
-                        error: result,
-                        message:
-                          result.error ??
-                          $localize`:@@intervention.publication.failed:Publication failed without applying partial changes.`,
-                        code: null,
-                        retryable: false,
-                        timestamp: Date.now(),
-                      };
-                      patchState(store, {
-                        publishCallState: errorCallState(failure),
-                        longRunning: false,
-                      });
-
-                      return;
-                    }
-
-                    patchState(store, {
-                      publishCallState: successCallState(result),
-                      longRunning: false,
-                    });
-                    dispatcher.dispatch(
-                      interventionPublicationStoreEvents.publishSucceeded(result),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    if (error instanceof PublicationPollTimeoutError) {
-                      const timeout: StoreError = {
-                        error,
-                        message: $localize`:@@intervention.publish.timedOutMessage:Publication is still running server-side — it will finish in the background.`,
-                        code: null,
-                        retryable: true,
-                        timestamp: Date.now(),
-                      };
-                      patchState(store, {
-                        publishCallState: errorCallState(timeout),
-                        publicationId: error.publicationId,
-                        longRunning: false,
-                        timedOut: true,
-                      });
-
-                      return;
-                    }
-
-                    const storeError: StoreError = {
-                      ...toStoreError(error),
-                      message: $localize`:@@intervention.publication.requestFailed:The publication request could not be completed.`,
-                    };
-                    patchState(store, {
-                      publishCallState: errorCallState(storeError),
-                      longRunning: false,
-                    });
-                  },
-                }),
-              ),
-            );
-          }),
-        ),
-      ),
+      const persist = (tracking: PublicationTracking): Promise<void> => {
+        const expected = scope;
+        const owner = offline.publicationOwner();
+        const org = organization;
+        const id = interventionId;
+        if (!isBrowser || !id) return Promise.resolve();
+        writeChain = writeChain
+          .then(() =>
+            owner === offline.publicationOwner()
+              ? offline.savePublicationTracking(org, id, tracking)
+              : undefined,
+          )
+          .catch(() => {
+            if (scope === expected)
+              patchState(store, {
+                storageError: $localize`:@@intervention.publication.storageError:Recovery could not be saved on this device. Keep this page open until the result is confirmed.`,
+              });
+          });
+        return writeChain;
+      };
 
       /**
-       * Method recheck
-       * @method recheck
-       *
-       * @description
-       * Re-reads the timed-out publication once, for the "Check again" the
-       * confirmation offers after {@link publish} rejects with a
-       * {@link PublicationPollTimeoutError}. A no-op without a captured
-       * `publicationId` — nothing to re-check yet.
-       *
-       * @access public
-       * @since 1.1.0
-       *
-       * @returns {void} No return value — progress is observable through `publishing`/`error`/`timedOut`.
-       */
-      recheck: rxMethod<void>(
-        pipe(
-          switchMap(() => {
-            const publicationId: string | null = store.publicationId();
-            if (publicationId === null) return EMPTY;
-
-            patchState(store, { publishCallState: pendingCallState() });
-
-            return from(publication.checkStatus(publicationId)).pipe(
-              tapResponse({
-                next: (result: PublicationOutput): void => {
-                  if (result.status === 'completed') {
-                    patchState(store, {
-                      publishCallState: successCallState(result),
-                      timedOut: false,
-                    });
-                    dispatcher.dispatch(
-                      interventionPublicationStoreEvents.publishSucceeded(result),
-                    );
-
-                    return;
-                  }
-
-                  if (result.status === 'failed') {
-                    const failure: StoreError = {
-                      error: result,
-                      message:
-                        result.error ??
-                        $localize`:@@intervention.publication.failed:Publication failed without applying partial changes.`,
-                      code: null,
-                      retryable: false,
-                      timestamp: Date.now(),
-                    };
-                    patchState(store, {
-                      publishCallState: errorCallState(failure),
-                      timedOut: false,
-                    });
-
-                    return;
-                  }
-
-                  const stillRunning: StoreError = {
-                    error: result,
-                    message: $localize`:@@intervention.publish.timedOutMessage:Publication is still running server-side — it will finish in the background.`,
-                    code: null,
-                    retryable: true,
-                    timestamp: Date.now(),
-                  };
-                  patchState(store, {
-                    publishCallState: errorCallState(stillRunning),
-                    timedOut: true,
-                  });
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = {
-                    ...toStoreError(error),
-                    message: $localize`:@@intervention.publication.requestFailed:The publication request could not be completed.`,
-                  };
-                  patchState(store, { publishCallState: errorCallState(storeError) });
-                },
-              }),
-            );
-          }),
-        ),
-      ),
-
-      /**
-       * Method reset
-       * @method reset
-       *
-       * @description
-       * Clears a previous attempt's result before a fresh confirmation opens,
-       * so a stale failure never lingers into the next attempt.
-       *
-       * @access public
+       * Function settle
+       * @description Records a server observation and emits success only for a completed publication.
+       * @access private
        * @since 1.0.0
-       *
+       * @param {PublicationOutput} result - Observed publication.
        * @returns {void}
        */
-      reset(): void {
-        patchState(store, INITIAL_STATE);
-      },
-    }),
+      const settle = (result: PublicationOutput): void => {
+        const previouslyCompleted =
+          store.publishCallState().status === 'success' &&
+          store.publishCallState().data?.status === 'completed';
+        const tracking: PublicationTracking = {
+          publicationId: result.id,
+          status: result.status,
+          checkedAt: Date.now(),
+        };
+        patchState(store, {
+          tracking,
+          publicationId: result.id,
+          longRunning: false,
+          timedOut: false,
+        });
+        void persist(tracking);
+        if (result.status === 'completed') {
+          patchState(store, { publishCallState: successCallState(result) });
+          if (!previouslyCompleted)
+            dispatcher.dispatch(interventionPublicationStoreEvents.publishSucceeded(result));
+        } else if (result.status === 'failed') {
+          patchState(store, {
+            publishCallState: errorCallState(
+              toStoreError(
+                new Error(
+                  result.error ??
+                    $localize`:@@intervention.publication.failed:Publication failed without applying partial changes.`,
+                ),
+              ),
+            ),
+          });
+        } else {
+          patchState(store, { publishCallState: successCallState(result), timedOut: true });
+        }
+      };
+
+      /**
+       * Function failObservation
+       * @description Keeps accepted identifiers on network failure and treats a lost launch response as unknown.
+       * @access private
+       * @since 1.0.0
+       * @param {unknown} error - Request or observation error.
+       * @returns {void}
+       */
+      const failObservation = (error: unknown): void => {
+        const id =
+          error instanceof PublicationPollTimeoutError
+            ? error.publicationId
+            : store.publicationId();
+        const normalized = toStoreError(error);
+        const unknown =
+          id === null &&
+          (normalized.code === null ||
+            normalized.code === 0 ||
+            (typeof normalized.code === 'number' && normalized.code >= 500));
+        const tracking: PublicationTracking | null = id
+          ? {
+              publicationId: id,
+              status: store.tracking()?.status === 'processing' ? 'processing' : 'pending',
+              checkedAt: store.tracking()?.checkedAt ?? Date.now(),
+            }
+          : { publicationId: null, status: unknown ? 'unknown' : 'failed', checkedAt: Date.now() };
+        patchState(store, {
+          tracking,
+          publicationId: id,
+          longRunning: false,
+          timedOut: tracking !== null && tracking.status !== 'failed',
+          publishCallState: errorCallState({
+            ...normalized,
+            message: id
+              ? $localize`:@@intervention.publication.observationInterrupted:The result is not confirmed. Check the status of the existing publication.`
+              : unknown
+                ? $localize`:@@intervention.publication.unknownResult:The publication result is unknown. Refresh the intervention before taking further action.`
+                : normalized.message,
+          }),
+        });
+        if (tracking) void persist(tracking);
+      };
+
+      return {
+        /**
+         * Method restore
+         * @description Restores only the active intervention's recovery record; stale reads are ignored.
+         * @access public
+         * @since 1.0.0
+         * @param {{ organization: string; interventionId: string }} context - Active scope.
+         * @returns {void}
+         */
+        restore: rxMethod<{ organization: string; interventionId: string }>(
+          pipe(
+            switchMap((context) => {
+              const owner = offline.publicationOwner();
+              const next = `${owner}:${context.organization}:${context.interventionId}`;
+              if (next === scope) return EMPTY;
+              scope = next;
+              organization = context.organization;
+              interventionId = context.interventionId;
+              patchState(store, INITIAL_STATE);
+              if (!isBrowser) return EMPTY;
+              patchState(store, { restoreCallState: pendingCallState() });
+              return from(offline.loadPublicationTracking(organization, interventionId)).pipe(
+                tapResponse({
+                  next: (tracking) => {
+                    if (scope !== next || owner !== offline.publicationOwner()) return;
+                    patchState(store, { restoreCallState: successCallState(null) });
+                    if (store.tracking() || store.publishing() || !tracking) return;
+                    patchState(store, {
+                      tracking,
+                      publicationId: tracking.publicationId,
+                      timedOut: !['completed', 'failed'].includes(tracking.status),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    if (scope === next && owner === offline.publicationOwner())
+                      patchState(store, {
+                        restoreCallState: errorCallState(toStoreError(error)),
+                        storageError: $localize`:@@intervention.publication.restoreError:Previous publication tracking could not be read. Refresh before publishing.`,
+                      });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+        /**
+         * Method publish
+         * @description Launches once, persists the accepted identifier, then observes that publication. Unresolved attempts cannot be posted again.
+         * @access public
+         * @since 1.0.0
+         * @param {InterventionOutput} intervention - Revision to publish.
+         * @returns {void}
+         */
+        publish: rxMethod<InterventionOutput>(
+          pipe(
+            exhaustMap((intervention) => {
+              if (
+                store.unresolved() ||
+                ['pending', 'error'].includes(store.restoreCallState().status)
+              )
+                return EMPTY;
+              organization = intervention.organization;
+              interventionId = intervention.id;
+              const owner = offline.publicationOwner();
+              scope = `${owner}:${organization}:${interventionId}`;
+              const expected = scope;
+              patchState(store, { ...INITIAL_STATE, publishCallState: pendingCallState() });
+              const result = (async (): Promise<PublicationOutput> => {
+                await persist({ publicationId: null, status: 'unknown', checkedAt: Date.now() });
+                if (scope !== expected || owner !== offline.publicationOwner())
+                  throw new Error('Publication context changed before launch.');
+                const accepted = await publication.start(intervention);
+                if (scope !== expected && owner === offline.publicationOwner()) {
+                  await offline.savePublicationTracking(
+                    intervention.organization,
+                    intervention.id,
+                    { publicationId: accepted.id, status: accepted.status, checkedAt: Date.now() },
+                  );
+                  return accepted;
+                }
+                if (scope === expected) {
+                  const tracking: PublicationTracking = {
+                    publicationId: accepted.id,
+                    status: accepted.status,
+                    checkedAt: Date.now(),
+                  };
+                  patchState(store, { tracking, publicationId: accepted.id });
+                  await persist(tracking);
+                }
+                return publication.observe(accepted);
+              })();
+              const result$ = from(result);
+              const slow$ = isBrowser
+                ? timer(30_000).pipe(
+                    tap(() => {
+                      if (scope === expected) patchState(store, { longRunning: true });
+                    }),
+                    takeUntil(result$.pipe(catchError(() => of(null)))),
+                    ignoreElements(),
+                  )
+                : EMPTY;
+              return merge(
+                slow$,
+                result$.pipe(
+                  tapResponse({
+                    next: (value) => {
+                      if (scope === expected) settle(value);
+                    },
+                    error: (error: unknown) => {
+                      if (scope === expected) failObservation(error);
+                    },
+                  }),
+                ),
+              );
+            }),
+          ),
+        ),
+        /**
+         * Method recheck
+         * @description Reads the existing publication without starting another operation.
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        recheck: rxMethod<void>(
+          pipe(
+            exhaustMap(() => {
+              const id = store.publicationId();
+              if (!id || store.publishing()) return EMPTY;
+              const expected = scope;
+              patchState(store, { publishCallState: pendingCallState() });
+              return from(publication.checkStatus(id)).pipe(
+                tapResponse({
+                  next: (value) => {
+                    if (scope === expected) settle(value);
+                  },
+                  error: (error: unknown) => {
+                    if (scope === expected) failObservation(error);
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+        /**
+         * Method reconcilePublished
+         * @description Reconciles a previously unknown result with a freshly loaded published intervention.
+         * @param {InterventionOutput} intervention - Fresh server representation.
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        reconcilePublished(intervention: InterventionOutput): void {
+          if (
+            intervention.id !== interventionId ||
+            intervention.organization !== organization ||
+            intervention.status !== 'published' ||
+            !store.unresolved()
+          )
+            return;
+          const tracking: PublicationTracking = {
+            publicationId: store.publicationId(),
+            status: 'completed',
+            checkedAt: Date.now(),
+          };
+          patchState(store, {
+            tracking,
+            timedOut: false,
+            longRunning: false,
+            publishCallState: idleCallState(),
+          });
+          void persist(tracking);
+        },
+        /**
+         * Method reset
+         * @method reset
+         * @description Clears resolved feedback while retaining unresolved publication tracking.
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        reset(): void {
+          if (!store.unresolved() && !store.publishing()) patchState(store, INITIAL_STATE);
+        },
+      };
+    },
   ),
 );
 
 /**
  * Type InterventionPublicationStoreType
- *
- * @description
- * Instance type of the {@link InterventionPublicationStore}.
+ * @description Injectable publication state instance.
+ * @since 1.0.0
  */
 export type InterventionPublicationStoreType = InstanceType<typeof InterventionPublicationStore>;

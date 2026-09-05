@@ -149,7 +149,7 @@ This feature does not own generic shell composition or account-level user identi
   inspection templates by the `inspections` subfeature's create flow
 - `/organizations/:organizationId/members` — the single people-management surface, tabbed via
   `?tab=` (`members` default, `roles`, `teams`), `?tab=`-addressable the same way as
-  `organization-settings-page` and `intervention-detail-page`'s rail. The route itself opens on
+  `organization-settings-page` and `intervention-detail-page`'s header tabs. The route itself opens on
   the **union** of every tab's read permission (`organizationPermissionGuard`, `match: 'any'`
   over `organization.members.read`, `.manage`, `organization.roles.read`, `.manage`,
   `organization.teams.read`) — reaching the route at all does not imply seeing every tab.
@@ -547,7 +547,8 @@ recipe, `app-collection-pagination` (`@shared/collection-pagination`), one toolb
 `app-collection-search-box` (also `@shared/collection-toolbar`), one editable filter-chip row,
 `app-collection-filter-bar` and its `app-filter-chip` shell (`@shared/collection-filters`), and
 one boundary for the native Spartan `Empty` states. The same `hlmEmpty` anatomy serves page-level,
-in-card and in-section empty slots; spacing and optional borders belong to the owning surface.
+in-card and in-section empty slots. Collection-table replacement states use the owning surface's
+neutral dashed border; spacing and other optional borders belong to the owning surface.
 Failures use `role="alert"`, a destructive media treatment and an optional retry action while
 keeping the native anatomy.
 
@@ -665,7 +666,10 @@ forms, not only `organization`'s, since the pattern is form-wide rather than fea
 routed page's title and header actions now, not the page itself: it renders the activated route's
 `title` (via `TitleService`, kept in sync by `PageTitleStrategy`) as the document's one `<h1>`, and
 a page contributes its right-side action buttons through a `<ng-template #pageActions>` registered
-on `PageActionsService` (`@core/page-actions`) — never an in-page title band. The breadcrumb trail
+on `PageActionsService` (`@core/page-actions`). A page with primary section or view navigation
+contributes a `<ng-template #pageTabs>` through `PageTabsService` (`@core/page-tabs`); the template
+uses Spartan's paginated tabs list with `variant="line"` and remains connected to the declaring
+page's `hlm-tabs` state and panels. Local filters and nested panel tabs stay in content. The breadcrumb trail
 below it never carries a heading itself, so there is exactly one `<h1>` per route regardless of
 whether that route opts into the trail. `app-organization-page-header` is retired entirely,
 including from `organization-dashboard-page`, which was its last consumer: the org identity it
@@ -796,3 +800,11 @@ Backend endpoints exist for these; no frontend model, service method or store do
 accepts membership. Organization list caches refresh and onboarding invalidates
 its cached record before guards reload access. The acceptance page then opens
 the joined organization directly; accepting the invitation remains explicit.
+
+## Asset explorer paging
+
+The assets pane preserves its three axes. Equipment and inspection lists each own their
+page, exact total and request state. Changing a selected facility cancels old reads and
+clears data from the previous scope; a retry only reloads the affected resource. Current
+snapshot indicators remain separate from period-bound dashboard trends; resource-growth
+charts are secondary to inspections and non-conformities.

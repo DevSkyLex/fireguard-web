@@ -10,6 +10,7 @@ const eligibleSucceeds = interventionOutput({
   number: 301,
   name: 'Move A eligible succeeds',
   status: 'planned',
+  responsible: `/api/organizations/${E2E_ORGANIZATION_ID}/members/e2e-member-1`,
   allowedTransitions: ['in_progress', 'abandoned'],
 });
 const eligibleFails = interventionOutput({
@@ -18,6 +19,7 @@ const eligibleFails = interventionOutput({
   number: 302,
   name: 'Move B eligible fails',
   status: 'planned',
+  responsible: `/api/organizations/${E2E_ORGANIZATION_ID}/members/e2e-member-1`,
   allowedTransitions: ['in_progress', 'abandoned'],
 });
 const ineligible = interventionOutput({
@@ -67,8 +69,36 @@ test.describe('Interventions list — bulk "Move to" with a mixed selection', ()
     await expect(interventions.rowStatus('Move B eligible fails')).toContainText('Planned');
     await expect(interventions.rowStatus('Move C not eligible')).toContainText('Draft');
 
+    await expect(page.getByTestId('interventions-batch-result')).toBeVisible();
+    await expect(page.getByTestId('interventions-batch-result')).toContainText(
+      '1 succeeded · 1 failed · 2 eligible',
+    );
     await expect(
-      interventions.toast('The intervention status could not be updated.'),
-    ).toBeVisible();
+      interventions
+        .row('Move A eligible succeeds')
+        .getByTestId('intervention-table-row-select')
+        .getByRole('checkbox'),
+    ).not.toBeChecked();
+    await expect(
+      interventions
+        .row('Move B eligible fails')
+        .getByTestId('intervention-table-row-select')
+        .getByRole('checkbox'),
+    ).toBeChecked();
+    await api.mockInterventionTransition(eligibleFails.id, {
+      ...eligibleFails,
+      status: 'in_progress',
+      revision: 2,
+    });
+    const retried: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH') retried.push(request.url());
+    });
+    await page.getByRole('button', { name: 'Retry failed interventions' }).click();
+    await expect(page.getByTestId('interventions-batch-result')).toContainText(
+      '1 succeeded · 0 failed · 1 eligible',
+    );
+    expect(retried).toHaveLength(1);
+    expect(retried[0]).toContain(eligibleFails.id);
   });
 });

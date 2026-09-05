@@ -17,8 +17,10 @@ import { of, Subject, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import {
   errorCallState,
+  successCallState,
   idleCallState,
   pendingCallState,
   type CallState,
@@ -221,6 +223,14 @@ const renderPageActions = (): HTMLElement => {
   return hostFixture.nativeElement as HTMLElement;
 };
 
+const renderPageTabs = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
 const byPageActionsTestId = (id: string): HTMLElement | null =>
   renderPageActions().querySelector(`[data-testid="${id}"]`);
 
@@ -230,6 +240,9 @@ const createPage = async (): Promise<ComponentFixture<InterventionDetailPage>> =
   created.componentRef.setInput('organizationId', 'org-1');
   created.componentRef.setInput('interventionId', 'intervention-1');
   await created.whenStable();
+  (created.nativeElement as HTMLElement).appendChild(renderPageActions());
+  (created.nativeElement as HTMLElement).appendChild(renderPageTabs());
+  document.body.appendChild(created.nativeElement as HTMLElement);
 
   return created;
 };
@@ -246,6 +259,7 @@ describe('InterventionDetailPage', () => {
   let changes: WritableSignal<readonly InterventionChangeOutput[]>;
   let saving: WritableSignal<boolean>;
   let updateDetailsCallState: WritableSignal<CallState>;
+  let workItemWriteCallState: WritableSignal<CallState>;
   let loadError: WritableSignal<string | null>;
   let loadFailed: WritableSignal<boolean>;
   let hasOlderActivities: WritableSignal<boolean>;
@@ -283,7 +297,13 @@ describe('InterventionDetailPage', () => {
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement =>
-    root().querySelector(`[data-testid="${id}"]`) as HTMLElement;
+    (root().querySelector(`[data-testid="${id}"]`) ??
+      document.querySelector(`[data-testid="${id}"]`)) as HTMLElement;
+
+  const openPageMenu = async (): Promise<void> => {
+    byTestId('intervention-detail-menu').click();
+    await fixture.whenStable();
+  };
 
   beforeAll(() => {
     globalThis.ResizeObserver ??= class {
@@ -303,6 +323,7 @@ describe('InterventionDetailPage', () => {
     changes = signal<readonly InterventionChangeOutput[]>([]);
     saving = signal(false);
     updateDetailsCallState = signal<CallState>(idleCallState());
+    workItemWriteCallState = signal<CallState>(idleCallState());
     loadError = signal<string | null>(null);
     loadFailed = signal(false);
     hasOlderActivities = signal(false);
@@ -391,10 +412,28 @@ describe('InterventionDetailPage', () => {
             blockedOperations: syncBlockedCount,
             problem: syncProblem,
             retryBlocked,
+            syncIntervention: vi.fn().mockResolvedValue(undefined),
           },
         },
-        { provide: InterventionOfflineService, useValue: { listOutbox } },
-        { provide: InterventionService, useValue: { downloadAttachment, exportReport } },
+        {
+          provide: InterventionOfflineService,
+          useValue: {
+            listOutbox,
+            pendingCount: signal(0),
+            publicationOwner: vi.fn().mockReturnValue('account-1'),
+            loadPublicationTracking: vi.fn().mockResolvedValue(null),
+            savePublicationTracking: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: InterventionService,
+          useValue: {
+            downloadAttachment,
+            exportReport,
+            get: vi.fn().mockImplementation(() => of(current())),
+            listIssues: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+          },
+        },
         {
           provide: TeamService,
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
@@ -404,7 +443,13 @@ describe('InterventionDetailPage', () => {
           useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
         },
         { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
-        { provide: InterventionPublicationService, useValue: { publish } },
+        {
+          provide: InterventionPublicationService,
+          useValue: {
+            start: publish,
+            observe: vi.fn().mockImplementation((value: unknown) => Promise.resolve(value)),
+          },
+        },
         { provide: FeedbackService, useValue: { success: vi.fn(), error: feedbackError } },
         { provide: TitleService, useValue: { setTitle: vi.fn() } },
         provideRouter([]),
@@ -488,8 +533,11 @@ describe('InterventionDetailPage', () => {
               loadFailed,
               transitionCallState: signal(idleCallState()),
               updateDetailsCallState,
+              workItemErrors: signal({}),
+              changeErrors: signal({}),
+              issuesCallState: signal(successCallState(null)),
               createWorkItemCallState: signal(idleCallState()),
-              workItemWriteCallState: signal(idleCallState()),
+              workItemWriteCallState,
               pendingWorkItemIds: signal(new Set<string>()),
               deleteWorkItemsCallState: signal(idleCallState()),
               rejectChangeCallState: signal(idleCallState()),
@@ -503,6 +551,7 @@ describe('InterventionDetailPage', () => {
               removeQueuedAttachment: vi.fn(),
               attachmentsCallState: signal(idleCallState()),
               attachmentWriteCallState: signal(idleCallState()),
+              attachmentDeleteCallState: signal(idleCallState()),
               pendingAttachmentIds: signal(new Set<string>()),
               loadAttachments: vi.fn(),
               uploadAttachment,
@@ -527,11 +576,15 @@ describe('InterventionDetailPage', () => {
           {
             provide: InterventionPlanningOptionsStore,
             useValue: {
+              catalogues: signal({}),
+              loadMore: vi.fn(),
               sites: signal([]),
               members: signal([]),
               labels: signal([]),
               targets: signal([]),
               loadWorkspaceOptions: vi.fn(),
+              ensureSelected: vi.fn(),
+              selectionFailed: signal(false),
             },
           },
           {
@@ -648,7 +701,7 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(true);
-      expect(root().textContent).toContain('Only the responsible agent can submit.');
+      expect(root().textContent).toContain('Submission is not currently available.');
     });
 
     it('should refuse publication while offline', async () => {
@@ -716,9 +769,10 @@ describe('InterventionDetailPage', () => {
 
       const band: HTMLElement = byTestId('intervention-detail-status-band');
 
-      expect(band.textContent).toContain('Changes requested');
-      expect(band.textContent).toContain('Field work');
+      expect(band.textContent).not.toContain('Changes requested');
+      expect(byTestId('intervention-property-status').textContent).toContain('Changes requested');
       expect(byTestId('intervention-detail-command').textContent).toContain('Record field work');
+      await openPageMenu();
       expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
     });
 
@@ -726,6 +780,7 @@ describe('InterventionDetailPage', () => {
       current.set(intervention({ status: 'submitted', blockersCount: 2 }));
       blockerCount.set(2);
       fixture = await createPage();
+      await openPageMenu();
 
       expect(byTestId('intervention-detail-blockers').textContent).toContain('2');
 
@@ -737,7 +792,7 @@ describe('InterventionDetailPage', () => {
       blockerCount.set(0);
       await fixture.whenStable();
 
-      expect(root().querySelector('[data-testid="intervention-detail-blockers"]')).toBeNull();
+      expect(document.querySelector('[data-testid="intervention-detail-blockers"]')).toBeNull();
     });
 
     it("should dispatch the page's own transition when the band's action is invoked", async () => {
@@ -774,8 +829,10 @@ describe('InterventionDetailPage', () => {
       HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
       try {
+        await openPageMenu();
         byTestId('intervention-detail-blockers').click();
         await fixture.whenStable();
+        await new Promise<void>((resolve) => setTimeout(resolve));
 
         const checklistWrapper: HTMLElement | null = root()
           .querySelector('app-intervention-issues-checklist')
@@ -800,6 +857,18 @@ describe('InterventionDetailPage', () => {
       await fixture.whenStable();
 
       expect(inBody('intervention-signature-dialog')).not.toBeNull();
+      expect(transition).not.toHaveBeenCalled();
+    });
+
+    it('should cancel without submitting when the signature is dismissed', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: false }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+      (inBody('intervention-signature-cancel') as HTMLButtonElement).click();
+      await fixture.whenStable();
+      expect(inBody('intervention-signature-dialog')).toBeNull();
       expect(transition).not.toHaveBeenCalled();
     });
 
@@ -865,7 +934,7 @@ describe('InterventionDetailPage', () => {
         fileName: 'signature.png',
         kind: 'signature',
       });
-      expect(inBody('intervention-signature-dialog')).toBeNull();
+      expect(inBody('intervention-signature-dialog')).not.toBeNull();
       expect(transition).not.toHaveBeenCalled();
 
       dispatcher.dispatch(
@@ -925,12 +994,34 @@ describe('InterventionDetailPage', () => {
       blockerCount.set(1);
       fixture = await createPage();
 
+      await openPageMenu();
       expect(byTestId('intervention-detail-blockers').textContent).toContain('1');
       expect(root().textContent).toContain('Missing sign-off.');
     });
   });
 
   describe('notices', () => {
+    it('should report each failed work mutation through feedback without an inline page alert', async () => {
+      fixture = await createPage();
+      const state = workItemWriteCallState;
+      const failure = errorCallState({
+        error: null,
+        message: 'This work item is no longer editable.',
+        code: 403,
+        retryable: false,
+        timestamp: 0,
+      });
+      state.set(failure);
+      await fixture.whenStable();
+      expect(feedbackError).toHaveBeenCalledWith('This work item is no longer editable.');
+      expect(root().querySelector('[data-testid="intervention-detail-error"]')).toBeNull();
+      state.set(pendingCallState());
+      await fixture.whenStable();
+      state.set(failure);
+      await fixture.whenStable();
+      expect(feedbackError).toHaveBeenCalledTimes(2);
+    });
+
     it('should offer a retry when the failure was a load, which re-running load repairs', async () => {
       loadError.set('The workspace could not be loaded.');
       loadFailed.set(true);
@@ -952,9 +1043,7 @@ describe('InterventionDetailPage', () => {
       loadFailed.set(false);
       fixture = await createPage();
 
-      expect(byTestId('intervention-detail-error').textContent).toContain(
-        'The site could not be changed.',
-      );
+      expect(root().querySelector('[data-testid="intervention-detail-error"]')).toBeNull();
       expect(root().querySelector('[data-testid="intervention-detail-retry"]')).toBeNull();
     });
 
@@ -997,7 +1086,7 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect(root().querySelector('[data-testid="intervention-sync-blocked-alert"]')).toBeNull();
-      expect(listOutbox).not.toHaveBeenCalled();
+      expect(listOutbox).toHaveBeenCalledWith('intervention-1');
     });
 
     it('should surface the blocked operations of THIS intervention on the page', async () => {
@@ -1032,7 +1121,7 @@ describe('InterventionDetailPage', () => {
       expect(alert.getAttribute('role')).toBe('alert');
       expect(alert.textContent).toContain('New comment');
       expect(alert.textContent).toContain('The server refused the comment.');
-      expect(alert.textContent).toContain('Replay stopped after a conflict.');
+      expect(alert.textContent).not.toContain('Replay stopped after a conflict.');
       expect(alert.textContent).not.toContain('New work item');
     });
 
@@ -1052,8 +1141,13 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       byTestId('intervention-sync-blocked-alert-retry').click();
+      fixture.detectChanges();
+      await fixture.whenStable();
 
-      expect(retryBlocked).toHaveBeenCalledTimes(1);
+      expect(retryBlocked).not.toHaveBeenCalled();
+      expect(
+        document.querySelector('[data-testid="intervention-operations-sheet"]'),
+      ).not.toBeNull();
     });
   });
 
@@ -1618,25 +1712,32 @@ describe('InterventionDetailPage', () => {
     it('should offer the Discussion trigger when messaging.read is granted', async () => {
       fixture = await createPage();
 
-      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeTruthy();
+      await openPageMenu();
+      expect(byTestId('intervention-detail-discussion-trigger').textContent).toContain(
+        'Intervention activity',
+      );
     });
 
-    it('should hide the Discussion trigger without messaging.read', async () => {
+    it('should keep intervention activity available without team messaging access', async () => {
       permitted.delete('organization.messaging.read');
       fixture = await createPage();
 
-      expect(byPageActionsTestId('intervention-detail-discussion-trigger')).toBeNull();
+      await openPageMenu();
+      expect(byTestId('intervention-detail-discussion-trigger').textContent).toContain(
+        'Intervention activity',
+      );
     });
 
     it('should open the activity and focus the comment from Discussion', async () => {
       fixture = await createPage();
-      expect(fixture.componentInstance['activityExpanded']()).toBe(false);
-      const trigger = byPageActionsTestId('intervention-detail-discussion-trigger');
+      expect(root().querySelector('#intervention-activity-content')).not.toBeNull();
+      await openPageMenu();
+      const trigger = byTestId('intervention-detail-discussion-trigger');
       document.body.appendChild(root());
       trigger?.click();
       await fixture.whenStable();
       await new Promise<void>((resolve) => setTimeout(resolve));
-      expect(fixture.componentInstance['activityExpanded']()).toBe(true);
+      expect(root().querySelector('[data-testid="intervention-activity-toggle"]')).toBeNull();
       expect(document.activeElement?.getAttribute('data-testid')).toBe('intervention-comment-body');
       expect(openSubjectThread).not.toHaveBeenCalled();
     });

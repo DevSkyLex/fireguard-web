@@ -16,8 +16,8 @@ import { form, FormField, maxLength, required, type FieldTree } from '@angular/f
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDialogFooter } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
-import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { InterventionRequestChangesFormValues } from './models';
 
@@ -54,7 +54,7 @@ const EMPTY_VALUES: InterventionRequestChangesFormValues = { note: '' };
     FormField,
     HlmButton,
     ...HlmFieldImports,
-    HlmSheetFooter,
+    HlmDialogFooter,
     ...HlmTextareaImports,
   ],
   templateUrl: './intervention-request-changes-form.component.html',

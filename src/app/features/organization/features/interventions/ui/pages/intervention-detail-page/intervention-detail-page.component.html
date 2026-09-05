@@ -1,4 +1,4 @@
-<div id="intervention-detail" class="flex w-full flex-col gap-4 p-4 max-sm:pb-32 md:p-6">
+<div id="intervention-detail" class="flex w-full flex-col gap-4">
   @if (store.loading() && !store.intervention()) {
     <div
       class="flex flex-col gap-4"
@@ -30,6 +30,23 @@
       </div>
     }
 
+    @if (planningOptions.selectionFailed()) {
+      <div hlmAlert role="alert">
+        <p hlmAlertDescription i18n="@@intervention.planning.selectionFailed">
+          Some selected resources could not be loaded. Your selections are preserved.
+        </p>
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          (click)="retrySelectedResources()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
+
     @if (blockedSyncOperations().length > 0) {
       <app-intervention-sync-blocked-alert
         [operations]="blockedSyncOperations()"
@@ -39,54 +56,52 @@
       />
     }
 
-    <p class="text-sm text-muted-foreground" data-testid="intervention-detail-meta">
-      {{ metaLine() }}
-    </p>
-
-    <section
-      class="flex flex-col gap-1"
-      aria-labelledby="intervention-detail-properties-title"
-      data-testid="intervention-detail-properties"
-    >
-      <h2
-        id="intervention-detail-properties-title"
-        class="sr-only"
-        i18n="@@intervention.sidebar.title"
-      >
-        Properties
-      </h2>
-
-      <app-intervention-properties-grid
-        [regionalFormatting]="regionalFormatting()"
-        [intervention]="intervention"
-        [organizationId]="organizationId()"
-        [siteOptions]="planningOptions.sites()"
-        [memberOptions]="planningOptions.members()"
-        [labelOptions]="planningOptions.labels()"
-        [canEditSchedule]="canEditSchedule()"
-        [canEditSite]="canEditSite()"
-        [canEditResponsible]="canEditResponsible()"
-        [canEditDetails]="canEditDetails()"
-        [canManageLabels]="canManageLabels()"
-        [editState]="editState()"
-        (detailsChanged)="onDetailsChanged($event)"
-        (editTargetChanged)="onEditTargetChanged($event)"
-        (manageLabelsRequested)="openManageLabels()"
-      />
-    </section>
-
-    <app-intervention-status-band
-      [status]="intervention.status"
-      [phase]="phase()"
-      [action]="commandAction()"
-      [busy]="store.saving()"
-      [blockersCount]="store.blockerCount()"
-      [revision]="intervention.revision"
-      [secondaryAction]="secondaryCommandAction()"
-      (invoked)="invokeCommandAction()"
-      (secondaryInvoked)="requestChangesVisible.set(true)"
-      (blockersRequested)="revealBlockers()"
-    />
+    @if (publicationStore.unresolved()) {
+      <div hlmAlert role="status" data-testid="intervention-publication-tracking">
+        <p hlmAlertTitle i18n="@@intervention.publication.trackingTitle">
+          Publication awaiting confirmation
+        </p>
+        <p hlmAlertDescription>{{ publicationStore.error() }}</p>
+        <div class="flex flex-wrap gap-2">
+          @if (publicationStore.publicationId()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="publishing()"
+              (click)="recheckPublication()"
+              i18n="@@intervention.publish.checkResult"
+            >
+              Check result
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              (click)="retryLoad()"
+              i18n="@@intervention.publication.refreshIntervention"
+            >
+              Refresh intervention
+            </button>
+          }
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            (click)="publishConfirmOpen.set(true)"
+            i18n="@@intervention.publication.showTracking"
+          >
+            View publication
+          </button>
+        </div>
+      </div>
+    }
+    @if (publicationStore.storageError(); as message) {
+      <div hlmAlert role="alert">
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
+    }
 
     @if (intervention.status === 'changes_requested' && intervention.reviewNote) {
       <div hlmAlert class="bg-muted/50" data-testid="intervention-detail-review-note">
@@ -102,7 +117,7 @@
       </div>
     }
 
-    @if (pageError(); as message) {
+    @if (store.loadFailed() && pageError(); as message) {
       <div hlmAlert variant="destructive" role="alert" data-testid="intervention-detail-error">
         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
         <p hlmAlertTitle>{{ message }}</p>
@@ -126,77 +141,78 @@
 
     <div #detailColumns class="@container/detail w-full">
       <div
-        class="flex flex-col gap-4 @4xl/detail:grid @4xl/detail:grid-cols-[minmax(0,1fr)_19rem] @4xl/detail:items-start @4xl/detail:gap-8"
+        class="flex flex-col gap-8 @4xl/detail:grid @4xl/detail:grid-cols-[minmax(0,1fr)_22rem] @4xl/detail:items-start @4xl/detail:gap-8"
       >
         <hlm-tabs
           [tab]="activeLinkedTab()"
           orientation="horizontal"
-          class="min-w-0 flex-col items-stretch gap-4"
+          class="min-w-0 flex-col items-stretch"
           (tabActivated)="onLinkedTabActivated($event)"
         >
-          <ng-template #linkedTabTriggers>
-            <button
-              hlmTabsTrigger="overview"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-overview"
-            >
-              <span i18n="@@intervention.linked.tabs.work">Work</span>
-            </button>
-            <button
-              hlmTabsTrigger="changes"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-changes"
-            >
-              <span i18n="@@intervention.linked.tabs.changes">Changes</span>
-              <span class="tabular-nums">{{ pendingChangesCount() }}</span>
-            </button>
-            <button
-              hlmTabsTrigger="attachments"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-attachments"
-            >
-              <span i18n="@@intervention.attachments.title">Attachments</span>
-              <span class="tabular-nums">{{ store.attachments().length }}</span>
-            </button>
-            <button
-              hlmTabsTrigger="facilities"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-facilities"
-            >
-              <span i18n="@@intervention.sidebar.facilities">Facilities</span>
-              <span class="tabular-nums">{{ intervention.facilitiesCount }}</span>
-            </button>
-            <button
-              hlmTabsTrigger="equipment"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-equipment"
-            >
-              <span i18n="@@intervention.sidebar.equipment">Equipment</span>
-              <span class="tabular-nums">{{ intervention.equipmentCount }}</span>
-            </button>
-            <button
-              hlmTabsTrigger="inspections"
-              class="max-sm:min-h-11"
-              data-testid="intervention-tab-inspections"
-            >
-              <span i18n="@@intervention.sidebar.inspections">Inspections</span>
-              <span class="tabular-nums">{{ intervention.inspectionsCount }}</span>
-            </button>
-          </ng-template>
-
-          <div
-            class="min-w-0 overflow-x-auto overflow-y-hidden py-1"
-            data-testid="intervention-tabs-list"
-          >
-            <hlm-tabs-list
+          <ng-template #pageTabs>
+            <hlm-paginated-tabs-list
               variant="line"
-              class="flex min-h-11 max-sm:[&>button]:shrink-0"
+              class="w-full"
+              tabListClass="justify-start max-sm:[&>button]:shrink-0"
+              data-testid="intervention-tabs-list"
               aria-label="Intervention sections"
               i18n-aria-label="@@intervention.linked.tabsAriaLabel"
             >
-              <ng-container *ngTemplateOutlet="linkedTabTriggers" />
-            </hlm-tabs-list>
-          </div>
+              <button
+                hlmTabsTrigger="overview"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-overview"
+              >
+                <ng-icon name="lucideListChecks" aria-hidden="true" />
+                <span i18n="@@intervention.linked.tabs.work">Work</span>
+              </button>
+              <button
+                hlmTabsTrigger="changes"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-changes"
+              >
+                <ng-icon name="lucideGitCompareArrows" aria-hidden="true" />
+                <span i18n="@@intervention.linked.tabs.changes">Changes</span>
+                <span class="tabular-nums">{{ pendingChangesCount() }}</span>
+              </button>
+              <button
+                hlmTabsTrigger="attachments"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-attachments"
+              >
+                <ng-icon name="lucidePaperclip" aria-hidden="true" />
+                <span i18n="@@intervention.attachments.title">Attachments</span>
+                <span class="tabular-nums">{{ store.attachments().length }}</span>
+              </button>
+              <button
+                hlmTabsTrigger="facilities"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-facilities"
+              >
+                <ng-icon name="lucideBuilding2" aria-hidden="true" />
+                <span i18n="@@intervention.sidebar.facilities">Facilities</span>
+                <span class="tabular-nums">{{ intervention.facilitiesCount }}</span>
+              </button>
+              <button
+                hlmTabsTrigger="equipment"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-equipment"
+              >
+                <ng-icon name="lucideBoxes" aria-hidden="true" />
+                <span i18n="@@intervention.sidebar.equipment">Equipment</span>
+                <span class="tabular-nums">{{ intervention.equipmentCount }}</span>
+              </button>
+              <button
+                hlmTabsTrigger="inspections"
+                class="max-sm:min-h-11"
+                data-testid="intervention-tab-inspections"
+              >
+                <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
+                <span i18n="@@intervention.sidebar.inspections">Inspections</span>
+                <span class="tabular-nums">{{ intervention.inspectionsCount }}</span>
+              </button>
+            </hlm-paginated-tabs-list>
+          </ng-template>
 
           <div hlmTabsContent="overview" class="min-w-0">
             <div class="flex min-w-0 flex-col gap-6">
@@ -205,20 +221,6 @@
                   [items]="readinessItems()"
                   (itemActivated)="onReadinessActivated($event)"
                 />
-              }
-
-              @if (phase() === 'execute' || phase() === 'review') {
-                <div
-                  #mobileIssuesSection
-                  tabindex="-1"
-                  class="scroll-mt-72 outline-none md:scroll-mt-36 @4xl/detail:hidden"
-                >
-                  <app-intervention-issues-checklist
-                    [issues]="store.issues()"
-                    [phase]="phase()"
-                    (activated)="onIssueActivated($event)"
-                  />
-                </div>
               }
 
               <div
@@ -248,8 +250,28 @@
                   </div>
                 }
 
+                @if (scanProblem(); as problem) {
+                  <div hlmAlert role="alert">
+                    <p hlmAlertDescription>{{ problem }}</p>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      (click)="scanProblem.set(null); revealFieldWork()"
+                      i18n="@@intervention.scan.browse"
+                    >
+                      Browse work items
+                    </button>
+                  </div>
+                }
                 <app-intervention-work-item-table
+                  [preferredFilter]="workFilter()"
+                  (filterChanged)="workFilter.set($event)"
+                  (proofsRequested)="proofItem.set($event)"
+                  [contextId]="interventionId()"
                   [items]="store.workItems()"
+                  [queuedIds]="operationsStore.queuedWorkItemIds()"
+                  [errors]="store.workItemErrors()"
                   [loading]="store.loading()"
                   [nextItemId]="nextWorkItemId()"
                   [pendingItemIds]="store.pendingWorkItemIds()"
@@ -282,48 +304,49 @@
                 />
               </div>
 
-              <hlm-collapsible
-                [expanded]="activityExpanded()"
-                (expandedChange)="activityExpanded.set($event)"
-              >
-                <button
-                  hlmCollapsibleTrigger
-                  hlmBtn
-                  variant="ghost"
-                  type="button"
-                  class="max-sm:min-h-11"
-                  data-testid="intervention-activity-toggle"
-                >
-                  <span i18n="@@intervention.activity.disclosure">Activity</span
-                  ><span class="tabular-nums">{{ store.activities().length }}</span>
-                </button>
+              @if (phase() === 'execute' || phase() === 'review') {
                 <div
-                  hlmCollapsibleContent
-                  id="intervention-activity-content"
-                  #activityContent
-                  class="flex flex-col gap-4 pt-3"
+                  #mobileIssuesSection
+                  tabindex="-1"
+                  class="scroll-mt-72 outline-none md:scroll-mt-36 @4xl/detail:hidden"
                 >
-                  <app-intervention-activity-thread
-                    [activities]="store.activities()"
-                    [members]="planningOptions.members()"
-                    [loading]="activitiesLoading()"
-                    [error]="activitiesError()"
-                    [hasOlder]="store.hasOlderActivities()"
-                    (olderRequested)="loadOlderActivities()"
-                    (retryRequested)="reloadActivities()"
+                  <app-intervention-issues-checklist
+                    [issues]="store.issues()"
+                    [loading]="store.issuesCallState().status === 'pending'"
+                    [error]="store.issuesCallState().error?.message ?? null"
+                    (retryRequested)="store.refreshIssues(interventionId())"
+                    [verified]="store.issuesCallState().status === 'success'"
+                    [phase]="phase()"
+                    (activated)="onIssueActivated($event)"
                   />
-
-                  <div class="border-t border-border pt-4">
-                    <app-intervention-comment-form
-                      [pending]="commentPending()"
-                      [online]="online()"
-                      [serverError]="commentError()"
-                      [members]="planningOptions.members()"
-                      (submitted)="postComment($event)"
-                    />
-                  </div>
                 </div>
-              </hlm-collapsible>
+              }
+
+              <div
+                id="intervention-activity-content"
+                #activityContent
+                class="flex flex-col gap-4 pt-3"
+              >
+                <app-intervention-activity-thread
+                  [activities]="store.activities()"
+                  [members]="planningOptions.members()"
+                  [loading]="activitiesLoading()"
+                  [error]="activitiesError()"
+                  [hasOlder]="store.hasOlderActivities()"
+                  (olderRequested)="loadOlderActivities()"
+                  (retryRequested)="reloadActivities()"
+                />
+
+                <div class="border-t border-border pt-4">
+                  <app-intervention-comment-form
+                    [pending]="commentPending()"
+                    [online]="online()"
+                    [serverError]="commentError()"
+                    [members]="planningOptions.members()"
+                    (submitted)="postComment($event)"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -331,6 +354,9 @@
             <ng-template hlmTabsContentLazy>
               <app-intervention-change-list
                 [changes]="store.changes()"
+                [workItems]="store.workItems()"
+                [errors]="store.changeErrors()"
+                [defaultFilter]="intervention.status === 'published' ? 'applied' : 'proposed'"
                 [canReject]="canRejectChange()"
                 [pendingChangeIds]="store.pendingChangeIds()"
                 (rejected)="rejectChange($event)"
@@ -341,6 +367,9 @@
           <div hlmTabsContent="attachments" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-attachments
+                [loading]="store.attachmentsCallState().status === 'pending'"
+                [loadError]="store.attachmentsCallState().error?.message ?? null"
+                (reloadRequested)="store.loadAttachments(interventionId())"
                 [attachments]="store.attachments()"
                 [queuedAttachments]="store.queuedAttachments()"
                 [workItems]="store.workItems()"
@@ -401,12 +430,76 @@
           </div>
         </hlm-tabs>
 
-        <div class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-32">
+        <aside
+          class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-4 @4xl/detail:border-s @4xl/detail:border-border @4xl/detail:ps-6"
+        >
+          <section
+            class="flex flex-col gap-1 border-b border-border pb-3"
+            aria-labelledby="intervention-detail-properties-title"
+            data-testid="intervention-detail-properties"
+          >
+            <div class="mb-1 flex flex-col gap-1">
+              <h2
+                id="intervention-detail-properties-title"
+                class="text-sm font-semibold"
+                i18n="@@intervention.sidebar.title"
+              >
+                Properties
+              </h2>
+              <p
+                class="text-xs leading-relaxed text-muted-foreground"
+                i18n="@@intervention.sidebar.description"
+              >
+                Planning, assignment and intervention status.
+              </p>
+            </div>
+
+            <app-intervention-properties-grid
+              [catalogues]="planningOptions.catalogues()"
+              (catalogueRequested)="planningOptions.loadMore($event)"
+              (catalogueSearched)="planningOptions.search($event)"
+              [regionalFormatting]="regionalFormatting()"
+              [intervention]="intervention"
+              [organizationId]="organizationId()"
+              [siteOptions]="planningOptions.sites()"
+              [memberOptions]="planningOptions.members()"
+              [labelOptions]="planningOptions.labels()"
+              [canEditSchedule]="canEditSchedule()"
+              [canEditSite]="canEditSite()"
+              [canEditResponsible]="canEditResponsible()"
+              [canEditDetails]="canEditDetails()"
+              [canManageLabels]="canManageLabels()"
+              [editState]="editState()"
+              (detailsChanged)="onDetailsChanged($event)"
+              (editTargetChanged)="onEditTargetChanged($event)"
+              (manageLabelsRequested)="openManageLabels()"
+            />
+          </section>
+          @if (phase() === 'execute' || phase() === 'review') {
+            <div
+              #desktopIssuesSection
+              tabindex="-1"
+              class="scroll-mt-72 outline-none md:scroll-mt-36 @max-4xl/detail:hidden"
+            >
+              <app-intervention-issues-checklist
+                [issues]="store.issues()"
+                [loading]="store.issuesCallState().status === 'pending'"
+                [error]="store.issuesCallState().error?.message ?? null"
+                (retryRequested)="store.refreshIssues(interventionId())"
+                [verified]="store.issuesCallState().status === 'success'"
+                [phase]="phase()"
+                (activated)="onIssueActivated($event)"
+              />
+            </div>
+          }
+
+          <hlm-separator />
+
           <section
             hlmCollapsible
             [expanded]="aboutExpanded() ?? false"
             (expandedChange)="aboutExpanded.set($event)"
-            class="flex flex-col gap-1"
+            class="flex flex-col gap-3"
             aria-labelledby="intervention-detail-about-title"
             data-testid="intervention-detail-about"
           >
@@ -416,12 +509,16 @@
               variant="ghost"
               type="button"
               id="intervention-detail-about-title"
-              class="justify-start max-sm:min-h-11"
-              i18n="@@intervention.detail.aboutTitle"
+              class="justify-between max-sm:min-h-11"
             >
-              About
+              <span i18n="@@intervention.detail.aboutTitle">About</span>
+              <ng-icon
+                name="lucideChevronRight"
+                [class.rotate-90]="aboutExpanded()"
+                aria-hidden="true"
+              />
             </button>
-            <div hlmCollapsibleContent>
+            <div hlmCollapsibleContent class="flex flex-col gap-4">
               <app-intervention-about
                 [regionalFormatting]="regionalFormatting()"
                 [intervention]="intervention"
@@ -430,25 +527,15 @@
                 (detailsChanged)="onDetailsChanged($event)"
                 (editTargetChanged)="onEditTargetChanged($event)"
               />
+              <p
+                class="text-xs leading-relaxed text-muted-foreground"
+                data-testid="intervention-detail-meta"
+              >
+                {{ metaLine() }}
+              </p>
             </div>
           </section>
-
-          <hlm-separator />
-
-          @if (phase() === 'execute' || phase() === 'review') {
-            <div
-              #desktopIssuesSection
-              tabindex="-1"
-              class="scroll-mt-72 outline-none md:scroll-mt-36 @max-4xl/detail:hidden"
-            >
-              <app-intervention-issues-checklist
-                [issues]="store.issues()"
-                [phase]="phase()"
-                (activated)="onIssueActivated($event)"
-              />
-            </div>
-          }
-        </div>
+        </aside>
       </div>
     </div>
 
@@ -550,6 +637,9 @@
 </div>
 
 <app-intervention-work-item-sheet
+  [catalogues]="planningOptions.catalogues()"
+  (catalogueRequested)="planningOptions.loadMore($event)"
+  (catalogueSearched)="planningOptions.search($event)"
   [visible]="workItemSheetVisible()"
   [pending]="workItemCreatePending()"
   [disabled]="!canAddWorkItem()"
@@ -560,7 +650,8 @@
   (submitted)="createWorkItem($event)"
 />
 
-<app-intervention-request-changes-sheet
+<app-intervention-request-changes-dialog
+  [interventionName]="store.intervention()?.name ?? ''"
   [visible]="requestChangesVisible()"
   [pending]="requestChangesPending()"
   [disabled]="!canReview()"
@@ -594,7 +685,9 @@
 
 <app-intervention-signature-dialog
   [visible]="signatureDialogVisible()"
-  [busy]="signatureUploading()"
+  [busy]="signatureUploading() || signingSubmitPending()"
+  [errorMessage]="store.attachmentWriteCallState().error?.message ?? null"
+  (skipped)="onSignatureSkipped()"
   (signed)="onSignatureCaptured($event)"
   (dismissed)="onSignatureDismissed()"
 />
@@ -616,6 +709,8 @@
   [intervention]="store.intervention()"
   [pendingChangesCount]="pendingChangesCount()"
   [publishing]="publishing()"
+  [accepted]="publicationStore.unresolved() && publicationStore.publicationId() !== null"
+  [unknownResult]="publicationStore.tracking()?.status === 'unknown'"
   [publicationLongRunning]="publicationLongRunning()"
   [publicationTimedOut]="publicationTimedOut()"
   [publicationError]="publicationError()"
@@ -651,126 +746,257 @@
 }
 
 <ng-template #pageActions>
-  @if (canDiscuss()) {
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      size="sm"
-      class="min-w-0 shrink max-sm:size-11"
-      data-testid="intervention-detail-discussion-trigger"
-      aria-controls="intervention-activity-content"
-      i18n-aria-label="@@intervention.discussion.trigger"
-      aria-label="Discussion"
-      [attr.aria-expanded]="activityExpanded()"
-      (click)="openActivity()"
-    >
-      <ng-icon name="lucideMessagesSquare" class="text-base" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@intervention.discussion.trigger"
-        >Discussion</span
-      >
-    </button>
-  }
-
   @if (store.intervention(); as intervention) {
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      align="end"
-      class="max-sm:size-11"
-      data-testid="intervention-detail-menu"
-      [hlmDropdownMenuTrigger]="moreMenu"
+    <div
+      class="flex min-w-0 flex-wrap items-center gap-2"
+      data-testid="intervention-detail-status-band"
     >
-      <ng-icon name="lucideEllipsis" aria-hidden="true" />
-      <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
-    </button>
-
-    <ng-template #moreMenu>
-      <hlm-dropdown-menu class="w-56">
-        @if (canDiscuss()) {
+      @if (recordingLabel(); as label) {
+        <span
+          class="text-xs text-muted-foreground"
+          role="status"
+          data-testid="intervention-recording-state"
+          >{{ label }}</span
+        >
+      }
+      <div
+        hlmButtonGroup
+        aria-label="More actions"
+        i18n-aria-label="@@intervention.detail.moreActions"
+      >
+        @if (commandAction(); as action) {
           <button
-            hlmDropdownMenuItem
+            hlmBtn
             type="button"
-            data-testid="intervention-detail-team-chat"
-            (click)="discussionSheetVisible.set(true)"
-            i18n="@@intervention.discussion.teamChat"
+            class="max-sm:min-h-11"
+            data-testid="intervention-detail-command"
+            [disabled]="action.disabled || action.loading || store.saving()"
+            [attr.aria-describedby]="action.disabledReason ? 'intervention-command-reason' : null"
+            (click)="invokeCommandAction()"
           >
-            Team chat
-          </button>
-        }
-
-        @if (transitionTargets().length > 0) {
-          <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
-            <hlm-dropdown-menu-label
-              id="intervention-transition-group-label"
-              i18n="@@intervention.detail.statusMenuLabel"
-              >Send it to</hlm-dropdown-menu-label
-            >
-            @for (target of transitionTargets(); track target) {
-              <button
-                hlmDropdownMenuItem
-                data-testid="intervention-detail-transition"
-                (click)="onTransitionSelect(target)"
-              >
-                <app-intervention-tag kind="status" [value]="target" asOption />
-              </button>
+            @if (action.loading) {
+              <hlm-spinner />
+            } @else {
+              <ng-icon [name]="action.icon" aria-hidden="true" />
             }
-          </hlm-dropdown-menu-group>
-          <hlm-dropdown-menu-separator />
-        }
-        @if (canAssignTeam()) {
-          <button
-            hlmDropdownMenuItem
-            data-testid="intervention-detail-assign-team"
-            (click)="openTeamAssign()"
-          >
-            <span i18n="@@intervention.team.assign.menuEntry">Assign team…</span>
+            <span class="truncate">{{ action.label }}</span>
           </button>
-        }
-        @if (canPlan()) {
+        } @else if (secondaryCommandAction(); as secondary) {
           <button
-            hlmDropdownMenuItem
-            data-testid="intervention-detail-duplicate"
-            (click)="duplicateIntervention()"
+            hlmBtn
+            type="button"
+            data-testid="intervention-command-secondary"
+            [disabled]="secondary.disabled || secondary.loading || store.saving()"
+            (click)="requestChangesVisible.set(true)"
           >
-            <ng-icon name="lucideCopy" aria-hidden="true" />
-            <span i18n="@@intervention.duplicate.action">Duplicate</span>
+            {{ secondary.label }}
+          </button>
+        } @else if (canDiscuss()) {
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            (click)="openActivity()"
+            i18n="@@intervention.discussion.activityTrigger"
+          >
+            <ng-icon name="lucideActivity" aria-hidden="true" />
+            <span>Intervention activity</span>
           </button>
         }
         <button
-          hlmDropdownMenuItem
-          data-testid="intervention-detail-export-report"
-          [disabled]="reportExporting()"
-          [attr.aria-busy]="reportExporting() ? 'true' : null"
-          (click)="exportReport(intervention)"
+          hlmBtn
+          type="button"
+          [variant]="commandAction() || secondaryCommandAction() ? 'default' : 'outline'"
+          size="icon"
+          align="end"
+          class="max-sm:size-11"
+          data-testid="intervention-detail-menu"
+          [hlmDropdownMenuTrigger]="moreMenu"
         >
-          <ng-icon name="lucideFileDown" aria-hidden="true" />
-          <span i18n="@@intervention.detail.exportReport">Export report</span>
+          <ng-icon name="lucideChevronRight" class="rotate-90" aria-hidden="true" />
+          <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
         </button>
-        @if (canAbandon()) {
+      </div>
+      @if (commandAction()?.disabledReason; as reason) {
+        <span id="intervention-command-reason" class="w-full text-xs text-muted-foreground">{{
+          reason
+        }}</span>
+      }
+      <ng-template #moreMenu>
+        <hlm-dropdown-menu class="w-56">
           <button
             hlmDropdownMenuItem
-            data-testid="intervention-detail-abandon"
-            (click)="requestAbandon()"
+            type="button"
+            data-testid="intervention-detail-discussion-trigger"
+            (click)="openActivity()"
+            i18n="@@intervention.discussion.activityTrigger"
           >
-            <ng-icon name="lucideBan" aria-hidden="true" />
-            <span i18n="@@intervention.abandon.action">Abandon intervention</span>
+            <ng-icon name="lucideActivity" aria-hidden="true" />
+            <span>Intervention activity</span>
           </button>
-        }
-        @if (canDeleteIntervention()) {
           <button
             hlmDropdownMenuItem
-            variant="destructive"
-            data-testid="intervention-detail-delete"
-            (click)="requestDeleteIntervention()"
+            type="button"
+            (click)="operationsVisible.set(true); refreshOperations()"
+            i18n="@@intervention.operations.view"
           >
-            <ng-icon name="lucideTrash2" aria-hidden="true" />
-            <span i18n="@@intervention.delete.action">Delete intervention</span>
+            <ng-icon name="lucideHistory" aria-hidden="true" />
+            <span>View saved operations</span>
           </button>
-        }
-      </hlm-dropdown-menu>
-    </ng-template>
+          @if (store.blockerCount() > 0) {
+            <button
+              hlmDropdownMenuItem
+              type="button"
+              data-testid="intervention-detail-blockers"
+              (click)="revealBlockers()"
+              i18n="@@intervention.band.blockers"
+            >
+              <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              <span>{{ store.blockerCount() }} blocking issues</span>
+            </button>
+          }
+          <hlm-dropdown-menu-separator />
+
+          @if (canDiscuss()) {
+            <button
+              hlmDropdownMenuItem
+              type="button"
+              data-testid="intervention-detail-team-chat"
+              (click)="discussionSheetVisible.set(true)"
+              i18n="@@intervention.discussion.teamChat"
+            >
+              <ng-icon name="lucideMessagesSquare" aria-hidden="true" />
+              <span>Team chat</span>
+            </button>
+          }
+
+          @if (transitionTargets().length > 0) {
+            <hlm-dropdown-menu-group aria-labelledby="intervention-transition-group-label">
+              <hlm-dropdown-menu-label
+                id="intervention-transition-group-label"
+                i18n="@@intervention.detail.statusMenuLabel"
+                >Send it to</hlm-dropdown-menu-label
+              >
+              @for (target of transitionTargets(); track target) {
+                <button
+                  hlmDropdownMenuItem
+                  data-testid="intervention-detail-transition"
+                  (click)="onTransitionSelect(target)"
+                >
+                  <app-intervention-tag kind="status" [value]="target" asOption />
+                </button>
+              }
+            </hlm-dropdown-menu-group>
+            <hlm-dropdown-menu-separator />
+          }
+          @if (canAssignTeam()) {
+            <button
+              hlmDropdownMenuItem
+              data-testid="intervention-detail-assign-team"
+              (click)="openTeamAssign()"
+            >
+              <ng-icon name="lucideUsersRound" aria-hidden="true" />
+              <span i18n="@@intervention.team.assign.menuEntry">Assign team…</span>
+            </button>
+          }
+          @if (canPlan()) {
+            <button
+              hlmDropdownMenuItem
+              data-testid="intervention-detail-duplicate"
+              (click)="duplicateIntervention()"
+            >
+              <ng-icon name="lucideCopy" aria-hidden="true" />
+              <span i18n="@@intervention.duplicate.action">Duplicate</span>
+            </button>
+          }
+          <button
+            hlmDropdownMenuItem
+            data-testid="intervention-detail-export-report"
+            [disabled]="reportExporting()"
+            [attr.aria-busy]="reportExporting() ? 'true' : null"
+            (click)="exportReport(intervention)"
+          >
+            <ng-icon name="lucideFileDown" aria-hidden="true" />
+            <span i18n="@@intervention.detail.exportReport">Export report</span>
+          </button>
+          @if (canAbandon()) {
+            <button
+              hlmDropdownMenuItem
+              data-testid="intervention-detail-abandon"
+              (click)="requestAbandon()"
+            >
+              <ng-icon name="lucideBan" aria-hidden="true" />
+              <span i18n="@@intervention.abandon.action">Abandon intervention</span>
+            </button>
+          }
+          @if (canDeleteIntervention()) {
+            <button
+              hlmDropdownMenuItem
+              variant="destructive"
+              data-testid="intervention-detail-delete"
+              (click)="requestDeleteIntervention()"
+            >
+              <ng-icon name="lucideTrash2" aria-hidden="true" />
+              <span i18n="@@intervention.delete.action">Delete intervention</span>
+            </button>
+          }
+        </hlm-dropdown-menu>
+      </ng-template>
+    </div>
   }
 </ng-template>
+
+<app-intervention-operations-sheet
+  [visible]="operationsVisible()"
+  [interventionName]="store.intervention()?.name ?? ''"
+  [operations]="operationsStore.operations()"
+  [workItems]="store.workItems()"
+  [callState]="operationsStore.loadCallState()"
+  [mutations]="operationsStore.mutations()"
+  [online]="syncOnline()"
+  [syncing]="syncRetrying()"
+  (visibleChange)="operationsVisible.set($event)"
+  (reloadRequested)="refreshOperations()"
+  (resolved)="operationsStore.resolve($event)"
+/>
+
+<hlm-sheet
+  [side]="proofSheetSide()"
+  [state]="proofItem() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && proofItem.set(null)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
+    data-testid="intervention-work-item-proofs"
+  >
+    <hlm-sheet-header>
+      <h2 hlmSheetTitle i18n="@@intervention.proofs.title">Work item evidence</h2>
+      <p hlmSheetDescription>{{ proofItem()?.targetSummary?.label ?? proofItem()?.action }}</p>
+    </hlm-sheet-header>
+    <div class="min-h-0 flex-1 overflow-y-auto px-4">
+      <app-intervention-attachments
+        [loading]="store.attachmentsCallState().status === 'pending'"
+        [loadError]="store.attachmentsCallState().error?.message ?? null"
+        (reloadRequested)="store.loadAttachments(interventionId())"
+        [attachments]="proofAttachments()"
+        [queuedAttachments]="proofQueuedAttachments()"
+        [workItems]="store.workItems()"
+        [canManage]="false"
+        [online]="online()"
+        [downloadingIds]="pendingDownloadIds()"
+        (downloadRequested)="downloadAttachment($event)"
+      />
+    </div>
+    <hlm-sheet-footer>
+      <button
+        hlmBtn
+        variant="outline"
+        (click)="proofItem.set(null); onLinkedTabActivated('attachments')"
+        i18n="@@intervention.proofs.viewAll"
+      >
+        View all intervention files
+      </button>
+    </hlm-sheet-footer>
+  </hlm-sheet-content>
+</hlm-sheet>

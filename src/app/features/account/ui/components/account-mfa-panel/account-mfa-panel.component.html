@@ -2,7 +2,9 @@
   <header class="flex flex-wrap items-start justify-between gap-3">
     <div class="flex min-w-0 flex-col gap-1">
       <div class="flex flex-wrap items-center gap-2">
-        <h2 hlmCardTitle i18n="@@account.mfa.title">Authenticator app</h2>
+        <h2 hlmCardTitle class="text-xl font-semibold tracking-tight" i18n="@@account.mfa.title">
+          Authenticator app
+        </h2>
         @if (totpEnabled()) {
           <span hlmBadge variant="default" class="gap-1">
             <ng-icon name="lucideShieldCheck" class="text-xs" aria-hidden="true" />
@@ -12,7 +14,7 @@
           <span hlmBadge variant="secondary" i18n="@@account.mfa.off">Off</span>
         }
       </div>
-      <p class="text-sm text-muted-foreground" i18n="@@account.mfa.description">
+      <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.mfa.description">
         Ask for a code from your phone whenever you sign in.
       </p>
     </div>

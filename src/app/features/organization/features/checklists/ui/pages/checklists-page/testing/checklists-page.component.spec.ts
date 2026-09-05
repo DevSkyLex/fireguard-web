@@ -10,7 +10,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -72,6 +72,7 @@ describe('ChecklistsPage', () => {
   let hasPermission: ReturnType<typeof vi.fn>;
 
   const createPage = async (): Promise<void> => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     fixture = TestBed.createComponent(ChecklistsPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     await fixture.whenStable();
@@ -162,13 +163,17 @@ describe('ChecklistsPage', () => {
     expect(renderPageActions().querySelector('[data-testid="checklists-new"]')).toBeNull();
   });
 
-  it('should open the create sheet from the header action', async () => {
+  it('should navigate to the dedicated create page from the header action', async () => {
     await createPage();
 
     renderPageActions().querySelector<HTMLButtonElement>('[data-testid="checklists-new"]')?.click();
     await fixture.whenStable();
 
-    expect(document.querySelector('[data-testid="checklist-create-sheet"]')).not.toBeNull();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(
+      ['organizations', 'org-1', 'checklists', 'new'].map((segment, index) =>
+        index === 0 ? '/' + segment : segment,
+      ),
+    );
   });
 
   it('should narrow the list to one status and return to page 1', async () => {
@@ -198,54 +203,6 @@ describe('ChecklistsPage', () => {
       page: 1,
     });
     expect(fixture.componentInstance['activeFilterKeys']()).toEqual([]);
-  });
-
-  it('should call ChecklistStore.create with the organization id and the payload', async () => {
-    await createPage();
-
-    fixture.componentInstance['createChecklist']({ name: 'Fire drill', version: '1.0', items: [] });
-
-    expect(create).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      input: { name: 'Fire drill', version: '1.0', items: [] },
-    });
-  });
-
-  it('should close the create dialog once the create write succeeds', async () => {
-    await createPage();
-    fixture.componentInstance['createDialogVisible'].set(true);
-    await fixture.whenStable();
-
-    createCallState.set(successCallState(checklist()));
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['createDialogVisible']()).toBe(false);
-    expect(resetCreateOperation).toHaveBeenCalled();
-  });
-
-  it('should call ChecklistStore.update for the checklist open in the edit dialog', async () => {
-    await createPage();
-    fixture.componentInstance['requestEdit'](checklist());
-
-    fixture.componentInstance['submitEdit']({ name: 'Renamed', items: [] });
-
-    expect(update).toHaveBeenCalledWith({
-      organizationId: 'org-1',
-      checklistId: 'checklist-1',
-      input: { name: 'Renamed', items: [] },
-    });
-  });
-
-  it('should close the edit dialog once the update write succeeds', async () => {
-    await createPage();
-    fixture.componentInstance['requestEdit'](checklist());
-    await fixture.whenStable();
-
-    updateCallState.set(successCallState(checklist()));
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['editingChecklist']()).toBeNull();
-    expect(resetUpdateOperation).toHaveBeenCalled();
   });
 
   it('should call ChecklistStore.archive for the checklist open in the archive confirmation', async () => {

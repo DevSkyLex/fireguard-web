@@ -24,7 +24,15 @@
   <ng-container surfaceRows>
     @for (item of items(); track item.id) {
       <tr hlmTableRow data-testid="checklist-table-row">
-        <td hlmTableCell class="font-medium text-foreground">{{ item.name }}</td>
+        <td hlmTableCell class="font-medium text-foreground">
+          <button
+            type="button"
+            class="rounded-sm text-start underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            (click)="viewRequested.emit(item)"
+          >
+            {{ item.name }}
+          </button>
+        </td>
 
         <td hlmTableCell>
           <app-checklist-status-tag [value]="item.status" />
@@ -50,9 +58,13 @@
         data-testid="checklist-table-card"
       >
         <div class="flex items-start gap-2">
-          <span class="line-clamp-2 min-w-0 flex-1 font-medium text-foreground">{{
-            item.name
-          }}</span>
+          <button
+            type="button"
+            class="min-w-0 flex-1 rounded-sm text-start font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            (click)="viewRequested.emit(item)"
+          >
+            {{ item.name }}
+          </button>
 
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
@@ -79,7 +91,7 @@
 </app-collection-surface>
 
 <ng-template #rowActions let-item="item">
-  @if (canWrite()) {
+  @if (canWrite() && item.status === 'active') {
     <button
       hlmBtn
       type="button"

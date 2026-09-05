@@ -1,4 +1,4 @@
-<div id="equipment-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+<div id="equipment-detail" class="flex w-full flex-col gap-4">
   @if (activeEquipmentStore.selectedEquipment(); as equipment) {
     <div class="flex flex-wrap items-center gap-2">
       <app-equipment-status-tag kind="status" [value]="equipment.status" />
@@ -86,36 +86,41 @@
       {{ metaLine() }}
     </p>
 
-    <hlm-tabs [tab]="activeTab()" class="flex-col" (tabActivated)="onTabActivated($event)">
-      <hlm-tabs-list
-        aria-label="Equipment sections"
-        i18n-aria-label="@@equipment.detail.tabsAriaLabel"
-      >
-        <button
-          hlmTabsTrigger="overview"
-          class="max-sm:min-h-11"
-          data-testid="equipment-tab-overview"
+    <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onTabActivated($event)">
+      <ng-template #pageTabs>
+        <hlm-paginated-tabs-list
+          variant="line"
+          class="w-full"
+          tabListClass="justify-start"
+          aria-label="Equipment sections"
+          i18n-aria-label="@@equipment.detail.tabsAriaLabel"
         >
-          <span i18n="@@equipment.detail.tabs.overview">Overview</span>
-        </button>
-        <button
-          hlmTabsTrigger="attachments"
-          class="max-sm:min-h-11"
-          data-testid="equipment-tab-attachments"
-        >
-          <span i18n="@@equipment.detail.tabs.attachments">Attachments</span>
-        </button>
-        <button
-          hlmTabsTrigger="maintenance"
-          class="max-sm:min-h-11"
-          data-testid="equipment-tab-maintenance"
-        >
-          <span i18n="@@equipment.detail.tabs.maintenance">Maintenance</span>
-        </button>
-        <button hlmTabsTrigger="tags" class="max-sm:min-h-11" data-testid="equipment-tab-tags">
-          <span i18n="@@equipment.detail.tabs.tags">Tags</span>
-        </button>
-      </hlm-tabs-list>
+          <button
+            hlmTabsTrigger="overview"
+            class="max-sm:min-h-11"
+            data-testid="equipment-tab-overview"
+          >
+            <span i18n="@@equipment.detail.tabs.overview">Overview</span>
+          </button>
+          <button
+            hlmTabsTrigger="attachments"
+            class="max-sm:min-h-11"
+            data-testid="equipment-tab-attachments"
+          >
+            <span i18n="@@equipment.detail.tabs.attachments">Attachments</span>
+          </button>
+          <button
+            hlmTabsTrigger="maintenance"
+            class="max-sm:min-h-11"
+            data-testid="equipment-tab-maintenance"
+          >
+            <span i18n="@@equipment.detail.tabs.maintenance">Maintenance</span>
+          </button>
+          <button hlmTabsTrigger="tags" class="max-sm:min-h-11" data-testid="equipment-tab-tags">
+            <span i18n="@@equipment.detail.tabs.tags">Tags</span>
+          </button>
+        </hlm-paginated-tabs-list>
+      </ng-template>
 
       <div hlmTabsContent="overview" class="flex flex-col gap-4">
         <section

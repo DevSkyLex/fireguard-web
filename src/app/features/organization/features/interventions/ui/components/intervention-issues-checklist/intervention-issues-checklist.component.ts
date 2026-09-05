@@ -58,6 +58,42 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionIssuesChecklist {
+  /**
+   * Property loading
+   * @readonly
+   * @description Whether the current section is waiting for its data.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading = input(false);
+  /**
+   * Property error
+   * @readonly
+   * @description Server or validation error retained beside the current draft.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly error = input<string | null>(null);
+  /**
+   * Property retryRequested
+   * @readonly
+   * @description Requests another verification of the current issues.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retryRequested = output<void>();
+  /**
+   * Property verified
+   * @readonly
+   * @description True only after successful verification against the server.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly verified: InputSignal<boolean> = input(false);
   //#region Inputs
   /**
    * Property issues
@@ -144,7 +180,7 @@ export class InterventionIssuesChecklist {
    * @type {Signal<boolean>}
    */
   protected readonly showClearNotice: Signal<boolean> = computed<boolean>(
-    () => this.phase() === 'review' && this.blockers().length === 0,
+    () => this.verified() && this.phase() === 'review' && this.blockers().length === 0,
   );
 
   /**

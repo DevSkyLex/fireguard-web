@@ -1,171 +1,188 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group>
-    <hlm-field>
-      <label hlmFieldLabel for="checklist-edit-name"
-        ><span i18n="@@checklists.form.name">Name</span><app-required-marker />
-      </label>
-      <input
-        hlmInput
-        id="checklist-edit-name"
-        type="text"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-name"
-        [formField]="nameForm.name"
-        [attr.aria-required]="true"
-        [attr.aria-invalid]="nameForm.name().touched() && nameForm.name().invalid()"
-      />
-      @if (nameForm.name().touched() && nameForm.name().invalid()) {
-        <hlm-field-error>{{ nameForm.name().errors()[0].message }}</hlm-field-error>
+  <fieldset class="min-w-0" [disabled]="pending()">
+    <hlm-field-group>
+      @if (error() || draftError(); as message) {
+        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
       }
-    </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="checklist-edit-name"
+          ><span i18n="@@checklists.form.name">Name</span><app-required-marker />
+        </label>
+        <input
+          hlmInput
+          id="checklist-edit-name"
+          type="text"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-name"
+          [formField]="nameForm.name"
+          [attr.aria-required]="true"
+          [attr.aria-invalid]="nameForm.name().touched() && nameForm.name().invalid()"
+        />
+        @if (nameForm.name().touched() && nameForm.name().invalid()) {
+          <hlm-field-error>{{ nameForm.name().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
 
-    @if (staged().length > 0) {
-      <ul class="flex flex-col gap-2" data-testid="checklist-edit-items">
-        @for (item of staged(); track $index; let i = $index) {
-          <li
-            class="flex items-start justify-between gap-3 rounded-lg px-3 py-2 ring-1 ring-foreground/10"
-          >
-            <div class="flex flex-col">
-              <span class="text-sm font-medium text-foreground">{{ item.label }}</span>
-              @if (item.description !== '') {
-                <span class="text-xs text-muted-foreground">{{ item.description }}</span>
-              }
-              @if (!item.required) {
-                <span class="text-xs text-muted-foreground" i18n="@@checklists.form.itemOptional"
-                  >Optional</span
+      @if (staged().length > 0) {
+        <ul class="flex flex-col gap-2" data-testid="checklist-edit-items">
+          @for (item of staged(); track $index; let i = $index) {
+            <li class="flex flex-wrap items-start justify-between gap-3 border-b py-4">
+              <div class="flex min-w-48 flex-1 flex-col gap-2 max-sm:basis-full">
+                <label class="text-xs text-muted-foreground" [for]="'checklist-row-label-' + i"
+                  ><span i18n="@@checklists.form.itemLabel">Item label</span> {{ i + 1 }}</label
                 >
-              }
-            </div>
-            <div class="flex shrink-0 items-center gap-1">
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="max-sm:min-h-11"
-                [disabled]="i === 0"
-                [attr.data-testid]="'checklist-edit-item-up-' + i"
-                (click)="moveItem(i, -1)"
-              >
-                <span class="sr-only" i18n="@@checklists.form.itemMoveUp">Move up</span>
-                <span aria-hidden="true">&uarr;</span>
-              </button>
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="max-sm:min-h-11"
-                [disabled]="i === staged().length - 1"
-                [attr.data-testid]="'checklist-edit-item-down-' + i"
-                (click)="moveItem(i, 1)"
-              >
-                <span class="sr-only" i18n="@@checklists.form.itemMoveDown">Move down</span>
-                <span aria-hidden="true">&darr;</span>
-              </button>
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="max-sm:min-h-11"
-                [attr.data-testid]="'checklist-edit-item-remove-' + i"
-                (click)="removeItem(i)"
-              >
-                <span i18n="@@checklists.form.itemRemove">Remove</span>
-              </button>
-            </div>
-          </li>
-        }
-      </ul>
-    }
-
-    <hlm-field>
-      <label hlmFieldLabel for="checklist-edit-item-label" i18n="@@checklists.form.itemLabel"
-        >Item label</label
-      >
-      <input
-        hlmInput
-        id="checklist-edit-item-label"
-        type="text"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-item-label"
-        [formField]="itemDraftForm.label"
-        [attr.aria-invalid]="itemDraftForm.label().touched() && itemDraftForm.label().invalid()"
-      />
-      @if (itemDraftForm.label().touched() && itemDraftForm.label().invalid()) {
-        <hlm-field-error>{{ itemDraftForm.label().errors()[0].message }}</hlm-field-error>
+                <input
+                  hlmInput
+                  [id]="'checklist-row-label-' + i"
+                  [formField]="stagedForm[i].label"
+                />
+                @if (item.description !== '') {
+                  <span class="text-xs text-muted-foreground">{{ item.description }}</span>
+                }
+                @if (!item.required) {
+                  <span class="text-xs text-muted-foreground" i18n="@@checklists.form.itemOptional"
+                    >Optional</span
+                  >
+                }
+              </div>
+              <div class="flex shrink-0 items-center gap-1">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11 max-sm:min-w-11"
+                  [disabled]="i === 0"
+                  [attr.data-testid]="'checklist-edit-item-up-' + i"
+                  (click)="moveItem(i, -1)"
+                >
+                  <span class="sr-only" i18n="@@checklists.form.itemMoveUp">Move up</span>
+                  <span aria-hidden="true">&uarr;</span>
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11 max-sm:min-w-11"
+                  [disabled]="i === staged().length - 1"
+                  [attr.data-testid]="'checklist-edit-item-down-' + i"
+                  (click)="moveItem(i, 1)"
+                >
+                  <span class="sr-only" i18n="@@checklists.form.itemMoveDown">Move down</span>
+                  <span aria-hidden="true">&darr;</span>
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  [attr.data-testid]="'checklist-edit-item-remove-' + i"
+                  (click)="removeItem(i)"
+                >
+                  <span i18n="@@checklists.form.itemRemove">Remove</span>
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
       }
-    </hlm-field>
 
-    <hlm-field>
-      <label
-        hlmFieldLabel
-        for="checklist-edit-item-description"
-        i18n="@@checklists.form.itemDescription"
-        >Description (optional)</label
-      >
-      <input
-        hlmInput
-        id="checklist-edit-item-description"
-        type="text"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-item-description"
-        [formField]="itemDraftForm.description"
-      />
-    </hlm-field>
-
-    <hlm-field orientation="horizontal">
-      <hlm-checkbox
-        inputId="checklist-edit-item-required"
-        data-testid="checklist-edit-item-required"
-        [formField]="itemDraftForm.required"
-      />
-      <label hlmFieldLabel for="checklist-edit-item-required" i18n="@@checklists.form.itemRequired"
-        >Required item</label
-      >
-    </hlm-field>
-
-    <hlm-field orientation="horizontal">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-item-add"
-        (click)="addItem()"
-      >
-        <span i18n="@@checklists.form.itemAdd">Add item</span>
-      </button>
-    </hlm-field>
-
-    <div class="flex flex-wrap items-center justify-end gap-2">
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-cancel"
-        [disabled]="pending()"
-        (click)="cancelled.emit()"
-      >
-        <span i18n="@@checklists.form.cancel">Cancel</span>
-      </button>
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="checklist-edit-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@checklists.form.saving">Saving…</span>
-        } @else {
-          <span i18n="@@checklists.form.save">Save changes</span>
+      <hlm-field>
+        <label hlmFieldLabel for="checklist-edit-item-label" i18n="@@checklists.form.itemLabel"
+          >Item label</label
+        >
+        <input
+          hlmInput
+          id="checklist-edit-item-label"
+          type="text"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-item-label"
+          [formField]="itemDraftForm.label"
+          [attr.aria-invalid]="itemDraftForm.label().touched() && itemDraftForm.label().invalid()"
+        />
+        @if (itemDraftForm.label().touched() && itemDraftForm.label().invalid()) {
+          <hlm-field-error>{{ itemDraftForm.label().errors()[0].message }}</hlm-field-error>
         }
-      </button>
-    </div>
-  </hlm-field-group>
+      </hlm-field>
+
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="checklist-edit-item-description"
+          i18n="@@checklists.form.itemDescription"
+          >Description (optional)</label
+        >
+        <input
+          hlmInput
+          id="checklist-edit-item-description"
+          type="text"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-item-description"
+          [formField]="itemDraftForm.description"
+        />
+      </hlm-field>
+
+      <hlm-field orientation="horizontal">
+        <hlm-checkbox
+          inputId="checklist-edit-item-required"
+          data-testid="checklist-edit-item-required"
+          [formField]="itemDraftForm.required"
+        />
+        <label
+          hlmFieldLabel
+          for="checklist-edit-item-required"
+          i18n="@@checklists.form.itemRequired"
+          >Required item</label
+        >
+      </hlm-field>
+
+      <hlm-field orientation="horizontal">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-item-add"
+          (click)="addItem()"
+        >
+          <span i18n="@@checklists.form.itemAdd">Add item</span>
+        </button>
+      </hlm-field>
+
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-cancel"
+          [disabled]="pending()"
+          (click)="cancelled.emit()"
+        >
+          <span i18n="@@checklists.form.cancel">Cancel</span>
+        </button>
+        <button
+          hlmBtn
+          type="submit"
+          class="max-sm:min-h-11"
+          data-testid="checklist-edit-submit"
+          [disabled]="pending()"
+          [attr.aria-busy]="pending() ? 'true' : null"
+          aria-live="polite"
+        >
+          @if (pending()) {
+            <span i18n="@@checklists.form.saving">Saving…</span>
+          } @else {
+            @if (creating()) {
+              <span i18n="@@checklists.form.create">Create checklist</span>
+            } @else {
+              <span i18n="@@checklists.form.save">Save changes</span>
+            }
+          }
+        </button>
+      </div>
+    </hlm-field-group>
+  </fieldset>
 </form>

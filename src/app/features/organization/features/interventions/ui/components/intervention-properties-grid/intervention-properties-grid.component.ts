@@ -15,8 +15,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideExternalLink } from '@ng-icons/lucide';
+import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+  PlanningCatalogueRequest,
+} from '@features/organization/features/interventions/models';
 import type {
   InterventionEditState,
   InterventionEditTarget,
@@ -30,6 +33,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
+import { InterventionCatalogueStatus } from '../intervention-catalogue-status';
 
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -38,7 +42,6 @@ import {
 } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
@@ -71,9 +74,10 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  * The intervention's properties, each edited where it is displayed
  * (`ARCHITECTURE.md` §10.5) — separated by rhythm, not rules: `PRODUCT.md`'s
  * "hierarchy from rhythm, not boxes" over a divider list, so the sidebar's
- * only boxed surface stays the action box below it. Rows keep enough gap that
- * a wrapping row (labels, participants) does not run into its neighbour
- * without a line to hold it back.
+ * only boxed surface stays the action box below it. Every property remains
+ * visible; the secondary grid uses this component's container width instead
+ * of viewport breakpoints, keeping participants, labels and revision legible
+ * in the narrow desktop rail and distributing them when the rail stacks.
  *
  * Two commit modes, chosen by the control rather than by taste: a value
  * picked in one gesture commits on that gesture, because a Save button after
@@ -87,14 +91,10 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  * `plannedStartAt` and `dueAt` are one card: they are picked together and
  * sent in one patch, which §10.5 admits as "a small coherent group".
  *
- * The site's facility record is reachable through a small external-link
- * icon-anchor **beside** the site's `app-inplace-field`, not projected inside
- * it: `InplaceField`'s trigger is itself a `<button>`, and an `<a>` nested
- * inside a `<button>` is invalid interactive nesting — it would also fire
- * the field's own open/close on every click and could leave the anchor
- * unreachable to assistive tech. The sibling anchor stays visible whenever
- * {@link siteFacilityId} resolves, independent of the field's edit state.
- * `shared/inplace-field` is never modified for a single consumer's shape.
+ * When the site is editable, its name opens the in-place picker. Once the
+ * workflow freezes that field, the same name becomes the link to the facility
+ * record. The conditional shapes avoid nesting an anchor inside
+ * `InplaceField`'s button trigger while keeping the name itself actionable.
  *
  * @version 1.2.0
  *
@@ -103,11 +103,10 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
+    InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
-    ...HlmCollapsibleImports,
     OrgDatePipe,
-    NgIcon,
     RouterLink,
     HlmButton,
     InplaceField,
@@ -116,11 +115,39 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
     ...HlmDatePickerImports,
     ...HlmSelectImports,
   ],
-  providers: [provideIcons({ lucideExternalLink })],
   templateUrl: './intervention-properties-grid.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPropertiesGrid {
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Independent request states and server coverage for preparation sources.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests the next page or retry of a selection source.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueKind>}
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests server search while preserving the active draft and selected labels.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueRequest>}
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
   //#region Inputs
   /**
    * Property intervention
@@ -398,7 +425,7 @@ export class InterventionPropertiesGrid {
   /**
    * Property siteFacilityId
    * @readonly
-   * @description The site's bare facility id, extracted from its IRI, driving the sibling external-link anchor beside the site field.
+   * @description The site's bare facility id, extracted from its IRI, so the read-only site name can link to its facility record.
    * @access protected
    * @since 1.1.0
    * @type {Signal<string | null>}

@@ -21,58 +21,60 @@
     </div>
   </div>
 } @else {
-  <div class="mb-5 flex flex-col gap-1">
-    <h2 class="text-base font-semibold text-foreground" i18n="@@org.settings.usage.title">
-      Plan usage
-    </h2>
-    <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@org.settings.usage.description">
-      Track what your organization currently uses against its plan limits. At the limit, new records
-      cannot be added until usage is reduced or the plan is upgraded.
-    </p>
-  </div>
-  <div class="grid gap-3 sm:grid-cols-2">
-    @for (row of rows(); track row.resource) {
-      <div
-        class="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
-        [attr.data-testid]="'organization-usage-row-' + row.resource"
-      >
-        <div class="flex items-start justify-between gap-3 text-sm">
-          <div class="flex min-w-0 flex-col gap-1">
-            <span class="font-medium text-foreground">{{ row.label }}</span>
-            <p class="text-xs leading-relaxed text-muted-foreground">{{ row.description }}</p>
+  <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+    <header class="min-w-0">
+      <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.settings.usage.title">
+        Plan usage
+      </h2>
+      <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.settings.usage.description">
+        Track what your organization currently uses against its plan limits. At the limit, new
+        records cannot be added until usage is reduced or the plan is upgraded.
+      </p>
+    </header>
+    <div class="grid min-w-0 gap-3 sm:grid-cols-2">
+      @for (row of rows(); track row.resource) {
+        <div
+          class="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
+          [attr.data-testid]="'organization-usage-row-' + row.resource"
+        >
+          <div class="flex items-start justify-between gap-3 text-sm">
+            <div class="flex min-w-0 flex-col gap-1">
+              <span class="font-medium text-foreground">{{ row.label }}</span>
+              <p class="text-xs leading-relaxed text-muted-foreground">{{ row.description }}</p>
+            </div>
+            @if (row.limit !== null) {
+              <span class="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                <span>{{ row.used }} / {{ row.limit }}</span>
+                @if (row.status.severity !== 'neutral') {
+                  <ng-icon
+                    [name]="row.status.icon"
+                    [class]="statusIconClass[row.status.severity]"
+                    aria-hidden="true"
+                  />
+                  <span>{{ row.status.label }}</span>
+                }
+              </span>
+            } @else {
+              <span class="text-muted-foreground">
+                {{ row.used }} · <span i18n="@@org.settings.usage.unlimited">Unlimited</span>
+              </span>
+            }
           </div>
-          @if (row.limit !== null) {
-            <span class="flex shrink-0 items-center gap-1.5 text-muted-foreground">
-              <span>{{ row.used }} / {{ row.limit }}</span>
-              @if (row.status.severity !== 'neutral') {
-                <ng-icon
-                  [name]="row.status.icon"
-                  [class]="statusIconClass[row.status.severity]"
-                  aria-hidden="true"
-                />
-                <span>{{ row.status.label }}</span>
-              }
-            </span>
-          } @else {
-            <span class="text-muted-foreground">
-              {{ row.used }} · <span i18n="@@org.settings.usage.unlimited">Unlimited</span>
-            </span>
+
+          @if (row.percent !== null) {
+            <div class="mt-auto flex flex-col gap-1.5">
+              <hlm-progress [value]="row.percent" [attr.aria-label]="row.label">
+                <hlm-progress-indicator />
+              </hlm-progress>
+              <p class="text-xs text-muted-foreground">
+                <span i18n="@@org.settings.usage.remaining">
+                  {{ row.remaining }} available before the plan limit
+                </span>
+              </p>
+            </div>
           }
         </div>
-
-        @if (row.percent !== null) {
-          <div class="mt-auto flex flex-col gap-1.5">
-            <hlm-progress [value]="row.percent" [attr.aria-label]="row.label">
-              <hlm-progress-indicator />
-            </hlm-progress>
-            <p class="text-xs text-muted-foreground">
-              <span i18n="@@org.settings.usage.remaining">
-                {{ row.remaining }} available before the plan limit
-              </span>
-            </p>
-          </div>
-        }
-      </div>
-    }
-  </div>
+      }
+    </div>
+  </section>
 }

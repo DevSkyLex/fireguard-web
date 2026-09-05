@@ -1,7 +1,7 @@
-<div id="organization-settings" class="flex h-full flex-col gap-6 p-4 md:p-6">
+<div id="organization-settings" class="flex h-full flex-col gap-6">
   @if (!organizationReady()) {
     <div
-      class="flex max-w-2xl flex-col gap-4"
+      class="flex w-full flex-col gap-4"
       role="status"
       aria-label="Loading organization settings"
       i18n-aria-label="@@org.settings.loadingAria"
@@ -11,120 +11,138 @@
       <hlm-skeleton class="h-24 w-full" />
     </div>
   } @else {
-    <hlm-tabs
-      [tab]="activeTab()"
-      [orientation]="settingsTabsOrientation()"
-      class="flex flex-col gap-4 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8"
-      (tabActivated)="onTabActivated($event)"
-    >
-      <ng-template #settingsTabTriggers>
-        <button
-          hlmTabsTrigger="general"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-general"
-        >
-          <ng-icon name="lucideSettings" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.general">General</span>
-        </button>
-        <button
-          hlmTabsTrigger="subscription"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-subscription"
-        >
-          <ng-icon name="lucideCreditCard" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.subscription">Subscription</span>
-        </button>
-        <button hlmTabsTrigger="usage" class="max-sm:min-h-11" data-testid="org-settings-tab-usage">
-          <ng-icon name="lucideGauge" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.usage">Usage</span>
-        </button>
-        <button
-          hlmTabsTrigger="notifications"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-notifications"
-        >
-          <ng-icon name="lucideBell" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.notifications">Notifications</span>
-        </button>
-        <button
-          hlmTabsTrigger="regional"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-regional"
-        >
-          <ng-icon name="lucideGlobe" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.regional">Regional & formats</span>
-        </button>
-        <button
-          hlmTabsTrigger="compliance"
-          class="max-sm:min-h-11"
-          data-testid="org-settings-tab-compliance"
-        >
-          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-          <span i18n="@@org.settings.tabs.compliance">Compliance</span>
-        </button>
-        @if (canDelete()) {
-          <button
-            hlmTabsTrigger="danger"
-            class="max-sm:min-h-11"
-            data-testid="org-settings-tab-danger"
-          >
-            <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
-            <span i18n="@@org.settings.tabs.danger">Danger zone</span>
-          </button>
-        }
-      </ng-template>
-
-      @if (settingsTabsOrientation() === 'vertical') {
-        <hlm-tabs-list
-          variant="line"
-          class="shrink-0 items-stretch lg:sticky lg:top-4"
-          aria-label="Organization settings sections"
-          i18n-aria-label="@@org.settings.tabsAriaLabel"
-        >
-          <ng-container *ngTemplateOutlet="settingsTabTriggers" />
-        </hlm-tabs-list>
-      } @else {
+    <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onTabActivated($event)">
+      <ng-template #pageTabs>
         <hlm-paginated-tabs-list
           variant="line"
           class="w-full"
+          tabListClass="justify-start"
           data-testid="org-settings-tabs-list"
           aria-label="Organization settings sections"
           i18n-aria-label="@@org.settings.tabsAriaLabel"
         >
-          <ng-container *ngTemplateOutlet="settingsTabTriggers" />
+          <button
+            hlmTabsTrigger="general"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-general"
+          >
+            <ng-icon name="lucideSettings" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.general">General</span>
+          </button>
+          <button
+            hlmTabsTrigger="subscription"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-subscription"
+          >
+            <ng-icon name="lucideCreditCard" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.subscription">Subscription</span>
+          </button>
+          <button
+            hlmTabsTrigger="usage"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-usage"
+          >
+            <ng-icon name="lucideGauge" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.usage">Usage</span>
+          </button>
+          <button
+            hlmTabsTrigger="notifications"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-notifications"
+          >
+            <ng-icon name="lucideBell" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.notifications">Notifications</span>
+          </button>
+          <button
+            hlmTabsTrigger="regional"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-regional"
+          >
+            <ng-icon name="lucideGlobe" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.regional">Regional & formats</span>
+          </button>
+          <button
+            hlmTabsTrigger="compliance"
+            class="max-sm:min-h-11"
+            data-testid="org-settings-tab-compliance"
+          >
+            <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+            <span i18n="@@org.settings.tabs.compliance">Compliance</span>
+          </button>
+          @if (canDelete()) {
+            <button
+              hlmTabsTrigger="danger"
+              class="max-sm:min-h-11"
+              data-testid="org-settings-tab-danger"
+            >
+              <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+              <span i18n="@@org.settings.tabs.danger">Danger zone</span>
+            </button>
+          }
         </hlm-paginated-tabs-list>
-      }
+      </ng-template>
 
-      <div hlmTabsContent="general" class="max-w-3xl">
+      <div hlmTabsContent="general" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
-          <section class="flex flex-col gap-6">
-            <app-organization-logo-picker
-              [logoUrl]="organization()?.logoUrl ?? null"
-              [organizationName]="organization()?.name ?? ''"
-              [pending]="settingsStore.isUploadingLogo()"
-              [removing]="settingsStore.isRemovingLogo()"
-              [error]="
-                settingsStore.uploadLogoError()?.message ??
-                settingsStore.removeLogoError()?.message ??
-                null
-              "
-              (selected)="uploadLogo($event)"
-              (removed)="removeLogo()"
-            />
+          <div class="flex min-w-0 flex-col divide-y divide-border">
+            <section
+              class="grid min-w-0 gap-6 pb-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+            >
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.general.sectionTitle"
+                >
+                  Organization details
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.general.sectionDescription"
+                >
+                  Manage the name, description and logo shown throughout this workspace.
+                </p>
+              </header>
 
-            <app-organization-general-form
-              [organization]="generalFormValues()"
-              [pending]="settingsStore.isSaving()"
-              (submitted)="saveGeneral($event)"
-            />
+              <div class="flex min-w-0 flex-col gap-6">
+                <app-organization-logo-picker
+                  [logoUrl]="organization()?.logoUrl ?? null"
+                  [organizationName]="organization()?.name ?? ''"
+                  [pending]="settingsStore.isUploadingLogo()"
+                  [removing]="settingsStore.isRemovingLogo()"
+                  [error]="
+                    settingsStore.uploadLogoError()?.message ??
+                    settingsStore.removeLogoError()?.message ??
+                    null
+                  "
+                  (selected)="uploadLogo($event)"
+                  (removed)="removeLogo()"
+                />
 
-            <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h2
-                class="text-sm font-medium text-muted-foreground"
-                i18n="@@org.settings.legal.sectionTitle"
-              >
-                Legal information
-              </h2>
+                <app-organization-general-form
+                  [organization]="generalFormValues()"
+                  [pending]="settingsStore.isSaving()"
+                  (submitted)="saveGeneral($event)"
+                />
+              </div>
+            </section>
+
+            <section
+              class="grid min-w-0 gap-6 pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+            >
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.legal.sectionTitle"
+                >
+                  Legal information
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.legal.sectionDescription"
+                >
+                  Keep the legal identity used for billing and compliance records up to date.
+                </p>
+              </header>
               <app-organization-legal-form
                 [legal]="legalFormValues()"
                 [legalTypeOptions]="legalTypeOptions()"
@@ -132,17 +150,23 @@
                 (submitted)="saveLegal($event)"
               />
             </section>
-          </section>
+          </div>
         </ng-template>
       </div>
 
-      <div hlmTabsContent="subscription" class="max-w-6xl">
+      <div hlmTabsContent="subscription" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
           <div class="flex flex-col gap-8">
             <div hlmCard>
               <div hlmCardHeader>
-                <h2 hlmCardTitle i18n="@@org.settings.subscription.currentTitle">Current plan</h2>
-                <p hlmCardDescription>
+                <h2
+                  hlmCardTitle
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.subscription.currentTitle"
+                >
+                  Current plan
+                </h2>
+                <p hlmCardDescription class="mt-1">
                   {{ organization()?.planName ?? '—' }}
                 </p>
                 <div hlmCardAction class="flex flex-col items-end gap-1">
@@ -251,12 +275,20 @@
             </div>
 
             <section class="flex flex-col gap-3">
-              <h2
-                class="text-sm font-medium text-muted-foreground"
-                i18n="@@org.settings.subscription.plansTitle"
-              >
-                Plans
-              </h2>
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.subscription.plansTitle"
+                >
+                  Plans
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.plan.billingCadenceHelp"
+                >
+                  Compare prices using your preferred billing frequency.
+                </p>
+              </header>
               <app-organization-plan-selector
                 [organizationId]="organizationId() ?? ''"
                 [currentPlanId]="organization()?.planId ?? null"
@@ -266,12 +298,20 @@
             </section>
 
             <section class="flex flex-col gap-3">
-              <h2
-                class="text-sm font-medium text-muted-foreground"
-                i18n="@@org.settings.subscription.invoicesTitle"
-              >
-                Invoices
-              </h2>
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.subscription.invoicesTitle"
+                >
+                  Invoices
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.subscription.invoicesDescription"
+                >
+                  View and download billing documents for this organization.
+                </p>
+              </header>
 
               @if (billingStore.isLoadingInvoices()) {
                 <div
@@ -292,7 +332,7 @@
                   <p hlmAlertDescription>{{ error.message }}</p>
                 </div>
               } @else if (billingStore.invoices().length === 0) {
-                <div hlmEmpty>
+                <div hlmEmpty class="border border-border">
                   <div hlmEmptyHeader>
                     <div hlmEmptyMedia variant="icon">
                       <ng-icon name="lucideReceipt" aria-hidden="true" />
@@ -358,7 +398,7 @@
         </ng-template>
       </div>
 
-      <div hlmTabsContent="usage" class="max-w-3xl">
+      <div hlmTabsContent="usage" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
           <app-organization-usage-panel
             [items]="quotaStore.items()"
@@ -367,7 +407,7 @@
         </ng-template>
       </div>
 
-      <div hlmTabsContent="notifications" class="max-w-3xl">
+      <div hlmTabsContent="notifications" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
           <app-organization-notifications-form
             [notifications]="notificationsSeed()"
@@ -377,17 +417,33 @@
         </ng-template>
       </div>
 
-      <div hlmTabsContent="regional" class="max-w-3xl">
+      <div hlmTabsContent="regional" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
-          <app-organization-regional-form
-            [regional]="regionalSeed()"
-            [pending]="settingsStore.isSaving()"
-            (submitted)="saveRegional($event)"
-          />
+          <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+            <header class="min-w-0">
+              <h2
+                class="text-xl font-semibold tracking-tight"
+                i18n="@@org.settings.regional.sectionTitle"
+              >
+                Regional settings
+              </h2>
+              <p
+                class="mt-1 text-sm text-muted-foreground"
+                i18n="@@org.settings.regional.sectionDescription"
+              >
+                Set the timezone, date format and measurements used across the organization.
+              </p>
+            </header>
+            <app-organization-regional-form
+              [regional]="regionalSeed()"
+              [pending]="settingsStore.isSaving()"
+              (submitted)="saveRegional($event)"
+            />
+          </section>
         </ng-template>
       </div>
 
-      <div hlmTabsContent="compliance" class="max-w-3xl">
+      <div hlmTabsContent="compliance" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
           <div class="flex flex-col gap-8">
             <app-organization-compliance-form
@@ -396,13 +452,23 @@
               (submitted)="saveCompliance($event)"
             />
 
-            <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h2
-                class="text-sm font-medium text-muted-foreground"
-                i18n="@@org.settings.compliance.automationTitle"
-              >
-                Automation
-              </h2>
+            <section
+              class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+            >
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.compliance.automationTitle"
+                >
+                  Automation
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.compliance.automationDescription"
+                >
+                  Choose when Fireguard should create corrective work automatically.
+                </p>
+              </header>
               <app-organization-automation-form
                 [automation]="automationSeed()"
                 [pending]="settingsStore.isSaving()"
@@ -410,13 +476,23 @@
               />
             </section>
 
-            <section class="flex flex-col gap-3 border-t border-border pt-6">
-              <h2
-                class="text-sm font-medium text-muted-foreground"
-                i18n="@@org.settings.approval.sectionTitle"
-              >
-                Four-eyes approval policy
-              </h2>
+            <section
+              class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+            >
+              <header class="min-w-0">
+                <h2
+                  class="text-xl font-semibold tracking-tight"
+                  i18n="@@org.settings.approval.sectionTitle"
+                >
+                  Four-eyes approval policy
+                </h2>
+                <p
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@org.settings.approval.sectionDescription"
+                >
+                  Decide which sensitive actions require a second authorized member.
+                </p>
+              </header>
               <app-organization-approval-form
                 [approval]="approvalSeed()"
                 [actionTypes]="approvalActionTypes()"
@@ -429,7 +505,7 @@
       </div>
 
       @if (canDelete()) {
-        <div hlmTabsContent="danger" class="max-w-3xl">
+        <div hlmTabsContent="danger" class="w-full min-w-0">
           <ng-template hlmTabsContentLazy>
             <div class="flex flex-col gap-3">
               @if (canSuspend() || canRestore()) {

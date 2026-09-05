@@ -1,3 +1,22 @@
+@if (loading()) {
+  <p class="py-2 text-sm text-muted-foreground" role="status" i18n="@@intervention.issues.checking">
+    Checking publication requirements…
+  </p>
+}
+@if (error(); as message) {
+  <div class="space-y-2 py-2" role="alert">
+    <p class="text-sm text-destructive">{{ message }}</p>
+    <button
+      hlmBtn
+      variant="outline"
+      size="sm"
+      (click)="retryRequested.emit()"
+      i18n="@@intervention.issues.retry"
+    >
+      Check requirements again
+    </button>
+  </div>
+}
 @if (blockers().length > 0 || secondaryIssues().length > 0 || showClearNotice()) {
   <section
     class="flex flex-col gap-3"
@@ -5,11 +24,15 @@
     i18n-aria-label="@@intervention.issues.title"
     data-testid="intervention-issues-checklist"
   >
-    @if (blockers().length > 0 || secondaryIssues().length > 0) {
-      <h3 class="text-sm font-medium text-muted-foreground" i18n="@@intervention.issues.title">
-        Publication issues
-      </h3>
-    }
+    <div class="flex flex-col gap-1">
+      <h3 class="text-sm font-semibold" i18n="@@intervention.issues.title">Publication issues</h3>
+      <p
+        class="text-xs leading-relaxed text-muted-foreground"
+        i18n="@@intervention.issues.description"
+      >
+        Requirements to resolve before publishing this intervention.
+      </p>
+    </div>
 
     @if (blockers().length > 0) {
       <ul hlmItemGroup>
@@ -19,13 +42,18 @@
               hlmItem
               type="button"
               variant="outline"
-              class="h-auto min-h-11 w-full justify-between gap-2 text-start"
+              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 text-start"
               data-testid="intervention-issues-checklist-blocker-item"
               (click)="activate(issue)"
             >
-              <span class="flex items-center gap-2">
+              <span hlmItemContent class="min-w-0">
                 <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
-                <span class="text-sm">{{ issue.message }}</span>
+                <span class="flex min-w-0 flex-col gap-1"
+                  ><span class="text-sm">{{ issue.message }}</span>
+                  @if (issue.field) {
+                    <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
+                  }
+                </span>
               </span>
               <ng-icon
                 name="lucideChevronRight"
@@ -42,7 +70,7 @@
         data-testid="intervention-issues-checklist-clear"
       >
         <ng-icon name="lucideCircleCheck" class="text-success" aria-hidden="true" />
-        <span i18n="@@intervention.issues.clear">No blockers — ready to publish</span>
+        <span i18n="@@intervention.issues.verifiedClear">No blocking issues detected</span>
       </p>
     }
 
@@ -77,13 +105,18 @@
                   hlmItem
                   type="button"
                   variant="default"
-                  class="h-auto min-h-11 w-full justify-between gap-2 text-start"
+                  class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 text-start"
                   data-testid="intervention-issues-checklist-secondary-item"
                   (click)="activate(issue)"
                 >
-                  <span class="flex items-center gap-2">
+                  <span hlmItemContent class="min-w-0">
                     <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
-                    <span class="text-sm">{{ issue.message }}</span>
+                    <span class="flex min-w-0 flex-col gap-1"
+                      ><span class="text-sm">{{ issue.message }}</span>
+                      @if (issue.field) {
+                        <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
+                      }
+                    </span>
                   </span>
                   <ng-icon
                     name="lucideChevronRight"

@@ -35,7 +35,9 @@ stores.
 
 ## Routes
 
-`/account` redirects to `/account/profile`. Each section is a full page:
+`/account` redirects to `/account/profile`. `AccountPage` keeps the Spartan settings navigation
+stable beneath the shell title, matching `OrganizationSettingsPage`: a paginated native `line`
+tab list in the dashboard page header. Each section remains a full page and owns its own workflow:
 
 - `/account/profile` — identity, avatar, first/last name and interface language
 - `/account/security` — authenticator app (TOTP), the sign-in email address (current address +
@@ -54,8 +56,10 @@ screen reads or writes the signed-in user.
 
 **The account is a page of the workspace shell, not a shell of its own.** It shares the single
 `DashboardLayout` mount with the organization tree, so opening it changes the content column and
-nothing else — the same sidebar, the same header, the same collapse state, no shell rebuild. It is
-never a panel, a secondary column, or a surface layered over another page.
+nothing else — the same sidebar, the same header, the same collapse state, no shell rebuild.
+`AccountPage` contributes the primary settings tabs through `PageTabsService`, while the active
+child route renders in the content column. It is never a panel, a secondary column, or a surface
+layered over another page.
 
 `/account` names no organization, but the shell keeps the one last worked in, so the switcher still
 names a workspace and the organization rows still lead into it
@@ -63,8 +67,8 @@ names a workspace and the organization rows still lead into it
 none, and nothing on the page changes with the one the sidebar happens to show.
 
 **The account is not a destination of the sidebar's navigation.** That column lists the work; the
-reader reaches their own account through the seat menu pinned at its foot (`AccountMenu`), which
-carries every section.
+reader enters their own account through the seat menu pinned at its foot (`AccountMenu`). Once
+inside, the account's local navigation keeps every section directly reachable.
 
 **The account is read-only until asked otherwise.** The profile shows its values; one Edit control
 swaps the editable group — the two names and the interface language — for its form, in place, next
@@ -148,7 +152,7 @@ rejected save is a whole-request failure rather than a field problem (`ARCHITECT
 
 ## Published Contracts
 
-- `USER_IDENTITY_PORT` / `UserIdentityPort`
+- `USER_IDENTITY_PORT` / `UserIdentityPort`: exposes canonical `profile.id` for account-scoped persistence; `sub` remains a legacy fallback.
 - `USER_ACCESS_PORT` / `UserAccessPort`
 - `USER_PROFILE_PORT` / `UserProfilePort`
 - `NOTIFICATION_CENTER_PORT` / `NotificationCenterPort`
@@ -166,9 +170,9 @@ inside a layout: it reads user identity, and rendering location does not transfe
 a user profile exists. The menu consumes `AUTH_LOGOUT_PORT` for sign-out rather than reaching into
 auth state.
 
-It is the **only** way into the account, so it carries every section — the three main pages and
-the notification preferences matrix. Adding a page to `/account` means adding it here too, or it
-is unreachable.
+It is the entry point into the account, so it carries every route-level section and the notification
+preferences matrix. `AccountPage` mirrors those sections as persistent local navigation; adding an
+account section means updating both entry and local navigation.
 
 `NotificationBell` (`ui/components/notification-bell/`) is account-owned for the same reason, and a
 shell contributes it to its header-actions slot through `withNotificationBell()` (`order: 7`, between

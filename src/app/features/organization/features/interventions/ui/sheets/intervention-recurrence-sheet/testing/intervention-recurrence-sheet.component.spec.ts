@@ -28,6 +28,7 @@ import { InterventionRecurrenceSheet } from '../intervention-recurrence-sheet.co
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class InterventionRecurrenceFormStub {
+  public readonly catalogues = input({});
   public readonly recurrence: InputSignal<InterventionRecurrenceOutput | null> =
     input<InterventionRecurrenceOutput | null>(null);
   public readonly pending: InputSignal<boolean> = input<boolean>(false);

@@ -1,12 +1,12 @@
-<section hlmCard data-testid="intervention-activity-thread">
-  <div hlmCardHeader>
-    <h2 hlmCardTitle i18n="@@intervention.activity.title">Activity</h2>
-    <p hlmCardDescription i18n="@@intervention.activity.caption">
+<section class="flex flex-col gap-4" data-testid="intervention-activity-thread">
+  <div class="flex flex-col gap-1">
+    <h2 class="text-lg font-semibold" i18n="@@intervention.activity.title">Activity</h2>
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.caption">
       System events and comments on this intervention, oldest first.
     </p>
   </div>
 
-  <div hlmCardContent class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3">
     @if (loading() && activities().length === 0) {
       <ul class="flex flex-col gap-3" aria-hidden="true">
         @for (row of skeletonRows; track row) {
@@ -72,13 +72,13 @@
             "
           >
             @if (row.activity.kind === 'system') {
-              <div hlmMarker class="min-h-11 items-stretch gap-3 text-xs">
-                <span class="flex w-6 shrink-0 items-start justify-center">
+              <div hlmMarker class="min-h-11 items-start gap-3 text-xs">
+                <span class="flex h-5 w-6 shrink-0 items-center justify-center">
                   <span hlmMarkerIcon>
                     <ng-icon [name]="row.icon" [class]="row.iconClass" aria-hidden="true" />
                   </span>
                 </span>
-                <span hlmMarkerContent class="flex flex-wrap items-start gap-2">
+                <span hlmMarkerContent class="flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
                   @if (row.statusChange; as change) {
                     <span class="font-medium text-foreground">{{ row.actorName }}</span>
                     <span i18n="@@intervention.activity.statusChangedLine">changed status</span>

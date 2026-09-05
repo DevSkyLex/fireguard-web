@@ -14,9 +14,9 @@
         >Responsible</label
       >
       <hlm-combobox
-        [value]="selectedMember()"
+        [formField]="memberForm"
+        (searchChange)="searched.emit($event)"
         [itemToString]="memberLabelOf"
-        (valueChange)="selectedMember.set($any($event))"
       >
         <hlm-combobox-input
           inputId="intervention-assign-member"
@@ -53,12 +53,58 @@
               </hlm-combobox-item>
             }
           </div>
+          <app-intervention-catalogue-status
+            kind="members"
+            [state]="catalogue()"
+            (requested)="loadMore.emit()"
+          />
         </hlm-combobox-content>
       </hlm-combobox>
     </hlm-field>
 
+    @if (selectionState()?.status === 'pending') {
+      <p
+        role="status"
+        class="text-sm text-muted-foreground"
+        i18n="@@intervention.catalogue.loading"
+      >
+        Loading options…
+      </p>
+    } @else if (selectionState()?.error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          (click)="selectionRetried.emit()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
+
+    @if (errors().length) {
+      <div hlmAlert variant="destructive" role="alert" data-testid="intervention-assign-errors">
+        <h4 hlmAlertTitle i18n="@@intervention.assign.partialFailure">
+          Some assignments were not saved
+        </h4>
+        <div hlmAlertDescription>
+          <p i18n="@@intervention.assign.retryFailures">
+            Your selection is preserved. Retrying only affects the failed interventions.
+          </p>
+          <ul class="mt-2 grid gap-1">
+            @for (error of errors(); track $index) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+
     <hlm-dialog-footer>
-      <button hlmDialogClose hlmBtn type="button" variant="outline">
+      <button hlmDialogClose hlmBtn type="button" variant="outline" [disabled]="busy()">
         <span i18n="@@common.cancel">Cancel</span>
       </button>
       <button
@@ -71,6 +117,8 @@
       >
         @if (busy()) {
           <span i18n="@@intervention.assign.submitting">Assigning…</span>
+        } @else if (errors().length) {
+          <span i18n="@@common.retry">Retry</span>
         } @else {
           <span i18n="@@intervention.assign.submit">Assign</span>
         }

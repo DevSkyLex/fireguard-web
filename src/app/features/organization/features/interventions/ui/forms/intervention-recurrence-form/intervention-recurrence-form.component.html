@@ -10,6 +10,9 @@
       </div>
     }
 
+    <h3 class="font-medium" i18n="@@intervention.recurrences.templateSection">
+      Template and identification
+    </h3>
     <hlm-field>
       <label hlmFieldLabel for="intervention-recurrence-name"
         ><span i18n="@@intervention.recurrences.nameLabel">Name</span><app-required-marker
@@ -32,34 +35,37 @@
       <label hlmFieldLabel for="intervention-recurrence-template"
         ><span i18n="@@intervention.recurrences.templateLabel">Template</span><app-required-marker
       /></label>
-      <hlm-select
+      <hlm-combobox
         [itemToString]="templateLabelOf"
         [formField]="recurrenceForm.templateId"
-        [attr.aria-required]="true"
+        (searchChange)="catalogueSearched.emit({ kind: 'templates', search: $event })"
       >
-        <hlm-select-trigger
-          buttonId="intervention-recurrence-template"
-          class="w-full"
+        <hlm-combobox-input
+          inputId="intervention-recurrence-template"
           data-testid="intervention-recurrence-template"
-        >
-          <hlm-select-value
-            placeholder="Choose a template"
-            i18n-placeholder="@@intervention.cf.templatePlaceholder"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.catalogue.noMatch"
+            >No matching option loaded.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
             @for (template of templates(); track template.id) {
-              <hlm-select-item [value]="template.id">{{ template.name }}</hlm-select-item>
+              <hlm-combobox-item [value]="template.id">{{ template.name }}</hlm-combobox-item>
             }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <app-intervention-catalogue-status
+        kind="templates"
+        [state]="catalogues().templates"
+        (requested)="catalogueRequested.emit($event)"
+      />
       @if (recurrenceForm.templateId().touched() && recurrenceForm.templateId().invalid()) {
         <hlm-field-error>{{ recurrenceForm.templateId().errors()[0].message }}</hlm-field-error>
       }
     </hlm-field>
 
+    <h3 class="font-medium" i18n="@@intervention.recurrences.rhythmSection">Schedule</h3>
     <div class="grid grid-cols-2 gap-3">
       <hlm-field>
         <label hlmFieldLabel for="intervention-recurrence-frequency"
@@ -205,29 +211,46 @@
       </hlm-field>
     </div>
 
+    <p
+      class="text-sm text-muted-foreground"
+      role="status"
+      i18n="@@intervention.recurrences.scheduleSummary"
+    >
+      {{ cadenceSummary() }} from {{ model().anchorDate | date: 'mediumDate' }} ({{
+        model().timezone
+      }}). Draft creation {{ model().leadTimeDays }} day(s) in advance. The next occurrence is
+      confirmed by the server after saving.
+    </p>
+    <h3 class="font-medium" i18n="@@intervention.recurrences.scopeSection">Scope and assignment</h3>
     <hlm-field>
       <label hlmFieldLabel for="intervention-recurrence-site" i18n="@@intervention.cf.site"
         >Site</label
       >
-      <hlm-select [itemToString]="siteLabelOf" [formField]="recurrenceForm.site">
-        <hlm-select-trigger
-          buttonId="intervention-recurrence-site"
-          class="w-full"
+      <hlm-combobox
+        [itemToString]="siteLabelOf"
+        [formField]="recurrenceForm.site"
+        (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
+      >
+        <hlm-combobox-input
+          inputId="intervention-recurrence-site"
           data-testid="intervention-recurrence-site"
-        >
-          <hlm-select-value
-            placeholder="Use template default"
-            i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@intervention.catalogue.noMatch"
+            >No matching option loaded.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
             @for (option of siteOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
             }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <app-intervention-catalogue-status
+        kind="sites"
+        [state]="catalogues().sites"
+        (requested)="catalogueRequested.emit($event)"
+      />
     </hlm-field>
 
     <hlm-field>
@@ -237,7 +260,11 @@
         i18n="@@intervention.cf.responsible"
         >Responsible</label
       >
-      <hlm-combobox [formField]="recurrenceForm.responsible" [itemToString]="memberLabelOf">
+      <hlm-combobox
+        [formField]="recurrenceForm.responsible"
+        (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
+        [itemToString]="memberLabelOf"
+      >
         <hlm-combobox-input
           inputId="intervention-recurrence-responsible"
           placeholder="Use template default"
@@ -272,6 +299,11 @@
           </div>
         </hlm-combobox-content>
       </hlm-combobox>
+      <app-intervention-catalogue-status
+        kind="members"
+        [state]="catalogues().members"
+        (requested)="catalogueRequested.emit($event)"
+      />
     </hlm-field>
   </hlm-field-group>
 

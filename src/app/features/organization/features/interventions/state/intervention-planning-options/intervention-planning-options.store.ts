@@ -3,17 +3,14 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, forkJoin, of, pipe, switchMap, tap, type Observable } from 'rxjs';
+import { EMPTY, map, mergeMap, pipe, timer, type Observable } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
-  isCallError,
-  isCallPending,
   pendingCallState,
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
-  type StoreError,
 } from '@core/request-state';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
@@ -23,12 +20,26 @@ import {
   InterventionLabelService,
   InterventionTemplateService,
 } from '@features/organization/features/interventions/data-access';
-import type { SelectOption } from '@features/organization/features/interventions/models';
+import type {
+  SelectOption,
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+  PlanningCatalogueRequest,
+  MemberSelectOption,
+  InterventionTemplateOutput,
+} from '@features/organization/features/interventions/models';
 import { toMemberSelectOption } from '@features/organization/utils';
 import { interventionPlanningOptionsStoreEvents } from './events';
 import type { InterventionPlanningOptionsState } from './models';
 
+/** Constant INITIAL_STATE
+ * @description Empty account-scoped selection caches and independent catalogue requests.
+ * @since 1.0.0
+ * @type {InterventionPlanningOptionsState}
+ */
 const INITIAL_STATE: InterventionPlanningOptionsState = {
+  catalogues: {},
+  selectionCallStates: {},
   sites: [],
   targets: [],
   members: [],
@@ -36,371 +47,443 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   templates: [],
   loadCallState: idleCallState(),
 };
-
-/**
- * Constant PLANNING_OPTION_PAGE_SIZE
- * @const PLANNING_OPTION_PAGE_SIZE
- *
- * @description
- * Maximum number of items fetched per resource type when loading planning
- * options. Keeps API responses bounded while covering typical organization sizes.
- *
+/** Function emptyCatalogue
+ * @description Initial coverage of a selection catalogue.
+ * @access private
  * @since 1.0.0
- *
- * @type {number}
+ * @returns {PlanningCatalogueState} Empty request.
  */
-const PLANNING_OPTION_PAGE_SIZE = 100;
-
-/**
- * Store InterventionPlanningOptionsStore
- * @const InterventionPlanningOptionsStore
- *
- * @description
- * Component-scoped NgRx SignalStore that loads and maps organization
- * resources (sites, equipment, members) into the selector options used
- * by intervention planning and workspace forms. Two load methods cover
- * the creation flow (sites + members) and the workspace flow (sites +
- * targets + members).
- *
- * @version 1.0.0
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+const emptyCatalogue = (): PlanningCatalogueState => ({
+  page: 0,
+  total: 0,
+  loaded: 0,
+  callState: idleCallState(),
+});
+/** Function mergeOptions
+ * @description Retains selected labels from previous pages and searches without duplicating values.
+ * @access private
+ * @since 1.0.0
+ * @param {readonly T[]} current - Cached options.
+ * @param {readonly T[]} next - Received options.
+ * @returns {T[]} Merged options.
  */
-/**
- * Function optional
- * @function optional
- *
- * @description
- * Lets one option source fail without taking its siblings down. `forkJoin`
- * errors as a whole the moment any input does, which had a
- * disproportionate consequence here: a failing template list left the Site,
- * Responsible and Label filter chips with no values to offer at all. A
- * failure is recorded rather than swallowed — the caller still dispatches
- * `loadFailed` — but the sources that did answer are kept.
- *
- * @since 11.1.0
- *
- * @template T
- * @param {Observable<T>} source - One option list request.
- * @param {unknown[]} failures - Collects the errors, for the caller to report.
- *
- * @returns {Observable<T | null>} The response, or `null` when it failed.
+const mergeOptions = <T extends SelectOption>(current: readonly T[], next: readonly T[]): T[] => [
+  ...new Map([...current, ...next].map((value) => [value.value, value])).values(),
+];
+
+/** Store InterventionPlanningOptionsStore
+ * @description Independent paginated catalogues. Successful sources are usable immediately; searches preserve cached selected labels.
+ * @since 1.0.0
  */
-/** How many option lists {@link InterventionPlanningOptionsStore.loadCreationOptions} joins — all of them failing is a real error, one is a degradation. */
-const CREATION_OPTION_SOURCES = 4;
-
-/** The same count for `loadWorkspaceOptions`, which adds the facility and equipment target lists. */
-const WORKSPACE_OPTION_SOURCES = 5;
-
-function optional<T>(source: Observable<T>, failures: unknown[]): Observable<T | null> {
-  return source.pipe(
-    catchError((error: unknown): Observable<null> => {
-      failures.push(error);
-
-      return of(null);
-    }),
-  );
-}
-
 export const InterventionPlanningOptionsStore = signalStore(
-  withState<InterventionPlanningOptionsState>(INITIAL_STATE),
+  withState(INITIAL_STATE),
   withComputed((store) => ({
-    /**
-     * Computed loading.
-     *
-     * @description
-     * True while a planning-options load is in flight.
-     */
-    loading: computed<boolean>(() => isCallPending(store.loadCallState())),
-
-    /**
-     * Computed loadError.
-     *
-     * @description
-     * Normalized error of the last load when it failed, otherwise `null`. Lets
-     * the form distinguish genuinely empty option lists from a failed fetch.
-     */
-    loadError: computed<StoreError | null>(() => {
-      const state = store.loadCallState();
-      return isCallError(state) ? state.error : null;
-    }),
-
-    /**
-     * Computed hasTemplates.
-     *
-     * @description
-     * True once the creation flow has at least one intervention template to
-     * offer — the "start from a template" picker stays hidden otherwise.
-     */
-    hasTemplates: computed<boolean>(() => store.templates().length > 0),
+    loading: computed(() => store.loadCallState().status === 'pending'),
+    loadError: computed(() => store.loadCallState().error),
+    selectionFailed: computed(() =>
+      Object.values(store.selectionCallStates()).some((state) => state.status === 'error'),
+    ),
+    hasTemplates: computed(() => store.templates().length > 0),
   })),
   withMethods(
     (
       store,
-      dispatcher = inject<Dispatcher>(Dispatcher),
-      facilities = inject<FacilityService>(FacilityService),
-      equipment = inject<EquipmentService>(EquipmentService),
-      members = inject<OrganizationMemberService>(OrganizationMemberService),
-      labelService = inject<InterventionLabelService>(InterventionLabelService),
-      templateService = inject<InterventionTemplateService>(InterventionTemplateService),
-    ) => ({
-      /**
-       * Method loadCreationOptions
-       * @method loadCreationOptions
-       *
-       * @description
-       * Loads site, member and label options for the intervention creation
-       * form and the list's filter bar. Resets all options and the loading
-       * flag before fetching.
-       *
-       * @access public
+      dispatcher = inject(Dispatcher),
+      facilities = inject(FacilityService),
+      equipment = inject(EquipmentService),
+      members = inject(OrganizationMemberService),
+      labels = inject(InterventionLabelService),
+      templates = inject(InterventionTemplateService),
+    ) => {
+      let organization: string | null = null;
+      let generation = 0;
+      let labelsStatus = idleCallState();
+      const requests: Partial<Record<PlanningCatalogueKind, number>> = {};
+      /** Method summarize
+       * @description Reports overall degradation without replacing each source's request state.
+       * @access private
        * @since 1.0.0
-       *
-       * @type {RxMethod<string | null>}
+       * @returns {void}
        */
-      loadCreationOptions: rxMethod<string | null>(
+      const summarize = (): void => {
+        const states = [
+          ...Object.values(store.catalogues()).map((value) => value.callState),
+          labelsStatus,
+        ];
+        patchState(store, {
+          loadCallState: states.some((state) => state.status === 'pending')
+            ? pendingCallState()
+            : states.every((state) => state.status === 'error')
+              ? errorCallState(
+                  states[0].error ?? toStoreError(new Error('Planning options unavailable')),
+                )
+              : successCallState(null),
+        });
+      };
+      const loadLabels = rxMethod<string>(
         pipe(
-          tap(() =>
-            patchState(store, {
-              sites: [],
-              targets: [],
-              members: [],
-              labels: [],
-              templates: [],
-              loadCallState: pendingCallState(),
-            }),
-          ),
-          switchMap((organizationId) => {
-            if (!organizationId) return of(null);
-            const failures: unknown[] = [];
-
-            return forkJoin({
-              organizationId: of(organizationId),
-              failures: of(failures),
-              sites: optional(
-                facilities.list(organizationId, {
-                  rootsOnly: true,
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              members: optional(
-                members.list(organizationId, {
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              labels: optional(labelService.list(`/api/organizations/${organizationId}`), failures),
-              templates: optional(
-                templateService.list(`/api/organizations/${organizationId}`, {
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-            });
-          }),
-          tapResponse({
-            next: (result) => {
-              if (!result) {
-                patchState(store, { loadCallState: successCallState(null) });
-                return;
-              }
-              const sites: readonly SelectOption[] = (result.sites?.member ?? []).map(
-                (facility) => ({
-                  label: facility.name,
-                  value: `/api/facilities/${facility.id}`,
-                }),
-              );
-              patchState(store, {
-                sites,
-                members: (result.members?.member ?? []).map((member) =>
-                  toMemberSelectOption(member, result.organizationId),
-                ),
-                labels: result.labels?.member ?? [],
-                templates: result.templates?.member ?? [],
-                loadCallState:
-                  result.failures.length === CREATION_OPTION_SOURCES
-                    ? errorCallState(toStoreError(result.failures[0]))
-                    : successCallState(null),
-              });
-
-              const [firstFailure] = result.failures;
-              if (firstFailure === undefined) return;
-
-              dispatcher.dispatch(
-                interventionPlanningOptionsStoreEvents.loadFailed(
-                  toStoreFailureEventPayload(
-                    toStoreError(firstFailure),
-                    'Some planning options could not be loaded',
-                  ),
-                ),
-              );
-            },
-            error: (error: unknown) => {
-              const storeError = toStoreError(error);
-              patchState(store, {
-                sites: [],
-                targets: [],
-                members: [],
-                labels: [],
-                templates: [],
-                loadCallState: errorCallState(storeError),
-              });
-              dispatcher.dispatch(
-                interventionPlanningOptionsStoreEvents.loadFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load planning options'),
-                ),
-              );
-            },
+          mergeMap((org) => {
+            const expected = generation;
+            labelsStatus = pendingCallState();
+            return labels.list(`/api/organizations/${org}`).pipe(
+              tapResponse({
+                next: (collection) => {
+                  if (expected === generation) {
+                    labelsStatus = successCallState(null);
+                    patchState(store, { labels: collection.member });
+                    summarize();
+                  }
+                },
+                error: (error: unknown) => {
+                  if (expected === generation) {
+                    labelsStatus = errorCallState(toStoreError(error));
+                    summarize();
+                  }
+                },
+              }),
+            );
           }),
         ),
-      ),
-      /**
-       * Method loadWorkspaceOptions
-       * @method loadWorkspaceOptions
-       *
-       * @description
-       * Loads site, target (facilities + equipment), member and label options
-       * for the intervention workspace forms. Resets all options before
-       * fetching. Labels feed the detail page's sidebar label editor.
-       *
-       * @access public
-       * @since 1.1.0
-       *
-       * @type {RxMethod<string | null>}
-       */
-      loadWorkspaceOptions: rxMethod<string | null>(
+      );
+      const loadPage = rxMethod<{
+        kind: PlanningCatalogueKind;
+        search?: string;
+        restart?: boolean;
+      }>(
         pipe(
-          tap(() =>
+          mergeMap(({ kind, search, restart }) => {
+            const org = organization;
+            const previous = store.catalogues()[kind] ?? emptyCatalogue();
+            if (
+              !org ||
+              (!restart &&
+                (previous.callState.status === 'pending' ||
+                  (previous.page > 0 && previous.loaded >= previous.total)))
+            )
+              return EMPTY;
+            const expected = generation;
+            const sequence = (requests[kind] = (requests[kind] ?? 0) + 1);
+            const query = search ?? previous.search ?? '';
+            const baseline = restart ? { ...emptyCatalogue(), search: query } : previous;
+            const page = baseline.page + 1;
+            const options = { page, itemsPerPage: 100 };
             patchState(store, {
-              sites: [],
-              targets: [],
-              members: [],
-              labels: [],
-              templates: [],
-              loadCallState: pendingCallState(),
-            }),
-          ),
-          switchMap((organizationId) => {
-            if (!organizationId) return of(null);
-            const failures: unknown[] = [];
-
-            return forkJoin({
-              organizationId: of(organizationId),
-              failures: of(failures),
-              sites: optional(
-                facilities.list(organizationId, {
-                  rootsOnly: true,
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              facilities: optional(
-                facilities.list(organizationId, {
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              equipment: optional(
-                equipment.list(organizationId, {
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              members: optional(
-                members.list(organizationId, {
-                  page: 1,
-                  itemsPerPage: PLANNING_OPTION_PAGE_SIZE,
-                }),
-                failures,
-              ),
-              labels: optional(labelService.list(`/api/organizations/${organizationId}`), failures),
+              catalogues: {
+                ...store.catalogues(),
+                [kind]: { ...baseline, callState: pendingCallState() },
+              },
             });
-          }),
-          tapResponse({
-            next: (result) => {
-              if (!result) {
-                patchState(store, { loadCallState: successCallState(null) });
-                return;
-              }
-              patchState(store, {
-                sites: (result.sites?.member ?? []).map((facility) => ({
-                  label: facility.name,
-                  value: `/api/facilities/${facility.id}`,
-                })),
-                targets: [
-                  ...(result.facilities?.member ?? []).map((facility) => ({
-                    label: facility.name,
-                    value: `/api/facilities/${facility.id}`,
+            summarize();
+            let source: Observable<{
+              total: number;
+              count: number;
+              values: readonly SelectOption[];
+              memberValues?: readonly MemberSelectOption[];
+              templateValues?: readonly InterventionTemplateOutput[];
+            }>;
+            if (kind === 'sites' || kind === 'facilities')
+              source = facilities
+                .list(org, {
+                  ...options,
+                  ...(query ? { search: query } : {}),
+                  ...(kind === 'sites' ? { rootsOnly: true } : {}),
+                })
+                .pipe(
+                  map((collection) => ({
+                    total: collection.totalItems,
+                    count: collection.member.length,
+                    values: collection.member.map((item) => ({
+                      value: `/api/facilities/${item.id}`,
+                      label: item.name,
+                    })),
                   })),
-                  ...(result.equipment?.member ?? []).map((item) => {
-                    const typeLabel: string =
-                      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)?.label ??
-                      item.type.replace(/_/g, ' ');
-
-                    return {
-                      label: item.serialNumber ? `${typeLabel} · ${item.serialNumber}` : typeLabel,
+                );
+            else if (kind === 'equipment')
+              source = equipment
+                .list(org, { ...options, ...(query ? { params: { search: query } } : {}) })
+                .pipe(
+                  map((collection) => ({
+                    total: collection.totalItems,
+                    count: collection.member.length,
+                    values: collection.member.map((item) => ({
                       value: `/api/equipment/${item.id}`,
-                    };
-                  }),
-                ],
-                members: (result.members?.member ?? []).map((member) =>
-                  toMemberSelectOption(member, result.organizationId),
-                ),
-                labels: result.labels?.member ?? [],
-                loadCallState:
-                  result.failures.length === WORKSPACE_OPTION_SOURCES
-                    ? errorCallState(toStoreError(result.failures[0]))
-                    : successCallState(null),
-              });
-
-              const [firstFailure] = result.failures;
-              if (firstFailure === undefined) return;
-
-              dispatcher.dispatch(
-                interventionPlanningOptionsStoreEvents.loadFailed(
-                  toStoreFailureEventPayload(
-                    toStoreError(firstFailure),
-                    'Some workspace options could not be loaded',
-                  ),
-                ),
+                      label: [
+                        EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)
+                          ?.label ?? item.type,
+                        item.serialNumber,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                    })),
+                  })),
+                );
+            else if (kind === 'members')
+              source = (
+                query ? members.list(org, options, { search: query }) : members.list(org, options)
+              ).pipe(
+                map((collection) => ({
+                  total: collection.totalItems,
+                  count: collection.member.length,
+                  values: [],
+                  memberValues: collection.member.map((item) => toMemberSelectOption(item, org)),
+                })),
               );
-            },
-            error: (error: unknown) => {
-              const storeError = toStoreError(error);
-              patchState(store, {
-                sites: [],
-                targets: [],
-                members: [],
-                labels: [],
-                templates: [],
-                loadCallState: errorCallState(storeError),
-              });
-              dispatcher.dispatch(
-                interventionPlanningOptionsStoreEvents.loadFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load planning options'),
-                ),
-              );
-            },
+            else
+              source = templates
+                .list(`/api/organizations/${org}`, {
+                  ...options,
+                  ...(query ? { search: query } : {}),
+                })
+                .pipe(
+                  map((collection) => ({
+                    total: collection.totalItems,
+                    count: collection.member.length,
+                    values: [],
+                    templateValues: collection.member,
+                  })),
+                );
+            return source.pipe(
+              tapResponse({
+                next: (result) => {
+                  if (expected !== generation || requests[kind] !== sequence) return;
+                  const catalogues = {
+                    ...store.catalogues(),
+                    [kind]: {
+                      page,
+                      search: query,
+                      total: result.total,
+                      loaded: baseline.loaded + result.count,
+                      callState: successCallState(null),
+                    },
+                  };
+                  if (kind === 'sites')
+                    patchState(store, {
+                      catalogues,
+                      sites: mergeOptions(store.sites(), result.values),
+                    });
+                  else if (kind === 'members')
+                    patchState(store, {
+                      catalogues,
+                      members: mergeOptions(store.members(), result.memberValues ?? []),
+                    });
+                  else if (kind === 'templates')
+                    patchState(store, {
+                      catalogues,
+                      templates: [
+                        ...new Map(
+                          [...store.templates(), ...(result.templateValues ?? [])].map((item) => [
+                            item.id,
+                            item,
+                          ]),
+                        ).values(),
+                      ],
+                    });
+                  else
+                    patchState(store, {
+                      catalogues,
+                      targets: mergeOptions(store.targets(), result.values),
+                    });
+                  summarize();
+                },
+                error: (error: unknown) => {
+                  if (expected !== generation || requests[kind] !== sequence) return;
+                  const failure = toStoreError(error);
+                  patchState(store, {
+                    catalogues: {
+                      ...store.catalogues(),
+                      [kind]: { ...baseline, callState: errorCallState(failure) },
+                    },
+                  });
+                  summarize();
+                  dispatcher.dispatch(
+                    interventionPlanningOptionsStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(
+                        failure,
+                        'Some planning options could not be loaded',
+                      ),
+                    ),
+                  );
+                },
+              }),
+            );
           }),
         ),
-      ),
-    }),
+      );
+      /** Method initialize
+       * @description Loads missing sources only, retaining selections when another form opens in the same organization.
+       * @access private
+       * @since 1.0.0
+       * @param {string | null} org - Organization.
+       * @param {readonly PlanningCatalogueKind[]} kinds - Required sources.
+       * @returns {void}
+       */
+      const initialize = (org: string | null, kinds: readonly PlanningCatalogueKind[]): void => {
+        if (org !== organization) {
+          organization = org;
+          generation++;
+          labelsStatus = idleCallState();
+          patchState(store, INITIAL_STATE);
+        }
+        if (!org) {
+          patchState(store, { loadCallState: successCallState(null) });
+          return;
+        }
+        const missing = kinds.filter(
+          (kind) =>
+            !store.catalogues()[kind] || store.catalogues()[kind]?.callState.status === 'error',
+        );
+        patchState(store, {
+          catalogues: {
+            ...store.catalogues(),
+            ...Object.fromEntries(missing.map((kind) => [kind, emptyCatalogue()])),
+          },
+        });
+        for (const kind of missing) loadPage({ kind });
+        if (labelsStatus.status === 'idle' || labelsStatus.status === 'error') loadLabels(org);
+      };
+      /**
+       * Method loadSelection
+       * @description Resolves a selected site or member independently of catalogue pagination, with scoped and deduplicated requests.
+       * @access private
+       * @since 1.0.0
+       * @param {string} iri - Selected resource in the current organization.
+       * @returns {void}
+       */
+      const loadSelection = rxMethod<string>(
+        pipe(
+          mergeMap((iri) => {
+            const org = organization;
+            if (!org || store.selectionCallStates()[iri]?.status === 'pending') return EMPTY;
+            const siteMatch = /^\/api\/facilities\/([^/]+)$/.exec(iri);
+            const memberPrefix = `/api/organizations/${org}/members/`;
+            const memberId = iri.startsWith(memberPrefix) ? iri.slice(memberPrefix.length) : '';
+            if (!siteMatch && (!memberId || memberId.includes('/'))) return EMPTY;
+            if ([...store.sites(), ...store.members()].some((option) => option.value === iri))
+              return EMPTY;
+            const expected = generation;
+            patchState(store, {
+              selectionCallStates: { ...store.selectionCallStates(), [iri]: pendingCallState() },
+            });
+            const source: Observable<{ site?: SelectOption; member?: MemberSelectOption }> =
+              siteMatch
+                ? facilities
+                    .get(org, siteMatch[1])
+                    .pipe(map((item) => ({ site: { value: iri, label: item.name } })))
+                : members
+                    .get(org, memberId)
+                    .pipe(map((item) => ({ member: toMemberSelectOption(item, org) })));
+            return source.pipe(
+              tapResponse({
+                next: ({ site, member }) => {
+                  if (expected !== generation) return;
+                  patchState(store, {
+                    selectionCallStates: {
+                      ...store.selectionCallStates(),
+                      [iri]: successCallState(null),
+                    },
+                    ...(site && !store.sites().some((option) => option.value === iri)
+                      ? { sites: mergeOptions(store.sites(), [site]) }
+                      : {}),
+                    ...(member && !store.members().some((option) => option.value === iri)
+                      ? { members: mergeOptions(store.members(), [member]) }
+                      : {}),
+                  });
+                },
+                error: (error: unknown) => {
+                  if (expected !== generation) return;
+                  patchState(store, {
+                    selectionCallStates: {
+                      ...store.selectionCallStates(),
+                      [iri]: errorCallState(toStoreError(error)),
+                    },
+                  });
+                },
+              }),
+            );
+          }),
+        ),
+      );
+      const searchSequences: Partial<Record<PlanningCatalogueKind, number>> = {};
+      return {
+        /**
+         * Method ensureSelected
+         * @description Resolves existing site and member references without advancing catalogue pages or changing their totals.
+         * @access public
+         * @since 1.0.0
+         * @param {string | null} org - Owning organization.
+         * @param {readonly (string | null | undefined)[]} iris - Existing selections.
+         * @returns {void}
+         */
+        ensureSelected(org: string | null, iris: readonly (string | null | undefined)[]): void {
+          initialize(org, []);
+          for (const iri of new Set(iris)) if (iri) loadSelection(iri);
+        },
+        /**
+         * Method loadCreationOptions
+         * @description Loads the independent sources needed for creation and filtering.
+         * @access public
+         * @since 1.0.0
+         * @param {string | null} org - Organization.
+         * @returns {void}
+         */
+        loadCreationOptions(org: string | null): void {
+          initialize(org, ['sites', 'members', 'templates']);
+        },
+        /**
+         * Method loadWorkspaceOptions
+         * @description Loads preparation sources while preserving existing selections.
+         * @access public
+         * @since 1.0.0
+         * @param {string | null} org - Organization.
+         * @returns {void}
+         */
+        loadWorkspaceOptions(org: string | null): void {
+          initialize(org, ['sites', 'members', 'facilities', 'equipment']);
+        },
+        /**
+         * Method loadMore
+         * @description Fetches the next page for the current source query.
+         * @access public
+         * @since 1.0.0
+         * @param {PlanningCatalogueKind} kind - Source.
+         * @returns {void}
+         */
+        loadMore(kind: PlanningCatalogueKind): void {
+          loadPage({ kind });
+        },
+        /**
+         * Method search
+         * @description Debounces remote searches independently and ignores obsolete queries or organization contexts.
+         * @access public
+         * @since 1.0.0
+         * @param {PlanningCatalogueRequest} request - Source and text.
+         * @returns {void}
+         */
+        search: rxMethod<PlanningCatalogueRequest>(
+          pipe(
+            mergeMap(({ kind, search = '' }) => {
+              const sequence = (searchSequences[kind] = (searchSequences[kind] ?? 0) + 1);
+              const expected = generation;
+              return timer(250).pipe(
+                map(() => {
+                  if (
+                    sequence === searchSequences[kind] &&
+                    expected === generation &&
+                    search.trim() !== (store.catalogues()[kind]?.search ?? '')
+                  )
+                    loadPage({ kind, search: search.trim(), restart: true });
+                }),
+              );
+            }),
+          ),
+        ),
+      };
+    },
   ),
 );
-
 /**
  * Type InterventionPlanningOptionsStoreType
- * @type InterventionPlanningOptionsStoreType
- *
- * @description
- * Injectable instance type exposed by {@link InterventionPlanningOptionsStore}.
- *
+ * @description Injectable planning catalogue store instance.
  * @since 1.0.0
  */
 export type InterventionPlanningOptionsStoreType = InstanceType<

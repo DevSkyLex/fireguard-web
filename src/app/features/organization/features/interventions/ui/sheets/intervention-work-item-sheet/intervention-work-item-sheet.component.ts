@@ -14,6 +14,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
+import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+} from '@features/organization/features/interventions/models';
 import type {
   MemberSelectOption,
   SelectOption,
@@ -53,6 +58,33 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemSheet {
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests remote options without replacing the draft.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Loaded coverage and failures by preparation source.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests another source page while preserving the form.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   //#region Inputs
   /**
    * Property visible

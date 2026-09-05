@@ -9,6 +9,18 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { disabled, form, FormField, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideBell,
+  lucideCalendarDays,
+  lucideCircleAlert,
+  lucideClipboardCheck,
+  lucideClock,
+  lucideMail,
+  lucideSend,
+  lucideUserPlus,
+  lucideUserRound,
+} from '@ng-icons/lucide';
 import type { OrganizationNotificationSettings } from '@features/organization/models';
 import { HlmField, HlmFieldDescription, HlmFieldGroup, HlmFieldLabel } from '@shared/ui/field';
 import { HlmSwitch } from '@shared/ui/switch';
@@ -23,11 +35,14 @@ import { HlmSwitch } from '@shared/ui/switch';
  * model and emits {@link submitted} on every change — there is no separate
  * save step, each switch is its own commit, matching how a preference panel
  * (rather than a record edit) is normally expected to behave.
+ * Delivery channels and event types use the same icon-led option-card pattern
+ * as the neighboring compliance settings so dense boolean choices remain
+ * easy to scan at desktop widths and stack cleanly on smaller screens.
  *
  * Persisted via the settings `PATCH`; not yet enforced by notification
  * dispatch itself (`FEATURE.md`).
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -38,7 +53,28 @@ import { HlmSwitch } from '@shared/ui/switch';
  */
 @Component({
   selector: 'app-organization-notifications-form',
-  imports: [FormField, HlmField, HlmFieldDescription, HlmFieldGroup, HlmFieldLabel, HlmSwitch],
+  imports: [
+    FormField,
+    NgIcon,
+    HlmField,
+    HlmFieldDescription,
+    HlmFieldGroup,
+    HlmFieldLabel,
+    HlmSwitch,
+  ],
+  providers: [
+    provideIcons({
+      lucideBell,
+      lucideCalendarDays,
+      lucideCircleAlert,
+      lucideClipboardCheck,
+      lucideClock,
+      lucideMail,
+      lucideSend,
+      lucideUserPlus,
+      lucideUserRound,
+    }),
+  ],
   templateUrl: './organization-notifications-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, type Signal } from '@angular/core';
 import { TitleService } from '@core/title';
 import { DashboardPageActions } from '../dashboard-page-actions';
+import { DashboardPageTabs } from '../dashboard-page-tabs';
 
 /**
  * Component DashboardPageHeader
@@ -8,7 +9,8 @@ import { DashboardPageActions } from '../dashboard-page-actions';
  *
  * @description
  * The shell's title band: the activated route's own title on the left, its
- * registered actions (`DashboardPageActions`) on the right. It sits between
+ * registered actions (`DashboardPageActions`) on the right, and its primary
+ * Spartan line tabs (`DashboardPageTabs`) beneath that row. It sits between
  * the 48px tool bar and the routed content, replacing the per-page title
  * blocks features used to render for themselves — the title is now the
  * document's one `<h1>`, sourced from `TitleService.pageTitle`, which
@@ -24,12 +26,12 @@ import { DashboardPageActions } from '../dashboard-page-actions';
  * registered none — a route always sets a title in this app, but the guard
  * keeps the band from showing a bare heading tag for one that does not.
  *
- * Its horizontal padding mirrors the `p-4 md:p-6` every routed page applies
- * to its own root, so the title starts on the same vertical line as the
- * content below it. A bottom border separates the subtle neutral background from content,
- * using the muted surface token at quarter opacity to gently lift the band in dark mode.
+ * Its inner `container` is the same one used by routed content, so the title
+ * starts on the same vertical line without a second horizontal inset. A bottom
+ * border separates the subtle neutral background from content, using the muted
+ * surface token at quarter opacity to gently lift the band in dark mode.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -40,7 +42,7 @@ import { DashboardPageActions } from '../dashboard-page-actions';
  */
 @Component({
   selector: 'app-dashboard-page-header',
-  imports: [DashboardPageActions],
+  imports: [DashboardPageActions, DashboardPageTabs],
   templateUrl: './dashboard-page-header.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

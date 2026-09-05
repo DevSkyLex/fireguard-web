@@ -1,5 +1,16 @@
-<div id="approvals" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+<div id="approvals" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="approvals"
+      placeholder="Search approval requests..."
+      i18n-placeholder="@@approvals.list.searchPlaceholder"
+      ariaLabel="Search approval requests..."
+      i18n-ariaLabel="@@approvals.list.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
     <app-collection-filter-toggle
       toolbarEnd
       [visible]="filtersVisible()"
@@ -66,7 +77,7 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideLock" aria-hidden="true" />
@@ -80,7 +91,7 @@
       </div>
     </div>
   } @else if (store.hasListError()) {
-    <div hlmEmpty role="alert">
+    <div hlmEmpty class="border border-border" role="alert">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon" class="text-destructive">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -97,7 +108,7 @@
       </div>
     </div>
   } @else if (!store.isLoading() && items().length === 0) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideShieldCheck" aria-hidden="true" />

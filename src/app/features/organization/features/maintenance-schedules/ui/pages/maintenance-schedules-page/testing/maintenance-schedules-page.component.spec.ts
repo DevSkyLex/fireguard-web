@@ -146,6 +146,24 @@ describe('MaintenanceSchedulesPage', () => {
     expect(load.mock.calls[0][0]).toMatchObject({ organization: '/api/organizations/org-1' });
   });
 
+  it('should render search and forward a settled term from the first page', async () => {
+    fixture = await createPage();
+    load.mockClear();
+    fixture.componentInstance['page'].set(3);
+
+    fixture.componentInstance['onSearchQueryChanged']('  smoke detector  ');
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="maintenance-search"]'),
+    ).not.toBeNull();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({
+      page: 1,
+      search: 'smoke detector',
+    });
+  });
+
   it('should call setIntervalOverride for the opened row when the override dialog submits', async () => {
     fixture = await createPage();
 

@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, type DebugElement } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { BrnCombobox } from '@spartan-ng/brain/combobox';
 import type {
   InterventionAssignRequest,
   InterventionAssignSubmittedEvent,
@@ -67,7 +68,7 @@ describe('InterventionAssignDialog', () => {
 
   const pickMember = async (value: string): Promise<void> => {
     const combobox: DebugElement = fixture.debugElement.query(By.directive(HlmCombobox));
-    combobox.triggerEventHandler('valueChange', value);
+    combobox.injector.get(BrnCombobox).select(value);
     await fixture.whenStable();
   };
 
@@ -149,6 +150,34 @@ describe('InterventionAssignDialog', () => {
     expect(submitted).toEqual([
       { interventionId: 'intervention-1', responsible: members[0].value },
     ]);
+  });
+
+  it('keeps the picked responsible and displays server errors for retry', async () => {
+    await setRequest(request);
+    await pickMember(members[0].value);
+    fixture.componentRef.setInput('errors', ['Roof round: access denied']);
+    await fixture.whenStable();
+    expect(content().textContent).toContain('Roof round: access denied');
+    submitButton().click();
+    expect(submitted).toEqual([
+      { interventionId: 'intervention-1', responsible: members[0].value },
+    ]);
+  });
+
+  it('blocks Cancel and the picker during an assignment', async () => {
+    await setRequest({ ...request, currentResponsible: members[0].value });
+    fixture.componentRef.setInput('busy', true);
+    await fixture.whenStable();
+    const cancel = Array.from(content().querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Cancel'),
+    );
+    if (!cancel) throw new Error('Cancel button missing');
+    expect(cancel.disabled).toBe(true);
+    cancel.click();
+    fixture.componentInstance['onStateChanged']('closed');
+    fixture.componentInstance['submit']();
+    expect(dismissed).toBe(0);
+    expect(submitted).toEqual([]);
   });
 
   it('should reset the selection when a new request opens', async () => {

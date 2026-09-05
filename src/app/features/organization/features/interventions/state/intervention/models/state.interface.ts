@@ -18,6 +18,14 @@ import type {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface InterventionState {
+  /**
+   * Property mutationCallStates
+   * @readonly
+   * @description Outcome of the last collection mutation for each resource, used by batch feedback.
+   * @since 1.0.0
+   * @type {Readonly<Record<string, CallState>>}
+   */
+  readonly mutationCallStates: Readonly<Record<string, CallState>>;
   //#region Properties
   /**
    * Property totalInterventions

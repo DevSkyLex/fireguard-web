@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { isApiError } from '@core/api/utils';
 import type { FeedbackEventPayload, StoreError } from '../../models';
 import { errorFeedback } from '../feedback-payload/feedback-payload.utils';
@@ -21,7 +22,29 @@ export function toStoreError(error: unknown): StoreError {
       error,
       message: error.detail,
       code: error.status,
-      retryable: error.status >= 500,
+      retryable: error.status === 0 || error.status >= 500,
+      timestamp: Date.now(),
+    };
+  }
+
+  if (error instanceof HttpErrorResponse) {
+    const body: unknown = error.error;
+    const detail =
+      typeof body === 'object' &&
+      body !== null &&
+      'detail' in body &&
+      typeof body.detail === 'string'
+        ? body.detail
+        : null;
+    return {
+      error,
+      message:
+        detail ??
+        (error.status === 0
+          ? $localize`:@@requestState.connectionUnavailable:The connection is unavailable. Check your network and try again.`
+          : $localize`:@@requestState.requestFailed:The request could not be completed. Please try again.`),
+      code: error.status,
+      retryable: error.status === 0 || error.status >= 500,
       timestamp: Date.now(),
     };
   }

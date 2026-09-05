@@ -54,4 +54,40 @@ export interface BoardColumn<T, K extends string = string> {
    * @type {readonly BoardItem<T>[]}
    */
   readonly items: readonly BoardItem<T>[];
+  /**
+   * Property total
+   * @readonly
+   * @description Server total when the column is paginated.
+   * @access public
+   * @since 1.0.0
+   * @type {number}
+   */
+  readonly total?: number;
+  /**
+   * Property loading
+   * @readonly
+   * @description Initial or next-page request in progress.
+   * @access public
+   * @since 1.0.0
+   * @type {boolean}
+   */
+  readonly loading?: boolean;
+  /**
+   * Property error
+   * @readonly
+   * @description Recoverable page failure.
+   * @access public
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  readonly error?: string | null;
+  /**
+   * Property hasMore
+   * @readonly
+   * @description Another server page is available.
+   * @access public
+   * @since 1.0.0
+   * @type {boolean}
+   */
+  readonly hasMore?: boolean;
 }

@@ -21,19 +21,19 @@ export class InterventionDetailPage {
   public constructor(private readonly page: Page) {}
 
   public readonly root: Locator = this.page.locator('#intervention-detail');
-  public readonly issuesChecklist: Locator = this.page.locator(
-    '[data-testid="intervention-issues-checklist"]:visible',
-  );
-  public readonly blockerItems: Locator = this.page.locator(
-    '[data-testid="intervention-issues-checklist-blocker-item"]:visible',
-  );
+  public readonly issuesChecklist: Locator = this.page
+    .getByTestId('intervention-issues-checklist')
+    .filter({ visible: true });
+  public readonly blockerItems: Locator = this.page
+    .getByTestId('intervention-issues-checklist-blocker-item')
+    .filter({ visible: true });
   public readonly fieldWorkSection: Locator = this.page.getByTestId(
     'intervention-detail-field-work',
   );
   public readonly workItemRows: Locator = this.page.getByTestId('intervention-work-item-table-row');
-  public readonly commandButton: Locator = this.page.locator(
-    '[data-testid="intervention-detail-command"]:visible',
-  );
+  public readonly commandButton: Locator = this.page
+    .getByTestId('intervention-detail-command')
+    .filter({ visible: true });
   public readonly discussionTrigger: Locator = this.page.getByTestId(
     'intervention-detail-discussion-trigger',
   );
@@ -85,7 +85,7 @@ export class InterventionDetailPage {
       .locator(
         '[data-testid="intervention-work-item-toggle"], [data-testid="intervention-work-item-toggle-card"]',
       )
-      .locator('visible=true');
+      .locator('[role="checkbox"]:visible');
   }
 
   /** Opens the live discussion sheet from the detail page's header trigger. */

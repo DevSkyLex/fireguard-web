@@ -13,7 +13,7 @@ It is the home for:
 - app-wide routing primitives (`routing/strategies`, `routing/guards`),
 - shared async store infrastructure (`request-state`),
 - appearance mode (`theme` — dark/light/system),
-- shell-level concerns (`splash-screen`, `breadcrumb`, `page-actions`,
+- shell-level concerns (`splash-screen`, `breadcrumb`, `page-actions`, `page-tabs`,
   `connectivity`, `cookie`, `mercure`, `title`, `locale`),
 - neutral contracts (ports) backing shared UI.
 
@@ -34,7 +34,7 @@ core/
   api/            theme/         feedback/        splash-screen/
   breadcrumb/     connectivity/  cookie/          mercure/
   title/          request-state/ boot-readiness/  locale/
-  page-actions/   indexed-db/
+  page-actions/   page-tabs/     indexed-db/
   config/         http/          routing/         # infrastructure groupings
 ```
 

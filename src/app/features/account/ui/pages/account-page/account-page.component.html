@@ -1,0 +1,47 @@
+<div id="account" class="flex h-full flex-col gap-6">
+  <hlm-tabs [tab]="activeSection()" class="contents" (tabActivated)="onSectionActivated($event)">
+    <ng-template #pageTabs>
+      <hlm-paginated-tabs-list
+        variant="line"
+        class="w-full"
+        tabListClass="justify-start"
+        data-testid="account-tabs-list"
+        aria-label="Account settings sections"
+        i18n-aria-label="@@account.page.navigationAria"
+      >
+        <button hlmTabsTrigger="profile" class="max-sm:min-h-11" data-testid="account-tab-profile">
+          <ng-icon name="lucideUserRound" aria-hidden="true" />
+          <span i18n="@@account.page.profileNav">Profile</span>
+        </button>
+        <button
+          hlmTabsTrigger="security"
+          class="max-sm:min-h-11"
+          data-testid="account-tab-security"
+        >
+          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+          <span i18n="@@account.page.securityNav">Security</span>
+        </button>
+        <button
+          hlmTabsTrigger="organizations"
+          class="max-sm:min-h-11"
+          data-testid="account-tab-organizations"
+        >
+          <ng-icon name="lucideBuilding2" aria-hidden="true" />
+          <span i18n="@@account.page.organizationsNav">Organizations</span>
+        </button>
+        <button
+          hlmTabsTrigger="notifications"
+          class="max-sm:min-h-11"
+          data-testid="account-tab-notifications"
+        >
+          <ng-icon name="lucideBell" aria-hidden="true" />
+          <span i18n="@@account.page.notificationsNav">Notifications</span>
+        </button>
+      </hlm-paginated-tabs-list>
+    </ng-template>
+
+    <div [hlmTabsContent]="activeSection()" class="w-full min-w-0">
+      <router-outlet />
+    </div>
+  </hlm-tabs>
+</div>

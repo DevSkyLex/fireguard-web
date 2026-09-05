@@ -50,6 +50,7 @@ export function withChannelsSidebarExtension(): SlotFeature<SidebarExtensionCont
         priority: 20,
         component: ChannelsPanel,
         label: $localize`:@@route.channels:Channels`,
+        contentPadding: false,
         active: computed(
           () =>
             context.selectedOrganizationId() !== null &&

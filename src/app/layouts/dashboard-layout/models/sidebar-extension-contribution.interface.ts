@@ -39,4 +39,19 @@ export interface SidebarExtensionContribution extends ExclusiveSlotContribution 
    * @type {Signal<boolean>}
    */
   readonly mobileVisible: Signal<boolean>;
+
+  /**
+   * Property contentPadding
+   * @readonly
+   *
+   * @description
+   * Whether the routed content keeps the dashboard's standard vertical spacing.
+   * Full-height workspaces can opt out while ordinary pages inherit it from the shell.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {boolean | undefined}
+   */
+  readonly contentPadding?: boolean;
 }

@@ -13,6 +13,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import {
   errorCallState,
   idleCallState,
@@ -62,6 +63,14 @@ class PageActionsHost {
 const renderPageActions = (): HTMLElement => {
   const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
   hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const renderPageTabs = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
   hostFixture.detectChanges();
 
   return hostFixture.nativeElement as HTMLElement;
@@ -183,6 +192,7 @@ describe('FacilityDetailPage', () => {
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('facilityId', 'facility-1');
     await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement).appendChild(renderPageTabs());
   };
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;

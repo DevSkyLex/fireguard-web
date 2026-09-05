@@ -42,6 +42,7 @@ import {
   type InspectionStatusTagDescriptor,
   type NonConformitySeverity,
 } from '@features/organization/features/inspections/models';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 
 import {
   ORGANIZATION_PERMISSION,
@@ -149,6 +150,7 @@ type OrganizationDashboardSeverityEntry = {
 @Component({
   selector: 'app-organization-dashboard-page',
   imports: [
+    ...HlmCollapsibleImports,
     NgIcon,
     ...HlmEmptyImports,
     HlmButton,
@@ -230,7 +232,9 @@ export class OrganizationDashboardPage {
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * * Registers {@link pageActions} on the shell header.
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
   /** "New intervention", registered on the shell header instead of an in-page title band. */
@@ -372,31 +376,67 @@ export class OrganizationDashboardPage {
   /** Shared label for the Inspections chart's card title and its single series name. */
   protected readonly inspectionsSeriesName: string = $localize`:@@org.statistics.trend.inspections.title:Inspections`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly inspectionsChartLabel: string = $localize`:@@org.statistics.trend.inspections.chartLabel:Inspections performed over time`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly nonConformitiesChartTitle: string = $localize`:@@org.statistics.trend.nonConformities.title:Non-conformities opened vs resolved`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly nonConformitiesChartLabel: string = $localize`:@@org.statistics.trend.nonConformities.chartLabel:Non-conformities opened and resolved over time`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly nonConformitiesOpenedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesOpened:Opened`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly nonConformitiesResolvedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesResolved:Resolved`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly equipmentSeriesName: string = $localize`:@@org.statistics.trend.equipment.title:Equipment added`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly equipmentChartLabel: string = $localize`:@@org.statistics.trend.equipment.chartLabel:Equipment added over time`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly facilitiesSeriesName: string = $localize`:@@org.statistics.trend.facilities.title:Facilities added`;
 
-  /** @access protected @since 1.0.0 @type {string} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly facilitiesChartLabel: string = $localize`:@@org.statistics.trend.facilities.chartLabel:Facilities added over time`;
 
   /** The current open+unresolved non-conformity count per severity, ordered from critical to low, each paired with its registry descriptor and its share of the breakdown's own total — the proportional bar's width. */
@@ -415,7 +455,11 @@ export class OrganizationDashboardPage {
       }));
     });
 
-  /** @access protected @since 1.0.0 @type {Signal<number>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<number>}
+   */
   protected readonly severityTotal: Signal<number> = computed(() =>
     this.severityBreakdown().reduce((sum, entry) => sum + entry.count, 0),
   );
@@ -429,14 +473,22 @@ export class OrganizationDashboardPage {
       : $localize`:@@org.statistics.severity.summaryMany:${total}:total: open and unresolved`;
   });
 
-  /** @access protected @since 1.0.0 @type {Signal<ChartSeries[]>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ChartSeries[]>}
+   */
   protected readonly inspectionsChartSeries: Signal<ChartSeries[]> = computed(() =>
     mapAlignedDashboardTrendSeriesToChartSeries(this.overviewTrendStore.alignedTrendData(), [
       { name: this.inspectionsSeriesName, index: 0 },
     ]),
   );
 
-  /** @access protected @since 1.0.0 @type {Signal<ChartSeries[]>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ChartSeries[]>}
+   */
   protected readonly nonConformitiesChartSeries: Signal<ChartSeries[]> = computed(() =>
     mapAlignedDashboardTrendSeriesToChartSeries(this.overviewTrendStore.alignedTrendData(), [
       { name: this.nonConformitiesOpenedSeriesName, index: 1 },
@@ -444,21 +496,33 @@ export class OrganizationDashboardPage {
     ]),
   );
 
-  /** @access protected @since 1.0.0 @type {Signal<ChartSeries[]>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ChartSeries[]>}
+   */
   protected readonly equipmentChartSeries: Signal<ChartSeries[]> = computed(() =>
     mapAlignedDashboardTrendSeriesToChartSeries(this.assetGrowthTrendStore.alignedTrendData(), [
       { name: this.equipmentSeriesName, index: 0 },
     ]),
   );
 
-  /** @access protected @since 1.0.0 @type {Signal<ChartSeries[]>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ChartSeries[]>}
+   */
   protected readonly facilitiesChartSeries: Signal<ChartSeries[]> = computed(() =>
     mapAlignedDashboardTrendSeriesToChartSeries(this.assetGrowthTrendStore.alignedTrendData(), [
       { name: this.facilitiesSeriesName, index: 1 },
     ]),
   );
 
-  /** @access protected @since 1.0.0 @type {Signal<string | null>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
   protected readonly inspectionsSummaryLine: Signal<string | null> = computed(() => {
     const output = this.overviewTrendStore.queryData()?.inspections;
 
@@ -469,7 +533,11 @@ export class OrganizationDashboardPage {
     );
   });
 
-  /** @access protected @since 1.0.0 @type {Signal<string | null>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
   protected readonly nonConformitiesSummaryLine: Signal<string | null> = computed(() => {
     const data = this.overviewTrendStore.queryData();
     const openedTotal = data?.ncOpened?.summary?.['total'];
@@ -480,7 +548,11 @@ export class OrganizationDashboardPage {
     return $localize`:@@org.statistics.trend.nonConformitiesSummary:${openedTotal}:opened: opened, ${resolvedTotal}:resolved: resolved this period`;
   });
 
-  /** @access protected @since 1.0.0 @type {Signal<string | null>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
   protected readonly equipmentSummaryLine: Signal<string | null> = computed(() => {
     const output = this.assetGrowthTrendStore.queryData()?.equipment;
 
@@ -491,7 +563,11 @@ export class OrganizationDashboardPage {
     );
   });
 
-  /** @access protected @since 1.0.0 @type {Signal<string | null>} */
+  /**
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
   protected readonly facilitiesSummaryLine: Signal<string | null> = computed(() => {
     const output = this.assetGrowthTrendStore.queryData()?.facilities;
 

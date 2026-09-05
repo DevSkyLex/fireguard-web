@@ -180,6 +180,7 @@ function instantiateFailureMessage(error: StoreError): string {
  */
 const INITIAL_INTERVENTION_STATE: InterventionState = {
   totalInterventions: 0,
+  mutationCallStates: {},
   listCallState: idleCallState(),
   servedFromLocalCache: false,
   createCallState: idleCallState<InterventionOutput>(),
@@ -639,6 +640,7 @@ export const InterventionStore = signalStore(
               }
               patchState(store, {
                 transitionCallState: pendingCallState<InterventionOutput>(),
+                mutationCallStates: { ...store.mutationCallStates(), [id]: pendingCallState() },
                 transitioningInterventionIds: [...store.transitioningInterventionIds(), id],
               });
             }),
@@ -652,6 +654,10 @@ export const InterventionStore = signalStore(
                       updateEntity({ id, changes: updated }, { collection: 'intervention' }),
                       {
                         transitionCallState: successCallState(updated),
+                        mutationCallStates: {
+                          ...store.mutationCallStates(),
+                          [id]: successCallState(null),
+                        },
                         transitioningInterventionIds: store
                           .transitioningInterventionIds()
                           .filter((pending: string): boolean => pending !== id),
@@ -670,6 +676,10 @@ export const InterventionStore = signalStore(
                     const storeError = toStoreError(error);
                     patchState(store, {
                       transitionCallState: errorCallState(storeError),
+                      mutationCallStates: {
+                        ...store.mutationCallStates(),
+                        [id]: errorCallState(storeError),
+                      },
                       transitioningInterventionIds: store
                         .transitioningInterventionIds()
                         .filter((pending: string): boolean => pending !== id),
@@ -729,7 +739,13 @@ export const InterventionStore = signalStore(
                   ),
                 );
               }
-              patchState(store, { assignCallState: pendingCallState<InterventionOutput>() });
+              patchState(store, {
+                assignCallState: pendingCallState<InterventionOutput>(),
+                mutationCallStates: {
+                  ...store.mutationCallStates(),
+                  [interventionId]: pendingCallState(),
+                },
+              });
             }),
             mergeMap(({ interventionId, responsible, revision }) =>
               interventionService.update(interventionId, { responsible }, revision).pipe(
@@ -742,7 +758,13 @@ export const InterventionStore = signalStore(
                         { id: interventionId, changes: updated },
                         { collection: 'intervention' },
                       ),
-                      { assignCallState: successCallState(updated) },
+                      {
+                        assignCallState: successCallState(updated),
+                        mutationCallStates: {
+                          ...store.mutationCallStates(),
+                          [interventionId]: successCallState(null),
+                        },
+                      },
                     );
                     dispatcher.dispatch(
                       interventionStoreEvents.assignSucceeded(
@@ -765,7 +787,13 @@ export const InterventionStore = signalStore(
                       );
                     }
                     const storeError = toStoreError(error);
-                    patchState(store, { assignCallState: errorCallState(storeError) });
+                    patchState(store, {
+                      assignCallState: errorCallState(storeError),
+                      mutationCallStates: {
+                        ...store.mutationCallStates(),
+                        [interventionId]: errorCallState(storeError),
+                      },
+                    });
                     dispatcher.dispatch(
                       interventionStoreEvents.assignFailed(
                         toStoreFailureEventPayload(storeError, assignFailureMessage(storeError)),
@@ -798,7 +826,15 @@ export const InterventionStore = signalStore(
          */
         delete: rxMethod<InterventionDeleteCommand>(
           pipe(
-            tap(() => patchState(store, { deleteCallState: pendingCallState() })),
+            tap(({ interventionId }) =>
+              patchState(store, {
+                deleteCallState: pendingCallState(),
+                mutationCallStates: {
+                  ...store.mutationCallStates(),
+                  [interventionId]: pendingCallState(),
+                },
+              }),
+            ),
             mergeMap(({ interventionId, revision }) =>
               interventionService.remove(interventionId, revision).pipe(
                 tapResponse({
@@ -809,6 +845,10 @@ export const InterventionStore = signalStore(
                       {
                         totalInterventions: Math.max(0, store.totalInterventions() - 1),
                         deleteCallState: successCallState(null),
+                        mutationCallStates: {
+                          ...store.mutationCallStates(),
+                          [interventionId]: successCallState(null),
+                        },
                       },
                     );
                     dispatcher.dispatch(
@@ -821,7 +861,13 @@ export const InterventionStore = signalStore(
                   },
                   error: (error: unknown) => {
                     const storeError = toStoreError(error);
-                    patchState(store, { deleteCallState: errorCallState(storeError) });
+                    patchState(store, {
+                      deleteCallState: errorCallState(storeError),
+                      mutationCallStates: {
+                        ...store.mutationCallStates(),
+                        [interventionId]: errorCallState(storeError),
+                      },
+                    });
                     dispatcher.dispatch(
                       interventionStoreEvents.deleteFailed(
                         toStoreFailureEventPayload(storeError, deleteFailureMessage(storeError)),

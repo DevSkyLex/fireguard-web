@@ -35,6 +35,7 @@ export class InterventionsPage {
   public readonly recurrencesTable: Locator = this.page.getByTestId(
     'intervention-recurrences-table',
   );
+  public readonly createMenu: Locator = this.page.getByTestId('interventions-create-menu');
   public readonly recurrencesNew: Locator = this.page.getByTestId('intervention-recurrences-new');
   public readonly recurrenceSheet: Locator = this.page.getByTestId('intervention-recurrence-sheet');
 
@@ -125,6 +126,7 @@ export class InterventionsPage {
   /** Switches to the "Recurrences" tab and opens the create form sheet from its "New recurrence" button. */
   public async openRecurrenceCreate(): Promise<void> {
     await this.openRecurrences();
+    await this.createMenu.click();
     await this.recurrencesNew.click();
   }
 }

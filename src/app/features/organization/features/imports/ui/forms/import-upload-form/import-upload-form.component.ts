@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
@@ -88,6 +89,31 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: false };
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportUploadForm {
+  /**
+   * Property acceptedJobId
+   * @readonly
+   * @description Server acceptance clears the submitted file and draft.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly acceptedJobId = input<string | null>(null);
+  /**
+   * Constructor
+   * @constructor
+   * @description Registers draft, route and browser lifecycle coordination.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    effect(() => {
+      if (this.acceptedJobId()) {
+        this.model.set(EMPTY_DRAFT);
+        this.selectedFile.set(null);
+        this.fileError.set(null);
+      }
+    });
+  }
+
   //#region Inputs
   /**
    * Property pending
@@ -240,6 +266,7 @@ export class ImportUploadForm {
    */
   protected submit(event: Event): void {
     event.preventDefault();
+    if (this.pending()) return;
 
     this.uploadForm().markAsTouched();
 
@@ -252,10 +279,6 @@ export class ImportUploadForm {
 
     const draft: ImportUploadDraft = this.model();
     this.submitted.emit({ kind: draft.kind as ImportJobKind, file, dryRun: draft.dryRun });
-
-    this.model.set(EMPTY_DRAFT);
-    this.selectedFile.set(null);
-    this.fileError.set(null);
   }
   //#endregion
 }

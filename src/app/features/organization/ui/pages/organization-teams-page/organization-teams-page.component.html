@@ -1,4 +1,4 @@
-<div id="organization-teams" class="flex h-full flex-col gap-6 p-4 md:p-6">
+<div id="organization-teams" class="flex h-full flex-col gap-6">
   <p class="shrink-0 text-sm text-muted-foreground">{{ subtitle() }}</p>
 
   <p class="sr-only" aria-live="polite" aria-atomic="true" data-testid="organization-teams-status">
@@ -6,7 +6,7 @@
   </p>
 
   @if (store.listCallState().status === 'error') {
-    <div hlmEmpty role="alert">
+    <div hlmEmpty class="border border-border" role="alert">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon" class="text-destructive">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -27,7 +27,7 @@
       </div>
     </div>
   } @else if (!store.isLoading() && store.teams().length === 0) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideUsersRound" aria-hidden="true" />

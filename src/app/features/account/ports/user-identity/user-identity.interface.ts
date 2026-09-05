@@ -15,6 +15,14 @@ import type { Signal } from '@angular/core';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface ShellUserProfile {
+  /**
+   * Property id
+   * @readonly
+   * @description Canonical account identifier returned by the current profile API.
+   * @since 1.0.0
+   * @type {string | null | undefined}
+   */
+  readonly id?: string | null;
   readonly sub?: string | null;
   readonly name?: string | null;
   readonly email?: string | null;

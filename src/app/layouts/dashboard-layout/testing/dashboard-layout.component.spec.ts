@@ -69,6 +69,37 @@ describe('DashboardLayout', () => {
     expect(sidebar?.getAttribute('data-variant')).toBe('sidebar');
   });
 
+  it('owns the standard vertical spacing for routed pages', async () => {
+    const fixture = await render();
+    const content: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-content-container"]',
+    );
+
+    expect(content?.classList.contains('py-4')).toBe(true);
+    expect(content?.classList.contains('md:py-6')).toBe(true);
+  });
+
+  it('lets a full-height sidebar workspace remove the standard content spacing', async () => {
+    const contribution: SidebarExtensionContribution = {
+      id: 'workspace',
+      component: PanelStub,
+      priority: 20,
+      active: signal(true),
+      label: 'Workspace',
+      mobileVisible: signal(false),
+      contentPadding: false,
+    };
+    const fixture = await render([
+      { provide: DASHBOARD_SIDEBAR_EXTENSION_SLOT, useValue: [contribution] },
+    ]);
+    const content: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-content-container"]',
+    );
+
+    expect(content?.classList.contains('py-4')).toBe(false);
+    expect(content?.classList.contains('md:py-6')).toBe(false);
+  });
+
   it('keeps the brand without header contributions and omits an empty footer', async () => {
     const fixture = await render();
     const element: HTMLElement = fixture.nativeElement;

@@ -13,10 +13,18 @@ import type { ImportJobOutput } from '@features/organization/features/imports/mo
  * @since 1.0.0
  */
 export interface ImportJobsState {
-  /** @type {CallState<null>} */
+  readonly visibleIds: readonly string[];
+  readonly pollCallStates: Readonly<Record<string, CallState>>;
+  /**
+   * *
+   * @type {CallState<null>}
+   */
   readonly listCallState: CallState<null>;
 
-  /** @type {number} */
+  /**
+   * *
+   * @type {number}
+   */
   readonly totalJobs: number;
 
   /**

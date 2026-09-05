@@ -111,8 +111,7 @@ describe('InterventionRecurrenceTable', () => {
     fixture.componentRef.setInput('canWrite', false);
     await fixture.whenStable();
 
-    expect(byTestId('intervention-recurrence-edit-recurrence-1')).toBeNull();
-    expect(byTestId('intervention-recurrence-remove-recurrence-1')).toBeNull();
+    expect(byTestId('intervention-recurrence-menu-recurrence-1')).toBeNull();
   });
 
   it('should emit editRequested with the row when Edit is pressed', async () => {
@@ -122,7 +121,13 @@ describe('InterventionRecurrenceTable', () => {
 
     const requested = vi.fn();
     fixture.componentInstance.editRequested.subscribe(requested);
-    byTestId('intervention-recurrence-edit-recurrence-1')?.dispatchEvent(new Event('click'));
+    byTestId('intervention-recurrence-menu-recurrence-1')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+    await fixture.whenStable();
+    document
+      .querySelector('[data-testid="intervention-recurrence-edit-recurrence-1"]')
+      ?.dispatchEvent(new Event('click', { bubbles: true }));
     await fixture.whenStable();
 
     expect(requested).toHaveBeenCalledTimes(1);
@@ -138,7 +143,13 @@ describe('InterventionRecurrenceTable', () => {
     const removed = vi.fn();
     fixture.componentInstance.removed.subscribe(removed);
 
-    byTestId('intervention-recurrence-remove-recurrence-1')?.dispatchEvent(new Event('click'));
+    byTestId('intervention-recurrence-menu-recurrence-1')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+    await fixture.whenStable();
+    document
+      .querySelector('[data-testid="intervention-recurrence-remove-recurrence-1"]')
+      ?.dispatchEvent(new Event('click', { bubbles: true }));
     await fixture.whenStable();
 
     expect(removed).toHaveBeenCalledExactlyOnceWith(target);

@@ -1,162 +1,164 @@
 <form novalidate (submit)="submit($event)">
-  <hlm-field-group>
-    @if (error(); as message) {
-      <div role="alert" data-testid="import-upload-error" class="text-sm text-destructive">
-        <p>{{ message }}</p>
-      </div>
-    }
-
-    <hlm-field>
-      <label hlmFieldLabel for="import-upload-kind"
-        ><span i18n="@@imports.upload.kind">Import type</span><app-required-marker
-      /></label>
-      <hlm-select [formField]="uploadForm.kind">
-        <hlm-select-trigger
-          buttonId="import-upload-kind"
-          class="w-full max-sm:min-h-11"
-          data-testid="import-upload-kind"
-        >
-          <hlm-select-value
-            placeholder="Choose what to import"
-            i18n-placeholder="@@imports.upload.kindPlaceholder"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of kindOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-      @if (uploadForm.kind().touched() && uploadForm.kind().invalid()) {
-        <hlm-field-error>{{ uploadForm.kind().errors()[0].message }}</hlm-field-error>
+  <fieldset class="min-w-0" [disabled]="pending()">
+    <hlm-field-group>
+      @if (error(); as message) {
+        <div role="alert" data-testid="import-upload-error" class="text-sm text-destructive">
+          <p>{{ message }}</p>
+        </div>
       }
-    </hlm-field>
 
-    <hlm-field>
-      <label hlmFieldLabel for="import-upload-file"
-        ><span i18n="@@imports.upload.file">CSV file</span><app-required-marker
-      /></label>
-      <div class="flex flex-wrap items-center gap-2">
+      <hlm-field>
+        <label hlmFieldLabel for="import-upload-kind"
+          ><span i18n="@@imports.upload.kind">Import type</span><app-required-marker
+        /></label>
+        <hlm-select [formField]="uploadForm.kind">
+          <hlm-select-trigger
+            buttonId="import-upload-kind"
+            class="w-full max-sm:min-h-11"
+            data-testid="import-upload-kind"
+          >
+            <hlm-select-value
+              placeholder="Choose what to import"
+              i18n-placeholder="@@imports.upload.kindPlaceholder"
+            />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of kindOptions(); track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+        @if (uploadForm.kind().touched() && uploadForm.kind().invalid()) {
+          <hlm-field-error>{{ uploadForm.kind().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="import-upload-file"
+          ><span i18n="@@imports.upload.file">CSV file</span><app-required-marker
+        /></label>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="w-fit gap-2 max-sm:min-h-11"
+            data-testid="import-upload-pick"
+            [disabled]="pending()"
+            (click)="fileInput.click()"
+          >
+            <ng-icon name="lucideUpload" class="text-sm" aria-hidden="true" />
+            <span i18n="@@imports.upload.choose">Choose file</span>
+          </button>
+          @if (selectedFile(); as file) {
+            <span class="inline-flex items-center gap-1.5 text-sm text-foreground">
+              <ng-icon name="lucideFileText" class="shrink-0" aria-hidden="true" />
+              <span class="truncate">{{ file.name }}</span>
+            </span>
+          }
+        </div>
+        <input
+          #fileInput
+          id="import-upload-file"
+          type="file"
+          accept=".csv,text/csv"
+          class="sr-only"
+          tabindex="-1"
+          data-testid="import-upload-file-input"
+          [disabled]="pending()"
+          (change)="pick($event)"
+        />
+        <p hlmFieldDescription i18n="@@imports.upload.fileDescription">
+          Comma or semicolon delimited, UTF-8, up to 5,000 rows and 5 MB.
+        </p>
+        @if (fileError(); as message) {
+          <hlm-field-error forceShow data-testid="import-upload-file-error">{{
+            message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field orientation="horizontal">
+        <hlm-field-content>
+          <label hlmFieldLabel for="import-upload-dry-run" i18n="@@imports.upload.dryRun"
+            >Dry run</label
+          >
+          <p hlmFieldDescription i18n="@@imports.upload.dryRunDescription">
+            Validates every row and reports what would happen without creating anything.
+          </p>
+        </hlm-field-content>
+        <hlm-switch
+          inputId="import-upload-dry-run"
+          data-testid="import-upload-dry-run"
+          [formField]="uploadForm.dryRun"
+        />
+      </hlm-field>
+
+      <hlm-collapsible [expanded]="helpExpanded()" (expandedChange)="helpExpanded.set($event)">
         <button
+          hlmCollapsibleTrigger
           hlmBtn
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
-          class="w-fit gap-2 max-sm:min-h-11"
-          data-testid="import-upload-pick"
-          [disabled]="pending()"
-          (click)="fileInput.click()"
+          class="gap-1.5"
+          data-testid="import-upload-help-trigger"
+          [attr.aria-expanded]="helpExpanded()"
         >
-          <ng-icon name="lucideUpload" class="text-sm" aria-hidden="true" />
-          <span i18n="@@imports.upload.choose">Choose file</span>
+          <ng-icon
+            name="lucideChevronDown"
+            aria-hidden="true"
+            class="transition-transform"
+            [class.rotate-180]="helpExpanded()"
+          />
+          <span i18n="@@imports.upload.helpTrigger">Expected CSV format</span>
         </button>
-        @if (selectedFile(); as file) {
-          <span class="inline-flex items-center gap-1.5 text-sm text-foreground">
-            <ng-icon name="lucideFileText" class="shrink-0" aria-hidden="true" />
-            <span class="truncate">{{ file.name }}</span>
-          </span>
-        }
-      </div>
-      <input
-        #fileInput
-        id="import-upload-file"
-        type="file"
-        accept=".csv,text/csv"
-        class="sr-only"
-        tabindex="-1"
-        data-testid="import-upload-file-input"
-        [disabled]="pending()"
-        (change)="pick($event)"
-      />
-      <p hlmFieldDescription i18n="@@imports.upload.fileDescription">
-        Comma or semicolon delimited, UTF-8, up to 5,000 rows and 5 MB.
-      </p>
-      @if (fileError(); as message) {
-        <hlm-field-error forceShow data-testid="import-upload-file-error">{{
-          message
-        }}</hlm-field-error>
-      }
-    </hlm-field>
-
-    <hlm-field orientation="horizontal">
-      <hlm-field-content>
-        <label hlmFieldLabel for="import-upload-dry-run" i18n="@@imports.upload.dryRun"
-          >Dry run</label
-        >
-        <p hlmFieldDescription i18n="@@imports.upload.dryRunDescription">
-          Validates every row and reports what would happen without creating anything.
-        </p>
-      </hlm-field-content>
-      <hlm-switch
-        inputId="import-upload-dry-run"
-        data-testid="import-upload-dry-run"
-        [formField]="uploadForm.dryRun"
-      />
-    </hlm-field>
-
-    <hlm-collapsible [expanded]="helpExpanded()" (expandedChange)="helpExpanded.set($event)">
-      <button
-        hlmCollapsibleTrigger
-        hlmBtn
-        type="button"
-        variant="ghost"
-        size="sm"
-        class="gap-1.5"
-        data-testid="import-upload-help-trigger"
-        [attr.aria-expanded]="helpExpanded()"
-      >
-        <ng-icon
-          name="lucideChevronDown"
-          aria-hidden="true"
-          class="transition-transform"
-          [class.rotate-180]="helpExpanded()"
-        />
-        <span i18n="@@imports.upload.helpTrigger">Expected CSV format</span>
-      </button>
-      <div hlmCollapsibleContent class="flex flex-col gap-2 pt-2 text-sm text-muted-foreground">
-        @if (columnHelp(); as help) {
-          <p>
-            <span class="font-medium text-foreground" i18n="@@imports.upload.helpRequired"
-              >Required columns:</span
-            >
-            {{ help.required.join(', ') }}
-          </p>
-          <p>
-            <span class="font-medium text-foreground" i18n="@@imports.upload.helpOptional"
-              >Optional columns:</span
-            >
-            {{ help.optional.join(', ') }}
-          </p>
-          @for (note of help.notes; track note) {
+        <div hlmCollapsibleContent class="flex flex-col gap-2 pt-2 text-sm text-muted-foreground">
+          @if (columnHelp(); as help) {
+            <p>
+              <span class="font-medium text-foreground" i18n="@@imports.upload.helpRequired"
+                >Required columns:</span
+              >
+              {{ help.required.join(', ') }}
+            </p>
+            <p>
+              <span class="font-medium text-foreground" i18n="@@imports.upload.helpOptional"
+                >Optional columns:</span
+              >
+              {{ help.optional.join(', ') }}
+            </p>
+            @for (note of help.notes; track note) {
+              <p>{{ note }}</p>
+            }
+          } @else {
+            <p i18n="@@imports.upload.helpChooseKind">Choose an import type to see its columns.</p>
+          }
+          @for (note of generalNotes; track note) {
             <p>{{ note }}</p>
           }
-        } @else {
-          <p i18n="@@imports.upload.helpChooseKind">Choose an import type to see its columns.</p>
-        }
-        @for (note of generalNotes; track note) {
-          <p>{{ note }}</p>
-        }
-      </div>
-    </hlm-collapsible>
+        </div>
+      </hlm-collapsible>
 
-    <div class="flex justify-end">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="import-upload-submit"
-        [disabled]="pending()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@imports.upload.submitting">Uploading…</span>
-        } @else {
-          <span i18n="@@imports.upload.submit">Start import</span>
-        }
-      </button>
-    </div>
-  </hlm-field-group>
+      <div class="flex justify-end">
+        <button
+          hlmBtn
+          type="submit"
+          class="max-sm:min-h-11"
+          data-testid="import-upload-submit"
+          [disabled]="pending()"
+          [attr.aria-busy]="pending() ? 'true' : null"
+          aria-live="polite"
+        >
+          @if (pending()) {
+            <span i18n="@@imports.upload.submitting">Uploading…</span>
+          } @else {
+            <span i18n="@@imports.upload.submit">Start import</span>
+          }
+        </button>
+      </div>
+    </hlm-field-group>
+  </fieldset>
 </form>

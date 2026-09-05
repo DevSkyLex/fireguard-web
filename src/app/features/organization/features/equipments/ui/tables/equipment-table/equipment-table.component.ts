@@ -59,7 +59,7 @@ import { EquipmentStatusTag } from '../../components/equipment-status-tag';
   ],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './equipment-table.component.html',
-  host: { class: 'block min-h-0 w-full flex-1' },
+  host: { class: 'block min-h-0 w-full flex-1 max-md:min-h-fit max-md:flex-none' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentTable {

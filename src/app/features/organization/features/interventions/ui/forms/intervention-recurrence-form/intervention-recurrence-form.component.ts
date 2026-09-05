@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,6 +23,11 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+  PlanningCatalogueRequest,
+} from '@features/organization/features/interventions/models';
+import type {
   InterventionRecurrenceFrequency,
   InterventionRecurrenceFormValues,
   InterventionRecurrenceOutput,
@@ -30,6 +36,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
+import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
@@ -107,6 +114,8 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
 @Component({
   selector: 'app-intervention-recurrence-form',
   imports: [
+    DatePipe,
+    InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
     RequiredMarker,
@@ -124,6 +133,35 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionRecurrenceForm {
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Independent request states and server coverage for preparation sources.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests the next page or retry of a selection source.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueKind>}
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests server search while preserving the active draft and selected labels.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueRequest>}
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
   //#region Inputs
   /**
    * Property recurrence
@@ -363,6 +401,20 @@ export class InterventionRecurrenceForm {
       });
     },
   );
+
+  /** Property cadenceSummary
+   * @readonly
+   * @description Reformulates the actual frequency multiplier without forecasting a server occurrence date.
+   * @access protected
+   * @since 1.0.0
+   */
+  protected readonly cadenceSummary = computed(() => {
+    const { frequency, interval } = this.model();
+    if (frequency === 'weekly')
+      return $localize`:@@intervention.recurrences.everyWeeks:Every ${interval}:count: week(s)`;
+    const count = interval * { monthly: 1, quarterly: 3, semiannual: 6, annual: 12 }[frequency];
+    return $localize`:@@intervention.recurrences.everyMonths:Every ${count}:count: month(s)`;
+  });
 
   /** Every cadence unit offered. */
   protected readonly frequencyValues: ReadonlyArray<InterventionRecurrenceFrequency> =

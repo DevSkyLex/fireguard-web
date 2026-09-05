@@ -1,9 +1,25 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  addEntity,
+  removeAllEntities,
+  setEntities,
+  setEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { mergeMap, pipe, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  Subject,
+  exhaustMap,
+  finalize,
+  mergeMap,
+  pipe,
+  switchMap,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import type { HydraCollection, RequestOptions } from '@core/api/models';
 import {
   errorCallState,
@@ -34,6 +50,8 @@ import type { ImportJobsState } from './models';
 const INITIAL_STATE: ImportJobsState = {
   listCallState: idleCallState(),
   totalJobs: 0,
+  visibleIds: [],
+  pollCallStates: {},
   createCallState: idleCallState(),
 };
 
@@ -73,14 +91,18 @@ export const ImportJobsStore = signalStore(
 
   withComputed((store) => ({
     /** All cached jobs from the entity collection, in insertion order. */
-    jobs: computed<ReadonlyArray<ImportJobOutput>>(() => store.jobEntities()),
+    jobs: computed<ReadonlyArray<ImportJobOutput>>(() =>
+      store
+        .visibleIds()
+        .flatMap((id) => (store.jobEntityMap()[id] ? [store.jobEntityMap()[id]] : [])),
+    ),
 
     /** True while the list is loading. */
     isLoading: computed<boolean>(() => isCallPending(store.listCallState())),
 
     /** True when the collection is empty and no list request is in flight. */
     isEmpty: computed<boolean>(
-      () => store.jobIds().length === 0 && !isCallPending(store.listCallState()),
+      () => store.visibleIds().length === 0 && !isCallPending(store.listCallState()),
     ),
 
     /** True when the last list request failed. */
@@ -97,18 +119,66 @@ export const ImportJobsStore = signalStore(
   })),
 
   withMethods((store, service: ImportJobService = inject(ImportJobService)) => {
+    let organization = '';
+    let lastQuery: {
+      organizationId: string;
+      options?: RequestOptions;
+      query?: ImportJobListQuery;
+    } | null = null;
+    const changedOrganization = new Subject<void>();
+    const activePolls = new Set<string>();
     const poll = rxMethod<ImportJobOutput>(
       pipe(
-        mergeMap((job) =>
-          service.pollJob(job).pipe(
+        mergeMap((job) => {
+          if (activePolls.has(job.id) || !['pending', 'processing'].includes(job.status))
+            return EMPTY;
+          const scope = organization;
+          activePolls.add(job.id);
+          patchState(store, {
+            pollCallStates: { ...store.pollCallStates(), [job.id]: pendingCallState() },
+          });
+          return service.pollJob(job).pipe(
+            takeUntil(changedOrganization),
             tapResponse({
-              next: (polled: ImportJobOutput): void => {
-                patchState(store, setEntity(polled, { collection: 'job' }));
+              next: (polled) => {
+                if (scope === organization)
+                  patchState(store, setEntity(polled, { collection: 'job' }), {
+                    pollCallStates: {
+                      ...store.pollCallStates(),
+                      [job.id]: ['pending', 'processing'].includes(polled.status)
+                        ? pendingCallState()
+                        : successCallState(null),
+                    },
+                  });
               },
-              error: (): void => undefined,
+              error: (error: unknown) => {
+                if (scope === organization)
+                  patchState(store, {
+                    pollCallStates: {
+                      ...store.pollCallStates(),
+                      [job.id]: errorCallState(toStoreError(error)),
+                    },
+                  });
+              },
             }),
-          ),
-        ),
+            finalize(() => {
+              activePolls.delete(job.id);
+              if (scope === organization && store.pollCallStates()[job.id]?.status === 'pending')
+                patchState(store, {
+                  pollCallStates: {
+                    ...store.pollCallStates(),
+                    [job.id]: errorCallState(
+                      toStoreError(
+                        new Error(
+                          $localize`:@@imports.poll.interrupted:Tracking stopped before a final result. Refresh this report to check the job.`,
+                        ),
+                      ),
+                    ),
+                  },
+                });
+            }),
+          );
+        }),
       ),
     );
 
@@ -118,17 +188,26 @@ export const ImportJobsStore = signalStore(
       query?: ImportJobListQuery;
     }>(
       pipe(
-        tap((): void => {
+        tap((request): void => {
+          if (organization !== request.organizationId) {
+            changedOrganization.next();
+            activePolls.clear();
+            organization = request.organizationId;
+            patchState(store, removeAllEntities({ collection: 'job' }), INITIAL_STATE);
+          }
+          lastQuery = request;
           patchState(store, { listCallState: pendingCallState() });
         }),
         switchMap(({ organizationId, options, query }) =>
           service.list(organizationId, options, query).pipe(
             tapResponse({
               next: (response: HydraCollection<ImportJobOutput>): void => {
-                patchState(store, setAllEntities([...response.member], { collection: 'job' }), {
+                patchState(store, setEntities([...response.member], { collection: 'job' }), {
+                  visibleIds: response.member.map((job) => job.id),
                   totalJobs: response.totalItems,
                   listCallState: successCallState(null),
                 });
+                for (const job of response.member) poll(job);
               },
               error: (error: unknown): void => {
                 patchState(store, { listCallState: errorCallState(toStoreError(error)) });
@@ -149,14 +228,16 @@ export const ImportJobsStore = signalStore(
         tap((): void => {
           patchState(store, { createCallState: pendingCallState() });
         }),
-        switchMap(({ organizationId, kind, file, dryRun }) =>
+        exhaustMap(({ organizationId, kind, file, dryRun }) =>
           service.create(organizationId, kind, file, dryRun).pipe(
             tapResponse({
               next: (job: ImportJobOutput): void => {
+                if (organization && organization !== organizationId) return;
                 patchState(store, addEntity(job, { collection: 'job' }), {
                   createCallState: successCallState(job),
                 });
                 poll(job);
+                if (lastQuery) load(lastQuery);
               },
               error: (error: unknown): void => {
                 const storeError: StoreError = toStoreError(error);
@@ -183,11 +264,37 @@ export const ImportJobsStore = signalStore(
        * @param {string} jobId - The job to re-read.
        * @returns {void}
        */
-      refresh(jobId: string): void {
-        service.get(jobId).subscribe((job) => {
-          patchState(store, setEntity(job, { collection: 'job' }));
-        });
-      },
+      refresh: rxMethod<string>(
+        pipe(
+          mergeMap((jobId) => {
+            const scope = organization;
+            patchState(store, {
+              pollCallStates: { ...store.pollCallStates(), [jobId]: pendingCallState() },
+            });
+            return service.get(jobId).pipe(
+              takeUntil(changedOrganization),
+              tapResponse({
+                next: (job) => {
+                  if (scope !== organization) return;
+                  patchState(store, setEntity(job, { collection: 'job' }), {
+                    pollCallStates: { ...store.pollCallStates(), [jobId]: successCallState(null) },
+                  });
+                  poll(job);
+                },
+                error: (error: unknown) => {
+                  if (scope === organization)
+                    patchState(store, {
+                      pollCallStates: {
+                        ...store.pollCallStates(),
+                        [jobId]: errorCallState(toStoreError(error)),
+                      },
+                    });
+                },
+              }),
+            );
+          }),
+        ),
+      ),
 
       /**
        * Method resetCreateOperation

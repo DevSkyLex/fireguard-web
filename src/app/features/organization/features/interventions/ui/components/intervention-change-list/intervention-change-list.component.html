@@ -1,49 +1,94 @@
-<section hlmCard data-testid="intervention-change-list">
-  <div hlmCardHeader>
-    <h2 hlmCardTitle i18n="@@intervention.changes.title">Proposed changes</h2>
-    <p hlmCardDescription i18n="@@intervention.changes.caption">
-      Applied automatically when this intervention is published.
+<section class="flex min-w-0 flex-col gap-5" data-testid="intervention-change-list">
+  <div class="flex flex-col gap-1">
+    <h2 class="text-base font-semibold" i18n="@@intervention.changes.historyTitle">
+      Resource changes
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.changes.historyHint">
+      Review proposed values and consult rejected or applied changes.
     </p>
   </div>
-
-  <div hlmCardContent>
-    <ul hlmItemGroup>
-      @for (row of proposedRows(); track row.change.id) {
-        <li hlmItem variant="outline" size="sm" data-testid="intervention-change-row">
-          <div hlmItemContent class="gap-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-sm font-medium text-foreground">{{ row.resourceKind }}</span>
-              <app-intervention-tag kind="changeStatus" [value]="row.change.status" asOption />
-              @if (canReject()) {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="ms-auto text-destructive hover:text-destructive"
-                  data-testid="intervention-change-reject"
-                  [disabled]="row.pending"
-                  (click)="rejected.emit(row.change.id)"
-                >
-                  @if (row.pending) {
-                    <hlm-spinner size="xs" aria-hidden="true" />
-                  }
-                  <span i18n="@@intervention.changes.reject">Reject</span>
-                </button>
+  <hlm-select
+    [value]="activeFilter()"
+    [itemToString]="filterLabelOf"
+    (valueChange)="filterChanged($event)"
+  >
+    <hlm-select-trigger
+      buttonId="intervention-changes-filter"
+      size="sm"
+      class="w-fit max-sm:min-h-11"
+      data-testid="intervention-changes-filter"
+    >
+      <ng-icon name="lucideListFilter" aria-hidden="true" />
+      <span class="text-muted-foreground" i18n="@@intervention.wit.filterStatus">Status</span>
+      <hlm-select-value />
+    </hlm-select-trigger>
+    <hlm-select-content *hlmSelectPortal>
+      <hlm-select-group>
+        @for (filter of filters(); track filter.value) {
+          <hlm-select-item
+            [value]="filter.value"
+            [attr.data-testid]="'intervention-changes-' + filter.value"
+          >
+            <span class="flex w-full items-center justify-between gap-6">
+              <span>{{ filter.label }}</span>
+              <span class="text-muted-foreground tabular-nums">{{ filter.count }}</span>
+            </span>
+          </hlm-select-item>
+        }
+      </hlm-select-group>
+    </hlm-select-content>
+  </hlm-select>
+  @for (group of groups(); track group.resource) {
+    <section class="flex flex-col gap-2">
+      <h3 class="text-sm font-semibold break-words">{{ group.label }}</h3>
+      <ul hlmItemGroup class="divide-y divide-border">
+        @for (row of group.rows; track row.change.id) {
+          <li hlmItem size="sm" class="px-0" data-testid="intervention-change-row">
+            <div hlmItemContent class="gap-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <app-intervention-tag kind="changeStatus" [value]="row.change.status" asOption />
+                @if (canReject() && row.change.status === 'proposed') {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="ms-auto max-sm:min-h-11"
+                    data-testid="intervention-change-reject"
+                    [disabled]="row.pending"
+                    (click)="rejected.emit(row.change.id)"
+                  >
+                    @if (row.pending) {
+                      <hlm-spinner size="xs" aria-hidden="true" />
+                    }
+                    <span i18n="@@intervention.changes.reject">Reject</span>
+                  </button>
+                }
+              </div>
+              <dl class="flex flex-col gap-2 text-sm">
+                @for (line of row.patchLines; track line.field) {
+                  <div class="grid grid-cols-1 gap-1 sm:grid-cols-[minmax(8rem,1fr)_2fr] sm:gap-4">
+                    <dt class="text-muted-foreground">{{ line.field }}</dt>
+                    <dd class="min-w-0 font-medium break-words">{{ line.value }}</dd>
+                  </div>
+                }
+              </dl>
+              @if (errors()[row.change.id]; as error) {
+                <p class="text-sm text-destructive" role="alert">{{ error }}</p>
               }
             </div>
-
-            <dl class="flex flex-col gap-1 text-sm">
-              @for (line of row.patchLines; track line.field) {
-                <div class="flex flex-wrap items-baseline gap-x-2">
-                  <dt class="text-muted-foreground">{{ line.field }}</dt>
-                  <dd class="font-medium text-foreground">{{ line.value }}</dd>
-                </div>
-              }
-            </dl>
-          </div>
-        </li>
-      }
-    </ul>
-  </div>
+          </li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    <div hlmEmpty class="min-h-32 border border-border">
+      <div hlmEmptyHeader>
+        <p hlmEmptyTitle i18n="@@intervention.changes.emptyTitle">No changes in this state</p>
+        <p hlmEmptyDescription i18n="@@intervention.changes.emptyHint">
+          Choose another status to consult the intervention history.
+        </p>
+      </div>
+    </div>
+  }
 </section>

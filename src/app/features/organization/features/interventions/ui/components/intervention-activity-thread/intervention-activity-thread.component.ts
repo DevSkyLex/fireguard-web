@@ -28,7 +28,6 @@ import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmMessageImports } from '@shared/ui/message';
@@ -73,9 +72,10 @@ const SKELETON_ROW_COUNT: number = 3;
  * `gap-1.5` (6px) — spartan's spacing there assumes a chat's denser message
  * groups, tighter than this timeline's own rhythm.
  *
- * Every entry's icon or avatar sits in a shared `w-6` rail column, `self-start`
- * aligned so it lines up with the first line of its row rather than spartan's
- * chat-oriented `self-end` default, and the comment row overrides
+ * Every entry's icon or avatar sits in a shared `w-6` rail column. A system
+ * icon and its content share a 20px alignment band so text, arrows and status
+ * badges have the same vertical centre while the row itself stays top-aligned.
+ * The comment row overrides
  * `hlmMessageAvatar`'s `min-w-8` down to `min-w-0` so its 24px `hlm-avatar`
  * sizes the column exactly like the system row's 16px marker icon — both
  * share one x-axis, `left-3` (half of `w-6`) past the row's own left edge.
@@ -122,10 +122,8 @@ const SKELETON_ROW_COUNT: number = 3;
  * generic fallback) is shorter than one with two status badges, and without
  * a floor its rail column could shrink past the line's own offsets and
  * render nothing visible at all — this happened, for the `created` row
- * specifically. `hlmMarkerContent` takes `items-start` rather than spartan's
- * own centering for the same reason: once the floor makes a row taller than
- * its one line of text, centering that text would drop it below the icon,
- * which stays pinned to the top of its own `items-start` rail span.
+ * specifically. The content's `min-h-5 items-center` keeps every inline datum
+ * centred against the icon without centring the whole line inside that floor.
  *
  * A known system event's marker icon carries its own tint — green for
  * `created`, a genuine grey for the far more frequent `status_changed` —
@@ -170,7 +168,6 @@ const SKELETON_ROW_COUNT: number = 3;
     ...HlmMessageImports,
     ...HlmBubbleImports,
     ...HlmAlertImports,
-    ...HlmCardImports,
     HlmButton,
   ],
   providers: [

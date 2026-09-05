@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import type {
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
@@ -32,6 +33,13 @@ const item = (overrides: Partial<InterventionWorkItemOutput>): InterventionWorkI
   ...overrides,
 });
 
+/** Minimal ResizeObserver stand-in: the status select observes its trigger in the test DOM. */
+class ResizeObserverStub {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+}
+
 describe('InterventionWorkItemTable', () => {
   let fixture: ComponentFixture<InterventionWorkItemTable>;
   let changes: InterventionWorkItemStatusChange[];
@@ -40,9 +48,15 @@ describe('InterventionWorkItemTable', () => {
   const rows = (): HTMLElement[] =>
     Array.from(root().querySelectorAll('[data-testid="intervention-work-item-table-row"]'));
   const toggles = (): HTMLButtonElement[] =>
-    Array.from(root().querySelectorAll('[data-testid="intervention-work-item-toggle"]'));
+    Array.from(
+      root().querySelectorAll('[data-testid="intervention-work-item-toggle"] [role="checkbox"]'),
+    );
   const byTestId = (id: string): HTMLElement | null =>
     root().querySelector(`[data-testid="${id}"]`);
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+  });
 
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
@@ -61,13 +75,47 @@ describe('InterventionWorkItemTable', () => {
     fixture.componentInstance.statusChanged.subscribe((change) => changes.push(change));
   });
 
-  it('should count completed and skipped alike as resolved', () => {
-    expect(root().textContent).toContain('2/4');
+  it('should count only completed work as done and show skipped work separately', async () => {
+    fixture.componentRef.setInput('showProgress', true);
+    fixture.componentRef.setInput('totalCount', 4);
+    fixture.componentRef.setInput('completedCount', 1);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('1/4');
+    expect(root().textContent).toContain('1 completed · 1 skipped · 2 remaining');
   });
 
   it('should name each row by its action and target', () => {
     expect(rows()[0]?.textContent).toContain('Inspection');
     expect(rows()[0]?.textContent).toContain('Extinguisher A-12');
+  });
+
+  it('should disable another member’s work before any mutation is emitted', async () => {
+    fixture.componentRef.setInput('currentMemberId', '/api/organizations/org-1/members/me');
+    fixture.componentRef.setInput('items', [
+      item({ assignee: '/api/organizations/org-1/members/other' }),
+    ]);
+    fixture.componentRef.setInput('canSkip', true);
+    await fixture.whenStable();
+    expect(toggles()[0]?.disabled).toBe(true);
+    expect(
+      byTestId('intervention-work-item-toggle-card')?.querySelector<HTMLButtonElement>(
+        '[role="checkbox"]',
+      )?.disabled,
+    ).toBe(true);
+    toggles()[0]?.click();
+    expect(changes).toEqual([]);
+  });
+
+  it('should enable an assigned item only after its member identity is known', async () => {
+    fixture.componentRef.setInput('items', [
+      item({ assignee: '/api/organizations/org-1/members/me' }),
+    ]);
+    await fixture.whenStable();
+    expect(toggles()[0]?.disabled).toBe(true);
+    fixture.componentRef.setInput('currentMemberId', '/api/organizations/org-1/members/me');
+    await fixture.whenStable();
+    expect(toggles()[0]?.disabled).toBe(false);
   });
 
   it('should name an item with no target by its action alone', async () => {
@@ -143,13 +191,10 @@ describe('InterventionWorkItemTable', () => {
     expect(rows()[1]?.textContent).toContain('Discovered');
   });
 
-  it('should give every state its own glyph, not a colour', () => {
-    // Compare the rendered paths: four states must be four distinct shapes.
-    const shapes: string[] = toggles().map(
-      (toggle) => toggle.querySelector('ng-icon svg')?.innerHTML ?? '',
-    );
-
-    expect(new Set(shapes).size).toBe(4);
+  it('should expose work item completion as checkboxes rather than pressed icon buttons', () => {
+    expect(toggles()).toHaveLength(4);
+    expect(toggles().every((toggle) => toggle.getAttribute('role') === 'checkbox')).toBe(true);
+    expect(toggles().every((toggle) => toggle.getAttribute('aria-pressed') === null)).toBe(true);
   });
 
   it('should complete a planned item in one gesture', () => {
@@ -194,9 +239,18 @@ describe('InterventionWorkItemTable', () => {
     fixture.componentRef.setInput('pendingItemIds', new Set(['wi-2']));
     await fixture.whenStable();
 
-    expect(toggles()[1]?.querySelector('hlm-spinner')).not.toBeNull();
-    expect(toggles()[1]?.getAttribute('aria-busy')).toBe('true');
-    expect(toggles()[0]?.querySelector('hlm-spinner')).toBeNull();
+    expect(
+      byTestId('intervention-work-item-toggle')?.querySelector(
+        '[data-testid="intervention-work-item-checkbox-pending"]',
+      ),
+    ).toBeNull();
+    const pendingToggle: HTMLElement | undefined = Array.from(
+      root().querySelectorAll<HTMLElement>('[data-testid="intervention-work-item-toggle"]'),
+    )[1];
+    expect(
+      pendingToggle?.querySelector('[data-testid="intervention-work-item-checkbox-pending"]'),
+    ).not.toBeNull();
+    expect(pendingToggle?.querySelector('[aria-busy="true"]')).not.toBeNull();
   });
 
   it('should not lock any toggle merely because some other write is in flight', async () => {
@@ -314,15 +368,14 @@ describe('InterventionWorkItemTable', () => {
     expect(requests).toBe(1);
   });
 
-  it('should show each filter chip with the count it would produce', () => {
-    expect(byTestId('intervention-work-items-filter-all')?.textContent).toContain('4');
-    expect(byTestId('intervention-work-items-filter-remaining')?.textContent).toContain('2');
-    expect(byTestId('intervention-work-items-filter-done')?.textContent).toContain('1');
-    expect(byTestId('intervention-work-items-filter-skipped')?.textContent).toContain('1');
+  it('should expose the active status through one compact filter', () => {
+    expect(byTestId('intervention-work-items-filter')?.textContent).toContain('Status');
+    expect(byTestId('intervention-work-items-filter')?.textContent).toContain('All');
+    expect(root().querySelector('hlm-toggle-group')).toBeNull();
   });
 
-  it('should narrow the rows to the picked chip', async () => {
-    (byTestId('intervention-work-items-filter-done') as HTMLButtonElement).click();
+  it('should narrow the rows to the selected status', async () => {
+    fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 'done');
     await fixture.whenStable();
 
     expect(rows()).toHaveLength(1);
@@ -333,11 +386,49 @@ describe('InterventionWorkItemTable', () => {
     fixture.componentRef.setInput('items', [item({ id: 'wi-1', status: 'planned' })]);
     await fixture.whenStable();
 
-    (byTestId('intervention-work-items-filter-done') as HTMLButtonElement).click();
+    fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 'done');
     await fixture.whenStable();
 
     expect(byTestId('intervention-work-items-filtered-empty')).not.toBeNull();
     expect(byTestId('intervention-work-items-empty')).toBeNull();
+  });
+
+  it('should keep the desktop table to seven stable columns', () => {
+    const headings: string[] = Array.from(
+      root().querySelectorAll('thead th'),
+      (heading) => heading.textContent?.trim() ?? '',
+    );
+
+    expect(headings).toEqual([
+      'Status',
+      'Target',
+      'Action',
+      'Requirement',
+      'Assignee',
+      'State',
+      'Actions',
+    ]);
+    expect(rows()[0]?.querySelectorAll('td')).toHaveLength(7);
+  });
+
+  it('should keep proof consultation in the fixed-width row menu', async () => {
+    fixture.componentRef.setInput('items', [item({ id: 'wi-1', evidenceCount: 1 })]);
+    await fixture.whenStable();
+
+    const requested: InterventionWorkItemOutput[] = [];
+    fixture.componentInstance.proofsRequested.subscribe((requestedItem) =>
+      requested.push(requestedItem),
+    );
+
+    (byTestId('intervention-work-item-menu') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    const proofAction: HTMLButtonElement | null = document.querySelector(
+      '[data-testid="intervention-work-item-view-proofs"]',
+    );
+    proofAction?.click();
+
+    expect(proofAction?.textContent).toContain('1 proof(s)');
+    expect(requested.map(({ id }) => id)).toEqual(['wi-1']);
   });
 
   it('should offer no "Mine first" toggle without a known member', () => {
@@ -439,5 +530,18 @@ describe('InterventionWorkItemTable', () => {
     expect(button?.disabled).toBe(true);
     expect(button?.getAttribute('aria-busy')).toBe('true');
     expect(byTestId('intervention-work-item-evidence-pending')).not.toBeNull();
+  });
+  it('restores a chosen filter when remounted in the execution phase', async () => {
+    fixture.componentRef.setInput('showProgress', true);
+    fixture.componentRef.setInput('preferredFilter', 'skipped');
+    await fixture.whenStable();
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]?.textContent).toContain('Skipped');
+    const emitted: string[] = [];
+    fixture.componentInstance.filterChanged.subscribe((filter) => emitted.push(filter));
+    fixture.componentInstance.revealItem('wi-1');
+    await fixture.whenStable();
+    expect(emitted).toEqual(['all']);
+    expect(rows()).toHaveLength(4);
   });
 });

@@ -115,3 +115,11 @@ export type { InterventionTagSeverity } from './intervention-tag/intervention-ta
 export { resolveInterventionTag } from './intervention-tag/intervention-tag.util';
 
 export type { InterventionBoardCardViewModel } from './intervention-board/intervention-board-card-view-model.interface';
+
+export type { PublicationTracking } from './publication/publication-tracking.interface';
+
+export type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+  PlanningCatalogueRequest,
+} from './planning/planning-catalogue.interface';

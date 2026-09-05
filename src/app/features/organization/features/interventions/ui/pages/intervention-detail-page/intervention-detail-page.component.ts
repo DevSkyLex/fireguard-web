@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,7 +21,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideActivity,
   lucideBan,
+  lucideBoxes,
+  lucideBuilding2,
+  lucideCalendarCheck,
+  lucideClipboardCheck,
+  lucideCircleCheckBig,
+  lucideListChecks,
+  lucidePlay,
+  lucideSend,
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
@@ -31,17 +39,29 @@ import {
   lucideCopy,
   lucideEllipsis,
   lucideFileDown,
+  lucideGitCompareArrows,
+  lucideHistory,
   lucideMessageSquareQuote,
   lucideMessagesSquare,
+  lucidePaperclip,
   lucideScanLine,
   lucideTrash2,
+  lucideUsersRound,
 } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
-import { isCallError, isCallPending, type CallState, type StoreError } from '@core/request-state';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
+import {
+  isCallError,
+  isCallPending,
+  toStoreError,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
@@ -61,7 +81,6 @@ import type {
   InterventionEditTarget,
   InterventionIssueTarget,
   InterventionLinkedResourceTabId,
-  InterventionOutboxOperation,
   InterventionOutput,
   InterventionPhase,
   InterventionQueuedAttachment,
@@ -93,6 +112,7 @@ import {
   InterventionLinkedResourcesStore,
   type InterventionLinkedResourcesStoreType,
 } from '@features/organization/features/interventions/state/intervention-linked-resources';
+import { InterventionOperationsStore } from '@features/organization/features/interventions/state/intervention-operations';
 import {
   InterventionPlanningOptionsStore,
   type InterventionPlanningOptionsStoreType,
@@ -125,14 +145,18 @@ import {
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmKbd } from '@shared/ui/kbd';
 import { HlmSeparator } from '@shared/ui/separator';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
@@ -141,7 +165,6 @@ import { InterventionChangeList } from '../../components/intervention-change-lis
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
-import { InterventionStatusBand } from '../../components/intervention-status-band';
 import { InterventionSyncBlockedAlert } from '../../components/intervention-sync-blocked-alert';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAbandonDialog } from '../../dialogs/intervention-abandon-dialog';
@@ -153,17 +176,21 @@ import type {
   InterventionLabelUpdateSubmittedEvent,
 } from '../../dialogs/intervention-label-manage-dialog';
 import { InterventionPublishDialog } from '../../dialogs/intervention-publish-dialog';
+import { InterventionRequestChangesDialog } from '../../dialogs/intervention-request-changes-dialog';
 import { InterventionSignatureDialog } from '../../dialogs/intervention-signature-dialog';
 import { InterventionTeamAssignDialog } from '../../dialogs/intervention-team-assign-dialog';
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
-import { InterventionRequestChangesSheet } from '../../sheets/intervention-request-changes-sheet';
+import { InterventionOperationsSheet } from '../../sheets/intervention-operations-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
-import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
+import {
+  InterventionWorkItemTable,
+  type InterventionWorkItemFilter,
+} from '../../tables/intervention-work-item-table';
 
 /** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
 const LINKED_RESOURCE_TAB_IDS: ReadonlySet<string> = new Set<string>([
@@ -209,20 +236,18 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * @description
  * One intervention, from planning to publication, laid out as two columns: a
- * first track carrying the linked-resources rail (`hlm-tabs`, six triggers:
- * Overview, Changes, Attachments, then one lookup table each for Facilities /
- * Equipment / Inspections) beside the active tab's panel, and a second column
- * stacking the properties card above the desktop issues checklist,
- * tab-independent. The two-track wrapper is a named Tailwind v4 container
+ * first track carrying the active workspace panel and a second column stacking
+ * properties above the desktop issues checklist. Six triggers — Overview,
+ * Changes, Attachments, Facilities, Equipment and Inspections — render as a
+ * paginated Spartan `line` list beneath the shell title through
+ * `PageTabsService`. The two-track wrapper is a named Tailwind v4 container
  * (`@container/detail`) rather than a viewport media query, because the
  * shell sidebar is collapsible and shifts the wrapper's real width by
  * roughly 200px at a fixed viewport: the second column breaks out at 896px
- * of container width (`@4xl/detail`, `propertiesRailVisible`) and the rail
- * itself turns vertical and `sticky` at 1152px (`@6xl/detail`,
- * `linkedTabsOrientation`) — both thresholds measured by a `ResizeObserver`
- * on the wrapper, not `matchMedia`. Below 896px everything stacks and the
- * rail lays out horizontal (`activeLinkedTab` drives which panel renders and
- * lazy-loads a tab's data on first activation).
+ * of container width (`@4xl/detail`, `propertiesRailVisible`), measured by a
+ * `ResizeObserver` on the wrapper. Below 896px everything stacks;
+ * `activeLinkedTab` drives which panel renders and lazy-loads a tab's data on
+ * first activation.
  *
  * Four decisions a reviewer should know about.
  *
@@ -252,10 +277,9 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * which reads and clears it once.
  *
  * The intervention's name is the shell breadcrumb's title, resolved by
- * `interventionTitleResolver`; the meta line stays as a lead paragraph at
- * content top, and Discussion plus the "more actions" menu register on the
- * shell header through `PageActionsService`. The status band renders exactly
- * where it always did.
+ * `interventionTitleResolver`. Status, recording state and the split command
+ * register on the shell header through `PageActionsService`; the meta line
+ * belongs to the secondary information rail.
  *
  * @version 5.1.0
  *
@@ -264,13 +288,15 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    ...HlmSheetImports,
     NgIcon,
     ...HlmEmptyImports,
     InterventionDiscussionSheet,
     ...HlmCollapsibleImports,
     HlmKbd,
-    NgTemplateOutlet,
     HlmButton,
+    HlmButtonGroup,
+    HlmSpinner,
     HlmSeparator,
     HlmSkeleton,
     ...HlmAlertImports,
@@ -285,8 +311,8 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
-    InterventionStatusBand,
     InterventionSyncBlockedAlert,
+    InterventionOperationsSheet,
     InterventionTeamAssignDialog,
     InterventionCommentForm,
     InterventionGettingStarted,
@@ -295,20 +321,30 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionFacilitiesTable,
     InterventionInspectionsTable,
     InterventionPropertiesGrid,
-    InterventionRequestChangesSheet,
+    InterventionRequestChangesDialog,
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
     ...HlmTabsImports,
   ],
   providers: [
+    InterventionOperationsStore,
     InterventionWorkspaceStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
     InterventionPublicationStore,
     InterventionLabelStore,
     provideIcons({
+      lucideActivity,
       lucideBan,
+      lucideBoxes,
+      lucideBuilding2,
+      lucideCalendarCheck,
+      lucideClipboardCheck,
+      lucideCircleCheckBig,
+      lucideListChecks,
+      lucidePlay,
+      lucideSend,
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
@@ -317,10 +353,14 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideCopy,
       lucideEllipsis,
       lucideFileDown,
+      lucideGitCompareArrows,
+      lucideHistory,
       lucideMessageSquareQuote,
       lucideMessagesSquare,
+      lucidePaperclip,
       lucideScanLine,
       lucideTrash2,
+      lucideUsersRound,
     }),
   ],
   templateUrl: './intervention-detail-page.component.html',
@@ -328,6 +368,48 @@ const IDLE_EDIT_STATE: InterventionEditState = {
   host: { '(document:keydown)': 'onDocumentKeydown($event)' },
 })
 export class InterventionDetailPage {
+  /**
+   * Property proofItem
+   * @readonly
+   * @description Work item whose associated evidence is being consulted.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<InterventionWorkItemOutput | null>}
+   */
+  protected readonly proofItem = signal<InterventionWorkItemOutput | null>(null);
+  /**
+   * Property proofSheetSide
+   * @readonly
+   * @description Responsive placement of the contextual evidence sheet.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly proofSheetSide = sheetSide();
+  /**
+   * Property proofAttachments
+   * @readonly
+   * @description Server files associated with the selected work item.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly InterventionAttachmentOutput[]>}
+   */
+  protected readonly proofAttachments = computed(() =>
+    this.store.attachments().filter((attachment) => attachment.workItemId === this.proofItem()?.id),
+  );
+  /**
+   * Property proofQueuedAttachments
+   * @readonly
+   * @description Locally queued files associated with the selected work item.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly InterventionQueuedAttachment[]>}
+   */
+  protected readonly proofQueuedAttachments = computed(() =>
+    this.store
+      .queuedAttachments()
+      .filter((attachment) => attachment.workItemId === this.proofItem()?.id),
+  );
   //#region Inputs
   /**
    * Property organizationId
@@ -435,7 +517,9 @@ export class InterventionDetailPage {
   protected readonly labelStore: InterventionLabelStoreType =
     inject<InterventionLabelStoreType>(InterventionLabelStore);
 
-  /** Lists organization teams for the "Assign team…" picker — read directly, not through a store: a one-shot fetch on dialog open, mirroring {@link downloadAttachment}. */
+  /**
+   * * Lists organization teams for the "Assign team…" picker — read directly, not through a store: a one-shot fetch on dialog open, mirroring {@link downloadAttachment}.
+   */
   private readonly teamService: TeamService = inject(TeamService);
 
   /**
@@ -475,29 +559,75 @@ export class InterventionDetailPage {
   private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
-   * Property blockedSyncOperations
+   * Property operationsStore
    * @readonly
-   *
-   * @description
-   * The queued operations for *this* intervention that failed to replay,
-   * which {@link InterventionSyncBlockedAlert} names on the page. Read from
-   * the outbox rather than derived from the coordinator's device-global
-   * count: an agent standing on one intervention needs to know whether it is
-   * their own inspection that is stuck, not that three things somewhere are.
-   *
-   * Empty on the server — the outbox repository short-circuits without
-   * IndexedDB rather than throwing.
-   *
+   * @description Owns operation reads and explicit recovery decisions scoped to this intervention.
    * @access protected
    * @since 1.0.0
-   *
-   * @type {WritableSignal<readonly InterventionOutboxOperation[]>}
+   * @type {InstanceType<typeof InterventionOperationsStore>}
    */
-  protected readonly blockedSyncOperations: WritableSignal<readonly InterventionOutboxOperation[]> =
-    signal<readonly InterventionOutboxOperation[]>([]);
+  protected readonly operationsStore = inject(InterventionOperationsStore);
+  /**
+   * Property operationsVisible
+   * @readonly
+   * @description Visibility of this intervention’s local operations sheet.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly operationsVisible = signal(false);
+  /**
+   * Property blockedSyncOperations
+   * @readonly
+   * @description Failed and conflicted operations belonging only to this intervention.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly InterventionOutboxOperation[]>}
+   */
+  protected readonly blockedSyncOperations = this.operationsStore.blocked;
+  /**
+   * Property syncOnline
+   * @readonly
+   * @description Current connectivity used to explain unavailable synchronization actions.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly syncOnline = this.connectivity.online;
+  /**
+   * Property recordingLabel
+   * @readonly
+   * @description Readable state of local persistence and synchronization, including unresolved reads.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly recordingLabel = computed(() => {
+    if (
+      this.operationsStore.loadCallState().status === 'error' ||
+      this.blockedSyncOperations().length > 0
+    )
+      return $localize`:@@intervention.operations.actionRequired:Action required`;
+    if (this.syncRetrying() && this.operationsStore.operations().length > 0)
+      return $localize`:@@intervention.operations.synchronizing:Synchronizing`;
+    if (this.operationsStore.operations().length > 0)
+      return $localize`:@@intervention.operations.saved:Saved on this device`;
+    if (this.operationsStore.loadCallState().status !== 'success')
+      return $localize`:@@intervention.operations.checking:Checking saved work…`;
+    return null;
+  });
 
-  /** Why the replay stopped, straight from the coordinator's last failure. */
-  protected readonly syncProblem: Signal<string | null> = this.sync.problem;
+  /**
+   * Property syncProblem
+   * @readonly
+   * @description Known replay failure for this intervention, excluding other device queues.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly syncProblem: Signal<string | null> = computed(
+    () => this.blockedSyncOperations().find((operation) => operation.error)?.error ?? null,
+  );
 
   /** Whether a replay is in flight, so the alert's retry reads as busy rather than dead. */
   protected readonly syncRetrying: Signal<boolean> = this.sync.syncing;
@@ -544,7 +674,11 @@ export class InterventionDetailPage {
    */
   private readonly router: Router = inject(Router);
 
-  /** @access private @since 5.3.0 @type {ActivatedRoute} */
+  /**
+   * @access private
+   * @since 5.3.0
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
   /** The application's language, used to phrase the meta line and the timeline. */
@@ -556,7 +690,9 @@ export class InterventionDetailPage {
   /** Disconnects the detail-columns width `ResizeObserver` on teardown. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * * Registers {@link pageActions} on the shell header.
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
   /**
@@ -564,7 +700,7 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * The Discussion button and the "more actions" menu, registered on the
+   * The status, recording state and split command, registered on the
    * shell header instead of rendering in a title band — the header carries
    * every routed page's own name and actions now (`ARCHITECTURE.md` §9.3).
    *
@@ -576,7 +712,49 @@ export class InterventionDetailPage {
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
-  /** The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown. */
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the intervention workspace sections.
+   *
+   * @access private
+   * @since 5.1.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 5.1.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
+
+  /**
+   * Property workItemTable
+   * @readonly
+   * @description Work dataview public focus API for QR matches.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<InterventionWorkItemTable | undefined>}
+   */
+  private readonly workItemTable: Signal<InterventionWorkItemTable | undefined> =
+    viewChild(InterventionWorkItemTable);
+
+  /**
+   * * The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown.
+   */
   private pendingFocusTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -584,11 +762,54 @@ export class InterventionDetailPage {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
     });
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
+
+    for (const request of [
+      () => this.store.transitionCallState(),
+      () => this.store.createWorkItemCallState(),
+      () => this.store.workItemWriteCallState(),
+      () => this.store.deleteWorkItemsCallState(),
+      () => this.store.attachmentWriteCallState(),
+      () => this.store.attachmentDeleteCallState(),
+    ]) {
+      effect((): void => {
+        const state = request();
+        const error = state.error;
+        if (error)
+          untracked(() =>
+            this.feedback.error(
+              error.message ?? $localize`:@@intervention.feedback.failed:Action failed`,
+            ),
+          );
+        else if (state.status === 'success') {
+          untracked(() =>
+            this.feedback.success($localize`:@@intervention.detail.fieldSaved:Change saved`),
+          );
+        }
+      });
+    }
+
+    for (const request of [
+      () => this.store.updateDetailsCallState(),
+      () => this.store.deleteCallState(),
+    ]) {
+      effect((): void => {
+        const error = request().error;
+        if (error)
+          untracked(() =>
+            this.feedback.error(
+              error.message ?? $localize`:@@intervention.feedback.failed:Action failed`,
+            ),
+          );
+      });
+    }
 
     effect((): void => {
       const interventionId: string = this.interventionId();
 
       untracked((): void => {
+        this.proofItem.set(null);
+        this.operationsVisible.set(false);
         this.store.load(interventionId);
         this.store.loadActivities(interventionId);
         this.store.loadAttachments(interventionId);
@@ -596,17 +817,34 @@ export class InterventionDetailPage {
     });
 
     effect((): void => {
-      const interventionId: string = this.interventionId();
-      const blockedTotal: number = this.sync.blockedOperations();
+      const interventionId = this.interventionId();
+      const organizationId = this.organizationId();
+      this.offline.publicationOwner();
+      untracked(() =>
+        this.publicationStore.restore({
+          organization: `/api/organizations/${organizationId}`,
+          interventionId,
+        }),
+      );
+    });
 
-      untracked((): void => void this.loadBlockedSyncOperations(interventionId, blockedTotal));
+    effect((): void => {
+      const interventionId: string = this.interventionId();
+      const organizationId = this.organizationId();
+      this.sync.blockedOperations();
+      this.sync.syncing();
+      this.offline.pendingCount();
+      untracked(() => this.operationsStore.load({ organizationId, interventionId }));
     });
 
     effect((): void => {
       const intervention: InterventionOutput | null = this.store.intervention();
       if (!intervention) return;
 
-      untracked((): void => this.titleService.setTitle(intervention.name));
+      untracked((): void => {
+        this.titleService.setTitle(intervention.name);
+        this.publicationStore.reconcilePublished(intervention);
+      });
     });
 
     effect((): void => {
@@ -646,6 +884,19 @@ export class InterventionDetailPage {
       });
     });
 
+    effect(() => {
+      const intervention = this.store.intervention();
+      const org = this.organizationId();
+      if (intervention?.id !== this.interventionId()) return;
+      untracked(() =>
+        this.planningOptions.ensureSelected(org, [
+          intervention?.site,
+          intervention?.responsible,
+          ...(intervention?.participants ?? []),
+        ]),
+      );
+    });
+
     effect((): void => {
       const callState: CallState = this.store.updateDetailsCallState();
 
@@ -672,6 +923,23 @@ export class InterventionDetailPage {
     });
 
     this.events
+      .on(interventionWorkspaceStoreEvents.workItemCreateSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (payload.interventionId === this.interventionId()) this.workItemSheetVisible.set(false);
+      });
+    this.events
+      .on(interventionWorkspaceStoreEvents.transitionSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (
+          payload.interventionId === this.interventionId() &&
+          payload.status === 'changes_requested'
+        )
+          this.requestChangesVisible.set(false);
+      });
+
+    this.events
       .on(interventionStoreEvents.deleteSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe((): void => this.navigateToList());
@@ -694,6 +962,7 @@ export class InterventionDetailPage {
         if (payload.attachment.kind !== 'signature' || !this.signingSubmitPending()) return;
 
         this.signingSubmitPending.set(false);
+        this.signatureDialogVisible.set(false);
         this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
       });
 
@@ -720,6 +989,18 @@ export class InterventionDetailPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property workFilter
+   * @readonly
+   * @description Explicit work filter retained across tabs and reset when the intervention changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<InterventionWorkItemFilter | null>}
+   */
+  protected readonly workFilter = linkedSignal<InterventionWorkItemFilter | null>(() => {
+    this.interventionId();
+    return null;
+  });
   /** The active organization's regional formatting context port. */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
@@ -740,9 +1021,9 @@ export class InterventionDetailPage {
    * @readonly
    * @description
    * The `@container/detail` element wrapping the two-track grid, whose measured
-   * width drives {@link linkedTabsOrientation} and {@link propertiesRailVisible} —
-   * a separate parent of the grid because a container query never matches the
-   * element that declares the container. See the class doc for the thresholds.
+   * width drives {@link propertiesRailVisible}. It is a separate parent of the
+   * grid because a container query never matches the element that declares the
+   * container. See the class doc for the threshold.
    * @access private
    * @since 6.6.0
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
@@ -799,12 +1080,11 @@ export class InterventionDetailPage {
    * @readonly
    *
    * @description
-   * Which of the left-hand rail's six tabs is showing — `overview` by
-   * default. Seeded from {@link tab} so the URL is the entry point, and
-   * writable so an in-page reveal can switch synchronously; every write goes
-   * through {@link setLinkedTab}, which mirrors it back to `?tab=`. Not
-   * store-owned: the store only tracks whether each of the three lookup tabs
-   * has ever loaded, not which one is currently visible.
+   * Which of the page header's six section tabs is showing — `overview` by
+   * default. Seeded from {@link tab} so the URL is the entry point, and writable
+   * so an in-page reveal can switch synchronously; every write goes through
+   * {@link setLinkedTab}, which mirrors it back to `?tab=`. The store tracks
+   * whether each lookup tab has loaded, while the page owns the visible section.
    *
    * @access protected
    * @since 5.3.0
@@ -819,34 +1099,15 @@ export class InterventionDetailPage {
     });
 
   /**
-   * Property linkedTabsOrientation
-   * @readonly
-   *
-   * @description
-   * Sections retain a horizontal native line-tab order at every width.
-   * The tab strip alone scrolls when its contents exceed the available width.
-   *
-   * @access protected
-   * @since 4.5.0
-   *
-   * @type {WritableSignal<'horizontal' | 'vertical'>}
-   */
-  protected readonly linkedTabsOrientation: WritableSignal<'horizontal' | 'vertical'> = signal<
-    'horizontal' | 'vertical'
-  >('horizontal');
-
-  /**
    * Property propertiesRailVisible
    * @readonly
    *
    * @description
    * Whether {@link detailColumns} is wide enough (`@4xl/detail`, 896px of
    * container inline size) to break the second column out as its own
-   * `sticky` rail. Between 896px and 1152px that rail is already visible
-   * while `linkedTabsOrientation` is still `horizontal`, which is why
-   * {@link focusIssuesChecklist} reads this signal instead. Starts `false`
-   * (server/pre-hydration default) and upgrades once the browser measures
-   * the wrapper.
+   * `sticky` rail. {@link focusIssuesChecklist} reads this signal to choose
+   * the currently visible checklist copy. It starts `false` during SSR and
+   * hydration, then upgrades once the browser measures the wrapper.
    *
    * @access protected
    * @since 6.6.0
@@ -965,10 +1226,14 @@ export class InterventionDetailPage {
     [],
   );
 
-  /** Whether {@link teams} is loading. */
+  /**
+   * * Whether {@link teams} is loading.
+   */
   protected readonly teamsLoading: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether {@link teams} has already been fetched once, so reopening the dialog does not refetch. */
+  /**
+   * * Whether {@link teams} has already been fetched once, so reopening the dialog does not refetch.
+   */
   private teamsLoaded = false;
 
   /**
@@ -989,7 +1254,18 @@ export class InterventionDetailPage {
   private readonly offlineBlockReason: WritableSignal<string | null> = signal<string | null>(null);
 
   /** Whether a publication request and its poll are running. */
-  protected readonly publishing: Signal<boolean> = this.publicationStore.publishing;
+  protected readonly publicationPreparing = signal(false);
+  /**
+   * Property publishing
+   * @readonly
+   * @description Whether publication preflight or server observation is running.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly publishing: Signal<boolean> = computed(
+    () => this.publicationPreparing() || this.publicationStore.publishing(),
+  );
 
   /** Whether the current publish attempt has been pending long enough to say so. */
   protected readonly publicationLongRunning: Signal<boolean> = this.publicationStore.longRunning;
@@ -1044,16 +1320,13 @@ export class InterventionDetailPage {
    *
    * @type {WritableSignal<boolean>}
    */
-  private readonly signingSubmitPending: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly signingSubmitPending: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Whether the add-work-item panel is open. */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
   protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
-
-  /** Activity stays collapsed until the operator opens it or chooses Discussion. */
-  protected readonly activityExpanded: WritableSignal<boolean> = signal<boolean>(false);
 
   /** Activity region used only after the explicit Discussion action. */
   private readonly activityContent: Signal<ElementRef<HTMLElement> | undefined> =
@@ -1062,7 +1335,6 @@ export class InterventionDetailPage {
   /** Reveals the activity and moves the keyboard cursor into its comment field. */
   protected openActivity(): void {
     this.setLinkedTab('overview');
-    this.activityExpanded.set(true);
     setTimeout((): void => {
       const field: HTMLTextAreaElement | null | undefined =
         this.activityContent()?.nativeElement.querySelector('textarea');
@@ -1549,6 +1821,12 @@ export class InterventionDetailPage {
         target: 'responsible',
       },
       {
+        id: 'start',
+        label: $localize`:@@intervention.checklist.start:Set a planned start`,
+        done: intervention.plannedStartAt != null,
+        target: 'schedule',
+      },
+      {
         id: 'schedule',
         label: $localize`:@@intervention.checklist.schedule:Set a due date`,
         done: intervention.dueAt != null,
@@ -1589,17 +1867,16 @@ export class InterventionDetailPage {
       if (this.phase() === 'prepare') {
         if (!this.canPlan() || intervention.status !== 'draft') return null;
 
-        const ready: boolean =
-          intervention.site != null &&
-          intervention.responsible != null &&
-          intervention.plannedStartAt != null &&
-          intervention.dueAt != null;
+        const missing = this.readinessItems().filter(
+          (item) => item.id !== 'workItems' && !item.done,
+        );
+        const ready: boolean = missing.length === 0;
 
         return {
           label: $localize`:@@intervention.cta.plan:Plan intervention`,
           icon: 'lucideCalendarCheck',
           disabled: !ready,
-          disabledReason: null,
+          disabledReason: ready ? null : missing.map((item) => item.label).join(' · '),
           loading: this.store.saving(),
         };
       }
@@ -1646,7 +1923,7 @@ export class InterventionDetailPage {
           disabled: !this.canSubmit(),
           disabledReason: this.canSubmit()
             ? null
-            : $localize`:@@intervention.cta.reasonResponsible:Only the responsible agent can submit.`,
+            : $localize`:@@intervention.cta.submissionUnavailable:Submission is not currently available. Check your access and the intervention requirements.`,
           loading: this.store.saving(),
         };
       }
@@ -1697,7 +1974,7 @@ export class InterventionDetailPage {
         disabled: !this.online(),
         disabledReason: this.online()
           ? null
-          : $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,
+          : $localize`:@@intervention.cta.reviewOffline:Reconnect to send your review.`,
         loading: false,
       };
     });
@@ -1750,6 +2027,22 @@ export class InterventionDetailPage {
   });
 
   //#endregion
+
+  /**
+   * Method retrySelectedResources
+   * @description Retries unresolved site and member labels without altering the intervention draft.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected retrySelectedResources(): void {
+    const intervention = this.store.intervention();
+    this.planningOptions.ensureSelected(this.organizationId(), [
+      intervention?.site,
+      intervention?.responsible,
+      ...(intervention?.participants ?? []),
+    ]);
+  }
 
   //#region Methods
   /**
@@ -2099,13 +2392,22 @@ export class InterventionDetailPage {
   }
 
   /**
+   * Property scanProblem
+   * @readonly
+   * @description Recoverable scan feedback beside the manual work list and capture action.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly scanProblem = signal<string | null>(null);
+
+  /**
    * Method onScanFileSelected
    *
    * @description
    * Decodes a captured QR against the intervention's work items and reveals
    * the match — scroll plus focus, the same landing `revealFieldWork` gives
-   * the phase actions. No match, or an undecodable capture, becomes a toast
-   * rather than a dead click.
+   * the phase actions. Failed captures remain visible beside the list for a manual lookup or another capture.
    *
    * @access protected
    * @since 4.4.0
@@ -2120,10 +2422,16 @@ export class InterventionDetailPage {
     inputElement.value = ''; // Re-picking the same file fires no change event otherwise.
     if (!file) return;
 
+    this.scanProblem.set(null);
+    const scannedInterventionId = this.interventionId();
     void this.fieldExecution
       .scanToWorkItem(file, this.store.workItems())
       .then((result: InterventionScanResult): void => {
+        if (this.interventionId() !== scannedInterventionId) return;
         if (result.kind === 'unreadable') {
+          this.scanProblem.set(
+            $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+          );
           this.feedback.error(
             $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
           );
@@ -2132,6 +2440,9 @@ export class InterventionDetailPage {
         }
 
         if (result.kind === 'noMatch') {
+          this.scanProblem.set(
+            $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
+          );
           this.feedback.error(
             $localize`:@@intervention.scan.noMatch:No work item of this intervention matches the scanned code.`,
           );
@@ -2139,10 +2450,21 @@ export class InterventionDetailPage {
           return;
         }
 
-        this.focusFieldWorkPanel();
+        this.revealFieldWork();
+        if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
+        this.pendingFocusTimeout = setTimeout(() => {
+          if (!this.destroyRef.destroyed && scannedInterventionId === this.interventionId())
+            this.workItemTable()?.revealItem(result.item.id);
+        }, 0);
         this.feedback.success(
-          $localize`:@@intervention.scan.matched:Found: ${result.item.target ?? result.item.id}:target:`,
+          $localize`:@@intervention.scan.matched:Found: ${result.item.targetSummary?.label ?? result.item.id}:target:`,
         );
+      })
+      .catch(() => {
+        if (!this.destroyRef.destroyed && scannedInterventionId === this.interventionId())
+          this.scanProblem.set(
+            $localize`:@@intervention.scan.unreadable:No QR code could be read from this capture.`,
+          );
       });
   }
 
@@ -2154,9 +2476,7 @@ export class InterventionDetailPage {
    * confirmation — publication is never invoked directly. In `execute`, once
    * the field work is actually done, submitting an intervention that carries
    * no completion signature yet opens {@link signatureDialogVisible} instead
-   * of transitioning outright — {@link onSignatureCaptured} and
-   * {@link onSignatureDismissed} both eventually call this transition
-   * themselves.
+   * of transitioning outright. Signing and the explicit unsigned action submit; passive dismissal only closes the dialog.
    *
    * @access protected
    * @since 1.0.0
@@ -2168,7 +2488,6 @@ export class InterventionDetailPage {
 
     if (target === null) {
       this.offlineBlockReason.set(null);
-      this.publicationStore.reset();
       this.publishConfirmOpen.set(true);
 
       return;
@@ -2211,7 +2530,6 @@ export class InterventionDetailPage {
    */
   protected onSignatureCaptured(signature: Blob): void {
     this.signingSubmitPending.set(true);
-    this.signatureDialogVisible.set(false);
     this.store.uploadAttachment({
       interventionId: this.interventionId(),
       file: signature,
@@ -2222,29 +2540,26 @@ export class InterventionDetailPage {
 
   /**
    * Method onSignatureDismissed
-   *
-   * @description
-   * The operator declined the nudge — Escape, the backdrop, or Skip — so the
-   * transition proceeds unsigned; the backend does not require a signature to
-   * submit. A no-op once the dialog is already hidden: Skip emits `dismissed`
-   * directly, closing the dialog then echoes it a second time through the
-   * underlying `hlm-dialog`'s own close notification, and dispatching the
-   * transition twice would cancel the first PATCH mid-flight and fail the
-   * echo on a stale revision. Also a no-op while {@link signingSubmitPending}
-   * is set: the programmatic close from {@link onSignatureCaptured} flows
-   * through the same notification while its own chain is already running.
-   *
+   * @description Cancels the signature prompt without submitting the intervention.
    * @access protected
-   * @since 5.5.0
-   *
+   * @since 1.0.0
    * @returns {void}
    */
   protected onSignatureDismissed(): void {
-    if (!this.signatureDialogVisible()) return;
-
-    this.signatureDialogVisible.set(false);
     if (this.signingSubmitPending()) return;
+    this.signatureDialogVisible.set(false);
+  }
 
+  /**
+   * Method onSignatureSkipped
+   * @description Submits unsigned only after the operator explicitly chooses that action.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected onSignatureSkipped(): void {
+    if (!this.signatureDialogVisible() || this.signingSubmitPending()) return;
+    this.signatureDialogVisible.set(false);
     this.store.transition({ interventionId: this.interventionId(), status: 'submitted' });
   }
 
@@ -2286,7 +2601,6 @@ export class InterventionDetailPage {
       status: 'changes_requested',
       reviewNote: values.note,
     });
-    this.requestChangesVisible.set(false);
   }
 
   /**
@@ -2316,7 +2630,6 @@ export class InterventionDetailPage {
         required: true,
       },
     });
-    this.workItemSheetVisible.set(false);
   }
 
   /**
@@ -2588,20 +2901,64 @@ export class InterventionDetailPage {
    *
    * @returns {void}
    */
-  protected confirmPublish(): void {
-    const intervention: InterventionOutput | null = this.store.intervention();
-    if (intervention === null) return;
-
+  protected async confirmPublish(): Promise<void> {
+    const intervention = this.store.intervention();
+    if (!intervention || this.publishing() || this.publicationStore.unresolved()) return;
     if (!this.online()) {
       this.offlineBlockReason.set(
         $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,
       );
-
       return;
     }
-
+    const id = intervention.id;
+    const organizationId = this.organizationId();
+    const owner = this.offline.publicationOwner();
     this.offlineBlockReason.set(null);
-    this.publicationStore.publish(intervention);
+    this.publicationPreparing.set(true);
+    try {
+      await this.sync.syncIntervention(organizationId, id);
+      if (
+        this.destroyRef.destroyed ||
+        id !== this.interventionId() ||
+        organizationId !== this.organizationId() ||
+        owner !== this.offline.publicationOwner()
+      )
+        return;
+      const queued = await this.offline.listOutbox(id);
+      if (queued.length > 0)
+        throw new Error(
+          $localize`:@@intervention.publication.unsynced:Resolve this intervention's local operations before publishing.`,
+        );
+      const fresh = await firstValueFrom(
+        forkJoin({
+          intervention: this.interventionService.get(id),
+          issues: this.interventionService.listIssues(id),
+        }),
+      );
+      if (
+        this.destroyRef.destroyed ||
+        id !== this.interventionId() ||
+        organizationId !== this.organizationId() ||
+        owner !== this.offline.publicationOwner()
+      )
+        return;
+      if (
+        !this.online() ||
+        !fresh.intervention.allowedActions?.canPublish ||
+        fresh.issues.member.some((issue) => issue.severity === 'blocker')
+      ) {
+        this.store.reload(id);
+        throw new Error(
+          $localize`:@@intervention.publication.preflightBlocked:Publication is unavailable. Review the updated permissions, connection and blocking issues.`,
+        );
+      }
+      this.publicationStore.publish(fresh.intervention);
+    } catch (error: unknown) {
+      if (id === this.interventionId() && organizationId === this.organizationId())
+        this.offlineBlockReason.set(toStoreError(error).message);
+    } finally {
+      this.publicationPreparing.set(false);
+    }
   }
 
   /**
@@ -2651,11 +3008,8 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected retryBlockedSync(): void {
-    void this.sync
-      .retryBlocked()
-      .then((): Promise<void> =>
-        this.loadBlockedSyncOperations(this.interventionId(), this.sync.blockedOperations()),
-      );
+    this.operationsVisible.set(true);
+    this.refreshOperations();
   }
 
   /**
@@ -2768,9 +3122,8 @@ export class InterventionDetailPage {
    *
    * @description
    * Applies the two-track wrapper's measured width to
-   * {@link linkedTabsOrientation} and {@link propertiesRailVisible} against
-   * the same thresholds as the template's `@4xl/detail` and `@6xl/detail`
-   * container queries (896px and 1152px).
+   * {@link propertiesRailVisible} at the same 896px threshold as the
+   * template's `@4xl/detail` container query.
    *
    * @access private
    * @since 6.6.0
@@ -2780,7 +3133,6 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   private applyDetailColumnsWidth(width: number): void {
-    this.linkedTabsOrientation.set('horizontal');
     this.propertiesRailVisible.set(width >= 896);
     this.aboutExpanded.update((expanded: boolean | undefined): boolean => expanded ?? width >= 896);
   }
@@ -2833,12 +3185,12 @@ export class InterventionDetailPage {
    * user regardless (WCAG 2.4.3), which is why the section itself receives
    * focus either way.
    *
-   * @access private
+   * @access protected
    * @since 1.0.0
    *
    * @returns {void}
    */
-  private revealFieldWork(): void {
+  protected revealFieldWork(): void {
     const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
     this.setLinkedTab('overview');
 
@@ -2871,13 +3223,9 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected revealBlockers(): void {
-    const switchingTab: boolean = this.activeLinkedTab() !== 'overview';
     this.setLinkedTab('overview');
-
-    if (switchingTab) {
-      if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
-      this.pendingFocusTimeout = setTimeout((): void => this.focusIssuesChecklist());
-    } else this.focusIssuesChecklist();
+    if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
+    this.pendingFocusTimeout = setTimeout((): void => this.focusIssuesChecklist());
   }
 
   /**
@@ -2931,43 +3279,29 @@ export class InterventionDetailPage {
 
   /** Navigates to a neighbour, if there is one. */
   /**
-   * Method loadBlockedSyncOperations
-   * @method loadBlockedSyncOperations
-   *
-   * @description
-   * Reads this intervention's outbox and keeps the entries a replay left
-   * `failed` or `conflict`. Short-circuits to an empty list when the device
-   * has nothing blocked at all, so the common case never touches IndexedDB.
-   *
-   * @access private
+   * Method refreshOperations
+   * @method refreshOperations
+   * @description Reads the active intervention queue, preserving explicit local read errors.
+   * @access protected
    * @since 1.0.0
-   *
-   * @param {string} interventionId - The intervention whose queue to read.
-   * @param {number} blockedTotal - The coordinator's device-global blocked count.
-   *
-   * @returns {Promise<void>} A promise resolving once the list is settled.
+   * @returns {void}
    */
-  private async loadBlockedSyncOperations(
-    interventionId: string,
-    blockedTotal: number,
-  ): Promise<void> {
-    if (blockedTotal === 0) {
-      this.blockedSyncOperations.set([]);
-
-      return;
-    }
-
-    const queued: readonly InterventionOutboxOperation[] =
-      await this.offline.listOutbox(interventionId);
-
-    this.blockedSyncOperations.set(
-      queued.filter(
-        (operation: InterventionOutboxOperation): boolean =>
-          operation.status === 'failed' || operation.status === 'conflict',
-      ),
-    );
+  protected refreshOperations(): void {
+    this.operationsStore.load({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+    });
   }
 
+  /**
+   * Method navigateToNeighbour
+   * @method navigateToNeighbour
+   * @description Navigates to a sibling intervention while preserving collection query parameters.
+   * @access private
+   * @since 1.0.0
+   * @param {string | null} interventionId - Neighbour identifier.
+   * @returns {void}
+   */
   private navigateToNeighbour(interventionId: string | null): void {
     if (interventionId === null) return;
 

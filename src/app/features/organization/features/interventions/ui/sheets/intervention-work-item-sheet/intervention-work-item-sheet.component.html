@@ -19,6 +19,9 @@
     </hlm-sheet-header>
 
     <app-intervention-work-item-form
+      [catalogues]="catalogues()"
+      (catalogueRequested)="catalogueRequested.emit($event)"
+      (catalogueSearched)="catalogueSearched.emit($event)"
       [pending]="pending()"
       [disabled]="disabled()"
       [serverError]="serverError()"

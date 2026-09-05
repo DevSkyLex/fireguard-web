@@ -6,8 +6,8 @@ Owns the organization's four-eyes decision surface over the backend
 Approval module:
 
 - listing an organization's approval requests — pending by default —
-  filterable by status and by the regulated action-type catalog, with
-  server-side pagination,
+  searchable and filterable by status and by the regulated action-type
+  catalog, with server-side pagination,
 - deciding on a pending request (approve or reject) with an optional
   decision note,
 - reading the regulated action-type catalog (`nc_waiver`,

@@ -23,19 +23,16 @@ import type {
 import {
   findInterventionMentionQuery,
   interventionMemberId,
-  parseInterventionMentions,
-  resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { COMMENT_MENTION_SUGGESTION_LIMIT } from './constants/intervention-comment-mention.constants';
-import type { InterventionCommentFormValues } from './models';
+import type { InterventionCommentFormValues, InterventionCommentSelectedMention } from './models';
 
 /** Longest a comment may be — mirrors what `InterventionService.addComment` accepts. */
 const COMMENT_MAX_LENGTH: number = 2000;
@@ -55,12 +52,11 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
  *
  * Typing `@` — or pressing the at-sign button, for anyone who does not know
  * the shortcut — opens a picker over {@link members}. Picking one inserts
- * the backend's own `@{memberUuid}` token verbatim rather than a display
- * name: the draft is exactly what gets posted, so there is no separate
- * label-to-marker rewrite to keep in sync with the API contract. The chip
- * row below the field parses the live draft the same way the activity
- * thread renders a posted one, so the author sees who is about to be
- * notified before sending.
+ * `@Display name` in the editable draft. The selected member is retained
+ * locally and that visible marker is converted to the backend's
+ * `@{memberUuid}` token only when the form emits. A manually typed name is
+ * left as plain text, so choosing a suggestion remains the act that creates
+ * a notification.
  *
  * @version 2.0.0
  *
@@ -87,7 +83,6 @@ const EMPTY_VALUES: InterventionCommentFormValues = { body: '' };
     ...HlmInputGroupImports,
     ...HlmItemImports,
     ...HlmAvatarImports,
-    ...HlmBadgeImports,
   ],
   providers: [provideIcons({ lucideAtSign })],
   templateUrl: './intervention-comment-form.component.html',
@@ -286,51 +281,40 @@ export class InterventionCommentForm {
     return member === undefined ? null : `intervention-comment-mention-${member.value}`;
   });
 
-  /**
-   * Property mentionedMembers
-   * @readonly
-   *
-   * @description
-   * Who the draft, as currently written, will notify — parsed live from the
-   * body with the same {@link parseInterventionMentions} the activity
-   * thread uses to render a posted comment, deduplicated in first-appearance
-   * order. A token that no longer resolves against {@link members} (deleted
-   * mid-edit, or simply retyped) drops out silently rather than showing a
-   * chip for nobody.
-   *
-   * @access protected
-   * @since 2.0.0
-   * @type {Signal<readonly MemberSelectOption[]>}
-   */
-  protected readonly mentionedMembers: Signal<readonly MemberSelectOption[]> = computed(
-    (): readonly MemberSelectOption[] => {
-      const members: readonly MemberSelectOption[] = this.members();
-      const seen = new Set<string>();
-      const resolved: MemberSelectOption[] = [];
-
-      for (const segment of parseInterventionMentions(this.model().body)) {
-        if (segment.kind !== 'mention' || seen.has(segment.value)) continue;
-
-        const member: MemberSelectOption | null = resolveInterventionMentionMember(
-          segment.value,
-          members,
-        );
-
-        if (member === null) continue;
-
-        seen.add(segment.value);
-        resolved.push(member);
-      }
-
-      return resolved;
-    },
-  );
-
   /** Caret offset in the draft, which is half of what decides the active query. */
   private readonly caret: WritableSignal<number> = signal<number>(0);
 
   /** Query term the list was dismissed for, so Escape does not re-open on it. */
   private readonly dismissedMention: WritableSignal<string | null> = signal<string | null>(null);
+
+  /**
+   * Property selectedMentions
+   * @readonly
+   *
+   * @description
+   * Picker-created mention occurrences that still exist unchanged in the draft.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {WritableSignal<readonly InterventionCommentSelectedMention[]>}
+   */
+  private readonly selectedMentions: WritableSignal<readonly InterventionCommentSelectedMention[]> =
+    signal<readonly InterventionCommentSelectedMention[]>([]);
+
+  /**
+   * Property lastBody
+   * @readonly
+   *
+   * @description
+   * Previous textarea value used to move or invalidate selected mention ranges after an edit.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @type {WritableSignal<string>}
+   */
+  private readonly lastBody: WritableSignal<string> = signal<string>('');
   //#endregion
 
   //#region Lifecycle
@@ -377,8 +361,10 @@ export class InterventionCommentForm {
 
     if (this.commentForm().invalid() || this.pending() || this.disabled()) return;
 
-    this.submitted.emit(this.model().body.trim());
+    this.submitted.emit(this.serializeBody(this.model().body).trim());
     this.model.set(EMPTY_VALUES);
+    this.selectedMentions.set([]);
+    this.lastBody.set('');
     this.commentForm().reset();
     this.closeMentions();
   }
@@ -422,11 +408,40 @@ export class InterventionCommentForm {
   }
 
   /**
+   * Method onFieldInput
+   * @method onFieldInput
+   *
+   * @description
+   * Reconciles picker-created mention ranges with one textarea edit and resets
+   * the highlighted suggestion for the new query.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {Event} event - Native textarea input event carrying the edited value.
+   * @returns {void}
+   */
+  protected onFieldInput(event: Event): void {
+    const element: HTMLTextAreaElement | null =
+      event.currentTarget instanceof HTMLTextAreaElement ? event.currentTarget : null;
+
+    if (element === null) return;
+
+    const next: string = element.value;
+    this.selectedMentions.update((mentions): readonly InterventionCommentSelectedMention[] =>
+      this.reconcileSelectedMentions(mentions, this.lastBody(), next),
+    );
+    this.lastBody.set(next);
+    this.caret.set(element.selectionStart);
+    this.activeMention.set(0);
+  }
+
+  /**
    * Method acceptMention
    *
    * @description
-   * Replaces the `@…` the caret sits in with the member's `@{uuid}` token —
-   * the same one the API parses mentions from — and closes the list.
+   * Replaces the `@…` the caret sits in with the member's readable display
+   * name and remembers the API identity for serialization on submit.
    *
    * @access protected
    * @since 2.0.0
@@ -442,10 +457,16 @@ export class InterventionCommentForm {
     if (query === null || element === undefined) return;
 
     const body: string = this.model().body;
-    const inserted = `@{${interventionMemberId(member)}} `;
+    const marker: string = `@${member.displayName}`;
+    const inserted: string = `${marker} `;
     const next: string = body.slice(0, query.start) + inserted + body.slice(query.end);
 
     this.model.set({ body: next });
+    this.selectedMentions.update((selected): readonly InterventionCommentSelectedMention[] => [
+      ...this.reconcileSelectedMentions(selected, body, next),
+      { member, start: query.start, end: query.start + marker.length },
+    ]);
+    this.lastBody.set(next);
 
     const caretAfter: number = query.start + inserted.length;
     element.value = next;
@@ -477,6 +498,10 @@ export class InterventionCommentForm {
     const next: string = body.slice(0, caret) + '@' + body.slice(caret);
 
     this.model.set({ body: next });
+    this.selectedMentions.update((mentions): readonly InterventionCommentSelectedMention[] =>
+      this.reconcileSelectedMentions(mentions, body, next),
+    );
+    this.lastBody.set(next);
 
     const caretAfter: number = caret + 1;
     element.value = next;
@@ -532,6 +557,93 @@ export class InterventionCommentForm {
   private closeMentions(): void {
     this.dismissedMention.set(this.mentionQuery()?.term ?? null);
     this.activeMention.set(0);
+  }
+
+  /**
+   * Method serializeBody
+   * @description Converts visible mentions chosen from the picker to the API token while leaving ordinary typed text unchanged.
+   * @access private
+   * @since 2.1.0
+   * @param {string} body - The readable comment draft.
+   * @returns {string} The body accepted by the intervention comment endpoint.
+   */
+  private serializeBody(body: string): string {
+    let serialized: string = body;
+    const mentions: readonly InterventionCommentSelectedMention[] =
+      this.selectedMentions().toSorted(
+        (
+          left: InterventionCommentSelectedMention,
+          right: InterventionCommentSelectedMention,
+        ): number => right.start - left.start,
+      );
+
+    for (const mention of mentions) {
+      const marker: string = `@${mention.member.displayName}`;
+      const followingCharacter: string | undefined = serialized[mention.end];
+
+      if (serialized.slice(mention.start, mention.end) !== marker) continue;
+      if (followingCharacter !== undefined && /[\p{L}\p{N}_]/u.test(followingCharacter)) continue;
+
+      const token: string = `@{${interventionMemberId(mention.member)}}`;
+      serialized = serialized.slice(0, mention.start) + token + serialized.slice(mention.end);
+    }
+
+    return serialized;
+  }
+
+  /**
+   * Method reconcileSelectedMentions
+   * @method reconcileSelectedMentions
+   *
+   * @description
+   * Shifts mention ranges around a textarea edit and drops any occurrence the
+   * edit touched, so only unchanged picker selections retain notification intent.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {readonly InterventionCommentSelectedMention[]} mentions - Existing selected occurrences.
+   * @param {string} previous - Draft before the edit.
+   * @param {string} next - Draft after the edit.
+   * @returns {readonly InterventionCommentSelectedMention[]} Surviving occurrences in the new draft.
+   */
+  private reconcileSelectedMentions(
+    mentions: readonly InterventionCommentSelectedMention[],
+    previous: string,
+    next: string,
+  ): readonly InterventionCommentSelectedMention[] {
+    if (previous === next) return mentions;
+
+    let prefix = 0;
+    const sharedLength: number = Math.min(previous.length, next.length);
+    while (prefix < sharedLength && previous[prefix] === next[prefix]) prefix++;
+
+    let suffix = 0;
+    while (
+      suffix < previous.length - prefix &&
+      suffix < next.length - prefix &&
+      previous[previous.length - suffix - 1] === next[next.length - suffix - 1]
+    )
+      suffix++;
+
+    const previousEnd: number = previous.length - suffix;
+    const nextEnd: number = next.length - suffix;
+    const delta: number = nextEnd - prefix - (previousEnd - prefix);
+
+    return mentions.flatMap((mention): readonly InterventionCommentSelectedMention[] => {
+      let start: number = mention.start;
+      let end: number = mention.end;
+
+      if (mention.start >= previousEnd) {
+        start += delta;
+        end += delta;
+      } else if (mention.end > prefix) {
+        return [];
+      }
+
+      const marker: string = `@${mention.member.displayName}`;
+      return next.slice(start, end) === marker ? [{ ...mention, start, end }] : [];
+    });
   }
   //#endregion
 }

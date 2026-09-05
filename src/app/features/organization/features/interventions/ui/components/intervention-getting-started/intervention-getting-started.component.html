@@ -1,45 +1,48 @@
-<section aria-labelledby="intervention-readiness-title">
-  <div class="mb-2">
-    <h3
+<section class="flex min-w-0 flex-col gap-4" aria-labelledby="intervention-readiness-title">
+  <div class="min-w-0">
+    <h2
       id="intervention-readiness-title"
-      class="text-sm font-medium"
+      class="text-xl font-semibold tracking-tight"
       i18n="@@intervention.checklist.readyToPlan"
     >
       Ready to plan
-    </h3>
+    </h2>
+    <p class="mt-1 text-sm text-muted-foreground" i18n="@@intervention.checklist.description">
+      Review the preparation for this intervention before planning it.
+    </p>
   </div>
 
-  <div>
-    <div hlmItemGroup class="grid gap-1 sm:grid-cols-2">
-      @for (item of items(); track item.id) {
-        <button
-          hlmItem
-          type="button"
-          variant="default"
-          size="xs"
-          class="min-h-11 text-start"
-          data-testid="intervention-getting-started-item"
-          [disabled]="item.done"
-          [attr.aria-current]="item.id === nextItemId() ? 'step' : null"
-          (click)="itemActivated.emit(item.target)"
-        >
-          <hlm-item-media variant="icon">
-            <ng-icon
-              [name]="item.done ? 'lucideCheck' : 'lucideCircle'"
-              [class]="item.done ? 'text-success' : 'text-muted-foreground'"
-              aria-hidden="true"
-            />
-          </hlm-item-media>
-          <hlm-item-content>
-            <hlm-item-title
-              [class.line-through]="item.done"
-              [class.text-muted-foreground]="item.done"
-            >
-              {{ item.label }}
-            </hlm-item-title>
-          </hlm-item-content>
-        </button>
-      }
-    </div>
+  <div hlmItemGroup class="grid gap-2 sm:grid-cols-2">
+    @for (item of items(); track item.id) {
+      <button
+        hlmItem
+        type="button"
+        variant="outline"
+        size="sm"
+        class="min-h-12 text-start hover:bg-muted/50 disabled:cursor-default"
+        data-testid="intervention-getting-started-item"
+        [disabled]="item.done"
+        [attr.aria-current]="item.id === nextItemId() ? 'step' : null"
+        (click)="itemActivated.emit(item.target)"
+      >
+        <hlm-item-media variant="icon">
+          <ng-icon
+            [name]="item.done ? 'lucideCircleCheck' : 'lucideCircle'"
+            [class]="item.done ? 'text-success' : 'text-muted-foreground'"
+            aria-hidden="true"
+          />
+        </hlm-item-media>
+        <hlm-item-content>
+          <hlm-item-title>{{ item.label }}</hlm-item-title>
+        </hlm-item-content>
+        @if (item.id === 'workItems') {
+          <hlm-item-actions>
+            <span hlmBadge variant="secondary" i18n="@@intervention.checklist.recommended">
+              Recommended
+            </span>
+          </hlm-item-actions>
+        }
+      </button>
+    }
   </div>
 </section>

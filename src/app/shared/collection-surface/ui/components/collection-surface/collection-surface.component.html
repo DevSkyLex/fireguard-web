@@ -7,7 +7,11 @@
     <ng-content select="[surfaceError]" />
   }
   @case ('empty') {
-    <ng-content select="[surfaceEmpty]" />
+    <div
+      class="flex min-h-32 w-full min-w-0 flex-1 items-center justify-center rounded-xl border border-dashed border-border"
+    >
+      <ng-content select="[surfaceEmpty]" />
+    </div>
   }
   @default {
     <div [class]="tableWrapperClass()">

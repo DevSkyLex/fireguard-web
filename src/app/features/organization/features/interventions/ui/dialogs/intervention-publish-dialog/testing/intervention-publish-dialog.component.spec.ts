@@ -71,6 +71,7 @@ describe('InterventionPublishDialog', () => {
 
   it('should offer "Check again" only once the publication timed out, hiding the confirm button', async () => {
     fixture.componentRef.setInput('publicationTimedOut', true);
+    fixture.componentRef.setInput('accepted', true);
     await setVisible(true);
 
     expect(recheckButton()).not.toBeNull();

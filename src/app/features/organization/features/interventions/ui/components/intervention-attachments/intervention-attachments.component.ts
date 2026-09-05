@@ -141,6 +141,33 @@ interface AttachmentFileMeta {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionAttachments {
+  /**
+   * Property loading
+   * @readonly
+   * @description Whether the current section is waiting for its data.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading = input(false);
+  /**
+   * Property loadError
+   * @readonly
+   * @description Section read failure; it must not appear as an empty result.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly loadError = input<string | null>(null);
+  /**
+   * Property reloadRequested
+   * @readonly
+   * @description Requests another read of the current section.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly reloadRequested = output<void>();
   //#region Inputs
   /**
    * Property attachments
@@ -279,6 +306,14 @@ export class InterventionAttachments {
   //#endregion
 
   //#region Properties
+  /**
+   * Property locale
+   * @readonly
+   * @description Active locale used to format file sizes and labels.
+   * @access private
+   * @since 1.0.0
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
 
   /** One number formatter per precision — the `Intl` constructor is too costly for per-row calls. */

@@ -8,7 +8,13 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCalendarClock, lucideCircleAlert } from '@ng-icons/lucide';
+import {
+  lucideCalendarClock,
+  lucideCircleAlert,
+  lucideEllipsis,
+  lucidePencil,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import type {
   InterventionRecurrenceFrequency,
   InterventionRecurrenceOutput,
@@ -22,6 +28,7 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTableImports } from '@shared/ui/table';
@@ -34,7 +41,7 @@ import { HlmTableImports } from '@shared/ui/table';
  * @description
  * The organization's recurring intervention schedules, as a full-width
  * `hlmTable` grid: name, template, cadence, next occurrence, an active
- * toggle, and a row's edit/delete affordances. This table only renders the
+ * toggle, and a row's ellipsis action menu. This table only renders the
  * list and reports row intents through {@link editRequested}, {@link removed}
  * and {@link activeToggled} — the owning page decides what a row's Delete
  * action means, including any confirmation.
@@ -43,7 +50,7 @@ import { HlmTableImports } from '@shared/ui/table';
  * the same treatment `InterventionFacilitiesTable` and its "Linked" siblings
  * give their own list failure.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -56,10 +63,19 @@ import { HlmTableImports } from '@shared/ui/table';
     CollectionSurface,
     OrgDatePipe,
     HlmButton,
+    ...HlmDropdownMenuImports,
     HlmSwitch,
     ...HlmTableImports,
   ],
-  providers: [provideIcons({ lucideCalendarClock, lucideCircleAlert })],
+  providers: [
+    provideIcons({
+      lucideCalendarClock,
+      lucideCircleAlert,
+      lucideEllipsis,
+      lucidePencil,
+      lucideTrash2,
+    }),
+  ],
   templateUrl: './intervention-recurrence-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -225,12 +241,12 @@ export class InterventionRecurrenceTable {
    *
    * @access protected
    * @since 1.0.0
-   * @param {'activate' | 'deactivate' | 'edit' | 'remove'} kind - The control named.
+   * @param {'activate' | 'deactivate' | 'edit' | 'menu' | 'remove'} kind - The control named.
    * @param {string} name - The recurrence's name.
    * @returns {string} The localized accessible name.
    */
   protected rowAriaLabelOf(
-    kind: 'activate' | 'deactivate' | 'edit' | 'remove',
+    kind: 'activate' | 'deactivate' | 'edit' | 'menu' | 'remove',
     name: string,
   ): string {
     switch (kind) {
@@ -240,6 +256,8 @@ export class InterventionRecurrenceTable {
         return $localize`:@@intervention.recurrences.deactivateAria:Deactivate ${name}:name:`;
       case 'edit':
         return $localize`:@@intervention.recurrences.editAria:Edit ${name}:name:`;
+      case 'menu':
+        return $localize`:@@intervention.recurrences.menuAria:Actions for ${name}:name:`;
       case 'remove':
         return $localize`:@@intervention.recurrences.removeAria:Delete ${name}:name:`;
     }

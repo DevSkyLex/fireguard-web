@@ -50,14 +50,11 @@ for (const mode of [
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/interventions`);
     const firstRow = page
-      .locator(
-        mode.width === 375
-          ? '[data-testid="intervention-table-card"]:visible'
-          : '[data-testid="intervention-table-row"]:visible',
-      )
+      .getByTestId(mode.width === 375 ? 'intervention-table-card' : 'intervention-table-row')
+      .filter({ visible: true })
       .first();
     await expect(firstRow).toBeVisible();
-    await expect(page.getByRole('region', { name: 'List', exact: true })).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name: 'List', exact: true })).toBeVisible();
     await expect(firstRow).toBeInViewport();
     await expect(page.getByTestId('intervention-statistics-analysis')).toBeHidden();
     await expectNoHorizontalOverflow(page);
@@ -81,7 +78,9 @@ for (const mode of [
     );
     await expect(page.getByTestId('intervention-detail-command')).toBeVisible();
     await expect(page.getByTestId('intervention-detail-command')).toBeInViewport();
-    await expect(page.getByTestId('intervention-field-site')).toBeInViewport();
+    if (mode.width > 375)
+      await expect(page.getByTestId('intervention-field-site')).toBeInViewport();
+    else await expect(page.getByTestId('intervention-field-site')).toBeVisible();
     await expect(
       page.getByRole('tablist', { name: 'Intervention sections', exact: true }),
     ).toHaveAttribute('data-variant', 'line');
@@ -106,6 +105,7 @@ for (const mode of [
     await expect(page.getByTestId('intervention-work-items-add')).toHaveCount(0);
     await expect(page.getByTestId('intervention-work-items-empty-add')).toHaveCount(1);
     await page.screenshot({ path: `${CAPTURES}/intervention-detail-${mode.name}.png` });
+    await page.getByTestId('intervention-detail-menu').click();
     await page.getByTestId('intervention-detail-discussion-trigger').click();
     await expect(page.getByTestId('intervention-comment-body')).toBeFocused();
     expect(errors, errors.join('\n')).toEqual([]);

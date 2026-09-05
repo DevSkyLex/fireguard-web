@@ -28,8 +28,6 @@ describe('InterventionCommentForm', () => {
     ) as HTMLButtonElement;
   const mentionOptions = (): NodeListOf<HTMLButtonElement> =>
     root().querySelectorAll('[data-testid="intervention-comment-mention-option"]');
-  const mentionChips = (): NodeListOf<HTMLLIElement> =>
-    root().querySelectorAll('[data-testid="intervention-comment-mention-chip"]');
 
   const type = async (value: string): Promise<void> => {
     body().value = value;
@@ -150,13 +148,14 @@ describe('InterventionCommentForm', () => {
     expect(mentionOptions()[0].textContent).toContain('Marc Dubois');
   });
 
-  it('should insert the member uuid token at the caret when a suggestion is picked', async () => {
+  it('should insert the readable member name at the caret when a suggestion is picked', async () => {
     await type('ping @');
     mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
     await fixture.whenStable();
 
-    expect(body().value).toBe('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} ');
+    expect(body().value).toBe('ping @Marc Dubois ');
     expect(mentionOptions().length).toBe(0);
+    expect(root().querySelector('[data-testid="intervention-comment-mention-chips"]')).toBeNull();
   });
 
   it('should open the picker from the at-sign trigger button', async () => {
@@ -168,23 +167,71 @@ describe('InterventionCommentForm', () => {
     expect(mentionOptions().length).toBe(1);
   });
 
-  it('should list who the draft will notify as it is typed', async () => {
-    await type('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please');
-
-    expect(mentionChips().length).toBe(1);
-    expect(mentionChips()[0].textContent).toContain('Marc Dubois');
-  });
-
-  it('should show no chips when the draft mentions nobody resolvable', async () => {
-    await type('ping @{00000000-0000-4000-8000-000000000000} please');
-
-    expect(mentionChips().length).toBe(0);
-  });
-
-  it('should submit the raw mention token verbatim', async () => {
-    await type('ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please');
+  it('should serialize a selected readable mention to the API token on submit', async () => {
+    await type('ping @');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('ping @Marc Dubois please');
     await submit();
 
     expect(submissions).toEqual(['ping @{3fa85f64-5717-4562-b3fc-2c963f66afa6} please']);
+  });
+
+  it('should serialize only the picked occurrence when the same name is typed manually later', async () => {
+    await type('@');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('@Marc Dubois and @Marc Dubois');
+    await submit();
+
+    expect(submissions).toEqual(['@{3fa85f64-5717-4562-b3fc-2c963f66afa6} and @Marc Dubois']);
+  });
+
+  it('should keep a selected mention when text is inserted before it', async () => {
+    await type('@');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('Please notify @Marc Dubois ');
+    await submit();
+
+    expect(submissions).toEqual(['Please notify @{3fa85f64-5717-4562-b3fc-2c963f66afa6}']);
+  });
+
+  it('should forget notification intent when the picked occurrence is edited', async () => {
+    await type('@');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('@Marc Duboi');
+    await type('Plain @Marc Dubois');
+    await submit();
+
+    expect(submissions).toEqual(['Plain @Marc Dubois']);
+  });
+
+  it('should leave a manually typed display name as ordinary text', async () => {
+    await type('ping @Marc Dubois please');
+    await submit();
+
+    expect(submissions).toEqual(['ping @Marc Dubois please']);
+  });
+
+  it('should not serialize a selected name when it is only the prefix of ordinary text', async () => {
+    await type('ping @');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('ping @Marc Duboisette');
+    await submit();
+
+    expect(submissions).toEqual(['ping @Marc Duboisette']);
+  });
+
+  it('should serialize a selected mention before closing punctuation', async () => {
+    await type('(@');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('(@Marc Dubois)');
+    await submit();
+
+    expect(submissions).toEqual(['(@{3fa85f64-5717-4562-b3fc-2c963f66afa6})']);
   });
 });

@@ -20,7 +20,7 @@ import type { ClassValue } from 'clsx';
 import type { Observable } from 'rxjs';
 import { buttonVariants } from '@shared/ui/button';
 import { classes, hlm } from '@shared/ui/utils';
-import { listVariants } from './hlm-tabs-list';
+import { type ListVariants, listVariants } from './hlm-tabs-list';
 
 @Component({
   selector: 'hlm-paginated-tabs-list',
@@ -48,16 +48,18 @@ import { listVariants } from './hlm-tabs-list';
 
     <div
       #tabListContainer
-      class="z-[1] flex grow overflow-hidden"
+      class="z-[1] flex min-w-0 grow overflow-x-clip overflow-y-visible"
       (keydown)="_handleKeydown($event)"
     >
       <div
         class="relative grow transition-transform"
-        #tabList
-        role="tablist"
-        (cdkObserveContent)="_onContentChanges()"
+      #tabList
+      role="tablist"
+      [attr.aria-label]="ariaLabel()"
+      [attr.data-variant]="variant()"
+      (cdkObserveContent)="_onContentChanges()"
       >
-        <div #tabListInner [class]="_tabListClass()">
+        <div #tabListInner [class]="_tabListClass()" [attr.data-variant]="variant()">
           <ng-content />
         </div>
       </div>
@@ -82,7 +84,9 @@ import { listVariants } from './hlm-tabs-list';
 export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
   constructor() {
     super();
-    classes(() => 'relative flex flex-shrink-0 items-center gap-1 overflow-hidden');
+    classes(
+      () => 'relative flex flex-shrink-0 items-center gap-1 overflow-x-clip overflow-y-visible',
+    );
   }
 
   public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
@@ -100,7 +104,38 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
     viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
 
   public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
-  protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
+
+  /**
+   * Property ariaLabel
+   * @readonly
+   *
+   * @description
+   * Accessible name forwarded to the inner element that owns the `tablist` role.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
+
+  /**
+   * Property variant
+   * @readonly
+   *
+   * @description
+   * Applies the same native Spartan list variant as `hlm-tabs-list` to the
+   * paginated list and exposes its data attribute to child tab triggers.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<ListVariants['variant']>}
+   */
+  public readonly variant = input<ListVariants['variant']>('default');
+  protected readonly _tabListClass = computed(() =>
+    hlm(listVariants({ variant: this.variant() }), this.tabListClass()),
+  );
 
   public readonly paginationButtonClass = input<ClassValue>('');
   protected readonly _paginationButtonClass = computed(() =>

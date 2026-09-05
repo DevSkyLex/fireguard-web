@@ -6,7 +6,7 @@ Owns the organization's read surface over the backend Maintenance module and
 the two actions it exposes to an operator:
 
 - listing maintenance schedules — one row per tracked equipment type per
-  facility — with server-side filtering and pagination,
+  facility — with server-side search, filtering and pagination,
 - overriding a single schedule's inspection interval, or clearing the
   override back to the organization default,
 - generating an inspection campaign (an intervention) from every schedule

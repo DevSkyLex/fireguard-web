@@ -23,6 +23,9 @@
     </hlm-sheet-header>
 
     <app-intervention-recurrence-form
+      [catalogues]="catalogues()"
+      (catalogueRequested)="catalogueRequested.emit($event)"
+      (catalogueSearched)="catalogueSearched.emit($event)"
       [recurrence]="formRecurrence()"
       [pending]="pending()"
       [serverError]="serverError()"

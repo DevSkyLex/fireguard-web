@@ -20,6 +20,11 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
+import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+} from '@features/organization/features/interventions/models';
 import {
   resolveInterventionTag,
   type InterventionDuplicatePrefill,
@@ -39,6 +44,7 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
+import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionCreateFormDraft, InterventionCreateFormValues } from './models';
 
@@ -97,6 +103,7 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
 @Component({
   selector: 'app-intervention-create-form',
   imports: [
+    InterventionCatalogueStatus,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -114,6 +121,33 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateForm {
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests remote options without replacing the draft.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Loaded coverage and failures by preparation source.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests another source page while preserving the form.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   //#region Inputs
   /**
    * Property pending

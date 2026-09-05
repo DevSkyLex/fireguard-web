@@ -1,23 +1,23 @@
-<hlm-sheet
-  [side]="side()"
-  [state]="sheetState()"
+<hlm-dialog
+  [state]="dialogState()"
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
-  <hlm-sheet-content
-    *hlmSheetPortal
-    class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[480px]! sm:max-w-none!"
-    data-testid="intervention-request-changes-sheet"
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-lg"
+    data-testid="intervention-request-changes-dialog"
     [attr.data-dirty]="dirty()"
   >
-    <hlm-sheet-header>
-      <h3 hlmSheetTitle i18n="@@intervention.rcDrawer.header">Request changes</h3>
-      <p hlmSheetDescription i18n="@@intervention.rc.hint">
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.rcDrawer.header">Request changes</h3>
+      <p hlmDialogDescription i18n="@@intervention.rc.hint">
         Explain what must change before this intervention can be published. The field agent sees
         this note when the work returns to execution.
       </p>
-    </hlm-sheet-header>
+    </hlm-dialog-header>
 
+    <p class="text-sm font-medium">{{ interventionName() }}</p>
     <app-intervention-request-changes-form
       [pending]="pending()"
       [disabled]="disabled()"
@@ -26,8 +26,8 @@
       (cancelled)="requestClose()"
       (dirtyChanged)="dirty.set($event)"
     />
-  </hlm-sheet-content>
-</hlm-sheet>
+  </hlm-dialog-content>
+</hlm-dialog>
 
 <app-unsaved-changes-dialog
   [state]="unsavedChangesDialogState()"

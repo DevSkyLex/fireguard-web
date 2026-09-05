@@ -92,6 +92,14 @@ describe('MaintenanceScheduleService', () => {
       req.flush(mockCollection([]));
     });
 
+    it('should forward a free-text search term', () => {
+      service.list({ organization: orgIri, search: 'smoke detector' }).subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === schedulesUrl);
+      expect(req.request.params.get('search')).toBe('smoke detector');
+      req.flush(mockCollection([]));
+    });
+
     it('should propagate a request error untouched', () => {
       let captured: unknown;
 

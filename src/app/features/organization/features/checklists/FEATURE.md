@@ -27,10 +27,10 @@ action on the row's own status once it exists, not rely on a backend refusal.
 
 ## Routes
 
-`/organizations/:organizationId/checklists` — the template library list, gated by
-`organization.inspection.read`. There is no detail route: creation, editing and archiving are
-list-scoped actions (`ChecklistCreateSheet`, `ChecklistEditDialog`, `ChecklistArchiveDialog`),
-gated by `organization.inspection.write`.
+- `/organizations/:organizationId/checklists`: searchable library, gated by `organization.inspection.read`.
+- `/organizations/:organizationId/checklists/new`: creation page, write-gated.
+- `/organizations/:organizationId/checklists/:checklistId`: editor for active writable checklists;
+  consultation for archives and readers. Both editor routes protect unsaved changes.
 
 ## State and Data Access
 
@@ -39,7 +39,7 @@ Primary stores:
 - `ChecklistStore` (component-scoped, provided once on the route leaf; list, create, update,
   archive)
 - `ActiveChecklistStore` (root-provided; the single selected/resolved checklist, read by
-  inspections' create flow and by a future checklist detail surface)
+  inspections' create flow; the detail page provides its own scoped instance)
 
 Primary service:
 
@@ -56,10 +56,8 @@ Primary service:
 - Checklist state and mutations stay local to this subfeature.
 - Consumers (e.g. inspections) reach checklists only through the feature's concern barrels
   (`state`, `models`, `data-access`), never a deep import.
-- **`ChecklistsPage` is the full management surface.** It searches, filters by status, lists
-  through `ChecklistTable`, and creates/edits/archives through the three dialogs above — every
-  write action is gated by `organization.inspection.write`. Row status renders through the
-  `models/checklist-status-tag/` registry, never as raw text.
+- `ChecklistsPage` searches, filters and archives through a confirmation dialog. Creation and
+  editing navigate to the dedicated editor. Every write is gated by inspection write permission.
 - `UpdateChecklistInput`'s `items` field, when sent, is always a **full replacement list** — the
   backend rejects any `PATCH` (name, reference code, or items) once the checklist is referenced by
   an existing inspection, and rejects an item change specifically once the checklist is archived.
@@ -71,5 +69,10 @@ Primary service:
   `referenceCode` is part of the backend contract (`CreateChecklistInput`, `UpdateChecklistInput`)
   but is not yet exposed in `ChecklistCreateForm` / `ChecklistEditForm` — a future pass can add it
   once the product decides how it should read.
-- A checklist template is created in `checklist-create-sheet` — its item list grows with the data, which `DESIGN.md` names as a surface that is never a dialog.
-- **The sheet gates dismissal while the form is dirty.** `ChecklistCreateForm` reports its own dirtiness (name field, item draft row, or a staged item) through `dirtyChanged`; `checklist-create-sheet` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
+- The editor includes an unfinished, valid item draft when saving. Invalid item text and
+  server errors preserve the complete draft. Inline labels and keyboard reorder controls
+  operate on the full replacement list; no drag-only reordering.
+- Drafts and pending submissions guard navigation and browser unload. Successful writes
+  reset the baseline; failed writes leave the editor intact. Archives are read-only.
+- Detail data loads browser-only with explicit skeleton and retry states; no authenticated
+  checklist payload is serialized into SSR transfer state.

@@ -51,6 +51,22 @@ export interface OrganizationPlanRow {
   readonly priceLabel: string;
 
   /**
+   * Property priceAmount
+   *
+   * @description Localized monetary amount, or the non-priced fallback label.
+   * @type {string}
+   */
+  readonly priceAmount: string;
+
+  /**
+   * Property priceCadence
+   *
+   * @description Short localized cadence displayed beside a recurring amount.
+   * @type {string | null}
+   */
+  readonly priceCadence: string | null;
+
+  /**
    * Property inheritedPlanName
    *
    * @description Previous catalog tier whose benefits are included by this plan.

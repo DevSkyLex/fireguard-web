@@ -1,7 +1,13 @@
-<div class="flex flex-col gap-2" data-testid="calendar-entry-list">
+<div class="flex flex-col" data-testid="calendar-entry-list">
   @for (item of items(); track item.sourceKey + item.id) {
     @if (interventionLinkOf(item); as link) {
-      <a hlmItem size="sm" class="rounded-md" data-testid="calendar-day-item" [routerLink]="link">
+      <a
+        hlmItem
+        size="sm"
+        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0"
+        data-testid="calendar-day-item"
+        [routerLink]="link"
+      >
         <div hlmItemContent>
           <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
           <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
@@ -9,7 +15,12 @@
         <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
       </a>
     } @else {
-      <div hlmItem size="sm" class="rounded-md" data-testid="calendar-day-item">
+      <div
+        hlmItem
+        size="sm"
+        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0"
+        data-testid="calendar-day-item"
+      >
         <div hlmItemContent>
           <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
           <span hlmItemDescription>{{ timeLabelOf(item) }}</span>

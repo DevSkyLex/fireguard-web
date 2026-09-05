@@ -19,21 +19,21 @@ primitive. The page maps the organization's regional preference
 onto the grid's generic `firstDayOfWeek` input, Monday when unset.
 
 The page is a **full-height console**, not a scrolling document: a
-page-level toolbar band (Today, prev/next period, the current period label,
-and a Month/Week/Day granularity selector) owns period navigation, driving
-the page's own `month`/`granularity`/`selectedDay` state. The selector is
-`hlm-tabs` (`@shared/ui/tabs`) — the whole toolbar-plus-content section sits
-inside one `[tab]="granularity()"`-bound `hlm-tabs`, `class="contents"` so it
-stays invisible to the page's own flex layout, with each of the three panels
-wired through `hlmTabsContent` — not a hand-rolled `role="tablist"`.
+page-level toolbar band (Today, prev/next period and the current period label)
+owns period navigation, driving the page's own
+`month`/`granularity`/`selectedDay` state. The Month/Week/Day selector is a
+paginated Spartan `line` tab list contributed to the dashboard page header
+through `PageTabsService`. The toolbar, projected triggers and content remain
+inside one `[tab]="granularity()"`-bound `hlm-tabs`, `class="contents"`, with
+each of the three panels wired through `hlmTabsContent`.
 `app-calendar` renders with its built-in toolbar hidden
 (`[showToolbar]="false"`) so the grid and the page never show two sets of
 Today/prev/next controls — the grid's own month title stays in the DOM,
 `sr-only`, because `brnCalendarGrid`'s accessible name is `aria-labelledby`
 that title regardless of whether it is visible.
 
-The granularity selector has an independent toolbar column on desktop and a
-dedicated row on mobile; period-label length must not change its position.
+The granularity selector is independent of the period label, so label length
+does not change its position.
 The header groups New event and the Subscribe menu in a native Spartan split
 button. Read-only viewers retain a direct Subscribe action.
 

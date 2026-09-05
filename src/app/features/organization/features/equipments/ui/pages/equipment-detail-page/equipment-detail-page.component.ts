@@ -30,6 +30,7 @@ import {
 } from '@ng-icons/lucide';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -117,7 +118,8 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * pre-filtered by that facility's `site`; it is a proxy by site, not a
  * filter by equipment, and is labelled as such.
  *
- * Three tabs beyond the identification fields (**Overview**): **Attachments**
+ * A paginated Spartan `line` list beneath the shell page title exposes three
+ * tabs beyond the identification fields (**Overview**): **Attachments**
  * ({@link EquipmentAttachments}, base64-JSON wire — see
  * {@link onAttachmentFilesPicked}), **Maintenance**
  * ({@link EquipmentMaintenanceHistory}, read-only), and **Tags**
@@ -381,6 +383,35 @@ export class EquipmentDetailPage {
   /** The lifecycle band, registered on the shell header instead of an in-page title band. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the equipment detail sections.
+   *
+   * @access private
+   * @since 1.5.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 1.5.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
   //#endregion
 
   //#region Constructor
@@ -400,7 +431,9 @@ export class EquipmentDetailPage {
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    const destroyRef: DestroyRef = inject(DestroyRef);
+    registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
 
     effect((): void => {
       const callState: CallState<EquipmentOutput | null> = this.store.updateCallState();

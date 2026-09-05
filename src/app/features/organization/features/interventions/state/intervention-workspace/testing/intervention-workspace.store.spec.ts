@@ -961,7 +961,8 @@ describe('InterventionWorkspaceStore call state', () => {
       expect.objectContaining({ type: '[Intervention Workspace Store] rejectChangeFailed' }),
     );
     expect(store.changes()[0]?.status).toBe('proposed');
-    expect(store.error()).toBeNull();
+    expect(store.error()).toContain('not allowed');
+    expect(store.changeErrors()[store.changes()[0]?.id ?? '']).toContain('not allowed');
   });
 
   it('ignores a rejection for a change that is no longer proposed', async () => {

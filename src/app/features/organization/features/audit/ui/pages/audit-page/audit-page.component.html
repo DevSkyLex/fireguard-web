@@ -1,4 +1,4 @@
-<div id="audit-page" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+<div id="audit-page" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <app-collection-toolbar>
     <app-collection-search-box
       toolbarStart
@@ -89,7 +89,7 @@
   </ng-template>
 
   @if (store.isForbidden()) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideLock" aria-hidden="true" />
@@ -101,7 +101,7 @@
       </div>
     </div>
   } @else if (store.hasListError()) {
-    <div hlmEmpty role="alert">
+    <div hlmEmpty class="border border-border" role="alert">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon" class="text-destructive">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -118,7 +118,7 @@
       </div>
     </div>
   } @else if (!store.isLoading() && items().length === 0) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideHistory" aria-hidden="true" />

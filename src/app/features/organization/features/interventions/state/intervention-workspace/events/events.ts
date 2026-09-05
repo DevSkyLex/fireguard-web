@@ -1,7 +1,10 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
-import type { InterventionAttachmentOutput } from '@features/organization/features/interventions/models';
+import type {
+  InterventionAttachmentOutput,
+  InterventionStatus,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Constant interventionWorkspaceStoreEvents
@@ -34,5 +37,10 @@ export const interventionWorkspaceStoreEvents = eventGroup({
     attachmentUploadSucceeded: type<{ readonly attachment: InterventionAttachmentOutput }>(),
     assignTeamSucceeded: type<FeedbackEventPayload>(),
     assignTeamFailed: type<FeedbackEventPayload>(),
+    workItemCreateSucceeded: type<{ readonly interventionId: string }>(),
+    transitionSucceeded: type<{
+      readonly interventionId: string;
+      readonly status: InterventionStatus;
+    }>(),
   },
 });

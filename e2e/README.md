@@ -49,14 +49,16 @@ discussion, creation (from the list page's "New intervention" action through to
 the new record's detail page) and detail issues/checklist; the equipments,
 facilities (+ map), inspections, checklists, approvals, audit, imports and
 maintenance-schedules collections; the assets explorer; members, team (roles),
-settings and the organization switcher; channels; invitation accept; the
-maintenance route; and the onboarding wizard's first step, steps 2 through 5
+settings and the organization switcher; account settings mobile navigation and
+the organization-leave flow; channels; invitation accept; the maintenance
+route; and the onboarding wizard's first step, steps 2 through 5
 (plan and members skip, a facility staged explicitly via "Add facility", and
 equipment registration completing the flow), plus the `onboardingGuard` /
 `onboardingRequiredGuard` mutual gate.
 
-Not covered, and worth stating plainly: `account` (4 pages) and `error` (3
-pages) have no spec at all; the intervention creation spec covers the "New
+Not covered, and worth stating plainly: the account profile, security and
+notification workflows and the three `error` pages have no dedicated specs;
+the intervention creation spec covers the "New
 intervention" button entry point only, not the `?create=1` query-param
 auto-open or the "start from a template" / "Duplicate" flows; `approvals`,
 `audit`, `checklists`, `imports` and `maintenance-schedules` have a filter-bar

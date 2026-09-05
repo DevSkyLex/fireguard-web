@@ -110,12 +110,9 @@ describe('ChecklistTable', () => {
     expect(document.querySelector('[data-testid="checklist-table-row-archive"]')).not.toBeNull();
   });
 
-  it('should offer only Edit for an archived checklist, since there is no restore endpoint', async () => {
-    fixture.componentRef.setInput('canWrite', true);
+  it('should keep archived checklists readable without write actions', async () => {
     await render([checklist({ status: 'archived' })]);
-    await openRowMenu();
-
-    expect(document.querySelector('[data-testid="checklist-table-row-edit"]')).not.toBeNull();
+    expect(document.querySelector('[data-testid="checklist-table-row-edit"]')).toBeNull();
     expect(document.querySelector('[data-testid="checklist-table-row-archive"]')).toBeNull();
   });
 

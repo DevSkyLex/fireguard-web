@@ -15,6 +15,12 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface OrganizationAssetsPaneState {
+  readonly equipmentPage: number;
+  readonly equipmentTotal: number;
+  readonly equipmentScope: string;
+  readonly inspectionPage: number;
+  readonly inspectionTotal: number;
+  readonly inspectionScope: string;
   //#region Properties
   /** The equipment currently in view. */
   readonly equipmentListCallState: CallState<readonly EquipmentOutput[]>;

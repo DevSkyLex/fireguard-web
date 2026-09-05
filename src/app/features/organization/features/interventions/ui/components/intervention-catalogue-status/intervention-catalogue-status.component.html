@@ -1,0 +1,34 @@
+@if (state(); as catalogue) {
+  <div
+    class="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
+    aria-live="polite"
+  >
+    @if (catalogue.callState.status === 'pending') {
+      <span i18n="@@intervention.catalogue.loading">Loading options…</span>
+    } @else if (catalogue.callState.error; as error) {
+      <span role="alert" class="text-destructive">{{ error.message }}</span>
+    } @else if (catalogue.loaded < catalogue.total) {
+      <span i18n="@@intervention.catalogue.coverageRemote"
+        >{{ catalogue.loaded }} of {{ catalogue.total }} matching options loaded.</span
+      >
+    }
+
+    @if (catalogue.loaded < catalogue.total || catalogue.callState.status === 'error') {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="max-sm:min-h-11"
+        [disabled]="catalogue.callState.status === 'pending'"
+        (click)="requested.emit(kind())"
+      >
+        @if (catalogue.callState.status === 'error') {
+          <span i18n="@@common.retry">Retry</span>
+        } @else {
+          <span i18n="@@intervention.catalogue.more">Load more options</span>
+        }
+      </button>
+    }
+  </div>
+}

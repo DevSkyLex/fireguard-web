@@ -117,6 +117,21 @@ describe('ApprovalsPage', () => {
     expect(ensureDirectoryLoaded).toHaveBeenCalledWith('org-1');
   });
 
+  it('should render search and forward a settled term from the first page', async () => {
+    fixture = await createPage();
+    load.mockClear();
+    fixture.componentInstance['page'].set(3);
+
+    fixture.componentInstance['onSearchQueryChanged']('  extinguisher  ');
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="approvals-search"]')).not.toBeNull();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({
+      options: { page: 1, search: 'extinguisher' },
+    });
+  });
+
   it('should give the action-type filter a persistent, associated label once its chip is picked', async () => {
     fixture = await createPage();
 

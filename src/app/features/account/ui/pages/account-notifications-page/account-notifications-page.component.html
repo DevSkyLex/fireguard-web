@@ -1,9 +1,5 @@
-<div id="account-notifications" class="flex h-full flex-col gap-6 p-4 md:p-6">
-  <hlm-tabs
-    [tab]="activeTab()"
-    class="flex max-w-3xl flex-col gap-4"
-    (tabActivated)="onTabActivated($event)"
-  >
+<div id="account-notifications" class="flex min-w-0 flex-col gap-6">
+  <hlm-tabs [tab]="activeTab()" class="flex flex-col gap-4" (tabActivated)="onTabActivated($event)">
     <hlm-tabs-list
       variant="line"
       aria-label="Notification sections"

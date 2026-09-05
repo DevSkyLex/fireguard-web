@@ -1,5 +1,6 @@
 import { inject, Service, type Signal } from '@angular/core';
 import type {
+  PublicationTracking,
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutboxOperation,
@@ -127,6 +128,68 @@ export class InterventionOfflineService {
    */
   public readonly pendingCount: Signal<number> = this.outbox.pendingCount;
   //#endregion
+
+  /**
+   * Method publicationOwner
+   * @method publicationOwner
+   * @description Captures the account identity for local recovery metadata and stale-response guards.
+   * @access public
+   * @since 1.0.0
+   * @returns {string | null} Authenticated subject, or null.
+   */
+  public publicationOwner(): string | null {
+    return this.database.currentOwnerId();
+  }
+
+  /**
+   * Method savePublicationTracking
+   * @description Persists recovery metadata in the account-bound database, scoped by organization and intervention.
+   * @access public
+   * @since 1.0.0
+   * @param {string} organization - Organization IRI.
+   * @param {string} interventionId - Intervention identifier.
+   * @param {PublicationTracking} tracking - Last known publication state.
+   * @returns {Promise<void>}
+   */
+  public async savePublicationTracking(
+    organization: string,
+    interventionId: string,
+    tracking: PublicationTracking,
+  ): Promise<void> {
+    const owner = this.publicationOwner();
+    if (!owner) return;
+    await this.database.ensureOwnerBound();
+    if (owner !== this.publicationOwner()) return;
+    await this.database.put(
+      'metadata',
+      `publication:${owner}:${organization}:${interventionId}`,
+      tracking,
+    );
+  }
+
+  /**
+   * Method loadPublicationTracking
+   * @description Reads recovery metadata after binding the database to the current account.
+   * @access public
+   * @since 1.0.0
+   * @param {string} organization - Organization IRI.
+   * @param {string} interventionId - Intervention identifier.
+   * @returns {Promise<PublicationTracking | null>}
+   */
+  public async loadPublicationTracking(
+    organization: string,
+    interventionId: string,
+  ): Promise<PublicationTracking | null> {
+    const owner = this.publicationOwner();
+    if (!owner) return null;
+    await this.database.ensureOwnerBound();
+    if (owner !== this.publicationOwner()) return null;
+    const tracking = await this.database.get<PublicationTracking>(
+      'metadata',
+      `publication:${owner}:${organization}:${interventionId}`,
+    );
+    return owner === this.publicationOwner() ? tracking : null;
+  }
 
   //#region Workspace
   /**

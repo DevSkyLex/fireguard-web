@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { E2E_MEMBER_IRI, interventionOutput } from '../support/fixtures/intervention-fixtures';
+import { organizationMemberOutput } from '../support/fixtures/member-fixtures';
 import {
   collectConsoleErrors,
   expectNoHorizontalOverflow,
@@ -53,7 +54,7 @@ async function mockDetail(
   await api.mockInterventionAttachments(intervention.id, []);
   await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
   await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
-  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
+  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
   await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
 }
 
@@ -72,7 +73,7 @@ test.describe('Intervention detail — the forward command', () => {
     await expect(detail.commandButton).not.toContainText('Submit');
   });
 
-  test('keeps the band in the thumb zone at 375px', async ({ page }) => {
+  test('keeps the split command in the page header at 375px', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
@@ -84,8 +85,10 @@ test.describe('Intervention detail — the forward command', () => {
 
     const box = await detail.commandButton.boundingBox();
     expect(box, 'the command button must be laid out to be measured').not.toBeNull();
-    // The lower third of a 667px viewport starts at 444px.
-    expect(box?.y ?? 0).toBeGreaterThan((667 / 3) * 2);
+    expect(box?.y ?? 9999).toBeLessThan(667 / 3);
+    await expect(
+      page.locator('#dashboard-page-header').getByTestId('intervention-detail-command'),
+    ).toBeVisible();
     await expect(detail.commandButton).toBeInViewport();
   });
 
@@ -112,11 +115,7 @@ test.describe('Intervention detail — the forward command', () => {
     await expect(detail.commandButton).toHaveCount(0);
   });
 
-  test('renders the band at 375px in dark mode with the action in the thumb zone', async ({
-    page,
-    context,
-    baseURL,
-  }) => {
+  test('renders the split command at 375px in dark mode', async ({ page, context, baseURL }) => {
     const consoleErrors = collectConsoleErrors(page);
     await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
     await page.setViewportSize({ width: 375, height: 800 });
@@ -147,7 +146,7 @@ test.describe('Intervention detail — the forward command', () => {
 
     await expect(detail.commandButton).toBeVisible();
     const box = await detail.commandButton.boundingBox();
-    // On desktop the band goes back to the top: the thumb zone is a phone rule.
+    // The command stays inside the page header on desktop as well as mobile.
     expect(box?.y ?? 9999).toBeLessThan(800 / 3);
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: SCREENSHOT_DIR + '/intervention-command-light-1280.png' });

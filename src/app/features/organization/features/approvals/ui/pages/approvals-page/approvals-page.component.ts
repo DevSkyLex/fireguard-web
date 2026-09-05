@@ -13,6 +13,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -22,6 +23,7 @@ import {
   lucideTag,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ApprovalRequestOutput,
@@ -48,7 +50,7 @@ import {
   type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -61,6 +63,9 @@ import { ApprovalRequestTable } from '../../tables/approval-request-table';
 
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
+
+/** How long typing settles before the search reaches the wire. */
+const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** Every status chip offered in the status field's value control. */
 const STATUS_VALUES: readonly ApprovalStatus[] = [
@@ -94,8 +99,8 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * pages already honours; its two-entry catalog needs no popover search.
  * Both fields are genuinely optional at the wire
  * (`ApprovalRequestListQuery`), so clearing either chip narrows to "any"
- * rather than being disabled. The list endpoint reads no free-text search,
- * so this page has no search box.
+ * rather than being disabled. Free-text search is debounced before it is
+ * forwarded through the list request's shared `RequestOptions` contract.
  *
  * Owns the query the table renders (filters, paging) and the decision
  * dialog's target. On a 409 decide failure the row may have moved out from
@@ -120,6 +125,7 @@ type ApprovalFilterKey = 'status' | 'actionType';
     CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
+    CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
   ],
@@ -212,6 +218,12 @@ export class ApprovalsPage {
 
   /** The active action-type narrowing, or `null` for every type. */
   protected readonly actionType: WritableSignal<string | null> = signal<string | null>(null);
+
+  /** What the search box holds before the debounce settles. */
+  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
+  /** The trimmed free-text search currently sent to the list endpoint. */
+  protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
   /** The page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
@@ -341,10 +353,21 @@ export class ApprovalsPage {
   public constructor() {
     this.store.loadActionTypes();
 
+    toObservable(this.draftSearch)
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term: string): void => {
+        const search: string = term.trim();
+        if (search === this.searchTerm()) return;
+
+        this.page.set(1);
+        this.searchTerm.set(search);
+      });
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const status: ApprovalStatus | null = this.status();
       const actionType: string | null = this.actionType();
+      const search: string = this.searchTerm();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
 
@@ -352,7 +375,7 @@ export class ApprovalsPage {
         this.memberDirectory.ensureLoaded(organizationId);
         this.store.load({
           organizationId,
-          options: { page, itemsPerPage: pageSize },
+          options: { page, itemsPerPage: pageSize, search: search || undefined },
           query: { status: status ?? undefined, actionType: actionType ?? undefined },
         });
       });
@@ -383,6 +406,11 @@ export class ApprovalsPage {
   //#endregion
 
   //#region Methods
+  /** Records a keystroke into the draft term watched by the debounce. */
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
+  }
+
   /**
    * Method applyStatus
    *
@@ -510,6 +538,8 @@ export class ApprovalsPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
+    this.draftSearch.set('');
+    this.searchTerm.set('');
     this.status.set(null);
     this.actionType.set(null);
     this.openFilterKey.set(null);
@@ -550,7 +580,11 @@ export class ApprovalsPage {
   protected reload(): void {
     this.store.load({
       organizationId: this.organizationId(),
-      options: { page: this.page(), itemsPerPage: this.pageSize() },
+      options: {
+        page: this.page(),
+        itemsPerPage: this.pageSize(),
+        search: this.searchTerm() || undefined,
+      },
       query: { status: this.status() ?? undefined, actionType: this.actionType() ?? undefined },
     });
   }

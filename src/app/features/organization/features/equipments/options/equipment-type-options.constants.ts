@@ -13,28 +13,63 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: EquipmentType }>}
+ * @type {ReadonlyArray<{ readonly icon: string; readonly label: string; readonly value: EquipmentType }>}
  */
 export const EQUIPMENT_TYPE_OPTIONS: ReadonlyArray<{
+  readonly icon: string;
   readonly label: string;
   readonly value: EquipmentType;
 }> = [
   {
+    icon: 'lucideFireExtinguisher',
     label: $localize`:@@equipmentType.fireExtinguisher:Fire extinguisher`,
     value: 'fire_extinguisher',
   },
-  { label: $localize`:@@equipmentType.smokeDetector:Smoke detector`, value: 'smoke_detector' },
-  { label: $localize`:@@equipmentType.heatDetector:Heat detector`, value: 'heat_detector' },
-  { label: $localize`:@@equipmentType.sprinkler:Sprinkler`, value: 'sprinkler' },
-  { label: $localize`:@@equipmentType.fireAlarmPanel:Fire alarm panel`, value: 'fire_alarm_panel' },
-  { label: $localize`:@@equipmentType.hydrant:Hydrant`, value: 'hydrant' },
-  { label: $localize`:@@equipmentType.fireDoor:Fire door`, value: 'fire_door' },
   {
+    icon: 'lucideAlarmSmoke',
+    label: $localize`:@@equipmentType.smokeDetector:Smoke detector`,
+    value: 'smoke_detector',
+  },
+  {
+    icon: 'lucideThermometer',
+    label: $localize`:@@equipmentType.heatDetector:Heat detector`,
+    value: 'heat_detector',
+  },
+  {
+    icon: 'lucideDroplets',
+    label: $localize`:@@equipmentType.sprinkler:Sprinkler`,
+    value: 'sprinkler',
+  },
+  {
+    icon: 'lucideSiren',
+    label: $localize`:@@equipmentType.fireAlarmPanel:Fire alarm panel`,
+    value: 'fire_alarm_panel',
+  },
+  {
+    icon: 'lucideDroplet',
+    label: $localize`:@@equipmentType.hydrant:Hydrant`,
+    value: 'hydrant',
+  },
+  {
+    icon: 'lucideDoorClosed',
+    label: $localize`:@@equipmentType.fireDoor:Fire door`,
+    value: 'fire_door',
+  },
+  {
+    icon: 'lucideLightbulb',
     label: $localize`:@@equipmentType.emergencyLighting:Emergency lighting`,
     value: 'emergency_lighting',
   },
-  { label: $localize`:@@equipmentType.accessControl:Access control`, value: 'access_control' },
-  { label: $localize`:@@equipmentType.camera:Camera`, value: 'camera' },
-  { label: $localize`:@@equipmentType.gasDetector:Gas detector`, value: 'gas_detector' },
-  { label: $localize`:@@equipmentType.other:Other`, value: 'other' },
+  {
+    icon: 'lucideFingerprint',
+    label: $localize`:@@equipmentType.accessControl:Access control`,
+    value: 'access_control',
+  },
+  { icon: 'lucideCctv', label: $localize`:@@equipmentType.camera:Camera`, value: 'camera' },
+  {
+    icon: 'lucideGauge',
+    label: $localize`:@@equipmentType.gasDetector:Gas detector`,
+    value: 'gas_detector',
+  },
+  { icon: 'lucideBox', label: $localize`:@@equipmentType.other:Other`, value: 'other' },
 ];

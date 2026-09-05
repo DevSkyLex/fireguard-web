@@ -3512,6 +3512,14 @@
         <source>Target</source>
         <target>Destino</target>
       </trans-unit>
+      <trans-unit id="intervention.wit.columnAction" datatype="html">
+        <source>Action</source>
+        <target>Acción</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.columnRequirement" datatype="html">
+        <source>Requirement</source>
+        <target>Requisito</target>
+      </trans-unit>
       <trans-unit id="intervention.wit.columnAssignee" datatype="html">
         <source>Assignee</source>
         <target>Asignado</target>
@@ -3583,6 +3591,10 @@
       <trans-unit id="intervention.sidebar.title" datatype="html">
         <source>Properties</source>
         <target>Propiedades</target>
+      </trans-unit>
+      <trans-unit id="intervention.sidebar.description" datatype="html">
+        <source> Planning, assignment and intervention status. </source>
+        <target> Planificación, asignación y estado de la intervención. </target>
       </trans-unit>
       <trans-unit id="intervention.prop.status" datatype="html">
         <source> Status </source>
@@ -5186,6 +5198,10 @@
         <source>Filter work items</source>
         <target>Filtrar elementos de trabajo</target>
       </trans-unit>
+      <trans-unit id="intervention.wit.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
       <trans-unit id="intervention.wit.filterAll" datatype="html">
         <source>All</source>
         <target>Todos</target>
@@ -5211,7 +5227,7 @@
         <target>Ningún elemento coincide con este filtro</target>
       </trans-unit>
       <trans-unit id="intervention.wit.filteredEmptyDesc" datatype="html">
-        <source>Try another chip, or clear the filter to see the whole scope.</source>
+        <source>Choose another status, or show all work items.</source>
         <target>Prueba con otro filtro, o bórralo para ver todo el alcance.</target>
       </trans-unit>
       <trans-unit id="intervention.wit.progressAriaLabel" datatype="html">
@@ -5262,6 +5278,10 @@
         <source>Ready to plan</source>
         <target>Listo para planificar</target>
       </trans-unit>
+      <trans-unit id="intervention.checklist.description" datatype="html">
+        <source>Review the preparation for this intervention before planning it.</source>
+        <target>Revisa la preparación de esta intervención antes de planificarla.</target>
+      </trans-unit>
       <trans-unit id="intervention.cta.plan" datatype="html">
         <source>Plan intervention</source>
         <target>Planificar la intervención</target>
@@ -5277,6 +5297,10 @@
       <trans-unit id="intervention.issues.title" datatype="html">
         <source>Publication issues</source>
         <target>Puntos de publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.description" datatype="html">
+        <source> Requirements to resolve before publishing this intervention. </source>
+        <target> Puntos que deben resolverse antes de publicar esta intervención. </target>
       </trans-unit>
       <trans-unit id="intervention.issues.clear" datatype="html">
         <source>No blockers — ready to publish</source>
@@ -8339,8 +8363,8 @@
         <target>No se encontraron planes de mantenimiento</target>
       </trans-unit>
       <trans-unit id="maintenance.list.emptyDesc" datatype="html">
-        <source>Adjust your filters, or track equipment to see its schedule here.</source>
-        <target>Ajuste sus filtros, o registre equipos para ver su plan aquí.</target>
+        <source>Adjust your search or filters, or track equipment to see its schedule here.</source>
+        <target>Ajuste la búsqueda o los filtros, o registre equipos para ver su plan aquí.</target>
       </trans-unit>
       <trans-unit id="maintenance.generateCampaignButton" datatype="html">
         <source>Generate inspection campaign</source>
@@ -8929,6 +8953,38 @@
       <trans-unit id="intervention.labels.manage.intro" datatype="html">
         <source>Labels are shared across every intervention in this organization.</source>
         <target>Las etiquetas se comparten entre todas las intervenciones de esta organización.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.newLabel" datatype="html">
+        <source>New label</source>
+        <target>Nueva etiqueta</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.newLabelDescription" datatype="html">
+        <source>Choose a short name and a color that remains recognizable in a list.</source>
+        <target>Elige un nombre corto y un color que siga siendo reconocible en una lista.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.creatingAria" datatype="html">
+        <source>Adding label</source>
+        <target>Añadiendo etiqueta</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.existingLabels" datatype="html">
+        <source>Existing labels</source>
+        <target>Etiquetas existentes</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.existingDescription" datatype="html">
+        <source>Rename, recolor or remove labels available to the organization.</source>
+        <target>Renombra, cambia el color o elimina las etiquetas disponibles en la organización.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.loadingAria" datatype="html">
+        <source>Loading labels</source>
+        <target>Cargando etiquetas</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.emptyDescription" datatype="html">
+        <source>Create the first label above to organize interventions.</source>
+        <target>Crea la primera etiqueta arriba para organizar las intervenciones.</target>
+      </trans-unit>
+      <trans-unit id="intervention.labels.manage.confirmDeleteTitle" datatype="html">
+        <source>Delete this label?</source>
+        <target>¿Eliminar esta etiqueta?</target>
       </trans-unit>
       <trans-unit id="intervention.labels.manage.loading" datatype="html">
         <source>Loading labels…</source>
@@ -11558,6 +11614,531 @@
         <source>This channel cannot be moved here</source>
         <target>Este canal no se puede mover aquí</target>
       </trans-unit>
-</body>
+      <trans-unit id="checklists.detail.back" datatype="html">
+        <source> Back to checklists </source>
+        <target>Volver a las listas de verificación</target>
+      </trans-unit>
+      <trans-unit id="checklists.detail.editorHelp" datatype="html">
+        <source> Order the checks as they should be performed in the field. Arrow buttons also work with the keyboard. A completed new item is included when you save. </source>
+        <target>Ordena los controles según su ejecución en el terreno. Las flechas también funcionan con el teclado. Un elemento nuevo completado se incluye al guardar.</target>
+      </trans-unit>
+      <trans-unit id="checklists.detail.itemCount" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> items</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> elementos</target>
+      </trans-unit>
+      <trans-unit id="checklists.detail.readOnly" datatype="html">
+        <source> This checklist is available for consultation. </source>
+        <target>Esta lista de verificación está disponible para consulta.</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.invalidItems" datatype="html">
+        <source>Check the labels and descriptions of the checklist items.</source>
+        <target>Revisa las etiquetas y descripciones de los elementos.</target>
+      </trans-unit>
+      <trans-unit id="common.confirm" datatype="html">
+        <source> Confirm </source>
+        <target>Confirmar</target>
+      </trans-unit>
+      <trans-unit id="common.loadMore" datatype="html">
+        <source>Load more</source>
+        <target>Cargar más</target>
+      </trans-unit>
+      <trans-unit id="common.loading" datatype="html">
+        <source> Loading… </source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="common.retry" datatype="html">
+        <source>Retry</source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="imports.poll.interrupted" datatype="html">
+        <source>Tracking stopped before a final result. Refresh this report to check the job.</source>
+        <target>El seguimiento se interrumpió antes del resultado final. Actualiza este informe para comprobar la importación.</target>
+      </trans-unit>
+      <trans-unit id="imports.report.refresh" datatype="html">
+        <source> Check job status </source>
+        <target>Comprobar el estado de la importación</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.interventionContext" datatype="html">
+        <source>Intervention context</source>
+        <target>Contexto de la intervención</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.linkedIntervention" datatype="html">
+        <source> This inspection was recorded as part of an intervention. </source>
+        <target>Esta inspección se realizó como parte de una intervención.</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.openIntervention" datatype="html">
+        <source>Open the intervention</source>
+        <target>Abrir la intervención</target>
+      </trans-unit>
+      <trans-unit id="inspection.detail.provisional" datatype="html">
+        <source> This inspection belongs to an intervention that has not published this record yet. Its result remains provisional in that workflow. </source>
+        <target>Esta inspección pertenece a una intervención que aún no ha publicado este registro. Su resultado sigue siendo provisional en ese proceso.</target>
+      </trans-unit>
+      <trans-unit id="intervention.attachments.loading" datatype="html">
+        <source> Loading intervention files… </source>
+        <target>Cargando los archivos de la intervención…</target>
+      </trans-unit>
+      <trans-unit id="intervention.batch.ineligible" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ batchSelectedCount() - batchIds().length }}"/> selected intervention(s) were not eligible for this action. </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ batchSelectedCount() - batchIds().length }}"/> intervención(es) seleccionada(s) no admitían esta acción.</target>
+      </trans-unit>
+      <trans-unit id="intervention.batch.retryFailed" datatype="html">
+        <source> Retry failed interventions </source>
+        <target>Reintentar las intervenciones fallidas</target>
+      </trans-unit>
+      <trans-unit id="intervention.batch.retryHint" datatype="html">
+        <source> Failed interventions remain selected. Correct the issue, then retry the action on that selection. </source>
+        <target>Las intervenciones fallidas siguen seleccionadas. Corrige el problema y vuelve a ejecutar la acción sobre esa selección.</target>
+      </trans-unit>
+      <trans-unit id="intervention.batch.summary" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ batchSucceededCount() }}"/> succeeded · <x id="INTERPOLATION_1" equiv-text="{{ batchFailedCount() }}"/> failed · <x id="INTERPOLATION_2" equiv-text="{{ batchIds().length }}"/> eligible </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ batchSucceededCount() }}"/> completadas · <x id="INTERPOLATION_1" equiv-text="{{ batchFailedCount() }}"/> fallidas · <x id="INTERPOLATION_2" equiv-text="{{ batchIds().length }}"/> elegibles</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.scope" datatype="html">
+        <source> Calendar applies status, type, site and responsible filters to the displayed period. Search, priority, labels and date filters remain saved for the list. </source>
+        <target>El calendario aplica los filtros de estado, tipo, sitio y responsable al período mostrado. La búsqueda, la prioridad, las etiquetas y los filtros de fechas se conservan para la lista.</target>
+      </trans-unit>
+      <trans-unit id="intervention.catalogue.coverageRemote" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ catalogue.loaded }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ catalogue.total }}"/> matching options loaded.</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ catalogue.loaded }}"/> de <x id="INTERPOLATION_1" equiv-text="{{ catalogue.total }}"/> opciones coincidentes cargadas.</target>
+      </trans-unit>
+      <trans-unit id="intervention.catalogue.loading" datatype="html">
+        <source>Loading options…</source>
+        <target>Cargando opciones…</target>
+      </trans-unit>
+      <trans-unit id="intervention.catalogue.more" datatype="html">
+        <source>Load more options</source>
+        <target>Cargar más opciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.catalogue.noMatch" datatype="html">
+        <source>No matching option loaded.</source>
+        <target>Ninguna opción coincidente cargada.</target>
+      </trans-unit>
+      <trans-unit id="intervention.catalogue.templateEmpty" datatype="html">
+        <source>No matching template among the loaded options.</source>
+        <target>Ninguna plantilla coincidente entre las opciones cargadas.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.assignment" datatype="html">
+        <source>Assignment</source>
+        <target>Asignación</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.calendar" datatype="html">
+        <source>Calendar</source>
+        <target>Calendario</target>
+      </trans-unit>
+      <trans-unit id="intervention.cf.planningRequirements" datatype="html">
+        <source> Site, responsible, start and due date are needed to plan. You can complete them after creating the draft. </source>
+        <target>El sitio, el responsable, el inicio y el vencimiento son necesarios para planificar. Puedes completarlos después de crear el borrador.</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.applied" datatype="html">
+        <source>Applied</source>
+        <target>Aplicados</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.emptyHint" datatype="html">
+        <source> Choose another status to consult the intervention history. </source>
+        <target>Elige otro estado para consultar el historial de la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.emptyTitle" datatype="html">
+        <source>No changes in this state</source>
+        <target>Ningún cambio en este estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.filterLabel" datatype="html">
+        <source>Change status</source>
+        <target>Estado de los cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.historyHint" datatype="html">
+        <source> Review proposed values and consult rejected or applied changes. </source>
+        <target>Revisa los valores propuestos y consulta los cambios rechazados o aplicados.</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.historyTitle" datatype="html">
+        <source> Resource changes </source>
+        <target>Cambios en los recursos</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.proposed" datatype="html">
+        <source>Proposed</source>
+        <target>Propuestos</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.rejected" datatype="html">
+        <source>Rejected</source>
+        <target>Rechazados</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.recommended" datatype="html">
+        <source>Recommended</source>
+        <target>Recomendado</target>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.start" datatype="html">
+        <source>Set a planned start</source>
+        <target>Definir el inicio previsto</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.reviewOffline" datatype="html">
+        <source>Reconnect to send your review.</source>
+        <target>Vuelve a conectarte para enviar la revisión.</target>
+      </trans-unit>
+      <trans-unit id="intervention.cta.submissionUnavailable" datatype="html">
+        <source>Submission is not currently available. Check your access and the intervention requirements.</source>
+        <target>El envío no está disponible actualmente. Comprueba tus permisos y los requisitos de la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.discussion.activityTrigger" datatype="html">
+        <source>Intervention activity</source>
+        <target>Actividad de la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.checking" datatype="html">
+        <source> Checking publication requirements… </source>
+        <target>Comprobando los requisitos de publicación…</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.retry" datatype="html">
+        <source> Check requirements again </source>
+        <target>Volver a comprobar los requisitos</target>
+      </trans-unit>
+      <trans-unit id="intervention.issues.verifiedClear" datatype="html">
+        <source>No blocking issues detected</source>
+        <target>No se han detectado bloqueos</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.actionRequired" datatype="html">
+        <source>Action required</source>
+        <target>Acción necesaria</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.checking" datatype="html">
+        <source>Checking saved work…</source>
+        <target>Comprobando el trabajo guardado…</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.conflict" datatype="html">
+        <source> The resource changed on the server. Review your local content before reapplying it. </source>
+        <target>El recurso ha cambiado en el servidor. Revisa tu contenido local antes de volver a aplicarlo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.current" datatype="html">
+        <source>Up to date</source>
+        <target>Actualizado</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.description" datatype="html">
+        <source> These operations are not yet confirmed by the server. They become available to your team after synchronization. </source>
+        <target>Estas operaciones aún no están confirmadas por el servidor. Estarán disponibles para tu equipo después de sincronizarse.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.discard" datatype="html">
+        <source> Discard local operation </source>
+        <target>Descartar la operación local</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.discardTitle" datatype="html">
+        <source>Discard this local operation?</source>
+        <target>¿Descartar esta operación local?</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.empty" datatype="html">
+        <source> No operations waiting to be sent for this intervention. </source>
+        <target>No hay operaciones pendientes de envío para esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.loading" datatype="html">
+        <source>Reading saved operations…</source>
+        <target>Leyendo las operaciones guardadas…</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.loss" datatype="html">
+        <source> This saved operation will be removed from this device without being sent. This cannot be undone. </source>
+        <target>Esta operación guardada se eliminará de este dispositivo sin enviarse. Esta acción no se puede deshacer.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.queued" datatype="html">
+        <source> Saved locally · awaiting synchronization </source>
+        <target>Guardado localmente · pendiente de sincronización</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.reapply" datatype="html">
+        <source> Your stored values will be sent again using the available revision. The server can reject them if the resource has changed. No automatic merge will be performed. </source>
+        <target>Sus valores guardados se reenviarán con la revisión disponible. El servidor puede rechazarlos si el recurso ha cambiado. No se realizará ninguna combinación automática.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.retry" datatype="html">
+        <source> Review and retry </source>
+        <target>Revisar y reintentar</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.retryTitle" datatype="html">
+        <source>Reapply your local content?</source>
+        <target>¿Volver a aplicar tu contenido local?</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.review" datatype="html">
+        <source>Review saved operations</source>
+        <target>Revisar las operaciones guardadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.revision" datatype="html">
+        <source> Last confirmed server revision: <x id="INTERPOLATION" equiv-text="{{ revision(operation) }}"/> </source>
+        <target>Última revisión del servidor verificada: <x id="INTERPOLATION" equiv-text="{{ revision(operation) }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.saved" datatype="html">
+        <source>Saved on this device</source>
+        <target>Guardado en este dispositivo</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.synchronizing" datatype="html">
+        <source>Synchronizing</source>
+        <target>Sincronizando</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.title" datatype="html">
+        <source>Saved on this device</source>
+        <target>Guardado en este dispositivo</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.view" datatype="html">
+        <source> View saved operations </source>
+        <target>Ver las operaciones guardadas</target>
+      </trans-unit>
+      <trans-unit id="intervention.proofs.count" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ item.evidenceCount }}"/> proof(s) </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ item.evidenceCount }}"/> evidencia(s)</target>
+      </trans-unit>
+      <trans-unit id="intervention.proofs.title" datatype="html">
+        <source>Work item evidence</source>
+        <target>Evidencias del trabajo</target>
+      </trans-unit>
+      <trans-unit id="intervention.proofs.viewAll" datatype="html">
+        <source> View all intervention files </source>
+        <target>Ver todos los archivos de la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.appliedChanges" datatype="html">
+        <source>Applied changes</source>
+        <target>Cambios aplicados</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.observationInterrupted" datatype="html">
+        <source>The result is not confirmed. Check the status of the existing publication.</source>
+        <target>El resultado no está confirmado. Comprueba el estado de la publicación existente.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.preflightBlocked" datatype="html">
+        <source>Publication is unavailable. Review the updated permissions, connection and blocking issues.</source>
+        <target>La publicación no está disponible. Revisa los permisos actualizados, la conexión y los bloqueos.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.refreshIntervention" datatype="html">
+        <source> Refresh intervention </source>
+        <target>Actualizar la intervención</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.restoreError" datatype="html">
+        <source>Previous publication tracking could not be read. Refresh before publishing.</source>
+        <target>No se ha podido leer el seguimiento de la publicación anterior. Actualiza antes de publicar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.result" datatype="html">
+        <source>Publication result</source>
+        <target>Resultado de la publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.showTracking" datatype="html">
+        <source> View publication </source>
+        <target>Ver la publicación</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.storageError" datatype="html">
+        <source>Recovery could not be saved on this device. Keep this page open until the result is confirmed.</source>
+        <target>No se ha podido guardar el seguimiento de recuperación en este dispositivo. Mantén esta página abierta hasta confirmar el resultado.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.trackingTitle" datatype="html">
+        <source> Publication awaiting confirmation </source>
+        <target>Publicación pendiente de confirmación</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.unknownResult" datatype="html">
+        <source>The publication result is unknown. Refresh the intervention before taking further action.</source>
+        <target>El resultado de la publicación es desconocido. Actualiza la intervención antes de realizar otra acción.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publication.unsynced" datatype="html">
+        <source>Resolve this intervention&apos;s local operations before publishing.</source>
+        <target>Resuelve las operaciones locales de esta intervención antes de publicar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.resultUnconfirmed" datatype="html">
+        <source> The publication result is not confirmed. Check its status before taking further action. </source>
+        <target>El resultado de la publicación no está confirmado. Comprueba su estado antes de realizar otra acción.</target>
+      </trans-unit>
+      <trans-unit id="intervention.publish.waitingForConfirmation" datatype="html">
+        <source> Waiting for confirmation from the compliance record. </source>
+        <target>Esperando la confirmación del registro de conformidad.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.everyMonths" datatype="html">
+        <source>Every <x id="count" equiv-text="count"/> month(s)</source>
+        <target>Cada <x id="count" equiv-text="count"/> mes(es)</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.everyWeeks" datatype="html">
+        <source>Every <x id="count" equiv-text="interval"/> week(s)</source>
+        <target>Cada <x id="count" equiv-text="interval"/> semana(s)</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.rhythmSection" datatype="html">
+        <source>Schedule</source>
+        <target>Frecuencia</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.scheduleSummary" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ cadenceSummary() }}"/> from <x id="INTERPOLATION_1" equiv-text="{{ model().anchorDate | date: &apos;mediumDate&apos; }}"/> (<x id="INTERPOLATION_2" equiv-text="{{
+        model().timezone
+      }}"/>). Draft creation <x id="INTERPOLATION_3" equiv-text="{{ model().leadTimeDays }}"/> day(s) in advance. The next occurrence is confirmed by the server after saving. </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ cadenceSummary() }}"/> a partir del <x id="INTERPOLATION_1" equiv-text="{{ model().anchorDate | date: &apos;mediumDate&apos; }}"/> (<x id="INTERPOLATION_2" equiv-text="{{
+        model().timezone
+      }}"/>). Creación del borrador con <x id="INTERPOLATION_3" equiv-text="{{ model().leadTimeDays }}"/> día(s) de antelación. El servidor confirma la próxima ocurrencia después de guardar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.scopeSection" datatype="html">
+        <source>Scope and assignment</source>
+        <target>Alcance y asignación</target>
+      </trans-unit>
+      <trans-unit id="intervention.recurrences.templateSection" datatype="html">
+        <source> Template and identification </source>
+        <target>Plantilla e identificación</target>
+      </trans-unit>
+      <trans-unit id="intervention.scan.browse" datatype="html">
+        <source>Browse work items</source>
+        <target>Consultar los trabajos</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.signAndSubmit" datatype="html">
+        <source>Sign and submit</source>
+        <target>Firmar y enviar</target>
+      </trans-unit>
+      <trans-unit id="intervention.signature.submitUnsigned" datatype="html">
+        <source>Submit without signature</source>
+        <target>Enviar sin firma</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.connectBeforePublish" datatype="html">
+        <source>Connect before publishing this intervention.</source>
+        <target>Conéctate antes de publicar esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.progressBreakdown" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ filterCounts().done }}"/> completed · <x id="INTERPOLATION_1" equiv-text="{{ filterCounts().skipped }}"/> skipped · <x id="INTERPOLATION_2" equiv-text="{{ filterCounts().remaining }}"/> remaining </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ filterCounts().done }}"/> completados · <x id="INTERPOLATION_1" equiv-text="{{ filterCounts().skipped }}"/> omitidos · <x id="INTERPOLATION_2" equiv-text="{{ filterCounts().remaining }}"/> pendientes</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.required" datatype="html">
+        <source>Required</source>
+        <target>Obligatorio</target>
+      </trans-unit>
+      <trans-unit id="intervention.workItems.savedLocally" datatype="html">
+        <source>Saved on this device</source>
+        <target>Guardado en este dispositivo</target>
+      </trans-unit>
+      <trans-unit id="org.assets.loadingResources" datatype="html">
+        <source> Loading resources… </source>
+        <target>Cargando recursos…</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.assetGrowth" datatype="html">
+        <source> Resource additions — equipment and facilities </source>
+        <target>Altas de recursos — equipos e instalaciones</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.currentSituation" datatype="html">
+        <source>Current situation</source>
+        <target>Situación actual</target>
+      </trans-unit>
+      <trans-unit id="requestState.connectionUnavailable" datatype="html">
+        <source>The connection is unavailable. Check your network and try again.</source>
+        <target>La conexión no está disponible. Comprueba la red y vuelve a intentarlo.</target>
+      </trans-unit>
+      <trans-unit id="requestState.requestFailed" datatype="html">
+        <source>The request could not be completed. Please try again.</source>
+        <target>No se ha podido completar la solicitud. Vuelve a intentarlo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.partialFailure" datatype="html">
+        <source>Some assignments were not saved</source>
+        <target>Algunas asignaciones no se han guardado</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.retryFailures" datatype="html">
+        <source>Your selection is preserved. Retrying only affects the failed interventions.</source>
+        <target>Su selección se conserva. El nuevo intento solo afecta a las intervenciones fallidas.</target>
+      </trans-unit>
+      <trans-unit id="intervention.assign.failed" datatype="html">
+        <source>Assignment could not be saved.</source>
+        <target>No se ha podido guardar la asignación.</target>
+      </trans-unit>
+      <trans-unit id="intervention.planning.selectionFailed" datatype="html">
+        <source>Some selected resources could not be loaded. Your selections are preserved.</source>
+        <target>No se han podido cargar algunos recursos seleccionados. Sus selecciones se conservan.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.baseRevision" datatype="html">
+        <source>Original local revision: <x id="INTERPOLATION" equiv-text="{{ operation.baseRevision }}"/></source>
+        <target>Revisión local original: <x id="INTERPOLATION" equiv-text="{{ operation.baseRevision }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.unknownRevision" datatype="html">
+        <source>The server revision could not be verified. Your local content is preserved.</source>
+        <target>No se ha podido verificar la revisión del servidor. Su contenido local se conserva.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.prepare" datatype="html">
+        <source>Define the scope, assign the team and complete the requirements before scheduling.</source>
+        <target>Defina el alcance, asigne el equipo y complete los requisitos antes de planificar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.planned" datatype="html">
+        <source>Review the scope and assignments, then start the work on site.</source>
+        <target>Revise el alcance y las asignaciones y comience el trabajo en el sitio.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.execute" datatype="html">
+        <source>Complete the remaining work and collect evidence before submitting for review.</source>
+        <target>Complete los trabajos pendientes y reúna las pruebas antes de enviar a revisión.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.correct" datatype="html">
+        <source>Address the reviewer’s feedback, then submit the intervention again.</source>
+        <target>Atienda las observaciones del revisor y vuelva a enviar la intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.review" datatype="html">
+        <source>Review the proposed changes and evidence, and resolve publication issues.</source>
+        <target>Revise los cambios propuestos y las pruebas y resuelva los problemas de publicación.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.published" datatype="html">
+        <source>The published record is locked. Consult its results, evidence and activity below.</source>
+        <target>El registro publicado está bloqueado. Consulte sus resultados, pruebas y actividad a continuación.</target>
+      </trans-unit>
+      <trans-unit id="intervention.workspace.abandoned" datatype="html">
+        <source>This intervention is closed. Its work and activity remain available for reference.</source>
+        <target>Esta intervención está cerrada. Sus trabajos y actividad siguen disponibles para consulta.</target>
+      </trans-unit>
+      <trans-unit id="intervention.feedback.failed" datatype="html"><source>Action failed</source><target>La acción ha fallado</target></trans-unit>
+      <trans-unit id="account.profile.detailsDescription" datatype="html">
+        <source>Update the name and language used for your account.</source>
+        <target>Actualiza el nombre y el idioma utilizados para tu cuenta.</target>
+      </trans-unit>
+      <trans-unit id="account.profile.accountDescription" datatype="html">
+        <source>Review your sign-in address, account history and assigned roles.</source>
+        <target>Consulta tu dirección de acceso, el historial de la cuenta y los roles asignados.</target>
+      </trans-unit>
+      <trans-unit id="account.danger.description" datatype="html">
+        <source>Manage actions that can permanently affect access to your account.</source>
+        <target>Gestiona las acciones que pueden afectar permanentemente al acceso a tu cuenta.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.sectionTitle" datatype="html">
+        <source>Organization details</source>
+        <target>Datos de la organización</target>
+      </trans-unit>
+      <trans-unit id="org.settings.general.sectionDescription" datatype="html">
+        <source>Manage the name, description and logo shown throughout this workspace.</source>
+        <target>Gestiona el nombre, la descripción y el logotipo que aparecen en este espacio de trabajo.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.sectionDescription" datatype="html">
+        <source>Keep the legal identity used for billing and compliance records up to date.</source>
+        <target>Mantén actualizada la identidad legal utilizada para la facturación y los registros de cumplimiento.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesDescription" datatype="html">
+        <source>View and download billing documents for this organization.</source>
+        <target>Consulta y descarga los documentos de facturación de esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.sectionTitle" datatype="html">
+        <source>Regional settings</source>
+        <target>Configuración regional</target>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.sectionDescription" datatype="html">
+        <source>Set the timezone, date format and measurements used across the organization.</source>
+        <target>Define la zona horaria, el formato de fecha y las unidades de medida utilizadas en la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderDescription" datatype="html">
+        <source>Set how early upcoming inspection deadlines should be surfaced.</source>
+        <target>Define con cuánta antelación deben mostrarse los próximos plazos de inspección.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.automationDescription" datatype="html">
+        <source>Choose when Fireguard should create corrective work automatically.</source>
+        <target>Elige cuándo debe crear Fireguard acciones correctivas automáticamente.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.sectionDescription" datatype="html">
+        <source>Decide which sensitive actions require a second authorized member.</source>
+        <target>Decide qué acciones sensibles requieren un segundo miembro autorizado.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.billingCadenceHelp" datatype="html">
+        <source>Compare prices using your preferred billing frequency.</source>
+        <target>Compara los precios según la frecuencia de facturación que prefieras.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.perYear" datatype="html">
+        <source><x id="price" equiv-text="formatted"/>/year</source>
+        <target><x id="price"/> / año</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.cadenceYear" datatype="html">
+        <source>per year</source>
+        <target>al año</target>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.cadenceMonth" datatype="html">
+        <source>per month</source>
+        <target>al mes</target>
+      </trans-unit>
+      <trans-unit id="approvals.list.searchPlaceholder" datatype="html">
+        <source>Search approval requests...</source>
+        <target>Buscar solicitudes de aprobación...</target>
+      </trans-unit>
+      <trans-unit id="maintenance.list.searchPlaceholder" datatype="html">
+        <source>Search schedules...</source>
+        <target>Buscar planes...</target>
+      </trans-unit>
+    </body>
   </file>
 </xliff>

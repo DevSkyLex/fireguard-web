@@ -114,3 +114,35 @@ test.describe('Intervention detail — a blocked outbox surfaces on the workspac
     });
   });
 });
+
+test('reviews local conflicts and discards only the explicitly confirmed operation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const api = new ApiMock(page);
+  await mockDetailPage(api);
+  await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/interventions/${interventionId}`);
+  await blockTheOutbox(page);
+  await page.getByTestId('intervention-sync-blocked-alert-retry').click();
+  const sheet = page.getByTestId('intervention-operations-sheet');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText('Riser valve replaced.');
+  await sheet
+    .locator('[data-operation-id="e2e-sync-alert-op-1"]')
+    .getByRole('button', { name: 'Review and retry' })
+    .click();
+  const confirmation = page.getByRole('alertdialog');
+  await expect(confirmation).toContainText('Reapply your local content?');
+  await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await readStore(page, 'outbox')).toHaveLength(2);
+  await sheet
+    .locator('[data-operation-id="e2e-sync-alert-op-2"]')
+    .getByRole('button', { name: 'Discard local operation' })
+    .click();
+  await expect(confirmation).toContainText('Riser valve replaced.');
+  await confirmation.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect
+    .poll(() => readStore(page, 'outbox'))
+    .toEqual([expect.objectContaining({ id: 'e2e-sync-alert-op-1' })]);
+  await expect(sheet.locator('[data-operation-id="e2e-sync-alert-op-2"]')).toHaveCount(0);
+});

@@ -217,7 +217,11 @@ Utility:
   pagination band, toolbar shell, search box, "Filters" toggle and editable type/status filter
   chip row — see `organization/FEATURE.md` § UI Conventions.
 - May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
-- Publishes the canonical `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding `create-equipment-form` and the `maintenance-schedules` subfeature's filter bar, table and campaign dialog all consume it so the equipment type catalog is not duplicated.
+- Publishes the canonical localized label and Lucide icon catalog as
+  `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding
+  `create-equipment-form`, organization compliance form, and the `maintenance-schedules`
+  subfeature's filter bar, table and campaign dialog all consume it so the equipment type
+  catalog is not duplicated.
 - `EquipmentService` is depended on directly by the `facilities` subfeature's `FacilityPlansStore` (`listByFacility`, `setPlanPosition`) for the floor-plan editor's equipment-pin placement — the same cross-feature dependency `FacilityOverviewStore` already took on for the equipment status summary. `EquipmentService.setPlanPosition` (`PUT
 /api/organizations/{organizationId}/equipment/{equipmentId}/plan-position`)
   places, moves, or clears (all-null body) one equipment item's pin on its

@@ -1,5 +1,5 @@
-<div id="account-security" class="flex h-full flex-col gap-6 p-4 md:p-6">
-  <div class="flex max-w-2xl flex-col gap-6">
+<div id="account-security" class="flex min-w-0 flex-col gap-6">
+  <div class="flex flex-col gap-6">
     @if (hasProfileError()) {
       <div hlmEmpty role="alert">
         <div hlmEmptyHeader>
@@ -52,101 +52,109 @@
         (cancelled)="totpStore.cancelSetup()"
       />
 
-      <section id="account-email" class="flex flex-col gap-3 border-t border-border pt-5">
-        <header class="flex min-w-0 flex-col gap-1">
-          <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.email.title">
+      <section
+        id="account-email"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      >
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.email.title">
             Email address
           </h2>
-          <p class="text-sm text-muted-foreground" i18n="@@account.email.description">
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.email.description">
             The address you sign in with. Changing it asks for your password and a confirmation from
             the new address.
           </p>
         </header>
 
-        @if (emailChangeStore.hasPendingRequest()) {
-          <div
-            class="flex flex-col gap-3 rounded-lg border border-border p-4"
-            role="status"
-            data-testid="account-email-pending"
-          >
-            <p class="text-sm text-foreground">
-              <span i18n="@@account.email.pendingText"
-                >We sent a confirmation link to {{ emailChangeStore.pendingEmail() }}. Open it from
-                that inbox to finish the change — until then you keep signing in with your current
-                address.</span
-              >
-            </p>
-            <p class="text-xs text-muted-foreground" i18n="@@account.email.pendingHint">
-              The link expires after one hour. Confirming signs you out everywhere, and you sign
-              back in with the new address.
-            </p>
-            <div class="flex flex-wrap gap-2">
+        <div class="flex min-w-0 flex-col gap-3">
+          @if (emailChangeStore.hasPendingRequest()) {
+            <div
+              class="flex flex-col gap-3 rounded-lg border border-border p-4"
+              role="status"
+              data-testid="account-email-pending"
+            >
+              <p class="text-sm text-foreground">
+                <span i18n="@@account.email.pendingText"
+                  >We sent a confirmation link to {{ emailChangeStore.pendingEmail() }}. Open it
+                  from that inbox to finish the change — until then you keep signing in with your
+                  current address.</span
+                >
+              </p>
+              <p class="text-xs text-muted-foreground" i18n="@@account.email.pendingHint">
+                The link expires after one hour. Confirming signs you out everywhere, and you sign
+                back in with the new address.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="account-email-resend"
+                  [disabled]="emailChangeStore.isCancelling()"
+                  (click)="openEmailChangeDialog()"
+                >
+                  <span i18n="@@account.email.resend">Resend link</span>
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  class="max-sm:min-h-11"
+                  data-testid="account-email-cancel-request"
+                  aria-live="polite"
+                  [disabled]="emailChangeStore.isCancelling()"
+                  [attr.aria-busy]="emailChangeStore.isCancelling() ? 'true' : null"
+                  (click)="cancelEmailChange()"
+                >
+                  @if (emailChangeStore.isCancelling()) {
+                    <span i18n="@@account.email.cancelling">Cancelling…</span>
+                  } @else {
+                    <span i18n="@@account.email.cancelRequest">Cancel request</span>
+                  }
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex flex-wrap items-center gap-3">
+              <p class="text-sm text-foreground" data-testid="account-email-current">
+                {{ currentEmail() }}
+              </p>
               <button
                 hlmBtn
                 type="button"
                 variant="outline"
                 size="sm"
                 class="max-sm:min-h-11"
-                data-testid="account-email-resend"
-                [disabled]="emailChangeStore.isCancelling()"
+                data-testid="account-email-change-open"
                 (click)="openEmailChangeDialog()"
               >
-                <span i18n="@@account.email.resend">Resend link</span>
-              </button>
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="sm"
-                class="max-sm:min-h-11"
-                data-testid="account-email-cancel-request"
-                aria-live="polite"
-                [disabled]="emailChangeStore.isCancelling()"
-                [attr.aria-busy]="emailChangeStore.isCancelling() ? 'true' : null"
-                (click)="cancelEmailChange()"
-              >
-                @if (emailChangeStore.isCancelling()) {
-                  <span i18n="@@account.email.cancelling">Cancelling…</span>
-                } @else {
-                  <span i18n="@@account.email.cancelRequest">Cancel request</span>
-                }
+                <span i18n="@@account.email.changeOpen">Change email</span>
               </button>
             </div>
-          </div>
-        } @else {
-          <div class="flex flex-wrap items-center gap-3">
-            <p class="text-sm text-foreground" data-testid="account-email-current">
-              {{ currentEmail() }}
-            </p>
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="max-sm:min-h-11"
-              data-testid="account-email-change-open"
-              (click)="openEmailChangeDialog()"
-            >
-              <span i18n="@@account.email.changeOpen">Change email</span>
-            </button>
-          </div>
-        }
+          }
 
-        <app-account-email-change-dialog
-          [visible]="changingEmail()"
-          [pending]="emailChangeStore.isRequesting()"
-          [initialEmail]="emailChangeStore.pendingEmail()"
-          (visibleChange)="changingEmail.set($event)"
-          (submitted)="requestEmailChange($event)"
-        />
+          <app-account-email-change-dialog
+            [visible]="changingEmail()"
+            [pending]="emailChangeStore.isRequesting()"
+            [initialEmail]="emailChangeStore.pendingEmail()"
+            (visibleChange)="changingEmail.set($event)"
+            (submitted)="requestEmailChange($event)"
+          />
+        </div>
       </section>
 
-      <section id="account-password" class="flex flex-col gap-3 border-t border-border pt-5">
-        <header class="flex min-w-0 flex-col gap-1">
-          <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.password.title">
+      <section
+        id="account-password"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      >
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.password.title">
             Password
           </h2>
-          <p class="text-sm text-muted-foreground" i18n="@@account.password.description">
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.password.description">
             Changing it takes two steps, so a stolen session cannot lock you out.
           </p>
         </header>
@@ -163,13 +171,13 @@
 
       <section
         id="account-sessions-section"
-        class="flex flex-col gap-3 border-t border-border pt-5"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
       >
-        <header class="flex min-w-0 flex-col gap-1">
-          <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.sessions.title">
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.sessions.title">
             Active sessions
           </h2>
-          <p class="text-sm text-muted-foreground" i18n="@@account.sessions.description">
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.sessions.description">
             Every browser and device currently signed into your account.
           </p>
         </header>
@@ -190,13 +198,13 @@
 
       <section
         id="account-trusted-devices-section"
-        class="flex flex-col gap-3 border-t border-border pt-5"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
       >
-        <header class="flex min-w-0 flex-col gap-1">
-          <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.devices.title">
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.devices.title">
             Trusted devices
           </h2>
-          <p class="text-sm text-muted-foreground" i18n="@@account.devices.description">
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.devices.description">
             Devices you told us to remember, so they skip the second factor for a while.
           </p>
         </header>
@@ -213,44 +221,52 @@
         />
       </section>
 
-      <section id="account-danger-zone" class="flex flex-col gap-3 border-t border-border pt-5">
-        <header class="flex min-w-0 flex-col gap-1">
-          <h2 class="flex items-center gap-2 text-sm font-semibold tracking-tight text-destructive">
+      <section
+        id="account-danger-zone"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      >
+        <header class="min-w-0">
+          <h2 class="flex items-center gap-2 text-xl font-semibold tracking-tight text-destructive">
             <ng-icon name="lucideTriangleAlert" class="shrink-0" aria-hidden="true" />
             <span i18n="@@account.danger.title">Danger zone</span>
           </h2>
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.danger.description">
+            Manage actions that can permanently affect access to your account.
+          </p>
         </header>
 
-        <div hlmCard class="border-destructive/40">
-          <div hlmCardHeader>
-            <h3 hlmCardTitle i18n="@@account.danger.deactivateTitle">Deactivate account</h3>
-            <p hlmCardDescription i18n="@@account.danger.deactivateDescription">
-              Deactivating signs you out everywhere and disables sign-in. Only an administrator can
-              reactivate your account.
-            </p>
+        <div class="min-w-0">
+          <div hlmCard class="border-destructive/40">
+            <div hlmCardHeader>
+              <h3 hlmCardTitle i18n="@@account.danger.deactivateTitle">Deactivate account</h3>
+              <p hlmCardDescription i18n="@@account.danger.deactivateDescription">
+                Deactivating signs you out everywhere and disables sign-in. Only an administrator
+                can reactivate your account.
+              </p>
+            </div>
+            <div hlmCardContent>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="w-fit gap-2 text-destructive max-sm:min-h-11"
+                data-testid="account-danger-deactivate-open"
+                (click)="openDeactivateDialog()"
+              >
+                <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+                <span i18n="@@account.danger.deactivateOpen">Deactivate account</span>
+              </button>
+            </div>
           </div>
-          <div hlmCardContent>
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              class="w-fit gap-2 text-destructive max-sm:min-h-11"
-              data-testid="account-danger-deactivate-open"
-              (click)="openDeactivateDialog()"
-            >
-              <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
-              <span i18n="@@account.danger.deactivateOpen">Deactivate account</span>
-            </button>
-          </div>
-        </div>
 
-        <app-account-deactivate-dialog
-          [visible]="confirmingDeactivation()"
-          [pending]="deactivationStore.isDeactivating()"
-          [error]="deactivationStore.deactivateError()?.message ?? null"
-          (visibleChange)="confirmingDeactivation.set($event)"
-          (confirmed)="deactivateAccount()"
-        />
+          <app-account-deactivate-dialog
+            [visible]="confirmingDeactivation()"
+            [pending]="deactivationStore.isDeactivating()"
+            [error]="deactivationStore.deactivateError()?.message ?? null"
+            (visibleChange)="confirmingDeactivation.set($event)"
+            (confirmed)="deactivateAccount()"
+          />
+        </div>
       </section>
     }
   </div>

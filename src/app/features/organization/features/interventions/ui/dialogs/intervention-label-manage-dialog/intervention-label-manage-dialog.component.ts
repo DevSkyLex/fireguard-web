@@ -14,13 +14,26 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideCheck,
+  lucidePencil,
+  lucidePlus,
+  lucideTag,
+  lucideTrash2,
+  lucideX,
+} from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { InterventionLabelOutput } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmDialogImports } from '@shared/ui/dialog';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSeparator } from '@shared/ui/separator';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /** A rename/recolor draft submitted for one existing label. */
 export interface InterventionLabelUpdateSubmittedEvent {
@@ -53,8 +66,9 @@ const DEFAULT_LABEL_COLOR = '#3b82f6';
  * @description
  * The organization's intervention label catalog, opened from wherever a
  * label is picked (`app-intervention-properties-grid`'s labels field today).
- * Lists every label with an inline rename/recolor editor and an inline
- * delete confirmation, plus a small "New label" form at the top.
+ * A Spartan field set creates labels, while a scrollable item group lists
+ * each existing label with inline rename/recolor and delete confirmation
+ * states. The dialog stays usable within the viewport as the catalog grows.
  *
  * Purely presentational (`ARCHITECTURE.md` §10.5): it owns no store and
  * takes its open state from {@link open}. Each row's edit draft and the
@@ -75,7 +89,21 @@ const DEFAULT_LABEL_COLOR = '#3b82f6';
  */
 @Component({
   selector: 'app-intervention-label-manage-dialog',
-  imports: [HlmButton, HlmInput, HlmSeparator, ...HlmDialogImports, ...HlmFieldImports],
+  imports: [
+    NgIcon,
+    HlmButton,
+    ...HlmButtonGroupImports,
+    ...HlmDialogImports,
+    ...HlmEmptyImports,
+    ...HlmFieldImports,
+    HlmInput,
+    ...HlmItemImports,
+    HlmSeparator,
+    HlmSpinner,
+  ],
+  providers: [
+    provideIcons({ lucideCheck, lucidePencil, lucidePlus, lucideTag, lucideTrash2, lucideX }),
+  ],
   templateUrl: './intervention-label-manage-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

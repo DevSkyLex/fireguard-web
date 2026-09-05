@@ -11,12 +11,35 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, max, min, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideAlarmSmoke,
+  lucideBox,
+  lucideCalendarClock,
+  lucideCalendarDays,
+  lucideCalendarRange,
+  lucideCctv,
+  lucideCircleAlert,
+  lucideCircleDotDashed,
+  lucideDoorClosed,
+  lucideDroplet,
+  lucideDroplets,
+  lucideFingerprint,
+  lucideFireExtinguisher,
+  lucideGauge,
+  lucideLightbulb,
+  lucideOctagonAlert,
+  lucideSiren,
+  lucideThermometer,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { OrganizationComplianceSettings } from '@features/organization/models';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OrganizationComplianceFormValues } from './models';
 import {
@@ -69,7 +92,39 @@ const MAX_REMINDER_WINDOW_DAYS: number = 180;
  */
 @Component({
   selector: 'app-organization-compliance-form',
-  imports: [FormField, HlmBadge, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    FormField,
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    HlmInput,
+    ...HlmFieldImports,
+    ...HlmInputGroupImports,
+    ...HlmSelectImports,
+  ],
+  providers: [
+    provideIcons({
+      lucideAlarmSmoke,
+      lucideBox,
+      lucideCalendarClock,
+      lucideCalendarDays,
+      lucideCalendarRange,
+      lucideCctv,
+      lucideCircleAlert,
+      lucideCircleDotDashed,
+      lucideDoorClosed,
+      lucideDroplet,
+      lucideDroplets,
+      lucideFingerprint,
+      lucideFireExtinguisher,
+      lucideGauge,
+      lucideLightbulb,
+      lucideOctagonAlert,
+      lucideSiren,
+      lucideThermometer,
+      lucideTriangleAlert,
+    }),
+  ],
   templateUrl: './organization-compliance-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -248,24 +303,49 @@ export class OrganizationComplianceForm {
   }
 
   /**
+   * Method equipmentTypeIcon
+   * @method equipmentTypeIcon
+   *
+   * @description Resolves an equipment type key to its Lucide icon, with a generic equipment fallback.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} type - The equipment type key.
+   * @returns {string} The registered Lucide icon name.
+   */
+  protected equipmentTypeIcon(type: string): string {
+    return (
+      EQUIPMENT_TYPE_OPTIONS.find((option): boolean => option.value === type)?.icon ?? 'lucideBox'
+    );
+  }
+
+  /**
    * Method severityLabel
    * @method severityLabel
    *
    * @description
-   * Resolves a non-conformity severity key to its display label, falling
-   * back to the raw key for a severity outside the known set.
+   * Resolves a non-conformity severity key to the card descriptor used by the
+   * SLA editor, falling back to a neutral descriptor for an unknown API key.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {string} severity - The severity key.
    *
-   * @returns {string} The display label.
+   * @returns {(typeof ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS)[number]} The card descriptor.
    */
-  protected severityLabel(severity: string): string {
+  protected severityOption(
+    severity: string,
+  ): (typeof ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS)[number] {
     return (
-      ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS.find((option): boolean => option.value === severity)
-        ?.label ?? severity
+      ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS.find(
+        (option): boolean => option.value === severity,
+      ) ?? {
+        description: '',
+        icon: 'lucideCircleDotDashed',
+        iconClass: 'size-4 text-muted-foreground',
+        label: severity,
+        value: severity,
+      }
     );
   }
 

@@ -96,12 +96,32 @@ export class InterventionSignatureDialog {
   /**
    * Property dismissed
    * @readonly
-   * @description The dialog was closed without signing — Escape, the backdrop, or Skip.
+   * @description Cancels submission when the dialog closes without an explicit commitment.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property skipped
+   * @readonly
+   * @description Explicitly submits without the optional signature.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly skipped: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property errorMessage
+   * @readonly
+   * @description Upload failure displayed while preserving the drawing for another attempt.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly errorMessage: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Constructor
@@ -120,7 +140,9 @@ export class InterventionSignatureDialog {
   //#endregion
 
   //#region Properties
-  /** The pad's backing canvas element, present only while {@link visible}. */
+  /**
+   * * The pad's backing canvas element, present only while {@link visible}.
+   */
   protected readonly canvasRef: Signal<ElementRef<HTMLCanvasElement> | undefined> =
     viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 

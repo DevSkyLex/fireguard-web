@@ -1,7 +1,7 @@
-<div id="account-organizations" class="flex flex-col gap-4 p-4 md:p-6">
+<div id="account-organizations" class="flex min-w-0 flex-col gap-4">
   @if (myOrganizations.isLoadingOrganizations() && myOrganizations.organizations().length === 0) {
     <div
-      class="flex max-w-2xl flex-col gap-3"
+      class="flex flex-col gap-3"
       role="status"
       aria-label="Loading your organizations"
       i18n-aria-label="@@account.organizations.loadingAria"
@@ -22,7 +22,7 @@
       </div>
     </div>
   } @else {
-    <ul hlmItemGroup class="max-w-2xl">
+    <ul hlmItemGroup>
       @for (organization of myOrganizations.organizations(); track organization.id) {
         <li
           hlmItem

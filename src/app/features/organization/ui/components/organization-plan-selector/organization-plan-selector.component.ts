@@ -30,8 +30,15 @@ import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationPlanChangeDialog } from '../../dialogs/organization-plan-change-dialog';
 import type { OrganizationPlanRow } from './models';
 
+/** Visual and accessible parts of a localized recurring plan price. */
+interface OrganizationPlanPriceDisplay {
+  readonly label: string;
+  readonly amount: string;
+  readonly cadence: string | null;
+}
+
 /**
- * Function priceLabelOf
+ * Function priceDisplayOf
  *
  * @description
  * Formats a plan's selected recurring price from the pricing catalog, or the localized
@@ -44,14 +51,14 @@ import type { OrganizationPlanRow } from './models';
  * @param {string} localeId - The active Angular locale.
  * @param {BillingInterval} interval - Billing cadence selected for comparison.
  *
- * @returns {string} The formatted price label for the selected billing cadence.
+ * @returns {OrganizationPlanPriceDisplay} The formatted price and its display parts.
  */
-function priceLabelOf(
+function priceDisplayOf(
   plan: PlanOutput,
   pricing: ReadonlyArray<PlanPricingOutput>,
   localeId: string,
   interval: BillingInterval,
-): string {
+): OrganizationPlanPriceDisplay {
   const entry: PlanPricingOutput | undefined = pricing.find((p) => p.planKey === plan.key);
   const amount: number | null | undefined =
     interval === 'year' ? entry?.yearlyAmount : entry?.monthlyAmount;
@@ -60,23 +67,38 @@ function priceLabelOf(
     plan.key.toLowerCase() === 'free' &&
     (amount === null || amount === undefined || amount === 0)
   ) {
-    return $localize`:@@org.settings.plan.free:Free`;
+    const label: string = $localize`:@@org.settings.plan.free:Free`;
+    return { label, amount: label, cadence: null };
   }
 
   if (entry === undefined || amount === null || amount === undefined) {
-    return interval === 'year'
-      ? $localize`:@@org.settings.plan.notAvailableYearly:Not available annually`
-      : $localize`:@@org.settings.plan.notAvailableMonthly:Not available monthly`;
+    const label: string =
+      interval === 'year'
+        ? $localize`:@@org.settings.plan.notAvailableYearly:Not available annually`
+        : $localize`:@@org.settings.plan.notAvailableMonthly:Not available monthly`;
+    return { label, amount: label, cadence: null };
   }
 
   const formatted: string = new Intl.NumberFormat(localeId, {
     style: 'currency',
     currency: entry.currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount / 100);
 
-  return interval === 'year'
-    ? $localize`:@@org.settings.plan.perYear:${formatted}:price:/year`
-    : $localize`:@@org.settings.plan.perMonth:${formatted}:price:/month`;
+  if (interval === 'year') {
+    return {
+      label: $localize`:@@org.settings.plan.perYear:${formatted}:price:/year`,
+      amount: formatted,
+      cadence: $localize`:@@org.settings.plan.cadenceYear:per year`,
+    };
+  }
+
+  return {
+    label: $localize`:@@org.settings.plan.perMonth:${formatted}:price:/month`,
+    amount: formatted,
+    cadence: $localize`:@@org.settings.plan.cadenceMonth:per month`,
+  };
 }
 
 /**
@@ -305,17 +327,28 @@ export class OrganizationPlanSelector implements OnInit {
 
     return this.planStore
       .plans()
-      .map((plan: PlanOutput, index: number, plans): OrganizationPlanRow => ({
-        id: plan.id,
-        key: plan.key,
-        name: plan.name,
-        description: plan.description ?? null,
-        priceLabel: priceLabelOf(plan, this.pricing(), this.localeId, this.billingInterval()),
-        inheritedPlanName: index > 0 ? (plans[index - 1]?.name ?? null) : null,
-        quotas: plan.quotas,
-        isCurrent: plan.id === currentId,
-        isPopular: plan.key.toLowerCase() === 'pro',
-      }));
+      .map((plan: PlanOutput, index: number, plans): OrganizationPlanRow => {
+        const price: OrganizationPlanPriceDisplay = priceDisplayOf(
+          plan,
+          this.pricing(),
+          this.localeId,
+          this.billingInterval(),
+        );
+
+        return {
+          id: plan.id,
+          key: plan.key,
+          name: plan.name,
+          description: plan.description ?? null,
+          priceLabel: price.label,
+          priceAmount: price.amount,
+          priceCadence: price.cadence,
+          inheritedPlanName: index > 0 ? (plans[index - 1]?.name ?? null) : null,
+          quotas: plan.quotas,
+          isCurrent: plan.id === currentId,
+          isPopular: plan.key.toLowerCase() === 'pro',
+        };
+      });
   });
 
   /**

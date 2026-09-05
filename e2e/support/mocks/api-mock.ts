@@ -122,6 +122,8 @@ async function fulfillJson(route: Route, status: number, body: unknown): Promise
  * ```
  */
 export class ApiMock {
+  /** Confirmed writes projected into subsequent collection reads, matching server behavior. */
+  private readonly interventionUpdates = new Map<string, InterventionOutputFixture>();
   private readonly page: Page;
   private safetyNetInstalled = false;
 
@@ -1139,6 +1141,16 @@ export class ApiMock {
     members: ReadonlyArray<OrganizationMemberOutputFixture> = [],
   ): Promise<void> {
     await this.installSafetyNet();
+    await Promise.all(
+      members.map((member) =>
+        this.page.route(
+          new RegExp(`/api/organizations/${organizationId}/members/${member.id}(\\?.*)?$`),
+          async (route) => {
+            await fulfillJson(route, 200, member);
+          },
+        ),
+      ),
+    );
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
       async (route) => {
@@ -1837,22 +1849,32 @@ export class ApiMock {
       const label = url.searchParams.get('label');
       const number = url.searchParams.get('number');
 
-      const filtered = interventions.filter((intervention) => {
-        if (status && intervention.status !== status) return false;
-        if (
-          member &&
-          intervention.responsible !== member &&
-          !intervention.participants.includes(member)
-        ) {
-          return false;
-        }
-        if (label && !(intervention.labels as readonly string[]).includes(label)) return false;
-        if (number && String(intervention.number) !== number) return false;
+      const filtered = interventions
+        .map((intervention) => this.interventionUpdates.get(intervention.id) ?? intervention)
+        .filter((intervention) => {
+          if (status && intervention.status !== status) return false;
+          if (
+            member &&
+            intervention.responsible !== member &&
+            !intervention.participants.includes(member)
+          ) {
+            return false;
+          }
+          if (label && !(intervention.labels as readonly string[]).includes(label)) return false;
+          if (number && String(intervention.number) !== number) return false;
 
-        return true;
-      });
+          return true;
+        });
 
-      await fulfillJson(route, 200, hydraCollection(filtered));
+      const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
+      const size = Math.max(1, Number(url.searchParams.get('itemsPerPage') ?? 30));
+      await fulfillJson(
+        route,
+        200,
+        hydraCollection(filtered.slice((page - 1) * size, page * size), {
+          totalItems: filtered.length,
+        }),
+      );
     });
   }
 
@@ -2060,6 +2082,7 @@ export class ApiMock {
         await route.fallback();
         return;
       }
+      this.interventionUpdates.set(interventionId, updated);
       await fulfillJson(route, 200, updated);
     });
   }

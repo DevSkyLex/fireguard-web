@@ -34,6 +34,7 @@ describe('withDirectMessagesSidebarExtension', () => {
     );
     expect(contribution.active()).toBe(true);
     expect(contribution.mobileVisible()).toBe(false);
+    expect(contribution.contentPadding).toBe(false);
     await router.navigateByUrl('/organizations/org-1/messages?search=one');
     expect(contribution.active()).toBe(true);
     expect(contribution.mobileVisible()).toBe(true);

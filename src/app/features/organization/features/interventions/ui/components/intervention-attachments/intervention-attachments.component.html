@@ -1,5 +1,5 @@
-<section hlmCard data-testid="intervention-attachments">
-  <div hlmCardHeader class="max-sm:flex max-sm:flex-col">
+<section class="space-y-4" data-testid="intervention-attachments">
+  <div class="relative flex flex-col gap-2">
     <h2 hlmCardTitle class="flex items-center gap-2">
       <span i18n="@@intervention.attachments.title">Attachments</span>
       @if (showCounter()) {
@@ -77,7 +77,30 @@
     }
   </div>
 
-  <div hlmCardContent class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3">
+    @if (loading()) {
+      <p
+        role="status"
+        class="text-sm text-muted-foreground"
+        i18n="@@intervention.attachments.loading"
+      >
+        Loading intervention files…
+      </p>
+    }
+    @if (loadError(); as message) {
+      <div role="alert">
+        <p class="text-sm text-destructive">{{ message }}</p>
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          (click)="reloadRequested.emit()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
     @if (!online()) {
       <p
         id="intervention-attachments-offline-reason"
@@ -111,7 +134,9 @@
       </p>
     }
 
-    @if (attachments().length === 0 && queuedAttachments().length === 0) {
+    @if (
+      !loading() && !loadError() && attachments().length === 0 && queuedAttachments().length === 0
+    ) {
       <div hlmEmpty data-testid="intervention-attachments-empty">
         <div hlmEmptyHeader>
           <div hlmEmptyMedia variant="icon">

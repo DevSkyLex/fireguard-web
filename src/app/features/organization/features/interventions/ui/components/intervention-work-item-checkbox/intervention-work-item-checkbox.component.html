@@ -1,0 +1,25 @@
+<label
+  class="relative inline-flex size-11 shrink-0 items-center justify-center"
+  [class.cursor-pointer]="!isDisabled()"
+  [class.cursor-not-allowed]="isDisabled()"
+  [for]="inputId()"
+  [attr.aria-busy]="pending() ? 'true' : null"
+>
+  <span [class.invisible]="pending()">
+    <hlm-checkbox
+      class="size-5 rounded-full border-2 disabled:opacity-100 data-checked:border-success data-checked:bg-transparent data-checked:text-success dark:data-checked:bg-transparent"
+      [inputId]="inputId()"
+      [checked]="checked()"
+      [disabled]="isDisabled()"
+      [aria-label]="ariaLabel()"
+      (checkedChange)="checkedChanged($event)"
+    />
+  </span>
+  @if (pending()) {
+    <hlm-spinner
+      class="absolute size-4"
+      data-testid="intervention-work-item-checkbox-pending"
+      aria-hidden="true"
+    />
+  }
+</label>

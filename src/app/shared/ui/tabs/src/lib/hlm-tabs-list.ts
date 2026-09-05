@@ -17,7 +17,16 @@ export const listVariants = cva(
     },
   },
 );
-type ListVariants = VariantProps<typeof listVariants>;
+/**
+ * Type ListVariants
+ * @type ListVariants
+ *
+ * @description
+ * Public variant contract shared by the standard and paginated Spartan tab lists.
+ *
+ * @since 1.1.0
+ */
+export type ListVariants = VariantProps<typeof listVariants>;
 
 @Directive({
   selector: '[hlmTabsList],hlm-tabs-list',

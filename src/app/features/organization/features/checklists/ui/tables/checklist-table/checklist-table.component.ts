@@ -70,6 +70,15 @@ import { ChecklistStatusTag } from '../../components/checklist-status-tag';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecklistTable {
+  /**
+   * Property viewRequested
+   * @readonly
+   * @description Requests consultation of the selected checklist, including archived templates.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<ChecklistOutput>}
+   */
+  public readonly viewRequested = output<ChecklistOutput>();
   //#region Inputs
   /**
    * Property items

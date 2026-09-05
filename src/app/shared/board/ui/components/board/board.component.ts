@@ -2,6 +2,7 @@ import { CdkDrag, CdkDropList, type CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   afterNextRender,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -9,7 +10,6 @@ import {
   DestroyRef,
   ElementRef,
   inject,
-  Injector,
   input,
   output,
   signal,
@@ -150,6 +150,15 @@ export class Board<T, K extends string = string> {
   );
   //#endregion
 
+  /**
+   * Property loadMoreRequested
+   * @readonly
+   * @description Requests the next page or retries a failed page; data access belongs to the consumer.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<K>}
+   */
+  public readonly loadMoreRequested: OutputEmitterRef<K> = output<K>();
   //#region Outputs
   /**
    * Property moveRequested
@@ -347,20 +356,6 @@ export class Board<T, K extends string = string> {
   private readonly elementRef: ElementRef<HTMLElement> = inject(ElementRef);
 
   /**
-   * Property injector
-   * @readonly
-   *
-   * @description
-   * Injection context for post-render focus restoration.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {Injector}
-   */
-  private readonly injector: Injector = inject(Injector);
-
-  /**
    * Property destroyRef
    * @readonly
    *
@@ -388,6 +383,18 @@ export class Board<T, K extends string = string> {
    * @since 1.0.0
    */
   public constructor() {
+    afterRenderEffect(() => {
+      const requested = this.pendingMoveFocus();
+      if (!requested) return;
+      const column = this.columns().find((candidate) => candidate.id === requested.target);
+      if (!column?.items.some((item) => item.id === requested.id && !item.disabled)) return;
+      const card = Array.from(
+        this.elementRef.nativeElement.querySelectorAll<HTMLElement>('[data-board-item-id]'),
+      ).find((element) => element.dataset['boardItemId'] === requested.id);
+      if (!card) return;
+      card.querySelector<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]')?.focus();
+      this.pendingMoveFocus.set(null);
+    });
     afterNextRender(() => {
       this.updateScrollAffordance();
       const observer = new ResizeObserver(() => this.updateScrollAffordance());
@@ -431,7 +438,7 @@ export class Board<T, K extends string = string> {
    * @returns {string}
    */
   protected countLabel(column: BoardColumn<T, K>): string {
-    return $localize`:@@board.columnCount:${column.items.length}:count: items in ${column.label}:column:`;
+    return $localize`:@@board.columnCount:${column.total ?? column.items.length}:count: items in ${column.label}:column:`;
   }
 
   /**
@@ -557,6 +564,16 @@ export class Board<T, K extends string = string> {
   }
 
   /**
+   * Property pendingMoveFocus
+   * @readonly
+   * @description Restores focus only after the caller confirms and renders the destination card.
+   * @access private
+   * @since 1.0.0
+   * @type {WritableSignal<{ id: string; target: K } | null>}
+   */
+  private readonly pendingMoveFocus = signal<{ id: string; target: K } | null>(null);
+
+  /**
    * Method requestMove
    * @method requestMove
    *
@@ -579,17 +596,7 @@ export class Board<T, K extends string = string> {
     this.liveMessage.set(
       $localize`:@@board.moveRequested:Move requested for ${item.label}:item: to ${column.label}:column:.`,
     );
-    afterNextRender(
-      () => {
-        const card = Array.from(
-          this.elementRef.nativeElement.querySelectorAll<HTMLElement>('[data-board-item-id]'),
-        ).find((element) => element.dataset['boardItemId'] === id);
-        card
-          ?.querySelector<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]')
-          ?.focus();
-      },
-      { injector: this.injector },
-    );
+    this.pendingMoveFocus.set({ id, target });
   }
 
   /**

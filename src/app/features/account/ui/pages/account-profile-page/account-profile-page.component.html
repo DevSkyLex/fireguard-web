@@ -1,5 +1,5 @@
-<div id="account-profile" class="flex h-full flex-col gap-6 p-4 md:p-6">
-  <div class="flex max-w-2xl flex-col gap-6">
+<div id="account-profile" class="flex min-w-0 flex-col gap-6">
+  <div class="flex flex-col gap-6">
     @if (hasProfileError()) {
       <div hlmEmpty role="alert">
         <div hlmEmptyHeader>
@@ -45,43 +45,48 @@
         </div>
       </div>
     } @else {
-      <section class="flex flex-col gap-4">
-        <div hlmItem class="min-w-0 border-0 p-0">
-          <div hlmItemMedia>
-            <hlm-avatar class="size-14 shrink-0 rounded-full">
-              @if (userStore.avatarUrlMedium(); as pictureUrl) {
-                <img hlmAvatarImage [src]="pictureUrl" alt="" />
-              }
-              <span
-                hlmAvatarFallback
-                class="rounded-full bg-muted text-sm font-semibold text-foreground"
-                >{{ userStore.initials() ?? '' }}</span
-              >
-            </hlm-avatar>
-          </div>
-          <div hlmItemContent class="min-w-0">
-            <div hlmItemTitle class="truncate text-base font-semibold">{{ displayName() }}</div>
-            @if (userStore.profile()?.email ?? null; as line) {
-              <div hlmItemDescription class="truncate text-sm break-all">{{ line }}</div>
-            }
-          </div>
-        </div>
+      <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.pictureTitle">
+            Profile picture
+          </h2>
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.profile.pictureDescription">
+            Choose the picture shown to teammates throughout Fireguard.
+          </p>
+        </header>
 
-        <app-account-avatar-picker
-          [pending]="editStore.isUploadingAvatar()"
-          (selected)="uploadAvatar($event)"
-        />
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-border p-4">
+          <hlm-avatar class="size-16 shrink-0 rounded-full">
+            @if (userStore.avatarUrlMedium(); as pictureUrl) {
+              <img hlmAvatarImage [src]="pictureUrl" alt="" />
+            }
+            <span
+              hlmAvatarFallback
+              class="rounded-full bg-muted text-sm font-semibold text-foreground"
+              >{{ userStore.initials() ?? '' }}</span
+            >
+          </hlm-avatar>
+
+          <app-account-avatar-picker
+            [pending]="editStore.isUploadingAvatar()"
+            (selected)="uploadAvatar($event)"
+          />
+        </div>
       </section>
 
-      <section class="flex flex-col gap-3 border-t border-border pt-5">
-        <header class="flex items-center justify-between gap-2">
-          <h2
-            class="text-sm font-medium text-muted-foreground"
-            i18n="@@account.profile.detailsTitle"
-          >
+      <section
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      >
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.detailsTitle">
             Details
           </h2>
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.profile.detailsDescription">
+            Update the name and language used for your account.
+          </p>
+        </header>
 
+        <div class="flex min-w-0 flex-col gap-4">
           @if (!editing()) {
             <button
               hlmBtn
@@ -89,57 +94,64 @@
               size="sm"
               variant="outline"
               data-testid="account-profile-edit"
-              class="max-sm:min-h-11"
+              class="self-end max-sm:min-h-11"
               (click)="startEditing()"
             >
               <span i18n="@@account.profile.edit">Edit</span>
             </button>
           }
-        </header>
 
-        @if (editing()) {
-          <app-account-profile-form
-            [profile]="formValues()"
-            [pending]="editStore.isSaving()"
-            (submitted)="save($event)"
-            (cancelled)="cancelEditing()"
-          />
-        } @else {
-          <dl class="flex flex-col gap-3 text-sm">
-            <div class="flex flex-col gap-0.5">
-              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.firstNameLabel">
-                First name
-              </dt>
-              <dd class="text-foreground">
-                {{ userStore.profile()?.firstName || '—' }}
-              </dd>
-            </div>
+          @if (editing()) {
+            <app-account-profile-form
+              [profile]="formValues()"
+              [pending]="editStore.isSaving()"
+              (submitted)="save($event)"
+              (cancelled)="cancelEditing()"
+            />
+          } @else {
+            <dl class="grid gap-4 text-sm sm:grid-cols-2">
+              <div class="flex flex-col gap-0.5">
+                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.firstNameLabel">
+                  First name
+                </dt>
+                <dd class="text-foreground">
+                  {{ userStore.profile()?.firstName || '—' }}
+                </dd>
+              </div>
 
-            <div class="flex flex-col gap-0.5">
-              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.lastNameLabel">
-                Last name
-              </dt>
-              <dd class="text-foreground">
-                {{ userStore.profile()?.lastName || '—' }}
-              </dd>
-            </div>
+              <div class="flex flex-col gap-0.5">
+                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.lastNameLabel">
+                  Last name
+                </dt>
+                <dd class="text-foreground">
+                  {{ userStore.profile()?.lastName || '—' }}
+                </dd>
+              </div>
 
-            <div class="flex flex-col gap-0.5">
-              <dt class="text-xs text-muted-foreground" i18n="@@account.profile.localeLabel">
-                Interface language
-              </dt>
-              <dd class="text-foreground">{{ localeLabel() }}</dd>
-            </div>
-          </dl>
-        }
+              <div class="flex flex-col gap-0.5">
+                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.localeLabel">
+                  Interface language
+                </dt>
+                <dd class="text-foreground">{{ localeLabel() }}</dd>
+              </div>
+            </dl>
+          }
+        </div>
       </section>
 
-      <section class="flex flex-col gap-3 border-t border-border pt-5">
-        <h2 class="text-sm font-medium text-muted-foreground" i18n="@@account.profile.accountTitle">
-          Account
-        </h2>
+      <section
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      >
+        <header class="min-w-0">
+          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.accountTitle">
+            Account
+          </h2>
+          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.profile.accountDescription">
+            Review your sign-in address, account history and assigned roles.
+          </p>
+        </header>
 
-        <dl class="flex flex-col gap-3 text-sm">
+        <dl class="grid gap-4 text-sm sm:grid-cols-2">
           <div class="flex flex-col gap-0.5">
             <dt class="text-xs text-muted-foreground" i18n="@@account.profile.emailLabel">Email</dt>
             <dd class="flex flex-wrap items-center gap-2">

@@ -35,14 +35,13 @@ those are authoritative from the backend, read by polling.
 
 ## State and Data Access
 
-Primary store: `ImportJobsStore` — `withEntities<ImportJobOutput>` keyed by
-id, plus `listCallState` and `createCallState`. A successful upload inserts
-the new job (`addEntity`) and immediately starts polling it
-(`ImportJobsStore.poll`, `mergeMap` so several jobs can poll independently);
-each live poll emission replaces exactly that job's row (`setEntity`) — the
-table never refetches the whole list to reflect progress. A poll's own
-transport error is swallowed rather than surfaced on a `CallState`: the row
-keeps its last known state, and a manual `refresh` is the recovery path.
+Primary store: `ImportJobsStore` keeps an entity cache separate from visible page ids
+and server totals. Upload acceptance refreshes the current query; a cached job must not
+be inserted into a filtered page. Each job has its own polling state and explicit recovery.
+The open report resolves its selected id from the live cache, even outside the current page.
+Polling errors and interrupted observation preserve the last known job without pretending
+completion. Reports paginate the received rows locally. Organization changes cancel polls
+and discard the previous context. Upload inputs reset only after server acceptance.
 
 Primary service: `ImportJobService` — extends `HydraApiService`. `create`
 posts multipart to the canonical `/api/imports` (not organization-scoped;

@@ -479,22 +479,30 @@ export abstract class HydraApiService {
    * @returns {Observable<never>} Observable that throws the API error.
    */
   protected handleError = (error: HttpErrorResponse): Observable<never> => {
-    // Check if server returned a structured API error
     if (isApiError(error.error)) {
       return throwError(() => error.error as ApiError | ConstraintViolation);
     }
 
-    // Network error or non-structured error - create ApiError.
-    // `instance` is omitted rather than nulled: the API omits absent fields
-    // entirely (verified against a live 401), and the synthesized error must have
-    // the same shape as a real one or consumers learn to expect the wrong thing.
+    const body: unknown = error.error;
+    const detail =
+      typeof body === 'object' &&
+      body !== null &&
+      'detail' in body &&
+      typeof body.detail === 'string' &&
+      body.detail.trim()
+        ? body.detail
+        : null;
     const apiError: ApiError = {
       '@id': '',
       '@type': 'Error',
       status: error.status || 0,
       type: 'about:blank',
       title: error.statusText || 'Network Error',
-      detail: error.message || 'An unexpected error occurred',
+      detail:
+        detail ??
+        (error.status === 0
+          ? $localize`:@@requestState.connectionUnavailable:The connection is unavailable. Check your network and try again.`
+          : $localize`:@@requestState.requestFailed:The request could not be completed. Please try again.`),
     };
 
     return throwError(() => apiError);

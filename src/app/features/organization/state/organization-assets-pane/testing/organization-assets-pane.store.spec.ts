@@ -75,7 +75,7 @@ describe('OrganizationAssetsPaneStore', () => {
     store.loadEquipment({ organizationId: 'org-1' });
     await flushEffects();
 
-    expect(mockEquipmentService.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 50 });
+    expect(mockEquipmentService.list).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 50 });
     expect(mockEquipmentService.listByFacility).not.toHaveBeenCalled();
     expect(store.equipment()).toEqual([equipment]);
   });
@@ -85,6 +85,7 @@ describe('OrganizationAssetsPaneStore', () => {
     await flushEffects();
 
     expect(mockEquipmentService.listByFacility).toHaveBeenCalledWith('org-1', 'facility-1', {
+      page: 1,
       itemsPerPage: 50,
     });
   });
@@ -94,6 +95,7 @@ describe('OrganizationAssetsPaneStore', () => {
     await flushEffects();
 
     expect(mockInspectionService.listByFacility).toHaveBeenCalledWith('org-1', 'facility-1', {
+      page: 1,
       itemsPerPage: 50,
     });
     expect(store.inspections()).toEqual([inspection]);

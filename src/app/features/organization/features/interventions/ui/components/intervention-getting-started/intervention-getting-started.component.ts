@@ -9,11 +9,12 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideCircle } from '@ng-icons/lucide';
+import { lucideCircle, lucideCircleCheck } from '@ng-icons/lucide';
 import type {
   InterventionReadinessItem,
   InterventionReadinessTarget,
 } from '@features/organization/features/interventions/models';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmItemImports } from '@shared/ui/item';
 
 /**
@@ -45,8 +46,8 @@ import { HlmItemImports } from '@shared/ui/item';
  */
 @Component({
   selector: 'app-intervention-getting-started',
-  imports: [NgIcon, ...HlmItemImports],
-  providers: [provideIcons({ lucideCheck, lucideCircle })],
+  imports: [NgIcon, HlmBadge, ...HlmItemImports],
+  providers: [provideIcons({ lucideCircle, lucideCircleCheck })],
   templateUrl: './intervention-getting-started.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

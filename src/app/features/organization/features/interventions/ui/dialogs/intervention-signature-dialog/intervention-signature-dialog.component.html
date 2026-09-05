@@ -46,16 +46,31 @@
       </button>
     </div>
 
-    <hlm-dialog-footer>
+    @if (errorMessage(); as message) {
+      <p class="text-sm text-destructive" role="alert">{{ message }}</p>
+    }
+    <hlm-dialog-footer class="flex-wrap">
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        [disabled]="busy()"
+        data-testid="intervention-signature-cancel"
+        (click)="dismissed.emit()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
       <button
         hlmBtn
         type="button"
         variant="outline"
         class="max-sm:min-h-11"
         data-testid="intervention-signature-skip"
-        (click)="dismissed.emit()"
+        [disabled]="busy()"
+        (click)="skipped.emit()"
       >
-        <span i18n="@@intervention.signature.skip">Skip</span>
+        <span i18n="@@intervention.signature.submitUnsigned">Submit without signature</span>
       </button>
       <button
         hlmBtn
@@ -69,7 +84,7 @@
         @if (busy()) {
           <span i18n="@@intervention.signature.confirming">Saving…</span>
         } @else {
-          <span i18n="@@intervention.signature.confirm">Confirm</span>
+          <span i18n="@@intervention.signature.signAndSubmit">Sign and submit</span>
         }
       </button>
       <span class="sr-only" aria-live="polite">

@@ -1,0 +1,149 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="visible() ? 'open' : 'closed'"
+  (stateChanged)="visibleChange.emit($event === 'open')"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
+    data-testid="intervention-operations-sheet"
+  >
+    <hlm-sheet-header>
+      <h2 hlmSheetTitle i18n="@@intervention.operations.title">Saved on this device</h2>
+      <p hlmSheetDescription>{{ interventionName() }}</p>
+    </hlm-sheet-header>
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+      <p class="mb-4 text-sm text-muted-foreground" i18n="@@intervention.operations.description">
+        These operations are not yet confirmed by the server. They become available to your team
+        after synchronization.
+      </p>
+      @if (callState().status === 'error') {
+        <p role="alert" class="text-sm text-destructive">{{ callState().error?.message }}</p>
+        <button hlmBtn variant="outline" (click)="reloadRequested.emit()" i18n="@@common.retry">
+          Retry
+        </button>
+      } @else if (callState().status === 'pending' && operations().length === 0) {
+        <p role="status" i18n="@@intervention.operations.loading">Reading saved operations…</p>
+      } @else if (operations().length === 0) {
+        <p role="status" i18n="@@intervention.operations.empty">
+          No operations waiting to be sent for this intervention.
+        </p>
+      }
+      <ol class="divide-y divide-border">
+        @for (operation of operations(); track operation.id) {
+          <li class="grid gap-2 py-4" [attr.data-operation-id]="operation.id">
+            <div class="flex flex-wrap justify-between gap-2">
+              <h3 class="font-medium">{{ labels[operation.type] }}</h3>
+              <time class="text-xs text-muted-foreground">{{
+                operation.createdAt | date: 'short'
+              }}</time>
+            </div>
+            <p class="text-sm">{{ target(operation) }}</p>
+            <p class="text-sm break-words whitespace-pre-wrap text-muted-foreground">
+              {{ preview(operation) }}
+            </p>
+            @if (operation.status === 'conflict') {
+              <p class="text-sm font-medium" i18n="@@intervention.operations.conflict">
+                The resource changed on the server. Review your local content before reapplying it.
+              </p>
+              @if (operation.baseRevision !== undefined && operation.baseRevision !== null) {
+                <p class="text-xs" i18n="@@intervention.operations.baseRevision">
+                  Original local revision: {{ operation.baseRevision }}
+                </p>
+              }
+              @if (revision(operation) !== null) {
+                <p class="text-xs" i18n="@@intervention.operations.revision">
+                  Last confirmed server revision: {{ revision(operation) }}
+                </p>
+              } @else {
+                <p class="text-xs" i18n="@@intervention.operations.unknownRevision">
+                  The server revision could not be verified. Your local content is preserved.
+                </p>
+              }
+            } @else if (operation.status !== 'failed') {
+              <p class="text-xs text-muted-foreground" i18n="@@intervention.operations.queued">
+                Saved locally · awaiting synchronization
+              </p>
+            }
+            @if (operation.error) {
+              <p class="text-sm text-destructive">{{ operation.error }}</p>
+            }
+            @if (mutations()[operation.id]?.error; as error) {
+              <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+            }
+            <div class="flex flex-wrap gap-2">
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                [disabled]="
+                  !online() || syncing() || mutations()[operation.id]?.status === 'pending'
+                "
+                (click)="retry(operation)"
+                i18n="@@intervention.operations.retry"
+              >
+                Review and retry
+              </button>
+              <button
+                hlmBtn
+                variant="ghost"
+                size="sm"
+                [disabled]="syncing() || mutations()[operation.id]?.status === 'pending'"
+                (click)="confirmation.set({ operation, action: 'discard' })"
+                i18n="@@intervention.operations.discard"
+              >
+                Discard local operation
+              </button>
+            </div>
+          </li>
+        }
+      </ol>
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>
+<hlm-alert-dialog
+  [state]="confirmation() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && confirmation.set(null)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>
+        @if (confirmation()?.action === 'discard') {
+          <span i18n="@@intervention.operations.discardTitle">Discard this local operation?</span>
+        } @else {
+          <span i18n="@@intervention.operations.retryTitle">Reapply your local content?</span>
+        }
+      </h2>
+      <p hlmAlertDialogDescription>
+        @if (confirmedOperation(); as operation) {
+          {{ labels[operation.type] }} · {{ target(operation) }}
+        }
+      </p>
+    </hlm-alert-dialog-header>
+    @if (confirmedOperation(); as operation) {
+      <p class="text-sm break-words whitespace-pre-wrap">{{ preview(operation) }}</p>
+      @if (confirmation()?.action === 'discard') {
+        <p class="text-sm" i18n="@@intervention.operations.loss">
+          This saved operation will be removed from this device without being sent. This cannot be
+          undone.
+        </p>
+      } @else {
+        <p class="text-sm" i18n="@@intervention.operations.reapply">
+          Your stored values will be sent again using the available revision. The server can reject
+          them if the resource has changed. No automatic merge will be performed.
+        </p>
+      }
+    }
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        [variant]="confirmation()?.action === 'discard' ? 'destructive' : 'default'"
+        (click)="confirm()"
+        i18n="@@common.confirm"
+      >
+        Confirm
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

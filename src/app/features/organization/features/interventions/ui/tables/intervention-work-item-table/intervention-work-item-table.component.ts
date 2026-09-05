@@ -1,5 +1,9 @@
 import type { BooleanInput } from '@angular/cdk/coercion';
 import {
+  afterRenderEffect,
+  ElementRef,
+  inject,
+  linkedSignal,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
@@ -16,12 +20,10 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCamera,
-  lucideCircle,
-  lucideCircleCheckBig,
-  lucideCircleDot,
-  lucideCircleSlash,
   lucideEllipsis,
   lucideFilterX,
+  lucideImages,
+  lucideListFilter,
   lucideListChecks,
   lucidePlus,
   lucideSkipForward,
@@ -36,40 +38,40 @@ import { CollectionSurface } from '@shared/collection-surface';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
+import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmToggle } from '@shared/ui/toggle';
-import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTag } from '../../components/intervention-tag';
-import {
-  WORK_ITEM_STATUS_ICON,
-  WORK_ITEM_STATUS_ICON_CLASS,
-} from './constants/intervention-work-item-appearance.constants';
+import { InterventionWorkItemCheckbox } from '../../components/intervention-work-item-checkbox';
 import type { InterventionWorkItemFilter } from './models/intervention-work-item-filter.type';
 import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-item-view/intervention-work-item-view.utils';
 
-/** Placeholder rows drawn while the intervention's own fetch is in flight. */
 /**
  * Component InterventionWorkItemTable
  * @class InterventionWorkItemTable
  *
  * @description
  * The field work, as an `hlmTable` grid an operator ticks off. One column per
- * datum — status toggle, item, target, assignee, state badge, origin, row
+ * datum — completion checkbox, target, action, requirement, assignee, state badge and row
  * menu — instead of a single stacked cell, on the density `InterventionTable`
  * already sets for §10.3 grids.
+ * The default planned origin is omitted when the state already says the same;
+ * a field discovery or a missing legacy state stays visible beside it. Evidence
+ * consultation lives in the fixed-width row menu so adding a photo cannot
+ * resize every data column.
  *
- * The status toggle is a 44px target — unconditionally, not `max-sm:`, because
+ * The workflow checkbox has a 44px target — unconditionally, not `max-sm:`, because
  * the surface is a gloved hand on a tablet. It is the one place this app
  * deliberately goes past its own `size-9` ceiling. Its cell drops `hlmTd`'s
- * default `p-2`: the button already exceeds a normal row's content height, so
+ * default `p-2`: the control already exceeds a normal row's content height, so
  * stacking 8px of padding on every side on top of it (measured: 60px rows
  * against `InterventionTable`'s 44px) was excess chrome, not part of the
- * target — the button's own 44px still renders untouched at `p-0`.
+ * target — its own 44px hit area still renders untouched at `p-0`.
  *
  * @version 2.3.0
  *
@@ -84,24 +86,23 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     HlmBadge,
     HlmToggle,
     InterventionTag,
+    InterventionWorkItemCheckbox,
     ...HlmAvatarImports,
     ...HlmButtonImports,
-    ...HlmCardImports,
     ...HlmDropdownMenuImports,
     ...HlmProgressImports,
+    ...HlmSelectImports,
     ...HlmSpinnerImports,
     ...HlmTableImports,
-    ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideCamera,
-      lucideCircle,
-      lucideCircleCheckBig,
-      lucideCircleDot,
-      lucideCircleSlash,
       lucideEllipsis,
       lucideFilterX,
+      lucideImages,
+      lucideListFilter,
       lucideListChecks,
       lucidePlus,
       lucideSkipForward,
@@ -112,7 +113,124 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemTable {
+  /**
+   * Property proofsRequested
+   * @readonly
+   * @description Requests consultation of the selected work item’s existing evidence.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<InterventionWorkItemOutput>}
+   */
+  public readonly proofsRequested = output<InterventionWorkItemOutput>();
+  /**
+   * Property queuedIds
+   * @readonly
+   * @description Work items with operations still waiting on this device.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly queuedIds = input<ReadonlySet<string>>(new Set());
+  /**
+   * Property contextId
+   * @readonly
+   * @description Resets local filters only when entering another intervention.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string>}
+   */
+  public readonly contextId: InputSignal<string> = input('');
+  /**
+   * Property focusedItemId
+   * @readonly
+   * @description Last work item requested by scanning or a deep link.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly focusedItemId: WritableSignal<string | null> = signal(null);
+  /**
+   * Property focusRequest
+   * @readonly
+   * @description Repeats focus when the same code is scanned again.
+   * @access private
+   * @since 1.0.0
+   * @type {WritableSignal<number>}
+   */
+  private readonly focusRequest: WritableSignal<number> = signal(0);
+  /**
+   * Property hostElement
+   * @readonly
+   * @description Bounds DOM focus to this dataview.
+   * @access private
+   * @since 1.0.0
+   * @type {ElementRef<HTMLElement>}
+   */
+  private readonly hostElement: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Constructor @constructor
+   * @description Focuses the visible responsive row only after Angular renders its filter change.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    afterRenderEffect(() => {
+      this.focusRequest();
+      const id = this.focusedItemId();
+      if (!id) return;
+      const row = Array.from(
+        this.hostElement.nativeElement.querySelectorAll<HTMLElement>('[data-work-item-id]'),
+      ).find(
+        (element) => element.dataset['workItemId'] === id && element.getClientRects().length > 0,
+      );
+      row?.scrollIntoView({ block: 'nearest' });
+      row?.focus({ preventScroll: true });
+    });
+  }
+
+  /**
+   * Method revealItem
+   * @description Reveals a scanned work item regardless of the current filter and requests keyboard focus.
+   * @access public
+   * @since 1.0.0
+   * @param {string} id - Work item identifier.
+   * @returns {void}
+   */
+  public revealItem(id: string): void {
+    this.activeFilter.set('all');
+    this.filterChanged.emit('all');
+    this.focusedItemId.set(id);
+    this.focusRequest.update((value) => value + 1);
+  }
+
+  /**
+   * Property errors
+   * @readonly
+   * @description Per-row failures preserved until a retry.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, string | null>>>}
+   */
+  public readonly errors: InputSignal<Readonly<Record<string, string | null>>> = input({});
   //#region Inputs
+  /**
+   * Property preferredFilter
+   * @readonly
+   * @description Parent-owned preference retained when this dataview is remounted on another tab visit.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<InterventionWorkItemFilter | null>}
+   */
+  public readonly preferredFilter = input<InterventionWorkItemFilter | null>(null);
+  /**
+   * Property filterChanged
+   * @readonly
+   * @description Emits explicit view changes so the page can preserve the current intervention preference.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<InterventionWorkItemFilter>}
+   */
+  public readonly filterChanged = output<InterventionWorkItemFilter>();
   /**
    * Property items
    * @readonly
@@ -401,7 +519,7 @@ export class InterventionWorkItemTable {
    * @readonly
    *
    * @description
-   * The active chip. A view preference local to this table, not route state —
+   * The active status filter. A view preference local to this table, not route state —
    * switching intervention detail pages resets it rather than carrying a stale
    * filter across a different scope.
    *
@@ -411,7 +529,10 @@ export class InterventionWorkItemTable {
    * @type {WritableSignal<InterventionWorkItemFilter>}
    */
   protected readonly activeFilter: WritableSignal<InterventionWorkItemFilter> =
-    signal<InterventionWorkItemFilter>('all');
+    linkedSignal<InterventionWorkItemFilter>(() => {
+      this.contextId();
+      return this.preferredFilter() ?? (this.showProgress() ? 'remaining' : 'all');
+    });
 
   /**
    * Property mineFirst
@@ -425,15 +546,14 @@ export class InterventionWorkItemTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
   /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
   protected readonly skeletonColumnWidths: readonly string[] = [
     'size-11 rounded-full',
     'h-4 w-40 max-w-full',
-    'h-4 w-24',
     'h-4 w-28',
     'h-4 w-20',
-    'h-4 w-16',
+    'h-4 w-28',
+    'h-4 w-20',
     'ms-auto size-6',
   ];
 
@@ -456,6 +576,22 @@ export class InterventionWorkItemTable {
         skipped: filterAndGroupInterventionWorkItems(items, 'skipped', null).length,
       };
     });
+
+  /** Labels the compact status filter and its native Spartan select value. */
+  protected readonly filterLabelOf: (filter: InterventionWorkItemFilter) => string = (
+    filter: InterventionWorkItemFilter,
+  ): string => {
+    switch (filter) {
+      case 'remaining':
+        return $localize`:@@intervention.wit.filterRemaining:Remaining`;
+      case 'done':
+        return $localize`:@@intervention.wit.filterDone:Done`;
+      case 'skipped':
+        return $localize`:@@intervention.wit.filterSkipped:Skipped`;
+      default:
+        return $localize`:@@intervention.wit.filterAll:All`;
+    }
+  };
 
   /**
    * Property showMineFirstToggle
@@ -530,9 +666,7 @@ export class InterventionWorkItemTable {
    * @type {Signal<number>}
    */
   protected readonly doneCount: Signal<number> = computed<number>(
-    () =>
-      this.items().filter((item) => item.status === 'completed' || item.status === 'skipped')
-        .length,
+    () => this.items().filter((item) => item.status === 'completed').length,
   );
 
   /**
@@ -557,30 +691,6 @@ export class InterventionWorkItemTable {
   //#endregion
 
   //#region Methods
-  /**
-   * Method iconOf
-   * @description The glyph for an item's state.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionWorkItemOutput} item - The item being rendered.
-   * @returns {string} The registered icon name.
-   */
-  protected iconOf(item: InterventionWorkItemOutput): string {
-    return WORK_ITEM_STATUS_ICON[item.status];
-  }
-
-  /**
-   * Method iconClassOf
-   * @description The size and tint of an item's glyph.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionWorkItemOutput} item - The item being rendered.
-   * @returns {string} Literal Tailwind classes.
-   */
-  protected iconClassOf(item: InterventionWorkItemOutput): string {
-    return WORK_ITEM_STATUS_ICON_CLASS[item.status];
-  }
-
   /**
    * Method isNext
    * @description Whether this is the item the operator should pick up next.
@@ -680,7 +790,11 @@ export class InterventionWorkItemTable {
    * @returns {boolean} True when the toggle should act.
    */
   protected canToggleItem(item: InterventionWorkItemOutput): boolean {
-    return this.canToggle() && item.status !== 'skipped';
+    return (
+      this.canToggle() &&
+      item.status !== 'skipped' &&
+      (!item.assignee || item.assignee === this.currentMemberId())
+    );
   }
 
   /**
@@ -709,7 +823,12 @@ export class InterventionWorkItemTable {
    * @returns {boolean} True when a skip is offered.
    */
   protected canSkipItem(item: InterventionWorkItemOutput): boolean {
-    return this.canSkip() && item.status !== 'completed' && item.status !== 'skipped';
+    return (
+      this.canSkip() &&
+      item.status !== 'completed' &&
+      item.status !== 'skipped' &&
+      (!item.assignee || item.assignee === this.currentMemberId())
+    );
   }
 
   /**
@@ -739,7 +858,7 @@ export class InterventionWorkItemTable {
    * @returns {boolean} True when the menu should render.
    */
   protected hasRowActions(item: InterventionWorkItemOutput): boolean {
-    return this.canSkipItem(item) || this.canDeleteItem(item);
+    return item.evidenceCount > 0 || this.canSkipItem(item) || this.canDeleteItem(item);
   }
 
   /**
@@ -792,31 +911,8 @@ export class InterventionWorkItemTable {
   }
 
   /**
-   * Method toggle
-   *
-   * @description
-   * Records progress. A completed item goes back to planned; anything else
-   * moves to completed, which is the one gesture the field surface needs.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {InterventionWorkItemOutput} item - The item being toggled.
-   *
-   * @returns {void}
-   */
-  protected toggle(item: InterventionWorkItemOutput): void {
-    if (!this.canToggleItem(item)) return;
-
-    this.statusChanged.emit({
-      workItemId: item.id,
-      status: item.status === 'completed' ? 'planned' : 'completed',
-    });
-  }
-
-  /**
    * Method onFilterChanged
-   * @description Narrows `hlm-toggle-group`'s single-select payload down to a known chip, falling back to `all` for anything else.
+   * @description Narrows the native Spartan select payload to a known filter, falling back to `all` for anything else.
    * @access protected
    * @since 6.1.0
    * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
@@ -827,6 +923,7 @@ export class InterventionWorkItemTable {
       value === 'remaining' || value === 'done' || value === 'skipped' ? value : 'all';
 
     this.activeFilter.set(filter);
+    this.filterChanged.emit(filter);
   }
   //#endregion
 }

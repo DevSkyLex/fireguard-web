@@ -1,40 +1,44 @@
-<div id="organization-members" class="flex h-full flex-col gap-6 p-4 md:p-6">
-  <hlm-tabs [tab]="activeTab()" class="flex flex-col gap-4" (tabActivated)="onTabActivated($event)">
-    <hlm-tabs-list
-      variant="line"
-      aria-label="Members sections"
-      i18n-aria-label="@@org.members.tabsAriaLabel"
-      data-testid="organization-members-tabs-list"
-    >
-      <button
-        hlmTabsTrigger="members"
-        class="max-sm:min-h-11"
-        data-testid="organization-members-tab-members"
-        i18n="@@org.members.tab.members"
+<div id="organization-members" class="flex h-full flex-col gap-6">
+  <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onTabActivated($event)">
+    <ng-template #pageTabs>
+      <hlm-paginated-tabs-list
+        variant="line"
+        class="w-full"
+        tabListClass="justify-start"
+        aria-label="Members sections"
+        i18n-aria-label="@@org.members.tabsAriaLabel"
+        data-testid="organization-members-tabs-list"
       >
-        Members
-      </button>
-      @if (canViewRolesTab()) {
         <button
-          hlmTabsTrigger="roles"
+          hlmTabsTrigger="members"
           class="max-sm:min-h-11"
-          data-testid="organization-members-tab-roles"
-          i18n="@@org.members.tab.roles"
+          data-testid="organization-members-tab-members"
+          i18n="@@org.members.tab.members"
         >
-          Roles & permissions
+          Members
         </button>
-      }
-      @if (canViewTeamsTab()) {
-        <button
-          hlmTabsTrigger="teams"
-          class="max-sm:min-h-11"
-          data-testid="organization-members-tab-teams"
-          i18n="@@org.members.tab.teams"
-        >
-          Teams
-        </button>
-      }
-    </hlm-tabs-list>
+        @if (canViewRolesTab()) {
+          <button
+            hlmTabsTrigger="roles"
+            class="max-sm:min-h-11"
+            data-testid="organization-members-tab-roles"
+            i18n="@@org.members.tab.roles"
+          >
+            Roles & permissions
+          </button>
+        }
+        @if (canViewTeamsTab()) {
+          <button
+            hlmTabsTrigger="teams"
+            class="max-sm:min-h-11"
+            data-testid="organization-members-tab-teams"
+            i18n="@@org.members.tab.teams"
+          >
+            Teams
+          </button>
+        }
+      </hlm-paginated-tabs-list>
+    </ng-template>
 
     <div hlmTabsContent="members">
       <ng-template hlmTabsContentLazy>
@@ -204,7 +208,7 @@
               </app-collection-toolbar>
 
               @if (listForbidden()) {
-                <div hlmEmpty>
+                <div hlmEmpty class="border border-border">
                   <div hlmEmptyHeader>
                     <div hlmEmptyMedia variant="icon">
                       <ng-icon name="lucideLock" aria-hidden="true" />
@@ -218,7 +222,7 @@
                   </div>
                 </div>
               } @else if (store.loadCallState().status === 'error') {
-                <div hlmEmpty role="alert">
+                <div hlmEmpty class="border border-border" role="alert">
                   <div hlmEmptyHeader>
                     <div hlmEmptyMedia variant="icon" class="text-destructive">
                       <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -242,7 +246,7 @@
                 </div>
               } @else if (!store.isLoading() && store.members().length === 0) {
                 @if (hasRosterFilters()) {
-                  <div hlmEmpty>
+                  <div hlmEmpty class="border border-border">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon">
                         <ng-icon name="lucideSearch" aria-hidden="true" />
@@ -265,7 +269,7 @@
                     </div>
                   </div>
                 } @else {
-                  <div hlmEmpty>
+                  <div hlmEmpty class="border border-border">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon">
                         <ng-icon name="lucideUsersRound" aria-hidden="true" />
@@ -322,7 +326,7 @@
                 <h2 hlmCardTitle>{{ pendingInvitationsHeading() }}</h2>
 
                 @if (store.loadCallState().status === 'error') {
-                  <div hlmEmpty role="alert">
+                  <div hlmEmpty class="border border-border" role="alert">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon" class="text-destructive">
                         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -347,7 +351,7 @@
                     </div>
                   </div>
                 } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
-                  <div hlmEmpty>
+                  <div hlmEmpty class="border border-border">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon">
                         <ng-icon name="lucideMailQuestion" aria-hidden="true" />

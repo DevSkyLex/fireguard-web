@@ -1,7 +1,17 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { PageTabsService } from '@core/page-tabs';
 import {
   idleCallState,
   pendingCallState,
@@ -28,6 +38,16 @@ import { OrganizationPlanStore } from '@features/organization/state/organization
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationPlanSelector } from '../../../components/organization-plan-selector';
 import { OrganizationSettingsPage } from '../organization-settings-page.component';
+
+@Component({
+  selector: 'app-page-tabs-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class PageTabsHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
 
 function organization(overrides: Partial<OrganizationOutput> = {}): OrganizationOutput {
   return {
@@ -69,6 +89,7 @@ function member(overrides: Partial<OrganizationMemberOutput> = {}): Organization
 
 describe('OrganizationSettingsPage', () => {
   let fixture: ComponentFixture<OrganizationSettingsPage>;
+  let tabsFixture: ComponentFixture<PageTabsHost> | null;
   let selectedOrganization: WritableSignal<OrganizationOutput | null>;
   let deleteCallState: WritableSignal<CallState<void>>;
   let statusCallState: WritableSignal<CallState<OrganizationOutput>>;
@@ -98,8 +119,17 @@ describe('OrganizationSettingsPage', () => {
   let listAllMembers: ReturnType<typeof vi.fn>;
   let listLegalTypes: ReturnType<typeof vi.fn>;
 
+  const renderPageTabs = (): HTMLElement => {
+    tabsFixture ??= TestBed.createComponent(PageTabsHost);
+    tabsFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
+    tabsFixture.detectChanges();
+
+    return tabsFixture.nativeElement as HTMLElement;
+  };
+
   const byTestId = (id: string): HTMLElement | null =>
-    (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
+    (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`) ??
+    renderPageTabs().querySelector(`[data-testid="${id}"]`);
 
   /**
    * Builds the page, having first swapped `OrganizationPlanSelector`'s own
@@ -107,6 +137,7 @@ describe('OrganizationSettingsPage', () => {
    * real transport this page-boundary spec has no business reaching.
    */
   async function createPage(tab?: string): Promise<void> {
+    tabsFixture = null;
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -337,29 +368,34 @@ describe('OrganizationSettingsPage', () => {
     expect(dangerTrigger?.textContent).toContain('Danger zone');
   });
 
-  it('should collapse the section list to a paginated horizontal row below the lg rail breakpoint', async () => {
+  it('should project the settings sections as native line tabs in the page header', async () => {
     await createPage();
 
     expect(fixture.nativeElement.querySelector('hlm-tabs-list')).toBeNull();
-    expect(fixture.nativeElement.querySelector('hlm-paginated-tabs-list')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('hlm-paginated-tabs-list')).toBeNull();
+    expect(renderPageTabs().querySelector('hlm-paginated-tabs-list')).not.toBeNull();
+    expect(renderPageTabs().querySelector('[data-variant="line"]')).not.toBeNull();
   });
 
-  it('should give plan comparison more room than the settings forms', async () => {
+  it('should let every settings panel fill the available content width', async () => {
     await createPage();
 
-    for (const tabId of ['general', 'usage', 'notifications', 'regional', 'compliance']) {
+    for (const tabId of [
+      'general',
+      'subscription',
+      'usage',
+      'notifications',
+      'regional',
+      'compliance',
+    ]) {
       const content: HTMLElement | null = fixture.nativeElement.querySelector(
         `[hlmtabscontent="${tabId}"]`,
       );
 
-      expect(content?.className).toContain('max-w-3xl');
+      expect(content?.className).toContain('w-full');
+      expect(content?.className).toContain('min-w-0');
+      expect(content?.className).not.toContain('max-w-');
     }
-
-    const subscriptionContent: HTMLElement | null = fixture.nativeElement.querySelector(
-      '[hlmtabscontent="subscription"]',
-    );
-
-    expect(subscriptionContent?.className).toContain('max-w-6xl');
   });
 
   it('should render the current-plan section as a card', async () => {

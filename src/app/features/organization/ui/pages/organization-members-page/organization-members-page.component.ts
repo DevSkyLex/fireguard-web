@@ -33,6 +33,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -149,7 +150,7 @@ type OrganizationMembersKpiTile = {
  * single people-management surface: three tabs, `?tab=`-addressable
  * (`members` default, `roles`, `teams`), following the same
  * `linkedSignal`-seeded, param-mirroring pattern as
- * `InterventionDetailPage`'s rail. The absorbed `OrganizationTeamPage`
+ * `InterventionDetailPage`'s header tabs. The absorbed `OrganizationTeamPage`
  * ("Roles & permissions", the retired `/team`) and `OrganizationTeamsPage`
  * ("Teams", the retired `/teams`) are mounted as-is inside
  * `hlmTabsContentLazy` panels rather than inlined — each keeps its own
@@ -199,7 +200,8 @@ type OrganizationMembersKpiTile = {
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
  * retired — {@link subtitle}'s member count stays as a lead line at content
- * top, and "Invite member" registers on the shell header through
+ * top, the primary tabs register beneath the title through `PageTabsService`,
+ * and "Invite member" registers on the shell header through
  * `PageActionsService`, gated to the `members` tab being active — the
  * absorbed pages' own action buttons (New role, New team) take over the
  * slot the same way while their tab is active, since `hlmTabsContentLazy`
@@ -351,6 +353,35 @@ export class OrganizationMembersPage {
   /** The "Invite member" button, registered on the shell header instead of an in-page title band. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the primary people-management tabs.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 2.0.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
 
   /** Currently selected member ids, scoped to the loaded page — cleared on every reload. */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
@@ -799,7 +830,9 @@ export class OrganizationMembersPage {
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    const destroyRef: DestroyRef = inject(DestroyRef);
+    registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
 
     effect((): void => {
       const isActive: boolean = this.activeTab() === 'members';

@@ -9,15 +9,36 @@
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+ * @type {ReadonlyArray<{ readonly icon: string; readonly label: string; readonly value: string }>}
  */
 export const ORGANIZATION_PERIODICITY_OPTIONS: ReadonlyArray<{
+  readonly icon: string;
   readonly label: string;
   readonly value: string;
 }> = [
-  { label: $localize`:@@org.settings.compliance.periodicityP1M:Every month`, value: 'P1M' },
-  { label: $localize`:@@org.settings.compliance.periodicityP3M:Every 3 months`, value: 'P3M' },
-  { label: $localize`:@@org.settings.compliance.periodicityP6M:Every 6 months`, value: 'P6M' },
-  { label: $localize`:@@org.settings.compliance.periodicityP1Y:Every year`, value: 'P1Y' },
-  { label: $localize`:@@org.settings.compliance.periodicityP2Y:Every 2 years`, value: 'P2Y' },
+  {
+    icon: 'lucideCalendarDays',
+    label: $localize`:@@org.settings.compliance.periodicityP1M:Every month`,
+    value: 'P1M',
+  },
+  {
+    icon: 'lucideCalendarDays',
+    label: $localize`:@@org.settings.compliance.periodicityP3M:Every 3 months`,
+    value: 'P3M',
+  },
+  {
+    icon: 'lucideCalendarDays',
+    label: $localize`:@@org.settings.compliance.periodicityP6M:Every 6 months`,
+    value: 'P6M',
+  },
+  {
+    icon: 'lucideCalendarRange',
+    label: $localize`:@@org.settings.compliance.periodicityP1Y:Every year`,
+    value: 'P1Y',
+  },
+  {
+    icon: 'lucideCalendarRange',
+    label: $localize`:@@org.settings.compliance.periodicityP2Y:Every 2 years`,
+    value: 'P2Y',
+  },
 ];

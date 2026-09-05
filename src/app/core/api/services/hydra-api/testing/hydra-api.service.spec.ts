@@ -61,6 +61,29 @@ describe('HydraApiService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('preserves a problem detail when the response omits optional error metadata', () => {
+    const failed = vi.fn();
+    resourceService.list({}).subscribe({ error: failed });
+    httpMock
+      .expectOne((r) => r.url === baseUrl)
+      .flush({ detail: 'The intervention changed.' }, { status: 409, statusText: 'Conflict' });
+    expect(failed).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 409, detail: 'The intervention changed.' }),
+    );
+  });
+
+  it('uses an actionable connection message instead of an HTTP URL for a network failure', () => {
+    const failed = vi.fn();
+    resourceService.list({}).subscribe({ error: failed });
+    httpMock.expectOne((r) => r.url === baseUrl).error(new ProgressEvent('error'));
+    expect(failed).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 0,
+        detail: 'The connection is unavailable. Check your network and try again.',
+      }),
+    );
+  });
+
   describe('sort and search params', () => {
     it('should emit the bracketed order[field] pair for a sort option', () => {
       resourceService.list({ sort: { field: 'createdAt', direction: 'desc' } }).subscribe();

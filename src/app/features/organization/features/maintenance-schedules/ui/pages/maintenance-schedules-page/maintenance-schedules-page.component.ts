@@ -15,7 +15,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -30,7 +30,7 @@ import {
   lucideTag,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { take } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
@@ -66,7 +66,7 @@ import {
   type CollectionFilterOption,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -78,6 +78,9 @@ import { MaintenanceScheduleTable } from '../../tables/maintenance-schedule-tabl
 
 /** The page sizes offered under the table — the server default first. */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
+
+/** How long typing settles before the search reaches the wire. */
+const SEARCH_DEBOUNCE_MS: number = 300;
 
 /** Every due-status chip offered in the filter bar. */
 const DUE_STATUS_VALUES: readonly MaintenanceDueStatus[] = [
@@ -116,11 +119,10 @@ interface MaintenanceScheduleFilters {
  * @description
  * Route entry page for the organization's maintenance schedules: a
  * `app-collection-filter-toggle` above an editable `app-collection-filter-bar`
- * carrying all four narrowings this endpoint accepts — due status, facility,
- * equipment type, due-before — as chips (`@shared/collection-filters`),
- * above the grid. There is no search box: `MaintenanceScheduleResource`'s
- * collection has no `SearchExtractor`, so offering one would fake a
- * narrowing the API cannot serve. An interval-override dialog is gated
+ * carrying all four structured narrowings this endpoint accepts — due status,
+ * facility, equipment type, due-before — as chips (`@shared/collection-filters`),
+ * above the grid. The shared search box debounces free-text input before
+ * forwarding it through `MaintenanceScheduleListOptions`. An interval-override dialog is gated
  * `organization.maintenance.manage`, and a "Generate inspection campaign"
  * header action is gated on that permission **and**
  * `organization.interventions.plan` together — a single 403 otherwise, so
@@ -164,6 +166,7 @@ interface MaintenanceScheduleFilters {
     CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
+    CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
     HlmSpinner,
@@ -264,6 +267,12 @@ export class MaintenanceSchedulesPage {
       equipmentType: null,
       dueBefore: null,
     });
+
+  /** What the search box holds before the debounce settles. */
+  protected readonly draftSearch: WritableSignal<string> = signal<string>('');
+
+  /** The trimmed free-text search currently sent to the list endpoint. */
+  protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
   /** The page window, one-based. */
   protected readonly page: WritableSignal<number> = signal<number>(1);
@@ -375,7 +384,7 @@ export class MaintenanceSchedulesPage {
 
   /** Whether the current view is narrowed at all, deciding what the empty state offers. */
   protected readonly hasFilters: Signal<boolean> = computed<boolean>(
-    () => this.activeFilterKeys().length > 0,
+    () => this.searchTerm() !== '' || this.activeFilterKeys().length > 0,
   );
 
   /** Which field's value selector currently renders forced open — `null` when none is. */
@@ -471,6 +480,16 @@ export class MaintenanceSchedulesPage {
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
 
+    toObservable(this.draftSearch)
+      .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
+      .subscribe((term: string): void => {
+        const search: string = term.trim();
+        if (search === this.searchTerm()) return;
+
+        this.page.set(1);
+        this.searchTerm.set(search);
+      });
+
     effect((): void => {
       const organizationId: string = this.organizationId();
 
@@ -488,6 +507,7 @@ export class MaintenanceSchedulesPage {
     effect((): void => {
       const organizationId: string = this.organizationId();
       const current: MaintenanceScheduleFilters = this.filters();
+      const search: string = this.searchTerm();
       const page: number = this.page();
       const pageSize: number = this.pageSize();
 
@@ -498,6 +518,7 @@ export class MaintenanceSchedulesPage {
           equipmentType: current.equipmentType ?? undefined,
           dueStatus: current.dueStatus ?? undefined,
           dueBefore: current.dueBefore?.toISOString(),
+          search: search || undefined,
           page,
           itemsPerPage: pageSize,
         });
@@ -536,6 +557,11 @@ export class MaintenanceSchedulesPage {
   //#endregion
 
   //#region Methods
+  /** Records a keystroke into the draft term watched by the debounce. */
+  protected onSearchQueryChanged(term: string): void {
+    this.draftSearch.set(term);
+  }
+
   /**
    * Method tableFacilityLabelOf
    *
@@ -661,6 +687,8 @@ export class MaintenanceSchedulesPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
+    this.draftSearch.set('');
+    this.searchTerm.set('');
     this.filters.set({ dueStatus: null, facility: null, equipmentType: null, dueBefore: null });
   }
 
@@ -761,6 +789,7 @@ export class MaintenanceSchedulesPage {
       equipmentType: current.equipmentType ?? undefined,
       dueStatus: current.dueStatus ?? undefined,
       dueBefore: current.dueBefore?.toISOString(),
+      search: this.searchTerm() || undefined,
       page: this.page(),
       itemsPerPage: this.pageSize(),
     });

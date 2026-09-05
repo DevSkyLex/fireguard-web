@@ -84,6 +84,21 @@
           }
         </div>
 
+        <div class="text-sm" data-testid="approval-request-mobile-subject">
+          @if (subjectRouteOf(item); as route) {
+            <a
+              class="rounded-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
+              [routerLink]="route"
+              >{{ subjectLabelOf(item) }}</a
+            >
+          } @else {
+            <span>{{ subjectLabelOf(item) }}</span>
+          }
+        </div>
+        <p class="text-sm text-muted-foreground" data-testid="approval-request-mobile-requester">
+          <span i18n="@@approvals.table.colRequester">Requested by</span>
+          {{ memberLabelOf()(item.requestedByMemberId) }}
+        </p>
         <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
           <app-approval-status-tag [value]="item.status" />
 

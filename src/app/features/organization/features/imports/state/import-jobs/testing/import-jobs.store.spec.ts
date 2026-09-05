@@ -90,7 +90,7 @@ describe('ImportJobsStore', () => {
       await flushEffects();
 
       expect(mockService.create).toHaveBeenCalledWith(organizationId, 'equipment', file, false);
-      expect(store.jobs()).toEqual([job]);
+      expect(store.jobEntities()).toEqual([job]);
       expect(store.isCreating()).toBe(false);
       expect(mockService.pollJob).toHaveBeenCalledWith(job);
     });
@@ -104,7 +104,7 @@ describe('ImportJobsStore', () => {
       store.create({ organizationId, kind: 'equipment', file });
       await flushEffects();
 
-      expect(store.jobs()).toEqual([]);
+      expect(store.jobEntities()).toEqual([]);
       expect(store.createError()).not.toBeNull();
     });
   });
@@ -121,12 +121,12 @@ describe('ImportJobsStore', () => {
 
       emissions.next(processing);
       await flushEffects();
-      expect(store.jobs()).toEqual([processing]);
+      expect(store.jobEntities()).toEqual([processing]);
 
       emissions.next(completed);
       emissions.complete();
       await flushEffects();
-      expect(store.jobs()).toEqual([completed]);
+      expect(store.jobEntities()).toEqual([completed]);
     });
 
     it('should leave the row untouched when the poll itself errors', async () => {
@@ -137,7 +137,7 @@ describe('ImportJobsStore', () => {
       store.create({ organizationId, kind: 'equipment', file: new File([''], 'e.csv') });
       await flushEffects();
 
-      expect(store.jobs()).toEqual([job]);
+      expect(store.jobEntities()).toEqual([job]);
     });
 
     it('should poll two jobs independently rather than one cancelling the other', async () => {
@@ -158,8 +158,8 @@ describe('ImportJobsStore', () => {
       secondPoll.next({ ...other, status: 'completed' });
       await flushEffects();
 
-      expect(store.jobs().find((j) => j.id === 'job-2')?.status).toBe('completed');
-      expect(store.jobs().find((j) => j.id === 'job-1')?.status).toBe('pending');
+      expect(store.jobEntities().find((j) => j.id === 'job-2')?.status).toBe('completed');
+      expect(store.jobEntities().find((j) => j.id === 'job-1')?.status).toBe('pending');
     });
   });
 

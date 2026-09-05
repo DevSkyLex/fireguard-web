@@ -39,7 +39,7 @@ export class ApprovalRequestService extends HydraApiService {
    *
    * @description
    * Retrieves a paginated page of one organization's approval requests,
-   * optionally filtered by status and action type.
+   * optionally searched and filtered by status and action type.
    *
    * @access public
    * @since 1.0.0

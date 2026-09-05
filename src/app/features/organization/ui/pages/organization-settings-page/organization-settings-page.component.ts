@@ -1,4 +1,3 @@
-import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,7 +12,9 @@ import {
   type EffectRef,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
+  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -38,6 +39,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import type { OptionOutput } from '@core/api/models';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
@@ -59,7 +61,6 @@ import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organ
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { toMemberSelectOption } from '@features/organization/utils';
-import { AT_LEAST_LG, mediaQuery } from '@shared/breakpoint';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -223,16 +224,16 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
  *
  * Each tab trigger carries an icon ahead of its label — the Danger zone
  * trigger tints its icon destructive, never colour alone, while its label
- * stays neutral like its siblings. The section list is a `lg`-and-up left
- * rail that collapses to a horizontally-scrollable row below that, and every
- * tab's content shares one `max-w-3xl` so the page does not visibly resize
- * as the reader switches tabs.
+ * stays neutral like its siblings. The section list is a paginated Spartan
+ * `line` tab list projected beneath the shell page title. Every settings panel
+ * fills the shell content width; structured forms use responsive label/content
+ * rows so controls gain room without stretching their explanatory copy.
  *
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
  * retired, and this page has no header actions of its own to register.
  *
- * @version 1.4.0
+ * @version 1.7.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -241,7 +242,6 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
   imports: [
     NgIcon,
     ...HlmEmptyImports,
-    NgTemplateOutlet,
     OrganizationApprovalForm,
     OrganizationAutomationForm,
     OrganizationCancelSubscriptionDialog,
@@ -440,8 +440,37 @@ export class OrganizationSettingsPage {
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** Unregisters the settings tab-rail orientation media query listener on teardown. */
+  /** Owns shell-tab registration for this page. */
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
+
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving this page's primary settings navigation.
+   *
+   * @access private
+   * @since 1.7.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Spartan settings tab list projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 1.7.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
 
   /**
    * Property defaultRegional
@@ -601,34 +630,6 @@ export class OrganizationSettingsPage {
       return resolved === 'danger' && !this.canDelete() ? 'general' : resolved;
     },
   );
-
-  /**
-   * Property settingsTabsOrientation
-   * @readonly
-   *
-   * @description
-   * Whether the section list lays out as a `lg`-and-up left rail
-   * (`vertical`, `hlm-tabs-list`) or a horizontally-scrollable row above the
-   * panes (`horizontal`, `hlm-paginated-tabs-list`) on narrower viewports —
-   * derived from `@shared/breakpoint`'s `lg` query rather than a `matchMedia`
-   * of its own. Starts `horizontal` (server/pre-hydration default) and
-   * upgrades once the browser evaluates the query.
-   *
-   * @access protected
-   * @since 1.2.0
-   * @type {WritableSignal<'horizontal' | 'vertical'>}
-   */
-  protected readonly settingsTabsOrientation: Signal<'horizontal' | 'vertical'> = computed(
-    (): 'horizontal' | 'vertical' => (this.isAtLeastLg() ? 'vertical' : 'horizontal'),
-  );
-
-  /**
-   * Whether the viewport is `lg` or wider, from the one shared breakpoint
-   * primitive. Read from the `min-width` side on purpose: the signal is
-   * `false` before the browser answers, and this page must render its
-   * horizontal row — not its desktop rail — on the server.
-   */
-  private readonly isAtLeastLg: Signal<boolean> = mediaQuery(AT_LEAST_LG);
 
   /**
    * Property generalFormValues
@@ -1190,6 +1191,22 @@ export class OrganizationSettingsPage {
     untracked((): void => this.confirmingCancelSubscription.set(false));
   });
 
+  //#endregion
+
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Projects the settings section navigation into the dashboard page header.
+   *
+   * @access public
+   * @since 1.7.0
+   */
+  public constructor() {
+    registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
+  }
   //#endregion
 
   //#region Methods

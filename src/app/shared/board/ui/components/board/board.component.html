@@ -91,7 +91,7 @@
               class="shrink-0 tabular-nums"
               data-testid="board-column-count"
               [attr.aria-label]="countLabel(column)"
-              >{{ column.items.length }}</hlm-badge
+              >{{ column.total ?? column.items.length }}</hlm-badge
             >
           </div>
           <div
@@ -132,14 +132,43 @@
                 }
               </div>
             } @empty {
-              <p
-                class="px-3 py-6 text-center text-sm text-muted-foreground"
-                data-testid="board-column-empty"
-              >
-                {{ emptyLabel() }}
-              </p>
+              @if (!column.loading && !column.error) {
+                <p
+                  class="px-3 py-6 text-center text-sm text-muted-foreground"
+                  data-testid="board-column-empty"
+                >
+                  {{ emptyLabel() }}
+                </p>
+              }
             }
           </div>
+          @if (column.loading || column.error || column.hasMore) {
+            <div class="flex shrink-0 flex-col gap-2 border-t border-border p-3">
+              @if (column.error; as error) {
+                <p class="text-sm text-destructive" role="alert">{{ error }}</p>
+              }
+              @if (column.loading) {
+                <p class="text-sm text-muted-foreground" role="status" i18n="@@common.loading">
+                  Loading…
+                </p>
+              }
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="min-h-11"
+                [disabled]="column.loading"
+                (click)="loadMoreRequested.emit(column.id)"
+              >
+                @if (column.error) {
+                  <span i18n="@@common.tryAgain">Try again</span>
+                } @else {
+                  <span i18n="@@common.loadMore">Load more</span>
+                }
+              </button>
+            </div>
+          }
           @if (dropState === 'allowed' || dropState === 'blocked') {
             <div
               [id]="columnId(column.id) + '-drop-hint'"

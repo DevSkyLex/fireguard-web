@@ -1,23 +1,64 @@
-<div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-  <app-intervention-tag kind="status" [value]="status()" />
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div class="flex min-w-0 flex-col gap-2 sm:flex-1 sm:basis-64">
+    <div class="flex flex-wrap items-center gap-3">
+      <app-intervention-tag kind="status" [value]="status()" />
+      @if (blockersCount() > 0) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="text-muted-foreground max-sm:min-h-11"
+          data-testid="intervention-detail-blockers"
+          (click)="blockersRequested.emit()"
+        >
+          <ng-icon name="lucideLock" class="text-destructive" aria-hidden="true" />
+          <span i18n="@@intervention.band.blockers">{{ blockersCount() }} blocking issues</span>
+        </button>
+      }
+    </div>
+    <h2 class="text-2xl font-semibold tracking-tight max-sm:hidden">{{ phaseLabel() }}</h2>
+    <div class="max-w-xl text-sm text-muted-foreground max-sm:hidden">
+      @switch (status()) {
+        @case ('draft') {
+          <p i18n="@@intervention.workspace.prepare">
+            Define the scope, assign the team and complete the requirements before scheduling.
+          </p>
+        }
+        @case ('planned') {
+          <p i18n="@@intervention.workspace.planned">
+            Review the scope and assignments, then start the work on site.
+          </p>
+        }
+        @case ('in_progress') {
+          <p i18n="@@intervention.workspace.execute">
+            Complete the remaining work and collect evidence before submitting for review.
+          </p>
+        }
+        @case ('changes_requested') {
+          <p i18n="@@intervention.workspace.correct">
+            Address the reviewer’s feedback, then submit the intervention again.
+          </p>
+        }
+        @case ('submitted') {
+          <p i18n="@@intervention.workspace.review">
+            Review the proposed changes and evidence, and resolve publication issues.
+          </p>
+        }
+        @case ('published') {
+          <p i18n="@@intervention.workspace.published">
+            The published record is locked. Consult its results, evidence and activity below.
+          </p>
+        }
+        @case ('abandoned') {
+          <p i18n="@@intervention.workspace.abandoned">
+            This intervention is closed. Its work and activity remain available for reference.
+          </p>
+        }
+      }
+    </div>
+  </div>
 
-  <span class="text-sm text-muted-foreground">{{ phaseLabel() }}</span>
-
-  @if (blockersCount() > 0) {
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      class="text-muted-foreground max-sm:min-h-11"
-      data-testid="intervention-detail-blockers"
-      (click)="blockersRequested.emit()"
-    >
-      <ng-icon name="lucideLock" class="text-destructive" aria-hidden="true" />
-      <span i18n="@@intervention.band.blockers">{{ blockersCount() }} blocking issues</span>
-    </button>
-  }
-
-  <div class="ms-auto flex flex-col items-end gap-0.5">
+  <div class="ms-auto flex max-w-sm flex-col items-end gap-2">
     @if (status() === 'published') {
       <div class="flex items-center gap-2 text-sm text-muted-foreground">
         <ng-icon name="lucideCircleCheckBig" class="text-foreground" aria-hidden="true" />
@@ -44,11 +85,16 @@
         variant="outline"
         class="max-sm:min-h-11"
         data-testid="intervention-command-secondary"
-        [disabled]="secondary.disabled || busy()"
+        [disabled]="secondary.disabled || secondary.loading || busy()"
+        [attr.aria-describedby]="secondary.disabledReason ? 'intervention-secondary-reason' : null"
         (click)="secondaryInvoked.emit()"
       >
         {{ secondary.label }}
       </button>
+      @if (secondary.disabledReason; as reason) {
+        <p id="intervention-secondary-reason" class="text-xs text-muted-foreground">{{ reason }}</p>
+      }
     }
+    <ng-content />
   </div>
 </div>

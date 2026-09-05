@@ -42,6 +42,7 @@ import {
 import { take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
@@ -82,6 +83,7 @@ import {
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
 import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/organization/utils';
+import { CollectionPagination } from '@shared/collection-pagination';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -129,6 +131,8 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
  * rule (`ARCHITECTURE.md` §12). Selecting a node loads that facility's
  * compliance summary into the right pane; "Export safety register" streams
  * the register PDF through `BrowserDownloadService`.
+ * The three axes use a paginated Spartan `line` tab list projected beneath
+ * the shell page title through `PageTabsService`.
  *
  * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -136,6 +140,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 @Component({
   selector: 'app-organization-assets-page',
   imports: [
+    CollectionPagination,
     NgIcon,
     ...HlmEmptyImports,
     OrgDatePipe,
@@ -246,12 +251,43 @@ export class OrganizationAssetsPage {
   protected readonly complianceBucketIconClass: typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS =
     COMPLIANCE_BUCKET_TAG_ICON_CLASS;
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * * Registers {@link pageActions} on the shell header.
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
   /** The "New facility" and "New equipment" buttons, rendered in the shell header. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the estate navigation axes.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
 
   /** Organization permission checks gating the creation actions and the equipment pane. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -392,7 +428,9 @@ export class OrganizationAssetsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
-  /** Whether the member may create equipment. Same reason as {@link canCreateFacilities}. */
+  /**
+   * * Whether the member may create equipment. Same reason as {@link canCreateFacilities}.
+   */
   protected readonly canCreateEquipment: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
   );
@@ -477,6 +515,7 @@ export class OrganizationAssetsPage {
     });
 
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -550,6 +589,33 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.2.0
+   * @returns {void}
+   */
+  /** Method changePanePage
+   * @description Changes one resource page without reloading the other list or losing the selected site.
+   * @access protected
+   * @since 1.0.0
+   * @param {'equipment' | 'inspections'} kind - Resource list.
+   * @param {number} page - Requested page.
+   * @returns {void}
+   */
+  protected changePanePage(kind: 'equipment' | 'inspections', page: number): void {
+    const facilityId = this.selectedFacilityId();
+    const request = {
+      organizationId: this.organizationId(),
+      page,
+      ...(this.axis() === 'site' && facilityId !== null ? { facilityId } : {}),
+    };
+    if (kind === 'equipment' && this.canReadEquipment()) this.pane.loadEquipment(request);
+    if (kind === 'inspections' && this.canReadInspections()) this.pane.loadInspections(request);
+  }
+
+  /**
+   * Method retryPane
+   * @method retryPane
+   * @description Reloads the resource lists in the currently selected explorer scope.
+   * @access protected
+   * @since 1.0.0
    * @returns {void}
    */
   protected retryPane(): void {

@@ -14,8 +14,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { sheetSide } from '@shared/sheet-side';
-import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
+import { HlmDialog, HlmDialogImports } from '@shared/ui/dialog';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import {
   InterventionRequestChangesForm,
@@ -23,11 +22,11 @@ import {
 } from '../../forms/intervention-request-changes-form';
 
 /**
- * Component InterventionRequestChangesSheet
- * @class InterventionRequestChangesSheet
+ * Component InterventionRequestChangesDialog
+ * @class InterventionRequestChangesDialog
  *
  * @description
- * The spartan sheet hosting {@link InterventionRequestChangesForm}.
+ * The native Spartan dialog hosting {@link InterventionRequestChangesForm}.
  *
  * Purely presentational: it owns the panel, forwards `visible`/`visibleChange`
  * and re-emits the form's `submitted`; the page keeps the orchestration
@@ -39,20 +38,17 @@ import {
  * covers Escape and the backdrop alike. Cancel always closes: the guard is
  * against losing the note by accident, never against leaving deliberately.
  *
- * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
- * instead of a right-hand panel, so its footer lands in the thumb zone.
- *
  * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
-  selector: 'app-intervention-request-changes-sheet',
-  imports: [InterventionRequestChangesForm, UnsavedChangesDialog, ...HlmSheetImports],
-  templateUrl: './intervention-request-changes-sheet.component.html',
+  selector: 'app-intervention-request-changes-dialog',
+  imports: [InterventionRequestChangesForm, UnsavedChangesDialog, ...HlmDialogImports],
+  templateUrl: './intervention-request-changes-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InterventionRequestChangesSheet {
+export class InterventionRequestChangesDialog {
   //#region Inputs
   /**
    * Property visible
@@ -93,6 +89,15 @@ export class InterventionRequestChangesSheet {
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+  /**
+   * Property interventionName
+   * @readonly
+   * @description Identifies the intervention returned to the agent.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string>}
+   */
+  public readonly interventionName: InputSignal<string> = input('');
   //#endregion
 
   //#region Outputs
@@ -143,26 +148,16 @@ export class InterventionRequestChangesSheet {
 
   //#region Properties
   /**
-   * Property sheetState
+   * Property dialogState
    * @readonly
    * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
    * @access protected
    * @since 1.0.0
    * @type {Signal<BrnDialogState>}
    */
-  protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
+  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
-
-  /**
-   * Property side
-   * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
-   * @access protected
-   * @since 1.1.0
-   * @type {Signal<'right' | 'bottom'>}
-   */
-  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
 
   /**
    * Property dirty
@@ -193,7 +188,7 @@ export class InterventionRequestChangesSheet {
     signal<BrnDialogState>('closed');
 
   /**
-   * Property sheetRef
+   * Property dialogRef
    * @readonly
    *
    * @description
@@ -205,9 +200,9 @@ export class InterventionRequestChangesSheet {
    * @access protected
    * @since 7.1.0
    *
-   * @type {Signal<HlmSheet | undefined>}
+   * @type {Signal<HlmDialog | undefined>}
    */
-  protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
+  protected readonly dialogRef: Signal<HlmDialog | undefined> = viewChild(HlmDialog);
   //#endregion
 
   //#region Methods
@@ -218,7 +213,7 @@ export class InterventionRequestChangesSheet {
    * @description
    * Relays a dismissal, ignoring the echo of a change the page already made.
    * An Escape or outside-click attempt reaching here while {@link dirty} is
-   * undone through {@link sheetRef} and redirected to the same confirmation
+   * undone through {@link dialogRef} and redirected to the same confirmation
    * {@link requestClose} raises.
    *
    * @access protected
@@ -234,7 +229,7 @@ export class InterventionRequestChangesSheet {
     if (isOpen === this.visible()) return;
 
     if (!isOpen && this.dirty()) {
-      this.sheetRef()?.open();
+      this.dialogRef()?.open();
       this.unsavedChangesDialogState.set('open');
 
       return;

@@ -4,7 +4,7 @@
   tabindex="-1"
   role="group"
   [attr.aria-label]="pageRootLabel"
-  class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 focus-visible:ring-2 focus-visible:ring-ring md:p-6"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 focus-visible:ring-2 focus-visible:ring-ring"
 >
   @if (activeFacilityStore.selectedFacility(); as facility) {
     @if (facility.path.length > 0) {
@@ -43,34 +43,34 @@
       {{ metaLine() }}
     </p>
 
-    <hlm-tabs
-      [tab]="activeTab()"
-      class="min-h-0 flex-1 flex-col"
-      (tabActivated)="onLinkedTabActivated($event)"
-    >
-      <hlm-tabs-list
-        variant="line"
-        aria-label="Facility sections"
-        i18n-aria-label="@@facility.detail.tabsAriaLabel"
-      >
-        <button
-          hlmTabsTrigger="overview"
-          class="max-sm:min-h-11"
-          data-testid="facility-tab-overview"
+    <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onLinkedTabActivated($event)">
+      <ng-template #pageTabs>
+        <hlm-paginated-tabs-list
+          variant="line"
+          class="w-full"
+          tabListClass="justify-start"
+          aria-label="Facility sections"
+          i18n-aria-label="@@facility.detail.tabsAriaLabel"
         >
-          <span i18n="@@facility.detail.tabs.overview">Overview</span>
-        </button>
-        <button
-          hlmTabsTrigger="information"
-          class="max-sm:min-h-11"
-          data-testid="facility-tab-information"
-        >
-          <span i18n="@@facility.detail.tabs.information">Information</span>
-        </button>
-        <button hlmTabsTrigger="plans" class="max-sm:min-h-11" data-testid="facility-tab-plans">
-          <span i18n="@@facility.detail.tabs.plans">Plans</span>
-        </button>
-      </hlm-tabs-list>
+          <button
+            hlmTabsTrigger="overview"
+            class="max-sm:min-h-11"
+            data-testid="facility-tab-overview"
+          >
+            <span i18n="@@facility.detail.tabs.overview">Overview</span>
+          </button>
+          <button
+            hlmTabsTrigger="information"
+            class="max-sm:min-h-11"
+            data-testid="facility-tab-information"
+          >
+            <span i18n="@@facility.detail.tabs.information">Information</span>
+          </button>
+          <button hlmTabsTrigger="plans" class="max-sm:min-h-11" data-testid="facility-tab-plans">
+            <span i18n="@@facility.detail.tabs.plans">Plans</span>
+          </button>
+        </hlm-paginated-tabs-list>
+      </ng-template>
 
       <div hlmTabsContent="overview" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         <section

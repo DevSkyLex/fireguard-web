@@ -83,13 +83,18 @@ The application brand is always written “Fireguard”.
 The dashboard toolbar and page header each have a bottom semantic border.
 The page header has no top border and keeps a subtle `bg-muted/25`
 surface, lighter than the main canvas in dark mode.
+Primary route-level navigation sits beneath the title in that header as a
+native Spartan `line` tab list. The paginated list preserves the same variant
+and keyboard model when the labels outgrow the available width. Tabs that
+switch only a local panel, filter or form mode stay with that content.
 
 The organization dashboard opens directly on four compact operational metrics and trends,
 without an organization identity block or Overview/Analysis tabs. Charts use the official
 Spartan Chart primitive, its semantic theme and native legend/tooltip. Channel creation
 uses a compact centered dialog, preserving the unsaved-draft guard.
-The interventions collection starts with the view selector, then search, filters
-and results. It has no metric cards or Analysis disclosure. Mobile rows keep
+The interventions collection keeps List, Board, Calendar and Recurrences in the
+page header, then starts its content with search, filters and results. It has no
+metric cards or Analysis disclosure. Mobile rows keep
 name, site, status and due date; bulk selection is explicitly activated.
 Long names wrap
 within the table so deadlines and row actions remain reachable. The generic board
@@ -101,8 +106,8 @@ deadline share one compact content row, without a separate footer surface.
 Property grids adapt to their available content width, including space taken by the sidebar.
 
 Creation uses one sheet, blank/template tabs and one visible form/footer.
-Intervention detail places operational context and work first, stable line tabs
-next, and activity and metadata in secondary disclosures. A single progression
+Intervention detail keeps its stable line tabs in the page header, then places
+operational context and work first, with activity and metadata in secondary disclosures. A single progression
 action remains accessible on mobile; a footer must never cover content or errors.
 
 ## Native patterns

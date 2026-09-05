@@ -134,6 +134,29 @@ describe('InterventionOutboxRepository', () => {
     expect(repository.hasPendingChanges()).toBe(false);
   });
 
+  it('preserves the original revision through repeated conflicts and distinguishes an unverified server revision', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(entries));
+    await repository.queue('intervention-1', 'intervention.update', {
+      revision: 2,
+      description: 'Local notes',
+    });
+    const [operation] = [...entries.values()];
+    await repository.rebaseOutboxRevision(operation.id, 5, 'Conflict');
+    await repository.rebaseOutboxRevision(operation.id, 8, 'Changed again');
+    expect(entries.get(operation.id)).toMatchObject({
+      baseRevision: 2,
+      serverRevision: 8,
+      payload: { revision: 8, description: 'Local notes' },
+    });
+    await repository.markOutboxConflict(operation.id, 'Revision unavailable');
+    expect(entries.get(operation.id)).toMatchObject({
+      baseRevision: 2,
+      serverRevision: null,
+      payload: { description: 'Local notes' },
+    });
+  });
+
   it('lists queued operations for one intervention in field entry order', async () => {
     const store = new Map<string, InterventionOutboxOperation>();
     const repository = build(inMemoryDatabase(store));

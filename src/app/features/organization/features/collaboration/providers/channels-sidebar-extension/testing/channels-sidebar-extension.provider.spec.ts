@@ -34,6 +34,7 @@ describe('withChannelsSidebarExtension', () => {
     );
     expect(contribution.active()).toBe(true);
     expect(contribution.mobileVisible()).toBe(false);
+    expect(contribution.contentPadding).toBe(false);
     await router.navigateByUrl('/organizations/org-1/channels?search=one');
     expect(contribution.active()).toBe(true);
     expect(contribution.mobileVisible()).toBe(true);

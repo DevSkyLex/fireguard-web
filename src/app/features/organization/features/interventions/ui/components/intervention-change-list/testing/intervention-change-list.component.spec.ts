@@ -54,8 +54,19 @@ describe('InterventionChangeList', () => {
     await create([change()]);
 
     expect(root().textContent).toContain(
-      'Applied automatically when this intervention is published.',
+      'Review proposed values and consult rejected or applied changes.',
     );
+  });
+
+  it('should use the compact status select with the proposed state selected by default', async () => {
+    await create([change(), change({ id: 'change-2', status: 'applied' })]);
+
+    const filter = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-changes-filter"]',
+    );
+    expect(filter?.textContent).toContain('Status');
+    expect(filter?.textContent).toContain('Proposed');
+    expect(root().querySelector('hlm-toggle-group')).toBeNull();
   });
 
   it('should offer no reject control unless the host grants it', async () => {

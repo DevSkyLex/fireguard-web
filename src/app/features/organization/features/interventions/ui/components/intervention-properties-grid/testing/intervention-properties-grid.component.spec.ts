@@ -90,6 +90,10 @@ describe('InterventionPropertiesGrid', () => {
   });
 
   it('should render one row per property', () => {
+    expect(byTestId('intervention-property-status')?.textContent).toContain('Draft');
+    expect(
+      byTestId('intervention-field-priority')?.querySelector('[data-slot="badge"]'),
+    ).not.toBeNull();
     expect(byTestId('intervention-field-priority')).not.toBeNull();
     expect(byTestId('intervention-field-site')).not.toBeNull();
     expect(byTestId('intervention-field-responsible')).not.toBeNull();
@@ -110,7 +114,7 @@ describe('InterventionPropertiesGrid', () => {
     expect(byTestId('intervention-field-participants')?.textContent).not.toContain('None');
   });
 
-  it('should show the site name as plain text inside app-inplace-field, never inside a link', async () => {
+  it('should keep an editable site inside the in-place field without a nested link', async () => {
     const siteOptions: readonly SelectOption[] = [
       { value: '/api/facilities/facility-1', label: 'Main warehouse' },
     ];
@@ -129,7 +133,7 @@ describe('InterventionPropertiesGrid', () => {
     expect(inplaceField.querySelector('a')).toBeNull();
   });
 
-  it('should offer a sibling external-link anchor to the facility record when a site is set', async () => {
+  it('should make the site name the facility link once the field is read-only', async () => {
     const siteOptions: readonly SelectOption[] = [
       { value: '/api/facilities/facility-1', label: 'Main warehouse' },
     ];
@@ -138,14 +142,14 @@ describe('InterventionPropertiesGrid', () => {
       site: '/api/facilities/facility-1',
     });
     fixture.componentRef.setInput('siteOptions', siteOptions);
+    fixture.componentRef.setInput('canEditSite', false);
     await fixture.whenStable();
 
     const link: HTMLAnchorElement | null = byTestId('intervention-site-link') as HTMLAnchorElement;
 
     expect(link).not.toBeNull();
     expect(link.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
-    expect(link.getAttribute('aria-label')).toBe('Open site facility');
-    expect(link.textContent?.trim()).toBe('');
+    expect(link.textContent?.trim()).toBe('Main warehouse');
   });
 
   it('should hide the external-link anchor when no site is set', () => {

@@ -1,5 +1,16 @@
-<div id="maintenance-schedules" class="flex min-h-0 w-full flex-1 flex-col gap-4 p-4 md:p-6">
+<div id="maintenance-schedules" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="maintenance"
+      placeholder="Search schedules..."
+      i18n-placeholder="@@maintenance.list.searchPlaceholder"
+      ariaLabel="Search schedules..."
+      i18n-ariaLabel="@@maintenance.list.searchPlaceholder"
+      [value]="draftSearch()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
     <app-collection-filter-toggle
       toolbarEnd
       [visible]="filtersVisible()"
@@ -134,7 +145,7 @@
   </ng-template>
 
   @if (listForbidden()) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideLock" aria-hidden="true" />
@@ -148,7 +159,7 @@
       </div>
     </div>
   } @else if (store.hasListError()) {
-    <div hlmEmpty role="alert">
+    <div hlmEmpty class="border border-border" role="alert">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon" class="text-destructive">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -167,7 +178,7 @@
       </div>
     </div>
   } @else if (!store.isLoading() && items().length === 0) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         @if (hasFilters() ? 'lucideCircleAlert' : 'lucidePackage'; as iconName) {
           <div hlmEmptyMedia variant="icon">
@@ -176,7 +187,7 @@
         }
         <p hlmEmptyTitle i18n="@@maintenance.list.emptyTitle">No maintenance schedules found</p>
         <p hlmEmptyDescription i18n="@@maintenance.list.emptyDesc">
-          Adjust your filters, or track equipment to see its schedule here.
+          Adjust your search or filters, or track equipment to see its schedule here.
         </p>
       </div>
       <div hlmEmptyContent>

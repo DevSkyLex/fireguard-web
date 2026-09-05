@@ -45,6 +45,7 @@ test.describe('Interventions — Recurrences tab', () => {
     await expect(interventions.recurrencesTable).toContainText('2× Quarterly');
     await expect(interventions.recurrencesTable).not.toContainText('quarterly');
 
+    await interventions.createMenu.click();
     await interventions.recurrencesNew.click();
     await expect(interventions.recurrenceSheet).toBeVisible();
     await expect(page.getByTestId('intervention-recurrence-frequency')).toContainText('Monthly');
@@ -133,6 +134,7 @@ test.describe('Interventions — Recurrences tab', () => {
     await interventions.goto(E2E_ORGANIZATION_ID);
     await interventions.openRecurrences();
 
+    await page.getByTestId(`intervention-recurrence-menu-${recurrence.id}`).click();
     await page.getByTestId(`intervention-recurrence-edit-${recurrence.id}`).click();
 
     await expect(interventions.recurrenceSheet).toBeVisible();
@@ -150,6 +152,7 @@ test.describe('Interventions — Recurrences tab', () => {
     await interventions.goto(E2E_ORGANIZATION_ID);
     await interventions.openRecurrences();
 
+    await page.getByTestId(`intervention-recurrence-menu-${recurrence.id}`).click();
     await page.getByTestId(`intervention-recurrence-remove-${recurrence.id}`).click();
 
     const dialog = page.getByTestId('intervention-recurrence-delete-dialog');

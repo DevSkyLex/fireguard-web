@@ -18,7 +18,7 @@
       <th hlmTableHead class="w-[90px] text-center" i18n="@@intervention.recurrences.activeColumn">
         Active
       </th>
-      <th hlmTableHead class="w-[170px]">
+      <th hlmTableHead class="w-12">
         <span class="sr-only" i18n="@@intervention.recurrences.columnActions">Actions</span>
       </th>
     </tr>
@@ -54,7 +54,7 @@
           />
         </td>
         <td hlmTableCell>
-          <span class="flex justify-end gap-1">
+          <span class="flex justify-end">
             <ng-container
               [ngTemplateOutlet]="rowActions"
               [ngTemplateOutletContext]="{ recurrence, suffix: '' }"
@@ -92,7 +92,7 @@
           templateNameOf(recurrence.template)
         }}</span>
 
-        <span class="flex gap-1">
+        <span class="flex justify-end">
           <ng-container
             [ngTemplateOutlet]="rowActions"
             [ngTemplateOutletContext]="{ recurrence, suffix: '-card' }"
@@ -147,26 +147,39 @@
       hlmBtn
       type="button"
       variant="ghost"
-      size="sm"
-      class="max-sm:min-h-11"
-      [attr.aria-label]="rowAriaLabelOf('edit', recurrence.name)"
-      [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id + suffix"
-      (click)="editRequested.emit(recurrence)"
-    >
-      <span i18n="@@common.edit">Edit</span>
-    </button>
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      size="sm"
-      class="max-sm:min-h-11"
-      [attr.aria-label]="rowAriaLabelOf('remove', recurrence.name)"
-      [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id + suffix"
+      size="icon-sm"
+      align="end"
+      class="max-sm:size-11"
+      [attr.aria-label]="rowAriaLabelOf('menu', recurrence.name)"
+      [attr.data-testid]="'intervention-recurrence-menu-' + recurrence.id + suffix"
       [disabled]="removingId() === recurrence.id"
-      (click)="removed.emit(recurrence)"
+      [hlmDropdownMenuTrigger]="rowMenu"
     >
-      <span i18n="@@common.delete">Delete</span>
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
     </button>
+
+    <ng-template #rowMenu>
+      <hlm-dropdown-menu class="w-48">
+        <button
+          hlmDropdownMenuItem
+          [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id + suffix"
+          (click)="editRequested.emit(recurrence)"
+        >
+          <ng-icon name="lucidePencil" aria-hidden="true" />
+          <span i18n="@@common.edit">Edit</span>
+        </button>
+        <hlm-dropdown-menu-separator />
+        <button
+          hlmDropdownMenuItem
+          variant="destructive"
+          [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id + suffix"
+          [disabled]="removingId() === recurrence.id"
+          (click)="removed.emit(recurrence)"
+        >
+          <ng-icon name="lucideTrash2" aria-hidden="true" />
+          <span i18n="@@common.delete">Delete</span>
+        </button>
+      </hlm-dropdown-menu>
+    </ng-template>
   }
 </ng-template>

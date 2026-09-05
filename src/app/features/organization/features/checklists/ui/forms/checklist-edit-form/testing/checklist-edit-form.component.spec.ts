@@ -56,8 +56,8 @@ describe('ChecklistEditForm', () => {
     const rows: readonly HTMLElement[] = [
       ...root().querySelectorAll<HTMLElement>('[data-testid="checklist-edit-items"] li'),
     ];
-    expect(rows[0].textContent).toContain('Check panel');
-    expect(rows[1].textContent).toContain('Check breakers');
+    expect(rows[0].querySelector('input')?.value).toBe('Check panel');
+    expect(rows[1].querySelector('input')?.value).toBe('Check breakers');
     expect(rows[1].textContent).toContain('Optional');
   });
 
@@ -101,7 +101,7 @@ describe('ChecklistEditForm', () => {
       ...root().querySelectorAll<HTMLElement>('[data-testid="checklist-edit-items"] li'),
     ];
     expect(rows.length).toBe(1);
-    expect(rows[0].textContent).toContain('Check breakers');
+    expect(rows[0].querySelector('input')?.value).toBe('Check breakers');
   });
 
   it('should reseed from a different checklist on the next open', async () => {

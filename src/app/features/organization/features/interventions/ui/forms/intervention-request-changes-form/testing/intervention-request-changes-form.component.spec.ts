@@ -109,7 +109,7 @@ describe('InterventionRequestChangesForm', () => {
   });
 
   it('should list the cancel button before the submit button in the action row', () => {
-    const footer = root().querySelector('hlm-sheet-footer') as HTMLElement;
+    const footer = root().querySelector('hlm-dialog-footer') as HTMLElement;
     const buttons = Array.from(footer.querySelectorAll('button'));
     const cancelButton = root().querySelector(
       '[data-testid="intervention-request-changes-cancel"]',

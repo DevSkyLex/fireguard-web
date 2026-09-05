@@ -26,6 +26,7 @@ import {
   HlmSidebarTrigger,
   HlmSidebarWrapper,
 } from '@shared/ui/sidebar';
+import { hlm } from '@shared/ui/utils';
 import { DashboardPageHeader } from './components';
 import type { SidebarExtensionContribution } from './models';
 import {
@@ -60,12 +61,14 @@ import {
  *
  * The 48px header is sized to the 32px control rhythm, not to hold a title:
  * that lives in `DashboardPageHeader`, a second band beneath it carrying the
- * activated route's title as the document's one `<h1>` and the page's own
- * actions (`DashboardPageActions`) — the breadcrumb's current crumb is no
- * longer a heading, since it would otherwise repeat the same text. For the
- * same reason the routed content column carries no `container mx-auto` — a
- * page's own density utilities (`p-4 md:p-6`) now own its horizontal rhythm,
- * and a page that wants the shell's full width is free to take it.
+ * activated route's title as the document's one `<h1>`, the page's own
+ * actions (`DashboardPageActions`) and optional primary navigation
+ * (`DashboardPageTabs`) — the breadcrumb's current crumb is no longer a
+ * heading, since it would otherwise repeat the same text. For the
+ * toolbar, routed content and page-header content share the same centred
+ * responsive `container`. That shared container owns horizontal alignment and
+ * the standard page spacing, while full-height workspaces explicitly opt out. The header
+ * backgrounds and separators still span the full content column.
  *
  * @version 1.0.0
  *
@@ -137,6 +140,26 @@ export class DashboardLayout {
    */
   protected readonly sidebarExtension: Signal<SidebarExtensionContribution | null> = computed(() =>
     resolveExclusiveSlot(this.sidebarExtensionContributions),
+  );
+
+  /**
+   * Property contentClass
+   * @readonly
+   *
+   * @description
+   * The shared routed-content container and its standard vertical page spacing.
+   * Sidebar workspaces such as messaging can request a flush, full-height canvas.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly contentClass: Signal<string> = computed((): string =>
+    hlm(
+      'container mx-auto flex min-h-0 flex-1 flex-col',
+      this.sidebarExtension()?.contentPadding === false ? null : 'py-4 md:py-6',
+    ),
   );
 
   /**

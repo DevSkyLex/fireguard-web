@@ -35,6 +35,13 @@ describe('ImportUploadForm', () => {
     root().querySelector<HTMLFormElement>('form')?.requestSubmit();
   };
 
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+  });
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
@@ -112,6 +119,12 @@ describe('ImportUploadForm', () => {
     submitForm();
     await fixture.whenStable();
 
+    expect(root().textContent).toContain('equipment.csv');
+    fixture.componentRef.setInput('error', 'Upload failed');
+    await fixture.whenStable();
+    expect(root().textContent).toContain('equipment.csv');
+    fixture.componentRef.setInput('acceptedJobId', 'job-accepted');
+    await fixture.whenStable();
     expect(root().textContent).not.toContain('equipment.csv');
   });
 

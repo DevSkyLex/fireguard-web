@@ -49,6 +49,7 @@ export function withDirectMessagesSidebarExtension(): SlotFeature<SidebarExtensi
         priority: 20,
         component: DirectMessagesPanel,
         label: $localize`:@@route.messages:Messages`,
+        contentPadding: false,
         active: computed(
           () =>
             context.selectedOrganizationId() !== null &&

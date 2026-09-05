@@ -1,6 +1,6 @@
 <hlm-alert-dialog
   [state]="dialogState()"
-  [disableClose]="publishing()"
+  [disableClose]="publishing() && !accepted()"
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-alert-dialog-content
@@ -51,18 +51,19 @@
                 Still publishing — large interventions can take a couple of minutes.
               </span>
             } @else {
-              <span i18n="@@intervention.publish.inProgress">
-                Writing to the compliance record — do not close this window.
+              <span i18n="@@intervention.publish.waitingForConfirmation">
+                Waiting for confirmation from the compliance record.
               </span>
             }
           } @else {
             <ng-icon name="lucideClock" aria-hidden="true" />
-            <span i18n="@@intervention.publish.timedOutMessage">
-              Publication is still running server-side — it will finish in the background.
+            <span i18n="@@intervention.publish.resultUnconfirmed">
+              The publication result is not confirmed. Check its status before taking further
+              action.
             </span>
           }
         </p>
-        @if (publicationTimedOut()) {
+        @if (publicationTimedOut() && accepted()) {
           <button
             hlmBtn
             type="button"
@@ -80,14 +81,14 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel class="max-sm:min-h-11" [disabled]="publishing()">
-        @if (publicationTimedOut()) {
+      <button hlmAlertDialogCancel class="max-sm:min-h-11" [disabled]="publishing() && !accepted()">
+        @if (accepted() || publicationTimedOut()) {
           <span i18n="@@common.close">Close</span>
         } @else {
           <span i18n="@@common.cancel">Cancel</span>
         }
       </button>
-      @if (!publicationTimedOut()) {
+      @if (!publicationTimedOut() && !accepted() && !unknownResult()) {
         <button
           hlmAlertDialogAction
           class="max-sm:min-h-11"

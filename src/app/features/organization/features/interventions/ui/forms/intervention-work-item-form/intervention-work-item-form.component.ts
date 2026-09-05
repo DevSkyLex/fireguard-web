@@ -13,6 +13,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
+import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+} from '@features/organization/features/interventions/models';
 import {
   resolveInterventionTag,
   type InterventionWorkItemAction,
@@ -20,6 +25,7 @@ import {
   type SelectOption,
 } from '@features/organization/features/interventions/models';
 import { serverMessagesOf } from '@shared/form-feedback';
+import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmAvatarImports } from '@shared/ui/avatar';
@@ -68,6 +74,7 @@ const EMPTY_VALUES: InterventionWorkItemFormValues = {
 @Component({
   selector: 'app-intervention-work-item-form',
   imports: [
+    InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
     RequiredMarker,
@@ -84,6 +91,33 @@ const EMPTY_VALUES: InterventionWorkItemFormValues = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemForm {
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests remote options without replacing the draft.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Loaded coverage and failures by preparation source.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests another source page while preserving the form.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   //#region Inputs
   /**
    * Property pending

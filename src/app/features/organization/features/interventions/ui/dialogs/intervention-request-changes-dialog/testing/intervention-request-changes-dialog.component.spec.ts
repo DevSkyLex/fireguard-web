@@ -1,9 +1,9 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { InterventionRequestChangesSheet } from '../intervention-request-changes-sheet.component';
+import { InterventionRequestChangesDialog } from '../intervention-request-changes-dialog.component';
 
 const content = (): HTMLElement =>
-  document.querySelector('[data-testid="intervention-request-changes-sheet"]') as HTMLElement;
+  document.querySelector('[data-testid="intervention-request-changes-dialog"]') as HTMLElement;
 const inSheet = (selector: string): HTMLElement => content().querySelector(selector) as HTMLElement;
 
 const unsavedChangesDialog = (): HTMLElement | null =>
@@ -13,14 +13,14 @@ const pressEscape = (): void => {
   content()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 };
 
-describe('InterventionRequestChangesSheet', () => {
-  let fixture: ComponentFixture<InterventionRequestChangesSheet>;
+describe('InterventionRequestChangesDialog', () => {
+  let fixture: ComponentFixture<InterventionRequestChangesDialog>;
   let visibility: boolean[];
 
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
-    fixture = TestBed.createComponent(InterventionRequestChangesSheet);
+    fixture = TestBed.createComponent(InterventionRequestChangesDialog);
     await fixture.whenStable();
 
     visibility = [];

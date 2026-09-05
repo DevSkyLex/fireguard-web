@@ -148,7 +148,7 @@ test.describe('Organization settings', () => {
     );
     await page.getByRole('button', { name: 'Annual' }).click();
     await expect(page.getByTestId('organization-plan-card-free')).toContainText('Free');
-    await expect(page.getByTestId('organization-plan-card-max')).toContainText(/€990\.00\/year/);
+    await expect(page.getByTestId('organization-plan-card-max')).toContainText(/€990\s+per year/);
     await expect(settings.invoiceRows).toHaveCount(1);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/settings-subscription-light-desktop.png` });
   });

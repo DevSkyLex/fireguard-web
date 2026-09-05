@@ -104,7 +104,30 @@ export class InterventionPublicationService {
    * @returns {Promise<PublicationOutput>} Terminal publication result.
    */
   public async publish(intervention: InterventionOutput): Promise<PublicationOutput> {
-    const publication = await lastValueFrom(this.interventions.publish(intervention));
+    return this.observe(await this.start(intervention));
+  }
+
+  /**
+   * Method start
+   * @description Starts publication and returns its identifier before observation begins.
+   * @access public
+   * @since 1.0.0
+   * @param {InterventionOutput} intervention - Intervention to publish.
+   * @returns {Promise<PublicationOutput>}
+   */
+  public start(intervention: InterventionOutput): Promise<PublicationOutput> {
+    return lastValueFrom(this.interventions.publish(intervention));
+  }
+
+  /**
+   * Method observe
+   * @description Observes an accepted publication without creating another one.
+   * @access public
+   * @since 1.0.0
+   * @param {PublicationOutput} publication - Accepted publication.
+   * @returns {Promise<PublicationOutput>}
+   */
+  public async observe(publication: PublicationOutput): Promise<PublicationOutput> {
     const final = await lastValueFrom(this.interventions.pollPublication(publication));
 
     if (final.status === 'pending' || final.status === 'processing') {

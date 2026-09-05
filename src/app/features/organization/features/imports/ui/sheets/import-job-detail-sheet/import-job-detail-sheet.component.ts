@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -24,12 +25,14 @@ import {
   type ImportRowErrorOutput,
 } from '@features/organization/features/imports/models';
 import { ImportStatusTag } from '@features/organization/features/imports/ui/components/import-status-tag';
+import { CollectionPagination } from '@shared/collection-pagination';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
+import { HlmButton } from '@shared/ui/button';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
 /** The severity-to-icon-colour pairing for a row's code badge, matching `IMPORT_STATUS_TAG_ICON_CLASS`. */
@@ -66,7 +69,14 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-import-job-detail-sheet',
-  imports: [OrgDatePipe, NgIcon, ImportStatusTag, ...HlmSheetImports],
+  imports: [
+    CollectionPagination,
+    HlmButton,
+    OrgDatePipe,
+    NgIcon,
+    ImportStatusTag,
+    ...HlmSheetImports,
+  ],
   providers: [
     provideIcons({
       lucideCircleAlert,
@@ -81,6 +91,54 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportJobDetailSheet {
+  /**
+   * Property trackingError
+   * @readonly
+   * @description Observation failure for this job, distinct from a confirmed processing failure.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly trackingError = input<string | null>(null);
+  /**
+   * Property refreshRequested
+   * @readonly
+   * @description Requests a new status read without recreating the job.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly refreshRequested = output<void>();
+  /**
+   * Property page
+   * @readonly
+   * @description Current local report page, reset for another job.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<number>}
+   */
+  protected readonly page = linkedSignal({ source: () => this.job()?.id, computation: () => 1 });
+  /**
+   * Property pageCount
+   * @readonly
+   * @description Number of pages in the received report.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<number>}
+   */
+  protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.rows().length / 50)));
+  /**
+   * Property pageRows
+   * @readonly
+   * @description Report rows on the current local page.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly ImportRowErrorOutput[]>}
+   */
+  protected readonly pageRows = computed(() =>
+    this.rows().slice((this.page() - 1) * 50, this.page() * 50),
+  );
+
   //#region Inputs
   /**
    * Property visible

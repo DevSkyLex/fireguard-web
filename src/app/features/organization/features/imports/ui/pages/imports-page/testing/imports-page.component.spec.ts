@@ -58,6 +58,9 @@ describe('ImportsPage', () => {
         {
           provide: ImportJobsStore,
           useValue: {
+            createCallState: signal({ status: 'idle', data: null }),
+            jobEntityMap: signal({ [job.id]: job }),
+            pollCallStates: signal({}),
             load,
             create,
             refresh: vi.fn(),

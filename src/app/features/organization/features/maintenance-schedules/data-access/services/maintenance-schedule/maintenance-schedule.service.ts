@@ -48,8 +48,8 @@ export class MaintenanceScheduleService extends HydraApiService {
    *
    * @description
    * Retrieves a paginated list of maintenance schedules scoped to one
-   * organization, optionally narrowed by facility, equipment type,
-   * due-status and a `dueBefore` upper bound.
+   * organization, optionally searched and narrowed by facility, equipment
+   * type, due-status and a `dueBefore` upper bound.
    *
    * @access public
    * @since 1.0.0

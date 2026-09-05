@@ -1,5 +1,8 @@
 import type { CallState } from '@core/request-state';
-import type { PublicationOutput } from '@features/organization/features/interventions/models';
+import type {
+  PublicationOutput,
+  PublicationTracking,
+} from '@features/organization/features/interventions/models';
 
 /**
  * Interface InterventionPublicationState
@@ -78,5 +81,29 @@ export interface InterventionPublicationState {
    * @type {boolean}
    */
   readonly timedOut: boolean;
+  /**
+   * Property tracking
+   * @readonly
+   * @description Durable publication recovery state.
+   * @since 1.0.0
+   * @type {PublicationTracking | null}
+   */
+  readonly tracking: PublicationTracking | null;
+  /**
+   * Property storageError
+   * @readonly
+   * @description Recovery persistence failure, separate from publication status.
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  readonly storageError: string | null;
+  /**
+   * Property restoreCallState
+   * @readonly
+   * @description Recovery lookup must finish before a new publication starts.
+   * @since 1.0.0
+   * @type {CallState}
+   */
+  readonly restoreCallState: CallState;
   //#endregion
 }

@@ -13,11 +13,13 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, Subject, of, throwError } from 'rxjs';
+import { defer, EMPTY, Subject, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import {
   errorCallState,
+  pendingCallState,
   idleCallState,
   successCallState,
   toStoreError,
@@ -35,6 +37,7 @@ import type {
   InterventionRecurrenceOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
@@ -50,7 +53,7 @@ import { InterventionsPage } from '../interventions-page.component';
 const serverActions = (status: InterventionOutput['status']): InterventionAllowedActionsOutput => ({
   canEditDetails: false,
   canEditSite: false,
-  canEditResponsible: false,
+  canEditResponsible: status === 'draft' || status === 'planned',
   canEditPlanning: false,
   canMutateWorkItems: false,
   canMutateChanges: false,
@@ -134,10 +137,8 @@ const createPage = async (
 };
 
 /**
- * Stands in for the shell's `DashboardPageActions` — the tab selector and
- * "New intervention" render through `PageActionsService`, never inside this
- * page's own `fixture.nativeElement`, so proving them means rendering the
- * registered `TemplateRef` the same way the real shell does.
+ * Stands in for a shell template outlet. Page actions and page tabs use the
+ * same `TemplateRef` projection contract while retaining separate registries.
  */
 @Component({
   selector: 'app-page-actions-host',
@@ -157,8 +158,17 @@ const renderPageActions = (): HTMLElement => {
   return hostFixture.nativeElement as HTMLElement;
 };
 
+const renderPageTabs = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
 describe('InterventionsPage', () => {
   let fixture: ComponentFixture<InterventionsPage>;
+  let mutationCallStates: WritableSignal<Record<string, CallState>>;
   let load: ReturnType<typeof vi.fn>;
   let create: ReturnType<typeof vi.fn>;
   let instantiateFromTemplate: ReturnType<typeof vi.fn>;
@@ -196,6 +206,7 @@ describe('InterventionsPage', () => {
   });
 
   beforeEach(() => {
+    mutationCallStates = signal<Record<string, CallState>>({});
     load = vi.fn();
     create = vi.fn();
     instantiateFromTemplate = vi.fn();
@@ -233,6 +244,7 @@ describe('InterventionsPage', () => {
           provide: InterventionStore,
           useValue: {
             load,
+            mutationCallStates,
             create,
             instantiateFromTemplate,
             transition,
@@ -262,12 +274,17 @@ describe('InterventionsPage', () => {
         {
           provide: InterventionPlanningOptionsStore,
           useValue: {
+            catalogues: signal({}),
+            loadMore: vi.fn(),
             sites: signal([]),
             members: signal([]),
             labels: signal([]),
             templates: signal([]),
             hasTemplates: signal(false),
             loadCreationOptions: vi.fn(),
+            ensureSelected: vi.fn(),
+            selectionFailed: signal(false),
+            selectionCallStates: signal({}),
           },
         },
         {
@@ -282,6 +299,16 @@ describe('InterventionsPage', () => {
           provide: InterventionService,
           useValue: {
             exportCsv,
+            list: vi.fn().mockImplementation((_org, options) =>
+              defer(() =>
+                of({
+                  member: interventionList().filter((item) => item.status === options.status),
+                  totalItems: interventionList().filter((item) => item.status === options.status)
+                    .length,
+                }),
+              ),
+            ),
+            update: vi.fn().mockReturnValue(EMPTY),
             statistics: vi.fn().mockReturnValue(of(null)),
             listCalendarWindow: vi.fn().mockReturnValue(of([])),
           },
@@ -374,6 +401,19 @@ describe('InterventionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.order).toEqual({ dueAt: 'desc' });
   });
 
+  it('restores the list page from the URL and writes subsequent page navigation', async () => {
+    totalInterventions.set(500);
+    fixture = await createPage();
+    fixture.componentRef.setInput('p', '3');
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(3);
+    fixture.componentInstance['goToPage'](4);
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { p: '4' }, queryParamsHandling: 'merge' }),
+    );
+  });
+
   it('should return to the first page whenever the query changes', async () => {
     fixture = await createPage();
 
@@ -429,6 +469,9 @@ describe('InterventionsPage', () => {
     interventionList.set([intervention({ id: 'board-item', status: 'planned' })]);
     transitioningInterventionIds.set(['board-item']);
     fixture = await createPage({ view: 'board' });
+    fixture.debugElement.injector
+      .get(InterventionBoardStore)
+      .move({ intervention: interventionList()[0], status: 'in_progress' });
     const columns = fixture.componentInstance['boardColumns']();
     expect(columns.map((column) => column.id)).toEqual([
       'draft',
@@ -459,11 +502,11 @@ describe('InterventionsPage', () => {
       responsible: null,
     };
     fixture.componentInstance['onBoardMoveRequested']({ item: data, columnId: 'in_progress' });
-    expect(transition).toHaveBeenCalledWith({
-      id: 'board-item',
-      status: 'in_progress',
-      revision: 7,
-    });
+    expect(TestBed.inject(InterventionService).update).toHaveBeenCalledWith(
+      'board-item',
+      { status: 'in_progress' },
+      7,
+    );
   });
 
   it('should reject pending and identity-restricted board moves before calling the store', async () => {
@@ -758,7 +801,13 @@ describe('InterventionsPage', () => {
         interventionId: 'i-abandoned',
         revision: 2,
       });
-      expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+      expect(fixture.componentInstance['selectedIds']().size).toBeGreaterThan(0);
+      mutationCallStates.set({
+        'i-draft': successCallState(null),
+        'i-abandoned': successCallState(null),
+      });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['selectedIds']().has('i-draft')).toBe(false);
     });
   });
 
@@ -795,6 +844,49 @@ describe('InterventionsPage', () => {
         responsible: '/api/organizations/org-1/members/member-2',
         revision: 5,
       });
+      expect(fixture.componentInstance['assignRequest']()?.interventionId).toBe('i-1');
+      expect(fixture.componentInstance['assignDialogBusy']()).toBe(true);
+      fixture.componentInstance['dismissAssign']();
+      expect(fixture.componentInstance['assignRequest']()).not.toBeNull();
+      mutationCallStates.set({ 'i-1': successCallState(null) });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['assignRequest']()).toBeNull();
+    });
+
+    it('retains a partially failed assignment and retries only its failed row', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', name: 'Roof', status: 'draft', revision: 1 }),
+        intervention({ id: 'i-2', name: 'Basement', status: 'planned', revision: 2 }),
+      ]);
+      fixture = await createPage();
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-1', 'i-2']));
+      fixture.componentInstance['requestBulkAssign']();
+      const event = {
+        interventionId: '',
+        responsible: '/api/organizations/org-1/members/member-2',
+      };
+      fixture.componentInstance['submitAssign'](event);
+      mutationCallStates.set({ 'i-1': successCallState(null), 'i-2': pendingCallState() });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['assignDialogBusy']()).toBe(true);
+      mutationCallStates.set({
+        'i-1': successCallState(null),
+        'i-2': errorCallState(toStoreError(new Error('Denied'))),
+      });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['assignDialogBusy']()).toBe(false);
+      expect(fixture.componentInstance['assignRequest']()).not.toBeNull();
+      expect(fixture.componentInstance['assignErrors']()).toEqual(['Basement: Denied']);
+      expect([...fixture.componentInstance['selectedIds']()]).toEqual(['i-2']);
+      assignResponsible.mockClear();
+      fixture.componentInstance['submitAssign'](event);
+      expect(assignResponsible).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'i-2',
+        responsible: event.responsible,
+        revision: 2,
+      });
+      mutationCallStates.set({ 'i-1': successCallState(null), 'i-2': successCallState(null) });
+      await fixture.whenStable();
       expect(fixture.componentInstance['assignRequest']()).toBeNull();
     });
 
@@ -859,14 +951,24 @@ describe('InterventionsPage', () => {
         responsible: '/api/organizations/org-1/members/member-2',
         revision: 2,
       });
-      expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+      expect(fixture.componentInstance['selectedIds']().size).toBeGreaterThan(0);
+      mutationCallStates.set({
+        'i-draft': successCallState(null),
+        'i-planned': successCallState(null),
+      });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['selectedIds']().has('i-draft')).toBe(false);
     });
   });
 
   describe('bulk transition', () => {
     it('should only count selected rows whose allowedTransitions include the target', async () => {
       interventionList.set([
-        intervention({ id: 'i-1', allowedTransitions: ['abandoned'] }),
+        intervention({
+          id: 'i-1',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+        }),
         intervention({ id: 'i-2', allowedTransitions: [] }),
       ]);
       fixture = await createPage();
@@ -878,8 +980,16 @@ describe('InterventionsPage', () => {
 
     it('should skip a selected row whose own transition is still in flight', async () => {
       interventionList.set([
-        intervention({ id: 'i-1', allowedTransitions: ['abandoned'] }),
-        intervention({ id: 'i-2', allowedTransitions: ['abandoned'] }),
+        intervention({
+          id: 'i-1',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+        }),
+        intervention({
+          id: 'i-2',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+        }),
       ]);
       transitioningInterventionIds.set(['i-2']);
       fixture = await createPage();
@@ -893,6 +1003,7 @@ describe('InterventionsPage', () => {
       interventionList.set([
         intervention({
           id: 'i-mine',
+          allowedActions: { ...serverActions('in_progress'), canSubmit: true },
           status: 'in_progress',
           allowedTransitions: ['submitted'],
           responsible: '/api/organizations/org-1/members/member-1',
@@ -915,8 +1026,18 @@ describe('InterventionsPage', () => {
 
     it('should call the store once per eligible row and clear the selection on confirm', async () => {
       interventionList.set([
-        intervention({ id: 'i-1', allowedTransitions: ['abandoned'], revision: 1 }),
-        intervention({ id: 'i-2', allowedTransitions: ['abandoned'], revision: 2 }),
+        intervention({
+          id: 'i-1',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+          revision: 1,
+        }),
+        intervention({
+          id: 'i-2',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+          revision: 2,
+        }),
       ]);
       fixture = await createPage();
 
@@ -926,7 +1047,10 @@ describe('InterventionsPage', () => {
 
       expect(transition).toHaveBeenCalledWith({ id: 'i-1', status: 'abandoned', revision: 1 });
       expect(transition).toHaveBeenCalledWith({ id: 'i-2', status: 'abandoned', revision: 2 });
-      expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+      expect(fixture.componentInstance['selectedIds']().size).toBeGreaterThan(0);
+      mutationCallStates.set({ 'i-1': successCallState(null), 'i-2': successCallState(null) });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['selectedIds']().has('i-1')).toBe(false);
     });
   });
 
@@ -1291,7 +1415,7 @@ describe('InterventionsPage', () => {
       fixture = await createPage();
 
       expect(
-        renderPageActions().querySelector('[data-testid="interventions-tab-recurrences"]'),
+        renderPageTabs().querySelector('[data-testid="intervention-recurrences-link"]'),
       ).toBeNull();
     });
   });
@@ -1299,19 +1423,22 @@ describe('InterventionsPage', () => {
   describe('page header', () => {
     it('should keep views above the collection and creation in the shared page header', async () => {
       fixture = await createPage({ view: 'recurrences' });
-      const header: HTMLElement = renderPageActions();
+      const actions: HTMLElement = renderPageActions();
+      const tabs: HTMLElement = renderPageTabs();
 
       const page = fixture.nativeElement as HTMLElement;
-      expect(header.querySelector('[data-testid="intervention-view-toggle"]')).toBeNull();
-      expect(page.querySelector('[data-testid="intervention-view-toggle-list"]')).not.toBeNull();
-      expect(page.querySelector('[data-testid="intervention-view-toggle-board"]')).not.toBeNull();
+      expect(page.querySelector('[data-testid="intervention-view-toggle"]')).toBeNull();
+      expect(tabs.querySelector('[data-testid="intervention-view-toggle-list"]')).not.toBeNull();
+      expect(tabs.querySelector('[data-testid="intervention-view-toggle-board"]')).not.toBeNull();
       expect(
-        page.querySelector('[data-testid="intervention-view-toggle-calendar"]'),
+        tabs.querySelector('[data-testid="intervention-view-toggle-calendar"]'),
       ).not.toBeNull();
-      expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
+      expect(tabs.querySelector('[data-testid="intervention-recurrences-link"]')).not.toBeNull();
+      expect(actions.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
+      expect(actions.querySelector('[data-testid="interventions-create-menu"]')).not.toBeNull();
     });
 
-    it('should turn "New intervention" into a split button once templates exist', async () => {
+    it('should keep intervention variants and recurrence creation in the header menu', async () => {
       fixture = await createPage();
       const planningOptions = TestBed.inject(InterventionPlanningOptionsStore) as unknown as {
         templates: WritableSignal<readonly { id: string; name: string }[]>;
@@ -1320,12 +1447,8 @@ describe('InterventionsPage', () => {
       await fixture.whenStable();
       const header: HTMLElement = renderPageActions();
 
-      // The only header split button in the app: its items are variants of the
-      // primary verb (DESIGN.md "Header actions" rule 3).
       expect(header.querySelector('[data-testid="interventions-new"]')).not.toBeNull();
-      expect(
-        header.querySelector('[data-testid="interventions-new-from-template"]'),
-      ).not.toBeNull();
+      expect(header.querySelector('[data-testid="interventions-create-menu"]')).not.toBeNull();
     });
 
     it('should keep no toolbar, mine toggle or filters toggle on the Recurrences tab', async () => {
@@ -1383,22 +1506,26 @@ describe('InterventionsPage', () => {
       };
       expect(fixture.componentInstance['canMoveBoardItem'](allowed, 'in_progress')).toBe(true);
       fixture.componentInstance['onBoardMoveRequested']({ item: allowed, columnId: 'in_progress' });
-      expect(transition).toHaveBeenCalledTimes(1);
+      expect(TestBed.inject(InterventionService).update).toHaveBeenCalledTimes(1);
     });
-    it('should load one large page, status excluded, while the Board tab is active', async () => {
+    it('should load one bounded page for every status while the Board tab is active', async () => {
       fixture = await createPage({ view: 'board' });
 
-      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
-      expect(boardCall).toBeDefined();
-      expect(boardCall?.[0].options.status).toBeUndefined();
-      expect(boardCall?.[0].options.page).toBe(1);
+      const calls = vi.mocked(TestBed.inject(InterventionService).list).mock.calls;
+      expect(calls).toHaveLength(7);
+      expect(calls.every((call) => call[1]?.itemsPerPage === 30 && call[1]?.page === 1)).toBe(true);
+      expect(new Set(calls.map((call) => call[1]?.status)).size).toBe(7);
     });
 
     it('should never send a status narrowing to the Board even when the URL still carries one', async () => {
       fixture = await createPage({ view: 'board', status: 'planned' });
 
-      const boardCall = load.mock.calls.find((call) => call[0].options.itemsPerPage === 200);
-      expect(boardCall?.[0].options.status).toBeUndefined();
+      const statuses = vi
+        .mocked(TestBed.inject(InterventionService).list)
+        .mock.calls.map((call) => call[1]?.status);
+      expect(statuses).toContain('draft');
+      expect(statuses).toContain('published');
+      expect(statuses).toHaveLength(7);
     });
 
     it('should send a legal move from the Board straight to the store, trusting the board already validated it', async () => {
@@ -1447,7 +1574,10 @@ describe('InterventionsPage', () => {
       const recurrenceService = TestBed.inject(InterventionRecurrenceService);
       const root = fixture.nativeElement as HTMLElement;
 
-      expect(root.querySelector('[data-testid="intervention-recurrences-new"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="intervention-recurrences-new"]')).toBeNull();
+      expect(root.textContent).not.toContain(
+        'Recurring schedules periodically draft a new intervention from a template. A materialized intervention carries no link back to the rule that created it.',
+      );
       expect(recurrenceService.list).toHaveBeenCalledTimes(1);
     });
 
@@ -1474,9 +1604,13 @@ describe('InterventionsPage', () => {
 
     it('should open the recurrence sheet on a blank draft when "New recurrence" is clicked', async () => {
       fixture = await createPage({ view: 'recurrences' });
-      const root = fixture.nativeElement as HTMLElement;
-
-      const newButton: HTMLButtonElement | null = root.querySelector(
+      const header: HTMLElement = renderPageActions();
+      const menuButton: HTMLButtonElement | null = header.querySelector(
+        '[data-testid="interventions-create-menu"]',
+      );
+      menuButton?.dispatchEvent(new Event('click', { bubbles: true }));
+      await fixture.whenStable();
+      const newButton: HTMLButtonElement | null = document.querySelector(
         '[data-testid="intervention-recurrences-new"]',
       );
       newButton?.dispatchEvent(new Event('click', { bubbles: true }));

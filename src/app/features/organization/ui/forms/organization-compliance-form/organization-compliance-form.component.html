@@ -1,92 +1,135 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
-    <section class="flex flex-col gap-3">
-      <h2
-        class="text-sm font-medium text-muted-foreground"
-        i18n="@@org.settings.compliance.slaTitle"
-      >
-        Non-conformity resolution SLA
-      </h2>
-      <p class="text-sm text-muted-foreground" i18n="@@org.settings.compliance.slaDescription">
-        Days allowed to resolve a non-conformity, by severity.
-      </p>
+    <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+      <header class="min-w-0">
+        <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.settings.compliance.slaTitle">
+          Non-conformity resolution SLA
+        </h2>
+        <p
+          class="mt-1 text-sm text-muted-foreground"
+          i18n="@@org.settings.compliance.slaDescription"
+        >
+          Days allowed to resolve a non-conformity, by severity.
+        </p>
+      </header>
 
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid min-w-0 gap-4 sm:grid-cols-2">
         @for (entry of complianceForm.nonConformitySlaDays; track entry[0]) {
-          <hlm-field>
-            <label
-              [attr.for]="'org-compliance-sla-' + entry[0]"
-              hlmFieldLabel
-              class="flex items-center gap-2"
-            >
-              {{ severityLabel(entry[0]) }}
-              @if (isCustomizedSla(entry[0])) {
-                <span
-                  hlmBadge
-                  variant="outline"
-                  class="text-xs"
-                  i18n="@@org.settings.compliance.customizedBadge"
-                  >Customized</span
-                >
-              }
-            </label>
-            <input
-              hlmInput
-              type="number"
-              [id]="'org-compliance-sla-' + entry[0]"
-              [attr.data-testid]="'org-compliance-sla-' + entry[0]"
-              [formField]="entry[1]"
-            />
+          @let severity = severityOption(entry[0]);
+          <hlm-field class="gap-3 rounded-lg border border-border bg-card/40 p-3">
+            <div class="flex min-w-0 items-start gap-3">
+              <span
+                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted"
+                aria-hidden="true"
+              >
+                <ng-icon [name]="severity.icon" [class]="severity.iconClass" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <label [attr.for]="'org-compliance-sla-' + entry[0]" hlmFieldLabel>
+                    {{ severity.label }}
+                  </label>
+                  @if (isCustomizedSla(entry[0])) {
+                    <span
+                      hlmBadge
+                      variant="outline"
+                      class="text-xs"
+                      i18n="@@org.settings.compliance.customizedBadge"
+                      >Customized</span
+                    >
+                  }
+                </div>
+                <p hlmFieldDescription class="mt-0.5">{{ severity.description }}</p>
+              </div>
+            </div>
+            <hlm-input-group>
+              <input
+                hlmInputGroupInput
+                type="number"
+                [id]="'org-compliance-sla-' + entry[0]"
+                [attr.data-testid]="'org-compliance-sla-' + entry[0]"
+                [formField]="entry[1]"
+              />
+              <hlm-input-group-addon align="inline-end">
+                <span hlmInputGroupText i18n="@@org.settings.compliance.daysUnit">days</span>
+              </hlm-input-group-addon>
+            </hlm-input-group>
           </hlm-field>
         }
       </div>
     </section>
 
-    <section class="flex flex-col gap-3 border-t border-border pt-5">
-      <h2
-        class="text-sm font-medium text-muted-foreground"
-        i18n="@@org.settings.compliance.periodicityTitle"
-      >
-        Inspection periodicity
-      </h2>
-      <p
-        class="text-sm text-muted-foreground"
-        i18n="@@org.settings.compliance.periodicityDescription"
-      >
-        How often each equipment type must be inspected.
-      </p>
+    <section
+      class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+    >
+      <header class="min-w-0">
+        <h2
+          class="text-xl font-semibold tracking-tight"
+          i18n="@@org.settings.compliance.periodicityTitle"
+        >
+          Inspection periodicity
+        </h2>
+        <p
+          class="mt-1 text-sm text-muted-foreground"
+          i18n="@@org.settings.compliance.periodicityDescription"
+        >
+          How often each equipment type must be inspected.
+        </p>
+      </header>
 
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid min-w-0 gap-3 sm:grid-cols-2">
         @for (entry of complianceForm.inspectionPeriodicityDefaults; track entry[0]) {
-          <hlm-field>
+          <hlm-field
+            orientation="responsive"
+            class="gap-3 rounded-lg border border-border bg-card/40 p-3"
+          >
             <label
               [attr.for]="'org-compliance-periodicity-' + entry[0]"
               hlmFieldLabel
-              class="flex items-center gap-2"
+              class="min-w-0 flex-1 gap-3"
             >
-              {{ equipmentTypeLabel(entry[0]) }}
-              @if (isCustomizedPeriodicity(entry[0])) {
-                <span
-                  hlmBadge
-                  variant="outline"
-                  class="text-xs"
-                  i18n="@@org.settings.compliance.customizedBadge"
-                  >Customized</span
-                >
-              }
+              <span
+                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+              >
+                <ng-icon [name]="equipmentTypeIcon(entry[0])" class="size-4" aria-hidden="true" />
+              </span>
+              <span class="flex min-w-0 flex-col items-start gap-1">
+                <span class="truncate">{{ equipmentTypeLabel(entry[0]) }}</span>
+                @if (isCustomizedPeriodicity(entry[0])) {
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="text-xs"
+                    i18n="@@org.settings.compliance.customizedBadge"
+                    >Customized</span
+                  >
+                }
+              </span>
             </label>
-            <hlm-select [itemToString]="periodicityLabel" [formField]="entry[1]">
+            <hlm-select class="min-w-0" [itemToString]="periodicityLabel" [formField]="entry[1]">
               <hlm-select-trigger
                 [buttonId]="'org-compliance-periodicity-' + entry[0]"
-                class="w-full"
+                class="w-full @md/field-group:w-40"
                 [attr.data-testid]="'org-compliance-periodicity-' + entry[0]"
               >
+                <ng-icon
+                  name="lucideCalendarClock"
+                  class="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <hlm-select-value />
               </hlm-select-trigger>
-              <hlm-select-content *hlmSelectPortal>
+              <hlm-select-content *hlmSelectPortal class="min-w-48">
                 <hlm-select-group>
                   @for (option of periodicityOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                    <hlm-select-item [value]="option.value">
+                      <ng-icon
+                        [name]="option.icon"
+                        class="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span class="whitespace-nowrap">{{ option.label }}</span>
+                    </hlm-select-item>
                   }
                 </hlm-select-group>
               </hlm-select-content>
@@ -96,14 +139,24 @@
       </div>
     </section>
 
-    <section class="flex flex-col gap-3 border-t border-border pt-5">
-      <h2
-        class="text-sm font-medium text-muted-foreground"
-        i18n="@@org.settings.compliance.reminderTitle"
-      >
-        Reminders
-      </h2>
-      <hlm-field class="max-w-xs">
+    <section
+      class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+    >
+      <header class="min-w-0">
+        <h2
+          class="text-xl font-semibold tracking-tight"
+          i18n="@@org.settings.compliance.reminderTitle"
+        >
+          Reminders
+        </h2>
+        <p
+          class="mt-1 text-sm text-muted-foreground"
+          i18n="@@org.settings.compliance.reminderDescription"
+        >
+          Set how early upcoming inspection deadlines should be surfaced.
+        </p>
+      </header>
+      <hlm-field class="w-full max-w-sm">
         <label
           hlmFieldLabel
           for="org-compliance-reminder-window"
@@ -132,22 +185,25 @@
       </hlm-field>
     </section>
 
-    <div class="flex flex-wrap items-center justify-end gap-2">
-      <button
-        hlmBtn
-        type="submit"
-        class="max-sm:min-h-11"
-        data-testid="org-compliance-submit"
-        [disabled]="!canSubmit()"
-        [attr.aria-busy]="pending() ? 'true' : null"
-        aria-live="polite"
-      >
-        @if (pending()) {
-          <span i18n="@@org.settings.compliance.submitting">Saving…</span>
-        } @else {
-          <span i18n="@@org.settings.compliance.submit">Save changes</span>
-        }
-      </button>
+    <div class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+      <span class="hidden lg:block" aria-hidden="true"></span>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button
+          hlmBtn
+          type="submit"
+          class="max-sm:min-h-11"
+          data-testid="org-compliance-submit"
+          [disabled]="!canSubmit()"
+          [attr.aria-busy]="pending() ? 'true' : null"
+          aria-live="polite"
+        >
+          @if (pending()) {
+            <span i18n="@@org.settings.compliance.submitting">Saving…</span>
+          } @else {
+            <span i18n="@@org.settings.compliance.submit">Save changes</span>
+          }
+        </button>
+      </div>
     </div>
   </hlm-field-group>
 </form>

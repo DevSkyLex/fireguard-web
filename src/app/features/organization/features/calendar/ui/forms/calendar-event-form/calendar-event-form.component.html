@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
-  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto">
     @if (serverMessage(); as message) {
       <div role="alert" data-testid="calendar-event-dialog-error" class="text-sm text-destructive">
         <p>{{ message }}</p>

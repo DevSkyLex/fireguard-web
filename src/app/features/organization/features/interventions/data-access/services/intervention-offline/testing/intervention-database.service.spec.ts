@@ -32,3 +32,26 @@ describe('InterventionDatabaseService (server platform)', () => {
     await expect(service.ensureOwnerBound('user-1')).resolves.toBeUndefined();
   });
 });
+
+describe('InterventionDatabaseService account identity', () => {
+  it('uses the canonical profile id when the legacy subject is absent', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionDatabaseService,
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: USER_IDENTITY_PORT, useValue: { profile: () => ({ id: 'canonical-account' }) } },
+      ],
+    });
+    expect(TestBed.inject(InterventionDatabaseService).currentOwnerId()).toBe('canonical-account');
+  });
+  it('retains compatibility with profiles exposing only a subject', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionDatabaseService,
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: USER_IDENTITY_PORT, useValue: { profile: () => ({ sub: 'legacy-account' }) } },
+      ],
+    });
+    expect(TestBed.inject(InterventionDatabaseService).currentOwnerId()).toBe('legacy-account');
+  });
+});

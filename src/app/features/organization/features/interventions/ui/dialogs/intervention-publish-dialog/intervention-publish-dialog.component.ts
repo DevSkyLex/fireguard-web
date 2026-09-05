@@ -126,6 +126,24 @@ export class InterventionPublishDialog {
    * @type {InputSignal<string | null>}
    */
   public readonly publicationError: InputSignal<string | null> = input<string | null>(null);
+  /**
+   * Property accepted
+   * @readonly
+   * @description An accepted publication can be followed outside the dialog.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly accepted: InputSignal<boolean> = input(false);
+  /**
+   * Property unknownResult
+   * @readonly
+   * @description No identifier was received, so another launch is unsafe.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly unknownResult: InputSignal<boolean> = input(false);
   //#endregion
 
   //#region Outputs
@@ -161,7 +179,9 @@ export class InterventionPublishDialog {
   //#endregion
 
   //#region Properties
-  /** The dialog state, derived from {@link visible} so there is no second copy of the truth. */
+  /**
+   * * The dialog state, derived from {@link visible} so there is no second copy of the truth.
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );

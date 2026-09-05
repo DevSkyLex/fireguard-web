@@ -29,7 +29,6 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 import { HlmAvatarImports } from '@shared/ui/avatar';
-import { HlmItemImports } from '@shared/ui/item';
 /**
  * Component AccountProfilePage
  * @class AccountProfilePage
@@ -51,7 +50,6 @@ import { HlmItemImports } from '@shared/ui/item';
   selector: 'app-account-profile-page',
   imports: [
     ...HlmAvatarImports,
-    ...HlmItemImports,
     NgIcon,
     ...HlmEmptyImports,
     AccountAvatarPicker,
@@ -136,23 +134,6 @@ export class AccountProfilePage implements OnInit {
         locale: profile?.locale ?? 'system',
       };
     },
-  );
-
-  /**
-   * Property displayName
-   * @readonly
-   *
-   * @description
-   * What to call the signed-in user, falling back to the address so the header
-   * is never blank.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly displayName: Signal<string> = computed(
-    (): string => this.userStore.displayName() ?? this.userStore.profile()?.email ?? '',
   );
 
   /**

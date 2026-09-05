@@ -37,6 +37,7 @@ import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -108,7 +109,8 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  *
  * @description
  * Route entry page for one facility record
- * (`/organizations/:organizationId/facilities/:facilityId`). Three tabs:
+ * (`/organizations/:organizationId/facilities/:facilityId`). A paginated
+ * Spartan `line` list beneath the shell page title exposes three tabs:
  * **Overview** (default) renders the descendant hierarchy through
  * {@link FacilityHierarchyChart} plus the equipment/inspection/intervention
  * summary from {@link FacilityOverviewStore} — the "Interventions on this
@@ -656,6 +658,35 @@ export class FacilityDetailPage {
     viewChild<TemplateRef<unknown>>('pageActions');
 
   /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the facility detail sections.
+   *
+   * @access private
+   * @since 1.13.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 1.13.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
+
+  /**
    * Property editModeStatusLabel
    * @readonly
    * @description The Plans tab editor's status line, naming the active mode and, in `draw-zone`, its vertex count.
@@ -716,6 +747,7 @@ export class FacilityDetailPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
 
     effect((): void => {
       const requested: FacilityDetailTabId = normalizeFacilityDetailTabId(this.tab());

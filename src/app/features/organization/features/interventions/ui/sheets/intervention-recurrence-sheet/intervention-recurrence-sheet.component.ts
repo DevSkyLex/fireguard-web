@@ -13,6 +13,11 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+  PlanningCatalogueRequest,
+} from '@features/organization/features/interventions/models';
+import type {
   InterventionRecurrenceFormTarget,
   InterventionRecurrenceFormValues,
   InterventionRecurrenceOutput,
@@ -63,6 +68,35 @@ import { InterventionRecurrenceForm } from '../../forms/intervention-recurrence-
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionRecurrenceSheet {
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Independent request states and server coverage for preparation sources.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests the next page or retry of a selection source.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueKind>}
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests server search while preserving the active draft and selected labels.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<PlanningCatalogueRequest>}
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
   //#region Inputs
   /**
    * Property target

@@ -1,4 +1,4 @@
-<div id="inspection-detail" class="flex w-full flex-col gap-4 p-4 md:p-6">
+<div id="inspection-detail" class="flex w-full flex-col gap-4">
   @if (activeInspectionStore.selectedInspection(); as inspection) {
     <div class="flex flex-wrap items-center gap-2">
       <app-inspection-status-tag kind="status" [value]="inspection.status" />
@@ -46,6 +46,38 @@
     <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
       {{ metaLine() }}
     </p>
+
+    @if (inspection.intervention; as interventionIri) {
+      <aside
+        class="flex max-w-2xl flex-col gap-2 border-s-2 border-border py-2 ps-4"
+        aria-label="Intervention context"
+        i18n-aria-label="@@inspection.detail.interventionContext"
+      >
+        @if (inspection.recordStatus === 'draft') {
+          <p class="text-sm" i18n="@@inspection.detail.provisional">
+            This inspection belongs to an intervention that has not published this record yet. Its
+            result remains provisional in that workflow.
+          </p>
+        } @else {
+          <p class="text-sm" i18n="@@inspection.detail.linkedIntervention">
+            This inspection was recorded as part of an intervention.
+          </p>
+        }
+        <a
+          hlmBtn
+          variant="link"
+          class="h-auto justify-start p-0"
+          [routerLink]="[
+            '/organizations',
+            organizationId(),
+            'interventions',
+            interventionIri.split('/').pop(),
+          ]"
+          i18n="@@inspection.detail.openIntervention"
+          >Open the intervention</a
+        >
+      </aside>
+    }
 
     <section
       class="flex max-w-2xl flex-col gap-1"

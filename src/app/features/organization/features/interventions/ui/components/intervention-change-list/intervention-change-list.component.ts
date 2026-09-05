@@ -3,18 +3,28 @@ import {
   Component,
   computed,
   input,
+  linkedSignal,
   output,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
-import type { InterventionChangeOutput } from '@features/organization/features/interventions/models';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideListFilter } from '@ng-icons/lucide';
+import type {
+  InterventionChangeOutput,
+  InterventionChangeStatus,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
 import type { InterventionChangeRowViewModel } from './models';
+import type { InterventionChangeGroup } from './models/intervention-change-group.interface';
 import { formatInterventionChangePatch } from './utils';
 
 /**
@@ -49,11 +59,134 @@ import { formatInterventionChangePatch } from './utils';
  */
 @Component({
   selector: 'app-intervention-change-list',
-  imports: [InterventionTag, HlmButton, ...HlmCardImports, ...HlmItemImports, ...HlmSpinnerImports],
+  imports: [
+    InterventionTag,
+    NgIcon,
+    HlmButton,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+    ...HlmSelectImports,
+    ...HlmSpinnerImports,
+  ],
+  providers: [provideIcons({ lucideListFilter })],
   templateUrl: './intervention-change-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionChangeList {
+  /**
+   * Property defaultFilter
+   * @readonly
+   * @description Published interventions open the applied history.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<InterventionChangeStatus>}
+   */
+  public readonly defaultFilter: InputSignal<InterventionChangeStatus> =
+    input<InterventionChangeStatus>('proposed');
+  /**
+   * Property workItems
+   * @readonly
+   * @description Existing target summaries used to label changes without per-row requests.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
+   */
+  public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> = input<
+    readonly InterventionWorkItemOutput[]
+  >([]);
+  /**
+   * Property errors
+   * @readonly
+   * @description Per-change write errors.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, string | null>>>}
+   */
+  public readonly errors: InputSignal<Readonly<Record<string, string | null>>> = input({});
+  /**
+   * Property activeFilter
+   * @readonly
+   * @description Selected change history state.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<InterventionChangeStatus>}
+   */
+  protected readonly activeFilter: WritableSignal<InterventionChangeStatus> = linkedSignal(() =>
+    this.defaultFilter(),
+  );
+
+  /** Labels the compact history filter and its Spartan select value. */
+  protected readonly filterLabelOf: (filter: InterventionChangeStatus) => string = (
+    filter: InterventionChangeStatus,
+  ): string => {
+    switch (filter) {
+      case 'rejected':
+        return $localize`:@@intervention.changes.rejected:Rejected`;
+      case 'applied':
+        return $localize`:@@intervention.changes.applied:Applied`;
+      default:
+        return $localize`:@@intervention.changes.proposed:Proposed`;
+    }
+  };
+
+  /**
+   * Property filters
+   * @readonly
+   * @description Available history states and their exact loaded counts.
+   * @access protected
+   * @since 1.0.0
+   */
+  protected readonly filters = computed(() =>
+    [
+      { value: 'proposed' as const, label: this.filterLabelOf('proposed') },
+      { value: 'rejected' as const, label: this.filterLabelOf('rejected') },
+      { value: 'applied' as const, label: this.filterLabelOf('applied') },
+    ].map((option) => ({
+      value: option.value,
+      label: option.label,
+      count: this.changes().filter((change) => change.status === option.value).length,
+    })),
+  );
+  /**
+   * Property groups
+   * @readonly
+   * @description Selected changes grouped by resource using work-item summaries where available.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly InterventionChangeGroup[]>}
+   */
+  protected readonly groups: Signal<readonly InterventionChangeGroup[]> = computed(() => {
+    const grouped = new Map<string, InterventionChangeRowViewModel[]>();
+    for (const row of this.proposedRows())
+      grouped.set(row.change.resource, [...(grouped.get(row.change.resource) ?? []), row]);
+    return [...grouped.entries()].map(([resource, rows]) => {
+      const item = this.workItems().find(
+        (work) =>
+          work.target === resource ||
+          work.resultResource === resource ||
+          rows.some((row) => row.change.workItem?.endsWith(`/${work.id}`)),
+      );
+      return {
+        resource,
+        rows,
+        label:
+          item?.targetSummary?.label ?? `${rows[0].resourceKind} · ${resource.split('/').at(-1)}`,
+      };
+    });
+  });
+  /**
+   * Method filterChanged
+   * @description Selects a supported history state.
+   * @access protected
+   * @since 1.0.0
+   * @param {string | readonly string[] | null | undefined} value - Chosen state.
+   * @returns {void}
+   */
+  protected filterChanged(value: string | readonly string[] | null | undefined): void {
+    if (value === 'proposed' || value === 'rejected' || value === 'applied')
+      this.activeFilter.set(value);
+  }
+
   //#region Inputs
   /**
    * Property changes
@@ -123,7 +256,7 @@ export class InterventionChangeList {
     const pending: ReadonlySet<string> = this.pendingChangeIds();
 
     return this.changes()
-      .filter((change) => change.status === 'proposed')
+      .filter((change) => change.status === this.activeFilter())
       .map((change: InterventionChangeOutput) => ({
         change,
         resourceKind: this.resourceKindOf(change),

@@ -1,121 +1,97 @@
 <div class="@container/properties">
-  <div class="grid gap-x-6 gap-y-1 @2xl/properties:grid-cols-2 @7xl/properties:grid-cols-4">
-    <div data-testid="intervention-field-priority">
-      <app-inplace-field
-        #priorityField
-        orientation="horizontal"
-        class="w-full"
-        label="Priority"
-        i18n-label="@@intervention.prop.priority"
-        commit="pick"
-        [editable]="canEditSchedule()"
-        [editing]="isEditing('priority')"
-        [pending]="isSaving('priority')"
-        [error]="errorFor('priority')"
-        (editingChange)="onEditing('priority', $event)"
-      >
-        <span fieldValue>
-          <app-intervention-tag kind="priority" [value]="intervention().priority" asOption />
-        </span>
-
-        <hlm-select
-          fieldEditor
-          class="w-full"
-          [value]="intervention().priority"
-          (valueChange)="pickPriority($any($event))"
-        >
-          <label
-            for="intervention-prop-priority"
-            class="sr-only"
-            i18n="@@intervention.prop.priority"
-            >Priority</label
-          >
-          <hlm-select-trigger buttonId="intervention-prop-priority" class="w-full">
-            <hlm-select-value />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal>
-            <hlm-select-group>
-              @for (priority of priorityValues; track priority) {
-                <hlm-select-item [value]="priority">
-                  <app-intervention-tag kind="priority" [value]="priority" asOption />
-                </hlm-select-item>
-              }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
-      </app-inplace-field>
+  <div
+    class="grid grid-cols-1 gap-x-6 gap-y-4 @sm/properties:grid-cols-2 @4xl/properties:grid-cols-4"
+  >
+    <div
+      class="flex min-h-11 min-w-0 flex-col items-start gap-1 px-2 py-2 text-sm sm:min-h-9"
+      data-testid="intervention-property-status"
+    >
+      <span class="text-xs text-muted-foreground" i18n="@@intervention.prop.status">Status</span>
+      <app-intervention-tag kind="status" [value]="intervention().status" />
     </div>
 
-    <div data-testid="intervention-field-site" class="flex items-center gap-1">
-      <app-inplace-field
-        #siteField
-        orientation="horizontal"
-        class="min-w-0 flex-1"
-        label="Site"
-        i18n-label="@@intervention.prop.site"
-        commit="pick"
-        [editable]="canEditSite()"
-        [editing]="isEditing('site')"
-        [pending]="isSaving('site')"
-        [error]="errorFor('site')"
-        (editingChange)="onEditing('site', $event)"
-      >
-        @if (siteLabel(); as site) {
-          <span fieldValue class="truncate font-medium">{{ site }}</span>
-        } @else {
-          <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.noSite">
-            No site
-          </span>
-        }
-
-        <hlm-combobox
-          fieldEditor
+    <div data-testid="intervention-field-site" class="min-w-0">
+      @if (canEditSite()) {
+        <app-inplace-field
+          #siteField
+          orientation="vertical"
           class="w-full"
-          [value]="intervention().site"
-          [itemToString]="siteLabelOf"
-          (valueChange)="pickSite($any($event))"
+          label="Site"
+          i18n-label="@@intervention.prop.site"
+          commit="pick"
+          [editable]="true"
+          [editing]="isEditing('site')"
+          [pending]="isSaving('site')"
+          [error]="errorFor('site')"
+          (editingChange)="onEditing('site', $event)"
         >
-          <label for="intervention-prop-site" class="sr-only" i18n="@@intervention.prop.site"
-            >Site</label
-          >
-          <hlm-combobox-input
-            inputId="intervention-prop-site"
-            placeholder="Search a site"
-            i18n-placeholder="@@intervention.cf.sitePlaceholder"
-          />
-          <hlm-combobox-content *hlmComboboxPortal>
-            <hlm-combobox-empty i18n="@@intervention.list.filterNoSite"
-              >No site matches.</hlm-combobox-empty
-            >
-            <div hlmComboboxList>
-              @for (option of siteOptions(); track option.value) {
-                <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
-              }
-            </div>
-          </hlm-combobox-content>
-        </hlm-combobox>
-      </app-inplace-field>
+          @if (siteLabel(); as site) {
+            <span fieldValue class="truncate font-medium">{{ site }}</span>
+          } @else {
+            <span fieldValue class="text-muted-foreground" i18n="@@intervention.prop.noSite">
+              No site
+            </span>
+          }
 
-      @if (siteFacilityId(); as facilityId) {
-        <a
-          hlmBtn
-          variant="ghost"
-          size="icon-sm"
-          class="size-6 shrink-0 max-sm:size-11"
-          data-testid="intervention-site-link"
-          [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
-          aria-label="Open site facility"
-          i18n-aria-label="@@intervention.prop.openSiteFacility"
-        >
-          <ng-icon name="lucideExternalLink" aria-hidden="true" />
-        </a>
+          <hlm-combobox
+            fieldEditor
+            class="w-full"
+            [value]="intervention().site"
+            [itemToString]="siteLabelOf"
+            (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
+            (valueChange)="pickSite($any($event))"
+          >
+            <label for="intervention-prop-site" class="sr-only" i18n="@@intervention.prop.site"
+              >Site</label
+            >
+            <hlm-combobox-input
+              inputId="intervention-prop-site"
+              placeholder="Search a site"
+              i18n-placeholder="@@intervention.cf.sitePlaceholder"
+            />
+            <hlm-combobox-content *hlmComboboxPortal>
+              <hlm-combobox-empty i18n="@@intervention.list.filterNoSite"
+                >No site matches.</hlm-combobox-empty
+              >
+              <div hlmComboboxList>
+                @for (option of siteOptions(); track option.value) {
+                  <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+                }
+              </div>
+              <app-intervention-catalogue-status
+                kind="sites"
+                [state]="catalogues().sites"
+                (requested)="catalogueRequested.emit($event)"
+              />
+            </hlm-combobox-content>
+          </hlm-combobox>
+        </app-inplace-field>
+      } @else {
+        <div class="flex min-h-11 min-w-0 flex-col items-start gap-1 px-2 py-2 text-sm sm:min-h-9">
+          <span class="text-xs text-muted-foreground" i18n="@@intervention.prop.site">Site</span>
+          @if (siteLabel(); as site) {
+            @if (siteFacilityId(); as facilityId) {
+              <a
+                class="min-w-0 truncate rounded-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                data-testid="intervention-site-link"
+                [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
+              >
+                {{ site }}
+              </a>
+            } @else {
+              <span class="truncate font-medium">{{ site }}</span>
+            }
+          } @else {
+            <span class="text-muted-foreground" i18n="@@intervention.prop.noSite">No site</span>
+          }
+        </div>
       }
     </div>
 
-    <div data-testid="intervention-field-responsible">
+    <div class="min-w-0" data-testid="intervention-field-responsible">
       <app-inplace-field
         #responsibleField
-        orientation="horizontal"
+        orientation="vertical"
         class="w-full"
         label="Responsible"
         i18n-label="@@intervention.cf.responsible"
@@ -147,6 +123,7 @@
           class="w-full"
           [value]="intervention().responsible"
           [itemToString]="memberLabelOf"
+          (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
           (valueChange)="pickResponsible($any($event))"
         >
           <label
@@ -186,15 +163,66 @@
                 </hlm-combobox-item>
               }
             </div>
+            <app-intervention-catalogue-status
+              kind="members"
+              [state]="catalogues().members"
+              (requested)="catalogueRequested.emit($event)"
+            />
           </hlm-combobox-content>
         </hlm-combobox>
       </app-inplace-field>
     </div>
 
-    <div data-testid="intervention-field-schedule">
+    <div class="min-w-0" data-testid="intervention-field-priority">
+      <app-inplace-field
+        #priorityField
+        orientation="vertical"
+        class="w-full"
+        label="Priority"
+        i18n-label="@@intervention.prop.priority"
+        commit="pick"
+        [editable]="canEditSchedule()"
+        [editing]="isEditing('priority')"
+        [pending]="isSaving('priority')"
+        [error]="errorFor('priority')"
+        (editingChange)="onEditing('priority', $event)"
+      >
+        <span fieldValue>
+          <app-intervention-tag kind="priority" [value]="intervention().priority" />
+        </span>
+
+        <hlm-select
+          fieldEditor
+          class="w-full"
+          [value]="intervention().priority"
+          (valueChange)="pickPriority($any($event))"
+        >
+          <label
+            for="intervention-prop-priority"
+            class="sr-only"
+            i18n="@@intervention.prop.priority"
+            >Priority</label
+          >
+          <hlm-select-trigger buttonId="intervention-prop-priority" class="w-full">
+            <hlm-select-value />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (priority of priorityValues; track priority) {
+                <hlm-select-item [value]="priority">
+                  <app-intervention-tag kind="priority" [value]="priority" asOption />
+                </hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      </app-inplace-field>
+    </div>
+
+    <div class="min-w-0" data-testid="intervention-field-schedule">
       <app-inplace-field
         #scheduleField
-        orientation="horizontal"
+        orientation="vertical"
         class="w-full"
         label="Planned window"
         i18n-label="@@intervention.cf.plannedRange"
@@ -234,24 +262,13 @@
       </app-inplace-field>
     </div>
   </div>
-</div>
-<hlm-collapsible class="block">
-  <button
-    hlmCollapsibleTrigger
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="sm"
-    class="max-sm:min-h-11"
-    i18n="@@intervention.prop.moreDetails"
+  <div
+    class="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 @sm/properties:grid-cols-2 @4xl/properties:grid-cols-3"
   >
-    More details
-  </button>
-  <div hlmCollapsibleContent class="grid gap-2 md:grid-cols-3">
     <div data-testid="intervention-field-participants">
       <app-inplace-field
         #participantsField
-        orientation="horizontal"
+        orientation="vertical"
         class="w-full"
         label="Participants"
         i18n-label="@@intervention.pf.participants"
@@ -286,6 +303,7 @@
           class="w-full"
           [value]="participantsDraft()"
           [itemToString]="memberLabelOf"
+          (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
           (valueChange)="participantsDraft.set($any($event))"
         >
           <hlm-combobox-chips>
@@ -327,6 +345,11 @@
                 </hlm-combobox-item>
               }
             </div>
+            <app-intervention-catalogue-status
+              kind="members"
+              [state]="catalogues().members"
+              (requested)="catalogueRequested.emit($event)"
+            />
           </hlm-combobox-content>
         </hlm-combobox-multiple>
       </app-inplace-field>
@@ -335,7 +358,7 @@
     <div data-testid="intervention-field-labels">
       <app-inplace-field
         #labelsField
-        orientation="horizontal"
+        orientation="vertical"
         class="w-full"
         label="Labels"
         i18n-label="@@intervention.sidebar.labels"
@@ -423,19 +446,15 @@
     </div>
 
     <div
-      class="flex min-h-11 items-center justify-between gap-2 px-2 text-sm sm:min-h-9"
+      class="flex min-h-11 min-w-0 flex-col items-start gap-1 px-2 py-2 text-sm sm:min-h-9"
       data-testid="intervention-field-revision"
     >
-      <span
-        class="w-24 shrink-0 text-xs text-muted-foreground"
-        i18n="@@intervention.sidebar.revision"
-      >
+      <span class="text-xs text-muted-foreground" i18n="@@intervention.sidebar.revision">
         Revision
       </span>
-      <span
-        class="flex min-w-0 flex-1 justify-end font-mono text-xs font-medium text-muted-foreground tabular-nums"
+      <span class="font-mono text-xs font-medium text-foreground tabular-nums"
         >v{{ intervention().revision }}</span
       >
     </div>
   </div>
-</hlm-collapsible>
+</div>

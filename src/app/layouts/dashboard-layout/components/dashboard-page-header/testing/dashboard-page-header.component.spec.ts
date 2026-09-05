@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import { TitleService } from '@core/title';
 import { DashboardPageHeader } from '../dashboard-page-header.component';
 
@@ -16,6 +17,7 @@ describe('DashboardPageHeader', () => {
         provideZonelessChangeDetection(),
         { provide: TitleService, useValue: { pageTitle } },
         { provide: PageActionsService, useValue: { actions: signal(null) } },
+        { provide: PageTabsService, useValue: { tabs: signal(null) } },
       ],
     });
 

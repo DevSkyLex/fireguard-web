@@ -110,12 +110,15 @@ describe('InterventionSignatureDialog', () => {
     expect(signed).toEqual([blob]);
   });
 
-  it('should emit dismissed on Skip without emitting signed', async () => {
+  it('should emit only the explicit unsigned submission intent on Skip', async () => {
+    const skipped = vi.fn();
+    fixture.componentInstance.skipped.subscribe(skipped);
     await setVisible(true);
 
     skipButton().click();
 
-    expect(dismissed).toBe(1);
+    expect(skipped).toHaveBeenCalledOnce();
+    expect(dismissed).toBe(0);
     expect(signed).toEqual([]);
   });
 

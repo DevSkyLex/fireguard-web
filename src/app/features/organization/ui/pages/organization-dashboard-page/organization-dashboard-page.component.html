@@ -1,4 +1,4 @@
-<div id="organization-dashboard" class="flex min-h-0 flex-col gap-6 p-4 md:p-6">
+<div id="organization-dashboard" class="flex min-h-0 flex-col gap-6">
   @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
     <div hlmEmpty>
       <div hlmEmptyHeader>
@@ -35,7 +35,8 @@
       </div>
     </div>
   } @else {
-    <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="org-dashboard-kpis">
+    <p class="text-sm font-medium" i18n="@@org.dashboard.currentSituation">Current situation</p>
+    <section class="grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="org-dashboard-kpis">
       @for (tile of kpiTiles(); track tile.id) {
         <div class="min-w-0" [attr.data-testid]="'org-dashboard-kpi-' + tile.id">
           <app-stat-tile
@@ -261,80 +262,92 @@
           }
         </div>
       </div>
-
-      <div hlmCard data-testid="org-statistics-chart-equipment">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>{{ equipmentSeriesName }}</h3>
-          @if (equipmentSummaryLine(); as line) {
-            <p hlmCardDescription>{{ line }}</p>
-          }
-        </div>
-        <div hlmCardContent>
-          @if (!assetGrowthTrendStore.canReadEquipment()) {
-            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
-          } @else if (assetGrowthTrendStore.queryHasError()) {
-            <app-organization-trend-chart-notice
-              icon="lucideTriangleAlert"
-              variant="error"
-              [message]="trendLoadErrorMessage"
-            >
-              <button
-                hlmBtn
-                variant="outline"
-                size="sm"
-                class="gap-2 max-sm:min-h-11"
-                (click)="retryAssetGrowthTrend()"
+    </div>
+    <div hlmCollapsible>
+      <button
+        hlmCollapsibleTrigger
+        hlmBtn
+        variant="ghost"
+        class="w-full justify-start max-sm:min-h-11"
+        i18n="@@org.dashboard.assetGrowth"
+      >
+        Resource additions — equipment and facilities
+      </button>
+      <div hlmCollapsibleContent class="grid gap-4 pt-4 lg:grid-cols-2">
+        <div hlmCard data-testid="org-statistics-chart-equipment">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle>{{ equipmentSeriesName }}</h3>
+            @if (equipmentSummaryLine(); as line) {
+              <p hlmCardDescription>{{ line }}</p>
+            }
+          </div>
+          <div hlmCardContent>
+            @if (!assetGrowthTrendStore.canReadEquipment()) {
+              <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+            } @else if (assetGrowthTrendStore.queryHasError()) {
+              <app-organization-trend-chart-notice
+                icon="lucideTriangleAlert"
+                variant="error"
+                [message]="trendLoadErrorMessage"
               >
-                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
-                <span i18n="@@org.statistics.retry">Retry</span>
-              </button>
-            </app-organization-trend-chart-notice>
-          } @else {
-            <app-line-chart
-              [series]="equipmentChartSeries()"
-              [label]="equipmentChartLabel"
-              [loading]="assetGrowthTrendStore.isQueryLoading()"
-              area
-            />
-          }
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="gap-2 max-sm:min-h-11"
+                  (click)="retryAssetGrowthTrend()"
+                >
+                  <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                  <span i18n="@@org.statistics.retry">Retry</span>
+                </button>
+              </app-organization-trend-chart-notice>
+            } @else {
+              <app-line-chart
+                [series]="equipmentChartSeries()"
+                [label]="equipmentChartLabel"
+                [loading]="assetGrowthTrendStore.isQueryLoading()"
+                area
+              />
+            }
+          </div>
         </div>
-      </div>
 
-      <div hlmCard data-testid="org-statistics-chart-facilities">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>{{ facilitiesSeriesName }}</h3>
-          @if (facilitiesSummaryLine(); as line) {
-            <p hlmCardDescription>{{ line }}</p>
-          }
-        </div>
-        <div hlmCardContent>
-          @if (!assetGrowthTrendStore.canReadFacilities()) {
-            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
-          } @else if (assetGrowthTrendStore.queryHasError()) {
-            <app-organization-trend-chart-notice
-              icon="lucideTriangleAlert"
-              variant="error"
-              [message]="trendLoadErrorMessage"
-            >
-              <button
-                hlmBtn
-                variant="outline"
-                size="sm"
-                class="gap-2 max-sm:min-h-11"
-                (click)="retryAssetGrowthTrend()"
+        <div hlmCard data-testid="org-statistics-chart-facilities">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle>{{ facilitiesSeriesName }}</h3>
+            @if (facilitiesSummaryLine(); as line) {
+              <p hlmCardDescription>{{ line }}</p>
+            }
+          </div>
+          <div hlmCardContent>
+            @if (!assetGrowthTrendStore.canReadFacilities()) {
+              <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
+            } @else if (assetGrowthTrendStore.queryHasError()) {
+              <app-organization-trend-chart-notice
+                icon="lucideTriangleAlert"
+                variant="error"
+                [message]="trendLoadErrorMessage"
               >
-                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
-                <span i18n="@@org.statistics.retry">Retry</span>
-              </button>
-            </app-organization-trend-chart-notice>
-          } @else {
-            <app-line-chart
-              [series]="facilitiesChartSeries()"
-              [label]="facilitiesChartLabel"
-              [loading]="assetGrowthTrendStore.isQueryLoading()"
-              area
-            />
-          }
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="gap-2 max-sm:min-h-11"
+                  (click)="retryAssetGrowthTrend()"
+                >
+                  <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
+                  <span i18n="@@org.statistics.retry">Retry</span>
+                </button>
+              </app-organization-trend-chart-notice>
+            } @else {
+              <app-line-chart
+                [series]="facilitiesChartSeries()"
+                [label]="facilitiesChartLabel"
+                [loading]="assetGrowthTrendStore.isQueryLoading()"
+                area
+              />
+            }
+          </div>
         </div>
       </div>
     </div>
@@ -344,7 +357,6 @@
   @if (canCreateInterventions()) {
     <button
       hlmBtn
-      size="sm"
       class="min-w-0 shrink gap-2 max-sm:min-h-11"
       i18n-aria-label="@@org.today.newIntervention"
       aria-label="New intervention"

@@ -14,6 +14,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
+import type {
+  PlanningCatalogueKind,
+  PlanningCatalogueState,
+} from '@features/organization/features/interventions/models';
 import type {
   InterventionDuplicatePrefill,
   InterventionTemplateInstantiateRequest,
@@ -23,6 +28,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { serverMessagesOf } from '@shared/form-feedback';
+import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -31,7 +37,6 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
@@ -74,6 +79,7 @@ import { HlmItemImports } from '@shared/ui/item';
 @Component({
   selector: 'app-intervention-create-sheet',
   imports: [
+    InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
     InterventionCreateForm,
@@ -83,7 +89,6 @@ import { HlmItemImports } from '@shared/ui/item';
     ...HlmComboboxImports,
     ...HlmDatePickerImports,
     ...HlmFieldImports,
-    ...HlmSelectImports,
     ...HlmSheetImports,
     ...HlmTabsImports,
     ...HlmAlertImports,
@@ -92,10 +97,45 @@ import { HlmItemImports } from '@shared/ui/item';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateSheet {
+  /**
+   * Property catalogueSearched
+   * @readonly
+   * @description Requests remote options without replacing the draft.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueSearched = output<PlanningCatalogueRequest>();
+  /**
+   * Property catalogues
+   * @readonly
+   * @description Loaded coverage and failures by preparation source.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogues = input<
+    Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
+  >({});
+  /**
+   * Property catalogueRequested
+   * @readonly
+   * @description Requests another source page while preserving the form.
+   * @access public
+   * @since 1.0.0
+   */
+  public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   /** Template selected by the collection menu before opening this sheet. */
   /** Failure of the distinct template instantiation command. */
   public readonly templateServerError: InputSignal<unknown> = input<unknown>(null);
 
+  /**
+   * Property initialTemplateId
+   * @readonly
+   * @description Template preselected when the creation sheet opens from a template action.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
   public readonly initialTemplateId: InputSignal<string | null> = input<string | null>(null);
 
   /** Only the active mode exposes a form and its submit action; both drafts remain mounted. */

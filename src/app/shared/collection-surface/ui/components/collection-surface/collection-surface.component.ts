@@ -113,7 +113,7 @@ type CollectionSurfaceSlot = 'error' | 'empty' | 'surface';
     HlmSkeleton,
     CollectionSkeletonRows,
   ],
-  host: { class: '@container/surface flex h-full w-full min-h-0 flex-col' },
+  host: { class: '@container/surface flex h-auto w-full min-h-fit flex-col md:h-full md:min-h-0' },
   templateUrl: './collection-surface.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -418,6 +418,14 @@ export class CollectionSurface {
     return `${base} ${height}`;
   });
 
+  /**
+   * Property tableWrapperClass
+   * @readonly
+   * @description Responsive table wrapper classes; scrolling requires a bounded desktop container.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
   protected readonly tableWrapperClass: Signal<string> = computed<string>(() => {
     const base: string = 'min-h-0 flex-1 overflow-hidden rounded-md border border-border';
 
@@ -448,12 +456,12 @@ export class CollectionSurface {
   protected readonly cardsWrapperClass: Signal<string> = computed<string>(() => {
     switch (this.compactBreakpoint()) {
       case 'xl':
-        return 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto @xl/surface:hidden';
+        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @xl/surface:hidden';
       case '3xl':
-        return 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto @3xl/surface:hidden';
+        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @3xl/surface:hidden';
       case '2xl':
       default:
-        return 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto @2xl/surface:hidden';
+        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @2xl/surface:hidden';
     }
   });
 

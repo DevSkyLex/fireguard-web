@@ -193,19 +193,6 @@ export const NotificationStore = signalStore(
     listError: computed<StoreError | null>(() => store.listCallState().error),
 
     /**
-     * Computed unreadCount
-     *
-     * @description
-     * Number of unread notifications in the local entity collection.
-     * Used to display a badge count on the bell icon.
-     *
-     * @since 1.0.0
-     *
-     * @returns {number}
-     */
-    unreadCount: computed<number>(() => store.unreadCount()),
-
-    /**
      * Computed hasUnread
      *
      * @description

@@ -36,6 +36,18 @@ const INTERVENTION_RETIRED_STORE_NAMES: readonly string[] = ['snapshots'];
 export class InterventionDatabaseService extends IndexedDbService {
   //#region Properties
   /**
+   * Method currentOwnerId
+   * @method currentOwnerId
+   * @description Identifies the account owning local operations without reading persisted credentials.
+   * @access public
+   * @since 1.0.0
+   * @returns {string | null} Authenticated subject, or null.
+   */
+  public currentOwnerId(): string | null {
+    return this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+  }
+
+  /**
    * Property schema
    * @readonly
    *
@@ -89,9 +101,7 @@ export class InterventionDatabaseService extends IndexedDbService {
    *
    * @return {Promise<void>} A promise resolving once local stores are bound to the user.
    */
-  public override ensureOwnerBound(
-    userId: string | null = this.identity.profile()?.sub ?? null,
-  ): Promise<void> {
+  public override ensureOwnerBound(userId: string | null = this.currentOwnerId()): Promise<void> {
     return super.ensureOwnerBound(userId);
   }
   //#endregion

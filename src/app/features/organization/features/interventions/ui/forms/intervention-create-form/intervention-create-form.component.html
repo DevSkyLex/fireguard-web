@@ -92,13 +92,17 @@
       </hlm-field-group>
     </fieldset>
     <fieldset hlmFieldSet>
-      <legend hlmFieldLegend i18n="@@intervention.cf.optionalPlanning">Planning (optional)</legend>
+      <legend hlmFieldLegend i18n="@@intervention.cf.assignment">Assignment</legend>
       <hlm-field-group>
         <hlm-field>
           <label hlmFieldLabel for="intervention-create-site" i18n="@@intervention.cf.site"
             >Site</label
           >
-          <hlm-combobox [formField]="createForm.site" [itemToString]="siteLabelOf">
+          <hlm-combobox
+            [formField]="createForm.site"
+            [itemToString]="siteLabelOf"
+            (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
+          >
             <hlm-combobox-input
               class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
               inputId="intervention-create-site"
@@ -116,6 +120,11 @@
               </div>
             </hlm-combobox-content>
           </hlm-combobox>
+          <app-intervention-catalogue-status
+            kind="sites"
+            [state]="catalogues().sites"
+            (requested)="catalogueRequested.emit($event)"
+          />
         </hlm-field>
 
         <hlm-field>
@@ -125,7 +134,11 @@
             i18n="@@intervention.cf.responsible"
             >Responsible</label
           >
-          <hlm-combobox [formField]="createForm.responsible" [itemToString]="memberLabelOf">
+          <hlm-combobox
+            [formField]="createForm.responsible"
+            [itemToString]="memberLabelOf"
+            (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
+          >
             <hlm-combobox-input
               class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
               inputId="intervention-create-responsible"
@@ -156,8 +169,21 @@
               </div>
             </hlm-combobox-content>
           </hlm-combobox>
+          <app-intervention-catalogue-status
+            kind="members"
+            [state]="catalogues().members"
+            (requested)="catalogueRequested.emit($event)"
+          />
         </hlm-field>
-
+      </hlm-field-group>
+    </fieldset>
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@intervention.cf.calendar">Calendar</legend>
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.cf.planningRequirements">
+        Site, responsible, start and due date are needed to plan. You can complete them after
+        creating the draft.
+      </p>
+      <hlm-field-group>
         <hlm-field>
           <label
             hlmFieldLabel

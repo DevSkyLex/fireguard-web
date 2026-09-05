@@ -257,8 +257,7 @@ export class InterventionSyncService {
         // to a plain conflict mark when the revision cannot be resolved (the
         // re-fetch failed, or the operation carries no revision to rebase).
         const rebasedRevision = await this.currentRevision(operation);
-        const queuedRevision = (operation.payload as { readonly revision?: number }).revision;
-        if (rebasedRevision !== null && rebasedRevision !== queuedRevision) {
+        if (rebasedRevision !== null) {
           await this.offline.rebaseOutboxRevision(operation.id, rebasedRevision, detail);
         } else {
           await this.offline.markOutboxConflict(operation.id, detail);

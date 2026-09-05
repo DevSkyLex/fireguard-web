@@ -207,12 +207,12 @@ export class InterventionOutboxRepository {
     if (this.database.browser) {
       effect(() => {
         const profile = this.identity.profile();
-        if (!profile?.sub) {
+        const owner = profile?.id ?? profile?.sub;
+        if (!owner) {
           return;
         }
-        const sub: string = profile.sub;
         void this.database
-          .ensureOwnerBound(sub)
+          .ensureOwnerBound(owner)
           .then(() => this.refresh())
           .catch(() => undefined);
       });
@@ -439,7 +439,15 @@ export class InterventionOutboxRepository {
     await this.database.ensureOwnerBound();
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
-    await this.database.put('outbox', id, { ...operation, status: 'conflict', error });
+    await this.database.put('outbox', id, {
+      ...operation,
+      baseRevision:
+        operation.baseRevision ??
+        ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
+      serverRevision: null,
+      status: 'conflict',
+      error,
+    });
     await this.refresh();
   }
 
@@ -480,6 +488,10 @@ export class InterventionOutboxRepository {
     await this.database.put('outbox', id, {
       ...operation,
       payload: { ...operation.payload, revision },
+      baseRevision:
+        operation.baseRevision ??
+        ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
+      serverRevision: revision,
       status: 'conflict',
       error,
     });

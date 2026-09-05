@@ -19,7 +19,7 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import type { OrganizationAssetsPaneState } from './models';
 
-/** Page size for the compact right-pane lists — this view previews, it does not paginate. */
+/** Page size for the compact right-pane lists — each resource has its own server page and total. */
 const PANE_ITEMS_PER_PAGE = 50;
 
 /**
@@ -31,6 +31,12 @@ const PANE_ITEMS_PER_PAGE = 50;
  * @since 1.0.0
  */
 const INITIAL_STATE: OrganizationAssetsPaneState = {
+  equipmentPage: 1,
+  equipmentTotal: 0,
+  equipmentScope: '',
+  inspectionPage: 1,
+  inspectionTotal: 0,
+  inspectionScope: '',
   equipmentListCallState: idleCallState(),
   inspectionListCallState: idleCallState(),
 };
@@ -66,6 +72,12 @@ export const OrganizationAssetsPaneStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
+    equipmentPageCount: computed(() =>
+      Math.max(1, Math.ceil(store.equipmentTotal() / PANE_ITEMS_PER_PAGE)),
+    ),
+    inspectionPageCount: computed(() =>
+      Math.max(1, Math.ceil(store.inspectionTotal() / PANE_ITEMS_PER_PAGE)),
+    ),
     /** The equipment currently in view. */
     equipment: computed<readonly EquipmentOutput[]>(
       () => store.equipmentListCallState().data ?? [],
@@ -109,23 +121,35 @@ export const OrganizationAssetsPaneStore = signalStore(
        *
        * @type {rxMethod<{ organizationId: string; facilityId?: string }>}
        */
-      loadEquipment: rxMethod<{ readonly organizationId: string; readonly facilityId?: string }>(
+      loadEquipment: rxMethod<{
+        readonly organizationId: string;
+        readonly facilityId?: string;
+        readonly page?: number;
+      }>(
         pipe(
-          switchMap(({ organizationId, facilityId }) => {
+          switchMap(({ organizationId, facilityId, page = 1 }) => {
             patchState(store, {
-              equipmentListCallState: pendingCallState(store.equipmentListCallState().data),
+              equipmentPage: page,
+              equipmentScope: `${organizationId}:${facilityId ?? ''}`,
+              equipmentListCallState: pendingCallState(
+                store.equipmentScope() === `${organizationId}:${facilityId ?? ''}`
+                  ? store.equipmentListCallState().data
+                  : null,
+              ),
             });
 
             const request = facilityId
               ? equipmentService.listByFacility(organizationId, facilityId, {
+                  page,
                   itemsPerPage: PANE_ITEMS_PER_PAGE,
                 })
-              : equipmentService.list(organizationId, { itemsPerPage: PANE_ITEMS_PER_PAGE });
+              : equipmentService.list(organizationId, { page, itemsPerPage: PANE_ITEMS_PER_PAGE });
 
             return request.pipe(
               tapResponse({
                 next: (collection: HydraCollection<EquipmentOutput>): void => {
                   patchState(store, {
+                    equipmentTotal: collection.totalItems,
                     equipmentListCallState: successCallState(collection.member),
                   });
                 },
@@ -155,23 +179,35 @@ export const OrganizationAssetsPaneStore = signalStore(
        *
        * @type {rxMethod<{ organizationId: string; facilityId?: string }>}
        */
-      loadInspections: rxMethod<{ readonly organizationId: string; readonly facilityId?: string }>(
+      loadInspections: rxMethod<{
+        readonly organizationId: string;
+        readonly facilityId?: string;
+        readonly page?: number;
+      }>(
         pipe(
-          switchMap(({ organizationId, facilityId }) => {
+          switchMap(({ organizationId, facilityId, page = 1 }) => {
             patchState(store, {
-              inspectionListCallState: pendingCallState(store.inspectionListCallState().data),
+              inspectionPage: page,
+              inspectionScope: `${organizationId}:${facilityId ?? ''}`,
+              inspectionListCallState: pendingCallState(
+                store.inspectionScope() === `${organizationId}:${facilityId ?? ''}`
+                  ? store.inspectionListCallState().data
+                  : null,
+              ),
             });
 
             const request = facilityId
               ? inspectionService.listByFacility(organizationId, facilityId, {
+                  page,
                   itemsPerPage: PANE_ITEMS_PER_PAGE,
                 })
-              : inspectionService.list(organizationId, { itemsPerPage: PANE_ITEMS_PER_PAGE });
+              : inspectionService.list(organizationId, { page, itemsPerPage: PANE_ITEMS_PER_PAGE });
 
             return request.pipe(
               tapResponse({
                 next: (collection: HydraCollection<InspectionOutput>): void => {
                   patchState(store, {
+                    inspectionTotal: collection.totalItems,
                     inspectionListCallState: successCallState(collection.member),
                   });
                 },

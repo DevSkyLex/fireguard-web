@@ -41,6 +41,24 @@ import { lucideCircleCheck, lucideCircleDashed } from '@ng-icons/lucide';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPublicationSummary {
+  /**
+   * Property published
+   * @readonly
+   * @description Displays confirmed publication outcomes instead of proposed changes.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly published = input(false);
+  /**
+   * Property appliedChanges
+   * @readonly
+   * @description Applied changes available in the loaded intervention history.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<number>}
+   */
+  public readonly appliedChanges = input(0);
   //#region Inputs
   /**
    * Property pendingChanges

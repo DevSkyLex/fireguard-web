@@ -20,7 +20,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendar1,
   lucideCalendarDays,
+  lucideCalendarRange,
   lucideChevronDown,
   lucideChevronLeft,
   lucideChevronRight,
@@ -30,6 +32,7 @@ import {
   lucideRss,
 } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -120,14 +123,14 @@ type CalendarPageAgendaGroup = {
  * inspections, interventions, preventive maintenance — read from the
  * backend's unified feed, at three granularities: the month grid, one week
  * as a seven-day agenda list, or a single day's list. A full-height console:
- * a page-level toolbar band (Today, prev/next period, the current period
- * label, the Month/Week/Day selector) drives the page's own
+ * a page-level toolbar band (Today, prev/next period and the current period
+ * label) drives the page's own
  * `month`/`granularity`/`selectedDay` state — the shared `app-calendar`
  * widget renders with its own built-in toolbar hidden (`showToolbar="false"`)
  * so the two never duplicate — and the active view fills the remaining
  * height, scrolling internally when it overflows. The Month/Week/Day
- * selector is `hlm-tabs` (`@shared/ui/tabs`), not a hand-rolled
- * `role="tablist"`: the whole toolbar-plus-content section sits inside one
+ * selector is a paginated Spartan `line` tab list projected beneath the
+ * shell page title through `PageTabsService`. The toolbar-plus-content section sits inside one
  * `[tab]="granularity()"`-bound `hlm-tabs`, which owns the roving tabindex,
  * arrow-key navigation and `aria-controls`/`aria-selected` wiring the three
  * panels below reference through `hlmTabsContent`; `class="contents"` on the
@@ -145,9 +148,7 @@ type CalendarPageAgendaGroup = {
  * authenticated read that would immediately refetch after hydration
  * (ARCHITECTURE.md §12.5-3). The toolbar's "Subscribe (iCal)" button opens
  * the feed-token dialog (`CalendarFeedSubscribeDialog`), which owns its own
- * transport calls — this page only holds its visibility. The selector occupies
- * an independent toolbar column on desktop and its own row on mobile, so a
- * changing period label never shifts it. Header actions use a native Spartan
+ * transport calls — this page only holds its visibility. Header actions use a native Spartan
  * creation split button with Subscribe in its menu; read-only viewers retain
  * the direct Subscribe action.
  *
@@ -180,7 +181,9 @@ type CalendarPageAgendaGroup = {
       lucideChevronRight,
       lucideCircleAlert,
       lucidePlus,
+      lucideCalendar1,
       lucideCalendarDays,
+      lucideCalendarRange,
       lucideChevronDown,
       lucideRss,
     }),
@@ -553,6 +556,35 @@ export class CalendarPage {
   /** "Subscribe (iCal)" and "New event", registered on the shell's title band rather than left in the toolbar — the toolbar keeps only what scopes the view (Today, prev/next, granularity). */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
+  /**
+   * Property pageTabsService
+   * @readonly
+   *
+   * @description
+   * Shell registry receiving the Month, Week and Day navigation.
+   *
+   * @access private
+   * @since 2.4.0
+   *
+   * @type {PageTabsService}
+   */
+  private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property pageTabs
+   * @readonly
+   *
+   * @description
+   * Native Spartan line tabs projected beneath the dashboard page title.
+   *
+   * @access private
+   * @since 2.4.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageTabs');
   //#endregion
 
   //#region Constructor
@@ -572,7 +604,9 @@ export class CalendarPage {
    * @since 2.2.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    const destroyRef: DestroyRef = inject(DestroyRef);
+    registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
+    registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
 
     effect((): void => {
       const organizationId: string = this.organizationId();

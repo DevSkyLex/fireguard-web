@@ -17031,7 +17031,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.wit.filteredEmptyDesc" datatype="html">
-        <source> Try another chip, or clear the filter to see the whole scope. </source>
+        <source> Choose another status, or show all work items. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-work-item-table/intervention-work-item-table.component.html</context>
           <context context-type="linenumber">457,460</context>
@@ -17684,7 +17684,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.emptyDesc" datatype="html">
-        <source> Adjust your filters, or track equipment to see its schedule here. </source>
+        <source> Adjust your search or filters, or track equipment to see its schedule here. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.html</context>
           <context context-type="linenumber">179,182</context>
@@ -23143,6 +23143,57 @@
           <context context-type="sourcefile">src/app/shared/unsaved-changes/ui/components/unsaved-changes-dialog/unsaved-changes-dialog.component.html</context>
           <context context-type="linenumber">22,24</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.checklist.description" datatype="html">
+        <source>Review the preparation for this intervention before planning it.</source>
+      </trans-unit>
+      <trans-unit id="account.profile.detailsDescription" datatype="html">
+        <source>Update the name and language used for your account.</source>
+      </trans-unit>
+      <trans-unit id="account.profile.accountDescription" datatype="html">
+        <source>Review your sign-in address, account history and assigned roles.</source>
+      </trans-unit>
+      <trans-unit id="account.danger.description" datatype="html">
+        <source>Manage actions that can permanently affect access to your account.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.general.sectionTitle" datatype="html">
+        <source>Organization details</source>
+      </trans-unit>
+      <trans-unit id="org.settings.general.sectionDescription" datatype="html">
+        <source>Manage the name, description and logo shown throughout this workspace.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.sectionDescription" datatype="html">
+        <source>Keep the legal identity used for billing and compliance records up to date.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.invoicesDescription" datatype="html">
+        <source>View and download billing documents for this organization.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.sectionTitle" datatype="html">
+        <source>Regional settings</source>
+      </trans-unit>
+      <trans-unit id="org.settings.regional.sectionDescription" datatype="html">
+        <source>Set the timezone, date format and measurements used across the organization.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.reminderDescription" datatype="html">
+        <source>Set how early upcoming inspection deadlines should be surfaced.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.compliance.automationDescription" datatype="html">
+        <source>Choose when Fireguard should create corrective work automatically.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.approval.sectionDescription" datatype="html">
+        <source>Decide which sensitive actions require a second authorized member.</source>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.cadenceYear" datatype="html">
+        <source>per year</source>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.cadenceMonth" datatype="html">
+        <source>per month</source>
+      </trans-unit>
+      <trans-unit id="approvals.list.searchPlaceholder" datatype="html">
+        <source>Search approval requests...</source>
+      </trans-unit>
+      <trans-unit id="maintenance.list.searchPlaceholder" datatype="html">
+        <source>Search schedules...</source>
       </trans-unit>
     </body>
   </file>

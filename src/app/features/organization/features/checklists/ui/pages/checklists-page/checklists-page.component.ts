@@ -17,6 +17,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -31,8 +32,6 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ChecklistOutput,
   ChecklistStatus,
-  CreateChecklistInput,
-  UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
 import {
   ChecklistStore,
@@ -57,8 +56,6 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
 import { ChecklistArchiveDialog } from '../../dialogs/checklist-archive-dialog';
-import { ChecklistEditDialog } from '../../dialogs/checklist-edit-dialog';
-import { ChecklistCreateSheet } from '../../sheets/checklist-create-sheet';
 import { ChecklistTable } from '../../tables/checklist-table';
 
 /** The page sizes offered under the table — the server default first. */
@@ -108,8 +105,6 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
     NgIcon,
     ...HlmEmptyImports,
     ChecklistArchiveDialog,
-    ChecklistCreateSheet,
-    ChecklistEditDialog,
     ChecklistStatusTag,
     ChecklistTable,
     CollectionFilterBar,
@@ -129,6 +124,15 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecklistsPage {
+  /**
+   * Property router
+   * @readonly
+   * @description Navigates between the owning feature routes.
+   * @access private
+   * @since 1.0.0
+   * @type {InstanceType<typeof Router>}
+   */
+  private readonly router = inject(Router);
   //#region Inputs
   /**
    * Property organizationId
@@ -281,18 +285,13 @@ export class ChecklistsPage {
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
   > = computed(() => ({ status: this.statusChipTemplate() }));
 
-  /** Whether the create dialog is open. */
-  protected readonly createDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
-
-  /** The checklist currently open in the edit dialog, or `null` when it is closed. */
-  protected readonly editingChecklist: WritableSignal<ChecklistOutput | null> =
-    signal<ChecklistOutput | null>(null);
-
   /** The checklist currently open in the archive confirmation, or `null` when it is closed. */
   protected readonly archivingChecklist: WritableSignal<ChecklistOutput | null> =
     signal<ChecklistOutput | null>(null);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * * Registers {@link pageActions} on the shell header.
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
   /** The "New checklist" button, registered on the shell header instead of the toolbar. */
@@ -333,28 +332,6 @@ export class ChecklistsPage {
             itemsPerPage: pageSize,
           },
         });
-      });
-    });
-
-    effect((): void => {
-      const callState: CallState<ChecklistOutput | null> = this.store.createCallState();
-
-      untracked((): void => {
-        if (callState.status !== 'success') return;
-
-        this.createDialogVisible.set(false);
-        this.store.resetCreateOperation();
-      });
-    });
-
-    effect((): void => {
-      const callState: CallState<ChecklistOutput | null> = this.store.updateCallState();
-
-      untracked((): void => {
-        if (callState.status !== 'success') return;
-
-        this.editingChecklist.set(null);
-        this.store.resetUpdateOperation();
       });
     });
 
@@ -534,19 +511,8 @@ export class ChecklistsPage {
    * @returns {void}
    */
   protected openCreateDialog(): void {
-    this.createDialogVisible.set(true);
-  }
-
-  /**
-   * Method createChecklist
-   * @description Sends the create write. The dialog closes once the store settles, via the constructor effect.
-   * @access protected
-   * @since 2.0.0
-   * @param {CreateChecklistInput} payload - The validated creation payload.
-   * @returns {void}
-   */
-  protected createChecklist(payload: CreateChecklistInput): void {
-    this.store.create({ organizationId: this.organizationId(), input: payload });
+    if (this.canWrite())
+      void this.router.navigate(['/organizations', this.organizationId(), 'checklists', 'new']);
   }
 
   /**
@@ -558,26 +524,12 @@ export class ChecklistsPage {
    * @returns {void}
    */
   protected requestEdit(checklist: ChecklistOutput): void {
-    this.editingChecklist.set(checklist);
-  }
-
-  /**
-   * Method submitEdit
-   * @description Sends the update write for the checklist currently open in the edit dialog. The dialog closes once the store settles, via the constructor effect.
-   * @access protected
-   * @since 2.0.0
-   * @param {UpdateChecklistInput} payload - The validated update payload.
-   * @returns {void}
-   */
-  protected submitEdit(payload: UpdateChecklistInput): void {
-    const checklist: ChecklistOutput | null = this.editingChecklist();
-    if (checklist === null) return;
-
-    this.store.update({
-      organizationId: this.organizationId(),
-      checklistId: checklist.id,
-      input: payload,
-    });
+    void this.router.navigate([
+      '/organizations',
+      this.organizationId(),
+      'checklists',
+      checklist.id,
+    ]);
   }
 
   /**
@@ -590,20 +542,6 @@ export class ChecklistsPage {
    */
   protected requestArchive(checklist: ChecklistOutput): void {
     this.archivingChecklist.set(checklist);
-  }
-
-  /**
-   * Method onEditDialogVisibleChanged
-   * @description Clears the editing target on any dismissal — Cancel, the backdrop or Escape.
-   * @access protected
-   * @since 2.0.0
-   * @param {boolean} visible - The dialog's new visibility.
-   * @returns {void}
-   */
-  protected onEditDialogVisibleChanged(visible: boolean): void {
-    if (visible) return;
-
-    this.editingChecklist.set(null);
   }
 
   /**

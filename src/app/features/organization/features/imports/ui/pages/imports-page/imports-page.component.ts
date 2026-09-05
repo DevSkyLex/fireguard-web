@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -177,14 +178,30 @@ export class ImportsPage {
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
   /** The job currently opened in the report panel, or `null` when it is closed. */
-  protected readonly selectedJob: WritableSignal<ImportJobOutput | null> =
-    signal<ImportJobOutput | null>(null);
+  protected readonly selectedJobId = linkedSignal<string, string | null>({
+    source: () => this.organizationId(),
+    computation: () => null,
+  });
+  /**
+   * Property selectedJob
+   * @readonly
+   * @description Resolves the open report from the live entity cache rather than a stale object copy.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ImportJobOutput | null>}
+   */
+  protected readonly selectedJob = computed(() => {
+    const id = this.selectedJobId();
+    return id ? (this.store.jobEntityMap()[id] ?? null) : null;
+  });
 
   /** The active "Kind" narrowing, or `null` when every kind is shown. Not URL-synced — this page persists no other query state either. */
   protected readonly kindFilter: WritableSignal<ImportJobKind | null> =
     signal<ImportJobKind | null>(null);
 
-  /** Every kind the filter offers, unlike {@link availableKindOptions} — narrowing what a reader sees needs no write permission. */
+  /**
+   * * Every kind the filter offers, unlike {@link availableKindOptions} — narrowing what a reader sees needs no write permission.
+   */
   protected readonly kindFilterOptions: typeof IMPORT_JOB_KIND_OPTIONS = IMPORT_JOB_KIND_OPTIONS;
 
   /** The filter bar's field catalog — a single "Kind" chip. */
@@ -312,19 +329,6 @@ export class ImportsPage {
           options: { page, itemsPerPage: pageSize },
           query: kind ? { kind } : undefined,
         });
-      });
-    });
-
-    effect((): void => {
-      const job: ImportJobOutput | null = this.selectedJob();
-      if (job === null) return;
-
-      const updated: ImportJobOutput | undefined = this.store
-        .jobs()
-        .find((candidate: ImportJobOutput) => candidate.id === job.id);
-
-      untracked((): void => {
-        if (updated && updated !== job) this.selectedJob.set(updated);
       });
     });
   }
@@ -482,7 +486,8 @@ export class ImportsPage {
    * @returns {void}
    */
   protected openReport(job: ImportJobOutput): void {
-    this.selectedJob.set(job);
+    this.selectedJobId.set(job.id);
+    this.store.refresh(job.id);
   }
 
   /**
@@ -493,7 +498,7 @@ export class ImportsPage {
    * @returns {void}
    */
   protected closeReport(): void {
-    this.selectedJob.set(null);
+    this.selectedJobId.set(null);
   }
   //#endregion
 }

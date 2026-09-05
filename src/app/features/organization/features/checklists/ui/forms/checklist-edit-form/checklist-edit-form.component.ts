@@ -2,14 +2,23 @@ import {
   ChangeDetectionStrategy,
   Component,
   effect,
+  computed,
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
-import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
+import {
+  applyEach,
+  form,
+  FormField,
+  maxLength,
+  required,
+  type FieldTree,
+} from '@angular/forms/signals';
 import type {
   ChecklistItemDraft,
   ChecklistItemInput,
@@ -72,6 +81,52 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecklistEditForm {
+  /**
+   * Property error
+   * @readonly
+   * @description Server or validation error retained beside the current draft.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly error = input<string | null>(null);
+  /**
+   * Property creating
+   * @readonly
+   * @description Whether this editor creates a checklist rather than updating one.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly creating = input(false);
+  /**
+   * Property dirtyChanged
+   * @readonly
+   * @description Reports unsaved input to the owning overlay or route guard.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<boolean>}
+   */
+  public readonly dirtyChanged = output<boolean>();
+  /**
+   * Property baseline
+   * @readonly
+   * @description Serialized last accepted draft used to identify unsaved changes.
+   * @access private
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
+  private readonly baseline = signal('');
+  /**
+   * Property draftError
+   * @readonly
+   * @description Validation feedback for staged checklist items.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly draftError = signal<string | null>(null);
+
   //#region Inputs
   /**
    * Property visible
@@ -184,6 +239,37 @@ export class ChecklistEditForm {
       });
     },
   );
+  /**
+   * Property stagedForm
+   * @readonly
+   * @description Signal Forms validation tree for editable checklist labels.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<readonly ChecklistItemDraft[]>}
+   */
+  protected readonly stagedForm = form(this.staged, (path) => {
+    applyEach(path, (item) => {
+      required(item.label, {
+        message: $localize`:@@checklists.form.itemLabelRequired:The item needs a label.`,
+      });
+      maxLength(item.label, ITEM_LABEL_MAX_LENGTH);
+      maxLength(item.description, ITEM_DESCRIPTION_MAX_LENGTH);
+    });
+  });
+  /**
+   * Property dirty
+   * @readonly
+   * @description Whether the current draft differs from its accepted baseline.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly dirty = computed(
+    () =>
+      this.baseline() !== JSON.stringify({ name: this.model().name, items: this.staged() }) ||
+      this.itemDraft().label !== '' ||
+      this.itemDraft().description !== '',
+  );
   //#endregion
 
   //#region Lifecycle
@@ -210,9 +296,13 @@ export class ChecklistEditForm {
             required: item.required,
           })),
       );
+      untracked(() =>
+        this.baseline.set(JSON.stringify({ name: this.model().name, items: this.staged() })),
+      );
       this.itemDraft.set(EMPTY_ITEM);
       this.itemDraftForm().reset();
     });
+    effect(() => this.dirtyChanged.emit(this.dirty()));
   }
   //#endregion
 
@@ -283,6 +373,19 @@ export class ChecklistEditForm {
 
     if (this.nameForm().invalid() || this.pending()) return;
 
+    this.draftError.set(null);
+    if (this.itemDraft().label !== '' || this.itemDraft().description !== '') {
+      this.itemDraftForm().markAsTouched();
+      if (this.itemDraftForm().invalid()) return;
+      this.addItem();
+    }
+    this.stagedForm().markAsTouched();
+    if (this.stagedForm().invalid() || this.staged().some((item) => !item.label.trim())) {
+      this.draftError.set(
+        $localize`:@@checklists.form.invalidItems:Check the labels and descriptions of the checklist items.`,
+      );
+      return;
+    }
     const items: ReadonlyArray<ChecklistItemInput> = this.staged().map(
       (draft: ChecklistItemDraft, position: number): ChecklistItemInput => ({
         label: draft.label.trim(),

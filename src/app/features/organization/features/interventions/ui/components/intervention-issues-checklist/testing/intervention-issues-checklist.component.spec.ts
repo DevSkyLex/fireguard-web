@@ -113,9 +113,11 @@ describe('InterventionIssuesChecklist', () => {
 
   it('should show the positive line only under review with no blockers', async () => {
     await setup([], 'review');
-
+    expect(clearNotice()).toBeNull();
+    fixture.componentRef.setInput('verified', true);
+    await fixture.whenStable();
     expect(clearNotice()).not.toBeNull();
-    expect(clearNotice()?.textContent).toContain('No blockers');
+    expect(clearNotice()?.textContent).toContain('No blocking issues detected');
   });
 
   it('should not show the positive line outside the review phase', async () => {

@@ -13,6 +13,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
+import { PageTabsService } from '@core/page-tabs';
 import {
   errorCallState,
   idleCallState,
@@ -52,6 +53,14 @@ class PageActionsHost {
 const renderPageActions = (): HTMLElement => {
   const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
   hostFixture.componentRef.setInput('template', TestBed.inject(PageActionsService).actions());
+  hostFixture.detectChanges();
+
+  return hostFixture.nativeElement as HTMLElement;
+};
+
+const renderPageTabs = (): HTMLElement => {
+  const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
+  hostFixture.componentRef.setInput('template', TestBed.inject(PageTabsService).tabs());
   hostFixture.detectChanges();
 
   return hostFixture.nativeElement as HTMLElement;
@@ -218,6 +227,7 @@ describe('OrganizationMembersPage', () => {
     if (roleIdParam !== undefined) fixture.componentRef.setInput('roleId', roleIdParam);
     if (tabParam !== undefined) fixture.componentRef.setInput('tab', tabParam);
     await fixture.whenStable();
+    (fixture.nativeElement as HTMLElement).appendChild(renderPageTabs());
   }
 
   beforeEach(() => {

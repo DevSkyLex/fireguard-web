@@ -1,0 +1,67 @@
+<div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-xl font-semibold">
+      @if (checklistId()) {
+        {{ active.selectedChecklist()?.name }}
+      } @else {
+        <span i18n="@@checklists.list.new">New checklist</span>
+      }
+    </h1>
+    <button hlmBtn type="button" variant="outline" (click)="back()" i18n="@@checklists.detail.back">
+      Back to checklists
+    </button>
+  </div>
+  @if (active.getCallState().status === 'error') {
+    <div role="alert" class="flex flex-col gap-3">
+      <p class="text-destructive">{{ active.getCallState().error?.message }}</p>
+      <button hlmBtn variant="outline" (click)="reload()" i18n="@@common.retry">Retry</button>
+    </div>
+  } @else if (checklistId() && !active.selectedChecklist()) {
+    <div hlmSkeleton class="h-32 w-full"></div>
+  } @else {
+    @if (active.selectedChecklist(); as checklist) {
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <app-checklist-status-tag [value]="checklist.status" /><span
+          i18n="@@checklists.detail.itemCount"
+          >{{ checklist.items.length }} items</span
+        >
+      </div>
+    }
+    @if (canWrite()) {
+      <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.editorHelp">
+        Order the checks as they should be performed in the field. Arrow buttons also work with the
+        keyboard. A completed new item is included when you save.
+      </p>
+      <app-checklist-edit-form
+        [visible]="true"
+        [creating]="!checklistId()"
+        [checklist]="active.selectedChecklist()"
+        [pending]="pending()"
+        [error]="store.updateError()?.message ?? store.createError()?.message ?? null"
+        (submitted)="save($event)"
+        (cancelled)="back()"
+        (dirtyChanged)="dirty.set($event)"
+      />
+    } @else if (active.selectedChecklist(); as checklist) {
+      <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.readOnly">
+        This checklist is available for consultation.
+      </p>
+      <ol class="divide-y">
+        @for (item of checklist.items; track item.id) {
+          <li class="flex flex-col gap-1 py-4">
+            <span class="font-medium">{{ $index + 1 }}. {{ item.label }}</span>
+            <p class="text-sm text-muted-foreground">{{ item.description }}</p>
+            @if (item.required) {
+              <span class="text-xs" i18n="@@checklists.form.itemRequired">Required item</span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  }
+</div>
+<app-unsaved-changes-dialog
+  [state]="discardOpen() ? 'open' : 'closed'"
+  (confirmed)="resolveLeave(true)"
+  (dismissed)="resolveLeave(false)"
+/>

@@ -6,6 +6,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
   concatMap,
+  defer,
   EMPTY,
   exhaustMap,
   filter,
@@ -82,6 +83,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   workItems: [],
   changes: [],
   issues: [],
+  issuesCallState: idleCallState(),
   servedFromLocalCache: false,
   loadCallState: idleCallState(),
   transitionCallState: idleCallState(),
@@ -89,9 +91,11 @@ const INITIAL_STATE: InterventionWorkspaceState = {
   createWorkItemCallState: idleCallState(),
   workItemWriteCallState: idleCallState(),
   pendingWorkItemIds: new Set<string>(),
+  workItemErrors: {},
   deleteWorkItemsCallState: idleCallState(),
   rejectChangeCallState: idleCallState(),
   pendingChangeIds: new Set<string>(),
+  changeErrors: {},
   deleteCallState: idleCallState(),
   assignTeamCallState: idleCallState(),
   addCommentCallState: idleCallState(),
@@ -125,9 +129,11 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   createWorkItemCallState: idleCallState(),
   workItemWriteCallState: idleCallState(),
   pendingWorkItemIds: new Set<string>(),
+  workItemErrors: {},
   deleteWorkItemsCallState: idleCallState(),
   rejectChangeCallState: idleCallState(),
   pendingChangeIds: new Set<string>(),
+  changeErrors: {},
   deleteCallState: idleCallState(),
   assignTeamCallState: idleCallState(),
   addCommentCallState: idleCallState(),
@@ -416,6 +422,7 @@ export const InterventionWorkspaceStore = signalStore(
           workItems,
           changes,
           issues: issues.member,
+          issuesCallState: fromCache ? idleCallState() : successCallState(null),
           servedFromLocalCache: fromCache,
           loadCallState: successCallState(null),
         });
@@ -522,11 +529,21 @@ export const InterventionWorkspaceStore = signalStore(
        */
       const refreshIssues = rxMethod<string>(
         pipe(
+          tap(() => patchState(store, { issuesCallState: pendingCallState() })),
           switchMap((interventionId) =>
             service.listIssues(interventionId).pipe(
               tapResponse({
-                next: (collection) => patchState(store, { issues: collection.member }),
-                error: () => undefined,
+                next: (collection) => {
+                  if (store.intervention()?.id === interventionId)
+                    patchState(store, {
+                      issues: collection.member,
+                      issuesCallState: successCallState(null),
+                    });
+                },
+                error: (error: unknown) => {
+                  if (store.intervention()?.id === interventionId)
+                    patchState(store, { issuesCallState: errorCallState(toStoreError(error)) });
+                },
               }),
             ),
           ),
@@ -783,6 +800,7 @@ export const InterventionWorkspaceStore = signalStore(
       );
 
       return {
+        refreshIssues,
         load,
         reload,
         loadActivities,
@@ -855,6 +873,12 @@ export const InterventionWorkspaceStore = signalStore(
                         { replace: false },
                       )
                       .catch(() => undefined);
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.transitionSucceeded({
+                        interventionId,
+                        status,
+                      }),
+                    );
                     return updatedIntervention;
                   }),
                 );
@@ -871,6 +895,12 @@ export const InterventionWorkspaceStore = signalStore(
                       intervention: updatedIntervention,
                       transitionCallState: successCallState(null),
                     });
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.transitionSucceeded({
+                        interventionId,
+                        status,
+                      }),
+                    );
                     refreshIssues(interventionId);
                   }),
                   catchError((error: unknown) => {
@@ -1077,61 +1107,45 @@ export const InterventionWorkspaceStore = signalStore(
          */
         createWorkItem: rxMethod<InterventionWorkItemCreateCommand>(
           pipe(
-            tap(() => patchState(store, { createWorkItemCallState: pendingCallState() })),
-            switchMap(({ interventionId, input }) => {
-              if (connectivity.isOffline()) {
-                const clientId = input.clientId ?? crypto.randomUUID();
-                const localWorkItem = optimistic.createWorkItem(input, clientId);
-                const intervention = store.intervention();
-                return from(
-                  offline.queue(interventionId, 'work-item.create', { ...input, clientId }),
-                ).pipe(
-                  tap(() => {
-                    const workItems: readonly InterventionWorkItemOutput[] = [
-                      ...store.workItems(),
-                      localWorkItem,
-                    ];
-                    const updatedIntervention = optimistic.addWorkItem(intervention);
-                    patchState(store, {
-                      intervention: updatedIntervention,
-                      workItems,
-                      createWorkItemCallState: successCallState(null),
-                    });
-                    if (updatedIntervention) {
-                      void offline
-                        .saveWorkspace(
-                          updatedIntervention,
-                          workItems,
-                          store.changes(),
-                          store.issues(),
-                          [],
-                          {
-                            replace: false,
-                          },
-                        )
-                        .catch(() => undefined);
-                    }
-                  }),
+            exhaustMap(({ interventionId, input }) => {
+              const clientId = input.clientId ?? crypto.randomUUID();
+              const payload = { ...input, clientId };
+              const captured = store.intervention();
+              const current = (): boolean =>
+                store.intervention()?.id === captured?.id &&
+                store.intervention()?.organization === captured?.organization;
+              patchState(store, { createWorkItemCallState: pendingCallState() });
+              const queue = () =>
+                defer(() => offline.queue(interventionId, 'work-item.create', payload)).pipe(
+                  map(() => optimistic.createWorkItem(payload, clientId)),
                 );
-              }
-
-              return service.createWorkItem(input).pipe(
+              const request = connectivity.isOffline()
+                ? queue()
+                : service
+                    .createWorkItem(payload)
+                    .pipe(
+                      catchError((error: unknown) =>
+                        connectivity.isNetworkFailure(error) ? queue() : throwError(() => error),
+                      ),
+                    );
+              return request.pipe(
                 tapResponse({
                   next: (created: InterventionWorkItemOutput) => {
-                    const workItems: readonly InterventionWorkItemOutput[] = [
-                      ...store.workItems(),
-                      created,
-                    ];
-                    const updatedIntervention = optimistic.addWorkItem(store.intervention());
+                    if (!current()) return;
+                    const workItems = [...store.workItems(), created];
+                    const intervention = optimistic.addWorkItem(store.intervention());
                     patchState(store, {
                       workItems,
-                      intervention: updatedIntervention,
+                      intervention,
                       createWorkItemCallState: successCallState(null),
                     });
-                    if (updatedIntervention) {
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.workItemCreateSucceeded({ interventionId }),
+                    );
+                    if (intervention)
                       void offline
                         .saveWorkspace(
-                          updatedIntervention,
+                          intervention,
                           workItems,
                           store.changes(),
                           store.issues(),
@@ -1139,18 +1153,19 @@ export const InterventionWorkspaceStore = signalStore(
                           { replace: false },
                         )
                         .catch(() => undefined);
-                    }
-                    refreshIssues(interventionId);
+                    if (!connectivity.isOffline()) refreshIssues(interventionId);
                   },
-                  error: (error: unknown) =>
-                    patchState(store, {
-                      createWorkItemCallState: errorCallState(
-                        workspaceFailure(
-                          error,
-                          $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
+                  error: (error: unknown) => {
+                    if (current())
+                      patchState(store, {
+                        createWorkItemCallState: errorCallState(
+                          workspaceFailure(
+                            error,
+                            $localize`:@@intervention.workspace.workItemCreateFailed:The work item could not be created.`,
+                          ),
                         ),
-                      ),
-                    }),
+                      });
+                  },
                 }),
               );
             }),
@@ -1180,115 +1195,98 @@ export const InterventionWorkspaceStore = signalStore(
         setWorkItemStatus: rxMethod<InterventionWorkItemStatusCommand>(
           pipe(
             mergeMap(({ interventionId, workItemId, status, skipReason }) => {
+              if (store.pendingWorkItemIds().has(workItemId)) return EMPTY;
+              const captured = store.intervention();
+              const current = (): boolean =>
+                store.intervention()?.id === captured?.id &&
+                store.intervention()?.organization === captured?.organization;
+              const item = store.workItems().find((candidate) => candidate.id === workItemId);
+              const reason = status === 'skipped' ? (skipReason ?? item?.skipReason ?? null) : null;
               patchState(store, {
                 workItemWriteCallState: pendingCallState(),
                 pendingWorkItemIds: withId(store.pendingWorkItemIds(), workItemId),
+                workItemErrors: { ...store.workItemErrors(), [workItemId]: null },
               });
-              const settle = finalize(() =>
-                patchState(store, {
-                  pendingWorkItemIds: withoutId(store.pendingWorkItemIds(), workItemId),
-                }),
-              );
-              const item = store.workItems().find((current) => current.id === workItemId);
-              const normalizedSkipReason: string | null =
-                status === 'skipped' ? (skipReason ?? item?.skipReason ?? null) : null;
-              if (connectivity.isOffline() && item) {
-                return from(
+              const queue = () =>
+                defer(() =>
                   offline.queue(interventionId, 'work-item.update', {
                     workItemId,
                     status,
-                    skipReason: normalizedSkipReason,
-                    revision: item.revision,
+                    skipReason: reason,
+                    revision: item?.revision,
                   }),
-                ).pipe(
-                  tap(() => {
+                ).pipe(map(() => null));
+              const request =
+                connectivity.isOffline() && item
+                  ? queue()
+                  : service
+                      .updateWorkItem(workItemId, { status, skipReason: reason }, item?.revision)
+                      .pipe(
+                        catchError((error: unknown) =>
+                          item && connectivity.isNetworkFailure(error)
+                            ? queue()
+                            : throwError(() => error),
+                        ),
+                      );
+              return request.pipe(
+                tapResponse({
+                  next: () => {
+                    if (!current()) return;
+                    if (!item) {
+                      patchState(store, { workItemWriteCallState: successCallState(null) });
+                      return;
+                    }
                     const result = optimistic.updateWorkItem(store.intervention(), item, {
                       workItemId,
                       status,
-                      skipReason: normalizedSkipReason ?? undefined,
+                      skipReason: reason ?? undefined,
                     });
-                    const updatedItem = result.workItem;
-                    const workItems = replaceWorkItem(store.workItems(), workItemId, updatedItem);
-                    const updatedIntervention = result.intervention;
+                    const workItems = replaceWorkItem(
+                      store.workItems(),
+                      workItemId,
+                      result.workItem,
+                    );
                     patchState(store, {
-                      intervention: updatedIntervention,
+                      intervention: result.intervention,
                       workItems,
                       workItemWriteCallState: successCallState(null),
                     });
-                    if (updatedIntervention) {
+                    if (result.intervention)
                       void offline
                         .saveWorkspace(
-                          updatedIntervention,
+                          result.intervention,
                           workItems,
                           store.changes(),
                           store.issues(),
                           [],
-                          {
-                            replace: false,
-                          },
+                          { replace: false },
                         )
                         .catch(() => undefined);
-                    }
-                  }),
-                  settle,
-                );
-              }
-
-              return service
-                .updateWorkItem(
-                  workItemId,
-                  { status, skipReason: normalizedSkipReason },
-                  item?.revision,
-                )
-                .pipe(
-                  tapResponse({
-                    next: () => {
-                      if (!item) {
-                        patchState(store, { workItemWriteCallState: successCallState(null) });
-
-                        return;
-                      }
-                      const result = optimistic.updateWorkItem(store.intervention(), item, {
-                        workItemId,
-                        status,
-                        skipReason: normalizedSkipReason ?? undefined,
-                      });
-                      const workItems = replaceWorkItem(
-                        store.workItems(),
-                        workItemId,
-                        result.workItem,
-                      );
+                    if (!connectivity.isOffline()) refreshIssues(interventionId);
+                  },
+                  error: (error: unknown) => {
+                    if (current())
                       patchState(store, {
-                        intervention: result.intervention,
-                        workItems,
-                        workItemWriteCallState: successCallState(null),
-                      });
-                      if (result.intervention) {
-                        void offline
-                          .saveWorkspace(
-                            result.intervention,
-                            workItems,
-                            store.changes(),
-                            store.issues(),
-                            [],
-                            { replace: false },
-                          )
-                          .catch(() => undefined);
-                      }
-                      refreshIssues(interventionId);
-                    },
-                    error: (error: unknown) =>
-                      patchState(store, {
+                        workItemErrors: {
+                          ...store.workItemErrors(),
+                          [workItemId]: toStoreError(error).message,
+                        },
                         workItemWriteCallState: errorCallState(
                           workspaceFailure(
                             error,
                             $localize`:@@intervention.workspace.workItemUpdateFailed:The work item could not be updated.`,
                           ),
                         ),
-                      }),
-                  }),
-                  settle,
-                );
+                      });
+                  },
+                  finalize: () => {
+                    if (current())
+                      patchState(store, {
+                        pendingWorkItemIds: withoutId(store.pendingWorkItemIds(), workItemId),
+                      });
+                  },
+                }),
+              );
             }),
           ),
         ),
@@ -1325,6 +1323,7 @@ export const InterventionWorkspaceStore = signalStore(
               patchState(store, {
                 rejectChangeCallState: pendingCallState(),
                 pendingChangeIds: withId(store.pendingChangeIds(), changeId),
+                changeErrors: { ...store.changeErrors(), [changeId]: null },
               });
               const settle = finalize(() =>
                 patchState(store, {
@@ -1382,7 +1381,13 @@ export const InterventionWorkspaceStore = signalStore(
                   if (connectivity.isNetworkFailure(error)) {
                     return queueRejection();
                   }
-                  patchState(store, { rejectChangeCallState: successCallState(null) });
+                  patchState(store, {
+                    rejectChangeCallState: errorCallState(toStoreError(error)),
+                    changeErrors: {
+                      ...store.changeErrors(),
+                      [changeId]: toStoreError(error).message,
+                    },
+                  });
                   dispatcher.dispatch(
                     interventionWorkspaceStoreEvents.rejectChangeFailed(
                       toStoreFailureEventPayload(
@@ -1563,15 +1568,22 @@ export const InterventionWorkspaceStore = signalStore(
             tap(() => patchState(store, { attachmentsCallState: pendingCallState() })),
             switchMap((interventionId) =>
               forkJoin({
-                collection: service.listAttachments(interventionId),
+                collection: service.listAttachments(interventionId).pipe(
+                  map((collection) => ({ collection, error: null })),
+                  catchError((error: unknown) =>
+                    of({ collection: null, error: toStoreError(error) }),
+                  ),
+                ),
                 queued: listQueuedAttachments(interventionId),
               }).pipe(
                 tapResponse({
                   next: ({ collection, queued }) =>
                     patchState(store, {
-                      attachments: collection.member,
+                      attachments: collection.collection?.member ?? store.attachments(),
                       queuedAttachments: queued,
-                      attachmentsCallState: successCallState(null),
+                      attachmentsCallState: collection.error
+                        ? errorCallState(collection.error)
+                        : successCallState(null),
                     }),
                   error: (error: unknown) =>
                     patchState(store, {

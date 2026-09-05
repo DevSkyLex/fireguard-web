@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { ChecklistStore } from './state';
 
 /**
@@ -32,6 +33,28 @@ export const CHECKLIST_ROUTES: Routes = [
     ],
     data: { breadcrumb: false },
     children: [
+      {
+        path: 'new',
+        canActivate: [
+          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.INSPECTION_WRITE] }),
+        ],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./ui/pages/checklist-detail-page/checklist-detail-page.component').then(
+            (m) => m.ChecklistDetailPage,
+          ),
+        title: $localize`:@@checklists.list.new:New checklist`,
+      },
+      {
+        path: ':checklistId',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./ui/pages/checklist-detail-page/checklist-detail-page.component').then(
+            (m) => m.ChecklistDetailPage,
+          ),
+        title: $localize`:@@route.checklists:Checklists`,
+      },
+
       {
         path: '',
         pathMatch: 'full',

@@ -1,10 +1,16 @@
 <div class="flex flex-col gap-3">
   <dl class="flex flex-col gap-1.5 text-sm">
     <div class="flex items-baseline justify-between gap-3">
-      <dt class="text-muted-foreground" i18n="@@intervention.publication.changes">
-        Pending changes
+      <dt class="text-muted-foreground">
+        @if (published()) {
+          <span i18n="@@intervention.publication.appliedChanges">Applied changes</span>
+        } @else {
+          <span i18n="@@intervention.publication.changes">Pending changes</span>
+        }
       </dt>
-      <dd class="font-medium text-foreground tabular-nums">{{ pendingChanges() }}</dd>
+      <dd class="font-medium text-foreground tabular-nums">
+        {{ published() ? appliedChanges() : pendingChanges() }}
+      </dd>
     </div>
     <div class="flex items-baseline justify-between gap-3">
       <dt class="text-muted-foreground" i18n="@@intervention.publication.inspections">
@@ -35,7 +41,9 @@
     </div>
   </dl>
 
-  <p class="text-xs text-muted-foreground" i18n="@@intervention.publication.atomic">
-    Either everything succeeds, or no record is modified.
-  </p>
+  @if (!published()) {
+    <p class="text-xs text-muted-foreground" i18n="@@intervention.publication.atomic">
+      Either everything succeeds, or no record is modified.
+    </p>
+  }
 </div>

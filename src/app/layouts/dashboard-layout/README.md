@@ -7,6 +7,15 @@ The header breadcrumb uses Spartan's native breadcrumb and dropdown primitives.
 On narrow screens it keeps home and the current page visible and moves intermediate
 ancestors into an ellipsis menu.
 
+The page header owns the route title, registered actions and optional primary
+navigation. Pages register a `#pageTabs` template through `PageTabsService`; that
+template uses Spartan's paginated tab list with `variant="line"`, while nested
+panel and form tabs remain beside their content.
+
+The routed-content container owns the standard `py-4 md:py-6` page spacing so
+feature pages align without repeating shell geometry. Full-height sidebar
+workspaces set `contentPadding: false` on their extension contribution.
+
 ## Sidebar footer
 
 The footer composes collaboration navigation (order 0), global utilities (order 5)
@@ -17,7 +26,8 @@ destinations at the bottom independently of the scrolling body navigation.
 
 `provideDashboardLayoutSlots({ sidebarExtension: [...] })` accepts
 `SlotFeature<SidebarExtensionContribution>` factories. Contributions declare a
-component, accessible label, priority and reactive `active`/`mobileVisible` signals.
+component, accessible label, priority and reactive `active`/`mobileVisible` signals;
+they may also disable the standard routed-content padding for a full-height workspace.
 The highest-priority active contribution owns the column; no active contribution
 means no reserved space. The primary sidebar remains independent and collapsible.
 

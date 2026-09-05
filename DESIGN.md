@@ -1,6 +1,6 @@
 # Fireguard visual conventions
 
-Fireguard uses the official Spartan **neutral** surfaces with an **orange primary**
+Fireguard uses cool **slate-neutral** surfaces inspired by the Spartan palette, with an **orange primary**
 and **Nova** component style in light and dark mode. The installed helm primitives are the visual
 reference; their brain behavior remains authoritative. This document records
 composition conventions, not a separate design system.
@@ -13,8 +13,12 @@ composition conventions, not a separate design system.
   orange: `#FF6A00` with `#000000` text in light mode, and `#FF850A` with `#0A0A0A`
   text in dark mode. The light button text contrast is 7.3:1. Sidebar primary
   tokens reference the same pair.
-- Backgrounds, panels, cards, borders, secondary actions and keyboard focus keep
-  the official neutral tokens. Text links remain neutral (`text-foreground`,
+- Backgrounds, panels, cards, borders, secondary actions and keyboard focus use
+  one restrained blue-slate ramp. The light theme keeps a white canvas, near-white elevated
+  surfaces, pale slate secondary surfaces and blue-gray separators. The dark theme uses a
+  near-neutral graphite ramp with a restrained cool undertone rather than mechanically inverting
+  the light values.
+  Text links remain neutral (`text-foreground`,
   including when using the native link button variant); bright orange is a fill,
   not small text on a light surface. Do not tint the application shell.
 - The Fireguard mark retains its existing geometry and orange detail. Browser

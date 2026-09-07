@@ -49,7 +49,7 @@
   </div>
 
   @if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
-    <div hlmEmpty class="flex-1">
+    <div hlmEmpty class="flex-1" data-testid="facility-map-empty">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon">
           <ng-icon name="lucideMap" aria-hidden="true" />

@@ -65,7 +65,7 @@ for (const mode of [
       await expect(page.getByTestId('calendar-feed-subscribe-dialog')).toBeVisible();
       await page.keyboard.press('Escape');
       await page.getByTestId('calendar-new-event').click();
-      await expect(page.getByTestId('calendar-event-sheet')).toBeVisible();
+      await expect(page.getByTestId('calendar-event-dialog')).toBeVisible();
     },
   );
 }

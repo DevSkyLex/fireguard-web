@@ -58,7 +58,10 @@ test('messages extension stays beside the collapsible navigation and supports se
   await page.getByTestId('direct-messages-panel-new').click();
   await expect(page.getByTestId('direct-message-picker')).toBeVisible();
   await page.getByTestId('new-direct-message-search').fill('Ines');
-  await page.getByTestId('new-direct-message-candidate').click();
+  const candidate = page.getByTestId('new-direct-message-candidate');
+  await expect(candidate).toHaveCount(1);
+  await expect(candidate).toContainText('Ines Pector');
+  await candidate.click();
   await expect(page.getByTestId('direct-message-picker')).toBeHidden();
   await page.getByRole('link', { name: 'Collaboration', exact: true }).click();
   await expect(extension).toBeVisible();

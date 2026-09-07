@@ -72,14 +72,14 @@
           @if (siteLabel(); as site) {
             @if (siteFacilityId(); as facilityId) {
               <a
-                class="min-w-0 truncate rounded-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                class="block max-w-full min-w-0 truncate rounded-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 data-testid="intervention-site-link"
                 [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
               >
                 {{ site }}
               </a>
             } @else {
-              <span class="truncate font-medium">{{ site }}</span>
+              <span class="block max-w-full truncate font-medium">{{ site }}</span>
             }
           } @else {
             <span class="text-muted-foreground" i18n="@@intervention.prop.noSite">No site</span>

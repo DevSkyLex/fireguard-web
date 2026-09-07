@@ -1,22 +1,21 @@
+import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   computed,
   effect,
   inject,
+  LOCALE_ID,
   signal,
-  viewChild,
   type Signal,
-  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBellRing,
   lucideBuilding2,
   lucideChevronRight,
+  lucideChevronDown,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideCircleDotDashed,
@@ -27,14 +26,12 @@ import {
   lucideLock,
   lucideMailWarning,
   lucideOctagonAlert,
-  lucidePlus,
   lucideRefreshCw,
   lucideShieldCheck,
   lucideTriangleAlert,
   lucideUndo2,
   lucideWrench,
 } from '@ng-icons/lucide';
-import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
@@ -47,6 +44,7 @@ import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardGranularity,
+  type OrganizationDashboardPeriod,
 } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -61,9 +59,12 @@ import {
 import {
   OrganizationTrendChartNotice,
   StatTile,
+  OrganizationDashboardRisk,
+  OrganizationDashboardAlerts,
+  OrganizationDashboardRecent,
+  type OrganizationDashboardAlertRow,
   type StatTileBadge,
   type StatTileDelta,
-  type StatTileDeltaDirection,
   type StatTileLink,
   type StatTileTone,
 } from '@features/organization/ui/components';
@@ -72,6 +73,7 @@ import {
   getOrganizationDashboardNonConformitySeverityBreakdown,
   getOrganizationDashboardOverviewMetricValue,
   mapAlignedDashboardTrendSeriesToChartSeries,
+  parseOrganizationDashboardPeriodBoundary,
 } from '@features/organization/utils';
 import { LineChart, type ChartSeries } from '@shared/chart';
 
@@ -81,6 +83,7 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
+import { resolveOrganizationDashboardAlertTag } from './models/organization-dashboard-alert-tag/organization-dashboard-alert-tag.util';
 
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -150,6 +153,11 @@ type OrganizationDashboardSeverityEntry = {
 @Component({
   selector: 'app-organization-dashboard-page',
   imports: [
+    DatePipe,
+    DecimalPipe,
+    OrganizationDashboardRisk,
+    OrganizationDashboardAlerts,
+    OrganizationDashboardRecent,
     ...HlmCollapsibleImports,
     NgIcon,
     ...HlmEmptyImports,
@@ -172,6 +180,7 @@ type OrganizationDashboardSeverityEntry = {
       lucideBellRing,
       lucideBuilding2,
       lucideChevronRight,
+      lucideChevronDown,
       lucideCircleAlert,
       lucideCircleCheck,
       lucideCircleDotDashed,
@@ -182,7 +191,6 @@ type OrganizationDashboardSeverityEntry = {
       lucideLock,
       lucideMailWarning,
       lucideOctagonAlert,
-      lucidePlus,
       lucideRefreshCw,
       lucideShieldCheck,
       lucideTriangleAlert,
@@ -212,9 +220,6 @@ export class OrganizationDashboardPage {
   private readonly permissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
-  /** Used to open an intervention or a filtered list. */
-  private readonly router: Router = inject<Router>(Router);
-
   /**
    * Property canReadInterventions
    * @readonly
@@ -226,20 +231,6 @@ export class OrganizationDashboardPage {
   protected readonly canReadInterventions: Signal<boolean> = computed((): boolean =>
     this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
   );
-
-  /** Whether the page may offer to start an intervention. Planning is the permission the interventions list itself gates creation on. */
-  protected readonly canCreateInterventions: Signal<boolean> = computed((): boolean =>
-    this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
-  );
-
-  /**
-   * * Registers {@link pageActions} on the shell header.
-   */
-  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
-
-  /** "New intervention", registered on the shell header instead of an in-page title band. */
-  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
-    viewChild<TemplateRef<unknown>>('pageActions');
 
   /**
    * Property kpiTiles
@@ -277,6 +268,12 @@ export class OrganizationDashboardPage {
       'nonConformities',
       'overdue',
     );
+    const open = getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'open');
+    const inProgress = getOrganizationDashboardOverviewMetricValue(
+      overview,
+      'nonConformities',
+      'inProgress',
+    );
     const tiles: OrganizationDashboardKpiTile[] = [];
 
     if (this.canReadInterventions()) {
@@ -296,11 +293,12 @@ export class OrganizationDashboardPage {
     tiles.push(
       {
         id: 'open-non-conformities',
-        label: $localize`:@@org.today.kpi.openNonConformities:Open non-conformities`,
-        value:
-          getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'open') ?? '—',
+        label: $localize`:@@org.dashboard.kpi.toResolve:Non-conformities to resolve`,
+        value: open !== null && inProgress !== null ? open + inProgress : '—',
         icon: 'lucideTriangleAlert',
-        link: inspectionsLink,
+        link: this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ)
+          ? inspectionsLink
+          : null,
         delta: null,
         tone:
           overdueNonConformities !== null && overdueNonConformities > 0 ? 'destructive' : 'neutral',
@@ -325,8 +323,10 @@ export class OrganizationDashboardPage {
         value:
           getOrganizationDashboardOverviewMetricValue(overview, 'inspections', 'closed') ?? '—',
         icon: 'lucideClipboardCheck',
-        link: inspectionsLink,
-        delta: this.toComparisonDelta(this.dashboardStore.inspectionsComparison(), true),
+        link: this.permissionService.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ)
+          ? inspectionsLink
+          : null,
+        delta: null,
         tone: 'neutral',
         badge: null,
       },
@@ -337,7 +337,9 @@ export class OrganizationDashboardPage {
           getOrganizationDashboardOverviewMetricValue(overview, 'equipment', 'underMaintenance') ??
           '—',
         icon: 'lucideWrench',
-        link: equipmentsLink,
+        link: this.permissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ)
+          ? equipmentsLink
+          : null,
         delta: null,
         tone: 'neutral',
         badge: null,
@@ -349,34 +351,102 @@ export class OrganizationDashboardPage {
   //#endregion
 
   //#region Properties — trends
-  /** Owns the combined inspections / non-conformities-opened / non-conformities-resolved trend datasets backing the Inspections and the Non-conformities opened vs resolved charts. */
+  /**
+   * Property overviewTrendStore
+   * @readonly
+   *
+   * @description Owns the inspection and non-conformity activity trend requests.
+   * @access protected
+   * @since 1.0.0
+   * @type {OverviewTrendStore}
+   */
   protected readonly overviewTrendStore: OverviewTrendStore =
     inject<OverviewTrendStore>(OverviewTrendStore);
 
-  /** Owns the combined equipment-created / facilities-created trend datasets backing the Equipment added and Facilities added charts. */
+  /**
+   * Property assetGrowthTrendStore
+   * @readonly
+   *
+   * @description Owns the equipment and facility growth trend requests.
+   * @access protected
+   * @since 1.0.0
+   * @type {AssetGrowthTrendStore}
+   */
   protected readonly assetGrowthTrendStore: AssetGrowthTrendStore =
     inject<AssetGrowthTrendStore>(AssetGrowthTrendStore);
 
-  /** The active preset range. Defaults to 30 days — a window wide enough to show a trend without asking for the full year up front. */
+  /**
+   * Property selectedPeriod
+   * @readonly
+   *
+   * @description Active trend preset, initialized to the dashboard's 30-day default.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<OrganizationDashboardTrendsPeriodPreset>}
+   */
   protected readonly selectedPeriod: WritableSignal<OrganizationDashboardTrendsPeriodPreset> =
     signal<OrganizationDashboardTrendsPeriodPreset>('30d');
 
-  /** Whether the trend charts fetch a comparison series, feeding each chart's own "vs previous period" summary line below it. Defaults on: the comparison is what turns a bare total into a trend signal. Does not affect the KPI row above, which is not period-scoped. */
+  /**
+   * Property compareToPreviousPeriod
+   * @readonly
+   *
+   * @description Whether activity charts request their previous-period comparison.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly compareToPreviousPeriod: WritableSignal<boolean> = signal<boolean>(true);
 
-  /** Placeholder row count shown while the severity breakdown loads. */
+  /**
+   * Property severitySkeletonRows
+   * @readonly
+   *
+   * @description Stable placeholder rows shown while the severity breakdown loads.
+   * @access protected
+   * @since 1.0.0
+   * @type {readonly number[]}
+   */
   protected readonly severitySkeletonRows: readonly number[] = [0, 1, 2, 3];
 
-  /** The message a trend chart card shows in place of its plot when its backing store denies the read outright (403). */
+  /**
+   * Property forbiddenMessage
+   * @readonly
+   *
+   * @description Permission-specific chart error shown for a denied trend request.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly forbiddenMessage: string = $localize`:@@org.statistics.forbidden:Not available with your permissions.`;
 
-  /** The message a trend chart card shows in place of its plot when its backing store failed for any other reason. */
+  /**
+   * Property trendLoadErrorMessage
+   * @readonly
+   *
+   * @description Generic chart error shown when a trend request fails.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly trendLoadErrorMessage: string = $localize`:@@org.statistics.trend.loadError:This chart could not be loaded.`;
 
-  /** Shared label for the Inspections chart's card title and its single series name. */
-  protected readonly inspectionsSeriesName: string = $localize`:@@org.statistics.trend.inspections.title:Inspections`;
+  /**
+   * Property inspectionsSeriesName
+   * @readonly
+   *
+   * @description Localized label shared by the inspection card and series.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
+  protected readonly inspectionsSeriesName: string = $localize`:@@org.dashboard.inspections.title:Inspections performed`;
 
   /**
+   * Property inspectionsChartLabel
+   * @readonly
+   *
+   * @description Accessible label for the inspection activity chart.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -384,6 +454,10 @@ export class OrganizationDashboardPage {
   protected readonly inspectionsChartLabel: string = $localize`:@@org.statistics.trend.inspections.chartLabel:Inspections performed over time`;
 
   /**
+   * Property nonConformitiesChartTitle
+   * @readonly
+   *
+   * @description Visible title for the opened-versus-resolved chart.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -391,6 +465,10 @@ export class OrganizationDashboardPage {
   protected readonly nonConformitiesChartTitle: string = $localize`:@@org.statistics.trend.nonConformities.title:Non-conformities opened vs resolved`;
 
   /**
+   * Property nonConformitiesChartLabel
+   * @readonly
+   *
+   * @description Accessible label for the opened-versus-resolved chart.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -398,6 +476,10 @@ export class OrganizationDashboardPage {
   protected readonly nonConformitiesChartLabel: string = $localize`:@@org.statistics.trend.nonConformities.chartLabel:Non-conformities opened and resolved over time`;
 
   /**
+   * Property nonConformitiesOpenedSeriesName
+   * @readonly
+   *
+   * @description Localized name for the opened non-conformity series.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -405,6 +487,10 @@ export class OrganizationDashboardPage {
   protected readonly nonConformitiesOpenedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesOpened:Opened`;
 
   /**
+   * Property nonConformitiesResolvedSeriesName
+   * @readonly
+   *
+   * @description Localized name for the resolved non-conformity series.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -412,6 +498,10 @@ export class OrganizationDashboardPage {
   protected readonly nonConformitiesResolvedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesResolved:Resolved`;
 
   /**
+   * Property equipmentSeriesName
+   * @readonly
+   *
+   * @description Localized name for the equipment growth series.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -419,6 +509,10 @@ export class OrganizationDashboardPage {
   protected readonly equipmentSeriesName: string = $localize`:@@org.statistics.trend.equipment.title:Equipment added`;
 
   /**
+   * Property equipmentChartLabel
+   * @readonly
+   *
+   * @description Accessible label for the equipment growth chart.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -426,6 +520,10 @@ export class OrganizationDashboardPage {
   protected readonly equipmentChartLabel: string = $localize`:@@org.statistics.trend.equipment.chartLabel:Equipment added over time`;
 
   /**
+   * Property facilitiesSeriesName
+   * @readonly
+   *
+   * @description Localized name for the facility growth series.
    * @access protected
    * @since 1.0.0
    * @type {string}
@@ -433,13 +531,28 @@ export class OrganizationDashboardPage {
   protected readonly facilitiesSeriesName: string = $localize`:@@org.statistics.trend.facilities.title:Facilities added`;
 
   /**
+   * Property facilitiesChartLabel
+   * @readonly
+   *
+   * @description Accessible label for the facility growth chart.
    * @access protected
    * @since 1.0.0
    * @type {string}
    */
   protected readonly facilitiesChartLabel: string = $localize`:@@org.statistics.trend.facilities.chartLabel:Facilities added over time`;
 
-  /** The current open+unresolved non-conformity count per severity, ordered from critical to low, each paired with its registry descriptor and its share of the breakdown's own total — the proportional bar's width. */
+  /**
+   * Property severityBreakdown
+   * @readonly
+   *
+   * @description
+   * All-status non-conformity counts from critical to low, paired with their
+   * registry descriptor and their share of the breakdown total.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly OrganizationDashboardSeverityEntry[]>}
+   */
   protected readonly severityBreakdown: Signal<readonly OrganizationDashboardSeverityEntry[]> =
     computed(() => {
       const raw = getOrganizationDashboardNonConformitySeverityBreakdown(
@@ -456,6 +569,10 @@ export class OrganizationDashboardPage {
     });
 
   /**
+   * Property severityTotal
+   * @readonly
+   *
+   * @description Total count represented by the available all-status severity breakdown.
    * @access protected
    * @since 1.0.0
    * @type {Signal<number>}
@@ -464,16 +581,32 @@ export class OrganizationDashboardPage {
     this.severityBreakdown().reduce((sum, entry) => sum + entry.count, 0),
   );
 
-  /** The severity card's subtitle: how many open, unresolved non-conformities the breakdown covers right now — a current snapshot, not scoped to the page's own period selector, since `DashboardStore` never applies it. */
-  protected readonly severitySummaryLine: Signal<string> = computed(() => {
-    const total: number = this.severityTotal();
+  /**
+   * Property severitySummaryLine
+   * @readonly
+   *
+   * @description
+   * Summarizes the current all-status severity snapshot independently of the
+   * activity period selector.
+   *
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly severitySummaryLine: Signal<string | null> = computed(() => {
+    if (!this.severityAvailable()) return null;
+    const total = new Intl.NumberFormat(this.locale).format(this.severityTotal());
 
-    return total === 1
-      ? $localize`:@@org.statistics.severity.summaryOne:1 open and unresolved`
-      : $localize`:@@org.statistics.severity.summaryMany:${total}:total: open and unresolved`;
+    return this.severityTotal() === 1
+      ? $localize`:@@org.dashboard.severity.summaryOne:1 recorded, across all statuses`
+      : $localize`:@@org.dashboard.severity.summaryMany:${total}:total: recorded, across all statuses`;
   });
 
   /**
+   * Property inspectionsChartSeries
+   * @readonly
+   *
+   * @description Period-scoped inspection volume series with the semantic primary color.
    * @access protected
    * @since 1.0.0
    * @type {Signal<ChartSeries[]>}
@@ -481,10 +614,18 @@ export class OrganizationDashboardPage {
   protected readonly inspectionsChartSeries: Signal<ChartSeries[]> = computed(() =>
     mapAlignedDashboardTrendSeriesToChartSeries(this.overviewTrendStore.alignedTrendData(), [
       { name: this.inspectionsSeriesName, index: 0 },
-    ]),
+    ]).map((series) => ({
+      name: series.name,
+      points: series.points,
+      colorToken: 'primary' as const,
+    })),
   );
 
   /**
+   * Property nonConformitiesChartSeries
+   * @readonly
+   *
+   * @description Period-scoped opened and resolved non-conformity series.
    * @access protected
    * @since 1.0.0
    * @type {Signal<ChartSeries[]>}
@@ -493,10 +634,18 @@ export class OrganizationDashboardPage {
     mapAlignedDashboardTrendSeriesToChartSeries(this.overviewTrendStore.alignedTrendData(), [
       { name: this.nonConformitiesOpenedSeriesName, index: 1 },
       { name: this.nonConformitiesResolvedSeriesName, index: 2 },
-    ]),
+    ]).map((series, index) => ({
+      name: series.name,
+      points: series.points,
+      colorToken: index === 0 ? ('warning' as const) : ('success' as const),
+    })),
   );
 
   /**
+   * Property equipmentChartSeries
+   * @readonly
+   *
+   * @description Period-scoped equipment growth series for additional analysis.
    * @access protected
    * @since 1.0.0
    * @type {Signal<ChartSeries[]>}
@@ -508,6 +657,10 @@ export class OrganizationDashboardPage {
   );
 
   /**
+   * Property facilitiesChartSeries
+   * @readonly
+   *
+   * @description Period-scoped facility growth series for additional analysis.
    * @access protected
    * @since 1.0.0
    * @type {Signal<ChartSeries[]>}
@@ -519,21 +672,10 @@ export class OrganizationDashboardPage {
   );
 
   /**
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<string | null>}
-   */
-  protected readonly inspectionsSummaryLine: Signal<string | null> = computed(() => {
-    const output = this.overviewTrendStore.queryData()?.inspections;
-
-    return this.formatTrendSummaryLine(
-      output?.summary?.['total'],
-      output?.comparison?.mode,
-      output?.comparison?.summary?.['delta'],
-    );
-  });
-
-  /**
+   * Property nonConformitiesSummaryLine
+   * @readonly
+   *
+   * @description Localized opened and resolved totals for the loaded activity period.
    * @access protected
    * @since 1.0.0
    * @type {Signal<string | null>}
@@ -543,12 +685,23 @@ export class OrganizationDashboardPage {
     const openedTotal = data?.ncOpened?.summary?.['total'];
     const resolvedTotal = data?.ncResolved?.summary?.['total'];
 
-    if (typeof openedTotal !== 'number' || typeof resolvedTotal !== 'number') return null;
+    if (
+      typeof openedTotal !== 'number' ||
+      typeof resolvedTotal !== 'number' ||
+      !Number.isFinite(openedTotal) ||
+      !Number.isFinite(resolvedTotal)
+    )
+      return null;
 
-    return $localize`:@@org.statistics.trend.nonConformitiesSummary:${openedTotal}:opened: opened, ${resolvedTotal}:resolved: resolved this period`;
+    const formatter = new Intl.NumberFormat(this.locale);
+    return $localize`:@@org.statistics.trend.nonConformitiesSummary:${formatter.format(openedTotal)}:opened: opened, ${formatter.format(resolvedTotal)}:resolved: resolved this period`;
   });
 
   /**
+   * Property equipmentSummaryLine
+   * @readonly
+   *
+   * @description Localized equipment total and comparison for the loaded activity period.
    * @access protected
    * @since 1.0.0
    * @type {Signal<string | null>}
@@ -560,10 +713,15 @@ export class OrganizationDashboardPage {
       output?.summary?.['total'],
       output?.comparison?.mode,
       output?.comparison?.summary?.['delta'],
+      output?.comparison?.summary?.['total'],
     );
   });
 
   /**
+   * Property facilitiesSummaryLine
+   * @readonly
+   *
+   * @description Localized facility total and comparison for the loaded activity period.
    * @access protected
    * @since 1.0.0
    * @type {Signal<string | null>}
@@ -575,9 +733,182 @@ export class OrganizationDashboardPage {
       output?.summary?.['total'],
       output?.comparison?.mode,
       output?.comparison?.summary?.['delta'],
+      output?.comparison?.summary?.['total'],
     );
   });
   //#endregion
+
+  /**
+   * Property locale
+   * @readonly
+   * @description Active application locale.
+   * @access private
+   * @since 1.0.0
+   * @type {string}
+   */
+  private readonly locale: string = inject(LOCALE_ID);
+
+  /**
+   * Property aggregateLoading
+   * @readonly
+   * @description Reserve skeletons only before the first successful aggregate.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly aggregateLoading: Signal<boolean> = computed(
+    () => this.dashboardStore.isQueryLoading() && !this.dashboardStore.queryData(),
+  );
+
+  /**
+   * Property alertRows
+   * @readonly
+   * @description Permission-checked presentation rows without summing overlapping alerts.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly OrganizationDashboardAlertRow[] | null>}
+   */
+  protected readonly alertRows: Signal<readonly OrganizationDashboardAlertRow[] | null> = computed(
+    () => {
+      const data = this.dashboardStore.queryData();
+      const organizationId = this.organizationContext.selectedOrganizationId();
+      if (!data || !Array.isArray(data.alerts)) return null;
+      const order = [
+        'critical_non_conformities_open',
+        'non_conformities_overdue',
+        'equipment_under_maintenance',
+        'expired_invitations',
+      ];
+      return data.alerts
+        .toSorted((a, b) => {
+          const rank = (code: string) => {
+            const index = order.indexOf(code);
+            return index < 0 ? order.length : index;
+          };
+          return rank(a.code ?? '') - rank(b.code ?? '');
+        })
+        .map((alert, index): OrganizationDashboardAlertRow => {
+          const code = alert.code ?? '';
+          const descriptor = resolveOrganizationDashboardAlertTag(code);
+          const permission =
+            code === 'equipment_under_maintenance'
+              ? ORGANIZATION_PERMISSION.EQUIPMENT_READ
+              : code === 'expired_invitations'
+                ? ORGANIZATION_PERMISSION.MEMBERS_MANAGE
+                : ORGANIZATION_PERMISSION.INSPECTION_READ;
+          const target =
+            code === 'equipment_under_maintenance'
+              ? 'equipments'
+              : code === 'expired_invitations'
+                ? 'members'
+                : 'inspections';
+          return {
+            id: code + '-' + index,
+            label:
+              descriptor.label || $localize`:@@org.dashboard.attention.unknown:Unrecognized alert`,
+            icon: descriptor.icon,
+            colorToken:
+              descriptor.severity === 'danger'
+                ? 'destructive'
+                : descriptor.severity === 'warning'
+                  ? 'warning'
+                  : 'muted-foreground',
+            count:
+              typeof alert.count === 'number' && Number.isFinite(alert.count) && alert.count >= 0
+                ? alert.count
+                : null,
+            destination:
+              organizationId &&
+              order.includes(code) &&
+              this.permissionService.hasPermission(permission)
+                ? ['/organizations', organizationId, target]
+                : null,
+          };
+        });
+    },
+  );
+
+  /**
+   * Property severityAvailable
+   * @readonly
+   * @description Missing severity data is distinct from zero recorded issues.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly severityAvailable: Signal<boolean> = computed(() =>
+    ['severityCritical', 'severityHigh', 'severityMedium', 'severityLow'].every(
+      (key) =>
+        getOrganizationDashboardOverviewMetricValue(
+          this.dashboardStore.queryData()?.overview,
+          'nonConformities',
+          key,
+        ) !== null,
+    ),
+  );
+
+  /**
+   * Property inspectionsTotal
+   * @readonly
+   * @description Performed inspection count for the loaded period, not the closed-inspection snapshot.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<number | null>}
+   */
+  protected readonly inspectionsTotal: Signal<number | null> = computed(() => {
+    const value = this.overviewTrendStore.queryData()?.inspections?.summary?.['total'];
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  });
+
+  /**
+   * Property inspectionsDeltaLine
+   * @readonly
+   * @description Comparison only when its denominator and delta are meaningful.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly inspectionsDeltaLine: Signal<string | null> = computed(() => {
+    const comparison = this.overviewTrendStore.queryData()?.inspections?.comparison;
+    if (comparison?.mode !== 'previous_period') return null;
+    const previous = comparison.summary?.['total'];
+    const delta = comparison.summary?.['delta'];
+    if (
+      typeof previous !== 'number' ||
+      !Number.isFinite(previous) ||
+      previous <= 0 ||
+      typeof delta !== 'number' ||
+      !Number.isFinite(delta)
+    )
+      return $localize`:@@org.dashboard.comparison.noBaseline:No previous-period baseline`;
+    const value = new Intl.NumberFormat(this.locale, {
+      maximumFractionDigits: 1,
+      signDisplay: 'exceptZero',
+    }).format(delta);
+    return $localize`:@@org.dashboard.comparison.delta:${value}:value:% vs previous period`;
+  });
+
+  /**
+   * Method formatLoadedPeriod
+   * @method formatLoadedPeriod
+   *
+   * @description Labels the period returned with the displayed data, including during a refresh.
+   * @access protected
+   * @since 1.0.0
+   * @param {OrganizationDashboardPeriod | undefined} period - Loaded API period.
+   * @returns {string} Localized range, or no fabricated date when absent.
+   */
+  protected formatLoadedPeriod(period: OrganizationDashboardPeriod | undefined): string {
+    if (!period?.from || !period.to) return '';
+    const from: Date = parseOrganizationDashboardPeriodBoundary(period.from);
+    const to: Date = parseOrganizationDashboardPeriodBoundary(period.to);
+    if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime()) || from > to) return '';
+    return new Intl.DateTimeFormat(this.locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).formatRange(from, to);
+  }
 
   //#region Lifecycle
   /**
@@ -586,15 +917,12 @@ export class OrganizationDashboardPage {
    *
    * @description
    * Activates browser-only trends on entry and wires the Trends section's period selector to both trend stores so a preset
-   * or compare-toggle change refetches every trend chart in one place, and
-   * registers {@link pageActions}.
+   * or compare-toggle change refetches every trend chart in one place.
    *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
-    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
-
     effect(() => {
       this.applyPeriodToTrendStores(this.selectedPeriod(), this.compareToPreviousPeriod());
       this.overviewTrendStore.activate();
@@ -602,27 +930,6 @@ export class OrganizationDashboardPage {
     });
   }
 
-  /**
-   * Method startIntervention
-   *
-   * @description
-   * Opens the intervention list with its creation drawer already open.
-   * `?create=1` is the interventions subfeature's published contract for
-   * this: it lets this page's primary action actually start the work
-   * without duplicating the creation drawer here.
-   *
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected startIntervention(): void {
-    const organizationId: string | null = this.organizationContext.selectedOrganizationId();
-    if (organizationId === null) return;
-
-    void this.router.navigate(['/organizations', organizationId, 'interventions'], {
-      queryParams: { create: '1' },
-    });
-  }
   //#endregion
 
   //#region Methods — trends
@@ -688,30 +995,6 @@ export class OrganizationDashboardPage {
   }
 
   /**
-   * Method toComparisonDelta
-   * @description Converts one of `DashboardStore`'s `*Comparison` signals — a pre-signed string magnitude and a literal direction — into the `StatTileDelta` shape `app-stat-tile` accepts.
-   * @access private
-   * @since 1.0.0
-   * @param {{ readonly value: string | number | null; readonly direction: string | null } | null} entry - The store's comparison delta.
-   * @param {boolean} positiveIsGood - Whether `up` is the desirable direction for this metric.
-   * @returns {StatTileDelta | null} The tile delta, or `null` when no comparison is available.
-   */
-  private toComparisonDelta(
-    entry: { readonly value: string | number | null; readonly direction: string | null } | null,
-    positiveIsGood: boolean,
-  ): StatTileDelta | null {
-    if (!entry || entry.direction === null) return null;
-
-    const direction: StatTileDeltaDirection =
-      entry.direction === 'up' ? 'up' : entry.direction === 'down' ? 'down' : 'flat';
-    const magnitude: number = Math.abs(Number(entry.value ?? 0));
-
-    if (!Number.isFinite(magnitude)) return null;
-
-    return { value: magnitude, direction, positiveIsGood };
-  }
-
-  /**
    * Method formatTrendSummaryLine
    * @description Formats one trend card's summary line: the period total alone, or the total plus its signed percentage change when a previous-period comparison was fetched.
    * @access private
@@ -719,23 +1002,35 @@ export class OrganizationDashboardPage {
    * @param {number | string | undefined} total - The trend output's `summary.total`.
    * @param {string | null | undefined} comparisonMode - The trend output's `comparison.mode`.
    * @param {number | string | undefined} delta - The trend output's `comparison.summary.delta`.
+   * @param {number | undefined} previousTotal - Prior period denominator; zero has no relative change.
    * @returns {string | null} The formatted line, or `null` when no total is available.
    */
   private formatTrendSummaryLine(
     total: number | string | undefined,
     comparisonMode: string | null | undefined,
     delta: number | string | undefined,
+    previousTotal: number | undefined,
   ): string | null {
-    if (typeof total !== 'number') return null;
+    if (typeof total !== 'number' || !Number.isFinite(total)) return null;
 
-    if (comparisonMode !== 'previous_period' || typeof delta !== 'number') {
-      return $localize`:@@org.statistics.trend.summary:${total}:total: total this period`;
+    const formattedTotal = new Intl.NumberFormat(this.locale).format(total);
+    if (
+      comparisonMode !== 'previous_period' ||
+      typeof delta !== 'number' ||
+      !Number.isFinite(delta) ||
+      typeof previousTotal !== 'number' ||
+      !Number.isFinite(previousTotal) ||
+      previousTotal <= 0
+    ) {
+      return $localize`:@@org.statistics.trend.summary:${formattedTotal}:total: total this period`;
     }
 
-    const roundedDelta: number = Math.round(delta * 10) / 10;
-    const formattedDelta: string = roundedDelta > 0 ? `+${roundedDelta}` : `${roundedDelta}`;
+    const formattedDelta = new Intl.NumberFormat(this.locale, {
+      maximumFractionDigits: 1,
+      signDisplay: 'exceptZero',
+    }).format(delta);
 
-    return $localize`:@@org.statistics.trend.summaryWithDelta:${total}:total: total this period, ${formattedDelta}:delta:% vs previous period`;
+    return $localize`:@@org.statistics.trend.summaryWithDelta:${formattedTotal}:total: total this period, ${formattedDelta}:delta:% vs previous period`;
   }
 
   /**

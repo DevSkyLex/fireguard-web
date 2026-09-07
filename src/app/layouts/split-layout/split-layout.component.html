@@ -17,11 +17,12 @@
     }
 
     <main
+      #content
       id="split-layout-content"
       class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 max-sm:scroll-pb-28 sm:px-8 sm:py-10"
     >
       <div id="split-layout-content-box" [class]="contentClass()">
-        <router-outlet />
+        <router-outlet (activate)="resetContentScroll()" />
       </div>
     </main>
 

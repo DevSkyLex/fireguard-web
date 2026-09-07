@@ -6,10 +6,18 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
  * @description
  * Per-route SSR rendering mode configuration.
  *
- * - `auth/**` and `onboarding/**` use `RenderMode.Server`: these are public or
- *   early-auth pages that benefit from server-side rendering and do not contain
- *   DOM-dependent overlay components. Onboarding already uses TransferState to
- *   prevent duplicate authenticated requests after hydration.
+ * - The federated sign-in callback uses `RenderMode.Client`: it owns a one-time
+ *   provider code and completes the exchange in the browser before handing the
+ *   result to `AuthStore`. Rendering it on the server would split that single
+ *   workflow across two runtimes.
+ *
+ * - The remaining `auth/**` routes use `RenderMode.Server`: these public and
+ *   early-auth pages benefit from server-side rendering and do not contain
+ *   DOM-dependent overlay components.
+ *
+ * - `onboarding/**` remains server-rendered and uses its feature-owned
+ *   TransferState handoff to avoid a duplicate authenticated request during
+ *   hydration.
  *
  * - All other routes (`**`) use `RenderMode.Client`: the dashboard shell and
  *   feature pages require authentication tokens, depend on overlay components
@@ -21,7 +29,15 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
  */
 export const serverRoutes: ServerRoute[] = [
   {
+    path: 'auth/federated/:provider/callback',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'auth/**',
+    renderMode: RenderMode.Server,
+  },
+  {
+    path: 'onboarding/**',
     renderMode: RenderMode.Server,
   },
   {

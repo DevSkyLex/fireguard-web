@@ -4,7 +4,7 @@
     hlmBtn
     type="button"
     variant="ghost"
-    size="sm"
+    [size]="triggerSize()"
     class="relative gap-1.5 max-sm:size-11 max-sm:px-0"
     data-testid="intervention-sync-status"
     [attr.aria-label]="triggerAriaLabel()"
@@ -26,7 +26,9 @@
         <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
       }
     }
-    <span class="hidden text-xs sm:inline">{{ triggerLabel() }}</span>
+    @if (triggerSize() === 'sm') {
+      <span class="hidden text-xs sm:inline">{{ triggerLabel() }}</span>
+    }
     @if (state() === 'blocked') {
       <span
         hlmBadge

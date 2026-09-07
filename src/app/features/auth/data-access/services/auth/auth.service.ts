@@ -2,9 +2,11 @@ import { Service } from '@angular/core';
 import { type Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type {
+  AuthenticatedLoginOutput,
   LoginInput,
   LoginOutput,
   LogoutOutput,
+  MfaChallengeLoginOutput,
   MfaResendInput,
   MfaVerifyInput,
 } from '@features/auth/models';
@@ -113,10 +115,10 @@ export class AuthService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @returns {Observable<LoginOutput>} Observable emitting a new login response with fresh token.
+   * @returns {Observable<AuthenticatedLoginOutput>} Observable emitting a fresh authenticated session.
    */
-  public refresh(): Observable<LoginOutput> {
-    return this.postAction<LoginOutput>(`${AuthService.BASE_PATH}/refresh`);
+  public refresh(): Observable<AuthenticatedLoginOutput> {
+    return this.postAction<AuthenticatedLoginOutput>(`${AuthService.BASE_PATH}/refresh`);
   }
 
   /**
@@ -131,10 +133,13 @@ export class AuthService extends HydraApiService {
    *
    * @param {MfaVerifyInput} input - MFA verification input containing pre-auth token and OTP code.
    *
-   * @returns {Observable<LoginOutput>} Observable emitting the login response with access token.
+   * @returns {Observable<AuthenticatedLoginOutput>} Observable emitting the completed session.
    */
-  public mfaVerify(input: MfaVerifyInput): Observable<LoginOutput> {
-    return this.post<MfaVerifyInput, LoginOutput>(`${AuthService.BASE_PATH}/mfa/verify`, input);
+  public mfaVerify(input: MfaVerifyInput): Observable<AuthenticatedLoginOutput> {
+    return this.post<MfaVerifyInput, AuthenticatedLoginOutput>(
+      `${AuthService.BASE_PATH}/mfa/verify`,
+      input,
+    );
   }
 
   /**
@@ -149,13 +154,16 @@ export class AuthService extends HydraApiService {
    *
    * @param {MfaResendInput} input - MFA resend input containing pre-auth token.
    *
-   * @returns {Observable<LoginOutput>} Observable emitting login response with new MFA tokens.
+   * @returns {Observable<MfaChallengeLoginOutput>} Observable emitting the renewed MFA challenge.
    *
    * @remarks
    * The response will contain updated mfa_token and challenge_token that should replace the old ones.
    */
-  public mfaResend(input: MfaResendInput): Observable<LoginOutput> {
-    return this.post<MfaResendInput, LoginOutput>(`${AuthService.BASE_PATH}/mfa/resend`, input);
+  public mfaResend(input: MfaResendInput): Observable<MfaChallengeLoginOutput> {
+    return this.post<MfaResendInput, MfaChallengeLoginOutput>(
+      `${AuthService.BASE_PATH}/mfa/resend`,
+      input,
+    );
   }
 
   //#endregion

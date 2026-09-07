@@ -35,8 +35,20 @@ call. This feature only serves failures that have no surface left to render.
 ## Invariants
 
 - No guard on these routes, ever — see Purpose.
-- `NotFoundPage` names the failed address from the `from` query parameter set
-  by `notFoundRedirectGuard`; keep the two in sync.
+- `NotFoundPage` does not display the failed address. The redirect guard retains
+  the `from` query parameter for routing context.
 - `ServerErrorPage` retries via `router.navigate(['/'])` so the failed guard
   re-runs; it must not link into a workspace URL directly, which would skip
   the resolution that failed.
+
+## Presentation
+
+403, 404 and 500 share a centered, width-capped standalone composition, oversized responsive
+error codes (112–192px), large headings
+and 44px minimum actions. Small screens stack the actions; short viewports scroll from
+the start of the message without clipping the heading.
+
+Primary-colored orbital accents identify each failure: access keys and locks for 403,
+navigation markers for 404, and repair tools for 500. Decorations are hidden from
+assistive technology and never intercept input. Motion settles within four seconds
+and respects reduced-motion preferences.

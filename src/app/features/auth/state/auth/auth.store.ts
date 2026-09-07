@@ -28,7 +28,14 @@ import {
 } from '@core/request-state';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
-import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
+import type {
+  AuthenticatedLoginOutput,
+  LoginInput,
+  LoginOutput,
+  LogoutOutput,
+  MfaChallengeLoginOutput,
+  MfaVerifyInput,
+} from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import {
   toResendAvailableAt,
@@ -337,11 +344,11 @@ export const AuthStore = signalStore(
        * the account-owned user profile. Shared by `login`, `mfaVerify`, and the
        * registration auto-login (`applySession`).
        *
-       * @param {LoginOutput} response - The authenticated login response.
+       * @param {AuthenticatedLoginOutput} response - The authenticated login response.
        *
        * @returns {void}
        */
-      const applySessionTokens = (response: LoginOutput): void => {
+      const applySessionTokens = (response: AuthenticatedLoginOutput): void => {
         patchState(store, {
           accessToken: response.access_token,
           expiresAt: calculateExpiresAt(response.expires_in),
@@ -375,7 +382,7 @@ export const AuthStore = signalStore(
               authService.login(credentials).pipe(
                 tapResponse({
                   next: (response: LoginOutput) => {
-                    if (response.mfa_required) {
+                    if (response.mfa_required === true) {
                       patchState(store, {
                         mfaRequired: true,
                         mfaToken: response.mfa_token ?? null,
@@ -472,7 +479,7 @@ export const AuthStore = signalStore(
             switchMap(() =>
               authService.refresh().pipe(
                 tapResponse({
-                  next: (response: LoginOutput) => {
+                  next: (response: AuthenticatedLoginOutput) => {
                     patchState(store, {
                       accessToken: response.access_token,
                       expiresAt: calculateExpiresAt(response.expires_in),
@@ -511,7 +518,7 @@ export const AuthStore = signalStore(
             exhaustMap((input) =>
               authService.mfaVerify(input).pipe(
                 tapResponse({
-                  next: (response: LoginOutput) => {
+                  next: (response: AuthenticatedLoginOutput) => {
                     patchState(store, { mfaVerifyCallState: successCallState(response) });
                     applySessionTokens(response);
 
@@ -565,7 +572,7 @@ export const AuthStore = signalStore(
 
               return authService.mfaResend({ preAuthToken }).pipe(
                 tapResponse({
-                  next: (response: LoginOutput) => {
+                  next: (response: MfaChallengeLoginOutput) => {
                     patchState(store, {
                       mfaToken: response.mfa_token ?? null,
                       challengeToken: response.challenge_token ?? null,
@@ -617,7 +624,7 @@ export const AuthStore = signalStore(
          */
         renewSession(): Observable<string | null> {
           renewal ??= authService.refresh().pipe(
-            map((response: LoginOutput): string | null => {
+            map((response: AuthenticatedLoginOutput): string | null => {
               patchState(store, {
                 accessToken: response.access_token,
                 expiresAt: calculateExpiresAt(response.expires_in),
@@ -662,7 +669,7 @@ export const AuthStore = signalStore(
          */
         async initialize(): Promise<void> {
           try {
-            const response: LoginOutput = await firstValueFrom(authService.refresh());
+            const response: AuthenticatedLoginOutput = await firstValueFrom(authService.refresh());
 
             patchState(store, {
               initialized: true,
@@ -721,6 +728,18 @@ export const AuthStore = signalStore(
          * @returns {void}
          */
         applySession(response: LoginOutput): void {
+          if (response.mfa_required === true) {
+            patchState(store, {
+              mfaRequired: true,
+              mfaToken: response.mfa_token ?? null,
+              challengeToken: response.challenge_token ?? null,
+              mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
+              loginCallState: successCallState(response),
+            });
+
+            return;
+          }
+
           applySessionTokens(response);
         },
 
@@ -746,6 +765,10 @@ export const AuthStore = signalStore(
           patchState(store, {
             accessToken: null,
             expiresAt: null,
+            mfaRequired: false,
+            mfaToken: null,
+            challengeToken: null,
+            mfaResendAvailableAt: null,
           });
           dispatcher.dispatch(authStoreEvents.sessionEnded());
         },

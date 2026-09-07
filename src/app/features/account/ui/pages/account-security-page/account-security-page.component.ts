@@ -1,3 +1,4 @@
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,6 +6,7 @@ import {
   effect,
   inject,
   OnInit,
+  PLATFORM_ID,
   signal,
   untracked,
   type EffectRef,
@@ -27,8 +29,16 @@ import { AccountTrustedDevicesPanel } from '@features/account/ui/components/acco
 import { AccountDeactivateDialog } from '@features/account/ui/dialogs/account-deactivate-dialog';
 import { AccountEmailChangeDialog } from '@features/account/ui/dialogs/account-email-change-dialog';
 import { AccountPasswordForm, type AccountEmailChangeFormValues } from '@features/account/ui/forms';
-import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
-import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
+import {
+  AUTH_SESSION_PORT,
+  FederatedConnectionsPanel,
+  FederatedPasswordSetupDialog,
+  resolveFederatedAuthErrorMessage,
+  type AuthSessionPort,
+  type FederatedProvider,
+  type PasswordSetupConfirmInput,
+} from '@features/auth';
+import { FederatedAuthStore, SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -51,7 +61,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * deactivation: a destructive card opening a confirmation dialog, and on
  * success the local session is purged and the reader lands on the login page.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -66,6 +76,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     AccountPasswordForm,
     AccountSessionsPanel,
     AccountTrustedDevicesPanel,
+    FederatedConnectionsPanel,
+    FederatedPasswordSetupDialog,
     HlmButton,
     ...HlmCardImports,
     HlmSkeleton,
@@ -227,6 +239,44 @@ export class AccountSecurityPage implements OnInit {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+  /**
+   * Property federatedStore
+   * @readonly
+   *
+   * @description
+   * Owns connected provider and first-password request state.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {FederatedAuthStore}
+   */
+  private readonly federatedStore = inject(FederatedAuthStore);
+
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Browser document used for authenticated provider redirects.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {Document}
+   */
+  private readonly document = inject(DOCUMENT);
+
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Runtime platform discriminator guarding browser navigation.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {object}
+   */
+  private readonly platformId = inject(PLATFORM_ID);
 
   /**
    * Property confirmingDeactivation
@@ -257,6 +307,110 @@ export class AccountSecurityPage implements OnInit {
    * @type {WritableSignal<boolean>}
    */
   protected readonly changingEmail: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property settingPassword
+   * @readonly
+   *
+   * @description
+   * Whether the first-password setup dialog is visible.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly settingPassword: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property signInMethods
+   * @readonly
+   *
+   * @description
+   * External sign-in state exposed to the template through the Auth public API.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @type {FederatedAuthStore}
+   */
+  protected readonly signInMethods = this.federatedStore;
+
+  /**
+   * Property signInMethodsError
+   * @readonly
+   *
+   * @description Localized error from the first failed sign-in-method operation.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly signInMethodsError: Signal<string | null> = computed<string | null>(() => {
+    const error =
+      this.federatedStore.providersCallState().error ??
+      this.federatedStore.connectionsError() ??
+      this.federatedStore.startCallState().error ??
+      this.federatedStore.disconnectCallState().error;
+
+    return error ? resolveFederatedAuthErrorMessage(error.message) : null;
+  });
+
+  /**
+   * Property passwordSetupError
+   * @readonly
+   *
+   * @description Localized first-password failure without exposing raw API details.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly passwordSetupError: Signal<string | null> = computed<string | null>(() => {
+    const requestError = this.federatedStore.passwordSetupRequestCallState().error;
+    if (requestError) return resolveFederatedAuthErrorMessage(requestError.message);
+
+    const confirmState = this.federatedStore.passwordSetupConfirmCallState();
+    if (confirmState.error) return resolveFederatedAuthErrorMessage(confirmState.error.message);
+    if (confirmState.data?.success === false) {
+      return resolveFederatedAuthErrorMessage(confirmState.data.errorCode);
+    }
+
+    return null;
+  });
+
+  /**
+   * Property federatedRedirectEffect
+   * @readonly
+   *
+   * @description
+   * Sends the browser to the provider after the API persists state and PKCE.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {EffectRef}
+   */
+  private readonly federatedRedirectEffect: EffectRef = effect((): void => {
+    const url = this.federatedStore.startUrl();
+    if (!url || !isPlatformBrowser(this.platformId)) return;
+
+    untracked((): void => {
+      this.federatedStore.resetStart();
+      this.document.defaultView?.location.assign(url);
+    });
+  });
+
+  /**
+   * Property passwordSetupOutcomeEffect
+   * @readonly
+   *
+   * @description
+   * Closes first-password setup once the confirmed password is persisted.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {EffectRef}
+   */
+  private readonly passwordSetupOutcomeEffect: EffectRef = effect((): void => {
+    if (!this.federatedStore.passwordSetupConfirmCallState().data?.success) return;
+
+    untracked((): void => this.settingPassword.set(false));
+  });
 
   /**
    * Property previousEmailRequestStatus
@@ -517,6 +671,8 @@ export class AccountSecurityPage implements OnInit {
     this.userStore.load();
     this.sessionStore.load();
     this.trustedDeviceStore.load();
+    this.federatedStore.loadProviders();
+    this.federatedStore.loadConnections();
   }
   //#endregion
 
@@ -709,6 +865,135 @@ export class AccountSecurityPage implements OnInit {
    */
   protected retryDevices(): void {
     this.trustedDeviceStore.load();
+  }
+
+  /**
+   * Method connectProvider
+   * @method connectProvider
+   *
+   * @description
+   * Starts an authenticated full-page provider linking flow.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {FederatedProvider} provider - Provider selected for connection.
+   * @returns {void}
+   */
+  protected connectProvider(provider: FederatedProvider): void {
+    this.federatedStore.startLink(provider);
+  }
+
+  /**
+   * Method disconnectProvider
+   * @method disconnectProvider
+   *
+   * @description
+   * Removes a provider after the presentational confirmation dialog.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {FederatedProvider} provider - Provider selected for removal.
+   * @returns {void}
+   */
+  protected disconnectProvider(provider: FederatedProvider): void {
+    this.federatedStore.disconnect(provider);
+  }
+
+  /**
+   * Method openPasswordSetup
+   * @method openPasswordSetup
+   *
+   * @description
+   * Opens the OTP-protected first-password dialog.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected openPasswordSetup(): void {
+    this.settingPassword.set(true);
+  }
+
+  /**
+   * Method onPasswordSetupVisibilityChanged
+   * @method onPasswordSetupVisibilityChanged
+   *
+   * @description
+   * Mirrors the Spartan dialog state and discards one-time setup data when the
+   * dialog closes.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {boolean} visible - Latest dialog visibility.
+   * @returns {void}
+   */
+  protected onPasswordSetupVisibilityChanged(visible: boolean): void {
+    this.settingPassword.set(visible);
+    if (!visible) this.federatedStore.resetPasswordSetup();
+  }
+
+  /**
+   * Method requestPasswordSetup
+   * @method requestPasswordSetup
+   *
+   * @description
+   * Requests the email code required for first-password setup.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected requestPasswordSetup(): void {
+    this.federatedStore.requestPasswordSetup();
+  }
+
+  /**
+   * Method restartPasswordSetup
+   * @method restartPasswordSetup
+   *
+   * @description Replaces an expired or exhausted OTP with a fresh challenge.
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected restartPasswordSetup(): void {
+    this.federatedStore.resetPasswordSetup();
+    this.federatedStore.requestPasswordSetup();
+  }
+
+  /**
+   * Method confirmPasswordSetup
+   * @method confirmPasswordSetup
+   *
+   * @description
+   * Submits the verified first-password payload.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {PasswordSetupConfirmInput} input - Verified challenge and new password.
+   * @returns {void}
+   */
+  protected confirmPasswordSetup(input: PasswordSetupConfirmInput): void {
+    this.federatedStore.confirmPasswordSetup(input);
+  }
+
+  /**
+   * Method retrySignInMethods
+   * @method retrySignInMethods
+   *
+   * @description
+   * Reloads provider availability and the user's connected methods after a
+   * partial or complete failure of the sign-in methods section.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @returns {void}
+   */
+  protected retrySignInMethods(): void {
+    this.federatedStore.resetStart();
+    this.federatedStore.resetDisconnect();
+    this.federatedStore.loadProviders();
+    this.federatedStore.loadConnections();
   }
 
   /**

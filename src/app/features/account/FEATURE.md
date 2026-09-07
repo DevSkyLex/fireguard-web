@@ -43,6 +43,8 @@ tab list in the dashboard page header. Each section remains a full page and owns
 - `/account/security` — authenticator app (TOTP), the sign-in email address (current address +
   the change-email dialog), the two-step password change, active sessions, trusted devices, and
   the danger zone carrying self-service account deactivation
+- `/account/security/federated/:provider/callback` — authenticated completion of an explicit
+  Google or Microsoft connection; provider credentials are removed from browser history first.
 - `/account/organizations` — the organizations the caller is a member of, each with its logo, name,
   and (for a non-owner) a "Leave" control; the active workspace is marked. Data and the leave
   mutation come from `features/organization`'s `MY_ORGANIZATIONS_PORT` — see Cross-Feature
@@ -70,11 +72,11 @@ none, and nothing on the page changes with the one the sidebar happens to show.
 reader enters their own account through the seat menu pinned at its foot (`AccountMenu`). Once
 inside, the account's local navigation keeps every section directly reachable.
 
-**The account is read-only until asked otherwise.** The profile shows its values; one Edit control
-swaps the editable group — the two names and the interface language — for its form, in place, next
-to the values being changed rather than in a dialog that would hide them (`ARCHITECTURE.md` §10.5).
-Everything below it carries no affordance at all, because none of it can be changed here: the
-address has no self-service endpoint, and the roles are granted by an administrator.
+**The profile's editable fields are always visible.** The two names and the interface language use
+an in-place Signal Form, one field per row, rather than an Edit control or a dialog that would hide
+the values being changed (`ARCHITECTURE.md` §10.5). Everything below it carries no affordance at
+all, because none of it can be changed here: the address has no self-service endpoint, and the
+roles are granted by an administrator.
 
 `features/organization` renders another member's profile at
 `/organizations/:organizationId/members/:memberId`, sharing only Spartan `Item` and `Avatar`
@@ -228,6 +230,14 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Invariants
 
+- The Security page renders auth-owned sign-in method UI through the Auth public API. Account
+  orchestrates the route and current user context; Auth owns provider state and transport.
+- A provider can be disconnected only when another provider or a local password remains.
+  Federated-only users define their first password through the OTP-protected Signal Forms dialog.
+- Retrying the sign-in-method section clears failed start and disconnect mutations before reloading
+  provider availability and the current connection set.
+- Email and password change forms that require a current password are hidden until a local
+  password exists; provider connection management remains available independently.
 - User profile remains account-owned even when auth bootstrap triggers its loading.
 - Shell-level user identity and notification behavior must cross feature boundaries through ports.
 - **The bell's panel is capped at `max-h-[165.75px]`, which is exactly three rows.** A row is an
@@ -288,3 +298,7 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 The sign-in email change (formerly listed here) shipped: request/cancel on `/account/security`,
 public confirmation on auth's `/auth/email-change/confirm`.
+
+The notification-center port publishes a monotonic `revision` signal for private realtime
+invalidation. Onboarding may observe it to refresh owned requests without accessing notification
+payloads; it grants no membership or permission locally.

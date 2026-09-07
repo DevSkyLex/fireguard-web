@@ -33,6 +33,7 @@ import {
   OrganizationMemberAccessStore,
   OrganizationQuotaStore,
 } from '@features/organization/state';
+import { OrganizationAccessAdminStore } from '@features/organization/state/organization-access-admin';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
@@ -182,9 +183,38 @@ describe('OrganizationSettingsPage', () => {
     });
 
     TestBed.overrideComponent(OrganizationSettingsPage, {
-      remove: { providers: [OrganizationSettingsStore, OrganizationBillingStore] },
+      remove: {
+        providers: [
+          OrganizationSettingsStore,
+          OrganizationBillingStore,
+          OrganizationAccessAdminStore,
+        ],
+      },
       add: {
         providers: [
+          {
+            provide: OrganizationAccessAdminStore,
+            useValue: {
+              loadPolicy: vi.fn(),
+              loadRequests: vi.fn(),
+              savePolicy: vi.fn(),
+              addDomain: vi.fn(),
+              verifyDomain: vi.fn(),
+              removeDomain: vi.fn(),
+              approve: vi.fn(),
+              reject: vi.fn(),
+              policy: signal(null),
+              policyFormRevision: signal(0),
+              policyCallState: signal(idleCallState()),
+              requestsCallState: signal(idleCallState()),
+              pending: signal(false),
+              reviewing: signal(false),
+              error: signal(null),
+              requestError: signal(null),
+              requestEntities: signal([]),
+              assignableRoles: signal([]),
+            },
+          },
           {
             provide: OrganizationSettingsStore,
             useValue: {
@@ -800,5 +830,16 @@ describe('OrganizationSettingsPage', () => {
     fixture.componentInstance['resumeSubscription']();
 
     expect(resumeSubscription).toHaveBeenCalledWith('org-1');
+  });
+  it('requires both access-management permissions before exposing or loading the access tab', async () => {
+    permissions.set(['organization.settings.write']);
+    await createPage('access');
+    expect(byTestId('org-settings-tab-access')).toBeNull();
+    expect(fixture.componentInstance['accessStore'].loadPolicy).not.toHaveBeenCalled();
+    permissions.set(['organization.settings.write', 'organization.members.manage']);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(byTestId('org-settings-tab-access')).not.toBeNull();
+    expect(fixture.componentInstance['accessStore'].loadPolicy).toHaveBeenCalledWith('org-1');
   });
 });

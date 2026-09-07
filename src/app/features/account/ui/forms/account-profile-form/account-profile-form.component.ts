@@ -1,14 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   linkedSignal,
   output,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { flagEs, flagFr, flagUn, flagUs } from '@ng-icons/flag-icons';
 import { USER_LOCALE_OPTIONS } from '@features/account/options';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -53,7 +57,8 @@ const NAME_MAX_LENGTH: number = 100;
  */
 @Component({
   selector: 'app-account-profile-form',
-  imports: [FormField, HlmButton, HlmInput, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [FormField, HlmButton, HlmInput, NgIcon, ...HlmFieldImports, ...HlmSelectImports],
+  providers: [provideIcons({ flagEs, flagFr, flagUn, flagUs })],
   templateUrl: './account-profile-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -105,21 +110,6 @@ export class AccountProfileForm {
   public readonly submitted: OutputEmitterRef<AccountProfileFormValues> =
     output<AccountProfileFormValues>();
 
-  /**
-   * Property cancelled
-   * @readonly
-   *
-   * @description
-   * Emits when the user abandons the edit. Nothing is reset here: the model is
-   * a `linkedSignal` over {@link profile}, so the next time the form is shown it
-   * starts from the stored values rather than from the abandoned draft.
-   *
-   * @access public
-   * @since 1.1.0
-   *
-   * @type {OutputEmitterRef<void>}
-   */
-  public readonly cancelled: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -136,6 +126,31 @@ export class AccountProfileForm {
    * @type {typeof USER_LOCALE_OPTIONS}
    */
   protected readonly localeOptions: typeof USER_LOCALE_OPTIONS = USER_LOCALE_OPTIONS;
+
+  /**
+   * Property selectedLocaleOption
+   * @readonly
+   *
+   * @description
+   * The selected language descriptor, including its Flag Icons glyph for the
+   * closed select trigger. A system-language fallback keeps the trigger
+   * meaningful while a profile is first being seeded.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {Signal<(typeof USER_LOCALE_OPTIONS)[number]>}
+   */
+  protected readonly selectedLocaleOption: Signal<(typeof USER_LOCALE_OPTIONS)[number]> = computed(
+    () => {
+      const locale: string = this.model().locale;
+
+      return (
+        USER_LOCALE_OPTIONS.find((option): boolean => option.value === locale) ??
+        USER_LOCALE_OPTIONS[0]
+      );
+    },
+  );
 
   /**
    * Property model

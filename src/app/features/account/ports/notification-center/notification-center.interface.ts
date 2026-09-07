@@ -13,6 +13,8 @@ import type { Signal } from '@angular/core';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface NotificationCenterPort {
+  /** Realtime invalidation counter; exposes no notification content. */
+  readonly revision: Signal<number>;
   readonly unreadCount: Signal<number>;
   readonly hasUnread: Signal<boolean>;
 

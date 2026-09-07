@@ -1,4 +1,10 @@
 <form novalidate (submit)="submit($event)">
+  <span
+    #passwordFocusSink
+    class="pointer-events-none absolute h-px w-px opacity-0"
+    tabindex="-1"
+    aria-hidden="true"
+  ></span>
   <hlm-field-group>
     @if (serverError(); as error) {
       <div hlmAlert variant="destructive" class="break-words" data-testid="register-server-error">
@@ -91,16 +97,96 @@
       <label hlmFieldLabel for="register-password"
         ><span i18n="@@auth.password.label">Password</span><app-required-marker
       /></label>
-      <app-password-input
-        inputId="register-password"
-        autocomplete="new-password"
-        placeholder="At least 8 characters"
-        i18n-placeholder="@@auth.password.placeholder"
-        [field]="registerForm.password"
-      />
-      <hlm-field-description i18n="@@auth.password.pattern">
-        Include an upper case letter, a lower case letter, a digit and a symbol
+      <div class="min-w-0">
+        <div
+          #passwordAnchor
+          class="min-w-0"
+          (focusin)="openPasswordRequirements()"
+          (focusout)="closePasswordRequirements($event)"
+        >
+          <app-password-input
+            inputId="register-password"
+            autocomplete="new-password"
+            placeholder="At least 8 characters"
+            i18n-placeholder="@@auth.password.placeholder"
+            [field]="registerForm.password"
+          />
+        </div>
+
+        <hlm-popover
+          align="end"
+          sideOffset="6"
+          [autoFocus]="false"
+          [closeOnOutsidePointerEvents]="false"
+          [attachTo]="passwordAnchor"
+          [state]="passwordRequirementsState()"
+          (stateChanged)="onPasswordRequirementsStateChanged($event)"
+          (closed)="onPasswordRequirementsClosed()"
+        >
+          <hlm-popover-content
+            *hlmPopoverPortal
+            class="p-0"
+            [style.width.px]="passwordAnchor.offsetWidth"
+            role="dialog"
+            aria-labelledby="register-password-requirements-title"
+          >
+            <div hlmPopoverHeader class="px-3 pt-3">
+              <h3
+                id="register-password-requirements-title"
+                hlmPopoverTitle
+                i18n="@@auth.password.requirements.title"
+              >
+                Password requirements
+              </h3>
+              <p hlmPopoverDescription i18n="@@auth.password.requirements.description">
+                Your password must meet all of these criteria.
+              </p>
+            </div>
+
+            <hlm-separator />
+
+            <ul
+              class="grid gap-1 p-2"
+              aria-label="Password requirements"
+              i18n-aria-label="@@auth.password.requirements.ariaLabel"
+            >
+              @for (criterion of passwordCriteria; track criterion.id) {
+                <li
+                  class="flex min-h-8 items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors"
+                  [class.text-muted-foreground]="!criterion.matches(passwordValue())"
+                >
+                  @if (criterion.matches(passwordValue())) {
+                    <ng-icon name="lucideCheck" class="shrink-0 text-success" aria-hidden="true" />
+                  } @else {
+                    <ng-icon
+                      name="lucideCircle"
+                      class="shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  }
+                  <span class="min-w-0 flex-1">{{ criterion.label }}</span>
+                  <span class="shrink-0 text-xs">{{
+                    criterion.matches(passwordValue())
+                      ? requirementMetLabel
+                      : requirementNotMetLabel
+                  }}</span>
+                </li>
+              }
+            </ul>
+          </hlm-popover-content>
+        </hlm-popover>
+      </div>
+      <hlm-field-description id="register-password-requirements-description" class="sr-only">
+        {{ passwordRequirementsDescription }}
       </hlm-field-description>
+      <span
+        class="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="register-password-requirements-announcement"
+        >{{ passwordRequirementsAnnouncement() }}</span
+      >
       @if (registerForm.password().touched() && registerForm.password().invalid()) {
         <hlm-field-error>{{ registerForm.password().errors()[0].message }}</hlm-field-error>
       }

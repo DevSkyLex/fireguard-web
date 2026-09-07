@@ -702,4 +702,40 @@ describe('FacilityService', () => {
       req.flush(new Blob(['csv-bytes'], { type: 'text/csv' }));
     });
   });
+  describe('addressSuggestions', () => {
+    it('requests the typed suggestion collection with its scoped query', () => {
+      const result = {
+        '@id': `${facilityBaseUrl}/address-suggestions`,
+        '@type': 'Collection',
+        member: [{ displayName: 'Paris, France', latitude: 48.86, longitude: 2.33 }],
+        totalItems: 1,
+      };
+      service
+        .addressSuggestions(orgId, 'Rue & Paris')
+        .subscribe((response) => expect(response).toEqual(result));
+      const request = httpMock.expectOne(
+        (candidate) => candidate.url === `${facilityBaseUrl}/address-suggestions`,
+      );
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.get('q')).toBe('Rue & Paris');
+      expect(request.request.withCredentials).toBe(true);
+      request.flush(result);
+    });
+
+    it('preserves a provider outage instead of returning an empty collection', () => {
+      service.addressSuggestions(orgId, 'Paris').subscribe({
+        next: () => {
+          throw new Error('An outage must remain an error');
+        },
+        error: (error: ApiError) => expect(error.status).toBe(503),
+      });
+      const request = httpMock.expectOne(
+        (candidate) => candidate.url === `${facilityBaseUrl}/address-suggestions`,
+      );
+      request.flush(
+        { status: 503, title: 'Service Unavailable', detail: 'Address provider unavailable.' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
+    });
+  });
 });

@@ -102,6 +102,17 @@ describe('LineChart', () => {
       fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])')?.textContent,
     ).toContain('No data');
   });
+  it('reports a series containing only unavailable samples as empty', async () => {
+    await render();
+    fixture.componentRef.setInput('series', [
+      { name: 'Inspections', points: [{ label: 'Jan', value: null }] },
+    ]);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])')?.textContent,
+    ).toContain('No data');
+    expect(fixture.nativeElement.querySelector('tanstack-chart')).toBeNull();
+  });
   it('renders all series labels in its native legend', async () => {
     await render();
     fixture.componentRef.setInput('series', [

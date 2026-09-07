@@ -4,3 +4,5 @@ export { TrustedDeviceService } from './services/trusted-device/trusted-device.s
 export { PasswordResetService } from './services/password-reset/password-reset.service';
 export { EmailChangeService } from './services/email-change/email-change.service';
 export { RegistrationService } from './services/registration/registration.service';
+export { FederatedAuthService } from './services/federation/federated-auth.service';
+export { EmailOwnershipService } from './services/email-ownership/email-ownership.service';

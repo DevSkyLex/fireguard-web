@@ -6,3 +6,4 @@ export { PlanService } from './services/plan/plan.service';
 export { BillingService } from './services/billing/billing.service';
 export { ComplianceService } from './services/compliance/compliance.service';
 export { TeamService } from './services/team/team.service';
+export { OrganizationAccessService } from './services/organization-access/organization-access.service';

@@ -1,0 +1,89 @@
+<section class="flex min-w-0 flex-col gap-4" data-testid="organization-join-requests">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="text-base font-semibold" i18n="@@org.access.requests.title">
+        Membership requests
+      </h2>
+      <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.access.requests.description">
+        Review people asking to join through a verified company domain.
+      </p>
+    </div>
+    <button
+      hlmBtn
+      variant="outline"
+      class="max-sm:min-h-11"
+      [disabled]="loading() || pending()"
+      (click)="retried.emit()"
+      i18n="@@org.access.requests.refresh"
+    >
+      Refresh requests
+    </button>
+  </header>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive">
+      <h3 hlmAlertTitle i18n="@@org.access.errorTitle">Could not complete the request</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  @if (loading()) {
+    <div
+      role="status"
+      aria-label="Loading membership requests"
+      i18n-aria-label="@@org.access.requests.loading"
+      class="grid gap-2"
+    >
+      <hlm-skeleton class="h-16 w-full" /><hlm-skeleton class="h-16 w-full" />
+    </div>
+  } @else if (!error() && requests().length === 0) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideUserRoundPlus" aria-hidden="true" />
+        </div>
+        <h3 hlmEmptyTitle i18n="@@org.access.requests.empty">No membership requests</h3>
+        <p hlmEmptyDescription i18n="@@org.access.requests.emptyHelp">
+          Requests from people with a verified company email will appear here.
+        </p>
+      </div>
+    </div>
+  }
+  <ul hlmItemGroup>
+    @for (request of requests(); track request.id) {
+      <li hlmItem variant="outline" class="min-w-0">
+        <div hlmItemContent>
+          <h3 hlmItemTitle class="break-all">{{ request.applicantEmail }}</h3>
+          <p class="text-xs text-muted-foreground">
+            <span i18n="@@org.access.requests.received">Received</span>
+            {{ request.createdAt | date: 'mediumDate' }} ·
+            <span i18n="@@org.access.requests.expires">Expires</span>
+            {{ request.expiresAt | date: 'mediumDate' }}
+          </p>
+        </div>
+        <div hlmItemActions class="flex-wrap">
+          <span hlmBadge variant="secondary">{{ statusLabels[request.status] }}</span>
+          @if (request.actions.includes('approve') || request.actions.includes('reject')) {
+            <button
+              hlmBtn
+              variant="outline"
+              class="max-sm:min-h-11"
+              [disabled]="pending()"
+              (click)="selectedId.set(request.id)"
+              i18n="@@org.access.requests.review"
+            >
+              Review request
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+</section>
+<app-organization-join-request-review-dialog
+  [request]="selected()"
+  [roles]="roles()"
+  [pending]="pending()"
+  [error]="error()"
+  (closed)="selectedId.set(null)"
+  (approved)="approved.emit($event)"
+  (rejected)="rejected.emit($event)"
+/>

@@ -128,6 +128,30 @@ describe('RegisterForm', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="register-server-error"]')).toBeNull();
   });
 
+  it('should replace the inline password hint with an accessible requirements popover', () => {
+    expect(
+      fixture.nativeElement.querySelector('hlm-field-description')?.classList.contains('sr-only'),
+    ).toBe(true);
+    expect(fixture.nativeElement.querySelector('hlm-popover')).not.toBeNull();
+  });
+
+  it('should render every password criterion while the password field is focused', async () => {
+    const password = fixture.nativeElement.querySelector('#register-password') as HTMLInputElement;
+
+    password.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await fixture.whenStable();
+
+    const menu = document.body.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
+    expect(menu).not.toBeNull();
+    expect(menu?.textContent).toContain('Password requirements');
+    expect(menu?.querySelectorAll('li')).toHaveLength(5);
+
+    password.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+    await fixture.whenStable();
+
+    expect(document.body.querySelector('[data-slot="popover-content"]')).toBeNull();
+  });
+
   it('should mark the first name field aria-invalid once submission touches it empty', async () => {
     await submit(fixture);
 
@@ -152,5 +176,38 @@ describe('RegisterForm', () => {
     const asterisk = label.querySelector('span[aria-hidden="true"]');
 
     expect(asterisk?.textContent).toContain('*');
+  });
+  it('associates the native password input with persistent requirements through Spartan Field', () => {
+    const password = fixture.nativeElement.querySelector('#register-password') as HTMLInputElement;
+    expect(password.getAttribute('aria-describedby')?.split(' ')).toContain(
+      'register-password-requirements-description',
+    );
+    const description = fixture.nativeElement.querySelector(
+      '#register-password-requirements-description',
+    ) as HTMLElement;
+    expect(description.textContent).toContain('At least 8 characters');
+    expect(description.textContent).toContain('An upper case letter');
+  });
+
+  it('announces criterion changes without announcing each character or moving input focus', async () => {
+    const password = fixture.nativeElement.querySelector('#register-password') as HTMLInputElement;
+    const announcement = fixture.nativeElement.querySelector(
+      '[data-testid="register-password-requirements-announcement"]',
+    ) as HTMLElement;
+    password.focus();
+    await type(fixture, '#register-password', 'A');
+    const firstStatus = announcement.textContent;
+    expect(firstStatus).toContain('An upper case letter: Met');
+    expect(firstStatus).toContain('A digit: Not met');
+    expect(document.activeElement).toBe(password);
+    await type(fixture, '#register-password', 'AB');
+    expect(announcement.textContent).toBe(firstStatus);
+    await type(fixture, '#register-password', 'AB1');
+    expect(announcement.textContent).toContain('A digit: Met');
+    expect(announcement.textContent).not.toContain('AB1');
+    expect(document.activeElement).toBe(password);
+    const rows = document.body.querySelectorAll('[data-slot="popover-content"] li');
+    expect(Array.from(rows).some((row) => row.textContent?.includes('Not met'))).toBe(true);
+    expect(Array.from(rows).some((row) => row.textContent?.includes('Met'))).toBe(true);
   });
 });

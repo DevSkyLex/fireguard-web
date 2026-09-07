@@ -39,13 +39,19 @@
     </hlm-select-content>
   </hlm-select>
   @for (group of groups(); track group.resource) {
-    <section class="flex flex-col gap-2">
+    <section class="flex min-w-0 flex-col gap-2">
       <h3 class="text-sm font-semibold break-words">{{ group.label }}</h3>
-      <ul hlmItemGroup class="divide-y divide-border">
+      <ul hlmItemGroup class="gap-3">
         @for (row of group.rows; track row.change.id) {
-          <li hlmItem size="sm" class="px-0" data-testid="intervention-change-row">
-            <div hlmItemContent class="gap-3">
-              <div class="flex flex-wrap items-center gap-2">
+          <li
+            hlmItem
+            variant="outline"
+            size="sm"
+            class="items-start px-3 py-3 sm:px-4"
+            data-testid="intervention-change-row"
+          >
+            <div hlmItemContent class="min-w-0 gap-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
                 <app-intervention-tag kind="changeStatus" [value]="row.change.status" asOption />
                 @if (canReject() && row.change.status === 'proposed') {
                   <button
@@ -65,9 +71,11 @@
                   </button>
                 }
               </div>
-              <dl class="flex flex-col gap-2 text-sm">
+              <dl
+                class="grid gap-2 border-t border-border/60 pt-3 text-sm sm:grid-cols-[minmax(8rem,0.75fr)_minmax(0,2fr)] sm:gap-x-4 sm:gap-y-2"
+              >
                 @for (line of row.patchLines; track line.field) {
-                  <div class="grid grid-cols-1 gap-1 sm:grid-cols-[minmax(8rem,1fr)_2fr] sm:gap-4">
+                  <div class="contents">
                     <dt class="text-muted-foreground">{{ line.field }}</dt>
                     <dd class="min-w-0 font-medium break-words">{{ line.value }}</dd>
                   </div>

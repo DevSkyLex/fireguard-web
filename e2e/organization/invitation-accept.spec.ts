@@ -13,7 +13,7 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { OrganizationInvitationAcceptPage } from '../support/pages/organization-invitation-accept.page';
 
-const SCREENSHOT_DIR = 'test-results/uiux-final-20260903';
+const SCREENSHOT_DIR = 'e2e/artifacts/corrections/invitations';
 
 test.describe('Invitation accept preview', () => {
   test('renders the pending invitation card with organization, inviter, invited email and expiry', async ({
@@ -94,7 +94,7 @@ test.describe('Invitation accept flow', () => {
     await expect(invitationAccept.openOrganizationLink).toHaveCount(0);
   });
 
-  test('shows a destructive alert without leaving the card when acceptance fails', async ({
+  test('shows one error toast while keeping the invitation available for retry', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -108,11 +108,15 @@ test.describe('Invitation accept flow', () => {
     await invitationAccept.goto(E2E_INVITATION_TOKEN);
     await invitationAccept.accept();
 
-    await expect(invitationAccept.acceptError).toBeVisible();
-    await expect(invitationAccept.acceptError).toContainText(
+    const toast = page
+      .locator('[data-sonner-toast]')
+      .filter({ hasText: "We couldn't accept this invitation" });
+    await expect(toast).toHaveCount(1);
+    await expect(toast).toContainText(
       'Please try again. If this invitation is no longer valid, ask your administrator for a new one.',
     );
-    await expect(invitationAccept.acceptError.locator('svg')).toBeVisible();
+    await expect(invitationAccept.acceptError).toHaveCount(0);
+    await expect(invitationAccept.acceptSubmit).toBeEnabled();
     await expect(invitationAccept.card).toBeVisible();
   });
 

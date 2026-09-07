@@ -28,6 +28,8 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
   /\/api\/auth\/logout$/,
   /\/api\/auth\/refresh$/,
   /\/api\/auth\/register$/,
+  /\/api\/auth\/federated\/providers$/,
+  /\/api\/auth\/federated\/(google|microsoft)\/(start|complete)$/,
   // Pre-authentication MFA challenge: there is no session to lose yet.
   /\/api\/auth\/mfa\/(verify|resend)$/,
   // Password reset: the caller is anonymous and holds a token, not a session.

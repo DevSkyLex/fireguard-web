@@ -32,6 +32,13 @@ export interface OnboardingPlanSelection {
   /** Billing cadence proposed. */
   readonly interval: 'month';
 
-  /** `true` when the plan carries a non-zero monthly price. */
-  readonly requiresPayment: boolean;
+  /**
+   * Property pricingState
+   * @readonly
+   * @description A commercial offer uses Billing even when its configured price is zero.
+   * @access public
+   * @since 1.1.0
+   * @type {'free' | 'priced'}
+   */
+  readonly pricingState: 'free' | 'priced';
 }

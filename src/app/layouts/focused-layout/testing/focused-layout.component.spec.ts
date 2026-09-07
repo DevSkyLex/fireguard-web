@@ -51,6 +51,8 @@ describe('FocusedLayout', () => {
     const element: HTMLElement = fixture.nativeElement;
 
     expect(element.querySelector('header #header-stub')).not.toBeNull();
+    expect(element.querySelector('header')?.textContent).toContain('Fireguard');
+    expect(element.querySelector('header img')?.getAttribute('src')).toBe('favicon.svg');
     expect(element.querySelector('footer #footer-stub')).not.toBeNull();
   });
 });

@@ -1,0 +1,69 @@
+<section hlmCard class="h-full" data-testid="org-dashboard-risk">
+  <div hlmCardHeader>
+    <h3 hlmCardTitle i18n="@@org.dashboard.risk.title">Non-conformity follow-up</h3>
+    <p hlmCardDescription i18n="@@org.dashboard.risk.description">Current distribution by status</p>
+  </div>
+  <div hlmCardContent class="@container/risk flex flex-1 flex-col justify-center">
+    @if (loading()) {
+      <div
+        class="flex min-h-64 min-w-0 flex-col items-center justify-center gap-6 @[400px]/risk:flex-row"
+      >
+        <hlm-skeleton class="size-40 shrink-0 rounded-full" />
+        <div class="flex flex-col gap-5">
+          <hlm-skeleton class="h-4 w-24" /><hlm-skeleton class="h-4 w-24" /><hlm-skeleton
+            class="h-4 w-24"
+          />
+        </div>
+      </div>
+    } @else if (segments(); as data) {
+      @if (total() > 0) {
+        <div class="grid items-center gap-4 @[400px]/risk:grid-cols-[1fr_1fr]">
+          <app-donut-chart
+            [segments]="data"
+            [height]="240"
+            label="Non-conformities by status"
+            i18n-label="@@org.dashboard.risk.chartLabel"
+          />
+          <dl class="flex flex-col gap-5">
+            @for (segment of data; track segment.id) {
+              <div class="flex items-center justify-between gap-4">
+                <dt class="flex min-w-0 items-center gap-2 text-sm">
+                  <span
+                    class="size-2 shrink-0 rounded-full"
+                    [style.background-color]="'var(--' + segment.colorToken + ')'"
+                    aria-hidden="true"
+                  ></span>
+                  {{ segment.label }}
+                </dt>
+                <dd class="flex shrink-0 items-baseline gap-2 tabular-nums">
+                  <span class="font-semibold">{{ segment.value | number }}</span
+                  ><span class="w-10 text-right text-xs text-muted-foreground"
+                    >{{ (segment.value / total()) * 100 | number: '1.0-0' }}%</span
+                  >
+                </dd>
+              </div>
+            }
+          </dl>
+        </div>
+      } @else {
+        <div hlmEmpty class="min-h-64">
+          <div hlmEmptyHeader>
+            <p hlmEmptyTitle i18n="@@org.dashboard.risk.empty">No non-conformities recorded</p>
+            <p hlmEmptyDescription i18n="@@org.dashboard.risk.emptyDescription">
+              Recorded issues will appear here as inspections are completed.
+            </p>
+          </div>
+        </div>
+      }
+    } @else {
+      <div hlmEmpty class="min-h-64">
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@org.dashboard.risk.unavailable">Status breakdown unavailable</p>
+          <p hlmEmptyDescription i18n="@@org.dashboard.risk.unavailableDescription">
+            The current snapshot does not contain all status counts.
+          </p>
+        </div>
+      </div>
+    }
+  </div>
+</section>

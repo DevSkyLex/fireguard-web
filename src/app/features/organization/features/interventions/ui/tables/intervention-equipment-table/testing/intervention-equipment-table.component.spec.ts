@@ -116,9 +116,10 @@ describe('InterventionEquipmentTable', () => {
   });
 
   it('should show the empty state when nothing is linked', () => {
-    expect(byTestId('intervention-equipment-empty')?.textContent).toContain(
-      'No equipment is linked to this intervention yet.',
-    );
+    const empty: HTMLElement | null = byTestId('intervention-equipment-empty');
+
+    expect(empty?.textContent).toContain('No equipment is linked to this intervention yet.');
+    expect(empty?.querySelector('ng-icon[name="lucideWrench"]')).not.toBeNull();
   });
 
   it('should show the "Show more" button when the server holds more equipment than is loaded', async () => {

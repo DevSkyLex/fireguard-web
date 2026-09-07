@@ -2,7 +2,9 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
-import { AuthStore } from '@features/auth/state';
+import { errorCallState, idleCallState, type CallState } from '@core/request-state';
+import type { FederatedProviderOutput } from '@features/auth/models';
+import { AuthStore, FederatedAuthStore } from '@features/auth/state';
 import { LoginPage } from '../login-page.component';
 
 describe('LoginPage', () => {
@@ -15,6 +17,18 @@ describe('LoginPage', () => {
     loginError: WritableSignal<null>;
     mfaRequired: WritableSignal<boolean>;
     isAuthenticated: WritableSignal<boolean>;
+  };
+  let mockFederatedStore: {
+    loadProviders: ReturnType<typeof vi.fn>;
+    startLogin: ReturnType<typeof vi.fn>;
+    resetStart: ReturnType<typeof vi.fn>;
+    enabledProviders: WritableSignal<readonly ('google' | 'microsoft')[]>;
+    providersLoading: WritableSignal<boolean>;
+    providersCallState: WritableSignal<CallState<readonly FederatedProviderOutput[]>>;
+    startPending: WritableSignal<boolean>;
+    pendingProvider: WritableSignal<'google' | 'microsoft' | null>;
+    startUrl: WritableSignal<string | null>;
+    startCallState: WritableSignal<{ status: 'idle'; data: null; error: null }>;
   };
   let navigateByUrl: MockInstance;
   let navigate: MockInstance;
@@ -30,12 +44,25 @@ describe('LoginPage', () => {
       mfaRequired,
       isAuthenticated,
     };
+    mockFederatedStore = {
+      loadProviders: vi.fn(),
+      startLogin: vi.fn(),
+      resetStart: vi.fn(),
+      enabledProviders: signal([]),
+      providersLoading: signal(false),
+      providersCallState: signal<CallState<readonly FederatedProviderOutput[]>>(idleCallState()),
+      startPending: signal(false),
+      pendingProvider: signal(null),
+      startUrl: signal(null),
+      startCallState: signal({ status: 'idle', data: null, error: null }),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthStore, useValue: mockAuthStore },
+        { provide: FederatedAuthStore, useValue: mockFederatedStore },
       ],
     });
 
@@ -48,8 +75,27 @@ describe('LoginPage', () => {
   });
 
   it('should not navigate while no outcome is reached', () => {
+    expect(mockFederatedStore.loadProviders).toHaveBeenCalledOnce();
     expect(navigate).not.toHaveBeenCalled();
     expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('should render only enabled providers and start the selected provider once', async () => {
+    mockFederatedStore.enabledProviders.set(['google']);
+    await fixture.whenStable();
+
+    const button = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="auth-provider-google"]')
+      ?.closest('button');
+    expect(button).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Microsoft');
+
+    button?.click();
+    expect(mockFederatedStore.startLogin).toHaveBeenCalledOnce();
+    expect(mockFederatedStore.startLogin).toHaveBeenCalledWith({
+      provider: 'google',
+      returnUrl: '/',
+    });
   });
 
   it('should send plain credentials without remember_me when it was not asked for', () => {
@@ -65,6 +111,7 @@ describe('LoginPage', () => {
       email: 'ada@example.com',
       password: 'Str0ng!Passw0rd',
     });
+    expect(mockFederatedStore.resetStart).toHaveBeenCalledOnce();
   });
 
   it('should send remember_me when it was asked for', () => {
@@ -86,6 +133,7 @@ describe('LoginPage', () => {
     await fixture.whenStable();
 
     expect(navigateByUrl).toHaveBeenCalledWith('/');
+    expect(mockFederatedStore.resetStart).toHaveBeenCalledOnce();
   });
 
   it('should route to verification when a challenge is pending', async () => {
@@ -108,6 +156,59 @@ describe('LoginPage', () => {
       queryParams: { returnUrl: undefined },
     });
     expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('should lock provider start while password sign-in is pending', async () => {
+    mockFederatedStore.enabledProviders.set(['google']);
+    mockAuthStore.isLoggingIn.set(true);
+    await fixture.whenStable();
+
+    const button = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="auth-provider-google"]')
+      ?.closest<HTMLButtonElement>('button');
+    button?.click();
+
+    expect(button?.disabled).toBe(true);
+    expect(mockFederatedStore.startLogin).not.toHaveBeenCalled();
+  });
+
+  it('should reject password submission while a provider start is pending', () => {
+    mockFederatedStore.startPending.set(true);
+
+    fixture.componentInstance['login']({
+      email: 'ada@example.com',
+      password: 'Str0ng!Passw0rd',
+      rememberMe: false,
+    });
+
+    expect(mockAuthStore.login).not.toHaveBeenCalled();
+    expect(mockFederatedStore.resetStart).not.toHaveBeenCalled();
+  });
+
+  it('should expose a localized retry when provider discovery fails', async () => {
+    mockFederatedStore.providersCallState.set(
+      errorCallState(
+        {
+          error: null,
+          message: 'provider_unavailable',
+          code: 503,
+          retryable: true,
+          timestamp: 0,
+        },
+        [],
+      ),
+    );
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'This sign-in provider is temporarily unavailable. Try again.',
+    );
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="federated-provider-retry"]')
+      ?.click();
+
+    expect(mockFederatedStore.resetStart).toHaveBeenCalledOnce();
+    expect(mockFederatedStore.loadProviders).toHaveBeenCalledTimes(2);
   });
   it('should carry the invitation destination through registration, recovery and MFA links', async () => {
     const destination = '/invitations/invite-token';

@@ -5,6 +5,7 @@ import type {
   OnboardingOutput,
   StartOnboardingInput,
   OnboardingStepKey,
+  PrepareOnboardingSetupInput,
 } from '@features/onboarding/models';
 
 /**
@@ -81,6 +82,22 @@ export class OnboardingService extends HydraApiService {
   //#endregion
 
   //#region Public Methods
+  /**
+   * Method prepareSetup
+   * @method prepareSetup
+   * @description Persists the complete batch before creating any resource, enabling recovery after reload or a lost response.
+   * @access public
+   * @since 1.1.0
+   * @param {PrepareOnboardingSetupInput} input - Session-scoped immutable item keys and wire payloads.
+   * @returns {Observable<OnboardingOutput>} Persisted setup operations and current flow.
+   */
+  public prepareSetup(input: PrepareOnboardingSetupInput): Observable<OnboardingOutput> {
+    return this.post<PrepareOnboardingSetupInput, OnboardingOutput>(
+      `${OnboardingService.BASE_PATH}/setup-operations`,
+      input,
+    );
+  }
+
   /**
    * Method get
    * @method get

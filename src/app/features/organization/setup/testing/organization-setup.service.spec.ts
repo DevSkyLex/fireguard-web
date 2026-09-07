@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import type { HydraCollection, HydraItem } from '@core/api/models';
 import {
   OrganizationInvitationService,
@@ -33,6 +33,7 @@ describe('OrganizationSetupService', () => {
     listAll: vi.fn(),
   };
   const facilityService = {
+    addressSuggestions: vi.fn(),
     listAll: vi.fn(),
     create: vi.fn(),
   };
@@ -98,6 +99,38 @@ describe('OrganizationSetupService', () => {
           description: 'Full access',
         },
       ]);
+    });
+  });
+
+  it('forwards a stable recovery context to each owner creation endpoint', () => {
+    const context = { onboardingSessionId: 'session-1', onboardingItemKey: 'item-1' };
+    organizationService.create.mockReturnValue(of({ id: 'org-1' }));
+    organizationInvitationService.invite.mockReturnValue(of({ id: 'invitation-1' }));
+    facilityService.create.mockReturnValue(of({ id: 'facility-1', name: 'HQ', type: 'site' }));
+    equipmentService.create.mockReturnValue(of({ id: 'equipment-1' }));
+    service.createOrganization({ name: 'Acme' }, context).subscribe();
+    service
+      .inviteMembers('org-1', [{ email: 'one@example.com', roleIds: [null, 'role-1'] }], context)
+      .subscribe();
+    service.createFacilities('org-1', [{ name: 'HQ', type: 'site' }], context).subscribe();
+    service
+      .createEquipment('org-1', { type: 'extinguisher', facilityId: 'facility-1' }, context)
+      .subscribe();
+    expect(organizationService.create).toHaveBeenCalledWith({ name: 'Acme', ...context });
+    expect(organizationInvitationService.invite).toHaveBeenCalledWith('org-1', {
+      email: 'one@example.com',
+      roleIds: ['role-1'],
+      ...context,
+    });
+    expect(facilityService.create).toHaveBeenCalledWith('org-1', {
+      name: 'HQ',
+      type: 'site',
+      ...context,
+    });
+    expect(equipmentService.create).toHaveBeenCalledWith('org-1', {
+      type: 'extinguisher',
+      facility: '/api/facilities/facility-1',
+      ...context,
     });
   });
 
@@ -278,5 +311,53 @@ describe('OrganizationSetupService', () => {
       expect(facilities).toEqual([{ id: 'facility-1', name: 'HQ', type: 'site' }]);
     });
     expect(facilityService.listAll).toHaveBeenCalledExactlyOnceWith('org-1');
+  });
+  it('maps address suggestions through the setup boundary without leaking the envelope', () => {
+    const match = Object.freeze({
+      displayName: '1 Rue de la Paix',
+      street: '1 Rue de la Paix',
+      city: 'Paris',
+      region: 'Île-de-France',
+      postalCode: '75002',
+      country: 'France',
+      countryCode: 'FR',
+      latitude: 48.86,
+      longitude: 2.33,
+    });
+    facilityService.addressSuggestions.mockReturnValue(of({ member: [match], totalItems: 1 }));
+    service.searchFacilityAddresses('org-1', 'Rue de la Paix').subscribe((matches) => {
+      expect(matches).toEqual([match]);
+      expect(matches[0]).not.toBe(match);
+    });
+    expect(facilityService.addressSuggestions).toHaveBeenCalledExactlyOnceWith(
+      'org-1',
+      'Rue de la Paix',
+    );
+  });
+
+  it('preserves an address provider failure for the owning store', () => {
+    const failure = new Error('Provider unavailable');
+    facilityService.addressSuggestions.mockReturnValue(throwError(() => failure));
+    service.searchFacilityAddresses('org-1', 'Paris').subscribe({
+      next: () => {
+        throw new Error('An outage must not become an empty result');
+      },
+      error: (error: unknown) => expect(error).toBe(failure),
+    });
+  });
+
+  it('passes selected address coordinates to facility creation', () => {
+    const facility = Object.freeze({
+      name: 'HQ',
+      type: 'site' as const,
+      address: '1 Rue de la Paix',
+      latitude: 48.86,
+      longitude: 2.33,
+    });
+    facilityService.create.mockReturnValue(of({ ...facility, id: 'site-1' }));
+    service.createFacilities('org-1', [facility]).subscribe((result) => {
+      expect(result).toEqual([{ id: 'site-1', name: 'HQ', type: 'site' }]);
+    });
+    expect(facilityService.create).toHaveBeenCalledExactlyOnceWith('org-1', facility);
   });
 });

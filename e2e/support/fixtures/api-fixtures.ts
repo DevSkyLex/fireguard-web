@@ -13,9 +13,9 @@ export const E2E_ORGANIZATION_ID = 'e2e-org-1';
 export interface LoginOutputFixture {
   readonly '@id': string;
   readonly '@type': string;
-  readonly access_token: string;
+  readonly access_token: string | null;
   readonly token_type: 'Bearer';
-  readonly expires_in: number;
+  readonly expires_in: number | null;
   readonly scope?: string | null;
   readonly mfa_required?: boolean | null;
   readonly mfa_token?: string | null;
@@ -23,6 +23,8 @@ export interface LoginOutputFixture {
   readonly mfa_method?: 'email' | 'sms' | 'totp' | null;
   readonly mfa_destination?: string | null;
   readonly mfa_resend_in?: number | null;
+  readonly return_url?: string | null;
+  readonly new_account?: boolean | null;
 }
 
 export function loginOutput(overrides: Partial<LoginOutputFixture> = {}): LoginOutputFixture {
@@ -198,7 +200,18 @@ export const E2E_ONBOARDING_STEPS: ReadonlyArray<OnboardingStepOutputFixture> = 
   }),
 ];
 
+/** A durable setup item returned on every browser resume. */
+export interface OnboardingSetupOperationFixture {
+  readonly stepKey: Exclude<OnboardingStepKeyFixture, 'select_plan'>;
+  readonly itemKey: string;
+  readonly payload: Readonly<Record<string, unknown>>;
+  readonly resourceId: string | null;
+  readonly status: 'prepared' | 'completed';
+}
+
 export interface OnboardingOutputFixture {
+  readonly sessionId: string;
+  readonly setupOperations: readonly OnboardingSetupOperationFixture[];
   readonly '@id': string;
   readonly '@type': string;
   readonly state: 'not_started' | 'in_progress' | 'blocked' | 'completed';
@@ -221,6 +234,8 @@ export function onboardingOutput(
   return {
     '@id': '/api/onboarding/organization',
     '@type': 'Onboarding',
+    sessionId: '00000000-0000-4000-8000-000000000101',
+    setupOperations: [],
     state: 'completed',
     flow: 'organization',
     nextStep: null,

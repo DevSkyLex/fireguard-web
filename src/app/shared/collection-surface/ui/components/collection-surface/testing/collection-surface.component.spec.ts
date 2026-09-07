@@ -64,6 +64,13 @@ describe('CollectionSurface', () => {
     expect(root().querySelector('[role="status"]')).toBeNull();
   });
 
+  it('uses a subtle tonal wash for alternating table rows', () => {
+    const body: HTMLElement | null = root().querySelector('tbody');
+
+    expect(body?.className).toContain('even:bg-muted/20');
+    expect(body?.className).not.toContain('even:bg-muted/40');
+  });
+
   it('draws the skeleton instead of the projected rows on the first load', async () => {
     fixture.componentInstance.loading.set(true);
     fixture.componentInstance.rowCount.set(0);

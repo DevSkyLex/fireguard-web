@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { GateReasonDirective } from '@shared/gate-reason';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSeparator } from '@shared/ui/separator';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component OnboardingStepFooter
@@ -15,15 +17,15 @@ import { HlmButton } from '@shared/ui/button';
  *
  * @description
  * The one action row every wizard step ends with: the step's named primary
- * action on the right (`type="submit"`, so it belongs to the form that
+ * action spanning the form width (`type="submit"`, so it belongs to the form that
  * renders it) and, only when the backend lets the step be skipped, a ghost
- * "Skip for now" on the left. Never a third control — the batch steps'
+ * "Skip for now" below it. Never a third control — the batch steps'
  * "Add another" lives with the fields it adds to, not here.
  *
- * Below `lg` the row sticks to the bottom of the viewport on the page ground,
- * so the primary action stays in the thumb zone while a long step scrolls.
- * A closed gate names its reason through `appGateReason`, per `PRODUCT.md`
- * principle 2.
+ * On phones, a native Spartan separator defines the sticky action row within the open form,
+ * so the primary action remains in the thumb zone while a long step scrolls
+ * without separating it from the fields it commits. A closed gate names its
+ * reason through `appGateReason`, per `PRODUCT.md` principle 2.
  *
  * @version 1.0.0
  *
@@ -36,9 +38,9 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-onboarding-step-footer',
-  imports: [HlmButton, GateReasonDirective],
+  imports: [HlmButton, HlmSeparator, HlmSpinner, GateReasonDirective],
   templateUrl: './onboarding-step-footer.component.html',
-  host: { class: 'sticky bottom-0 z-10 block bg-background' },
+  host: { class: 'block bg-background max-sm:sticky max-sm:bottom-0 max-sm:z-10' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingStepFooter {

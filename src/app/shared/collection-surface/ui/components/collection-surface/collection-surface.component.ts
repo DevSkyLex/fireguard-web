@@ -381,21 +381,6 @@ export class CollectionSurface {
   protected readonly captionId: Signal<string> = computed<string>(() => `${this.testId()}-caption`);
 
   /**
-   * Property tableWrapperClass
-   * @readonly
-   *
-   * @description
-   * The bordered outer shell's classes, hidden below
-   * {@link compactBreakpoint} in favor of the card layout. It takes the host's
-   * height as a flex item (`flex-1 min-h-0`) rather than `h-full`, which only
-   * resolves when every ancestor already has a definite height.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  /**
    * Property containerClass
    * @readonly
    *
@@ -421,7 +406,12 @@ export class CollectionSurface {
   /**
    * Property tableWrapperClass
    * @readonly
-   * @description Responsive table wrapper classes; scrolling requires a bounded desktop container.
+   *
+   * @description
+   * The bordered outer shell's responsive classes, hidden below
+   * {@link compactBreakpoint} in favor of cards. It grows as a bounded flex
+   * item so the table body can own its scrolling.
+   *
    * @access protected
    * @since 1.0.0
    * @type {Signal<string>}
@@ -498,7 +488,7 @@ export class CollectionSurface {
    * @readonly
    *
    * @description
-   * The body's zebra striping (`DESIGN.md`'s "Wash" tonal step, on every
+   * The body's subtle zebra striping (`DESIGN.md`'s "Wash" tonal step, on every
    * even projected `<tr>`) plus the {@link density}-driven cell padding,
    * targeting the caller's projected `[data-slot=table-cell]` cells through
    * a descendant selector.
@@ -509,7 +499,7 @@ export class CollectionSurface {
    * @type {Signal<string>}
    */
   protected readonly tbodyClass: Signal<string> = computed<string>(() => {
-    const base: string = '[&>tr]:even:bg-muted/40';
+    const base: string = '[&>tr]:even:bg-muted/20';
 
     switch (this.density()) {
       case 'compact':

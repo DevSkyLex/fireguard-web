@@ -1,6 +1,7 @@
 import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
 import { catchError, EMPTY, forkJoin, from, map, mergeMap, type Observable, switchMap } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionOfflineService,
@@ -25,6 +26,16 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  */
 @Service()
 export class InterventionPrefetchService {
+  /**
+   * Property authSession
+   * @readonly
+   * @description Prevents background requests before sign-in and cancels prefetch when the session ends.
+   * @access private
+   * @since 1.0.0
+   * @type {AuthSessionPort}
+   */
+  private readonly authSession = inject<AuthSessionPort>(AUTH_SESSION_PORT);
+
   /**
    * Property organization
    * @readonly
@@ -132,7 +143,7 @@ export class InterventionPrefetchService {
    */
   public constructor() {
     effect((onCleanup) => {
-      if (!this.started()) return;
+      if (!this.started() || !this.authSession.isAuthenticated()) return;
       const organizationId = this.organization.selectedOrganizationId();
       if (!organizationId || this.connectivity.isOffline()) return;
       const subscription = this.members

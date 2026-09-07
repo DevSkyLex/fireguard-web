@@ -1,0 +1,322 @@
+<div id="onboarding-workspace-page" class="flex min-w-0 flex-col gap-6">
+  <header class="flex flex-col gap-2">
+    @if (requestsOnly) {
+      <h1
+        data-workspace-heading
+        tabindex="-1"
+        class="text-2xl font-semibold tracking-tight"
+        i18n="@@onboarding.workspace.requestsTitle"
+      >
+        Your membership requests
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@onboarding.workspace.requestsDescription">
+        Track your requests. Access starts when an administrator approves you.
+      </p>
+    } @else {
+      <h1
+        data-workspace-heading
+        tabindex="-1"
+        class="text-2xl font-semibold tracking-tight"
+        i18n="@@onboarding.workspace.title"
+      >
+        Your workspace
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@onboarding.workspace.description">
+        Join your organization or create a workspace for your team.
+      </p>
+    }
+  </header>
+
+  @if (store.loading() && !store.options()) {
+    <div class="flex items-center gap-3 py-8" role="status">
+      <hlm-spinner /><span i18n="@@onboarding.workspace.loading">Finding your workspaces…</span>
+    </div>
+  }
+  @if (store.optionsCallState().error) {
+    <div hlmAlert variant="destructive">
+      <p hlmAlertDescription i18n="@@onboarding.workspace.loadError">
+        We could not check your workspaces. Please try again.
+      </p>
+      <button
+        hlmBtn
+        variant="outline"
+        type="button"
+        class="mt-3 min-h-11"
+        [disabled]="store.loading()"
+        (click)="store.load()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (store.options(); as options) {
+    @if (!requestsOnly) {
+      @if (options.invitations.length > 0) {
+        <section class="flex flex-col gap-3" aria-labelledby="workspace-invitations-title">
+          <h2
+            id="workspace-invitations-title"
+            class="text-sm font-medium"
+            i18n="@@onboarding.workspace.invitations"
+          >
+            Your invitations
+          </h2>
+          <div hlmItemGroup class="gap-3">
+            @for (invitation of options.invitations; track invitation.id) {
+              <div hlmItem variant="outline" class="min-w-0">
+                <ng-icon name="lucideMail" aria-hidden="true" />
+                <div hlmItemContent class="min-w-0">
+                  <p hlmItemTitle class="break-words">{{ invitation.organizationName }}</p>
+                  <p hlmItemDescription class="flex flex-wrap gap-x-1">
+                    <span i18n="@@onboarding.workspace.invitationExpires">Invitation expires</span
+                    ><span>{{ invitation.expiresAt | date: 'mediumDate' }}</span>
+                  </p>
+                </div>
+                <div hlmItemActions class="max-sm:w-full">
+                  <button
+                    hlmBtn
+                    type="button"
+                    class="min-h-11 max-sm:w-full"
+                    [disabled]="store.busy()"
+                    (click)="store.admit({ id: invitation.id, invitation: true })"
+                    i18n="@@onboarding.workspace.acceptInvitation"
+                  >
+                    Accept invitation
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (options.emailProofRequired) {
+        <section class="flex flex-col gap-4" aria-labelledby="workspace-proof-title">
+          <h2
+            id="workspace-proof-title"
+            class="text-base font-semibold"
+            i18n="@@onboarding.workspace.verifyTitle"
+          >
+            Verify your email address
+          </h2>
+          <p class="text-sm text-muted-foreground" i18n="@@onboarding.workspace.verifyDescription">
+            Confirm access to your mailbox to find organizations that use your email domain.
+          </p>
+          @if (store.challengeCallState().data; as challenge) {
+            <app-otp-form
+              [challengeKey]="challenge.challengeToken"
+              [pending]="store.confirmCallState().status === 'pending'"
+              [showResend]="true"
+              [resending]="store.challengeCallState().status === 'pending'"
+              [resendAvailableIn]="challenge.canResendIn"
+              (submitted)="store.confirmProof($event.code)"
+              (resent)="store.startProof()"
+            />
+          } @else {
+            <button
+              hlmBtn
+              type="button"
+              class="min-h-11 self-start max-sm:w-full"
+              [disabled]="store.busy()"
+              (click)="store.startProof()"
+              i18n="@@onboarding.workspace.sendCode"
+            >
+              Send verification code
+            </button>
+          }
+        </section>
+      } @else {
+        @if (options.organizations.length > 0) {
+          <section class="flex flex-col gap-3" aria-labelledby="workspace-organizations-title">
+            <h2
+              id="workspace-organizations-title"
+              class="text-sm font-medium"
+              i18n="@@onboarding.workspace.organizations"
+            >
+              Your organizations
+            </h2>
+            <div hlmItemGroup class="gap-3">
+              @for (organization of options.organizations; track organization.id) {
+                <div hlmItem variant="outline" class="min-w-0">
+                  <hlm-avatar>
+                    @if (organization.logoUrl) {
+                      <img hlmAvatarImage [src]="organization.logoUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback>{{ organization.name.slice(0, 2) }}</span>
+                  </hlm-avatar>
+                  <div hlmItemContent class="min-w-0">
+                    <p hlmItemTitle class="break-words">{{ organization.name }}</p>
+                    <p hlmItemDescription class="break-all">{{ organization.domain }}</p>
+                    @if (organization.roleLabel) {
+                      <p class="text-xs text-muted-foreground">
+                        <span i18n="@@onboarding.workspace.role">Your role:</span>
+                        {{ organization.roleLabel }}
+                      </p>
+                    }
+                  </div>
+                  <div hlmItemActions class="flex-wrap max-sm:w-full">
+                    @if (organization.actions.includes('join')) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        class="min-h-11 max-sm:w-full"
+                        [disabled]="store.busy()"
+                        (click)="store.admit({ id: organization.id, invitation: false })"
+                        i18n="@@onboarding.workspace.join"
+                      >
+                        Join organization
+                      </button>
+                    }
+                    @if (organization.actions.includes('request')) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        class="min-h-11 max-sm:w-full"
+                        [disabled]="store.busy()"
+                        (click)="store.request(organization.id)"
+                        i18n="@@onboarding.workspace.request"
+                      >
+                        Request to join
+                      </button>
+                    }
+                    @if (organization.actions.includes('open')) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        class="min-h-11 max-sm:w-full"
+                        [disabled]="store.busy()"
+                        (click)="open(organization.id)"
+                        i18n="@@onboarding.workspace.open"
+                      >
+                        Open workspace
+                      </button>
+                    }
+                    @if (organization.actions.includes('view_request')) {
+                      <a
+                        hlmBtn
+                        variant="outline"
+                        class="min-h-11 max-sm:w-full"
+                        routerLink="/onboarding/requests"
+                        [queryParams]="{ returnUrl: destination || undefined }"
+                        i18n="@@onboarding.workspace.viewRequest"
+                        >View my request</a
+                      >
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        } @else if (options.invitations.length === 0 && !store.optionsCallState().error) {
+          <div hlmAlert>
+            <ng-icon name="lucideBuilding2" aria-hidden="true" />
+            <h2 hlmAlertTitle i18n="@@onboarding.workspace.noOrganization">
+              No organization available for this email
+            </h2>
+            <p hlmAlertDescription i18n="@@onboarding.workspace.noOrganizationDescription">
+              Ask your administrator for an invitation, or create a workspace for your team.
+              Personal email addresses can join by invitation.
+            </p>
+          </div>
+        }
+      }
+    }
+
+    @if (hasRequests()) {
+      <section class="flex flex-col gap-3" aria-labelledby="workspace-requests-title">
+        <h2
+          id="workspace-requests-title"
+          class="text-sm font-medium"
+          i18n="@@onboarding.workspace.requests"
+        >
+          Your requests
+        </h2>
+        <div hlmItemGroup class="gap-3" aria-live="polite">
+          @for (request of options.requests; track request.id) {
+            <div hlmItem variant="outline" class="min-w-0">
+              <ng-icon name="lucideClock3" aria-hidden="true" />
+              <div hlmItemContent class="min-w-0">
+                <p hlmItemTitle class="break-words">{{ request.organizationName }}</p>
+                <p hlmItemDescription>{{ statusLabel(request.status) }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ request.createdAt | date: 'mediumDate' }}
+                </p>
+              </div>
+              <div hlmItemActions class="max-sm:w-full">
+                @if (request.actions.includes('open')) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    class="min-h-11 max-sm:w-full"
+                    [disabled]="store.busy()"
+                    (click)="open(request.organizationId)"
+                    i18n="@@onboarding.workspace.open"
+                  >
+                    Open workspace
+                  </button>
+                }
+                @if (request.actions.includes('cancel')) {
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    type="button"
+                    class="min-h-11 max-sm:w-full"
+                    [disabled]="store.busy()"
+                    (click)="store.cancel(request.id)"
+                    i18n="@@onboarding.workspace.cancelRequest"
+                  >
+                    Cancel request
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <button
+          hlmBtn
+          variant="outline"
+          type="button"
+          class="min-h-11 self-start max-sm:w-full"
+          [disabled]="store.loading() || store.busy()"
+          (click)="store.load()"
+          i18n="@@onboarding.workspace.refresh"
+        >
+          Check for updates
+        </button>
+      </section>
+    } @else if (requestsOnly && !store.optionsCallState().error) {
+      <p class="text-sm text-muted-foreground" i18n="@@onboarding.workspace.noRequests">
+        You have no membership requests.
+      </p>
+    }
+  }
+
+  <div class="flex flex-col items-start gap-2">
+    @if (requestsOnly) {
+      <a
+        hlmBtn
+        variant="outline"
+        class="min-h-11 max-sm:w-full"
+        routerLink="/onboarding/workspace"
+        [queryParams]="{ returnUrl: destination || undefined }"
+        i18n="@@onboarding.workspace.back"
+        >Choose a workspace</a
+      >
+    }
+    <button
+      hlmBtn
+      variant="outline"
+      type="button"
+      class="min-h-11 max-sm:w-full"
+      [disabled]="store.busy()"
+      (click)="store.create()"
+    >
+      @if (onboarding.targetOrganizationId()) {
+        <span i18n="@@onboarding.workspace.resume">Continue setting up your organization</span>
+      } @else {
+        <span i18n="@@onboarding.workspace.create">Create an organization</span>
+      }
+    </button>
+  </div>
+</div>

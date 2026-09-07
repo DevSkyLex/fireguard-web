@@ -20,10 +20,10 @@ import {
 } from '@angular/forms/signals';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDialogFooter } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
-import { HlmSheetFooter } from '@shared/ui/sheet';
 import type { ChannelCreateDraft, NewChannelFormDraft } from './models';
 
 /** Matches `CreateChannelInput.name`'s server-side bounds. */
@@ -84,7 +84,7 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
     HlmInput,
     ...HlmFieldImports,
     ...HlmSelectImports,
-    HlmSheetFooter,
+    HlmDialogFooter,
   ],
   templateUrl: './channel-create-form.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },

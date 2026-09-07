@@ -52,7 +52,7 @@ for (const [width, dark] of [
       const dashboard = new OrganizationDashboardPage(page);
       await dashboard.goto(E2E_ORGANIZATION_ID);
       await expect(dashboard.kpiSection.locator('app-stat-tile')).toHaveCount(4);
-      await expect(dashboard.root.locator('tanstack-chart svg')).toHaveCount(4);
+      await expect(dashboard.root.locator('tanstack-chart svg')).toHaveCount(5);
       await expectNoHorizontalOverflow(page);
       await page.screenshot({
         path: 'e2e/artifacts/dashboard-summary-' + width + '.png',

@@ -204,6 +204,17 @@ export class OtpForm {
   public readonly resendAvailableIn: InputSignal<number> = input<number>(0);
 
   /**
+   * Property challengeKey
+   * @readonly
+   * @description Identifies a replacement challenge in memory so the resend cooldown
+   * restarts even when the server returns the same delay. Never rendered as an attribute.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly challengeKey: InputSignal<string | null> = input<string | null>(null);
+
+  /**
    * Property length
    * @readonly
    *
@@ -341,7 +352,7 @@ export class OtpForm {
    * @constructor
    *
    * @description
-   * Reseeds the resend countdown whenever the input changes, and stops the
+   * Reseeds the resend countdown whenever the delay or challenge changes, and stops the
    * ticking interval with the component.
    *
    * @access public
@@ -350,6 +361,7 @@ export class OtpForm {
   public constructor() {
     effect((): void => {
       const seconds: number = this.resendAvailableIn();
+      this.challengeKey();
 
       untracked((): void => this.restartCooldown(seconds));
     });

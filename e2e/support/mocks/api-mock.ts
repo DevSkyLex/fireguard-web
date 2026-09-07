@@ -1,4 +1,7 @@
 import type { Page, Route } from '@playwright/test';
+import type { OrganizationAccessPolicyOutput } from '../../../src/app/features/organization/models/access/organization-access-policy-output.interface';
+import type { OrganizationJoinOptionsOutput } from '../../../src/app/features/organization/models/access/organization-join-options-output.interface';
+import type { OrganizationJoinRequestOutput } from '../../../src/app/features/organization/models/access/organization-join-request-output.interface';
 import {
   currentOrganizationMemberProfileOutput,
   hydraCollection,
@@ -15,6 +18,7 @@ import {
   type NotificationOutputFixture,
   type OnboardingOutputFixture,
   type OnboardingStepKeyFixture,
+  type OnboardingSetupOperationFixture,
   type OptionFixture,
   type OrganizationOutputFixture,
   type RegisterOutputFixture,
@@ -122,10 +126,242 @@ async function fulfillJson(route: Route, status: number, body: unknown): Promise
  * ```
  */
 export class ApiMock {
+  /** Provides deterministic address suggestions without contacting a geocoding provider. */
+  public async mockFacilityAddressSuggestions(organizationId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `**/api/organizations/${organizationId}/facilities/address-suggestions?*`,
+      async (route) => {
+        await fulfillJson(route, 200, {
+          '@context': '/api/contexts/AddressSuggestion',
+          '@type': 'hydra:Collection',
+          member: [
+            {
+              displayName: '12 Quai des Docks, 76600 Le Havre, France',
+              street: '12 Quai des Docks',
+              city: 'Le Havre',
+              region: 'Normandie',
+              country: 'France',
+              countryCode: 'FR',
+              postalCode: '76600',
+              latitude: 49.49,
+              longitude: 0.12,
+            },
+          ],
+          totalItems: 1,
+        });
+      },
+    );
+  }
+
+  /** Confirms explicit immediate admission without trusting browser-supplied role data. */
+  public async mockWorkspaceImmediateAdmission(
+    organizationId: string,
+    onAction: () => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/join(\\?.*)?$`),
+      async (route) => {
+        onAction();
+        await fulfillJson(route, 200, { organizationId });
+      },
+    );
+  }
+
+  /** Runs a user-bound OTP exchange while leaving discovery hidden until confirmation. */
+  public async mockWorkspaceEmailOwnership(onConfirm: (body: unknown) => void): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/auth\/email-ownership\/start(\?.*)?$/, async (route) => {
+      await fulfillJson(route, 200, { challengeToken: 'a'.repeat(64), canResendIn: 60 });
+    });
+    await this.page.route(/\/api\/auth\/email-ownership\/confirm(\?.*)?$/, async (route) => {
+      onConfirm(route.request().postDataJSON());
+      await fulfillJson(route, 200, { verified: true });
+    });
+  }
+
+  /** Supplies organization access settings and their exact DNS verification instructions. */
+  public async mockOrganizationAccessPolicy(
+    organizationId: string,
+    policy: OrganizationAccessPolicyOutput,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/access-policy(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, policy);
+      },
+    );
+  }
+
+  /** Supplies only manager-visible applicant identity and assignable review roles. */
+  public async mockOrganizationJoinRequests(
+    organizationId: string,
+    requests: readonly OrganizationJoinRequestOutput[],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/join-requests(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, {
+          ...hydraCollection(requests),
+          assignableRoles: [{ id: 'member-role', label: 'Member' }],
+        });
+      },
+    );
+  }
+
+  /** Completes a provider callback through the existing session/MFA response contract. */
+  public async mockFederatedLoginComplete(
+    provider: 'google' | 'microsoft',
+    response: LoginOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/auth/federated/${provider}/complete(\\?.*)?$`),
+      async (route) => {
+        await fulfillJson(route, 200, response);
+      },
+    );
+  }
+
+  /** Supplies private workspace choices, including state changes after an explicit action. */
+  public async mockWorkspaceOptions(
+    response: () => OrganizationJoinOptionsOutput,
+    status = 200,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/organizations\/join-options(\?.*)?$/, async (route) => {
+      await fulfillJson(
+        route,
+        status,
+        status === 200 ? response() : { message: 'Workspace discovery unavailable.' },
+      );
+    });
+  }
+
+  /** Creates or cancels a caller-owned membership request without contacting a live API. */
+  public async mockWorkspaceRequestAction(
+    path: 'request' | 'cancel',
+    organizationId: string,
+    response: OrganizationJoinRequestOutput,
+    onAction: () => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    const endpoint =
+      path === 'request'
+        ? `/api/organizations/${organizationId}/join-requests`
+        : `/api/organizations/join-requests/${response.id}/cancel`;
+    await this.page.route(new RegExp(`${endpoint}(\\?.*)?$`), async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      onAction();
+      await fulfillJson(route, 200, response);
+    });
+  }
+
+  /** Accepts only the invitation identifier selected by the test user. */
+  public async mockWorkspaceInvitationAcceptance(
+    invitationId: string,
+    organizationId: string,
+    onAction: () => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/invitations/${invitationId}/accept(\\?.*)?$`),
+      async (route) => {
+        onAction();
+        await fulfillJson(route, 200, { organizationId });
+      },
+    );
+  }
+
+  /** Records explicit creation intent independently from reading available workspaces. */
+  public async mockOnboardingStart(
+    response: OnboardingOutputFixture,
+    onAction: (body: unknown) => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/onboarding\/organization\/start(\?.*)?$/, async (route) => {
+      onAction(route.request().postDataJSON());
+      this.onboardingRecord = response;
+      await fulfillJson(route, 200, response);
+    });
+  }
+
   /** Confirmed writes projected into subsequent collection reads, matching server behavior. */
   private readonly interventionUpdates = new Map<string, InterventionOutputFixture>();
   private readonly page: Page;
   private safetyNetInstalled = false;
+  private onboardingRecord: OnboardingOutputFixture | null = null;
+
+  /** Persists a prepared setup batch before any resource endpoint is called. */
+  private async mockSetupPreparation(): Promise<void> {
+    await this.page.route(
+      /\/api\/onboarding\/organization\/setup-operations(\?.*)?$/,
+      async (route) => {
+        const input = route.request().postDataJSON() as {
+          sessionId: string;
+          stepKey: OnboardingSetupOperationFixture['stepKey'];
+          items: readonly { itemKey: string; payload: Readonly<Record<string, unknown>> }[];
+        };
+        const record = this.onboardingRecord;
+        if (!record || input.sessionId !== record.sessionId) {
+          await fulfillJson(route, 409, { message: 'Setup session mismatch.' });
+          return;
+        }
+        const retained = record.setupOperations.filter(
+          (operation) => operation.stepKey !== input.stepKey || operation.status === 'completed',
+        );
+        const prepared: OnboardingSetupOperationFixture[] = input.items
+          .filter((item) => !retained.some((operation) => operation.itemKey === item.itemKey))
+          .map((item) =>
+            Object.assign({}, item, {
+              stepKey: input.stepKey,
+              status: 'prepared' as const,
+              resourceId: null,
+            }),
+          );
+        this.onboardingRecord = { ...record, setupOperations: [...retained, ...prepared] };
+        await fulfillJson(route, 200, this.onboardingRecord);
+      },
+    );
+  }
+
+  /** Keeps resource receipts in the same mocked server state used by subsequent GETs. */
+  public recordSetupCreation(route: Route, resourceId: string, organizationId?: string): void {
+    const input = route.request().postDataJSON() as {
+      onboardingSessionId?: string;
+      onboardingItemKey?: string;
+    };
+    if (
+      !this.onboardingRecord ||
+      input.onboardingSessionId !== this.onboardingRecord.sessionId ||
+      !input.onboardingItemKey
+    )
+      return;
+    this.onboardingRecord = {
+      ...this.onboardingRecord,
+      ...(organizationId ? { targetOrganizationId: organizationId } : {}),
+      setupOperations: this.onboardingRecord.setupOperations.map((operation) =>
+        operation.itemKey === input.onboardingItemKey
+          ? Object.assign({}, operation, { status: 'completed' as const, resourceId })
+          : operation,
+      ),
+    };
+  }
+
+  /** Advances only the flow state, retaining durable receipts from prior resource writes. */
+  private advanceOnboarding(record: OnboardingOutputFixture): OnboardingOutputFixture {
+    this.onboardingRecord = {
+      ...record,
+      setupOperations: this.onboardingRecord?.setupOperations ?? record.setupOperations,
+    };
+    return this.onboardingRecord;
+  }
 
   public constructor(page: Page) {
     this.page = page;
@@ -163,6 +399,10 @@ export class ApiMock {
    */
   public async mockUnauthenticatedSession(): Promise<void> {
     await this.installSafetyNet();
+    // Provider discovery is part of auth-page initialization, even in password-only scenarios.
+    await this.page.route(`${API_BASE_URL}/api/auth/federated/providers`, async (route) => {
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
     await this.page.route(`${API_BASE_URL}/api/auth/refresh`, async (route) => {
       await fulfillJson(route, 401, { message: 'Unauthorized' });
     });
@@ -185,6 +425,8 @@ export class ApiMock {
 
     const profile: UserProfileOutputFixture = userProfileOutput(options?.profile);
     const onboarding: OnboardingOutputFixture = onboardingOutput(options?.onboarding);
+    this.onboardingRecord = onboarding;
+    await this.mockSetupPreparation();
     const organizations: ReadonlyArray<OrganizationOutputFixture> = options?.organizations ?? [
       organizationOutput(),
     ];
@@ -247,7 +489,7 @@ export class ApiMock {
       },
     );
     await this.page.route(`${API_BASE_URL}/api/onboarding/organization`, async (route) => {
-      await fulfillJson(route, 200, onboarding);
+      await fulfillJson(route, 200, this.onboardingRecord ?? onboarding);
     });
     await this.page.route(/\/api\/organizations(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection(organizations));
@@ -328,8 +570,10 @@ export class ApiMock {
    */
   public async mockOnboarding(onboarding: OnboardingOutputFixture): Promise<void> {
     await this.installSafetyNet();
+    this.onboardingRecord = onboarding;
+    await this.mockSetupPreparation();
     await this.page.route(`${API_BASE_URL}/api/onboarding/organization`, async (route) => {
-      await fulfillJson(route, 200, onboarding);
+      await fulfillJson(route, 200, this.onboardingRecord ?? onboarding);
     });
   }
 
@@ -450,7 +694,7 @@ export class ApiMock {
     await this.page.route(
       `${API_BASE_URL}/api/onboarding/organization/steps/${stepKey}/execute`,
       async (route) => {
-        await fulfillJson(route, 200, onboarding);
+        await fulfillJson(route, 200, this.advanceOnboarding(onboarding));
       },
     );
   }
@@ -469,7 +713,7 @@ export class ApiMock {
     await this.page.route(
       `${API_BASE_URL}/api/onboarding/organization/steps/${stepKey}/skip`,
       async (route) => {
-        await fulfillJson(route, 200, onboarding);
+        await fulfillJson(route, 200, this.advanceOnboarding(onboarding));
       },
     );
   }
@@ -488,6 +732,7 @@ export class ApiMock {
         await route.fallback();
         return;
       }
+      this.recordSetupCreation(route, organization.id, organization.id);
       await fulfillJson(route, 201, organization);
     });
   }
@@ -528,6 +773,7 @@ export class ApiMock {
           await route.fallback();
           return;
         }
+        this.recordSetupCreation(route, equipment.id);
         await fulfillJson(route, 201, equipment);
       },
     );
@@ -629,6 +875,7 @@ export class ApiMock {
           await route.fallback();
           return;
         }
+        this.recordSetupCreation(route, facility.id);
         await fulfillJson(route, 201, facility);
       },
     );

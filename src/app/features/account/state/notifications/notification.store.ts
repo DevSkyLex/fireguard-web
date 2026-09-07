@@ -80,6 +80,7 @@ const NOTIFICATION_TYPES_TRANSFER_KEY = makeStateKey<ReadonlyArray<NotificationT
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
+  revision: 0,
   totalNotifications: 0,
   unreadCount: 0,
   currentPage: 1,
@@ -627,7 +628,10 @@ export const NotificationStore = signalStore(
                         patchState(
                           store,
                           prependEntity(notification, { collection: 'notification' }),
-                          { totalNotifications: store.totalNotifications() + 1 },
+                          {
+                            totalNotifications: store.totalNotifications() + 1,
+                            revision: store.revision() + 1,
+                          },
                         );
                       }),
                       catchError(() => {

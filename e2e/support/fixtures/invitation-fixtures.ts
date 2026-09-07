@@ -26,6 +26,9 @@ export interface OrganizationInvitationPreviewOutputFixture {
 export function invitationPreviewOutput(
   overrides: Partial<OrganizationInvitationPreviewOutputFixture> = {},
 ): OrganizationInvitationPreviewOutputFixture {
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 7);
+  expiry.setHours(12, 0, 0, 0);
   return {
     '@id': `/api/organizations/invitations/${E2E_INVITATION_TOKEN}/preview`,
     '@type': 'OrganizationInvitationPreview',
@@ -35,7 +38,7 @@ export function invitationPreviewOutput(
     inviterDisplayName: 'Ella Uzer',
     invitedEmail: 'invitee@fireguard.test',
     status: 'pending',
-    expiresAt: '2026-09-01T00:00:00+00:00',
+    expiresAt: expiry.toISOString(),
     ...overrides,
   };
 }

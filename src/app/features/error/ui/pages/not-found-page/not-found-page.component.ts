@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideCompass } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideCompass, lucideMapPin, lucideRoute } from '@ng-icons/lucide';
 import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
 
@@ -10,13 +10,8 @@ import { HlmButton } from '@shared/ui/button';
  * @class NotFoundPage
  *
  * @description
- * The route that did not resolve. `notFoundRedirectGuard` forwards the address
- * that failed as the `from` query parameter, so the page can name it instead of
- * offering the one exit a member who mistyped a deep link does not want.
- *
- * Two ways out, in the order they are useful: back to where they came from, and
- * the workspace root. Going back is first because an unmatched URL is usually a
- * stale link followed from somewhere that still works.
+ * Presents an unmatched route without exposing its address in the page.
+ * Offers the workspace root first, followed by browser history navigation.
  *
  * @version 1.0.0
  *
@@ -25,26 +20,13 @@ import { HlmButton } from '@shared/ui/button';
 @Component({
   selector: 'app-not-found-page',
   imports: [RouterLink, NgIcon, PageHeading, HlmButton],
-  providers: [provideIcons({ lucideArrowLeft, lucideCompass })],
+  providers: [provideIcons({ lucideMapPin, lucideRoute, lucideArrowLeft, lucideCompass })],
   templateUrl: './not-found-page.component.html',
+  host: { class: 'my-auto block w-full max-w-xl shrink-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotFoundPage {
   //#region Properties
-  /**
-   * Property route
-   * @readonly
-   *
-   * @description
-   * Carries the `from` parameter the redirect guard attached.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @type {ActivatedRoute}
-   */
-  private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
-
   /**
    * Property router
    * @readonly
@@ -59,21 +41,6 @@ export class NotFoundPage {
    */
   private readonly router: Router = inject<Router>(Router);
 
-  /**
-   * Property attemptedUrl
-   * @readonly
-   *
-   * @description
-   * The address that failed, or `null` when the page was reached directly.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string | null>}
-   */
-  protected readonly attemptedUrl: Signal<string | null> = computed((): string | null =>
-    this.route.snapshot.queryParamMap.get('from'),
-  );
   //#endregion
 
   //#region Methods

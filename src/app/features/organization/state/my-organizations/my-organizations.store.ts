@@ -28,6 +28,7 @@ import { OrganizationMemberService, OrganizationService } from '@features/organi
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization/active-organization.store';
 import { organizationInvitationAcceptStoreEvents } from '../organization-invitation-accept/events';
+import { organizationMembershipEvents } from '../organization-membership/events';
 import { myOrganizationsStoreEvents } from './events';
 import type { MyOrganizationsState } from './models';
 
@@ -219,7 +220,10 @@ export const MyOrganizationsStore = signalStore(
       /** Refreshes a previously requested membership list after accepting an invitation. */
       onInit(): void {
         events
-          .on(organizationInvitationAcceptStoreEvents.acceptSucceeded)
+          .on(
+            organizationInvitationAcceptStoreEvents.acceptSucceeded,
+            organizationMembershipEvents.joined,
+          )
           .pipe(takeUntilDestroyed(destroyRef))
           .subscribe(() => {
             if (store.listCallState().status !== 'idle') store.loadOrganizations();

@@ -43,6 +43,14 @@ describe('InterventionChangeList', () => {
     expect(root().textContent).toContain('Facility');
   });
 
+  it('should never expose a resource identifier in the group heading', async () => {
+    const resourceId = '33333333-3333-4333-8333-333333333333';
+    await create([change({ resource: `/api/equipment/${resourceId}` })]);
+
+    expect(root().querySelector('h3')?.textContent?.trim()).toBe('Equipment');
+    expect(root().textContent).not.toContain(resourceId);
+  });
+
   it('should render the patch as readable field/value lines', async () => {
     await create([change({ patch: { locationLabel: 'Rack B-12' } })]);
 

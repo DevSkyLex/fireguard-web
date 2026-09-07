@@ -9,7 +9,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleDotDashed, lucidePackage } from '@ng-icons/lucide';
+import {
+  lucideCircleAlert,
+  lucideCircleDotDashed,
+  lucidePackage,
+  lucideWrench,
+} from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { CollectionSurface } from '@shared/collection-surface';
 import { HlmBadge } from '@shared/ui/badge';
@@ -52,7 +57,9 @@ import { InterventionTag } from '../../components/intervention-tag';
     InterventionTag,
     ...HlmTableImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideCircleDotDashed, lucidePackage })],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideCircleDotDashed, lucidePackage, lucideWrench }),
+  ],
   templateUrl: './intervention-equipment-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

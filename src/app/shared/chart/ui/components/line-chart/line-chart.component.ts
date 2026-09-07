@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   input,
+  LOCALE_ID,
   PLATFORM_ID,
   type InputSignal,
   type InputSignalWithTransform,
@@ -56,6 +57,41 @@ type LineChartDatum = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LineChart {
+  /**
+   * Property locale
+   * @readonly
+   * @description Active application locale for numeric axis and tooltip labels.
+   * @access private
+   * @since 1.0.0
+   * @type {string}
+   */
+  private readonly locale: string = inject(LOCALE_ID);
+  /**
+   * Property showPoints
+   * @readonly
+   * @description Controls persistent sample markers; native focus markers remain available.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly showPoints: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(true, { transform: booleanAttribute });
+  /**
+   * Property integerAxis
+   * @readonly
+   * @description Uses whole-number ticks for event volumes without changing other chart consumers.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignalWithTransform<boolean, BooleanInput>}
+   */
+  public readonly integerAxis: InputSignalWithTransform<boolean, BooleanInput> = input<
+    boolean,
+    BooleanInput
+  >(false, {
+    transform: booleanAttribute,
+  });
   //#region Inputs
   /**
    * Property series
@@ -197,7 +233,12 @@ export class LineChart {
    * @type {Signal<boolean>}
    */
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
-    () => !this.series().some((entry) => entry.points.length > 0),
+    () =>
+      !this.series().some((entry) =>
+        entry.points.some(
+          (point) => typeof point.value === 'number' && Number.isFinite(point.value),
+        ),
+      ),
   );
 
   /**
@@ -230,7 +271,8 @@ export class LineChart {
         points: series.points.map((point) => ({
           category:
             point.label instanceof Date ? point.label.toISOString().slice(0, 10) : point.label,
-          value: Number.isFinite(point.value) ? point.value : null,
+          value:
+            typeof point.value === 'number' && Number.isFinite(point.value) ? point.value : null,
         })),
       }));
       const categories = [
@@ -250,10 +292,20 @@ export class LineChart {
           {
             marks: [
               ...(this.area() ? [areaY(rows, { ...channels, fillOpacity: 0.12 })] : []),
-              lineY(rows, { ...channels, strokeWidth: 2, points: true }),
+              lineY(rows, { ...channels, strokeWidth: 2, points: this.showPoints() }),
             ],
             scales: {
-              x: { scale: scalePoint<string>().domain(categories).padding(0.3) },
+              x: {
+                scale: scalePoint<string>().domain(categories).padding(0.3),
+                ...(this.integerAxis()
+                  ? {
+                      axis: {
+                        ticks: { spacing: 100, size: 0 },
+                        tickLabels: { thin: { minGap: 16, priority: 'ends' as const } },
+                      },
+                    }
+                  : {}),
+              },
               y: {
                 scale: scaleLinear().domain([
                   Math.min(0, ...rows.map((row) => row.value ?? 0)),
@@ -261,11 +313,27 @@ export class LineChart {
                 ]),
                 nice: true,
                 grid: this.showGridLines(),
+                ...(this.integerAxis()
+                  ? {
+                      axis: {
+                        ticks: {
+                          format: (value: number) =>
+                            Number.isInteger(value)
+                              ? new Intl.NumberFormat(this.locale).format(value)
+                              : '',
+                        },
+                      },
+                    }
+                  : {}),
               },
             },
             color: {
               domain: normalized.map((series) => series.name),
-              range: HLM_CHART_THEME.palette,
+              range: this.series().map((series, index) =>
+                series.colorToken
+                  ? `var(--${series.colorToken})`
+                  : HLM_CHART_THEME.palette[index % HLM_CHART_THEME.palette.length],
+              ),
               ...(this.showLegend() ? { legend: colorLegend({ placement: 'bottom' }) } : {}),
             },
             theme: HLM_CHART_THEME,
@@ -278,7 +346,7 @@ export class LineChart {
                 rows: [...new Map(points.map((point) => [point.datum.series, point])).values()].map(
                   (point) => ({
                     label: point.datum.series,
-                    value: String(point.yValue),
+                    value: new Intl.NumberFormat(this.locale).format(Number(point.yValue)),
                     color: point.color,
                   }),
                 ),

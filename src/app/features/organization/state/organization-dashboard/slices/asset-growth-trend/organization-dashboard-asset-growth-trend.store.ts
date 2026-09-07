@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, LOCALE_ID, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,12 +10,13 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, forkJoin, of, pipe, switchMap } from 'rxjs';
+import { EMPTY, filter, forkJoin, of, pipe, switchMap } from 'rxjs';
 import {
   withQueryState,
   setPendingQuery,
   setSuccessQuery,
   setErrorQuery,
+  resetQuery,
   toStoreError,
 } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -84,6 +85,7 @@ type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResource
  * dashboard card. Manages filter state, orchestrates parallel API calls
  * for equipment-created and facilities-created trends, and exposes
  * fully derived chart data and summary KPI metrics as computed signals.
+ * Query data and errors belong to `queryOrganizationId` and are cleared on a scope change.
  *
  * Designed to be provided at **component level** (`providers: [OrganizationDashboardAssetGrowthStore]`),
  * so each card instance owns an independent, lifecycle-bound copy of the store.
@@ -120,6 +122,7 @@ function createAssetGrowthTrendStore() {
      * @since 2.0.0
      */
     withQueryState<OrganizationDashboardAssetGrowthData>(),
+    withState({ queryOrganizationId: null as string | null }),
     withDashboardFilterState(),
     withState({ ...getDashboardInitialFilterDraftState(), activated: false }),
     withState({
@@ -146,15 +149,47 @@ function createAssetGrowthTrendStore() {
      * @since 2.0.0
      */
     withMethods(
-      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
-        /** Enables browser-only queries after the analysis tab is first opened. */
+      (
+        store,
+        organizationService = inject<OrganizationService>(OrganizationService),
+        activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+      ) => ({
+        /** Enables browser-only queries when the dashboard page activates the trend store. */
         activate(): void {
           patchState(store, { activated: true });
         },
+        /**
+         * Method load
+         * @method load
+         *
+         * @description
+         * Replaces the active read while retaining previous data only within the
+         * same organization. Responses from a departed organization are ignored.
+         *
+         * @access public
+         * @since 2.0.0
+         * @param {OrganizationDashboardAssetGrowthParams | undefined} params - Active query or cancellation.
+         * @returns {void}
+         */
         load: rxMethod<OrganizationDashboardAssetGrowthParams | undefined>(
           pipe(
+            filter(
+              (params) =>
+                !params ||
+                params.organizationId === activeOrganizationStore.selectedOrganizationId(),
+            ),
             switchMap((params) => {
-              if (!params) return EMPTY;
+              const activeOrganizationId = activeOrganizationStore.selectedOrganizationId();
+              if (store.queryOrganizationId() !== activeOrganizationId) {
+                patchState(store, resetQuery(), { queryOrganizationId: activeOrganizationId });
+              }
+              if (!params) {
+                if (store.isQueryLoading()) {
+                  const data = store.queryData();
+                  patchState(store, data ? setSuccessQuery(data) : resetQuery());
+                }
+                return EMPTY;
+              }
 
               patchState(store, setPendingQuery());
 
@@ -180,8 +215,16 @@ function createAssetGrowthTrendStore() {
                   : of(null),
               }).pipe(
                 tapResponse({
-                  next: (data) => patchState(store, setSuccessQuery(data)),
-                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                  next: (data) => {
+                    if (activeOrganizationStore.selectedOrganizationId() !== params.organizationId)
+                      return;
+                    patchState(store, setSuccessQuery(data));
+                  },
+                  error: (err) => {
+                    if (activeOrganizationStore.selectedOrganizationId() !== params.organizationId)
+                      return;
+                    patchState(store, setErrorQuery(toStoreError(err)));
+                  },
                 }),
               );
             }),
@@ -399,6 +442,7 @@ function createAssetGrowthTrendStore() {
         organizationPermissionService = inject<OrganizationPermissionService>(
           OrganizationPermissionService,
         ),
+        locale: string = inject<string>(LOCALE_ID),
       ) => ({
         canReadEquipment: computed<boolean>(() =>
           organizationPermissionService.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
@@ -408,9 +452,16 @@ function createAssetGrowthTrendStore() {
         ),
         alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
           const growth: ReturnType<typeof store.queryData> = store.queryData();
+          const loadedGranularity = (growth?.equipment?.period ?? growth?.facilities?.period)
+            ?.granularity;
           return alignDashboardTrendSeries(
             [growth?.equipment?.series, growth?.facilities?.series],
-            store.selectedGranularity(),
+            loadedGranularity === 'day' ||
+              loadedGranularity === 'week' ||
+              loadedGranularity === 'month'
+              ? loadedGranularity
+              : store.selectedGranularity(),
+            locale,
           );
         }),
       }),
@@ -473,18 +524,25 @@ function createAssetGrowthTrendStore() {
       };
     }),
 
-    withHooks((store) => ({
+    withHooks((store, activeOrganizationStore = inject(ActiveOrganizationStore)) => ({
       /**
        * Hook onInit
        *
        * @description
        * Connects {@link loadParams} to {@link load} via `rxMethod` so the card
-       * refetches whenever a filter signal changes.
+       * refetches whenever a filter signal changes. Watches organization identity
+       * separately so inactive queries cannot retain another organization's data.
        *
        * @returns {void}
        */
       onInit(): void {
         store.load(store.loadParams);
+        effect(() => {
+          const organizationId = activeOrganizationStore.selectedOrganizationId();
+          untracked(() => {
+            if (store.queryOrganizationId() !== organizationId) store.load(undefined);
+          });
+        });
       },
     })),
 

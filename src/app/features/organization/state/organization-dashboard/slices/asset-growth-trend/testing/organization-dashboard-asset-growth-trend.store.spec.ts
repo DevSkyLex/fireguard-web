@@ -1,6 +1,6 @@
-import { PLATFORM_ID, signal } from '@angular/core';
+import { computed, PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access/services/organization-permission/organization-permission.service';
 import { OrganizationService } from '@features/organization/data-access';
 import type {
@@ -18,7 +18,7 @@ const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
 
-describe('OrganizationDashboardAssetGrowthStore', () => {
+describe('AssetGrowthTrendStore', () => {
   let store: AssetGrowthTrendStore;
   const permissionState = {
     canReadEquipment: signal(false),
@@ -46,6 +46,8 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-04-01T00:00:00Z',
   };
+  const selectedOrganization = signal<OrganizationOutput | null>(organization);
+  const selectedOrganizationId = computed(() => selectedOrganization()?.id ?? null);
 
   const equipmentTrend: OrganizationDashboardTrendOutput = {
     '@id': '/api/organizations/org-1/dashboard/trends/equipment-created',
@@ -85,6 +87,7 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
   };
 
   beforeEach(() => {
+    selectedOrganization.set(organization);
     permissionState.canReadEquipment.set(false);
     permissionState.canReadFacilities.set(false);
 
@@ -117,7 +120,7 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
         },
         {
           provide: ActiveOrganizationStore,
-          useValue: { selectedOrganization: signal<OrganizationOutput | null>(organization) },
+          useValue: { selectedOrganization, selectedOrganizationId },
         },
         { provide: PLATFORM_ID, useValue: 'browser' },
       ],
@@ -216,5 +219,166 @@ describe('OrganizationDashboardAssetGrowthStore', () => {
         compare: undefined,
       }),
     );
+  });
+
+  it('clears A growth data when B starts loading and does not restore it on B failure', async () => {
+    permissionState.canReadEquipment.set(true);
+    permissionState.canReadFacilities.set(true);
+    store.activate();
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+
+    selectedOrganization.set({ ...organization, id: 'org-2' });
+    await flushEffects();
+
+    expect(store.queryOrganizationId()).toBe('org-2');
+    expect(store.queryData()).toBeNull();
+    expect(store.isQueryLoading()).toBe(true);
+    pending.error(new Error('Organization B unavailable'));
+    expect(store.queryError()?.message).toBe('Organization B unavailable');
+    expect(store.queryData()).toBeNull();
+  });
+
+  it('cancels both A trend requests during a switch and ignores their late results', async () => {
+    permissionState.canReadEquipment.set(true);
+    permissionState.canReadFacilities.set(true);
+    store.activate();
+    await flushEffects();
+    const staleEquipment = new Subject<OrganizationDashboardTrendOutput>();
+    const staleFacilities = new Subject<OrganizationDashboardTrendOutput>();
+    const current = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend
+      .mockReturnValueOnce(staleEquipment)
+      .mockReturnValueOnce(current);
+    mockOrganizationService.getDashboardFacilitiesCreatedTrend.mockReturnValueOnce(staleFacilities);
+    store.load(store.loadParams());
+
+    selectedOrganization.set({ ...organization, id: 'org-2' });
+    await flushEffects();
+    expect(staleEquipment.observed).toBe(false);
+    expect(staleFacilities.observed).toBe(false);
+
+    const trendB = { ...equipmentTrend, summary: { total: 42 } };
+    current.next(trendB);
+    current.complete();
+    staleEquipment.next(equipmentTrend);
+    staleEquipment.complete();
+    staleFacilities.next(facilityTrend);
+    staleFacilities.complete();
+
+    expect(store.queryData()?.equipment).toEqual(trendB);
+    expect(store.queryOrganizationId()).toBe('org-2');
+  });
+
+  it.each(['success', 'error'] as const)(
+    'ignores a stale %s before the organization-change effects run',
+    async (outcome) => {
+      permissionState.canReadEquipment.set(true);
+      const pending = new Subject<OrganizationDashboardTrendOutput>();
+      mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+      store.activate();
+      await flushEffects();
+
+      selectedOrganization.set({ ...organization, id: 'org-2' });
+      if (outcome === 'success') {
+        pending.next(equipmentTrend);
+        pending.complete();
+      } else pending.error(new Error('Stale failure'));
+
+      expect(store.queryData()).toBeNull();
+      expect(store.queryError()).toBeNull();
+    },
+  );
+
+  it('cancels a pending retry and clears data when the organization disappears', async () => {
+    permissionState.canReadEquipment.set(true);
+    store.activate();
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+    store.load(store.loadParams());
+
+    selectedOrganization.set(null);
+    await flushEffects();
+    pending.next(equipmentTrend);
+    pending.complete();
+
+    expect(pending.observed).toBe(false);
+    expect(store.queryOrganizationId()).toBeNull();
+    expect(store.queryData()).toBeNull();
+    expect(store.queryError()).toBeNull();
+    expect(store.isQueryLoading()).toBe(false);
+  });
+
+  it('retains data during a same-organization period change and its recoverable failure', async () => {
+    permissionState.canReadEquipment.set(true);
+    store.activate();
+    await flushEffects();
+    const previous = store.queryData();
+    const previousChart = store.alignedTrendData();
+    const pending = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+
+    store.setGranularity('month');
+    await flushEffects();
+    expect(store.isQueryLoading()).toBe(true);
+    expect(store.queryData()).toEqual(previous);
+    expect(store.alignedTrendData()).toEqual(previousChart);
+    pending.error(new Error('Period unavailable'));
+    expect(store.queryHasError()).toBe(true);
+    expect(store.queryData()).toEqual(previous);
+  });
+
+  it('clears data on organization change even while an incomplete period prevents queries', async () => {
+    permissionState.canReadEquipment.set(true);
+    store.activate();
+    await flushEffects();
+    const previous = store.queryData();
+    store.setDateRange([new Date('2026-04-01')]);
+    await flushEffects();
+    expect(store.loadParams()).toBeUndefined();
+    expect(store.queryData()).toEqual(previous);
+
+    selectedOrganization.set({ ...organization, id: 'org-2' });
+    await flushEffects();
+    expect(store.queryData()).toBeNull();
+    expect(store.queryOrganizationId()).toBe('org-2');
+  });
+
+  it('ignores an obsolete manual retry without cancelling the current organization query', async () => {
+    permissionState.canReadEquipment.set(true);
+    store.activate();
+    await flushEffects();
+    const oldParams = store.loadParams();
+    const pending = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+    selectedOrganization.set({ ...organization, id: 'org-2' });
+    await flushEffects();
+
+    store.load(oldParams);
+
+    expect(pending.observed).toBe(true);
+    expect(mockOrganizationService.getDashboardEquipmentCreatedTrend).toHaveBeenCalledTimes(2);
+    pending.next({ ...equipmentTrend, summary: { total: 42 } });
+    pending.complete();
+    expect(store.queryData()?.equipment?.summary?.['total']).toBe(42);
+  });
+
+  it('ends a cancelled period refresh without discarding its same-organization data', async () => {
+    permissionState.canReadEquipment.set(true);
+    store.activate();
+    await flushEffects();
+    const previous = store.queryData();
+    const pending = new Subject<OrganizationDashboardTrendOutput>();
+    mockOrganizationService.getDashboardEquipmentCreatedTrend.mockReturnValue(pending);
+    store.load(store.loadParams());
+
+    store.setDateRange([new Date('2026-04-01')]);
+    await flushEffects();
+
+    expect(pending.observed).toBe(false);
+    expect(store.isQueryLoading()).toBe(false);
+    expect(store.queryData()).toEqual(previous);
   });
 });

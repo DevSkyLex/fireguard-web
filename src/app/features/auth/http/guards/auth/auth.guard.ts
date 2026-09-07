@@ -1,13 +1,15 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { AuthStore } from '@features/auth/state';
+import { resolveReturnUrl } from '@features/auth/utils';
 
 /**
  * Auth Guard
  *
  * @description
  * Protects routes that require authentication.
- * Redirects to login if user is not authenticated.
+ * Redirects to login while preserving the safe destination. An expired OAuth
+ * connection callback restarts from account security without retaining credentials.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -15,7 +17,7 @@ import { AuthStore } from '@features/auth/state';
  * @returns {GuardResult} True if user can access protected route, otherwise
  * a UrlTree redirecting to the login page.
  */
-export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const authGuard: CanActivateFn = (_route, state): MaybeAsync<GuardResult> => {
   /**
    * Constant authStore
    * @const authStore
@@ -42,6 +44,12 @@ export const authGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
   // If already authenticated, allow access
   if (authStore.isAuthenticated()) return true;
 
-  // Redirect to login
-  return router.createUrlTree(['/auth/login']);
+  const destination = resolveReturnUrl(state.url, '');
+  const returnUrl = destination.startsWith('/account/security/federated/')
+    ? '/account/security'
+    : destination;
+
+  return returnUrl
+    ? router.createUrlTree(['/auth/login'], { queryParams: { returnUrl } })
+    : router.createUrlTree(['/auth/login']);
 };

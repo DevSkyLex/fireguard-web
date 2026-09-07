@@ -69,6 +69,17 @@
             <ng-icon name="lucideShieldCheck" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.compliance">Compliance</span>
           </button>
+          @if (canManageAccess()) {
+            <button
+              hlmTabsTrigger="access"
+              class="max-sm:min-h-11"
+              data-testid="org-settings-tab-access"
+            >
+              <ng-icon name="lucideGlobe" aria-hidden="true" /><span i18n="@@org.access.tab"
+                >Access and domains</span
+              >
+            </button>
+          }
           @if (canDelete()) {
             <button
               hlmTabsTrigger="danger"
@@ -82,6 +93,36 @@
         </hlm-paginated-tabs-list>
       </ng-template>
 
+      @if (canManageAccess()) {
+        <div hlmTabsContent="access" class="w-full min-w-0">
+          <ng-template hlmTabsContentLazy>
+            <app-organization-access-panel
+              [policy]="accessStore.policy()"
+              [policyRevision]="accessStore.policyFormRevision()"
+              [loading]="accessStore.policyCallState().status === 'pending'"
+              [pending]="accessStore.pending()"
+              [error]="accessStore.error()"
+              (policySubmitted)="saveAccessPolicy($event)"
+              (domainAdded)="
+                accessStore.addDomain({ organizationId: organizationId() ?? '', domain: $event })
+              "
+              (domainVerified)="
+                accessStore.verifyDomain({
+                  organizationId: organizationId() ?? '',
+                  domainId: $event,
+                })
+              "
+              (domainRemoved)="
+                accessStore.removeDomain({
+                  organizationId: organizationId() ?? '',
+                  domainId: $event,
+                })
+              "
+              (retried)="accessStore.loadPolicy(organizationId() ?? '')"
+            />
+          </ng-template>
+        </div>
+      }
       <div hlmTabsContent="general" class="w-full min-w-0">
         <ng-template hlmTabsContentLazy>
           <div class="flex min-w-0 flex-col divide-y divide-border">

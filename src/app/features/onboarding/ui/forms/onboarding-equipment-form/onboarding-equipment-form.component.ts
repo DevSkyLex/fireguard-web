@@ -4,8 +4,8 @@ import {
   computed,
   effect,
   input,
+  linkedSignal,
   output,
-  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -16,23 +16,12 @@ import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
-import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
-import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OnboardingEquipmentFormDraft, OnboardingEquipmentTypeOption } from './models';
-
-/** A blank draft. */
-const EMPTY_VALUES: OnboardingEquipmentFormDraft = {
-  type: '',
-  brand: '',
-  model: '',
-  serialNumber: '',
-  facilityId: '',
-};
 
 /** Trims a free-text field, sending `undefined` rather than an empty string. */
 function trimmed(value: string): string | undefined {
@@ -74,7 +63,6 @@ function trimmed(value: string): string | undefined {
   selector: 'app-onboarding-equipment-form',
   imports: [
     ...HlmComboboxImports,
-    ...HlmAlertImports,
     RequiredMarker,
     FormField,
     HlmInput,
@@ -87,6 +75,17 @@ function trimmed(value: string): string | undefined {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingEquipmentForm {
+  /**
+   * Property restored
+   * @readonly
+   * @description Pending fields restored from the server before any durable creation result exists.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<SetupCreateEquipmentInput | null>}
+   */
+  public readonly restored: InputSignal<SetupCreateEquipmentInput | null> =
+    input<SetupCreateEquipmentInput | null>(null);
+
   //#region Inputs
   /**
    * Property pending
@@ -109,16 +108,6 @@ export class OnboardingEquipmentForm {
   public readonly facilities: InputSignal<readonly SetupFacilitySummary[]> = input<
     readonly SetupFacilitySummary[]
   >([]);
-
-  /**
-   * Property serverError
-   * @readonly
-   * @description Whatever the creation request failed with.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<unknown>}
-   */
-  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
 
   /**
    * Property skippable
@@ -156,8 +145,16 @@ export class OnboardingEquipmentForm {
 
   //#region Properties
   /** The edited draft. */
-  protected readonly model: WritableSignal<OnboardingEquipmentFormDraft> =
-    signal<OnboardingEquipmentFormDraft>(EMPTY_VALUES);
+  protected readonly model: WritableSignal<OnboardingEquipmentFormDraft> = linkedSignal(() => {
+    const restored = this.restored();
+    return {
+      type: (restored?.type ?? '') as OnboardingEquipmentTypeOption | '',
+      brand: restored?.brand ?? '',
+      model: restored?.model ?? '',
+      serialNumber: restored?.serialNumber ?? '',
+      facilityId: restored?.facilityId ?? '',
+    };
+  });
 
   /**
    * Property equipmentForm
@@ -182,22 +179,6 @@ export class OnboardingEquipmentForm {
 
   /** The equipment types offered, owned by the equipments subfeature. */
   protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
-
-  /**
-   * Property serverMessages
-   * @readonly
-   * @description Everything the API said about the rejected request, as flat lines above the form.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<readonly string[]>}
-   */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
-    serverMessagesOf(
-      this.serverError(),
-      [],
-      $localize`:@@onboarding.equipmentForm.createFailed:The equipment could not be registered.`,
-    ),
-  );
 
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>

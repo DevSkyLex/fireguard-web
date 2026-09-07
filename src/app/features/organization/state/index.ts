@@ -24,3 +24,4 @@ export { MyOrganizationsStore } from './my-organizations';
 export type { MyOrganizationsState } from './my-organizations';
 export { myOrganizationsStoreEvents } from './my-organizations';
 export { organizationInvitationAcceptStoreEvents } from './organization-invitation-accept';
+export { organizationMembershipEvents } from './organization-membership/events';

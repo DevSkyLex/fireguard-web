@@ -155,9 +155,10 @@
                   "!@features/organization/setup",
                   "!@features/organization/models",
                   "!@features/organization/data-access",
+                  "!@features/organization/utils",
                   "!@features/organization/features/equipments"
                 ],
-                "message": "ARCHITECTURE.md 4 / 14.2 - onboarding may consume exactly four organization surfaces, and they are the ones its FEATURE.md records: setup, models, data-access, and the equipments public API. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
+                "message": "ARCHITECTURE.md 4 / 14.2 - onboarding may consume the documented organization surfaces, and they are the ones its FEATURE.md records: setup, models, data-access, utils, and the equipments public API. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               }
             ]
           }

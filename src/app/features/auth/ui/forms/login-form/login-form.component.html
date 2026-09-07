@@ -72,7 +72,7 @@
         <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
       </label>
       <a
-        class="inline-flex items-center rounded-sm text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+        class="inline-flex items-center rounded-sm text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
         routerLink="/auth/password-reset/forgot"
         [queryParams]="{ returnUrl: returnUrl() || undefined }"
         i18n="@@auth.login.forgotPassword"

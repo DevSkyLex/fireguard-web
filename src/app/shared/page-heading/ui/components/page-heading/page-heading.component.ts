@@ -37,6 +37,16 @@ import { ChangeDetectionStrategy, Component, input, type InputSignal } from '@an
 export class PageHeading {
   //#region Inputs
   /**
+   * Property size
+   * @readonly
+   * @description Larger standalone headings for full-page states; ordinary forms retain their current scale.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<'default' | 'large'>}
+   */
+  public readonly size: InputSignal<'default' | 'large'> = input<'default' | 'large'>('default');
+
+  /**
    * Property heading
    * @readonly
    *

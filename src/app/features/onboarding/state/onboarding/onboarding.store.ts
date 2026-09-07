@@ -14,6 +14,9 @@ import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   Observable,
+  Subject,
+  defaultIfEmpty,
+  takeUntil,
   catchError,
   exhaustMap,
   firstValueFrom,
@@ -41,6 +44,8 @@ import type {
   OnboardingStepOutput,
   StartOnboardingInput,
 } from '@features/onboarding/models';
+import { onboardingSetupEvents } from '@features/onboarding/state/setup';
+import { organizationMembershipEvents } from '@features/organization/setup';
 import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { onboardingStoreEvents } from './events';
 import type { OnboardingStoreState } from './models';
@@ -286,118 +291,40 @@ export const OnboardingStore = signalStore(
       onboardingService = inject<OnboardingService>(OnboardingService),
       platformId = inject<object>(PLATFORM_ID),
       transferState = inject<TransferState>(TransferState),
-    ) => ({
-      /**
-       * Method initialize
-       *
-       * @description
-       * Bootstraps the onboarding workflow during SSR and reuses the
-       * transferred state after browser hydration to avoid a duplicate
-       * authenticated request.
-       *
-       * @since 1.1.0
-       *
-       * @param {StartOnboardingInput} input - Bootstrap options passed to the start endpoint.
-       *
-       * @returns {Promise<void>} Resolves when initialization is complete.
-       */
-      async initialize(input: StartOnboardingInput = { reset: false }): Promise<void> {
-        if (store.onboarding() !== null) {
-          return;
-        }
+    ) => {
+      // Session and membership invalidation terminate every previous response subscription.
+      const invalidated = new Subject<void>();
 
-        const callState = store.startCallState();
-        if (callState.status === 'pending' || callState.status === 'success') {
-          return;
-        }
+      return {
+        /**
+         * Method initialize
+         *
+         * @description
+         * Bootstraps the onboarding workflow during SSR and reuses the
+         * transferred state after browser hydration to avoid a duplicate
+         * authenticated request.
+         *
+         * @since 1.1.0
+         *
+         * @param {StartOnboardingInput} input - Bootstrap options passed to the start endpoint.
+         *
+         * @returns {Promise<void>} Resolves when initialization is complete.
+         */
+        async initialize(input: StartOnboardingInput = { reset: false }): Promise<void> {
+          if (store.onboarding() !== null) {
+            return;
+          }
 
-        patchState(store, { startCallState: pendingCallState() });
+          const callState = store.startCallState();
+          if (callState.status === 'pending' || callState.status === 'success') {
+            return;
+          }
 
-        await firstValueFrom(
-          onboardingService.start(input).pipe(
-            tapResponse({
-              next: (response: OnboardingOutput) => {
-                patchState(store, {
-                  onboarding: response,
-                  startCallState: successCallState(response),
-                });
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { startCallState: errorCallState(storeError) });
-                dispatcher.dispatch(
-                  onboardingStoreEvents.startFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to start onboarding'),
-                  ),
-                );
-              },
-            }),
-          ),
-          { defaultValue: undefined },
-        );
-      },
+          patchState(store, { startCallState: pendingCallState() });
 
-      /**
-       * Method load
-       *
-       * @description
-       * Fetches the current onboarding record from the API. Uses `switchMap`
-       * so a new call cancels any in-flight request.
-       *
-       * @fires onboardingStoreEvents.loadFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      load: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { loadCallState: pendingCallState() })),
-          switchMap(() =>
-            onboardingService.get().pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    loadCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { loadCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load onboarding'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method start
-       *
-       * @description
-       * Starts the onboarding workflow by posting the initial input to the
-       * API. Uses `exhaustMap` to prevent duplicate submissions.
-       *
-       * @param {StartOnboardingInput} input  Configuration for the new
-       *   onboarding (e.g. target organization).
-       *
-       * @fires onboardingStoreEvents.startFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      start: rxMethod<StartOnboardingInput>(
-        pipe(
-          tap(() => patchState(store, { startCallState: pendingCallState() })),
-          exhaustMap((input: StartOnboardingInput) =>
+          await firstValueFrom(
             onboardingService.start(input).pipe(
+              takeUntil(invalidated),
               tapResponse({
                 next: (response: OnboardingOutput) => {
                   patchState(store, {
@@ -410,248 +337,359 @@ export const OnboardingStore = signalStore(
                   patchState(store, { startCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
                     onboardingStoreEvents.startFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to start onboarding'),
+                      toStoreFailureEventPayload(
+                        storeError,
+                        $localize`:@@onboarding.wizard.startFailed:Your activation could not be loaded. Try again to continue.`,
+                      ),
                     ),
                   );
                 },
               }),
             ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method executeStep
-       *
-       * @description
-       * Executes an onboarding step by key. Uses `exhaustMap` to prevent
-       * duplicate submissions. On success the full onboarding record is
-       * refreshed.
-       *
-       * @param {ExecuteStepPayload} payload  Contains the `stepKey` to execute.
-       *
-       * @fires onboardingStoreEvents.executeStepFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      executeStep: rxMethod<ExecuteStepPayload>(
-        pipe(
-          tap(() => patchState(store, { executeStepCallState: pendingCallState() })),
-          exhaustMap(({ stepKey }: ExecuteStepPayload) =>
-            onboardingService.executeStep(stepKey).pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    executeStepCallState: successCallState(response),
-                    skipStepCallState: idleCallState(),
-                    rollbackCallState: idleCallState(),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { executeStepCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.executeStepFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to execute step'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method skipStep
-       *
-       * @description
-       * Skips an onboarding step by key. Uses `exhaustMap` to prevent
-       * duplicate submissions.
-       *
-       * @param {OnboardingStepKey} stepKey  The step key to skip.
-       *
-       * @fires onboardingStoreEvents.skipStepFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      skipStep: rxMethod<OnboardingStepKey>(
-        pipe(
-          tap(() => patchState(store, { skipStepCallState: pendingCallState() })),
-          exhaustMap((stepKey) =>
-            onboardingService.skipStep(stepKey).pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    skipStepCallState: successCallState(response),
-                    executeStepCallState: idleCallState(),
-                    rollbackCallState: idleCallState(),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { skipStepCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.skipStepFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to skip step'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method rollback
-       *
-       * @description
-       * Rolls back the last completed onboarding step. Uses `exhaustMap`
-       * to prevent duplicate submissions. Check `canRollback()` before
-       * calling to ensure a rollback is available.
-       *
-       * @fires onboardingStoreEvents.rollbackFailed  On API error.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      rollback: rxMethod<void>(
-        pipe(
-          tap(() => patchState(store, { rollbackCallState: pendingCallState() })),
-          exhaustMap(() =>
-            onboardingService.rollback().pipe(
-              tapResponse({
-                next: (response: OnboardingOutput) => {
-                  patchState(store, {
-                    onboarding: response,
-                    rollbackCallState: successCallState(response),
-                    executeStepCallState: idleCallState(),
-                    skipStepCallState: idleCallState(),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { rollbackCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    onboardingStoreEvents.rollbackFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to rollback step'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
-
-      /**
-       * Method clear
-       *
-       * @description
-       * Resets the store to its initial state: clears the onboarding
-       * record and resets all operations to idle.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      clear(): void {
-        transferState.remove(ONBOARDING_TRANSFER_KEY);
-        patchState(store, INITIAL_ONBOARDING_STATE);
-      },
-
-      /**
-       * Method resetExecuteStepOperation
-       *
-       * @description
-       * Resets the execute-step operation to idle. Call this after
-       * displaying an error to the user so the next step attempt
-       * starts fresh.
-       *
-       * @since 1.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      resetExecuteStepOperation(): void {
-        patchState(store, { executeStepCallState: idleCallState() });
-      },
-
-      /**
-       * Method ensureLoaded
-       *
-       * @description
-       * Returns an `Observable<OnboardingOutput | null>` resolving the current
-       * onboarding record. If the record is already in the store it is returned
-       * synchronously (via `of()`); otherwise the API is called once and the
-       * response is patched into the store as a side-effect so consumers (the
-       * wizard-access guard, the shell checklist) do not re-fetch it.
-       *
-       * Loading never blocks the shell: any API error resolves to `null` so a failing
-       * endpoint never hard-locks navigation.
-       *
-       * @since 3.0.0
-       *
-       * @author Valentin FORTIN <contact@valentin-fortin.pro>
-       */
-      ensureLoaded(): Observable<OnboardingOutput | null> {
-        const current: OnboardingOutput | null = store.onboarding();
-        if (current !== null) {
-          return of(current);
-        }
-
-        // The SSR handoff lives here, not in `initialize()`: the guards call
-        // this first, on both sides. Writing the key from `initialize()` meant
-        // the server filled the store, `initialize()` returned early, the key
-        // was never set — and the browser refetched on hydration.
-        if (isPlatformBrowser(platformId) && transferState.hasKey(ONBOARDING_TRANSFER_KEY)) {
-          const transferred: OnboardingOutput | null = transferState.get(
-            ONBOARDING_TRANSFER_KEY,
-            null,
+            { defaultValue: undefined },
           );
+        },
+
+        /**
+         * Method load
+         *
+         * @description
+         * Fetches the current onboarding record from the API. Uses `switchMap`
+         * so a new call cancels any in-flight request.
+         *
+         * @fires onboardingStoreEvents.loadFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        load: rxMethod<void>(
+          pipe(
+            tap(() => patchState(store, { loadCallState: pendingCallState() })),
+            switchMap(() =>
+              onboardingService.get().pipe(
+                takeUntil(invalidated),
+                tapResponse({
+                  next: (response: OnboardingOutput) => {
+                    patchState(store, {
+                      onboarding: response,
+                      loadCallState: successCallState(response),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { loadCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      onboardingStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@onboarding.wizard.startFailed:Your activation could not be loaded. Try again to continue.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method start
+         *
+         * @description
+         * Starts the onboarding workflow by posting the initial input to the
+         * API. Uses `exhaustMap` to prevent duplicate submissions.
+         *
+         * @param {StartOnboardingInput} input  Configuration for the new
+         *   onboarding (e.g. target organization).
+         *
+         * @fires onboardingStoreEvents.startFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        start: rxMethod<StartOnboardingInput>(
+          pipe(
+            tap(() => patchState(store, { startCallState: pendingCallState() })),
+            exhaustMap((input: StartOnboardingInput) =>
+              onboardingService.start(input).pipe(
+                takeUntil(invalidated),
+                tapResponse({
+                  next: (response: OnboardingOutput) => {
+                    patchState(store, {
+                      onboarding: response,
+                      startCallState: successCallState(response),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { startCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      onboardingStoreEvents.startFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@onboarding.wizard.startFailed:Your activation could not be loaded. Try again to continue.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method executeStep
+         *
+         * @description
+         * Executes an onboarding step by key. Uses `exhaustMap` to prevent
+         * duplicate submissions. On success the full onboarding record is
+         * refreshed.
+         *
+         * @param {ExecuteStepPayload} payload  Contains the `stepKey` to execute.
+         *
+         * @fires onboardingStoreEvents.executeStepFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        executeStep: rxMethod<ExecuteStepPayload>(
+          pipe(
+            tap(() => patchState(store, { executeStepCallState: pendingCallState() })),
+            exhaustMap(({ stepKey }: ExecuteStepPayload) =>
+              onboardingService.executeStep(stepKey).pipe(
+                takeUntil(invalidated),
+                tapResponse({
+                  next: (response: OnboardingOutput) => {
+                    patchState(store, {
+                      onboarding: response,
+                      executeStepCallState: successCallState(response),
+                      skipStepCallState: idleCallState(),
+                      rollbackCallState: idleCallState(),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { executeStepCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      onboardingStoreEvents.executeStepFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@onboarding.wizard.lifecycleFailed:This step could not be updated. Your saved information is still available.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method skipStep
+         *
+         * @description
+         * Skips an onboarding step by key. Uses `exhaustMap` to prevent
+         * duplicate submissions.
+         *
+         * @param {OnboardingStepKey} stepKey  The step key to skip.
+         *
+         * @fires onboardingStoreEvents.skipStepFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        skipStep: rxMethod<OnboardingStepKey>(
+          pipe(
+            tap(() => patchState(store, { skipStepCallState: pendingCallState() })),
+            exhaustMap((stepKey) =>
+              onboardingService.skipStep(stepKey).pipe(
+                takeUntil(invalidated),
+                tapResponse({
+                  next: (response: OnboardingOutput) => {
+                    patchState(store, {
+                      onboarding: response,
+                      skipStepCallState: successCallState(response),
+                      executeStepCallState: idleCallState(),
+                      rollbackCallState: idleCallState(),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { skipStepCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      onboardingStoreEvents.skipStepFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@onboarding.wizard.lifecycleFailed:This step could not be updated. Your saved information is still available.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method rollback
+         *
+         * @description
+         * Rolls back the last completed onboarding step. Uses `exhaustMap`
+         * to prevent duplicate submissions. Check `canRollback()` before
+         * calling to ensure a rollback is available.
+         *
+         * @fires onboardingStoreEvents.rollbackFailed  On API error.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        rollback: rxMethod<void>(
+          pipe(
+            tap(() => patchState(store, { rollbackCallState: pendingCallState() })),
+            exhaustMap(() =>
+              onboardingService.rollback().pipe(
+                takeUntil(invalidated),
+                tapResponse({
+                  next: (response: OnboardingOutput) => {
+                    patchState(store, {
+                      onboarding: response,
+                      rollbackCallState: successCallState(response),
+                      executeStepCallState: idleCallState(),
+                      skipStepCallState: idleCallState(),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { rollbackCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      onboardingStoreEvents.rollbackFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@onboarding.wizard.rollbackFailed:The previous step could not be restored. Try again.`,
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method clear
+         *
+         * @description
+         * Resets the store to its initial state: clears the onboarding
+         * record, cancels in-flight response subscriptions and resets all operations to idle.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        clear(): void {
+          invalidated.next();
           transferState.remove(ONBOARDING_TRANSFER_KEY);
+          patchState(store, INITIAL_ONBOARDING_STATE);
+        },
 
-          if (transferred) {
-            patchState(store, {
-              onboarding: transferred,
-              loadCallState: successCallState(transferred),
-            });
+        /**
+         * Method resetExecuteStepOperation
+         *
+         * @description
+         * Resets the execute-step operation to idle. Call this after
+         * displaying an error to the user so the next step attempt
+         * starts fresh.
+         *
+         * @since 1.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        resetExecuteStepOperation(): void {
+          patchState(store, { executeStepCallState: idleCallState() });
+        },
 
-            return of(transferred);
+        /**
+         * Method ensureLoaded
+         *
+         * @description
+         * Returns an `Observable<OnboardingOutput | null>` resolving the current
+         * onboarding record. If the record is already in the store it is returned
+         * synchronously (via `of()`); otherwise the API is called once and the
+         * response is patched into the store as a side-effect so consumers (the
+         * wizard-access guard, the shell checklist) do not re-fetch it.
+         *
+         * Loading never blocks the shell: any API error resolves to `null` so a failing
+         * endpoint never hard-locks navigation.
+         *
+         * @since 3.0.0
+         *
+         * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         */
+        ensureLoaded(): Observable<OnboardingOutput | null> {
+          const current: OnboardingOutput | null = store.onboarding();
+          if (current !== null) {
+            return of(current);
           }
-        }
 
-        return onboardingService.get().pipe(
-          tap((response: OnboardingOutput) => {
-            patchState(store, {
-              onboarding: response,
-              loadCallState: successCallState(response),
-            });
+          // The SSR handoff lives here, not in `initialize()`: the guards call
+          // this first, on both sides. Writing the key from `initialize()` meant
+          // the server filled the store, `initialize()` returned early, the key
+          // was never set — and the browser refetched on hydration.
+          if (isPlatformBrowser(platformId) && transferState.hasKey(ONBOARDING_TRANSFER_KEY)) {
+            const transferred: OnboardingOutput | null = transferState.get(
+              ONBOARDING_TRANSFER_KEY,
+              null,
+            );
+            transferState.remove(ONBOARDING_TRANSFER_KEY);
 
-            if (!isPlatformBrowser(platformId)) {
-              transferState.set(ONBOARDING_TRANSFER_KEY, response);
+            if (transferred) {
+              patchState(store, {
+                onboarding: transferred,
+                loadCallState: successCallState(transferred),
+              });
+
+              return of(transferred);
             }
-          }),
-          map((response: OnboardingOutput): OnboardingOutput | null => response),
-          // The failure is recorded, not just swallowed: `null` alone cannot
-          // tell "this account has no onboarding record" from "the endpoint is
-          // down", and the shell guard needs that difference to avoid locking a
-          // member out of an app they have already activated.
-          catchError((error: unknown): Observable<OnboardingOutput | null> => {
-            patchState(store, { loadCallState: errorCallState(toStoreError(error)) });
+          }
 
-            return of(null);
-          }),
-        );
-      },
-    }),
+          return onboardingService.get().pipe(
+            takeUntil(invalidated),
+            tap((response: OnboardingOutput) => {
+              patchState(store, {
+                onboarding: response,
+                loadCallState: successCallState(response),
+              });
+
+              if (!isPlatformBrowser(platformId)) {
+                const { setupOperations: _setupOperations, ...routeState } = response;
+                transferState.set(ONBOARDING_TRANSFER_KEY, routeState);
+              }
+            }),
+            map((response: OnboardingOutput): OnboardingOutput | null => response),
+            defaultIfEmpty(null),
+            // The failure is recorded, not just swallowed: `null` alone cannot
+            // tell "this account has no onboarding record" from "the endpoint is
+            // down", and the shell guard needs that difference to avoid locking a
+            // member out of an app they have already activated.
+            catchError((error: unknown): Observable<OnboardingOutput | null> => {
+              patchState(store, { loadCallState: errorCallState(toStoreError(error)) });
+
+              return of(null);
+            }),
+          );
+        },
+      };
+    },
   ),
   //#endregion
 
@@ -668,7 +706,18 @@ export const OnboardingStore = signalStore(
      */
     onInit(store, events = inject<Events>(Events)): void {
       events
-        .on(authStoreEvents.sessionEnded, organizationInvitationAcceptStoreEvents.acceptSucceeded)
+        .on(onboardingSetupEvents.snapshotUpdated)
+        .pipe(takeUntilDestroyed())
+        .subscribe(({ payload }) => {
+          if (store.onboarding()?.sessionId !== payload.sessionId || !payload.sessionId) return;
+          patchState(store, { onboarding: payload, loadCallState: successCallState(payload) });
+        });
+      events
+        .on(
+          authStoreEvents.sessionEnded,
+          organizationInvitationAcceptStoreEvents.acceptSucceeded,
+          organizationMembershipEvents.joined,
+        )
         .pipe(takeUntilDestroyed())
         .subscribe(() => {
           store.clear();

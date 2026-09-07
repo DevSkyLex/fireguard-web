@@ -19,5 +19,14 @@ export interface StartOnboardingInput {
    * @type {boolean}
    */
   readonly reset?: boolean;
+  /**
+   * Property intent
+   * @readonly
+   * @description Explicit creation choice; never inferred from visiting discovery.
+   * @access public
+   * @since 1.0.0
+   * @type {'create' | undefined}
+   */
+  readonly intent?: 'create';
   //#endregion
 }

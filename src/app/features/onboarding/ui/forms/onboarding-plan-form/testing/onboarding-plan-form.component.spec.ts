@@ -48,7 +48,7 @@ describe('OnboardingPlanForm', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('should render every plan with its price, defaulting an unpriced plan to Free', () => {
+  it('should render every plan with its price, showing Free only for the explicit free offer', () => {
     const text: string | null = element.textContent;
 
     expect(text).toContain('Free');
@@ -107,7 +107,7 @@ describe('OnboardingPlanForm', () => {
 
     await submit();
 
-    expect(emitted).toEqual([{ planKey: 'free', interval: 'month', requiresPayment: false }]);
+    expect(emitted).toEqual([{ planKey: 'free', interval: 'month', pricingState: 'free' }]);
   });
 
   it('should emit a priced plan as requiring payment', async () => {
@@ -122,19 +122,51 @@ describe('OnboardingPlanForm', () => {
 
     await submit();
 
-    expect(emitted).toEqual([{ planKey: 'pro', interval: 'month', requiresPayment: true }]);
+    expect(emitted).toEqual([{ planKey: 'pro', interval: 'month', pricingState: 'priced' }]);
   });
+  it.each([undefined, null])(
+    'disables a commercial offer without a monthly price (%s)',
+    async (amount) => {
+      fixture.componentRef.setInput(
+        'pricing',
+        amount === undefined ? [] : [pricingOf('pro', amount)],
+      );
+      await fixture.whenStable();
+      const radio = element.querySelector('#onboarding-plan-pro') as HTMLElement;
+      expect(radio.getAttribute('aria-disabled')).toBe('true');
+      expect(
+        element.querySelector('[data-testid="onboarding-plan-card-pro"]')?.textContent,
+      ).toContain('Monthly price unavailable');
+      const emitted = vi.fn();
+      fixture.componentInstance.submitted.subscribe(emitted);
+      (
+        fixture.componentInstance as unknown as { model: WritableSignal<{ planKey: string }> }
+      ).model.set({ planKey: 'pro' });
+      await fixture.whenStable();
+      await submit();
+      expect(emitted).not.toHaveBeenCalled();
+      expect(
+        (element.querySelector('[data-testid="onboarding-plan-submit"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    },
+  );
 
-  it('should surface the normalized error message above the form', async () => {
-    fixture.componentRef.setInput('serverError', {
-      message: 'boom',
-      retryable: false,
-      timestamp: 1,
-    });
+  it('keeps a commercial zero price on the Billing path', async () => {
+    fixture.componentRef.setInput('pricing', [pricingOf('pro', 0)]);
     await fixture.whenStable();
-
-    expect(element.querySelector('[data-testid="onboarding-plan-error"]')?.textContent).toContain(
-      'boom',
-    );
+    (element.querySelector('#onboarding-plan-pro') as HTMLElement).click();
+    await fixture.whenStable();
+    const emitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(emitted);
+    await submit();
+    expect(emitted).toHaveBeenCalledWith({
+      planKey: 'pro',
+      interval: 'month',
+      pricingState: 'priced',
+    });
+    expect(
+      element.querySelector('[data-testid="onboarding-plan-card-pro"]')?.textContent,
+    ).toContain('$0.00/month');
   });
 });

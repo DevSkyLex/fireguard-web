@@ -14,6 +14,7 @@ import {
   type OnboardingStepKey,
   type OnboardingStepOutput,
 } from '@features/onboarding/models';
+import { HlmItem, HlmItemGroup } from '@shared/ui/item';
 import { HlmProgress, HlmProgressIndicator } from '@shared/ui/progress';
 import { ONBOARDING_STEP_RAIL_ICONS } from './constants/onboarding-step-rail-icons.constants';
 import { ONBOARDING_STEP_STATUS_TAG_ICON_CLASS } from './constants/onboarding-step-status-tag-severity.constants';
@@ -24,17 +25,12 @@ import type { OnboardingStepRailRow } from './models';
  * @class OnboardingStepRail
  *
  * @description
- * Read-only progress list for the activation wizard: every step in order,
- * each with its own glyph and a status glyph, the currently active step
- * marked with `aria-current="step"` and the only one to carry its sublabel
- * and status text. A resolved step collapses to its label and glyph (the
- * status stays in the accessible name), a skipped or blocked one keeps its
- * status visible because it explains the row — except a step the backend
- * reports `blocked` merely because it comes after the active one: that is
- * "not started", not a failure, and renders as such. Shared verbatim by the
- * split-layout showcase panel (`lg` and up) and the wizard page's own
- * in-content copy (below `lg`) — one component, so the two surfaces the
- * feature's `FEATURE.md` promises can never drift apart.
+ * Read-only activation progress composed of native Spartan items. The active
+ * step has a muted surface, `aria-current="step"`, and a short sublabel.
+ * Ordinary status labels remain available to assistive technology; skipped
+ * and blocked statuses stay visible. A future step blocked only by its order
+ * is presented as not started, rather than as a failure.
+ * Shared by the desktop showcase and the mobile progress disclosure.
  *
  * Purely presentational: it takes the onboarding record's steps and renders
  * them, never injecting the store itself (`ARCHITECTURE.md` §10.3).
@@ -50,7 +46,7 @@ import type { OnboardingStepRailRow } from './models';
  */
 @Component({
   selector: 'app-onboarding-step-rail',
-  imports: [HlmProgressIndicator, NgIcon, HlmProgress],
+  imports: [HlmItem, HlmItemGroup, HlmProgressIndicator, NgIcon, HlmProgress],
   providers: [provideIcons(ONBOARDING_STEP_RAIL_ICONS)],
   templateUrl: './onboarding-step-rail.component.html',
   host: { class: 'block' },
@@ -93,6 +89,16 @@ export class OnboardingStepRail {
     readonly done: number;
     readonly total: number;
   }>({ done: 0, total: 0 });
+
+  /**
+   * Property compact
+   * @readonly
+   * @description Removes the duplicated progress summary when the rail is expanded below the mobile progress control.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly compact: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Properties
@@ -127,10 +133,7 @@ export class OnboardingStepRail {
         statusIconClass: ONBOARDING_STEP_STATUS_TAG_ICON_CLASS[statusTag.severity],
         isActive: step.key === activeKey,
         showSublabel: step.key === activeKey,
-        statusLabelVisible:
-          step.key === activeKey ||
-          step.status === 'skipped' ||
-          (step.status === 'blocked' && !upcoming),
+        statusLabelVisible: step.status === 'skipped' || (step.status === 'blocked' && !upcoming),
       };
     });
   });

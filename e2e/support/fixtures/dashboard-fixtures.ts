@@ -111,11 +111,14 @@ export function organizationDashboardOutput(
       nonConformities: {
         summary: [
           { key: 'open', value: 5 },
+          { key: 'inProgress', value: 3 },
+          { key: 'done', value: 12 },
+          { key: 'waived', value: 2 },
           { key: 'overdue', value: 1 },
           { key: 'severityCritical', value: 1 },
           { key: 'severityHigh', value: 1 },
           { key: 'severityMedium', value: 2 },
-          { key: 'severityLow', value: 1 },
+          { key: 'severityLow', value: 18 },
         ],
       },
       interventions: { summary: [{ key: 'open', value: 7 }] },

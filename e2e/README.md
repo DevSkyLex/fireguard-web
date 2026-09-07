@@ -31,15 +31,14 @@ e2e/
     helpers/offline.ts                # perceived-connectivity toggle + IndexedDB outbox read/seed
   auth/                               # /auth/login, /auth/register(/verify), /auth/mfa-verify specs
   maintenance/                        # /maintenance + 503 interceptor specs
-  onboarding/                         # /onboarding wizard (first step, steps 2-5, guard-chain) specs
+  onboarding/                         # /onboarding/workspace discovery and /onboarding/create setup
+  error/                              # focused error pages, decorations and responsive actions
   organization/                       # every /organizations/:id/... spec
 ```
 
 ## Coverage scope
 
-40 specs, listed by what they drive rather than summarised — an exact count
-goes stale the moment a spec is added or split, so treat this as a shape, not
-an inventory.
+Coverage is described by workflow; use `playwright test --list` for the current inventory.
 
 Covered: sign-in, registration (draft → email verification → auto-login) and
 MFA verification, including the login page's plain-credentials, rejected-login
@@ -54,10 +53,14 @@ the organization-leave flow; channels; invitation accept; the maintenance
 route; and the onboarding wizard's first step, steps 2 through 5
 (plan and members skip, a facility staged explicitly via "Add facility", and
 equipment registration completing the flow), plus the `onboardingGuard` /
-`onboardingRequiredGuard` mutual gate.
+`onboardingRequiredGuard` mutual gate. Regression cases also cover private workspace
+discovery, resumed setup receipts (including a lost creation response and a partially
+completed batch), focus after successful and failed transitions, OAuth error recovery
+through password/MFA, dashboard isolation during an organization switch, and the focused
+error-page layouts. OAuth providers and their callbacks use mocks, not real provider sessions.
 
 Not covered, and worth stating plainly: the account profile, security and
-notification workflows and the three `error` pages have no dedicated specs;
+notification workflows are not covered by these auth/onboarding regressions;
 the intervention creation spec covers the "New
 intervention" button entry point only, not the `?create=1` query-param
 auto-open or the "start from a template" / "Duplicate" flows; `approvals`,
@@ -123,6 +126,13 @@ page wrapper around it.
 - `mockOnboarding(onboarding)` — registered AFTER `mockAuthenticatedSession`,
   overrides the completed default the session bootstrap installs (Playwright
   matches routes last-registered-first).
+- Onboarding mocks retain a server-side journal for the test's lifetime: setup preparation
+  writes `setupOperations`, successful creation mocks record receipts, and later reads
+  expose them even after a reload. A custom creation handler must call
+  `api.recordSetupCreation(route, resourceId, organizationId?)` when simulating a commit,
+  including before aborting a response to model a committed operation whose response was lost.
+  These browser mocks verify client recovery; transactional concurrency and quotas require
+  separate backend tests.
 - `mockEquipmentList` / `mockFacilityList` / `mockInspectionList` match the
   organization-scoped collection endpoint with a regex tolerant of query
   strings, so search/filter/page navigation never needs re-mocking.

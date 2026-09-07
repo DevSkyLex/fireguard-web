@@ -13,7 +13,7 @@ import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
-const CAPTURES = 'test-results/uiux-desktop-review-20260903/auth-onboarding';
+const CAPTURES = 'e2e/artifacts/corrections/desktop-layout';
 const PHASE = process.env['UIUX_CAPTURE_PHASE'] ?? 'after';
 const ORDER: readonly OnboardingStepKeyFixture[] = [
   'create_organization',
@@ -48,7 +48,7 @@ async function inspectLayout(page: Page, field: Locator) {
         return { width: rect.width, right: rect.right };
       }),
       railLabels: Array.from(
-        document.querySelectorAll('#split-layout-showcase ol li > div > p:first-child'),
+        document.querySelectorAll('#split-layout-showcase [data-testid="onboarding-step-label"]'),
       ).map((element) => ({
         label: element.textContent?.trim(),
         height: element.getBoundingClientRect().height,
@@ -106,6 +106,7 @@ for (const viewport of [
       await expect(auth.otpResend).toBeInViewport();
 
       await api.mockAuthenticatedSession();
+      await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
       await api.mockPlans([
         planOutput({
           id: 'free',
@@ -165,8 +166,12 @@ for (const viewport of [
 
           if (key === 'select_plan') {
             if (PHASE !== 'before') {
-              for (const choice of layout.planChoices)
-                expect(choice.width).toBe(layout.content?.width);
+              expect(new Set(layout.planChoices.map((choice) => choice.width)).size).toBe(1);
+              for (const choice of layout.planChoices) {
+                expect(choice.right).toBeLessThanOrEqual(
+                  (layout.content?.x ?? 0) + (layout.content?.width ?? 0),
+                );
+              }
             }
             await page.getByTestId('onboarding-plan-card-pro').click();
             await expect(onboarding.planSubmit).toHaveText('Continue to payment');
@@ -204,6 +209,7 @@ for (const viewport of [
             await page.getByRole('option', { name: 'Site', exact: true }).click();
             await expect(page.getByRole('option', { name: 'Site', exact: true })).toHaveCount(0);
             await onboarding.facilityNameInput.fill('North logistics and maintenance center');
+            await onboarding.chooseFacilityAddress();
             await onboarding.facilityAddButton.click();
             if (PHASE !== 'before')
               await expect(onboarding.facilityNameInput).not.toHaveAttribute(

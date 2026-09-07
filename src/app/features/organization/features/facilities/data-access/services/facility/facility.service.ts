@@ -11,6 +11,7 @@ import type {
   FacilityPlanOverlayOutput,
   FacilityBuildingModelOutput,
   FacilityGeocodeOutput,
+  FacilityAddressSuggestionsOutput,
   CreateFacilityInput,
   UpdateFacilityInput,
   MoveFacilityInput,
@@ -170,6 +171,26 @@ export class FacilityService extends HydraApiService {
     return this.getOne<FacilityGeocodeOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/geocode`,
       { params: { address } },
+    );
+  }
+
+  /**
+   * Method addressSuggestions
+   * @method addressSuggestions
+   * @description Searches the organization-scoped address suggestion endpoint. An empty collection means no match; provider outages and authorization failures remain HTTP errors.
+   * @access public
+   * @since 1.0.0
+   * @param {string} organizationId - Organization whose facility is being configured.
+   * @param {string} query - Address query of three to 250 characters.
+   * @returns {Observable<FacilityAddressSuggestionsOutput>} Up to five address suggestions.
+   */
+  public addressSuggestions(
+    organizationId: string,
+    query: string,
+  ): Observable<FacilityAddressSuggestionsOutput> {
+    return this.getOne<FacilityAddressSuggestionsOutput>(
+      `${FacilityService.BASE_PATH}/${organizationId}/facilities/address-suggestions`,
+      { params: { q: query } },
     );
   }
 

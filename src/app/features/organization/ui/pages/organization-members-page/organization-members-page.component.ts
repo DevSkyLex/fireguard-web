@@ -1,4 +1,6 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
+  PLATFORM_ID,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -24,12 +26,15 @@ import {
   lucideLock,
   lucideMailPlus,
   lucideMailQuestion,
+  lucideNetwork,
   lucideSearch,
+  lucideShieldCheck,
   lucideTrash2,
   lucideUserCheck,
   lucideUsersRound,
   lucideX,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -61,11 +66,17 @@ import {
   type OrganizationQuotaStoreType,
 } from '@features/organization/state';
 import {
+  organizationAccessAdminEvents,
+  OrganizationAccessAdminStore,
+  type OrganizationAccessAdminStoreType,
+} from '@features/organization/state/organization-access-admin';
+import {
   INVITATIONS_PAGE_SIZE,
   MEMBERS_PAGE_SIZE,
   OrganizationMembersStore,
 } from '@features/organization/state/organization-members';
 import { StatTile } from '@features/organization/ui/components';
+import { OrganizationJoinRequestPanel } from '@features/organization/ui/components/organization-join-request-panel';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
@@ -101,10 +112,15 @@ const SEARCH_DEBOUNCE_MS: number = 300;
  *
  * @since 2.0.0
  */
-type OrganizationMembersTabId = 'members' | 'roles' | 'teams';
+type OrganizationMembersTabId = 'members' | 'roles' | 'teams' | 'requests';
 
 /** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
-const MEMBERS_TAB_IDS: ReadonlySet<string> = new Set<string>(['members', 'roles', 'teams']);
+const MEMBERS_TAB_IDS: ReadonlySet<string> = new Set<string>([
+  'members',
+  'roles',
+  'teams',
+  'requests',
+]);
 
 /**
  * Function isOrganizationMembersTabId
@@ -199,8 +215,7 @@ type OrganizationMembersKpiTile = {
  *
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
- * retired — {@link subtitle}'s member count stays as a lead line at content
- * top, the primary tabs register beneath the title through `PageTabsService`,
+ * retired — the primary tabs register beneath the title through `PageTabsService`,
  * and "Invite member" registers on the shell header through
  * `PageActionsService`, gated to the `members` tab being active — the
  * absorbed pages' own action buttons (New role, New team) take over the
@@ -214,6 +229,7 @@ type OrganizationMembersKpiTile = {
 @Component({
   selector: 'app-organization-members-page',
   imports: [
+    OrganizationJoinRequestPanel,
     NgIcon,
     ...HlmEmptyImports,
     HlmCardTitle,
@@ -236,6 +252,7 @@ type OrganizationMembersKpiTile = {
     ...HlmToggleGroupImports,
   ],
   providers: [
+    OrganizationAccessAdminStore,
     OrganizationMembersStore,
     provideIcons({
       lucideLock,
@@ -243,7 +260,9 @@ type OrganizationMembersKpiTile = {
       lucideGauge,
       lucideMailPlus,
       lucideMailQuestion,
+      lucideNetwork,
       lucideSearch,
+      lucideShieldCheck,
       lucideTrash2,
       lucideUserCheck,
       lucideUsersRound,
@@ -255,6 +274,17 @@ type OrganizationMembersKpiTile = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMembersPage {
+  /**
+   * Property accessStore
+   * @readonly
+   * @description Page-scoped request review state with server-authorized roles.
+   * @access protected
+   * @since 1.0.0
+   * @type {OrganizationAccessAdminStoreType}
+   */
+  protected readonly accessStore: OrganizationAccessAdminStoreType = inject(
+    OrganizationAccessAdminStore,
+  );
   //#region Inputs
   /**
    * Property organizationId
@@ -600,15 +630,6 @@ export class OrganizationMembersPage {
     () => ['/organizations', this.organizationId(), 'members'],
   );
 
-  /** The header's count line, naming how many members the organization has. */
-  protected readonly subtitle: Signal<string> = computed<string>(() => {
-    const total: number = this.store.membersTotal();
-
-    return total === 1
-      ? $localize`:@@org.members.countOne:1 member`
-      : $localize`:@@org.members.countMany:${total}:count: members`;
-  });
-
   /**
    * Property membersQuotaItem
    * @readonly
@@ -687,20 +708,6 @@ export class OrganizationMembersPage {
         loading: this.quotaStore.isLoadingQuota(),
       },
     ];
-  });
-
-  /**
-   * Property rosterHeading
-   * @readonly
-   * @description The roster section's heading, naming how many rows the current search/status filter matches.
-   * @access protected
-   * @since 1.1.0
-   * @type {Signal<string>}
-   */
-  protected readonly rosterHeading: Signal<string> = computed<string>(() => {
-    const total: number = this.store.membersTotal();
-
-    return $localize`:@@org.members.rosterHeadingCount:Roster (${total}:count:)`;
   });
 
   /**
@@ -830,6 +837,21 @@ export class OrganizationMembersPage {
    * @since 1.0.0
    */
   public constructor() {
+    const browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+    effect((): void => {
+      const id = this.organizationId();
+      if (browser && id && this.activeTab() === 'requests' && this.canManageMembers())
+        untracked(() => this.accessStore.loadRequests(id));
+    });
+    inject(Events)
+      .on(organizationAccessAdminEvents.membershipApproved)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (payload.organizationId === this.organizationId()) {
+          this.reload();
+          this.quotaStore.reload();
+        }
+      });
     const destroyRef: DestroyRef = inject(DestroyRef);
     registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
@@ -1398,6 +1420,7 @@ export class OrganizationMembersPage {
    * @returns {boolean}
    */
   private isTabPermitted(tab: OrganizationMembersTabId): boolean {
+    if (tab === 'requests') return this.canManageMembers();
     if (tab === 'roles') return this.canViewRolesTab();
     if (tab === 'teams') return this.canViewTeamsTab();
 

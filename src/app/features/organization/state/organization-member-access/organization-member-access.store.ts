@@ -11,13 +11,16 @@ import {
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
+  defaultIfEmpty,
   filter,
   finalize,
   map,
   of,
   pipe,
   shareReplay,
+  Subject,
   switchMap,
+  takeUntil,
   tap,
   type Observable,
 } from 'rxjs';
@@ -30,6 +33,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';
@@ -83,7 +87,15 @@ export const OrganizationMemberAccessStore = signalStore(
       store,
       organizationMemberService = inject<OrganizationMemberService>(OrganizationMemberService),
       activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+      authSession = inject<AuthSessionPort>(AUTH_SESSION_PORT),
     ) => {
+      /**
+       * Constant accessCancellation
+       * @description Cancels permission reads when the session or organization context is cleared.
+       * @since 1.0.0
+       * @type {Subject<void>}
+       */
+      const accessCancellation = new Subject<void>();
       /**
        * The access request currently in flight, if any. Two guards resolve the
        * same organization on a single navigation — the parent `:organizationId`
@@ -105,6 +117,7 @@ export const OrganizationMemberAccessStore = signalStore(
          */
         loadAccess: rxMethod<string>(
           pipe(
+            filter(() => authSession.isAuthenticated()),
             filter((organizationId: string) => {
               const callState: CallState<CurrentOrganizationMemberProfileOutput> =
                 store.accessCallState();
@@ -122,6 +135,7 @@ export const OrganizationMemberAccessStore = signalStore(
             }),
             switchMap((organizationId: string) =>
               organizationMemberService.getCurrentProfile(organizationId).pipe(
+                takeUntil(accessCancellation),
                 tapResponse({
                   next: (profile: CurrentOrganizationMemberProfileOutput) => {
                     patchState(store, {
@@ -166,6 +180,7 @@ export const OrganizationMemberAccessStore = signalStore(
          * @returns {Observable<boolean>} `true` when access is resolved successfully.
          */
         ensureAccessResolved(organizationId: string): Observable<boolean> {
+          if (!authSession.isAuthenticated()) return of(false);
           const currentOrganizationId: string | null = store.currentOrganizationId();
           const accessCallState: CallState<CurrentOrganizationMemberProfileOutput> =
             store.accessCallState();
@@ -187,6 +202,7 @@ export const OrganizationMemberAccessStore = signalStore(
           const request$: Observable<boolean> = organizationMemberService
             .getCurrentProfile(organizationId)
             .pipe(
+              takeUntil(accessCancellation),
               map((profile: CurrentOrganizationMemberProfileOutput): boolean => {
                 patchState(store, {
                   currentOrganizationId: organizationId,
@@ -205,6 +221,7 @@ export const OrganizationMemberAccessStore = signalStore(
 
                 return of(false);
               }),
+              defaultIfEmpty(false),
               finalize((): void => {
                 if (pendingAccess?.organizationId === organizationId) pendingAccess = null;
               }),
@@ -245,6 +262,8 @@ export const OrganizationMemberAccessStore = signalStore(
          * Resets the organization member access state.
          */
         clear(): void {
+          accessCancellation.next();
+          pendingAccess = null;
           patchState(store, INITIAL_STATE);
         },
       };
@@ -254,6 +273,7 @@ export const OrganizationMemberAccessStore = signalStore(
   withHooks((store) => {
     const activeOrganizationStore: ActiveOrganizationStore =
       inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+    const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
 
     return {
       onInit(): void {
@@ -279,6 +299,13 @@ export const OrganizationMemberAccessStore = signalStore(
          * would throw away the request the guard is waiting on.
          */
         effect(() => {
+          // A remembered workspace is a preference, not proof of an authenticated session.
+          // Loading it before OAuth/MFA completes would turn its 401 into a login redirect.
+          if (!authSession.isAuthenticated()) {
+            previousOrganizationId = null;
+            untracked(() => store.clear());
+            return;
+          }
           const organizationId: string | null = activeOrganizationStore.selectedOrganizationId();
           const leftOrganizationScope: boolean =
             organizationId === null && previousOrganizationId !== null;

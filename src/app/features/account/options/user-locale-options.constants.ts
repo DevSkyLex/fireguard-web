@@ -15,14 +15,26 @@ import type { UserLocale } from '@features/account/models';
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: UserLocale }>}
+ * @type {readonly [{ readonly label: string; readonly value: UserLocale; readonly icon: string }, ...Array<{ readonly label: string; readonly value: UserLocale; readonly icon: string }>]}
  */
-export const USER_LOCALE_OPTIONS: ReadonlyArray<{
-  readonly label: string;
-  readonly value: UserLocale;
-}> = [
-  { label: $localize`:@@account.locale.system:Use my browser language`, value: 'system' },
-  { label: 'English', value: 'en' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Español', value: 'es' },
+export const USER_LOCALE_OPTIONS: readonly [
+  {
+    readonly label: string;
+    readonly value: UserLocale;
+    readonly icon: string;
+  },
+  ...Array<{
+    readonly label: string;
+    readonly value: UserLocale;
+    readonly icon: string;
+  }>,
+] = [
+  {
+    label: $localize`:@@account.locale.system:Use my browser language`,
+    value: 'system',
+    icon: 'flagUn',
+  },
+  { label: 'English', value: 'en', icon: 'flagUs' },
+  { label: 'Français', value: 'fr', icon: 'flagFr' },
+  { label: 'Español', value: 'es', icon: 'flagEs' },
 ];

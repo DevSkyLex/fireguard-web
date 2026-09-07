@@ -2,6 +2,7 @@ import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, Router } from '@angular/router';
 import { firstValueFrom, of, Subject, throwError } from 'rxjs';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   ORGANIZATION_PERMISSION,
@@ -22,6 +23,7 @@ const flushEffects = async (): Promise<void> => {
 };
 
 describe('OrganizationMemberAccessStore', () => {
+  const isAuthenticated = signal(true);
   const selectedOrganization = signal<{ id: string } | null>(null);
   const selectedOrganizationId = computed<string | null>(() => selectedOrganization()?.id ?? null);
 
@@ -79,6 +81,7 @@ describe('OrganizationMemberAccessStore', () => {
   };
 
   beforeEach(() => {
+    isAuthenticated.set(true);
     selectedOrganization.set(null);
     routerEvents = new Subject<NavigationEnd>();
     mockRouter = {
@@ -98,6 +101,7 @@ describe('OrganizationMemberAccessStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated } },
         {
           provide: ActiveOrganizationStore,
           useValue: {
@@ -117,6 +121,47 @@ describe('OrganizationMemberAccessStore', () => {
     });
 
     store = TestBed.inject(OrganizationMemberAccessStore);
+  });
+
+  it('does not load a remembered organization before authentication finishes', async () => {
+    isAuthenticated.set(false);
+    selectedOrganization.set({ id: 'org-1' });
+    await flushEffects();
+
+    store.loadAccess('org-1');
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(false);
+    expect(mockOrganizationMemberService.getCurrentProfile).not.toHaveBeenCalled();
+
+    isAuthenticated.set(true);
+    await flushEffects();
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledOnce();
+  });
+
+  it('cancels a pending access query when the authenticated session ends', async () => {
+    const response = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(response);
+    selectedOrganization.set({ id: 'org-1' });
+    await flushEffects();
+    expect(response.observed).toBe(true);
+
+    isAuthenticated.set(false);
+    await flushEffects();
+    expect(response.observed).toBe(false);
+    response.next(profile);
+    expect(store.profile()).toBeNull();
+    expect(store.permissions()).toEqual([]);
+  });
+
+  it('settles a pending guard without retaining permissions after logout', async () => {
+    const response = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(response);
+    const resolution = firstValueFrom(store.ensureAccessResolved('org-1'));
+    isAuthenticated.set(false);
+    await flushEffects();
+
+    await expect(resolution).resolves.toBe(false);
+    expect(response.observed).toBe(false);
+    expect(store.profile()).toBeNull();
   });
 
   it('should load organization member access when the active organization changes', async () => {

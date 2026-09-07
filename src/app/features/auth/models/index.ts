@@ -9,7 +9,13 @@
  */
 
 export type { LoginInput } from './login/login-input.interface';
-export type { LoginOutput, TokenType, MfaMethod } from './login/login-output.interface';
+export type {
+  AuthenticatedLoginOutput,
+  LoginOutput,
+  MfaChallengeLoginOutput,
+  MfaMethod,
+  TokenType,
+} from './login/login-output.interface';
 export type { LogoutOutput } from './logout/logout-output.interface';
 export type { MfaResendInput } from './mfa/mfa-resend-input.interface';
 export type { MfaVerifyInput } from './mfa/mfa-verify-input.interface';
@@ -31,3 +37,19 @@ export type { RegisterResendInput } from './register/register-resend-input.inter
 export type { RegisterVerifyInput } from './register/register-verify-input.interface';
 export type { GrantType } from './session/grant-type.type';
 export type { TokenOutput } from './session/token-output.interface';
+export type {
+  FederatedCompleteInput,
+  FederatedConnectionOutput,
+  FederatedConnectionsOutput,
+  FederatedAuthErrorCode,
+  FederatedProvider,
+  FederatedProviderOutput,
+  FederatedStartInput,
+  FederatedStartOutput,
+  PasswordSetupChallengeOutput,
+  PasswordSetupConfirmInput,
+  PasswordSetupConfirmOutput,
+  SignInMethod,
+} from './federation/federated-auth.interface';
+export type { EmailOwnershipOutput } from './email-ownership/email-ownership-output.interface';
+export type { EmailOwnershipChallengeOutput } from './email-ownership/email-ownership-challenge-output.interface';

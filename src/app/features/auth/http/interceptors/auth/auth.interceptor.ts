@@ -9,14 +9,24 @@ import { Observable } from 'rxjs';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 
 /**
- * Public endpoints that don't require authentication
- * @constant
+ * Constant PUBLIC_ENDPOINTS
+ * @readonly
+ *
+ * @description
+ * Authentication endpoints that must never inherit a stale bearer token.
+ * Federated connection endpoints are intentionally absent because linking an
+ * identity requires the current Fireguard session.
+ *
+ * @since 1.1.0
+ * @type {RegExp[]}
  */
 const PUBLIC_ENDPOINTS: RegExp[] = [
   /\/api\/auth\/login$/,
   /\/api\/auth\/logout$/,
   /\/api\/auth\/refresh$/,
   /\/api\/auth\/register$/,
+  /\/api\/auth\/federated\/providers$/,
+  /\/api\/auth\/federated\/(google|microsoft)\/(start|complete)$/,
   /\/api\/oauth2\/token$/,
 ];
 

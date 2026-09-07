@@ -104,7 +104,7 @@ describe('organizationGuard', () => {
     );
 
     expect(result).toBe(redirectUrlTree);
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/onboarding']);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/onboarding/workspace']);
   });
 
   it('should redirect to the saved organization when the cookie resolves successfully', async () => {

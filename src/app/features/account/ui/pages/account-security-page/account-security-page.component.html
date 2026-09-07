@@ -52,122 +52,156 @@
         (cancelled)="totpStore.cancelSetup()"
       />
 
-      <section
-        id="account-email"
-        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
-      >
-        <header class="min-w-0">
-          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.email.title">
-            Email address
-          </h2>
-          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.email.description">
-            The address you sign in with. Changing it asks for your password and a confirmation from
-            the new address.
-          </p>
-        </header>
+      <app-federated-connections-panel
+        [providers]="signInMethods.enabledProviders()"
+        [connections]="signInMethods.connections()"
+        [loading]="signInMethods.providersLoading() || signInMethods.connectionsLoading()"
+        [pending]="
+          signInMethods.startPending() || signInMethods.disconnectCallState().status === 'pending'
+        "
+        [pendingProvider]="signInMethods.pendingProvider()"
+        [error]="signInMethodsError()"
+        (connectRequested)="connectProvider($event)"
+        (disconnectRequested)="disconnectProvider($event)"
+        (passwordSetupRequested)="openPasswordSetup()"
+        (retried)="retrySignInMethods()"
+      />
 
-        <div class="flex min-w-0 flex-col gap-3">
-          @if (emailChangeStore.hasPendingRequest()) {
-            <div
-              class="flex flex-col gap-3 rounded-lg border border-border p-4"
-              role="status"
-              data-testid="account-email-pending"
-            >
-              <p class="text-sm text-foreground">
-                <span i18n="@@account.email.pendingText"
-                  >We sent a confirmation link to {{ emailChangeStore.pendingEmail() }}. Open it
-                  from that inbox to finish the change — until then you keep signing in with your
-                  current address.</span
-                >
-              </p>
-              <p class="text-xs text-muted-foreground" i18n="@@account.email.pendingHint">
-                The link expires after one hour. Confirming signs you out everywhere, and you sign
-                back in with the new address.
-              </p>
-              <div class="flex flex-wrap gap-2">
+      <app-federated-password-setup-dialog
+        [visible]="settingPassword()"
+        [challengeToken]="signInMethods.passwordSetupChallenge()"
+        [maskedRecipient]="
+          signInMethods.passwordSetupRequestCallState().data?.maskedRecipient ?? null
+        "
+        [requestPending]="signInMethods.passwordSetupRequestCallState().status === 'pending'"
+        [confirmPending]="signInMethods.passwordSetupConfirmCallState().status === 'pending'"
+        [error]="passwordSetupError()"
+        (visibleChange)="onPasswordSetupVisibilityChanged($event)"
+        (codeRequested)="requestPasswordSetup()"
+        (restartRequested)="restartPasswordSetup()"
+        (submitted)="confirmPasswordSetup($event)"
+      />
+
+      @if (signInMethods.passwordConfigured()) {
+        <section
+          id="account-email"
+          class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+        >
+          <header class="min-w-0">
+            <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.email.title">
+              Email address
+            </h2>
+            <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.email.description">
+              The address you sign in with. Changing it asks for your password and a confirmation
+              from the new address.
+            </p>
+          </header>
+
+          <div class="flex min-w-0 flex-col gap-3">
+            @if (emailChangeStore.hasPendingRequest()) {
+              <div
+                class="flex flex-col gap-3 rounded-lg border border-border p-4"
+                role="status"
+                data-testid="account-email-pending"
+              >
+                <p class="text-sm text-foreground">
+                  <span i18n="@@account.email.pendingText"
+                    >We sent a confirmation link to {{ emailChangeStore.pendingEmail() }}. Open it
+                    from that inbox to finish the change — until then you keep signing in with your
+                    current address.</span
+                  >
+                </p>
+                <p class="text-xs text-muted-foreground" i18n="@@account.email.pendingHint">
+                  The link expires after one hour. Confirming signs you out everywhere, and you sign
+                  back in with the new address.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="max-sm:min-h-11"
+                    data-testid="account-email-resend"
+                    [disabled]="emailChangeStore.isCancelling()"
+                    (click)="openEmailChangeDialog()"
+                  >
+                    <span i18n="@@account.email.resend">Resend link</span>
+                  </button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="max-sm:min-h-11"
+                    data-testid="account-email-cancel-request"
+                    aria-live="polite"
+                    [disabled]="emailChangeStore.isCancelling()"
+                    [attr.aria-busy]="emailChangeStore.isCancelling() ? 'true' : null"
+                    (click)="cancelEmailChange()"
+                  >
+                    @if (emailChangeStore.isCancelling()) {
+                      <span i18n="@@account.email.cancelling">Cancelling…</span>
+                    } @else {
+                      <span i18n="@@account.email.cancelRequest">Cancel request</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="flex flex-wrap items-center gap-3">
+                <p class="text-sm text-foreground" data-testid="account-email-current">
+                  {{ currentEmail() }}
+                </p>
                 <button
                   hlmBtn
                   type="button"
                   variant="outline"
                   size="sm"
                   class="max-sm:min-h-11"
-                  data-testid="account-email-resend"
-                  [disabled]="emailChangeStore.isCancelling()"
+                  data-testid="account-email-change-open"
                   (click)="openEmailChangeDialog()"
                 >
-                  <span i18n="@@account.email.resend">Resend link</span>
-                </button>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="max-sm:min-h-11"
-                  data-testid="account-email-cancel-request"
-                  aria-live="polite"
-                  [disabled]="emailChangeStore.isCancelling()"
-                  [attr.aria-busy]="emailChangeStore.isCancelling() ? 'true' : null"
-                  (click)="cancelEmailChange()"
-                >
-                  @if (emailChangeStore.isCancelling()) {
-                    <span i18n="@@account.email.cancelling">Cancelling…</span>
-                  } @else {
-                    <span i18n="@@account.email.cancelRequest">Cancel request</span>
-                  }
+                  <span i18n="@@account.email.changeOpen">Change email</span>
                 </button>
               </div>
-            </div>
-          } @else {
-            <div class="flex flex-wrap items-center gap-3">
-              <p class="text-sm text-foreground" data-testid="account-email-current">
-                {{ currentEmail() }}
-              </p>
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="sm"
-                class="max-sm:min-h-11"
-                data-testid="account-email-change-open"
-                (click)="openEmailChangeDialog()"
-              >
-                <span i18n="@@account.email.changeOpen">Change email</span>
-              </button>
-            </div>
-          }
+            }
 
-          <app-account-email-change-dialog
-            [visible]="changingEmail()"
-            [pending]="emailChangeStore.isRequesting()"
-            [initialEmail]="emailChangeStore.pendingEmail()"
-            (visibleChange)="changingEmail.set($event)"
-            (submitted)="requestEmailChange($event)"
+            <app-account-email-change-dialog
+              [visible]="changingEmail()"
+              [pending]="emailChangeStore.isRequesting()"
+              [initialEmail]="emailChangeStore.pendingEmail()"
+              (visibleChange)="changingEmail.set($event)"
+              (submitted)="requestEmailChange($event)"
+            />
+          </div>
+        </section>
+      }
+
+      @if (signInMethods.passwordConfigured()) {
+        <section
+          id="account-password"
+          class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+        >
+          <header class="min-w-0">
+            <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.password.title">
+              Password
+            </h2>
+            <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.password.description">
+              Changing it takes two steps, so a stolen session cannot lock you out.
+            </p>
+          </header>
+
+          <app-account-password-form
+            [step]="passwordStore.step()"
+            [pending]="isChangingPassword()"
+            [maskedRecipient]="passwordStore.maskedRecipient()"
+            (requested)="requestPasswordChange($event)"
+            (confirmed)="confirmPasswordChange($event)"
+            (restarted)="passwordStore.restart()"
           />
-        </div>
-      </section>
-
-      <section
-        id="account-password"
-        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
-      >
-        <header class="min-w-0">
-          <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.password.title">
-            Password
-          </h2>
-          <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.password.description">
-            Changing it takes two steps, so a stolen session cannot lock you out.
-          </p>
-        </header>
-
-        <app-account-password-form
-          [step]="passwordStore.step()"
-          [pending]="isChangingPassword()"
-          [maskedRecipient]="passwordStore.maskedRecipient()"
-          (requested)="requestPasswordChange($event)"
-          (confirmed)="confirmPasswordChange($event)"
-          (restarted)="passwordStore.restart()"
-        />
-      </section>
+        </section>
+      }
 
       <section
         id="account-sessions-section"

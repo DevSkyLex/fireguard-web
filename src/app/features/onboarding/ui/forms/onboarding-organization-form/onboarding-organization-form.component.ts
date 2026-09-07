@@ -1,36 +1,23 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   input,
+  linkedSignal,
   output,
-  signal,
   type InputSignal,
   type OutputEmitterRef,
-  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import type { SetupCreateOrganizationInput } from '@features/organization/setup';
-import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
-import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmButton } from '@shared/ui/button';
-import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import type { OnboardingOrganizationFormDraft } from './models';
 
 /** A blank draft. */
-const EMPTY_VALUES: OnboardingOrganizationFormDraft = { name: '', slug: '' };
-
-/** Trims a free-text field, sending `undefined` rather than an empty string. */
-function trimmed(value: string): string | undefined {
-  const trimmedValue: string = value.trim();
-
-  return trimmedValue === '' ? undefined : trimmedValue;
-}
+const EMPTY_VALUES: OnboardingOrganizationFormDraft = { name: '' };
 
 /**
  * Component OnboardingOrganizationForm
@@ -57,21 +44,23 @@ function trimmed(value: string): string | undefined {
  */
 @Component({
   selector: 'app-onboarding-organization-form',
-  imports: [
-    HlmButton,
-    ...HlmCollapsibleImports,
-    ...HlmAlertImports,
-    RequiredMarker,
-    FormField,
-    HlmInput,
-    OnboardingStepFooter,
-    ...HlmFieldImports,
-  ],
+  imports: [RequiredMarker, FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
   templateUrl: './onboarding-organization-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingOrganizationForm {
+  /**
+   * Property restored
+   * @readonly
+   * @description Pending fields restored from the server before any durable creation result exists.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<SetupCreateOrganizationInput | null>}
+   */
+  public readonly restored: InputSignal<SetupCreateOrganizationInput | null> =
+    input<SetupCreateOrganizationInput | null>(null);
+
   //#region Inputs
   /**
    * Property pending
@@ -82,16 +71,6 @@ export class OnboardingOrganizationForm {
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
-
-  /**
-   * Property serverError
-   * @readonly
-   * @description Whatever the creation request failed with.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<unknown>}
-   */
-  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
 
   /**
    * Property skippable
@@ -135,8 +114,9 @@ export class OnboardingOrganizationForm {
   protected readonly pendingLabel: string = $localize`:@@onboarding.orgForm.submitting:Creating…`;
 
   /** The edited draft. */
-  protected readonly model: WritableSignal<OnboardingOrganizationFormDraft> =
-    signal<OnboardingOrganizationFormDraft>(EMPTY_VALUES);
+  protected readonly model: WritableSignal<OnboardingOrganizationFormDraft> = linkedSignal(() => ({
+    name: this.restored()?.name ?? EMPTY_VALUES.name,
+  }));
 
   /**
    * Property organizationForm
@@ -155,21 +135,6 @@ export class OnboardingOrganizationForm {
     },
   );
 
-  /**
-   * Property serverMessages
-   * @readonly
-   * @description Everything the API said about the rejected request, as flat lines above the form.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<readonly string[]>}
-   */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
-    serverMessagesOf(
-      this.serverError(),
-      [],
-      $localize`:@@onboarding.orgForm.createFailed:The organization could not be created.`,
-    ),
-  );
   //#endregion
 
   //#region Methods
@@ -178,7 +143,7 @@ export class OnboardingOrganizationForm {
    *
    * @description
    * Marks the tree touched so the unmet rule shows, then emits when valid.
-   * The optional slug is dropped rather than sent as an empty string.
+   * The server derives the workspace slug from its name.
    *
    * @access protected
    * @since 1.0.0
@@ -196,7 +161,7 @@ export class OnboardingOrganizationForm {
 
     const draft: OnboardingOrganizationFormDraft = this.model();
 
-    this.submitted.emit({ name: draft.name.trim(), slug: trimmed(draft.slug) });
+    this.submitted.emit({ name: draft.name.trim() });
   }
   //#endregion
 }

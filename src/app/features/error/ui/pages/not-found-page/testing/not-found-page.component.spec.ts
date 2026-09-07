@@ -37,12 +37,12 @@ describe('NotFoundPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('should name the address that failed', async () => {
+  it('should not display the address that failed', async () => {
     const fixture = await createPage('/organizations/org-1/nowhere');
 
     // Without it the page could only offer "back to home", the one exit a
     // member who mistyped a deep link does not want.
-    expect(fixture.nativeElement.textContent).toContain('/organizations/org-1/nowhere');
+    expect(fixture.nativeElement.textContent).not.toContain('/organizations/org-1/nowhere');
   });
 
   it('should omit the address when the page was reached directly', async () => {

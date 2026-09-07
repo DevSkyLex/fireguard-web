@@ -27,7 +27,9 @@ describe('PageHeading', () => {
     const heading: HTMLHeadingElement = fixture.nativeElement.querySelector('h1');
 
     expect(heading.textContent?.trim()).toBe('Sign in');
-    expect(heading.className).toBe('text-2xl font-semibold tracking-tight text-foreground');
+    expect(Array.from(heading.classList)).toEqual(
+      expect.arrayContaining(['text-2xl', 'font-semibold', 'tracking-tight', 'text-foreground']),
+    );
   });
 
   it('should preserve the header wrapper classes', () => {
@@ -47,7 +49,9 @@ describe('PageHeading', () => {
     const description: HTMLParagraphElement = fixture.nativeElement.querySelector('p');
 
     expect(description.textContent?.trim()).toBe('Access your Fireguard workspace.');
-    expect(description.className).toBe('text-sm text-muted-foreground');
+    expect(Array.from(description.classList)).toEqual(
+      expect.arrayContaining(['text-sm', 'text-muted-foreground']),
+    );
   });
 
   it('should project rich content into the header', async () => {

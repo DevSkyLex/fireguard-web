@@ -137,12 +137,15 @@ describe('InterventionSyncIndicator', () => {
     expect(
       trigger()?.querySelector('[data-testid="intervention-sync-pending-count"]')?.textContent,
     ).toContain('4');
+    expect(trigger()?.className).toContain('px-2.5');
   });
 
   it('should read as quietly synced with no badge once nothing is queued', async () => {
     expect(trigger()?.getAttribute('aria-label')).toBe('Up to date');
     expect(trigger()?.querySelector('[data-testid="intervention-sync-blocked-count"]')).toBeNull();
     expect(trigger()?.querySelector('[data-testid="intervention-sync-pending-count"]')).toBeNull();
+    expect(trigger()?.className).toContain('size-7');
+    expect(trigger()?.textContent).not.toContain('Up to date');
   });
 
   it('should show "Up to date" before the first clean replay', async () => {

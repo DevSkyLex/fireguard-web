@@ -1,4 +1,6 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
+  PLATFORM_ID,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -44,6 +46,7 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import type { ApprovalActionTypeOutput } from '@features/organization/features/approvals/models';
+import type { OrganizationAccessPolicyInput } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import type {
   InvoiceOutput,
@@ -58,8 +61,13 @@ import type {
   MemberSelectOption,
 } from '@features/organization/models';
 import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import {
+  OrganizationAccessAdminStore,
+  type OrganizationAccessAdminStoreType,
+} from '@features/organization/state/organization-access-admin';
 import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import { OrganizationAccessPanel } from '@features/organization/ui/components/organization-access-panel';
 import { toMemberSelectOption } from '@features/organization/utils';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -112,6 +120,7 @@ import {
  */
 const TAB_IDS: ReadonlyArray<OrganizationSettingsTabId> = [
   'general',
+  'access',
   'subscription',
   'usage',
   'notifications',
@@ -240,6 +249,7 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
 @Component({
   selector: 'app-organization-settings-page',
   imports: [
+    OrganizationAccessPanel,
     NgIcon,
     ...HlmEmptyImports,
     OrganizationApprovalForm,
@@ -265,6 +275,7 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
     ...HlmTabsImports,
   ],
   providers: [
+    OrganizationAccessAdminStore,
     OrganizationSettingsStore,
     OrganizationBillingStore,
     provideIcons({
@@ -292,6 +303,30 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSettingsPage {
+  /**
+   * Property accessStore
+   * @readonly
+   * @description Page-owned admission settings state.
+   * @access protected
+   * @since 1.0.0
+   * @type {OrganizationAccessAdminStoreType}
+   */
+  protected readonly accessStore: OrganizationAccessAdminStoreType = inject(
+    OrganizationAccessAdminStore,
+  );
+  /**
+   * Property canManageAccess
+   * @readonly
+   * @description Requires both settings-write and membership-management permissions.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canManageAccess: Signal<boolean> = computed(
+    () =>
+      this.permissionService.hasPermission(ORGANIZATION_PERMISSION.SETTINGS_WRITE) &&
+      this.permissionService.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_MANAGE),
+  );
   //#region Inputs
   /**
    * Property tab
@@ -627,6 +662,7 @@ export class OrganizationSettingsPage {
           ? (requested as OrganizationSettingsTabId)
           : 'general';
 
+      if (resolved === 'access' && !this.canManageAccess()) return 'general';
       return resolved === 'danger' && !this.canDelete() ? 'general' : resolved;
     },
   );
@@ -1205,6 +1241,13 @@ export class OrganizationSettingsPage {
    * @since 1.7.0
    */
   public constructor() {
+    const browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+    effect((): void => {
+      const id = this.organizationId();
+      if (browser && id && this.activeTab() === 'access' && this.canManageAccess()) {
+        untracked(() => this.accessStore.loadPolicy(id));
+      }
+    });
     registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
   }
   //#endregion
@@ -1736,4 +1779,18 @@ export class OrganizationSettingsPage {
     return new Intl.DateTimeFormat(this.locale, { dateStyle: 'long' }).format(parsed);
   }
   //#endregion
+  /**
+   * Method saveAccessPolicy
+   * @method saveAccessPolicy
+   * @description Persists a confirmed policy only for the active authorized organization.
+   * @access protected
+   * @since 1.0.0
+   * @param {OrganizationAccessPolicyInput} policy - Confirmed policy.
+   * @returns {void}
+   */
+  protected saveAccessPolicy(policy: OrganizationAccessPolicyInput): void {
+    const organizationId = this.organizationId();
+    if (organizationId && this.canManageAccess())
+      this.accessStore.savePolicy({ organizationId, input: policy });
+  }
 }

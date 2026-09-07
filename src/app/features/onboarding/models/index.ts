@@ -9,3 +9,11 @@ export type { StartOnboardingInput } from './onboarding-output/start-onboarding-
 export type { OnboardingStepStatusTagSeverity } from './onboarding-step-status-tag/onboarding-step-status-tag-severity.type';
 export type { OnboardingStepStatusTagDescriptor } from './onboarding-step-status-tag/onboarding-step-status-tag-descriptor.interface';
 export { resolveOnboardingStepStatusTag } from './onboarding-step-status-tag/onboarding-step-status-tag.util';
+
+export type {
+  OnboardingSetupStep,
+  OnboardingSetupPayload,
+  OnboardingSetupItem,
+  OnboardingSetupOperation,
+  PrepareOnboardingSetupInput,
+} from './setup-operation/onboarding-setup-operation.interface';

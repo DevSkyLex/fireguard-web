@@ -35,9 +35,9 @@ export class OnboardingPage {
 
   public readonly facilityTypeTrigger: Locator = this.page.getByTestId('onboarding-facility-type');
   public readonly facilityNameInput: Locator = this.page.getByTestId('onboarding-facility-name');
-  public readonly facilityAddressInput: Locator = this.page.getByTestId(
-    'onboarding-facility-address',
-  );
+  public readonly facilityAddressInput: Locator = this.page
+    .getByTestId('onboarding-facility-address')
+    .locator('input');
   public readonly facilityAddButton: Locator = this.page.getByTestId('onboarding-facility-add');
   public readonly facilitiesStaged: Locator = this.page.getByTestId('onboarding-facilities-staged');
   public readonly facilitiesSubmit: Locator = this.page.getByTestId('onboarding-facilities-submit');
@@ -63,7 +63,7 @@ export class OnboardingPage {
   public readonly equipmentSubmit: Locator = this.page.getByTestId('onboarding-equipment-submit');
 
   public async goto(): Promise<void> {
-    await this.page.goto('/onboarding');
+    await this.page.goto('/onboarding/create');
   }
 
   /** Picks a facility type option from the `hlm-select` trigger by its visible label. */
@@ -85,6 +85,14 @@ export class OnboardingPage {
   }): Promise<void> {
     await this.pickFacilityType(values.type);
     await this.facilityNameInput.fill(values.name);
+    await this.chooseFacilityAddress();
     await this.facilityAddButton.click();
+  }
+  /** Selects the canonical fixture address using the native suggestion list. */
+  public async chooseFacilityAddress(): Promise<void> {
+    await this.facilityAddressInput.fill('12 Quai des Docks');
+    await this.page
+      .getByRole('option', { name: '12 Quai des Docks, 76600 Le Havre, France' })
+      .click();
   }
 }

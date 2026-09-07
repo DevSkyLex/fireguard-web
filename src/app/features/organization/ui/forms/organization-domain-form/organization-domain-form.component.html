@@ -1,0 +1,33 @@
+<form class="flex flex-col gap-3" novalidate (submit)="submit($event)">
+  <div hlmField>
+    <label hlmFieldLabel for="organization-domain" i18n="@@org.access.domain"
+      >Company email domain</label
+    >
+    <input
+      hlmInput
+      id="organization-domain"
+      [formField]="domainForm.domain"
+      placeholder="company.com"
+      autocomplete="off"
+      autocapitalize="none"
+      spellcheck="false"
+    />
+    <p hlmFieldDescription i18n="@@org.access.domainHelp">
+      Add a company domain you control. Public email services such as Gmail and Outlook cannot be
+      used.
+    </p>
+    @if (domainForm.domain().touched() && domainForm.domain().invalid()) {
+      <hlm-field-error>{{ domainForm.domain().errors()[0]?.message }}</hlm-field-error>
+    }
+  </div>
+  <button
+    hlmBtn
+    variant="outline"
+    class="w-fit max-sm:min-h-11 max-sm:w-full"
+    type="submit"
+    [disabled]="pending()"
+    i18n="@@org.access.addDomain"
+  >
+    Add domain
+  </button>
+</form>

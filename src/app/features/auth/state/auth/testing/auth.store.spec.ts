@@ -112,8 +112,8 @@ describe('AuthStore', () => {
   it('should store MFA state when login requires MFA', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',
@@ -166,8 +166,8 @@ describe('AuthStore', () => {
   it('should verify MFA and trust device when pending flag is true', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',
@@ -248,16 +248,16 @@ describe('AuthStore', () => {
   it('should resend MFA code and update tokens when MFA token is present', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',
     };
     const resendResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'new-mfa-token',
       challenge_token: 'new-challenge-token',
@@ -280,8 +280,8 @@ describe('AuthStore', () => {
   it('should memorize the resend cooldown announced by a successful resend', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       mfa_resend_in: 60,
@@ -298,8 +298,8 @@ describe('AuthStore', () => {
   it('should memorize the retry delay parsed from a 429 resend refusal', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
     };
@@ -325,8 +325,8 @@ describe('AuthStore', () => {
   it('should clear the resend cooldown with the MFA state', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       mfa_resend_in: 60,
@@ -411,8 +411,8 @@ describe('AuthStore', () => {
   it('should expose mfaMethod and mfaDestination from login response', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',
@@ -431,8 +431,8 @@ describe('AuthStore', () => {
   it('should clear MFA flags when clearMfaState is called', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',
@@ -521,8 +521,8 @@ describe('AuthStore', () => {
   it('should dispatch an event on MFA resend service error', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
-      access_token: '',
-      expires_in: 0,
+      access_token: null,
+      expires_in: null,
       mfa_required: true,
       mfa_token: 'mfa-token',
       challenge_token: 'challenge-token',

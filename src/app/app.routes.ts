@@ -4,7 +4,6 @@ import { authGuard, withLogoutControl } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
 import { onboardingRequiredGuard } from '@features/onboarding/http/guards';
-import { withOnboardingShowcase } from '@features/onboarding/providers';
 import {
   provideCollaborationAssistant,
   withAssistantToggle,
@@ -40,7 +39,8 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * Every shell is wired to real features — the authentication workflow and the
  * mandatory activation wizard share the split shell, the error pages the
  * focused one, and both the account and the organization tree the dashboard.
- * The auth split shell uses a presentation panel; onboarding keeps a compact rail.
+ * Both entry workflows share the presentation panel; onboarding renders its progress
+ * above its own form.
  * `data.splitWidth` sizes
  * the main form: `md` for authentication and `xl` for onboarding offers.
  *
@@ -51,7 +51,9 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * lose the sidebar's state with it — every time the reader stepped into their
  * account.
  *
- * `onboardingRequiredGuard` on the dashboard root is the mandatory half of the
+ * The dashboard authenticates its parent before `onboardingRequiredGuard` runs
+ * for a child, so anonymous deep links cannot start protected onboarding reads.
+ * Authentication is checked again on reused-shell navigation. The child gate is the mandatory half of the
  * mutual gate it forms with `/onboarding`'s own `onboardingGuard`: any
  * non-completed record is redirected to the wizard before any dashboard child
  * route resolves, and `organizationGuard` still sends an organization-less
@@ -89,10 +91,10 @@ export const APP_ROUTES: Routes = [
     path: 'onboarding',
     component: SplitLayout,
     canActivate: [authGuard, maintenanceGuard],
-    data: { splitWidth: 'xl', splitAlign: 'start' },
+    data: { splitShowcase: 'panel', splitWidth: 'xl', splitAlign: 'start' },
     providers: [
       provideSplitLayoutSlots({
-        showcase: [withSplitLayoutShowcase(), withOnboardingShowcase()],
+        showcase: [withSplitLayoutShowcase()],
         header: [withThemeSwitcher(), withLogoutControl()],
       }),
     ],
@@ -124,7 +126,8 @@ export const APP_ROUTES: Routes = [
   {
     path: '',
     component: DashboardLayout,
-    canActivate: [onboardingRequiredGuard],
+    canActivate: [authGuard],
+    runGuardsAndResolvers: 'always',
     providers: [
       provideCollaborationAssistant(),
       provideChannelsWorkspace(),
@@ -146,12 +149,13 @@ export const APP_ROUTES: Routes = [
     children: [
       {
         path: 'account',
-        canActivate: [authGuard],
+        canActivate: [onboardingRequiredGuard],
         loadChildren: () =>
           import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
       },
       {
         path: 'organizations',
+        canActivate: [onboardingRequiredGuard],
         loadChildren: () =>
           import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
       },

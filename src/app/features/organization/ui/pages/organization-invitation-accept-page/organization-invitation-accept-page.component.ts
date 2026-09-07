@@ -35,7 +35,7 @@ import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-forma
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
+
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 
@@ -49,18 +49,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * that requires a session, so an unauthenticated attempt is redirected to
  * sign-in with this page's own URL (token included) as `returnUrl`.
  *
- * This is a route shell — orchestration and the request states — presented
- * as a single centered card inside `FocusedLayout`. The missing-token,
- * preview-error and not-available states share one `#statusCard` template
- * (icon-or-avatar, title, optional badge, description, a "Go to homepage"
- * footer identical across the three) rather than three near-duplicate
- * `hlmCard` blocks — a local `ng-template`, not a new component, since every
- * consumer lives on this one page (`ARCHITECTURE.md` §2.8) and the codebase
- * already uses this exact shape for a repeated, parameterized row
- * (`ChannelsPage`'s `#row`, `StatTile`'s `#tileContent`). The icon area shows
- * the chip for a state that has no organization to name (missing token,
- * preview error) and the organization's own avatar for a state that does
- * (accepted, pending, not-available).
+ * Presented as an open, centered surface inside FocusedLayout. Status states
+ * share one local template, while actions retain equal full-width sizing.
  *
  * @version 1.3.0
  *
@@ -68,6 +58,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
  */
 @Component({
   selector: 'app-organization-invitation-accept-page',
+  host: { class: 'block w-full max-w-xl' },
   imports: [
     OrgDatePipe,
     NgTemplateOutlet,
@@ -80,7 +71,6 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmSkeleton,
     HlmSpinner,
     ...HlmAlertImports,
-    ...HlmCardImports,
   ],
   providers: [
     OrganizationInvitationAcceptStore,
@@ -311,10 +301,17 @@ export class OrganizationInvitationAcceptPage {
     this.store.loadPreview(token);
   });
 
-  /** Opens the accepted workspace; activation guards still decide whether it is ready. */
+  /**
+   * Property openAcceptedOrganization
+   * @readonly
+   * @description Opens the organization returned by acceptance; activation guards remain authoritative.
+   * @access private
+   * @since 1.0.0
+   * @type {EffectRef}
+   */
   private readonly openAcceptedOrganization: EffectRef = effect((): void => {
     if (!this.store.isAccepted()) return;
-    const organizationId: string | undefined = this.store.preview()?.organizationId;
+    const organizationId: string | null = this.store.acceptedOrganizationId();
     void this.router.navigate(
       organizationId ? ['/organizations', organizationId] : ['/organizations'],
     );

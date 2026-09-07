@@ -1,0 +1,201 @@
+<div class="flex min-w-0 flex-col gap-8" data-testid="organization-access-panel">
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <h3 hlmAlertTitle i18n="@@org.access.errorTitle">Could not complete the request</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+      <button
+        hlmBtn
+        variant="outline"
+        class="mt-3 max-sm:min-h-11"
+        [disabled]="loading() || pending()"
+        (click)="retried.emit()"
+        i18n="@@org.access.retry"
+      >
+        Try again
+      </button>
+    </div>
+  }
+  @if (loading() && !policy()) {
+    <div
+      role="status"
+      aria-label="Loading access settings"
+      i18n-aria-label="@@org.access.loading"
+      class="grid gap-3"
+    >
+      <hlm-skeleton class="h-32 w-full" /><hlm-skeleton class="h-32 w-full" />
+    </div>
+  }
+  @if (policy(); as current) {
+    <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+      <header>
+        <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.access.policyTitle">
+          Organization access
+        </h2>
+        <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.access.policyDescription">
+          Choose how people with a verified company email can join your organization.
+        </p>
+      </header>
+      <app-organization-access-policy-form
+        [policy]="current"
+        [policyRevision]="policyRevision()"
+        [pending]="pending()"
+        (submitted)="policySubmitted.emit($event)"
+      />
+    </section>
+    <section
+      class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+    >
+      <header>
+        <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.access.domainsTitle">
+          Company domains
+        </h2>
+        <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.access.domainsDescription">
+          Prove ownership using a DNS TXT record. Only the exact verified email domain matches.
+        </p>
+      </header>
+      <div class="flex min-w-0 flex-col gap-6">
+        <app-organization-domain-form
+          [pending]="pending()"
+          (submitted)="domainAdded.emit($event)"
+        />
+        @if (hasSuspendedDomain()) {
+          <div hlmAlert>
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <h3 hlmAlertTitle i18n="@@org.access.suspendedTitle">Some domains need verification</h3>
+            <p hlmAlertDescription i18n="@@org.access.suspendedDescription">
+              New memberships and approvals are paused for these domains. Existing members keep
+              their access.
+            </p>
+          </div>
+        }
+        @if (current.domains.length === 0) {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideGlobe" aria-hidden="true" />
+              </div>
+              <h3 hlmEmptyTitle i18n="@@org.access.domainsEmpty">No company domain yet</h3>
+              <p hlmEmptyDescription i18n="@@org.access.domainsEmptyHelp">
+                Add a domain above to receive your organization's DNS verification record.
+              </p>
+            </div>
+          </div>
+        }
+        <ul hlmItemGroup class="gap-3">
+          @for (domain of current.domains; track domain.id) {
+            <li hlmItem variant="outline" class="min-w-0">
+              <div hlmItemContent class="min-w-0 gap-4">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 hlmItemTitle class="break-all">{{ domain.domain }}</h3>
+                  <span hlmBadge variant="secondary">{{ statusLabels[domain.status] }}</span>
+                </div>
+                <p hlmItemDescription i18n="@@org.access.dnsInstructions">
+                  Add this TXT record in your domain's DNS settings, then verify.
+                </p>
+                <dl class="grid min-w-0 gap-3 text-sm">
+                  <div class="min-w-0">
+                    <dt class="text-muted-foreground" i18n="@@org.access.dnsName">
+                      TXT record name
+                    </dt>
+                    <dd class="flex min-w-0 items-start gap-2">
+                      <code class="min-w-0 flex-1 break-all select-all">{{ domain.dnsName }}</code
+                      ><button
+                        hlmBtn
+                        variant="ghost"
+                        size="icon"
+                        class="shrink-0 max-sm:size-11"
+                        [cdkCopyToClipboard]="domain.dnsName"
+                        (cdkCopyToClipboardCopied)="copied($event)"
+                        aria-label="Copy TXT record name"
+                        i18n-aria-label="@@org.access.copyName"
+                      >
+                        <ng-icon name="lucideCopy" aria-hidden="true" />
+                      </button>
+                    </dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-muted-foreground" i18n="@@org.access.dnsValue">
+                      TXT record value
+                    </dt>
+                    <dd class="flex min-w-0 items-start gap-2">
+                      <code class="min-w-0 flex-1 break-all select-all">{{ domain.dnsValue }}</code
+                      ><button
+                        hlmBtn
+                        variant="ghost"
+                        size="icon"
+                        class="shrink-0 max-sm:size-11"
+                        [cdkCopyToClipboard]="domain.dnsValue"
+                        (cdkCopyToClipboardCopied)="copied($event)"
+                        aria-label="Copy TXT record value"
+                        i18n-aria-label="@@org.access.copyValue"
+                      >
+                        <ng-icon name="lucideCopy" aria-hidden="true" />
+                      </button>
+                    </dd>
+                  </div>
+                </dl>
+                <div hlmItemActions class="flex-wrap">
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    class="max-sm:min-h-11"
+                    [disabled]="pending()"
+                    (click)="domainVerified.emit(domain.id)"
+                    i18n="@@org.access.verifyDomain"
+                  >
+                    Verify domain</button
+                  ><button
+                    hlmBtn
+                    variant="ghost"
+                    class="max-sm:min-h-11"
+                    [disabled]="pending()"
+                    (click)="removing.set(domain)"
+                    i18n="@@org.access.removeDomain"
+                  >
+                    Remove domain
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+        <p role="status" class="text-sm text-muted-foreground">{{ clipboardMessage() }}</p>
+      </div>
+    </section>
+  }
+</div>
+<hlm-dialog
+  [state]="removing() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && removing.set(null)"
+>
+  <hlm-dialog-content *hlmDialogPortal
+    ><hlm-dialog-header
+      ><h2 hlmDialogTitle i18n="@@org.access.removeTitle">Remove this domain?</h2>
+      <p hlmDialogDescription i18n="@@org.access.removeDescription">
+        People will no longer discover this organization using this domain. Existing members keep
+        their access.
+      </p></hlm-dialog-header
+    >
+    <p class="text-sm font-medium break-all">{{ removing()?.domain }}</p>
+    <hlm-dialog-footer
+      ><button
+        hlmBtn
+        hlmDialogClose
+        variant="outline"
+        class="max-sm:min-h-11"
+        i18n="@@org.access.cancel"
+      >
+        Cancel</button
+      ><button
+        hlmBtn
+        variant="destructive"
+        class="max-sm:min-h-11"
+        (click)="remove()"
+        i18n="@@org.access.removeDomain"
+      >
+        Remove domain
+      </button></hlm-dialog-footer
+    >
+  </hlm-dialog-content></hlm-dialog
+>

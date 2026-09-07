@@ -1,11 +1,37 @@
-<div id="not-found-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
-  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-    <ng-icon name="lucideCompass" class="text-2xl" aria-hidden="true" />
-  </div>
-
+<div id="not-found-page" class="flex w-full max-w-xl flex-col items-center gap-8 text-center">
   <div class="flex flex-col gap-2">
-    <p class="font-mono text-sm text-muted-foreground">404</p>
+    <div
+      class="relative mx-auto mb-6 flex w-full max-w-lg items-center justify-center py-8 sm:py-10"
+    >
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary">
+        <div
+          class="absolute inset-x-4 inset-y-8 -rotate-12 rounded-[50%] border border-dashed border-primary/25 sm:inset-x-8"
+        ></div>
+        <div
+          class="absolute top-0 left-5 -rotate-12 motion-safe:animate-[bounce_4s_ease-in-out_1] sm:left-10"
+        >
+          <ng-icon name="lucideMapPin" size="32" />
+        </div>
+        <div
+          class="absolute right-4 bottom-1 rotate-12 motion-safe:animate-[bounce_3s_ease-in-out_1] sm:right-10"
+        >
+          <ng-icon name="lucideRoute" size="36" />
+        </div>
+        <div class="absolute top-2 right-9 rotate-12 opacity-60 sm:right-16">
+          <ng-icon name="lucideCompass" size="24" />
+        </div>
+        <span class="absolute bottom-7 left-12 size-2 rounded-full bg-primary/50"></span>
+        <span class="absolute top-1/2 right-0 size-2 rotate-45 border border-primary/50"></span>
+        <span class="absolute top-1/2 left-0 size-1.5 rounded-full bg-primary/30"></span>
+      </div>
+      <p
+        class="relative font-mono text-[clamp(7rem,24vw,12rem)] leading-none font-semibold tracking-tighter text-foreground"
+      >
+        404
+      </p>
+    </div>
     <app-page-heading
+      size="large"
       heading="That page is not here"
       i18n-heading="@@error.notFound.title"
       description="The link may be out of date, or the record it pointed to may have been removed."
@@ -13,22 +39,13 @@
     />
   </div>
 
-  @if (attemptedUrl(); as attempted) {
-    <p
-      class="max-w-full truncate rounded-md bg-muted px-3 py-2 font-mono text-xs text-muted-foreground"
-      [title]="attempted"
-    >
-      {{ attempted }}
-    </p>
-  }
-
-  <div class="flex flex-wrap items-center justify-center gap-3">
-    <button hlmBtn variant="outline" size="sm" class="gap-2 max-sm:min-h-11" (click)="goBack()">
+  <div class="grid w-full max-w-md grid-cols-1 items-stretch gap-3 sm:grid-cols-2">
+    <a hlmBtn size="lg" class="min-h-11" routerLink="/" i18n="@@error.notFound.home">
+      Go to my workspace
+    </a>
+    <button hlmBtn variant="outline" size="lg" class="min-h-11 gap-2" (click)="goBack()">
       <ng-icon name="lucideArrowLeft" class="text-sm" aria-hidden="true" />
       <span i18n="@@error.notFound.back">Go back</span>
     </button>
-    <a hlmBtn size="sm" class="max-sm:min-h-11" routerLink="/" i18n="@@error.notFound.home">
-      Go to my workspace
-    </a>
   </div>
 </div>

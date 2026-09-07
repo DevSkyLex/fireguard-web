@@ -1,0 +1,23 @@
+@if (loading() || !isBrowser) {
+  <hlm-skeleton
+    class="mx-auto aspect-square rounded-full"
+    [style.height.px]="height()"
+    [style.max-width.%]="100"
+  />
+} @else if (total() === 0) {
+  <div hlmEmpty [style.min-height.px]="height()">
+    <div hlmEmptyHeader>
+      <p hlmEmptyTitle i18n="@@shared.chart.donut.empty">No data to display</p>
+    </div>
+  </div>
+} @else {
+  <div class="relative" [style.height.px]="height()">
+    <tanstack-chart hlmChart data-testid="donut-chart" [options]="chartOptions()" />
+    <div
+      class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1"
+    >
+      <span class="text-2xl font-semibold tabular-nums">{{ total() | number }}</span>
+      <span class="text-xs text-muted-foreground" i18n="@@shared.chart.donut.total">Total</span>
+    </div>
+  </div>
+}

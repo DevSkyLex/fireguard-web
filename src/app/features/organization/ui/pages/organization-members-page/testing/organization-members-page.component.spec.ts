@@ -32,6 +32,7 @@ import {
 } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationQuotaStore } from '@features/organization/state';
+import { OrganizationAccessAdminStore } from '@features/organization/state/organization-access-admin';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationMembersPage } from '../organization-members-page.component';
@@ -181,9 +182,31 @@ describe('OrganizationMembersPage', () => {
     });
 
     TestBed.overrideComponent(OrganizationMembersPage, {
-      remove: { providers: [OrganizationMembersStore] },
+      remove: { providers: [OrganizationMembersStore, OrganizationAccessAdminStore] },
       add: {
         providers: [
+          {
+            provide: OrganizationAccessAdminStore,
+            useValue: {
+              loadPolicy: vi.fn(),
+              loadRequests: vi.fn(),
+              savePolicy: vi.fn(),
+              addDomain: vi.fn(),
+              verifyDomain: vi.fn(),
+              removeDomain: vi.fn(),
+              approve: vi.fn(),
+              reject: vi.fn(),
+              policy: signal(null),
+              policyCallState: signal(idleCallState()),
+              requestsCallState: signal(idleCallState()),
+              pending: signal(false),
+              reviewing: signal(false),
+              error: signal(null),
+              requestError: signal(null),
+              requestEntities: signal([]),
+              assignableRoles: signal([]),
+            },
+          },
           {
             provide: OrganizationMembersStore,
             useValue: {

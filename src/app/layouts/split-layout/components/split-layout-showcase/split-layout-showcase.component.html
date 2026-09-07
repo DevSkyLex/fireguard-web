@@ -1,29 +1,89 @@
-<div class="flex min-h-full flex-col gap-8 p-8 text-foreground xl:p-12">
-  <div class="flex items-center gap-2.5">
+<div class="relative isolate flex min-h-full w-full flex-col overflow-hidden p-6 xl:p-12">
+  <div
+    class="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,var(--primary-foreground)_1.25px,transparent_1.5px)] [mask-image:radial-gradient(ellipse_76%_66%_at_42%_42%,black_14%,transparent_82%)] [background-size:20px_20px] opacity-[0.22] [-webkit-mask-image:radial-gradient(ellipse_76%_66%_at_42%_42%,black_14%,transparent_82%)] dark:[background-image:radial-gradient(circle,var(--foreground)_1.25px,transparent_1.5px)] dark:opacity-[0.14]"
+    aria-hidden="true"
+  ></div>
+  <div class="relative flex shrink-0 items-center gap-2.5">
     <img src="favicon.svg" width="32" height="32" alt="" />
     <span class="text-lg font-semibold tracking-tight">Fireguard</span>
   </div>
-  <div class="my-auto flex w-full max-w-md flex-col gap-10 py-6">
-    <p
-      class="max-w-[18ch] text-3xl leading-tight font-semibold tracking-tight text-balance xl:text-4xl"
-      i18n="@@auth.showcase.workspace"
+
+  <div class="relative flex min-h-0 flex-1 flex-col pt-8 xl:pt-14">
+    <div class="max-w-lg shrink-0">
+      <h2
+        class="max-w-[17ch] text-2xl leading-tight font-semibold tracking-tight text-balance xl:text-4xl"
+        i18n="@@auth.showcase.workspace"
+      >
+        Your field operations workspace
+      </h2>
+      <p
+        class="mt-4 max-w-[50ch] text-sm leading-relaxed text-primary-foreground dark:text-muted-foreground"
+        i18n="@@auth.showcase.lifecycle.detail"
+      >
+        Plan it, run it in the field, publish the report — without re-entering anything.
+      </p>
+    </div>
+
+    <div
+      id="auth-showcase-preview"
+      class="relative mt-6 min-h-0 flex-1 xl:mt-10"
+      aria-hidden="true"
     >
-      Your field operations workspace
-    </p>
-    <ul class="flex flex-col gap-7">
-      @for (point of proofPoints; track point.label) {
-        <li class="flex gap-4">
-          <ng-icon
-            [name]="point.icon"
-            class="mt-0.5 shrink-0 text-lg text-muted-foreground"
-            aria-hidden="true"
+      <div
+        class="relative mx-auto aspect-[6/5] w-full max-w-2xl [@media(max-height:700px)]:w-[70%] [@media(min-height:701px)_and_(max-height:820px)]:w-[84%]"
+      >
+        <div
+          class="absolute top-0 left-0 aspect-[16/10] w-[96%] overflow-hidden rounded-xl border border-primary-foreground/25 bg-background p-1.5 shadow-2xl shadow-foreground/20 dark:border-border dark:shadow-background/80"
+        >
+          <img
+            data-testid="auth-showcase-dashboard-light"
+            class="h-full w-full rounded-lg object-cover object-top dark:hidden"
+            src="auth-showcase/dashboard-light.png"
+            width="1440"
+            height="900"
+            alt=""
+            [attr.loading]="resolvedTheme() === 'light' ? 'eager' : 'lazy'"
+            [attr.fetchpriority]="resolvedTheme() === 'light' ? 'high' : 'auto'"
+            decoding="async"
           />
-          <div class="flex flex-col gap-1">
-            <p class="text-sm font-medium">{{ point.label }}</p>
-            <p class="text-sm leading-relaxed text-muted-foreground">{{ point.detail }}</p>
-          </div>
-        </li>
-      }
-    </ul>
+          <img
+            data-testid="auth-showcase-dashboard-dark"
+            class="hidden h-full w-full rounded-lg object-cover object-top dark:block"
+            src="auth-showcase/dashboard-dark.png"
+            width="1440"
+            height="900"
+            alt=""
+            [attr.loading]="resolvedTheme() === 'dark' ? 'eager' : 'lazy'"
+            [attr.fetchpriority]="resolvedTheme() === 'dark' ? 'high' : 'auto'"
+            decoding="async"
+          />
+        </div>
+
+        <div
+          class="absolute right-0 bottom-[4%] aspect-[1120/419] w-[74%] overflow-hidden rounded-xl border border-primary-foreground/25 bg-background p-1.5 shadow-2xl shadow-foreground/25 dark:border-border dark:shadow-background/80"
+        >
+          <img
+            data-testid="auth-showcase-activity-light"
+            class="h-full w-full rounded-lg object-cover object-top dark:hidden"
+            src="auth-showcase/activity-light.png"
+            width="1120"
+            height="419"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            data-testid="auth-showcase-activity-dark"
+            class="hidden h-full w-full rounded-lg object-cover object-top dark:block"
+            src="auth-showcase/activity-dark.png"
+            width="1120"
+            height="419"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </div>

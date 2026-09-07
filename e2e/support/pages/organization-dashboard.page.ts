@@ -14,10 +14,6 @@ export class OrganizationDashboardPage {
   public readonly pageTitle: Locator = this.page
     .locator('#dashboard-page-header')
     .getByRole('heading', { level: 1 });
-  public readonly newInterventionButton: Locator = this.page.getByRole('button', {
-    name: 'New intervention',
-  });
-
   public readonly kpiSection: Locator = this.page.getByTestId('org-dashboard-kpis');
   public readonly syncIndicatorTrigger: Locator = this.page.getByTestId('intervention-sync-status');
   public readonly syncIndicatorLastSynced: Locator = this.page.getByTestId(

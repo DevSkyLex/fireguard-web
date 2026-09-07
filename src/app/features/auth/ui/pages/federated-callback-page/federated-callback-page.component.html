@@ -1,0 +1,53 @@
+<div class="mx-auto flex w-full max-w-md min-w-0 flex-col items-center gap-5 text-center">
+  @if (callbackInvalid()) {
+    <div class="flex min-w-0 flex-col gap-2" role="alert">
+      <h1 class="text-xl font-semibold tracking-tight" i18n="@@auth.federated.failedTitle">
+        Sign-in couldn't be completed
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@auth.federated.failedDescription">
+        The provider response is no longer valid. Start again from the sign-in page.
+      </p>
+    </div>
+    <a
+      hlmBtn
+      variant="outline"
+      routerLink="/auth/login"
+      [queryParams]="{ returnUrl: returnUrl() || undefined }"
+      i18n="@@auth.federated.backToLogin"
+    >
+      Back to sign in
+    </a>
+  } @else if (federatedStore.completeLoginError(); as error) {
+    <div class="flex min-w-0 flex-col gap-2" role="alert">
+      <h1 class="text-xl font-semibold tracking-tight" i18n="@@auth.federated.failedTitle">
+        Sign-in couldn't be completed
+      </h1>
+      <p class="text-sm text-muted-foreground">
+        {{ federatedErrorMessage(error.message) }}
+      </p>
+    </div>
+    <a
+      hlmBtn
+      variant="outline"
+      routerLink="/auth/login"
+      [queryParams]="{ returnUrl: returnUrl() || undefined }"
+      i18n="@@auth.federated.backToLogin"
+    >
+      Back to sign in
+    </a>
+  } @else {
+    <hlm-spinner
+      class="text-primary"
+      aria-label="Completing sign-in"
+      i18n-aria-label="@@auth.federated.completing"
+    />
+    <div class="flex flex-col gap-1">
+      <h1 class="text-xl font-semibold tracking-tight" i18n="@@auth.federated.completingTitle">
+        Completing sign-in
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@auth.federated.completingDescription">
+        Fireguard is securely checking the provider response.
+      </p>
+    </div>
+  }
+</div>

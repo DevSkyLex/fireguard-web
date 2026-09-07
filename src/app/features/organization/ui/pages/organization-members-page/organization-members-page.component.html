@@ -15,8 +15,21 @@
           data-testid="organization-members-tab-members"
           i18n="@@org.members.tab.members"
         >
+          <ng-icon name="lucideUsersRound" class="size-4" aria-hidden="true" />
           Members
         </button>
+        @if (canManageMembers()) {
+          <button
+            hlmTabsTrigger="requests"
+            class="max-sm:min-h-11"
+            data-testid="organization-members-tab-requests"
+          >
+            <ng-icon name="lucideUserCheck" aria-hidden="true" /><span
+              i18n="@@org.access.requests.tab"
+              >Requests</span
+            >
+          </button>
+        }
         @if (canViewRolesTab()) {
           <button
             hlmTabsTrigger="roles"
@@ -24,6 +37,7 @@
             data-testid="organization-members-tab-roles"
             i18n="@@org.members.tab.roles"
           >
+            <ng-icon name="lucideShieldCheck" class="size-4" aria-hidden="true" />
             Roles & permissions
           </button>
         }
@@ -34,17 +48,38 @@
             data-testid="organization-members-tab-teams"
             i18n="@@org.members.tab.teams"
           >
+            <ng-icon name="lucideNetwork" class="size-4" aria-hidden="true" />
             Teams
           </button>
         }
       </hlm-paginated-tabs-list>
     </ng-template>
 
+    @if (canManageMembers()) {
+      <div hlmTabsContent="requests">
+        <ng-template hlmTabsContentLazy>
+          <app-organization-join-request-panel
+            [requests]="accessStore.requestEntities()"
+            [roles]="accessStore.assignableRoles()"
+            [loading]="accessStore.requestsCallState().status === 'pending'"
+            [pending]="accessStore.reviewing()"
+            [error]="accessStore.requestError()"
+            (retried)="accessStore.loadRequests(organizationId())"
+            (approved)="
+              accessStore.approve({
+                organizationId: organizationId(),
+                requestId: $event.requestId,
+                roleIds: $event.roleIds,
+              })
+            "
+            (rejected)="accessStore.reject({ organizationId: organizationId(), requestId: $event })"
+          />
+        </ng-template>
+      </div>
+    }
     <div hlmTabsContent="members">
       <ng-template hlmTabsContentLazy>
         <div class="flex flex-col gap-6">
-          <p class="shrink-0 text-sm text-muted-foreground">{{ subtitle() }}</p>
-
           <div class="flex flex-col gap-6">
             <section
               class="grid shrink-0 grid-cols-2 gap-4 lg:grid-cols-4"
@@ -90,10 +125,8 @@
             }
 
             <section class="flex shrink-0 flex-col gap-3">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 hlmCardTitle>{{ rosterHeading() }}</h2>
-
-                @if (canManageMembers() && selectedIds().size > 0) {
+              @if (canManageMembers() && selectedIds().size > 0) {
+                <div class="flex justify-end">
                   <button
                     hlmBtn
                     type="button"
@@ -106,8 +139,8 @@
                     <ng-icon name="lucideTrash2" aria-hidden="true" />
                     <span class="truncate">{{ bulkRemoveLabel() }}</span>
                   </button>
-                }
-              </div>
+                </div>
+              }
 
               <app-collection-toolbar>
                 <app-collection-search-box

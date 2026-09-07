@@ -17,6 +17,35 @@ export interface OnboardingFacilityDraft {
   /** Display name of the facility. */
   readonly name: string;
 
-  /** Optional postal or freeform address. */
+  /** Typed address, valid only after selecting a provider suggestion. */
   readonly address: string;
+  /**
+   * Property city
+   * @readonly
+   * @description Locality used to refine and confirm the address.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly city: string;
+
+  /**
+   * Property country
+   * @readonly
+   * @description Country name when provided by the address source.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly country: string;
+
+  /**
+   * Property postalCode
+   * @readonly
+   * @description Postal code when available for the locality.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly postalCode: string;
 }

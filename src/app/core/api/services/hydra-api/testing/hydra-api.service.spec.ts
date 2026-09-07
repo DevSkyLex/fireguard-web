@@ -22,6 +22,10 @@ class TestResourceService extends HydraApiService {
   public list(options?: RequestOptions): Observable<HydraCollection<HydraItem>> {
     return this.getCollection<HydraItem>('/api/resources', options);
   }
+
+  public remove(): Observable<HydraItem> {
+    return this.deleteOne<HydraItem>('/api/resources/one');
+  }
 }
 
 describe('HydraApiService', () => {
@@ -82,6 +86,19 @@ describe('HydraApiService', () => {
         detail: 'The connection is unavailable. Check your network and try again.',
       }),
     );
+  });
+
+  it('should return a Hydra resource from a response-bearing delete', () => {
+    const output: HydraItem = { '@id': '/api/resources', '@type': 'ResourceState' };
+    const received = vi.fn();
+
+    resourceService.remove().subscribe(received);
+
+    const request = httpMock.expectOne(`${baseUrl}/one`);
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.withCredentials).toBe(true);
+    request.flush(output);
+    expect(received).toHaveBeenCalledWith(output);
   });
 
   describe('sort and search params', () => {

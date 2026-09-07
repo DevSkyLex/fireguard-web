@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { type CanActivateFn, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { map } from 'rxjs';
+import { resolveReturnUrl } from '@features/auth/utils';
 import type { OnboardingOutput } from '@features/onboarding/models';
 import { OnboardingStore } from '@features/onboarding/state';
 
@@ -8,12 +9,10 @@ import { OnboardingStore } from '@features/onboarding/state';
  * Guard onboardingRequiredGuard
  *
  * @description
- * Mandatory-onboarding gate for the application shell. Onboarding is **blocking**:
- * a user may not reach the dashboard, organizations, or account areas until the
- * activation flow is `completed`. Any non-completed record redirects to the
- * `/onboarding` wizard. It is the mirror of {@link onboardingGuard}, which keeps a
- * completed user from re-opening the wizard — together they form a mutual gate
- * around `/onboarding` and the rest of the app.
+ * Workspace gate for the application shell. A completed creator flow or an
+ * independently accessible organization permits navigation. An unfinished pinned
+ * creation never blocks a member who joined another organization. Organization
+ * guards remain authoritative for the specific destination and its permissions.
  *
  * **A transport failure is not an answer.** {@link OnboardingStore.ensureLoaded}
  * resolves to `null` both when the account genuinely has no record and when the
@@ -27,21 +26,24 @@ import { OnboardingStore } from '@features/onboarding/state';
  * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
- * @return {MaybeAsync<GuardResult>} `true` when onboarding is complete or its
+ * @return {MaybeAsync<GuardResult>} `true` when workspace access exists or onboarding is complete, or its
  * state is unknown because the request failed, a `UrlTree` to `/onboarding`
  * otherwise.
  */
-export const onboardingRequiredGuard: CanActivateFn = (): MaybeAsync<GuardResult> => {
+export const onboardingRequiredGuard: CanActivateFn = (_route, state): MaybeAsync<GuardResult> => {
   const onboardingStore: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
   const router: Router = inject<Router>(Router);
 
   return onboardingStore.ensureLoaded().pipe(
     map((onboarding: OnboardingOutput | null): GuardResult => {
-      if (onboarding?.state === 'completed') return true;
+      if (onboarding?.state === 'completed' || onboarding?.accessibleOrganizationId) return true;
 
       if (onboarding === null && onboardingStore.loadError() !== null) return true;
 
-      return router.createUrlTree(['/onboarding']);
+      const returnUrl = resolveReturnUrl(state.url, '');
+      return returnUrl && !returnUrl.startsWith('/onboarding')
+        ? router.createUrlTree(['/onboarding'], { queryParams: { returnUrl } })
+        : router.createUrlTree(['/onboarding']);
     }),
   );
 };

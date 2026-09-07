@@ -33,15 +33,20 @@ for (const scene of [
     const form = await auth.loginRoot.boundingBox();
     if (!shell || !panel || !column || !form)
       throw new Error('The split layout must be measurable.');
-    expect(shell.width).toBeLessThanOrEqual(1600);
-    expect(panel.width / shell.width).toBeGreaterThan(0.4);
-    expect(panel.width / shell.width).toBeLessThan(0.46);
+    expect(shell.width).toBe(scene.width);
+    expect(panel.width / shell.width).toBeGreaterThan(0.49);
+    expect(panel.width / shell.width).toBeLessThan(0.51);
     expect(panel.y).toBe(0);
     expect(panel.height).toBe(scene.height);
     await expect(page.locator('#split-layout-showcase')).toHaveCSS('border-radius', '0px');
     expect(form.width).toBeLessThanOrEqual(448);
     expect(Math.abs(form.x + form.width / 2 - (column.x + column.width / 2))).toBeLessThan(2);
-    await expect(page.locator('#split-layout-showcase li').last()).toBeInViewport();
+    await expect(page.locator('#auth-showcase-preview')).toBeInViewport();
+    await expect(
+      page.getByTestId(
+        scene.dark ? 'auth-showcase-dashboard-dark' : 'auth-showcase-dashboard-light',
+      ),
+    ).toBeVisible();
     await page.screenshot({
       path: `e2e/artifacts/auth-split-desktop/login-${scene.width}-${scene.dark ? 'dark' : 'light'}.png`,
       animations: 'disabled',

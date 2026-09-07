@@ -86,56 +86,12 @@
           </p>
         </header>
 
-        <div class="flex min-w-0 flex-col gap-4">
-          @if (!editing()) {
-            <button
-              hlmBtn
-              type="button"
-              size="sm"
-              variant="outline"
-              data-testid="account-profile-edit"
-              class="self-end max-sm:min-h-11"
-              (click)="startEditing()"
-            >
-              <span i18n="@@account.profile.edit">Edit</span>
-            </button>
-          }
-
-          @if (editing()) {
-            <app-account-profile-form
-              [profile]="formValues()"
-              [pending]="editStore.isSaving()"
-              (submitted)="save($event)"
-              (cancelled)="cancelEditing()"
-            />
-          } @else {
-            <dl class="grid gap-4 text-sm sm:grid-cols-2">
-              <div class="flex flex-col gap-0.5">
-                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.firstNameLabel">
-                  First name
-                </dt>
-                <dd class="text-foreground">
-                  {{ userStore.profile()?.firstName || '—' }}
-                </dd>
-              </div>
-
-              <div class="flex flex-col gap-0.5">
-                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.lastNameLabel">
-                  Last name
-                </dt>
-                <dd class="text-foreground">
-                  {{ userStore.profile()?.lastName || '—' }}
-                </dd>
-              </div>
-
-              <div class="flex flex-col gap-0.5">
-                <dt class="text-xs text-muted-foreground" i18n="@@account.profile.localeLabel">
-                  Interface language
-                </dt>
-                <dd class="text-foreground">{{ localeLabel() }}</dd>
-              </div>
-            </dl>
-          }
+        <div class="min-w-0">
+          <app-account-profile-form
+            [profile]="formValues()"
+            [pending]="editStore.isSaving()"
+            (submitted)="save($event)"
+          />
         </div>
       </section>
 

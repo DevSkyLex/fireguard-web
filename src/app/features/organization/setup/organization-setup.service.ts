@@ -10,12 +10,14 @@ import { EquipmentService } from '@features/organization/features/equipments/dat
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
+  SetupOperationContext,
   SetupCreateEquipmentInput,
   SetupCreateFacilityInput,
   SetupCreateInspectionInput,
   SetupCreateOrganizationInput,
   SetupEquipmentSummary,
   SetupFacilitySummary,
+  SetupFacilityAddressMatch,
   SetupInviteMemberInput,
   SetupOrganizationRole,
 } from './organization-setup.types';
@@ -131,10 +133,14 @@ export class OrganizationSetupService {
    * transport payload from consumers.
    *
    * @param {SetupCreateOrganizationInput} input Organization creation payload.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
    * @returns {Observable<void>} Observable completing when the organization has been created.
    */
-  public createOrganization(input: SetupCreateOrganizationInput): Observable<void> {
-    return this.organizationService.create(input).pipe(map(() => undefined));
+  public createOrganization(
+    input: SetupCreateOrganizationInput,
+    context?: SetupOperationContext,
+  ): Observable<void> {
+    return this.organizationService.create({ ...input, ...context }).pipe(map(() => undefined));
   }
 
   /**
@@ -168,11 +174,13 @@ export class OrganizationSetupService {
    *
    * @param {string} organizationId Target organization identifier.
    * @param {readonly SetupInviteMemberInput[]} invitations Invitations to create.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
    * @returns {Observable<void>} Observable completing when all invitations have been sent.
    */
   public inviteMembers(
     organizationId: string,
     invitations: readonly SetupInviteMemberInput[],
+    context?: SetupOperationContext,
   ): Observable<void> {
     if (invitations.length === 0) return of(undefined);
 
@@ -184,6 +192,7 @@ export class OrganizationSetupService {
 
         return this.organizationInvitationService.invite(organizationId, {
           ...invitation,
+          ...context,
           roleIds: roleIds?.length ? roleIds : undefined,
         });
       }),
@@ -198,6 +207,49 @@ export class OrganizationSetupService {
   }
 
   /**
+   * Method searchFacilityAddresses
+   * @method searchFacilityAddresses
+   * @description Retrieves address suggestions through the facility-owned search provider without exposing its transport envelope to onboarding.
+   * @access public
+   * @since 1.0.0
+   * @param {string} organizationId - Organization owning the new facility.
+   * @param {string} query - Postal address fragment entered by the user.
+   * @returns {Observable<readonly SetupFacilityAddressMatch[]>} Suggested addresses, preserving upstream HTTP errors.
+   */
+  public searchFacilityAddresses(
+    organizationId: string,
+    query: string,
+  ): Observable<readonly SetupFacilityAddressMatch[]> {
+    return this.facilityService.addressSuggestions(organizationId, query).pipe(
+      map((collection) =>
+        collection.member.map(
+          ({
+            displayName,
+            latitude,
+            longitude,
+            street,
+            city,
+            region,
+            postalCode,
+            country,
+            countryCode,
+          }) => ({
+            displayName,
+            street,
+            city,
+            region,
+            postalCode,
+            country,
+            countryCode,
+            latitude,
+            longitude,
+          }),
+        ),
+      ),
+    );
+  }
+
+  /**
    * Method createFacilities
    *
    * @description
@@ -207,16 +259,20 @@ export class OrganizationSetupService {
    *
    * @param {string} organizationId Target organization identifier.
    * @param {readonly SetupCreateFacilityInput[]} facilities Facilities to create.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
    * @returns {Observable<readonly SetupFacilitySummary[]>} Observable emitting the created facility summaries.
    */
   public createFacilities(
     organizationId: string,
     facilities: readonly SetupCreateFacilityInput[],
+    context?: SetupOperationContext,
   ): Observable<readonly SetupFacilitySummary[]> {
     if (facilities.length === 0) return of([]);
 
     return forkJoin(
-      facilities.map((facility) => this.facilityService.create(organizationId, facility)),
+      facilities.map((facility) =>
+        this.facilityService.create(organizationId, { ...facility, ...context }),
+      ),
     ).pipe(
       map((created) =>
         created.map((facility) => ({ id: facility.id, name: facility.name, type: facility.type })),
@@ -260,17 +316,20 @@ export class OrganizationSetupService {
    *
    * @param {string} organizationId Target organization identifier.
    * @param {SetupCreateEquipmentInput} input Equipment creation payload.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
    * @returns {Observable<void>} Observable completing when the equipment has been created.
    */
   public createEquipment(
     organizationId: string,
     input: SetupCreateEquipmentInput,
+    context?: SetupOperationContext,
   ): Observable<void> {
     const { facilityId, ...equipment } = input;
 
     return this.equipmentService
       .create(organizationId, {
         ...equipment,
+        ...context,
         facility: facilityId ? `/api/facilities/${facilityId}` : undefined,
       })
       .pipe(map(() => undefined));

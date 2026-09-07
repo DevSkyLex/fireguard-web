@@ -45,6 +45,15 @@ describe('organization-dashboard-metric utils', () => {
       ).toBeNull();
     });
 
+    it('keeps non-finite values unavailable', () => {
+      const invalid: OrganizationDashboardOverview = {
+        nonConformities: { summary: [{ key: 'open', value: Number.NaN }] },
+      };
+      expect(
+        getOrganizationDashboardOverviewMetricValue(invalid, 'nonConformities', 'open'),
+      ).toBeNull();
+    });
+
     it('returns null when the value is not numeric', () => {
       const stringy: OrganizationDashboardOverview = {
         nonConformities: { summary: [{ key: 'open', value: 'n/a' }] },

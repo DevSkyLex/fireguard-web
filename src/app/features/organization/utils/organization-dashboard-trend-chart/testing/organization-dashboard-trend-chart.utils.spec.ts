@@ -39,7 +39,7 @@ describe('organization-dashboard-trend-chart utils', () => {
       expect(result[1]?.points.map((point) => point.value)).toEqual([1, 2]);
     });
 
-    it('zero-fills a requested index the aligned data does not carry', () => {
+    it('keeps a requested dataset unavailable when the aligned data does not carry it', () => {
       const result: ChartSeries[] = mapAlignedDashboardTrendSeriesToChartSeries(aligned, [
         { name: 'Missing', index: 5 },
       ]);
@@ -48,8 +48,8 @@ describe('organization-dashboard-trend-chart utils', () => {
         {
           name: 'Missing',
           points: [
-            { label: '01 Jan 2026', value: 0 },
-            { label: '02 Jan 2026', value: 0 },
+            { label: '01 Jan 2026', value: null },
+            { label: '02 Jan 2026', value: null },
           ],
         },
       ]);

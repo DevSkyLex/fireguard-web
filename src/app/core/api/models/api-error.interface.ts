@@ -26,6 +26,14 @@ import type { HydraItem } from './hydra-item.interface';
  */
 export interface ApiError extends HydraItem {
   /**
+   * Property code
+   * @description Stable optional application failure code, independent of the localized detail.
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly code?: string;
+
+  /**
    * Property status
    * @readonly
    *

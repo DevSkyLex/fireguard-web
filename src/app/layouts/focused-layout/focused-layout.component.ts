@@ -9,8 +9,10 @@ import { FOCUSED_FOOTER_SLOT, FOCUSED_HEADER_SLOT } from './slots';
  *
  * @description
  * Minimal shell for standalone pages — errors, maintenance, anything a member
- * lands on without the workspace around it. One vertically centred content row
+ * lands on without the workspace around it. One horizontally and vertically centred content row
  * between an optional header and footer, both of them slots.
+ * A non-interactive dotted backdrop fades along the shell edges in both themes,
+ * leaving the central reading area clear for every focused page.
  *
  * @version 1.0.0
  *
@@ -23,8 +25,8 @@ import { FOCUSED_FOOTER_SLOT, FOCUSED_HEADER_SLOT } from './slots';
  *
  * Three rows, the middle one taking the slack. The shell itself never scrolls:
  * the content row owns the scroller, so the header and footer stay put on a
- * page taller than the viewport, and its `justify-center` centres a short page
- * while a tall one pushes past it and scrolls rather than clipping.
+ * page taller than the viewport. Auto block margins centre short content and
+ * collapse for tall content, keeping its beginning reachable by scrolling.
  */
 @Component({
   selector: 'app-focused-layout',

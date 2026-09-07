@@ -1,0 +1,76 @@
+<section hlmCard class="h-full" data-testid="org-dashboard-alerts">
+  <div hlmCardHeader>
+    <h3 hlmCardTitle i18n="@@org.dashboard.attention.title">Points of attention</h3>
+    <p hlmCardDescription i18n="@@org.dashboard.attention.description">
+      Current items that need a closer look
+    </p>
+  </div>
+  <div hlmCardContent class="flex flex-1 flex-col">
+    @if (loading()) {
+      <div class="flex min-h-52 flex-col gap-6 py-3">
+        <hlm-skeleton class="h-6 w-full" /><hlm-skeleton class="h-6 w-4/5" /><hlm-skeleton
+          class="h-6 w-full"
+        />
+      </div>
+    } @else if (rows(); as items) {
+      @if (items.length) {
+        <div hlmItemGroup class="w-full">
+          @for (row of items; track row.id) {
+            @if (!$first) {
+              <hlm-item-separator />
+            }
+            <ng-template #content>
+              <div hlmItemMedia variant="icon">
+                <ng-icon
+                  [name]="row.icon"
+                  [style.color]="'var(--' + row.colorToken + ')'"
+                  aria-hidden="true"
+                />
+              </div>
+              <div hlmItemContent>
+                <p hlmItemTitle>{{ row.label }}</p>
+              </div>
+              <div hlmItemActions>
+                <span class="font-semibold tabular-nums">{{
+                  row.count === null ? '—' : (row.count | number)
+                }}</span>
+                @if (row.destination) {
+                  <ng-icon
+                    name="lucideChevronRight"
+                    class="text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                }
+              </div>
+            </ng-template>
+            @if (row.destination; as destination) {
+              <a hlmItem size="sm" class="min-h-11" [routerLink]="destination"
+                ><ng-container [ngTemplateOutlet]="content"
+              /></a>
+            } @else {
+              <div hlmItem size="sm"><ng-container [ngTemplateOutlet]="content" /></div>
+            }
+          }
+        </div>
+      } @else {
+        <div hlmEmpty class="min-h-52">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon">
+              <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@org.dashboard.attention.empty">No attention items raised</p>
+            <p hlmEmptyDescription i18n="@@org.dashboard.attention.emptyDescription">
+              The latest snapshot contains no operational alerts.
+            </p>
+          </div>
+        </div>
+      }
+    } @else {
+      <div hlmEmpty class="min-h-52">
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@org.dashboard.attention.unavailable">Alerts unavailable</p>
+        </div>
+      </div>
+    }
+  </div>
+</section>

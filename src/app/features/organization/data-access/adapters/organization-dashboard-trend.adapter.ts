@@ -9,15 +9,45 @@ import type {
  * @description
  * Result of {@link alignDashboardTrendSeries}. Provides a common sorted
  * bucket axis for N sparse series so they can be rendered as aligned
- * Chart.js datasets without gaps or mismatched indices.
+ * chart datasets without mismatched indices. A sparse bucket is zero-filled;
+ * an explicitly present point whose value is unavailable remains `null`.
+ *
+ * @since 1.0.0
+ * @type {AlignedDashboardTrendSeries}
  */
 export type AlignedDashboardTrendSeries = {
-  /** Sorted ISO bucket strings shared by all datasets. */
+  /**
+   * Property buckets
+   * @readonly
+   *
+   * @description Sorted ISO bucket strings shared by all datasets.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly string[]}
+   */
   readonly buckets: readonly string[];
-  /** Human-readable labels corresponding to each bucket (same order). */
+
+  /**
+   * Property labels
+   * @readonly
+   *
+   * @description Localized labels corresponding to each bucket in the same order.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly string[]}
+   */
   readonly labels: readonly string[];
-  /** One `number[]` per input series, zero-filled for missing buckets. */
-  readonly datasets: readonly number[][];
+
+  /**
+   * Property datasets
+   * @readonly
+   *
+   * @description One dataset per input series, with null reserved for unavailable point values.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly (readonly (number | null)[])[]}
+   */
+  readonly datasets: readonly (readonly (number | null)[])[];
 };
 
 /**
@@ -27,6 +57,9 @@ export type AlignedDashboardTrendSeries = {
  * Extracts the time-bucket key from a trend series point. Tries the
  * `bucket`, `date`, `label`, and `from` fields in that order and
  * coerces the result to a string.
+ *
+ * @access public
+ * @since 1.0.0
  *
  * @param {OrganizationDashboardTrendSeriesPoint} point - The trend data point to inspect.
  * @returns {string} The bucket key, or an empty string if none found.
@@ -40,33 +73,50 @@ export function getDashboardTrendPointBucket(point: OrganizationDashboardTrendSe
  *
  * @description
  * Extracts the numeric value from a trend series point. Tries the
- * `count`, `total`, and `value` fields in that order.
+ * `count`, `total`, and `value` fields in that order. Missing and non-finite
+ * values stay unavailable instead of becoming a healthy-looking zero.
+ *
+ * @access public
+ * @since 1.0.0
  *
  * @param {OrganizationDashboardTrendSeriesPoint} point - The trend data point to inspect.
- * @returns {number} The numeric value, or 0 if none found.
+ * @returns {number | null} The finite numeric value, or null when unavailable.
  */
-export function getDashboardTrendPointValue(point: OrganizationDashboardTrendSeriesPoint): number {
-  return Number(point['count'] ?? point['total'] ?? point['value'] ?? 0);
+export function getDashboardTrendPointValue(
+  point: OrganizationDashboardTrendSeriesPoint,
+): number | null {
+  const rawValue: unknown = point['count'] ?? point['total'] ?? point['value'];
+
+  if (rawValue === null || rawValue === undefined || rawValue === '') return null;
+
+  const value: number = Number(rawValue);
+  return Number.isFinite(value) ? value : null;
 }
 
 /**
  * Function formatDashboardTrendBucket
  *
  * @description
- * Converts a raw ISO bucket string into a human-readable en-US label.
+ * Converts a raw ISO bucket string into a human-readable label in the active
+ * application locale.
  *
  * - ISO week buckets (`YYYY-Www`) → `"Mon DD – Mon DD, YYYY"` range.
  * - Month buckets (`YYYY-MM`) → `"Mon YYYY"`.
  * - Day/datetime buckets → `"DD Mon YYYY"`.
  * - Unrecognised strings are returned unchanged.
  *
+ * @access public
+ * @since 1.0.0
+ *
  * @param {string} bucket - The raw ISO bucket string from the API.
  * @param {OrganizationDashboardGranularity} granularity - The active granularity.
+ * @param {string} locale - Locale used by the date formatter.
  * @returns {string} A human-readable label for the bucket.
  */
 export function formatDashboardTrendBucket(
   bucket: string,
   granularity: OrganizationDashboardGranularity,
+  locale: string = 'en-US',
 ): string {
   if (!bucket) return '';
 
@@ -79,11 +129,11 @@ export function formatDashboardTrendBucket(
     const dayOffset = (jan4.getDay() + 6) % 7;
     const weekStart = new Date(year, 0, 4 - dayOffset + (week - 1) * 7);
     const weekEnd = new Date(year, 0, 4 - dayOffset + (week - 1) * 7 + 6);
-    const fromLabel = weekStart.toLocaleDateString('en-US', {
+    const fromLabel = weekStart.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
     });
-    const toLabel = weekEnd.toLocaleDateString('en-US', {
+    const toLabel = weekEnd.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -112,7 +162,7 @@ export function formatDashboardTrendBucket(
   if (Number.isNaN(date.getTime())) return bucket;
 
   if (granularity === 'month') {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       month: 'short',
       year: 'numeric',
     });
@@ -120,11 +170,11 @@ export function formatDashboardTrendBucket(
 
   if (granularity === 'week') {
     const weekEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 6);
-    const fromLabel = date.toLocaleDateString('en-US', {
+    const fromLabel = date.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
     });
-    const toLabel = weekEnd.toLocaleDateString('en-US', {
+    const toLabel = weekEnd.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -133,7 +183,7 @@ export function formatDashboardTrendBucket(
     return `${fromLabel} - ${toLabel}`;
   }
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -152,9 +202,13 @@ export function formatDashboardTrendBucket(
  * This is the primary utility that prevents Chart.js from misaligning
  * grouped bars when series have different bucket sets.
  *
+ * @access public
+ * @since 1.0.0
+ *
  * @param {readonly (readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined)[]} seriesCollection
  *   One array of trend points per dataset. Nullish entries are treated as empty.
  * @param {OrganizationDashboardGranularity} granularity - The active granularity used for label formatting.
+ * @param {string} locale - Locale used for the shared bucket labels.
  * @returns {AlignedDashboardTrendSeries} The aligned result.
  */
 export function alignDashboardTrendSeries(
@@ -164,6 +218,7 @@ export function alignDashboardTrendSeries(
     | undefined
   )[],
   granularity: OrganizationDashboardGranularity,
+  locale: string = 'en-US',
 ): AlignedDashboardTrendSeries {
   const bucketSet = new Set<string>();
 
@@ -180,22 +235,33 @@ export function alignDashboardTrendSeries(
   const buckets = Array.from(bucketSet).toSorted((left: string, right: string) =>
     left.localeCompare(right),
   );
-  const labels = buckets.map((bucket: string) => formatDashboardTrendBucket(bucket, granularity));
+  const labels = buckets.map((bucket: string) =>
+    formatDashboardTrendBucket(bucket, granularity, locale),
+  );
   const datasets = seriesCollection.map((series) => {
-    const valueByBucket = new Map<string, number>();
+    if (series === null || series === undefined) return buckets.map(() => null);
 
-    for (const point of series ?? []) {
+    const valueByBucket = new Map<string, number | null>();
+
+    for (const point of series) {
       const bucket = getDashboardTrendPointBucket(point);
 
       if (!bucket) continue;
 
-      valueByBucket.set(
-        bucket,
-        (valueByBucket.get(bucket) ?? 0) + getDashboardTrendPointValue(point),
-      );
+      const value: number | null = getDashboardTrendPointValue(point);
+      const previous: number | null | undefined = valueByBucket.get(bucket);
+
+      if (value === null) {
+        if (!valueByBucket.has(bucket)) valueByBucket.set(bucket, null);
+        continue;
+      }
+
+      valueByBucket.set(bucket, (typeof previous === 'number' ? previous : 0) + value);
     }
 
-    return buckets.map((bucket: string) => valueByBucket.get(bucket) ?? 0);
+    return buckets.map((bucket: string) =>
+      valueByBucket.has(bucket) ? (valueByBucket.get(bucket) ?? null) : 0,
+    );
   });
 
   return {
@@ -215,6 +281,9 @@ export function alignDashboardTrendSeries(
  * Typical use-case: deriving a "net pressure" series from opened and
  * resolved non-conformity datasets.
  *
+ * @access public
+ * @since 1.0.0
+ *
  * @param {readonly number[]} left - The minuend series.
  * @param {readonly number[]} right - The subtrahend series.
  * @returns {number[]} A new array of element-wise differences.
@@ -230,6 +299,9 @@ export function buildDifferenceSeries(left: readonly number[], right: readonly n
  * Computes an element-wise percentage (`(numerator[i] / denominator[i]) * 100`)
  * with configurable decimal precision. Returns 0 for any bucket where the
  * denominator is zero or negative, guarding against division-by-zero.
+ *
+ * @access public
+ * @since 1.0.0
  *
  * @param {readonly number[]} numerator - The dividend series.
  * @param {readonly number[]} denominator - The divisor series.
@@ -257,13 +329,16 @@ export function buildPercentageSeries(
  * Maps a raw trend series into a dense numeric array by extracting the
  * value of each point in order. Nullish series are treated as empty.
  *
+ * @access public
+ * @since 1.0.0
+ *
  * @param {readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined} series
  *   The raw trend series returned by the API.
- * @returns {number[]} The ordered numeric values for each point.
+ * @returns {(number | null)[]} The ordered values, preserving unavailable samples.
  */
 export function getDashboardTrendSeriesValues(
   series: readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined,
-): number[] {
+): (number | null)[] {
   return (series ?? []).map(getDashboardTrendPointValue);
 }
 
@@ -274,11 +349,17 @@ export function getDashboardTrendSeriesValues(
  * Returns the sum of all values in a numeric series.
  * Commonly used to produce the period-total KPI displayed above the chart.
  *
- * @param {readonly number[]} values - The values to sum.
- * @returns {number} The total.
+ * @access public
+ * @since 1.0.0
+ *
+ * @param {readonly (number | null)[]} values - The values to sum.
+ * @returns {number | null} The total, or null when no finite value is available.
  */
-export function sumDashboardTrendValues(values: readonly number[]): number {
-  return values.reduce((sum, value) => sum + value, 0);
+export function sumDashboardTrendValues(values: readonly (number | null)[]): number | null {
+  const available: number[] = values.filter(
+    (value): value is number => typeof value === 'number' && Number.isFinite(value),
+  );
+  return available.length > 0 ? available.reduce((sum, value) => sum + value, 0) : null;
 }
 
 /**
@@ -287,17 +368,20 @@ export function sumDashboardTrendValues(values: readonly number[]): number {
  * @description
  * Convenience wrapper that extracts the numeric value from each point of
  * a raw trend series and returns their total. Handles nullish series
- * gracefully by treating them as empty (returns 0).
+ * gracefully without manufacturing a total when every sample is unavailable.
  *
  * Typical use-case: computing period totals from a comparison series
  * without having to manually `.map(getDashboardTrendPointValue)` first.
  *
+ * @access public
+ * @since 1.0.0
+ *
  * @param {readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined} series
  *   The raw series returned by the API, or nullish when not yet loaded.
- * @returns {number} The sum of all point values in the series.
+ * @returns {number | null} The sum of all available point values, or null.
  */
 export function sumTrendSeries(
   series: readonly OrganizationDashboardTrendSeriesPoint[] | null | undefined,
-): number {
+): number | null {
   return sumDashboardTrendValues(getDashboardTrendSeriesValues(series));
 }

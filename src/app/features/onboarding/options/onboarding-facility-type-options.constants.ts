@@ -14,15 +14,24 @@ import type { SetupFacilityType } from '@features/organization/setup';
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: SetupFacilityType }>}
+ * @type {ReadonlyArray<{ readonly label: string; readonly value: SetupFacilityType; readonly icon: string }>}
  */
 export const ONBOARDING_FACILITY_TYPE_OPTIONS: ReadonlyArray<{
   readonly label: string;
   readonly value: SetupFacilityType;
+  readonly icon: string;
 }> = [
-  { label: $localize`:@@onboarding.facilityType.site:Site`, value: 'site' },
-  { label: $localize`:@@onboarding.facilityType.building:Building`, value: 'building' },
-  { label: $localize`:@@onboarding.facilityType.floor:Floor`, value: 'floor' },
-  { label: $localize`:@@onboarding.facilityType.zone:Zone`, value: 'zone' },
-  { label: $localize`:@@onboarding.facilityType.area:Area`, value: 'area' },
+  { label: $localize`:@@onboarding.facilityType.site:Site`, value: 'site', icon: 'lucideMapPin' },
+  {
+    label: $localize`:@@onboarding.facilityType.building:Building`,
+    value: 'building',
+    icon: 'lucideBuilding2',
+  },
+  {
+    label: $localize`:@@onboarding.facilityType.floor:Floor`,
+    value: 'floor',
+    icon: 'lucideLayers',
+  },
+  { label: $localize`:@@onboarding.facilityType.zone:Zone`, value: 'zone', icon: 'lucideScan' },
+  { label: $localize`:@@onboarding.facilityType.area:Area`, value: 'area', icon: 'lucideSquare' },
 ];

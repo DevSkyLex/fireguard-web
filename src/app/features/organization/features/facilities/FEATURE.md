@@ -906,3 +906,8 @@ organization-scoped read never carries `revision`, then sends the required
   `equipment-assign-facility-dialog` (equipments imports the `models` and
   `state` barrels for this alone). A picker never formats a facility on its own
   and never falls back to a raw id on its trigger.
+
+Address suggestions use the authenticated organization-scoped `address-suggestions` endpoint
+through `FacilityService.addressSuggestions`. This is distinct from the explicit Nominatim
+geocode action; autocomplete consumers must never issue per-keystroke Nominatim lookups.
+The organization setup facade may publish the suggestion transport for onboarding. Suggestions include provider-normalized street, city, region, postal code, country and ISO country code; consumers must not parse the canonical label to reconstruct them.

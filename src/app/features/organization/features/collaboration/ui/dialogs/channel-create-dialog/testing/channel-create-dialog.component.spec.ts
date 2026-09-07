@@ -51,6 +51,14 @@ describe('ChannelCreateDialog', () => {
     expect(panel()).toBeNull();
   });
 
+  it('should use dialog anatomy without duplicate form padding', async () => {
+    await open();
+
+    expect(panel()?.querySelector('hlm-dialog-footer')).not.toBeNull();
+    expect(panel()?.querySelector('hlm-sheet-footer')).toBeNull();
+    expect(panel()?.querySelector('hlm-field-group')?.className).not.toContain('px-4');
+  });
+
   it('should forward a validated submit and close', async () => {
     await open();
     await typeName('Incident room');

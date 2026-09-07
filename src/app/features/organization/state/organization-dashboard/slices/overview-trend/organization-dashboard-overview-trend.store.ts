@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, LOCALE_ID, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -10,12 +10,13 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, forkJoin, pipe, switchMap } from 'rxjs';
+import { EMPTY, filter, forkJoin, pipe, switchMap } from 'rxjs';
 import {
   withQueryState,
   setPendingQuery,
   setSuccessQuery,
   setErrorQuery,
+  resetQuery,
   toStoreError,
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
@@ -44,7 +45,8 @@ import {
  * Component-scoped NgRx SignalStore for the **Overview Trend** dashboard
  * card. Fires three parallel API calls (inspections, NC opened, NC resolved)
  * using `forkJoin`, then exposes a four-dataset line chart (including the
- * derived Net Pressure series) and four KPI metrics.
+ * derived Net Pressure series) and four KPI metrics. Query data and errors
+ * belong to `queryOrganizationId` and never survive a change of organization.
  *
  * @example
  * ```typescript
@@ -72,6 +74,7 @@ function createOverviewTrendStore() {
      * @since 1.0.0
      */
     withQueryState<OrganizationDashboardOverviewTrendResource>(),
+    withState({ queryOrganizationId: null as string | null }),
     withDashboardFilterState(),
     withState({ ...getDashboardInitialFilterDraftState(), activated: false }),
     //#endregion
@@ -89,25 +92,49 @@ function createOverviewTrendStore() {
      * @since 1.0.0
      */
     withMethods(
-      (store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
-        /** Enables browser-only queries after the analysis tab is first opened. */
+      (
+        store,
+        organizationService = inject<OrganizationService>(OrganizationService),
+        activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+      ) => ({
+        /** Enables browser-only queries when the dashboard page activates the trend store. */
         activate(): void {
           patchState(store, { activated: true });
         },
         /**
          * Method load
+         * @method load
          *
          * @description
          * NgRx `rxMethod` that fetches three parallel trend datasets (inspections,
          * NC opened, NC resolved) via `forkJoin` whenever the params signal emits.
-         * Undefined params are silently ignored via an `EMPTY` return.
+         * Changing organization clears previous data. Incomplete period drafts
+         * cancel reads but retain data within the same organization only.
          *
+         * @access public
          * @since 1.0.0
+         * @param {OrganizationDashboardTrendResourceParams | undefined} params - Active query or cancellation.
+         * @returns {void}
          */
         load: rxMethod<OrganizationDashboardTrendResourceParams | undefined>(
           pipe(
+            filter(
+              (params) =>
+                !params ||
+                params.organizationId === activeOrganizationStore.selectedOrganizationId(),
+            ),
             switchMap((params) => {
-              if (!params) return EMPTY;
+              const activeOrganizationId = activeOrganizationStore.selectedOrganizationId();
+              if (store.queryOrganizationId() !== activeOrganizationId) {
+                patchState(store, resetQuery(), { queryOrganizationId: activeOrganizationId });
+              }
+              if (!params) {
+                if (store.isQueryLoading()) {
+                  const data = store.queryData();
+                  patchState(store, data ? setSuccessQuery(data) : resetQuery());
+                }
+                return EMPTY;
+              }
 
               patchState(store, setPendingQuery());
 
@@ -141,8 +168,16 @@ function createOverviewTrendStore() {
                 ),
               }).pipe(
                 tapResponse({
-                  next: (data) => patchState(store, setSuccessQuery(data)),
-                  error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
+                  next: (data) => {
+                    if (activeOrganizationStore.selectedOrganizationId() !== params.organizationId)
+                      return;
+                    patchState(store, setSuccessQuery(data));
+                  },
+                  error: (err) => {
+                    if (activeOrganizationStore.selectedOrganizationId() !== params.organizationId)
+                      return;
+                    patchState(store, setErrorQuery(toStoreError(err)));
+                  },
                 }),
               );
             }),
@@ -255,12 +290,18 @@ function createOverviewTrendStore() {
      *
      * @since 1.0.0
      */
-    withComputed((store) => ({
+    withComputed((store, locale: string = inject<string>(LOCALE_ID)) => ({
       alignedTrendData: computed<AlignedDashboardTrendSeries>(() => {
         const result: ReturnType<typeof store.queryData> = store.queryData();
+        const loadedGranularity = result?.inspections?.period?.granularity;
         return alignDashboardTrendSeries(
           [result?.inspections?.series, result?.ncOpened?.series, result?.ncResolved?.series],
-          store.selectedGranularity(),
+          loadedGranularity === 'day' ||
+            loadedGranularity === 'week' ||
+            loadedGranularity === 'month'
+            ? loadedGranularity
+            : store.selectedGranularity(),
+          locale,
         );
       }),
     })),
@@ -301,18 +342,25 @@ function createOverviewTrendStore() {
       };
     }),
 
-    withHooks((store) => ({
+    withHooks((store, activeOrganizationStore = inject(ActiveOrganizationStore)) => ({
       /**
        * Hook onInit
        *
        * @description
        * Connects {@link loadParams} to {@link load} via `rxMethod` so the card
-       * refetches whenever a filter signal changes.
+       * refetches whenever a filter signal changes. Watches organization identity
+       * separately so an incomplete period cannot retain another organization's data.
        *
        * @returns {void}
        */
       onInit(): void {
         store.load(store.loadParams);
+        effect(() => {
+          const organizationId = activeOrganizationStore.selectedOrganizationId();
+          untracked(() => {
+            if (store.queryOrganizationId() !== organizationId) store.load(undefined);
+          });
+        });
       },
     })),
     //#endregion

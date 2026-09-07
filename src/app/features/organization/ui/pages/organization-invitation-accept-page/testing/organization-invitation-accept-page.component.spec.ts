@@ -56,6 +56,7 @@ describe('OrganizationInvitationAcceptPage', () => {
       preview: previewSignal,
       isAccepting,
       isAccepted,
+      acceptedOrganizationId: () => (isAccepted() ? 'org-1' : null),
       isAcceptError,
       acceptError,
       loadPreview,
@@ -104,12 +105,6 @@ describe('OrganizationInvitationAcceptPage', () => {
     isAuthenticated = signal(true);
     loadPreview = vi.fn();
     accept = vi.fn();
-  });
-
-  it('should show the Fireguard mark above the card', async () => {
-    await render(undefined);
-
-    expect(fixture.nativeElement.textContent).toContain('Fireguard');
   });
 
   it('should show the missing-token card and never request a preview without one', async () => {
@@ -228,7 +223,7 @@ describe('OrganizationInvitationAcceptPage', () => {
     });
   });
 
-  it('should show the destructive alert when acceptance failed', async () => {
+  it('keeps acceptance retryable without duplicating the store toast inline', async () => {
     previewSignal.set(preview('pending'));
     isAcceptError.set(true);
     acceptError.set(toStoreError(new Error('This invitation was just revoked.')));
@@ -238,9 +233,13 @@ describe('OrganizationInvitationAcceptPage', () => {
       '[data-testid="organization-invitation-accept-error"]',
     );
 
-    expect(alert).not.toBeNull();
-    expect(alert?.textContent).toContain('Please try again.');
-    expect(alert?.textContent).not.toContain('This invitation was just revoked.');
+    expect(alert).toBeNull();
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="organization-invitation-accept-submit"]',
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    button.click();
+    expect(accept).toHaveBeenCalledExactlyOnceWith('tok-1');
   });
 
   it.each([

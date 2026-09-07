@@ -24,6 +24,14 @@ import {
  */
 export const AUTH_ROUTES: Routes = [
   {
+    path: 'federated/:provider/callback',
+    loadComponent: () =>
+      import('./ui/pages/federated-callback-page/federated-callback-page.component').then(
+        (m) => m.FederatedCallbackPage,
+      ),
+    title: $localize`:@@route.federatedCallback:Completing sign-in`,
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () =>

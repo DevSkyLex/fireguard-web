@@ -1,165 +1,281 @@
-<form novalidate (submit)="submit($event)">
-  <hlm-field-group class="gap-5">
-    @if (serverMessages().length > 0) {
-      <div hlmAlert variant="destructive" data-testid="onboarding-facilities-error">
-        @for (message of serverMessages(); track message) {
-          <p hlmAlertDescription>{{ message }}</p>
-        }
-      </div>
-    }
-
-    @if (staged().length > 0) {
-      <p class="text-sm font-medium" i18n="@@onboarding.batch.prepared">
-        Prepared: {{ staged().length }}
-      </p>
-      <ul
-        hlmItemGroup
-        class="gap-0 divide-y divide-border"
-        data-testid="onboarding-facilities-staged"
-      >
-        @for (row of stagedRows(); track $index; let i = $index) {
-          <li hlmItem size="sm" class="px-0">
-            <hlm-item-media variant="icon">
-              <ng-icon name="lucideMapPin" aria-hidden="true" />
-            </hlm-item-media>
-            <hlm-item-content>
-              <p hlmItemTitle>{{ row.name }}</p>
-              <p hlmItemDescription>{{ row.summary }}</p>
-            </hlm-item-content>
-            @if (row.completed) {
-              <span class="text-xs text-muted-foreground" i18n="@@onboarding.batch.saved"
-                >Saved</span
-              >
-            } @else if (row.failed) {
-              <span class="text-xs text-destructive" i18n="@@onboarding.batch.failed"
-                >Needs retry</span
-              >
-            }
-            <hlm-item-actions>
-              <button
-                hlmBtn
-                variant="ghost"
-                size="icon-sm"
-                class="max-sm:size-11"
-                type="button"
-                [disabled]="pending() || row.completed"
-                (click)="editFacility(i)"
-                [attr.aria-label]="editFacilityLabel(row.name)"
-              >
-                <ng-icon name="lucidePencil" aria-hidden="true" />
-              </button>
-              <button
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                class="max-sm:size-11"
-                [attr.data-testid]="'onboarding-facilities-remove-' + i"
-                [attr.aria-label]="removeFacilityLabel(row.name)"
-                [disabled]="pending() || row.completed"
-                (click)="removeFacility(i)"
-              >
-                <ng-icon name="lucideX" aria-hidden="true" />
-              </button>
-            </hlm-item-actions>
-          </li>
-        }
-      </ul>
-    }
-
-    @if (atCapacity()) {
-      <p class="text-xs text-muted-foreground" i18n="@@onboarding.facilitiesForm.capacity">
-        You can stage up to 5 facilities at once.
-      </p>
-    } @else {
-      <div hlmFieldGroup class="grid items-start gap-4 sm:grid-cols-2">
-        <hlm-field>
-          <label hlmFieldLabel for="onboarding-facility-name"
-            ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
-          /></label>
-          <input
-            class="max-sm:min-h-11"
-            hlmInput
-            id="onboarding-facility-name"
-            #draftInput
-            type="text"
-            data-testid="onboarding-facility-name"
-            placeholder="Main warehouse"
-            i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
-            [formField]="draftForm.name"
-            [attr.aria-required]="true"
-          />
-          <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
-        </hlm-field>
-
-        <hlm-field>
-          <label hlmFieldLabel for="onboarding-facility-type"
-            ><span i18n="@@onboarding.facilitiesForm.type"> Type</span><app-required-marker
-          /></label>
-          <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
-            <hlm-select-trigger
-              buttonId="onboarding-facility-type"
-              class="w-full max-sm:min-h-11"
-              data-testid="onboarding-facility-type"
-            >
-              <hlm-select-value
-                placeholder="Select a facility type"
-                i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
-              />
-            </hlm-select-trigger>
-            <hlm-select-content *hlmSelectPortal>
-              <hlm-select-group>
-                @for (option of typeOptions; track option.value) {
-                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+  <div class="min-w-0">
+    <hlm-field-group>
+      @if (staged().length > 0) {
+        <div class="flex flex-col gap-2">
+          <p class="text-sm font-medium" i18n="@@onboarding.batch.prepared">
+            Prepared: {{ staged().length }}
+          </p>
+          <ul
+            hlmItemGroup
+            class="gap-0 divide-y divide-border overflow-hidden rounded-lg border border-border"
+            data-testid="onboarding-facilities-staged"
+          >
+            @for (row of stagedRows(); track $index; let i = $index) {
+              <li hlmItem size="sm" class="px-3">
+                <hlm-item-media variant="icon">
+                  <ng-icon name="lucideMapPin" aria-hidden="true" />
+                </hlm-item-media>
+                <hlm-item-content class="min-w-0">
+                  <p hlmItemTitle class="min-w-0 break-all">{{ row.name }}</p>
+                  <p hlmItemDescription>{{ row.summary }}</p>
+                </hlm-item-content>
+                @if (row.completed) {
+                  <span class="text-xs text-muted-foreground" i18n="@@onboarding.batch.saved"
+                    >Saved</span
+                  >
+                } @else if (row.failed) {
+                  <span class="text-xs text-destructive" i18n="@@onboarding.batch.failed"
+                    >Needs retry</span
+                  >
                 }
-              </hlm-select-group>
-            </hlm-select-content>
-          </hlm-select>
-          <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
-        </hlm-field>
-      </div>
-      <hlm-field>
-        <label
-          hlmFieldLabel
-          for="onboarding-facility-address"
-          i18n="@@onboarding.facilitiesForm.address"
-        >
-          Address (optional)
-        </label>
-        <input
-          class="max-sm:min-h-11"
-          hlmInput
-          id="onboarding-facility-address"
-          type="text"
-          data-testid="onboarding-facility-address"
-          [formField]="draftForm.address"
-        />
-      </hlm-field>
+                <hlm-item-actions class="max-sm:w-full max-sm:justify-end">
+                  <button
+                    hlmBtn
+                    variant="ghost"
+                    size="icon-sm"
+                    class="max-sm:size-11"
+                    type="button"
+                    [disabled]="pending() || row.completed"
+                    (click)="editFacility(i)"
+                    [attr.aria-label]="editFacilityLabel(row.name)"
+                  >
+                    <ng-icon name="lucidePencil" aria-hidden="true" />
+                  </button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    class="max-sm:size-11"
+                    [attr.data-testid]="'onboarding-facilities-remove-' + i"
+                    [attr.aria-label]="removeFacilityLabel(row.name)"
+                    [disabled]="pending() || row.completed"
+                    (click)="removeFacility(i)"
+                  >
+                    <ng-icon name="lucideX" aria-hidden="true" />
+                  </button>
+                </hlm-item-actions>
+              </li>
+            }
+          </ul>
+        </div>
+      }
 
-      <div>
-        <button
-          hlmBtn
-          type="button"
-          variant="ghost"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="onboarding-facility-add"
-          [disabled]="draftForm().invalid() || pending()"
-          (click)="addFacility()"
-        >
-          <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span i18n="@@onboarding.facilitiesForm.add">Add another facility</span>
-        </button>
-      </div>
-    }
+      @if (atCapacity()) {
+        <p class="text-xs text-muted-foreground" i18n="@@onboarding.facilitiesForm.capacity">
+          You can stage up to 5 facilities at once.
+        </p>
+      } @else {
+        <div class="min-w-0">
+          <div hlmFieldGroup class="grid items-start gap-4 sm:grid-cols-2">
+            <hlm-field>
+              <label hlmFieldLabel for="onboarding-facility-name"
+                ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
+              /></label>
+              <input
+                class="max-sm:min-h-11"
+                hlmInput
+                id="onboarding-facility-name"
+                #draftInput
+                type="text"
+                data-testid="onboarding-facility-name"
+                placeholder="Main warehouse"
+                i18n-placeholder="@@onboarding.facilitiesForm.namePlaceholder"
+                [formField]="draftForm.name"
+                [attr.aria-required]="true"
+              />
+              <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
+            </hlm-field>
 
-    <app-onboarding-step-footer
-      [label]="submitLabel()"
-      [pendingLabel]="pendingLabel"
-      [pending]="pending()"
-      [skippable]="skippable()"
-      submitTestId="onboarding-facilities-submit"
-      (skipped)="skipped.emit()"
-    />
-  </hlm-field-group>
+            <hlm-field>
+              <label hlmFieldLabel for="onboarding-facility-type"
+                ><span i18n="@@onboarding.facilitiesForm.type"> Type</span><app-required-marker
+              /></label>
+              <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
+                <hlm-select-trigger
+                  buttonId="onboarding-facility-type"
+                  class="w-full max-sm:min-h-11"
+                  data-testid="onboarding-facility-type"
+                >
+                  @if (selectedTypeIcon(); as icon) {
+                    <ng-icon [name]="icon" aria-hidden="true" />
+                  }
+                  <hlm-select-value
+                    placeholder="Select a facility type"
+                    i18n-placeholder="@@onboarding.facilitiesForm.typePlaceholder"
+                  />
+                </hlm-select-trigger>
+                <hlm-select-content *hlmSelectPortal>
+                  <hlm-select-group>
+                    @for (option of typeOptions; track option.value) {
+                      <hlm-select-item [value]="option.value">
+                        <span class="flex items-center gap-2">
+                          <ng-icon [name]="option.icon" aria-hidden="true" />
+                          <span>{{ option.label }}</span>
+                        </span>
+                      </hlm-select-item>
+                    }
+                  </hlm-select-group>
+                </hlm-select-content>
+              </hlm-select>
+              <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
+            </hlm-field>
+          </div>
+          <hlm-field class="mt-4">
+            <label hlmFieldLabel for="onboarding-facility-address">
+              <span i18n="@@onboarding.facilitiesForm.verifiedAddress">Address</span
+              ><app-required-marker />
+            </label>
+            <hlm-combobox
+              [formField]="draftForm.address"
+              [search]="addressQuery()"
+              [itemToString]="addressLabelOf"
+              [filter]="addressFilter"
+              (valueChange)="selectAddress($event)"
+            >
+              <hlm-combobox-input
+                inputId="onboarding-facility-address"
+                (input)="addressInputChanged($event)"
+                data-testid="onboarding-facility-address"
+                class="max-sm:min-h-11 max-sm:[&_input]:min-h-11"
+                [showTrigger]="false"
+                placeholder="Start typing a street and city"
+                i18n-placeholder="@@onboarding.facilitiesForm.addressPlaceholder"
+              />
+              <hlm-combobox-content *hlmComboboxPortal>
+                @if (addressPending()) {
+                  <div hlmComboboxStatus>
+                    <hlm-spinner /><span i18n="@@onboarding.facilitiesForm.addressSearching"
+                      >Searching addresses…</span
+                    >
+                  </div>
+                } @else if (!addressError() && addressMatches().length === 0) {
+                  <hlm-combobox-empty>
+                    @if (addressQuery().trim().length < 3) {
+                      <span i18n="@@onboarding.facilitiesForm.addressStart"
+                        >Enter at least 3 characters.</span
+                      >
+                    } @else {
+                      <span i18n="@@onboarding.facilitiesForm.addressEmpty"
+                        >No address found. Include the street and city.</span
+                      >
+                    }
+                  </hlm-combobox-empty>
+                }
+                <div hlmComboboxList>
+                  @for (match of addressMatches(); track match.displayName) {
+                    <hlm-combobox-item
+                      [value]="match.displayName"
+                      class="min-h-11"
+                      data-testid="onboarding-address-suggestion"
+                    >
+                      <span class="min-w-0 whitespace-normal">{{ match.displayName }}</span>
+                    </hlm-combobox-item>
+                  }
+                </div>
+              </hlm-combobox-content>
+            </hlm-combobox>
+            <hlm-field-error>{{ draftForm.address().errors()[0]?.message }}</hlm-field-error>
+            @if (addressError()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="min-h-11"
+                (click)="addressSearched.emit(addressSearchQuery())"
+                i18n="@@onboarding.facilitiesForm.addressRetry"
+              >
+                Retry address search
+              </button>
+            }
+          </hlm-field>
+
+          <div hlmFieldGroup class="mt-4 grid items-start gap-4 sm:grid-cols-2">
+            <hlm-field class="sm:col-span-2">
+              <label hlmFieldLabel for="onboarding-facility-city"
+                ><span i18n="@@onboarding.facilitiesForm.city">City</span><app-required-marker
+              /></label>
+              <input
+                hlmInput
+                id="onboarding-facility-city"
+                type="text"
+                autocomplete="address-level2"
+                class="max-sm:min-h-11"
+                [formField]="draftForm.city"
+                (input)="addressPartChanged('city', $event)"
+              />
+              <hlm-field-error>{{ draftForm.city().errors()[0]?.message }}</hlm-field-error>
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="onboarding-facility-country"
+                ><span i18n="@@onboarding.facilitiesForm.country">Country</span></label
+              >
+              <div hlmInputGroup class="max-sm:min-h-11">
+                @if (selectedCountryIcon(); as icon) {
+                  <span hlmInputGroupAddon>
+                    <ng-icon
+                      [name]="icon"
+                      aria-hidden="true"
+                      data-testid="onboarding-country-flag"
+                    />
+                  </span>
+                }
+                <input
+                  hlmInputGroupInput
+                  id="onboarding-facility-country"
+                  type="text"
+                  autocomplete="country-name"
+                  class="max-sm:min-h-11"
+                  [formField]="draftForm.country"
+                  (input)="addressPartChanged('country', $event)"
+                />
+              </div>
+              <hlm-field-error>{{ draftForm.country().errors()[0]?.message }}</hlm-field-error>
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="onboarding-facility-postalCode"
+                ><span i18n="@@onboarding.facilitiesForm.postalCode">ZIP / postal code</span></label
+              >
+              <input
+                hlmInput
+                id="onboarding-facility-postalCode"
+                type="text"
+                autocomplete="postal-code"
+                class="max-sm:min-h-11"
+                [formField]="draftForm.postalCode"
+                (input)="addressPartChanged('postalCode', $event)"
+              />
+              <hlm-field-error>{{ draftForm.postalCode().errors()[0]?.message }}</hlm-field-error>
+            </hlm-field>
+          </div>
+
+          <div class="mt-4 flex justify-start">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="max-sm:min-h-11"
+              data-testid="onboarding-facility-add"
+              [disabled]="draftForm().invalid() || pending()"
+              (click)="addFacility()"
+            >
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              <span i18n="@@onboarding.facilitiesForm.add">Add another facility</span>
+            </button>
+          </div>
+        </div>
+      }
+    </hlm-field-group>
+  </div>
+
+  <app-onboarding-step-footer
+    [label]="submitLabel()"
+    [pendingLabel]="pendingLabel"
+    [pending]="pending()"
+    [skippable]="skippable()"
+    submitTestId="onboarding-facilities-submit"
+    (skipped)="skipped.emit()"
+  />
 </form>

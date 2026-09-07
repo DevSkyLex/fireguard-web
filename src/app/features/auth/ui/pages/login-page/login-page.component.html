@@ -7,18 +7,93 @@
   />
 
   <app-login-form
-    [pending]="authStore.isLoggingIn()"
+    [pending]="authStore.isLoggingIn() || federatedStore.startPending()"
     [returnUrl]="returnUrl"
     [serverError]="authStore.loginError()"
     (submitted)="login($event)"
   />
 
+  @if (federatedStore.providersLoading()) {
+    <div
+      class="flex min-h-11 items-center justify-center gap-2 text-sm text-muted-foreground"
+      role="status"
+      aria-live="polite"
+    >
+      <hlm-spinner aria-hidden="true" />
+      <span i18n="@@auth.federated.loadingProviders">Loading sign-in providers…</span>
+    </div>
+  } @else if (federatedStore.providersCallState().error; as error) {
+    <div class="flex flex-col items-center gap-3 text-center" role="alert">
+      <p class="text-sm text-destructive">{{ federatedErrorMessage(error.message) }}</p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="federated-provider-retry"
+        (click)="retryProviderDiscovery()"
+      >
+        <span i18n="@@common.retry">Retry</span>
+      </button>
+    </div>
+  } @else if (federatedStore.enabledProviders().length) {
+    <div class="flex min-w-0 flex-col gap-4">
+      <div class="flex items-center gap-3" aria-hidden="true">
+        <hlm-separator class="min-w-0 flex-1" />
+        <span class="text-xs text-muted-foreground" i18n="@@auth.federated.separator"
+          >Or continue with</span
+        >
+        <hlm-separator class="min-w-0 flex-1" />
+      </div>
+
+      <div class="grid min-w-0 gap-3 sm:grid-cols-2">
+        @for (provider of federatedStore.enabledProviders(); track provider) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="lg"
+            class="min-h-11 w-full gap-2"
+            [attr.data-testid]="'auth-provider-' + provider"
+            [disabled]="federatedStore.startPending() || authStore.isLoggingIn()"
+            [attr.aria-busy]="
+              federatedStore.startPending() && federatedStore.pendingProvider() === provider
+                ? 'true'
+                : null
+            "
+            (click)="signInWith(provider)"
+          >
+            @if (federatedStore.startPending() && federatedStore.pendingProvider() === provider) {
+              <hlm-spinner
+                aria-label="Opening provider"
+                i18n-aria-label="@@auth.federated.opening"
+              />
+            } @else {
+              <ng-icon [name]="provider" aria-hidden="true" />
+            }
+            @if (provider === 'google') {
+              <span i18n="@@auth.federated.google">Google</span>
+            } @else {
+              <span i18n="@@auth.federated.microsoft">Microsoft</span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (federatedStore.startCallState().error; as error) {
+        <p class="text-center text-sm text-destructive" role="alert">
+          {{ federatedErrorMessage(error.message) }}
+        </p>
+      }
+    </div>
+  }
+
   <p
-    class="flex flex-wrap items-center justify-center gap-x-1 border-t border-border pt-4 text-center text-sm text-muted-foreground"
+    class="flex flex-wrap items-center justify-center gap-x-1 text-center text-sm text-muted-foreground"
   >
     <span i18n="@@auth.login.noAccount">No account yet?</span>
     <a
-      class="inline-flex min-h-11 items-center justify-center rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      class="inline-flex min-h-11 items-center justify-center rounded-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       routerLink="/auth/register"
       [queryParams]="{ returnUrl: returnUrl || undefined }"
       i18n="@@auth.login.register"

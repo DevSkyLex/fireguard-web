@@ -9,9 +9,9 @@ describe('authGuard', () => {
   let mockAuthStore: { isAuthenticated: ReturnType<typeof vi.fn> };
   const loginUrlTree = {} as UrlTree;
   const route = {} as unknown as Parameters<typeof authGuard>[0];
-  const state = {} as unknown as Parameters<typeof authGuard>[1];
 
-  function runGuard(): boolean | UrlTree {
+  function runGuard(url?: string): boolean | UrlTree {
+    const state = { url: url ?? '' } as Parameters<typeof authGuard>[1];
     return TestBed.runInInjectionContext(() => authGuard(route, state)) as boolean | UrlTree;
   }
 
@@ -42,6 +42,31 @@ describe('authGuard', () => {
     mockAuthStore.isAuthenticated.mockReturnValue(false);
     const result = runGuard();
     expect(result).toBe(loginUrlTree);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
+  });
+
+  it.each([
+    '/onboarding/requests',
+    '/onboarding/workspace?returnUrl=%2Finvitations%2Faccept%3Ftoken%3Dinvitation',
+  ])('preserves the requested workspace destination %s', (url) => {
+    mockAuthStore.isAuthenticated.mockReturnValue(false);
+    runGuard(url);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: url },
+    });
+  });
+
+  it('restarts an expired OAuth connection without carrying callback credentials', () => {
+    mockAuthStore.isAuthenticated.mockReturnValue(false);
+    runGuard('/account/security/federated/google/callback?code=private-code&state=private-state');
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { returnUrl: '/account/security' },
+    });
+  });
+
+  it('does not preserve an unsafe destination', () => {
+    mockAuthStore.isAuthenticated.mockReturnValue(false);
+    runGuard('//other.example/path');
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/auth/login']);
   });
 

@@ -26,7 +26,7 @@ export function mapAlignedDashboardTrendSeriesToChartSeries(
     name,
     points: aligned.labels.map((label, pointIndex) => ({
       label,
-      value: aligned.datasets[index]?.[pointIndex] ?? 0,
+      value: aligned.datasets[index]?.[pointIndex] ?? null,
     })),
   }));
 }

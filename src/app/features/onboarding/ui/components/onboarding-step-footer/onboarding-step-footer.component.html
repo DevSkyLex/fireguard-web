@@ -1,23 +1,6 @@
-<div
-  class="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-border bg-background py-3"
-  [class.justify-between]="skippable()"
-  [class.justify-end]="!skippable()"
->
-  @if (skippable()) {
-    <button
-      hlmBtn
-      type="button"
-      variant="ghost"
-      class="max-sm:min-h-11"
-      data-testid="onboarding-wizard-skip"
-      [disabled]="pending()"
-      (click)="skipped.emit()"
-    >
-      <span i18n="@@onboarding.wizard.skip">Skip for now</span>
-    </button>
-  }
-
-  <div class="flex min-w-0 flex-col items-end gap-1">
+<hlm-separator class="sm:hidden" />
+<div class="flex flex-col gap-3 py-3 sm:py-0">
+  <div class="flex w-full min-w-0 flex-col gap-1">
     @if (gateReason(); as reason) {
       <p
         class="text-xs text-muted-foreground"
@@ -30,7 +13,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="min-h-11 w-full"
       #gate="appGateReason"
       [attr.data-testid]="submitTestId()"
       [disabled]="pending() || gateReason() !== null"
@@ -39,10 +22,24 @@
       aria-live="polite"
     >
       @if (pending()) {
+        <hlm-spinner />
         <span>{{ pendingLabel() }}</span>
       } @else {
         <span>{{ label() }}</span>
       }
     </button>
   </div>
+  @if (skippable()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="min-h-11 w-full"
+      data-testid="onboarding-wizard-skip"
+      [disabled]="pending()"
+      (click)="skipped.emit()"
+    >
+      <span i18n="@@onboarding.wizard.skip">Skip for now</span>
+    </button>
+  }
 </div>

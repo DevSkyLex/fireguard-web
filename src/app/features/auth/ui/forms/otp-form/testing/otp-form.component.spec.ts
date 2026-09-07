@@ -39,6 +39,34 @@ describe('OtpForm', () => {
     expect(slots.length).toBe(6);
   });
 
+  it('restarts an unchanged resend delay for a replacement mailbox challenge', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      fixture.componentRef.setInput('showResend', true);
+      fixture.componentRef.setInput('resendAvailableIn', 2);
+      fixture.componentRef.setInput('challengeKey', 'challenge-1');
+      await fixture.whenStable();
+      vi.advanceTimersByTime(2000);
+      await fixture.whenStable();
+      const resendButton = fixture.nativeElement.querySelector(
+        'button[type="button"]',
+      ) as HTMLButtonElement;
+      expect(resendButton.disabled).toBe(false);
+
+      fixture.componentRef.setInput('challengeKey', 'challenge-2');
+      await fixture.whenStable();
+      expect(resendButton.disabled).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="otp-resend-cooldown"]').textContent,
+      ).toContain('2s');
+      vi.advanceTimersByTime(2000);
+      await fixture.whenStable();
+      expect(resendButton.disabled).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('should offer the code to a phone through the one-time-code hint', () => {
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
 

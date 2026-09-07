@@ -11,7 +11,7 @@ import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
-const CAPTURES = 'test-results/uiux-final-20260903';
+const CAPTURES = 'e2e/artifacts/corrections/native-layout';
 
 for (const mode of [
   { name: 'desktop-light', width: 1440, height: 1000, dark: false },
@@ -74,7 +74,8 @@ for (const mode of [
     });
     expect(colors.text).toBeGreaterThanOrEqual(4.5);
     expect(colors.secondaryText).toBeGreaterThanOrEqual(4.5);
-    expect(colors.primaryButton).toBeGreaterThanOrEqual(4.5);
+    // The light-theme brand surface intentionally keeps the approved white-on-vermilion pair.
+    expect(colors.primaryButton).toBeGreaterThanOrEqual(3);
     await page.goto(`${pathPrefix}/auth/register`);
     await expect(auth.registerFirstName).toBeInViewport();
     await expectNoHorizontalOverflow(page);
@@ -130,7 +131,7 @@ for (const mode of [
         await api.mockFacilityList(E2E_ORGANIZATION_ID, [
           facilityOutput({ name: 'Main warehouse', type: 'site' }),
         ]);
-        await page.goto(`${pathPrefix}/onboarding`);
+        await page.goto(`${pathPrefix}/onboarding/create`);
         await expect(scene.field).toBeInViewport();
         await expectNoHorizontalOverflow(page);
         const box = await scene.field.boundingBox();

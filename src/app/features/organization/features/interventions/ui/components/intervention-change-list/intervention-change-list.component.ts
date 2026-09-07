@@ -151,6 +151,8 @@ export class InterventionChangeList {
    * Property groups
    * @readonly
    * @description Selected changes grouped by resource using work-item summaries where available.
+   * Resource identifiers are deliberately omitted from the fallback heading so technical IRIs
+   * cannot leak into the intervention view.
    * @access protected
    * @since 1.0.0
    * @type {Signal<readonly InterventionChangeGroup[]>}
@@ -169,8 +171,7 @@ export class InterventionChangeList {
       return {
         resource,
         rows,
-        label:
-          item?.targetSummary?.label ?? `${rows[0].resourceKind} · ${resource.split('/').at(-1)}`,
+        label: item?.targetSummary?.label ?? rows[0].resourceKind,
       };
     });
   });

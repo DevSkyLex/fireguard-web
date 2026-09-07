@@ -54,18 +54,6 @@ describe('AccountProfilePage', () => {
     saveCallState: WritableSignal<{ status: string }>;
   };
 
-  /**
-   * Opens the editable group, the way the Edit control does.
-   */
-  async function startEditing(): Promise<void> {
-    (
-      fixture.nativeElement.querySelector(
-        '[data-testid="account-profile-edit"]',
-      ) as HTMLButtonElement
-    ).click();
-    await fixture.whenStable();
-  }
-
   beforeEach(async () => {
     profile = signal<UserProfileOutput | null>(PROFILE);
     loadError = signal<StoreError | null>(null);
@@ -104,18 +92,15 @@ describe('AccountProfilePage', () => {
     await fixture.whenStable();
   });
 
-  it('should show the details read-only, with no form in sight', () => {
+  it('should show the editable fields directly, without an edit control', () => {
     const element: HTMLElement = fixture.nativeElement;
 
-    expect(element.querySelector('#account-first-name')).toBeNull();
-    expect(element.textContent).toContain('Ada');
-    expect(element.textContent).toContain('Lovelace');
-    expect(element.querySelector('[data-testid="account-profile-edit"]')).not.toBeNull();
+    expect(element.querySelector('#account-first-name')).not.toBeNull();
+    expect(element.querySelector('#account-last-name')).not.toBeNull();
+    expect(element.querySelector('[data-testid="account-profile-edit"]')).toBeNull();
   });
 
-  it('should seed the form from the stored profile once editing starts', async () => {
-    await startEditing();
-
+  it('should seed the form from the stored profile immediately', () => {
     const firstName = fixture.nativeElement.querySelector(
       '#account-first-name',
     ) as HTMLInputElement;
@@ -232,51 +217,5 @@ describe('AccountProfilePage', () => {
     // `fr` is not a thing to display to a reader.
     expect(fixture.nativeElement.textContent).toContain('Français');
     expect(fixture.nativeElement.textContent).not.toContain('locale');
-  });
-
-  it('should hide the edit control while editing', async () => {
-    await startEditing();
-
-    expect(fixture.nativeElement.querySelector('[data-testid="account-profile-edit"]')).toBeNull();
-  });
-
-  it('should return to read-only when the edit is abandoned', async () => {
-    await startEditing();
-
-    (
-      fixture.nativeElement.querySelector(
-        '[data-testid="account-profile-cancel"]',
-      ) as HTMLButtonElement
-    ).click();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('#account-first-name')).toBeNull();
-    expect(editStore.save).not.toHaveBeenCalled();
-  });
-
-  it('should return to read-only once a save lands', async () => {
-    await startEditing();
-
-    editStore.saveCallState.set({ status: 'pending' });
-    await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('#account-first-name')).not.toBeNull();
-
-    editStore.saveCallState.set({ status: 'success' });
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('#account-first-name')).toBeNull();
-  });
-
-  it('should stay open when reopened after an earlier save', async () => {
-    editStore.saveCallState.set({ status: 'pending' });
-    await fixture.whenStable();
-    editStore.saveCallState.set({ status: 'success' });
-    await fixture.whenStable();
-
-    await startEditing();
-
-    // The call state stays `success` afterwards, so keying on the state rather
-    // than on the transition into it would slam the form shut on reopening.
-    expect(fixture.nativeElement.querySelector('#account-first-name')).not.toBeNull();
   });
 });

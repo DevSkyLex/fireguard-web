@@ -1151,8 +1151,8 @@
         <target>Impossible de charger le tableau de bord</target>
       </trans-unit>
       <trans-unit id="org.dashboard.error.description" datatype="html">
-        <source>Summary figures, alerts and the severity breakdown couldn&apos;t be fetched.</source>
-        <target>Les chiffres de synthèse, les alertes et la répartition par gravité n'ont pas pu être récupérés.</target>
+        <source> Summary figures, alerts and the severity breakdown couldn&apos;t be fetched. </source>
+        <target>Les indicateurs, les alertes et la répartition par gravité n’ont pas pu être chargés.</target>
       </trans-unit>
       <trans-unit id="org.dashboard.trends.title" datatype="html">
         <source>Trends</source>
@@ -4791,8 +4791,8 @@
         <target>Aucune non-conformité enregistrée.</target>
       </trans-unit>
       <trans-unit id="org.statistics.trend.loadError" datatype="html">
-        <source> This chart could not be loaded. </source>
-        <target>Ce graphique n'a pas pu être chargé.</target>
+        <source>This chart could not be loaded.</source>
+        <target>Ce graphique n’a pas pu être chargé.</target>
       </trans-unit>
       <trans-unit id="org.statistics.trend.inspections.title" datatype="html">
         <source>Inspections</source>
@@ -11454,6 +11454,38 @@
 <source>Use at least <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> characters</source>
 <target>Utilisez au moins <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> caractères</target>
 </trans-unit>
+<trans-unit id="auth.password.requirements.minLength" datatype="html">
+<source>At least <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> characters</source>
+<target>Au moins <x id="min" equiv-text="PASSWORD_MIN_LENGTH"/> caractères</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.uppercase" datatype="html">
+<source>An upper case letter</source>
+<target>Une lettre majuscule</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.lowercase" datatype="html">
+<source>A lower case letter</source>
+<target>Une lettre minuscule</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.digit" datatype="html">
+<source>A digit</source>
+<target>Un chiffre</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.symbol" datatype="html">
+<source>A symbol (@$!%*?&amp;#)</source>
+<target>Un symbole (@$!%*?&amp;#)</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.ariaLabel" datatype="html">
+<source>Password requirements</source>
+<target>Exigences du mot de passe</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.title" datatype="html">
+<source>Password requirements</source>
+<target>Exigences du mot de passe</target>
+</trans-unit>
+<trans-unit id="auth.password.requirements.description" datatype="html">
+<source>Your password must meet all of these criteria.</source>
+<target>Votre mot de passe doit respecter tous ces critères.</target>
+</trans-unit>
 <trans-unit id="auth.passwordConfirmation.required" datatype="html">
 <source>Repeat the password</source>
 <target>Répétez le mot de passe</target>
@@ -12138,6 +12170,2342 @@
       <trans-unit id="maintenance.list.searchPlaceholder" datatype="html">
         <source>Search schedules...</source>
         <target>Rechercher des plannings...</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.activity.scope" datatype="html">
+        <source>Period controls apply to activity charts only.</source>
+        <target>La période s’applique uniquement aux graphiques d’activité.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.activity.title" datatype="html">
+        <source>Activity</source>
+        <target>Activité</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.additional.title" datatype="html">
+        <source>Additional analysis</source>
+        <target>Analyses complémentaires</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.description" datatype="html">
+        <source>Current items that need a closer look</source>
+        <target>Les éléments qui nécessitent votre attention</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.empty" datatype="html">
+        <source>No attention items raised</source>
+        <target>Aucun point d’attention signalé</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.emptyDescription" datatype="html">
+        <source>The latest snapshot contains no operational alerts.</source>
+        <target>La dernière situation ne contient aucune alerte opérationnelle.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.title" datatype="html">
+        <source>Points of attention</source>
+        <target>Points d’attention</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.unavailable" datatype="html">
+        <source>Alerts unavailable</source>
+        <target>Alertes indisponibles</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.attention.unknown" datatype="html">
+        <source>Unrecognized alert</source>
+        <target>Alerte non reconnue</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.comparison.delta" datatype="html">
+        <source><x id="value" equiv-text="value"/>% vs previous period</source>
+        <target><x id="value" equiv-text="value"/> % par rapport à la période précédente</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.comparison.noBaseline" datatype="html">
+        <source>No previous-period baseline</source>
+        <target>Aucune base de comparaison sur la période précédente</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.comparison.toggle" datatype="html">
+        <source>Compare</source>
+        <target>Comparer</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.inspections.title" datatype="html">
+        <source>Inspections performed</source>
+        <target>Inspections réalisées</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.kpi.toResolve" datatype="html">
+        <source>Non-conformities to resolve</source>
+        <target>Non-conformités à traiter</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.all" datatype="html">
+        <source>View all interventions</source>
+        <target>Toutes les interventions</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.description" datatype="html">
+        <source>Pick up where your team left off</source>
+        <target>Reprenez le suivi des dernières interventions de votre équipe</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.due" datatype="html">
+        <source>Due</source>
+        <target>Échéance</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.empty" datatype="html">
+        <source>No recent interventions</source>
+        <target>Aucune intervention récente</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.emptyDescription" datatype="html">
+        <source>Interventions will appear here when your team creates or updates them.</source>
+        <target>Les interventions apparaîtront ici lorsque votre équipe les créera ou les mettra à jour.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.intervention" datatype="html">
+        <source>Intervention</source>
+        <target>Intervention</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.responsible" datatype="html">
+        <source>Responsible</source>
+        <target>Responsable</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.site" datatype="html">
+        <source>Site</source>
+        <target>Site</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.status" datatype="html">
+        <source>Status</source>
+        <target>Statut</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.title" datatype="html">
+        <source>Recently updated interventions</source>
+        <target>Interventions récemment mises à jour</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.unassigned" datatype="html">
+        <source>Unassigned</source>
+        <target>Non attribué</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.recent.unavailable" datatype="html">
+        <source>Recent interventions unavailable</source>
+        <target>Interventions récentes indisponibles</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.refreshing" datatype="html">
+        <source>Updating charts… Previous period remains visible.</source>
+        <target>Mise à jour des graphiques… La période précédente reste affichée.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.chartLabel" datatype="html">
+        <source>Non-conformities by status</source>
+        <target>Non-conformités par statut</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.description" datatype="html">
+        <source>Current distribution by status</source>
+        <target>Répartition actuelle par statut</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.empty" datatype="html">
+        <source>No non-conformities recorded</source>
+        <target>Aucune non-conformité enregistrée</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.emptyDescription" datatype="html">
+        <source>Recorded issues will appear here as inspections are completed.</source>
+        <target>Les problèmes enregistrés apparaîtront ici au fil des inspections.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.title" datatype="html">
+        <source>Non-conformity follow-up</source>
+        <target>Suivi des non-conformités</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.unavailable" datatype="html">
+        <source>Status breakdown unavailable</source>
+        <target>Répartition par statut indisponible</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risk.unavailableDescription" datatype="html">
+        <source>The current snapshot does not contain all status counts.</source>
+        <target>La situation actuelle ne contient pas tous les décomptes par statut.</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risks.scope" datatype="html">
+        <source>Current snapshot, independent of the selected period</source>
+        <target>Situation actuelle, indépendante de la période sélectionnée</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.risks.title" datatype="html">
+        <source>Risks and follow-up</source>
+        <target>Risques et suivi</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.severity.summaryMany" datatype="html">
+        <source><x id="total" equiv-text="total"/> recorded, across all statuses</source>
+        <target><x id="total" equiv-text="total"/> enregistrées, tous statuts confondus</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.severity.summaryOne" datatype="html">
+        <source>1 recorded, across all statuses</source>
+        <target>1 enregistrée, tous statuts confondus</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.severity.unavailable" datatype="html">
+        <source>Severity breakdown unavailable</source>
+        <target>Répartition par gravité indisponible</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.snapshot.asOf" datatype="html">
+        <source>Data as of</source>
+        <target>Données au</target>
+      </trans-unit>
+      <trans-unit id="shared.chart.donut.empty" datatype="html">
+        <source>No data to display</source>
+        <target>Aucune donnée à afficher</target>
+      </trans-unit>
+      <trans-unit id="shared.chart.donut.total" datatype="html">
+        <source>Total</source>
+        <target>Total</target>
+      </trans-unit>
+      <trans-unit id="route.federatedCallback" datatype="html">
+        <source>Completing sign-in</source>
+        <target>Connexion fédérée</target>
+      </trans-unit>
+      <trans-unit id="route.federatedLinkCallback" datatype="html">
+        <source>Connecting sign-in provider</source>
+        <target>Liaison du fournisseur</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.separator" datatype="html">
+        <source>Or continue with</source>
+        <target>Ou continuer avec</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.opening" datatype="html">
+        <source>Opening provider</source>
+        <target>Ouverture du fournisseur</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.google" datatype="html">
+        <source>Google</source>
+        <target>Google</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.microsoft" datatype="html">
+        <source>Microsoft</source>
+        <target>Microsoft</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.failedTitle" datatype="html">
+        <source> Sign-in couldn&apos;t be completed </source>
+        <target>Impossible de finaliser la connexion</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.accountExists" datatype="html">
+        <source> Sign in with your password, then connect this provider from Security. </source>
+        <target>Connectez-vous avec votre mot de passe, puis associez ce fournisseur depuis Sécurité.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.failedDescription" datatype="html">
+        <source> The provider response is no longer valid. Start again from the sign-in page. </source>
+        <target>La réponse du fournisseur n’est plus valide. Recommencez depuis la page de connexion.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.backToLogin" datatype="html">
+        <source> Back to sign in </source>
+        <target>Retour à la connexion</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.completing" datatype="html">
+        <source>Completing sign-in</source>
+        <target>Finalisation de la connexion</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.completingTitle" datatype="html">
+        <source> Completing sign-in </source>
+        <target>Finalisation de la connexion</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.completingDescription" datatype="html">
+        <source> Fireguard is securely checking the provider response. </source>
+        <target>Fireguard vérifie de manière sécurisée la réponse du fournisseur.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.title" datatype="html">
+        <source> Sign-in methods </source>
+        <target>Méthodes de connexion</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.description" datatype="html">
+        <source> Choose how you access Fireguard. Provider accounts are only linked after you sign in here. </source>
+        <target>Choisissez comment accéder à Fireguard. Les comptes fournisseurs sont associés uniquement après votre connexion ici.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.password" datatype="html">
+        <source>Password</source>
+        <target>Mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.passwordConfigured" datatype="html">
+        <source>Configured</source>
+        <target>Configuré</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.passwordMissing" datatype="html">
+        <source>Not configured</source>
+        <target>Non configuré</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.setPassword" datatype="html">
+        <source>Set password</source>
+        <target>Définir un mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.notConnected" datatype="html">
+        <source> Not connected </source>
+        <target>Non connecté</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.disconnect" datatype="html">
+        <source>Disconnect</source>
+        <target>Dissocier</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.connect" datatype="html">
+        <source>Connect</source>
+        <target>Associer</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.disconnectTitle" datatype="html">
+        <source> Disconnect this provider? </source>
+        <target>Dissocier ce fournisseur ?</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.disconnectDescription" datatype="html">
+        <source> You will no longer be able to use this provider to sign in. Fireguard keeps at least one sign-in method on your account. </source>
+        <target>Vous ne pourrez plus utiliser ce fournisseur pour vous connecter. Fireguard conserve au moins une méthode de connexion sur votre compte.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.passwordSetupTitle" datatype="html">
+        <source>Set a password</source>
+        <target>Définir un mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.passwordSetupDescription" datatype="html">
+        <source> A password gives you another way to sign in. We verify your email before adding it. </source>
+        <target>Un mot de passe vous offre une autre méthode de connexion. Nous vérifions votre adresse email avant de l’ajouter.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.passwordSetupCodeHint" datatype="html">
+        <source> Fireguard will send a six-digit code to your account email. </source>
+        <target>Fireguard enverra un code à six chiffres à l’adresse email de votre compte.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.sendingCode" datatype="html">
+        <source>Sending code</source>
+        <target>Envoi du code</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.sendCode" datatype="html">
+        <source>Send code</source>
+        <target>Envoyer le code</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.codeSent" datatype="html">
+        <source>We sent a code to</source>
+        <target>Nous avons envoyé un code à</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.codeLabel" datatype="html">
+        <source>Emailed code</source>
+        <target>Code reçu par email</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.newPassword" datatype="html">
+        <source>New password</source>
+        <target>Nouveau mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.confirmPassword" datatype="html">
+        <source>Repeat password</source>
+        <target>Répéter le mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.savingPassword" datatype="html">
+        <source>Saving password</source>
+        <target>Enregistrement du mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.savePassword" datatype="html">
+        <source>Save password</source>
+        <target>Enregistrer le mot de passe</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.codeRequired" datatype="html">
+        <source>Enter the code we emailed you</source>
+        <target>Saisissez le code reçu par email</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.codePattern" datatype="html">
+        <source>Enter the six-digit code</source>
+        <target>Saisissez le code à six chiffres</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.linkFailedTitle" datatype="html">
+        <source> Provider couldn&apos;t be connected </source>
+        <target>Impossible d’associer le fournisseur</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.identityLinked" datatype="html">
+        <source> This provider account is already connected to another Fireguard account. </source>
+        <target>Ce compte fournisseur est déjà associé à un autre compte Fireguard.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.linkFailedDescription" datatype="html">
+        <source> The provider response is no longer valid. Start the connection again. </source>
+        <target>La réponse du fournisseur n’est plus valide. Recommencez la liaison.</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.back" datatype="html">
+        <source> Back to Security </source>
+        <target>Retour à Sécurité</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.connecting" datatype="html">
+        <source>Connecting provider</source>
+        <target>Liaison du fournisseur</target>
+      </trans-unit>
+      <trans-unit id="account.signInMethods.connectingDescription" datatype="html">
+        <source> Securely connecting your provider… </source>
+        <target>Connexion sécurisée de votre fournisseur…</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.loadingProviders" datatype="html">
+        <source>Loading sign-in providers…</source>
+        <target>Chargement des fournisseurs de connexion…</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.accountExists" datatype="html">
+        <source>Sign in with your password, then connect this provider from Security.</source>
+        <target>Connectez-vous avec votre mot de passe, puis associez ce fournisseur depuis Sécurité.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.accountUnavailable" datatype="html">
+        <source>This Fireguard account cannot sign in.</source>
+        <target>Ce compte Fireguard ne peut pas se connecter.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.missingEmail" datatype="html">
+        <source>The provider did not return an email address that Fireguard can use.</source>
+        <target>Le fournisseur n’a renvoyé aucune adresse email utilisable par Fireguard.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.emailUnverified" datatype="html">
+        <source>The provider did not confirm a verified email address.</source>
+        <target>Le fournisseur n’a pas confirmé d’adresse email vérifiée.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.challengeExpired" datatype="html">
+        <source>This verification request can no longer be used. Send a new code.</source>
+        <target>Cette demande de vérification n’est plus utilisable. Envoyez un nouveau code.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.providerUnavailable" datatype="html">
+        <source>This sign-in provider is temporarily unavailable. Try again.</source>
+        <target>Ce fournisseur de connexion est temporairement indisponible. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.identityLinked" datatype="html">
+        <source>This provider account is already connected to another Fireguard account.</source>
+        <target>Ce compte fournisseur est déjà associé à un autre compte Fireguard.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.identityMissing" datatype="html">
+        <source>The provider did not return an identity that Fireguard can use.</source>
+        <target>Le fournisseur n’a renvoyé aucune identité utilisable par Fireguard.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.invalidCode" datatype="html">
+        <source>The verification code is incorrect. Try again.</source>
+        <target>Le code de vérification est incorrect. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.invalidFlow" datatype="html">
+        <source>This sign-in request has expired or was already used. Start again.</source>
+        <target>Cette demande de connexion a expiré ou a déjà été utilisée. Recommencez.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.lastSignInMethod" datatype="html">
+        <source>Add another sign-in method before removing this one.</source>
+        <target>Ajoutez une autre méthode de connexion avant de supprimer celle-ci.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.passwordAlreadyConfigured" datatype="html">
+        <source>A password is already configured for this account.</source>
+        <target>Un mot de passe est déjà configuré pour ce compte.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.providerAlreadyLinked" datatype="html">
+        <source>A provider of this type is already connected to your account.</source>
+        <target>Un fournisseur de ce type est déjà associé à votre compte.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.providerCancelled" datatype="html">
+        <source>Sign-in was cancelled. You can try again.</source>
+        <target>La connexion a été annulée. Vous pouvez réessayer.</target>
+      </trans-unit>
+      <trans-unit id="auth.federated.error.fallback" datatype="html">
+        <source>We couldn&apos;t complete this request. Try again.</source>
+        <target>Impossible de finaliser cette demande. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="route.workspace" datatype="html">
+        <source>Your workspace</source>
+        <target>Votre espace de travail</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/onboarding.routes.ts</context>
+          <context context-type="linenumber">13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.joinRequests" datatype="html">
+        <source>Membership requests</source>
+        <target>Demandes d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/onboarding.routes.ts</context>
+          <context context-type="linenumber">14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.chooseWorkspace" datatype="html">
+        <source> Join an existing organization </source>
+        <target>Rejoindre une organisation existante</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-wizard-page/onboarding-wizard-page.component.html</context>
+          <context context-type="linenumber">285,288</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.requestsTitle" datatype="html">
+        <source>Your membership requests</source>
+        <target>Vos demandes d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">4,5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.requestsDescription" datatype="html">
+        <source>Track your requests. Access starts when an administrator approves you.</source>
+        <target>Suivez vos demandes. L’accès est accordé après validation par un administrateur.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">5,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.title" datatype="html">
+        <source>Your workspace</source>
+        <target>Votre espace de travail</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">7,8</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.description" datatype="html">
+        <source>Join your organization or create a workspace for your team.</source>
+        <target>Rejoignez votre organisation ou créez un espace pour votre équipe.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">8,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.loading" datatype="html">
+        <source>Finding your workspaces…</source>
+        <target>Recherche de vos espaces…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">13,15</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.loadError" datatype="html">
+        <source>We could not check your workspaces. Please try again.</source>
+        <target>Impossible de vérifier vos espaces. Réessayez.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.invitations" datatype="html">
+        <source>Your invitations</source>
+        <target>Vos invitations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">29,30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.invitationExpires" datatype="html">
+        <source>Invitation expires</source>
+        <target>Expiration de l’invitation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.acceptInvitation" datatype="html">
+        <source>Accept invitation</source>
+        <target>Accepter l’invitation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">39,41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.verifyTitle" datatype="html">
+        <source>Verify your email address</source>
+        <target>Vérifiez votre adresse email</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">49,50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.verifyDescription" datatype="html">
+        <source>Confirm access to your mailbox to find organizations that use your email domain.</source>
+        <target>Confirmez l’accès à votre boîte mail pour trouver les organisations correspondant à votre domaine.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">50,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.sendCode" datatype="html">
+        <source>Send verification code</source>
+        <target>Envoyer un code de vérification</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">54,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.organizations" datatype="html">
+        <source>Your organizations</source>
+        <target>Vos organisations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">60,61</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.role" datatype="html">
+        <source>Your role:</source>
+        <target>Votre rôle :</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.join" datatype="html">
+        <source>Join organization</source>
+        <target>Rejoindre l’organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">74,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.request" datatype="html">
+        <source>Request to join</source>
+        <target>Demander à rejoindre</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">75,76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.open" datatype="html">
+        <source>Open workspace</source>
+        <target>Ouvrir l’espace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">76,77</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">106,107</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.viewRequest" datatype="html">
+        <source>View my request</source>
+        <target>Voir ma demande</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">77,79</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.noOrganization" datatype="html">
+        <source>No organization available for this email</source>
+        <target>Aucune organisation disponible pour cette adresse</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.noOrganizationDescription" datatype="html">
+        <source>Ask your administrator for an invitation, or create a workspace for your team. Personal email addresses can join by invitation.</source>
+        <target>Demandez une invitation à votre administrateur ou créez un espace pour votre équipe. Les adresses personnelles peuvent rejoindre sur invitation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">87,93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.requests" datatype="html">
+        <source>Your requests</source>
+        <target>Vos demandes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">95,96</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.cancelRequest" datatype="html">
+        <source>Cancel request</source>
+        <target>Annuler la demande</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">107,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.refresh" datatype="html">
+        <source>Check for updates</source>
+        <target>Actualiser le statut</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">112,114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.noRequests" datatype="html">
+        <source>You have no membership requests.</source>
+        <target>Vous n’avez aucune demande d’adhésion.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">115,119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.back" datatype="html">
+        <source>Choose a workspace</source>
+        <target>Choisir un espace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">120,121</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.resume" datatype="html">
+        <source>Continue setting up your organization</source>
+        <target>Reprendre la configuration de votre organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">122</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.create" datatype="html">
+        <source>Create an organization</source>
+        <target>Créer une organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">122,127</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.pending" datatype="html">
+        <source>Awaiting approval</source>
+        <target>En attente de validation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.ts</context>
+          <context context-type="linenumber">150</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.approved" datatype="html">
+        <source>Approved</source>
+        <target>Approuvée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.rejected" datatype="html">
+        <source>Declined</source>
+        <target>Refusée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.ts</context>
+          <context context-type="linenumber">152</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.expired" datatype="html">
+        <source>Expired</source>
+        <target>Expirée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.errorTitle" datatype="html">
+        <source>Could not complete the request</source>
+        <target>La demande n’a pas pu aboutir</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">5,6</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">24,25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.retry" datatype="html">
+        <source> Try again </source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">15,17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.loading" datatype="html">
+        <source>Loading access settings</source>
+        <target>Chargement des paramètres d’accès</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">22,23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.policyTitle" datatype="html">
+        <source> Organization access </source>
+        <target>Accès à l’organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">33,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.policyDescription" datatype="html">
+        <source> Choose how people with a verified company email can join your organization. </source>
+        <target>Choisissez comment les personnes disposant d’un email professionnel vérifié peuvent rejoindre votre organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">36,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainsTitle" datatype="html">
+        <source> Company domains </source>
+        <target>Domaines de l’entreprise</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">50,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainsDescription" datatype="html">
+        <source> Prove ownership using a DNS TXT record. Only the exact verified email domain matches. </source>
+        <target>Prouvez leur possession avec un enregistrement DNS TXT. Seul le domaine exact vérifié est reconnu.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">53,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.suspendedTitle" datatype="html">
+        <source>Some domains need verification</source>
+        <target>Certains domaines doivent être vérifiés</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">64,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.suspendedDescription" datatype="html">
+        <source> New memberships and approvals are paused for these domains. Existing members keep their access. </source>
+        <target>Les nouvelles adhésions et validations sont suspendues pour ces domaines. Les membres actuels conservent leur accès.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">66,69</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainsEmpty" datatype="html">
+        <source>No company domain yet</source>
+        <target>Aucun domaine d’entreprise</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">77,78</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainsEmptyHelp" datatype="html">
+        <source> Add a domain above to receive your organization&apos;s DNS verification record. </source>
+        <target>Ajoutez un domaine ci-dessus pour obtenir l’enregistrement DNS de votre organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.dnsInstructions" datatype="html">
+        <source> Add this TXT record in your domain&apos;s DNS settings, then verify. </source>
+        <target>Ajoutez cet enregistrement TXT dans les paramètres DNS du domaine, puis lancez la vérification.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">93,95</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.dnsName" datatype="html">
+        <source> TXT record name </source>
+        <target>Nom de l’enregistrement TXT</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">98,99</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.copyName" datatype="html">
+        <source>Copy TXT record name</source>
+        <target>Copier le nom TXT</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">109,110</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.dnsValue" datatype="html">
+        <source> TXT record value </source>
+        <target>Valeur de l’enregistrement TXT</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">118,119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.copyValue" datatype="html">
+        <source>Copy TXT record value</source>
+        <target>Copier la valeur TXT</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">129,130</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.verifyDomain" datatype="html">
+        <source> Verify domain</source>
+        <target>Vérifier le domaine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">146,147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.removeDomain" datatype="html">
+        <source> Remove domain </source>
+        <target>Retirer le domaine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">155,156</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">196,197</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.removeTitle" datatype="html">
+        <source>Remove this domain?</source>
+        <target>Retirer ce domaine ?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">173,174</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.removeDescription" datatype="html">
+        <source> People will no longer discover this organization using this domain. Existing members keep their access. </source>
+        <target>Cette organisation ne sera plus proposée aux personnes utilisant ce domaine. Les membres actuels conservent leur accès.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">175,177</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.cancel" datatype="html">
+        <source> Cancel</source>
+        <target>Annuler</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.html</context>
+          <context context-type="linenumber">188,190</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">59,61</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">81,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainStatus.pending" datatype="html">
+        <source>Awaiting verification</source>
+        <target>En attente de vérification</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.ts</context>
+          <context context-type="linenumber">165</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainStatus.verified" datatype="html">
+        <source>Verified</source>
+        <target>Vérifié</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.ts</context>
+          <context context-type="linenumber">166</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainStatus.suspended" datatype="html">
+        <source>Verification suspended</source>
+        <target>Vérification suspendue</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.copied" datatype="html">
+        <source>Copied to clipboard.</source>
+        <target>Copié dans le presse-papiers.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.ts</context>
+          <context context-type="linenumber">192</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.copyFailed" datatype="html">
+        <source>Could not copy. Select and copy the DNS value manually.</source>
+        <target>La copie a échoué. Sélectionnez et copiez manuellement la valeur DNS.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-access-panel/organization-access-panel.component.ts</context>
+          <context context-type="linenumber">193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.title" datatype="html">
+        <source> Membership requests </source>
+        <target>Demandes d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">5,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.description" datatype="html">
+        <source> Review people asking to join through a verified company domain. </source>
+        <target>Examinez les demandes reçues via un domaine d’entreprise vérifié.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">8,12</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.refresh" datatype="html">
+        <source> Refresh requests </source>
+        <target>Actualiser les demandes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">19,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.loading" datatype="html">
+        <source>Loading membership requests</source>
+        <target>Chargement des demandes d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">31,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.empty" datatype="html">
+        <source>No membership requests</source>
+        <target>Aucune demande d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.emptyHelp" datatype="html">
+        <source> Requests from people with a verified company email will appear here. </source>
+        <target>Les demandes des personnes disposant d’un email professionnel vérifié apparaîtront ici.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">45,48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.received" datatype="html">
+        <source>Received</source>
+        <target>Reçue le</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.expires" datatype="html">
+        <source>Expires</source>
+        <target>Expire le</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.review" datatype="html">
+        <source> Review request </source>
+        <target>Examiner la demande</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.html</context>
+          <context context-type="linenumber">73,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.pending" datatype="html">
+        <source>Awaiting review</source>
+        <target>En attente d’examen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.ts</context>
+          <context context-type="linenumber">160</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.approved" datatype="html">
+        <source>Approved</source>
+        <target>Approuvée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.ts</context>
+          <context context-type="linenumber">161</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.rejected" datatype="html">
+        <source>Rejected</source>
+        <target>Refusée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.ts</context>
+          <context context-type="linenumber">162</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.ts</context>
+          <context context-type="linenumber">163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.expired" datatype="html">
+        <source>Expired</source>
+        <target>Expirée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-join-request-panel/organization-join-request-panel.component.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.reviewTitle" datatype="html">
+        <source>Review membership request</source>
+        <target>Examiner la demande d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">11,13</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.reviewDescription" datatype="html">
+        <source> Approving grants access with the roles you select. Rejecting leaves this person without access to the organization. </source>
+        <target>L’approbation accorde les rôles sélectionnés. Le refus laisse cette personne sans accès à l’organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">18,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.roles" datatype="html">
+        <source>Roles to assign</source>
+        <target>Rôles à attribuer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">24,26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.noRoles" datatype="html">
+        <source> No assignable role is available. Ask an administrator to review this request. </source>
+        <target>Aucun rôle ne peut être attribué. Demandez à un administrateur d’examiner cette demande.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">38,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.reject" datatype="html">
+        <source> Reject request </source>
+        <target>Refuser la demande</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">71,73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.approve" datatype="html">
+        <source> Approve request </source>
+        <target>Approuver la demande</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.html</context>
+          <context context-type="linenumber">82,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.roleRequired" datatype="html">
+        <source>Choose at least one role.</source>
+        <target>Choisissez au moins un rôle.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.ts</context>
+          <context context-type="linenumber">119</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.policyLegend" datatype="html">
+        <source>How people join</source>
+        <target>Modalités d’adhésion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">3,4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.role" datatype="html">
+        <source>Role for new members</source>
+        <target>Rôle des nouveaux membres</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.roleHelp" datatype="html">
+        <source> Only roles with permissions no greater than Member are eligible. </source>
+        <target>Seuls les rôles dont les droits ne dépassent pas ceux de Membre sont éligibles.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">32,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.save" datatype="html">
+        <source> Save access policy </source>
+        <target>Enregistrer la politique d’accès</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">46,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.automaticTitle" datatype="html">
+        <source>Allow immediate membership?</source>
+        <target>Autoriser l’adhésion immédiate ?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">58,59</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.automaticDescription" datatype="html">
+        <source> People with a verified company email can join without administrator approval. </source>
+        <target>Les personnes disposant d’un email professionnel vérifié pourront rejoindre sans validation administrative.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">60,63</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.verifiedDomains" datatype="html">
+        <source>Verified domains</source>
+        <target>Domaines vérifiés</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">69,70</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.enableAutomatic" datatype="html">
+        <source> Enable immediate membership </source>
+        <target>Activer l’adhésion immédiate</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.html</context>
+          <context context-type="linenumber">89,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.roleRequired" datatype="html">
+        <source>Choose an eligible role.</source>
+        <target>Choisissez un rôle éligible.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">98</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.noVerifiedDomain" datatype="html">
+        <source>No verified domain yet. Discovery remains unavailable until a domain is verified.</source>
+        <target>Aucun domaine vérifié. La découverte reste indisponible tant qu’un domaine n’est pas vérifié.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">153</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.invitation" datatype="html">
+        <source>Invitation only</source>
+        <target>Sur invitation uniquement</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">169</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.invitationHelp" datatype="html">
+        <source>Only people invited by a member can join.</source>
+        <target>Seules les personnes invitées par un membre peuvent rejoindre.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.approval" datatype="html">
+        <source>Administrator approval</source>
+        <target>Validation administrative</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">174</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.approvalHelp" datatype="html">
+        <source>People with a verified company email can request membership.</source>
+        <target>Les personnes disposant d’un email professionnel vérifié peuvent demander à rejoindre.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">175</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.automatic" datatype="html">
+        <source>Immediate membership</source>
+        <target>Adhésion immédiate</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.mode.automaticHelp" datatype="html">
+        <source>Eligible people can join with the selected role, without administrator approval.</source>
+        <target>Les personnes éligibles rejoignent avec le rôle choisi, sans validation administrative.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">180</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domain" datatype="html">
+        <source>Company email domain</source>
+        <target>Domaine email de l’entreprise</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-domain-form/organization-domain-form.component.html</context>
+          <context context-type="linenumber">4,7</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainHelp" datatype="html">
+        <source> Add a company domain you control. Public email services such as Gmail and Outlook cannot be used. </source>
+        <target>Ajoutez un domaine d’entreprise que vous contrôlez. Les services publics comme Gmail et Outlook sont exclus.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-domain-form/organization-domain-form.component.html</context>
+          <context context-type="linenumber">16,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.addDomain" datatype="html">
+        <source> Add domain </source>
+        <target>Ajouter un domaine</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-domain-form/organization-domain-form.component.html</context>
+          <context context-type="linenumber">31,34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainRequired" datatype="html">
+        <source>Enter your company domain.</source>
+        <target>Saisissez le domaine de votre entreprise.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-domain-form/organization-domain-form.component.ts</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.domainInvalid" datatype="html">
+        <source>Enter a domain such as company.com, without https:// or an email address.</source>
+        <target>Saisissez un domaine comme entreprise.fr, sans https:// ni adresse email.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-domain-form/organization-domain-form.component.ts</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.requests.tab" datatype="html">
+        <source>Requests</source>
+        <target>Demandes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.tab" datatype="html">
+        <source>Access and domains</source>
+        <target>Accès et domaines</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-settings-page/organization-settings-page.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainInvalid" datatype="html">
+        <source>Enter a valid company domain, without a URL or email address.</source>
+        <target>Saisissez un domaine d’entreprise valide, sans URL ni adresse email.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainGeneric" datatype="html">
+        <source>Public or disposable email providers cannot be used for organization discovery.</source>
+        <target>Les services email publics ou jetables ne peuvent pas servir à découvrir une organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainPublic" datatype="html">
+        <source>Choose a company-owned domain, not a public suffix.</source>
+        <target>Choisissez un domaine appartenant à l’entreprise, pas un suffixe public.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainCatalogUnavailable" datatype="html">
+        <source>Domain verification is temporarily unavailable. Try again later.</source>
+        <target>La vérification des domaines est temporairement indisponible. Réessayez plus tard.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">26</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainUnavailable" datatype="html">
+        <source>Verify an active company domain before enabling discovery or approving this request.</source>
+        <target>Vérifiez un domaine d’entreprise actif avant d’activer la découverte ou d’approuver cette demande.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.domainLimit" datatype="html">
+        <source>This organization has reached its company domain limit.</source>
+        <target>Cette organisation a atteint sa limite de domaines d’entreprise.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.roleRequired" datatype="html">
+        <source>Choose at least one authorized role.</source>
+        <target>Choisissez au moins un rôle autorisé.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.roleIneligible" datatype="html">
+        <source>This role is not eligible for the selected membership policy. Choose another role.</source>
+        <target>Ce rôle n’est pas éligible pour cette politique d’adhésion. Choisissez-en un autre.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">30</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.roleInUse" datatype="html">
+        <source>This role is used for immediate membership. Replace it in access settings before changing it.</source>
+        <target>Ce rôle est utilisé pour l’adhésion immédiate. Remplacez-le dans les paramètres d’accès avant de le modifier.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.requestCooldown" datatype="html">
+        <source>A recent request was rejected. Wait seven days before requesting again, or ask for an invitation.</source>
+        <target>Une demande récente a été refusée. Patientez sept jours avant de réessayer ou demandez une invitation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.requestPending" datatype="html">
+        <source>A membership request is already awaiting review.</source>
+        <target>Une demande d’adhésion est déjà en attente d’examen.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.requestNotPending" datatype="html">
+        <source>This request can no longer be reviewed. Refresh the list to see its current status.</source>
+        <target>Cette demande ne peut plus être examinée. Actualisez la liste pour consulter son statut.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.emailChanged" datatype="html">
+        <source>Your email address has changed. Verify your current address before continuing.</source>
+        <target>Votre adresse email a changé. Vérifiez votre adresse actuelle avant de continuer.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.emailProofRequired" datatype="html">
+        <source>Verify your email address before discovering or joining an organization.</source>
+        <target>Vérifiez votre adresse email avant de rechercher ou de rejoindre une organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.invitationAvailable" datatype="html">
+        <source>You already have an invitation to this organization. Accept that invitation to continue.</source>
+        <target>Vous avez déjà une invitation à cette organisation. Acceptez-la pour continuer.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.approvalRequired" datatype="html">
+        <source>An administrator must approve your membership. Send a request to join.</source>
+        <target>Un administrateur doit valider votre adhésion. Envoyez une demande.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">38</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.modeInvalid" datatype="html">
+        <source>Choose a valid organization access policy.</source>
+        <target>Choisissez une politique d’accès valide.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.invalidRequest" datatype="html">
+        <source>This request is no longer valid. Refresh the page and try again.</source>
+        <target>Cette demande n’est plus valide. Actualisez la page et réessayez.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.unavailable" datatype="html">
+        <source>This organization is not available to join.</source>
+        <target>Cette organisation ne peut pas être rejointe.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.quota" datatype="html">
+        <source>The organization has no member seats available. Ask an administrator to review its plan.</source>
+        <target>L’organisation n’a plus de place disponible. Demandez à un administrateur de vérifier son offre.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.forbidden" datatype="html">
+        <source>You do not have permission to perform this action.</source>
+        <target>Vous n’avez pas la permission d’effectuer cette action.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.rateLimited" datatype="html">
+        <source>Too many attempts. Wait a moment before trying again.</source>
+        <target>Trop de tentatives. Patientez un instant avant de réessayer.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.error.fallback" datatype="html">
+        <source>Could not complete this request. Try again.</source>
+        <target>La demande n’a pas pu aboutir. Réessayez.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/utils/organization-access-error/organization-access-error.utils.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.requestSent" datatype="html">
+        <source>Request sent. No access has been granted yet.</source>
+        <target>Demande envoyée. Aucun accès n’a encore été accordé.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">33,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.emailConfirmed" datatype="html">
+        <source>Email address verified. Available organizations are being refreshed.</source>
+        <target>Adresse email vérifiée. Les organisations disponibles sont en cours d’actualisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">37,39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.requestCancelled" datatype="html">
+        <source>Request cancelled.</source>
+        <target>Demande annulée.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
+          <context context-type="linenumber">40,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.verifiedAddress" datatype="html">
+        <source>Address</source>
+        <target>Adresse</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressRequired" datatype="html">
+        <source>Select a suggested address.</source>
+        <target>Sélectionnez une adresse proposée.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressPlaceholder" datatype="html">
+        <source>Start typing a street and city</source>
+        <target>Saisissez une rue et une ville</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressSearching" datatype="html">
+        <source>Searching addresses…</source>
+        <target>Recherche d’adresses…</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressFailed" datatype="html">
+        <source>Address search is unavailable. Try again.</source>
+        <target>La recherche d’adresses est indisponible. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressStart" datatype="html">
+        <source>Enter at least 3 characters.</source>
+        <target>Saisissez au moins 3 caractères.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressEmpty" datatype="html">
+        <source>No address found. Include the street and city.</source>
+        <target>Aucune adresse trouvée. Précisez la rue et la ville.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressHint" datatype="html">
+        <source>Choose a suggestion to confirm the location.</source>
+        <target>Choisissez une suggestion pour confirmer l’emplacement.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.addressRetry" datatype="html">
+        <source>Retry address search</source>
+        <target>Réessayer la recherche d’adresse</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.capacity" datatype="html">
+        <source>This step is limited to 5 invitations, including those already sent. You can invite more people from your organization later.</source>
+        <target>Cette étape est limitée à 5 invitations, y compris celles déjà envoyées. Vous pourrez inviter d’autres personnes depuis votre organisation.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.defaultRole" datatype="html">
+        <source>Default role</source>
+        <target>Rôle par défaut</target>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.duplicateEmail" datatype="html">
+        <source>This email is already in this invitation batch.</source>
+        <target>Cette adresse email figure déjà dans cette liste d’invitations.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.city" datatype="html">
+        <source>City</source>
+        <target>Ville</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.country" datatype="html">
+        <source>Country</source>
+        <target>Pays</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.postalCode" datatype="html">
+        <source>ZIP / postal code</source>
+        <target>Code postal</target>
+      </trans-unit>
+      <trans-unit id="onboarding.facilitiesForm.cityRequired" datatype="html">
+        <source>City is required.</source>
+        <target>La ville est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="account.locale.system" datatype="html">
+        <source>Use my browser language</source>
+        <target>Utiliser la langue du navigateur</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/options/user-locale-options.constants.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.password.confirmPlaceholder" datatype="html">
+        <source>Repeat your new password</source>
+        <target>Répétez votre nouveau mot de passe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-password-form/account-password-form.component.html</context>
+          <context context-type="linenumber">107,108</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/dialogs/federated-password-setup-dialog/federated-password-setup-dialog.component.html</context>
+          <context context-type="linenumber">103,104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.password.description" datatype="html">
+        <source> Changing it takes two steps, so a stolen session cannot lock you out. </source>
+        <target>Le changement se fait en deux étapes pour empêcher une session volée de bloquer votre accès.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-security-page/account-security-page.component.html</context>
+          <context context-type="linenumber">191,193</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.password.newPlaceholder" datatype="html">
+        <source>Your new password</source>
+        <target>Votre nouveau mot de passe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-password-form/account-password-form.component.html</context>
+          <context context-type="linenumber">90,91</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/dialogs/federated-password-setup-dialog/federated-password-setup-dialog.component.html</context>
+          <context context-type="linenumber">86,87</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.password.title" datatype="html">
+        <source> Password </source>
+        <target>Mot de passe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-security-page/account-security-page.component.html</context>
+          <context context-type="linenumber">188,190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.accountTitle" datatype="html">
+        <source> Account </source>
+        <target>Compte</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">103,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.detailsTitle" datatype="html">
+        <source> Details </source>
+        <target>Informations</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">82,84</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.emailLabel" datatype="html">
+        <source>Email</source>
+        <target>Adresse e-mail</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">112,113</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.emailUnverified" datatype="html">
+        <source>Not confirmed</source>
+        <target>Non confirmée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">117,120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.errorDescription" datatype="html">
+        <source> Your details can&apos;t be shown or edited until we know who you are. </source>
+        <target>Vos informations ne peuvent être affichées ou modifiées tant que votre identité n’est pas disponible.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">11,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your account</source>
+        <target>Impossible de charger votre compte</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">9,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.firstNameLabel" datatype="html">
+        <source>First name</source>
+        <target>Prénom</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">6,9</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.firstNameMaxLength" datatype="html">
+        <source>Use at most <x id="max" equiv-text="NAME_MAX_LENGTH"/> characters</source>
+        <target>Utilisez au maximum <x id="max" equiv-text="NAME_MAX_LENGTH"/> caractères</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.ts</context>
+          <context context-type="linenumber">189</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.firstNamePlaceholder" datatype="html">
+        <source>Ada</source>
+        <target>Ada</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.lastNameLabel" datatype="html">
+        <source>Last name</source>
+        <target>Nom</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">28,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.lastNameMaxLength" datatype="html">
+        <source>Use at most <x id="max" equiv-text="NAME_MAX_LENGTH"/> characters</source>
+        <target>Utilisez au maximum <x id="max" equiv-text="NAME_MAX_LENGTH"/> caractères</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.ts</context>
+          <context context-type="linenumber">192</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.lastNamePlaceholder" datatype="html">
+        <source>Lovelace</source>
+        <target>Lovelace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">35,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.lastSignInLabel" datatype="html">
+        <source> Last sign-in </source>
+        <target>Dernière connexion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">135,137</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.localeHint" datatype="html">
+        <source>Applies the next time this page loads.</source>
+        <target>S’applique au prochain chargement de cette page.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">73,75</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.localeLabel" datatype="html">
+        <source>Interface language</source>
+        <target>Langue de l’interface</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">49,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.localePlaceholder" datatype="html">
+        <source>Choose a language</source>
+        <target>Choisir une langue</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">55,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.memberSinceLabel" datatype="html">
+        <source> Member since </source>
+        <target>Membre depuis</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">126,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.pictureDescription" datatype="html">
+        <source> Choose the picture shown to teammates throughout Fireguard. </source>
+        <target>Choisissez la photo visible par vos collègues dans Fireguard.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">54,58</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.pictureTitle" datatype="html">
+        <source> Profile picture </source>
+        <target>Photo de profil</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">51,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">22,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.rolesLabel" datatype="html">
+        <source> Roles </source>
+        <target>Rôles</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-profile-page/account-profile-page.component.html</context>
+          <context context-type="linenumber">144,146</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.submit" datatype="html">
+        <source>Save changes</source>
+        <target>Enregistrer les modifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">90,93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.profile.submitting" datatype="html">
+        <source>Saving…</source>
+        <target>Enregistrement…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/forms/account-profile-form/account-profile-form.component.html</context>
+          <context context-type="linenumber">88,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.security.errorDescription" datatype="html">
+        <source> Your security settings can&apos;t be shown until we know who you are. </source>
+        <target>Vos paramètres de sécurité ne peuvent être affichés tant que votre identité n’est pas disponible.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-security-page/account-security-page.component.html</context>
+          <context context-type="linenumber">11,14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.security.errorTitle" datatype="html">
+        <source>Couldn&apos;t load your account</source>
+        <target>Impossible de charger votre compte</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-security-page/account-security-page.component.html</context>
+          <context context-type="linenumber">9,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.security.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/pages/account-security-page/account-security-page.component.html</context>
+          <context context-type="linenumber">22,24</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.password.requirements.met" datatype="html">
+        <source>Met</source>
+        <target>Satisfait</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.ts</context>
+          <context context-type="linenumber">320</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="auth.password.requirements.notMet" datatype="html">
+        <source>Not met</source>
+        <target>À compléter</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/ui/forms/register-form/register-form.component.ts</context>
+          <context context-type="linenumber">330</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.notFound.back" datatype="html">
+        <source>Go back</source>
+        <target>Revenir en arrière</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">48,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.notFound.description" datatype="html">
+        <source>The link may be out of date, or the record it pointed to may have been removed.</source>
+        <target>Le lien est peut-être obsolète, ou l’élément auquel il renvoyait a été supprimé.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">37,38</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.notFound.home" datatype="html">
+        <source> Go to my workspace </source>
+        <target>Accéder à mon espace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">44,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="error.notFound.title" datatype="html">
+        <source>That page is not here</source>
+        <target>Cette page est introuvable</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/error/ui/pages/not-found-page/not-found-page.component.html</context>
+          <context context-type="linenumber">35,36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.sync.queueAriaLabel" datatype="html">
+        <source>Waiting to sync</source>
+        <target>En attente de synchronisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-indicator/intervention-sync-indicator.component.html</context>
+          <context context-type="linenumber">108,109</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.sync.queueDiscard" datatype="html">
+        <source>Discard</source>
+        <target>Supprimer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-indicator/intervention-sync-indicator.component.html</context>
+          <context context-type="linenumber">161,163</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.sync.queueLoading" datatype="html">
+        <source> Reading the queue… </source>
+        <target>Lecture de la file d’attente…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-indicator/intervention-sync-indicator.component.html</context>
+          <context context-type="linenumber">102,104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.sync.queueRetry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-sync-indicator/intervention-sync-indicator.component.html</context>
+          <context context-type="linenumber">149,151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.planForm.unavailable" datatype="html">
+        <source>Monthly price unavailable</source>
+        <target>Tarif mensuel indisponible</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/onboarding-plan-form/onboarding-plan-form.component.ts</context>
+          <context context-type="linenumber">78</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/onboarding-plan-form/onboarding-plan-form.component.ts</context>
+          <context context-type="linenumber">292</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.forbiddenDesc" datatype="html">
+        <source> Ask an organization admin to grant you read access to the member directory. </source>
+        <target>Demandez à un administrateur de l’organisation de vous donner accès à l’annuaire des membres.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">253,254</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.forbiddenTitle" datatype="html">
+        <source> Not available with your permissions </source>
+        <target>Vos permissions ne permettent pas cet accès</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">250,251</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilterAll" datatype="html">
+        <source>All roles</source>
+        <target>Tous les rôles</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">232,233</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">757</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilterAriaLabel" datatype="html">
+        <source>Filter by role</source>
+        <target>Filtrer par rôle</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">224,225</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilterUnknown" datatype="html">
+        <source>Unknown role</source>
+        <target>Rôle inconnu</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.ts</context>
+          <context context-type="linenumber">761</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.members.selectRows" datatype="html">
+        <source>Select</source>
+        <target>Sélectionner</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-members-page/organization-members-page.component.html</context>
+          <context context-type="linenumber">209,211</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.errorTitle" datatype="html">
+        <source> Search is temporarily unavailable </source>
+        <target>La recherche est temporairement indisponible</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">149,151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.hintDescription" datatype="html">
+        <source> Enter at least 2 characters to find equipment, facilities, interventions, inspections and non-conformities. </source>
+        <target>Saisissez au moins 2 caractères pour trouver des équipements, sites, interventions, inspections et non-conformités.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">90,92</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.hintTitle" datatype="html">
+        <source> Search across your workspace </source>
+        <target>Rechercher dans votre espace</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">84,86</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.keepTypingDescription" datatype="html">
+        <source> Search starts after 2 characters so results stay relevant. </source>
+        <target>La recherche commence à partir de 2 caractères pour obtenir des résultats pertinents.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">101,103</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.keepTypingTitle" datatype="html">
+        <source> Add one more character </source>
+        <target>Ajoutez un caractère</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">95,97</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.keyboard.close" datatype="html">
+        <source>Close</source>
+        <target>Fermer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">253,256</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.keyboard.navigate" datatype="html">
+        <source>Navigate</source>
+        <target>Naviguer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">245,247</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.keyboard.open" datatype="html">
+        <source>Open</source>
+        <target>Ouvrir</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">249,251</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.loadingDescription" datatype="html">
+        <source> Looking through your organization&apos;s operational records. </source>
+        <target>Recherche dans les données opérationnelles de votre organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">132,134</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.noResultsTitle" datatype="html">
+        <source> No matching records </source>
+        <target>Aucun résultat correspondant</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">168,170</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.resultPlural" datatype="html">
+        <source>results</source>
+        <target>résultats</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">184,186</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.resultSingular" datatype="html">
+        <source>result</source>
+        <target>résultat</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">182,184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.resultsSummary" datatype="html">
+        <source> Results for “<x id="INTERPOLATION" equiv-text="{{ term().trim() }}"/>” </source>
+        <target>Résultats pour « <x id="INTERPOLATION" equiv-text="{{ term().trim() }}"/> »</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">177,179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.trigger.label" datatype="html">
+        <source>Search</source>
+        <target>Rechercher</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">17,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.visibleDescription" datatype="html">
+        <source> Find operational records and open their detail page without leaving your current work. </source>
+        <target>Trouvez des données opérationnelles et consultez leurs détails sans quitter votre travail en cours.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">52,55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.search.visibleTitle" datatype="html">
+        <source> Search this organization </source>
+        <target>Rechercher dans cette organisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
+          <context context-type="linenumber">49,51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.billingCadenceAria" datatype="html">
+        <source>Billing frequency</source>
+        <target>Fréquence de facturation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.includes" datatype="html">
+        <source>Included:</source>
+        <target>Inclus :</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">125,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.includesPrevious" datatype="html">
+        <source> Everything in <x id="INTERPOLATION" equiv-text="{{ inheritedPlanName }}"/>, plus: </source>
+        <target>Tout ce qui est inclus dans <x id="INTERPOLATION" equiv-text="{{ inheritedPlanName }}"/>, plus :</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">122,123</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.monthly" datatype="html">
+        <source>Monthly</source>
+        <target>Mensuelle</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.popular" datatype="html">
+        <source>Most popular</source>
+        <target>Le plus populaire</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">69,71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.settings.plan.yearly" datatype="html">
+        <source>Annual</source>
+        <target>Annuelle</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/organization-plan-selector/organization-plan-selector.component.html</context>
+          <context context-type="linenumber">44,46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.accountNotifications" datatype="html">
+        <source>Notifications</source>
+        <target>Notifications</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.accountProfile" datatype="html">
+        <source>Your account</source>
+        <target>Votre compte</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.accountSecurity" datatype="html">
+        <source>Security</source>
+        <target>Sécurité</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">38</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/account.routes.ts</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.forgotPassword" datatype="html">
+        <source>Reset your password</source>
+        <target>Réinitialiser votre mot de passe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.login" datatype="html">
+        <source>Sign in</source>
+        <target>Connexion</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.mfaVerify" datatype="html">
+        <source>Two-factor verification</source>
+        <target>Vérification à deux facteurs</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">62</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.newPassword" datatype="html">
+        <source>Choose a new password</source>
+        <target>Choisir un nouveau mot de passe</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">89</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.passwordResetVerify" datatype="html">
+        <source>Enter your reset code</source>
+        <target>Saisir votre code de réinitialisation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.register" datatype="html">
+        <source>Create account</source>
+        <target>Créer un compte</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.registerVerify" datatype="html">
+        <source>Confirm your email</source>
+        <target>Confirmer votre adresse e-mail</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/auth/auth.routes.ts</context>
+          <context context-type="linenumber">55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.chart.lineChart.empty.title" datatype="html">
+        <source>No data</source>
+        <target>Aucune donnée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/chart/ui/components/line-chart/line-chart.component.ts</context>
+          <context context-type="linenumber">256</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="org.access.roleUnavailable" datatype="html">
+        <source>Role unavailable</source>
+        <target>Rôle indisponible</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-join-request-review-dialog/organization-join-request-review-dialog.component.ts</context>
+          <context context-type="linenumber">121</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/forms/organization-access-policy-form/organization-access-policy-form.component.ts</context>
+          <context context-type="linenumber">111</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.commandFailed" datatype="html">
+        <source>We could not complete this action. Please try again.</source>
+        <target>Impossible de terminer cette action. Veuillez réessayer.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/workspace/workspace.store.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.createReady" datatype="html">
+        <source>Your workspace setup is ready.</source>
+        <target>La configuration de votre espace est prête.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/workspace/workspace.store.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.joined" datatype="html">
+        <source>You have joined the organization.</source>
+        <target>Vous avez rejoint l’organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/workspace/workspace.store.ts</context>
+          <context context-type="linenumber">217</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.workspace.proofSent" datatype="html">
+        <source>Verification code sent. Check your inbox.</source>
+        <target>Code de vérification envoyé. Consultez votre boîte de réception.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/workspace/workspace.store.ts</context>
+          <context context-type="linenumber">326</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.failed" datatype="html">
+        <source>Setup could not be saved. Your prepared items are available to retry.</source>
+        <target>La configuration n’a pas pu être enregistrée. Vos éléments préparés sont conservés pour réessayer.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/setup/setup.store.ts</context>
+          <context context-type="linenumber">164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.loading" datatype="html">
+        <source>Restoring your setup…</source>
+        <target>Restauration de votre configuration…</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-wizard-page/onboarding-wizard-page.component.html</context>
+          <context context-type="linenumber">73,74</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.saved" datatype="html">
+        <source>This item has already been created. Continue to confirm this step.</source>
+        <target>Cet élément a déjà été créé. Continuez pour confirmer cette étape.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-wizard-page/onboarding-wizard-page.component.html</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.confirm" datatype="html">
+        <source>Continue setup</source>
+        <target>Continuer la configuration</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-wizard-page/onboarding-wizard-page.component.html</context>
+          <context context-type="linenumber">80,82</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.unavailable" datatype="html">
+        <source>Your setup could not be restored. Please refresh and try again.</source>
+        <target>Impossible de restaurer votre configuration. Actualisez la page et réessayez.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/setup/setup.store.ts</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/setup/setup.store.ts</context>
+          <context context-type="linenumber">315</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.organizationUnavailable" datatype="html">
+        <source>Your organization could not be restored. Please refresh and try again.</source>
+        <target>Impossible de retrouver votre organisation. Actualisez la page et réessayez.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/setup/setup.store.ts</context>
+          <context context-type="linenumber">196</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.setup.incomplete" datatype="html">
+        <source>Some items are still pending. Please try again to finish your setup.</source>
+        <target>Certains éléments sont encore en attente. Réessayez pour terminer votre configuration.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/state/setup/setup.store.ts</context>
+          <context context-type="linenumber">365</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="onboarding.membersForm.requiredGate" datatype="html">
+        <source>Add at least one email.</source>
+        <target>Ajoutez au moins une adresse e-mail.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/onboarding/ui/forms/onboarding-members-form/onboarding-members-form.component.ts</context>
+          <context context-type="linenumber">383</context>
+        </context-group>
       </trans-unit>
     </body>
   </file>

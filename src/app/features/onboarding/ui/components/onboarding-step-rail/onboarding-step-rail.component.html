@@ -1,51 +1,46 @@
-<div class="flex flex-col gap-4">
-  <div class="flex items-center justify-between gap-3">
-    <p class="text-xs font-medium text-muted-foreground">{{ progressLabel() }}</p>
-  </div>
-  <hlm-progress
-    [value]="progress().total ? (progress().done / progress().total) * 100 : 0"
-    aria-hidden="true"
-    ><hlm-progress-indicator class="motion-reduce:transition-none"
-  /></hlm-progress>
-
-  <ol class="flex flex-col">
-    @for (row of rows(); track row.key; let isLast = $last) {
+<div class="flex flex-col gap-6">
+  @if (!compact()) {
+    <div class="flex flex-col gap-3">
+      <p class="text-xs text-muted-foreground">{{ progressLabel() }}</p>
+      <hlm-progress
+        [value]="progress().total ? (progress().done / progress().total) * 100 : 0"
+        aria-hidden="true"
+      >
+        <hlm-progress-indicator class="motion-reduce:transition-none" />
+      </hlm-progress>
+    </div>
+  }
+  <ol hlmItemGroup class="gap-1">
+    @for (row of rows(); track row.key) {
       <li
-        class="relative flex gap-3 pb-3 last:pb-0"
+        hlmItem
+        size="sm"
+        [variant]="row.isActive ? 'muted' : 'default'"
+        class="min-w-0 flex-nowrap items-start"
         [attr.aria-current]="row.isActive ? 'step' : null"
       >
-        @if (!isLast) {
-          <span
-            class="absolute top-8 left-[15px] h-[calc(100%-2rem)] w-px bg-foreground/10"
-            aria-hidden="true"
-          ></span>
-        }
-
-        <span
-          class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full ring-1 ring-foreground/10"
-          [class.bg-foreground]="row.isActive"
-          [class.text-background]="row.isActive"
-          [class.bg-muted]="!row.isActive"
-          [class.text-muted-foreground]="!row.isActive"
-        >
-          <ng-icon [name]="row.icon" aria-hidden="true" class="text-base" />
-        </span>
-
-        <div class="flex min-w-0 flex-col gap-0.5 pt-1.5">
+        <ng-icon
+          [name]="row.isActive ? row.icon : row.statusIcon"
+          size="16px"
+          class="mt-0.5 shrink-0"
+          [class]="row.isActive ? 'text-foreground' : row.statusIconClass"
+          aria-hidden="true"
+        />
+        <div class="flex min-w-0 flex-col gap-1">
           <p
-            class="text-sm font-medium"
-            [class.text-foreground]="row.isActive"
+            class="text-sm leading-snug"
+            data-testid="onboarding-step-label"
+            [class.font-semibold]="row.isActive"
             [class.text-muted-foreground]="!row.isActive"
           >
             {{ row.label }}
           </p>
           @if (row.showSublabel) {
-            <p class="text-xs text-muted-foreground">{{ row.sublabel }}</p>
+            <p class="text-xs leading-relaxed text-muted-foreground">{{ row.sublabel }}</p>
           }
-          <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ng-icon [name]="row.statusIcon" [class]="row.statusIconClass" aria-hidden="true" />
-            <span [class.sr-only]="!row.statusLabelVisible">{{ row.statusLabel }}</span>
-          </p>
+          <span class="text-xs text-muted-foreground" [class.sr-only]="!row.statusLabelVisible">{{
+            row.statusLabel
+          }}</span>
         </div>
       </li>
     }

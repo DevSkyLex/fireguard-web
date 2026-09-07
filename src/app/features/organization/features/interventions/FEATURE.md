@@ -894,6 +894,10 @@ Internal code imports deep paths directly.
 
 ## Cross-Feature Dependencies
 
+- Consumes Auth's `AUTH_SESSION_PORT` for offline prefetch. Background member and intervention
+  reads wait for an authenticated session; losing that session cancels pending reads even when
+  an organization identifier remains remembered.
+
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
   `ORGANIZATION_PERMISSION` from `@features/organization/models`).

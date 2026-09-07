@@ -1,4 +1,4 @@
-<div id="organization-dashboard" class="flex min-h-0 flex-col gap-6">
+<div id="organization-dashboard" class="@container/dashboard flex min-h-0 flex-col gap-6">
   @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
     <div hlmEmpty>
       <div hlmEmptyHeader>
@@ -35,8 +35,18 @@
       </div>
     </div>
   } @else {
-    <p class="text-sm font-medium" i18n="@@org.dashboard.currentSituation">Current situation</p>
-    <section class="grid grid-cols-2 gap-3 xl:grid-cols-4" data-testid="org-dashboard-kpis">
+    @if (dashboardStore.queryData()?.generatedAt; as generatedAt) {
+      <div class="flex justify-end">
+        <p class="text-xs text-muted-foreground">
+          <span i18n="@@org.dashboard.snapshot.asOf">Data as of</span>
+          {{ generatedAt | date: 'medium' }}
+        </p>
+      </div>
+    }
+    <section
+      class="grid grid-cols-1 gap-4 @[360px]/dashboard:grid-cols-2 @[960px]/dashboard:auto-cols-fr @[960px]/dashboard:grid-flow-col @[960px]/dashboard:grid-cols-none"
+      data-testid="org-dashboard-kpis"
+    >
       @for (tile of kpiTiles(); track tile.id) {
         <div class="min-w-0" [attr.data-testid]="'org-dashboard-kpi-' + tile.id">
           <app-stat-tile
@@ -48,24 +58,24 @@
             [badge]="tile.badge"
             [delta]="tile.delta"
             [link]="tile.link"
-            [loading]="dashboardStore.isQueryLoading()"
+            [loading]="aggregateLoading()"
           />
         </div>
       }
     </section>
   }
 
-  <section class="flex flex-col gap-6" data-testid="org-dashboard-trends">
-    <div
-      class="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between"
-    >
+  <section
+    data-testid="org-dashboard-trends"
+    class="grid min-w-0 grid-cols-1 gap-4 @[960px]/dashboard:grid-cols-2"
+  >
+    <div class="flex min-w-0 flex-col gap-3">
       <div>
-        <h2 hlmCardTitle i18n="@@org.dashboard.trends.title">Trends</h2>
-        <p class="text-sm text-muted-foreground" i18n="@@org.dashboard.trends.scopeNote">
-          Applies to the charts and figures below, not the summary above
+        <h2 class="font-semibold" i18n="@@org.dashboard.activity.title">Activity</h2>
+        <p class="text-sm text-muted-foreground" i18n="@@org.dashboard.activity.scope">
+          Period controls apply to activity charts only.
         </p>
       </div>
-
       <div class="flex flex-wrap items-center gap-3">
         <hlm-toggle-group
           type="single"
@@ -80,7 +90,7 @@
         >
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11"
+            class="max-sm:min-h-11 max-sm:min-w-11"
             value="7d"
             i18n="@@org.statistics.period.7d"
           >
@@ -88,7 +98,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11"
+            class="max-sm:min-h-11 max-sm:min-w-11"
             value="30d"
             i18n="@@org.statistics.period.30d"
           >
@@ -96,7 +106,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11"
+            class="max-sm:min-h-11 max-sm:min-w-11"
             value="90d"
             i18n="@@org.statistics.period.90d"
           >
@@ -104,7 +114,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11"
+            class="max-sm:min-h-11 max-sm:min-w-11"
             value="12m"
             i18n="@@org.statistics.period.12m"
           >
@@ -115,9 +125,10 @@
         <hlm-field orientation="horizontal" class="w-auto gap-2">
           <label
             hlmFieldLabel
+            class="max-sm:min-h-11 max-sm:min-w-11"
             for="org-statistics-compare"
-            i18n="@@org.statistics.compareToggle.label"
-            >Compare to previous period</label
+            i18n="@@org.dashboard.comparison.toggle"
+            >Compare</label
           >
           <hlm-switch
             inputId="org-statistics-compare"
@@ -127,153 +138,249 @@
           />
         </hlm-field>
       </div>
+
+      @if (
+        (overviewTrendStore.isQueryLoading() && overviewTrendStore.queryData()) ||
+        (assetGrowthTrendStore.isQueryLoading() && assetGrowthTrendStore.queryData())
+      ) {
+        <p role="status" class="text-xs text-muted-foreground" i18n="@@org.dashboard.refreshing">
+          Updating charts… Previous period remains visible.
+        </p>
+      }
     </div>
+    <div class="hidden flex-col justify-between gap-2 @[960px]/dashboard:flex">
+      <div>
+        <h2 class="font-semibold" i18n="@@org.dashboard.risks.title">Risks and follow-up</h2>
+        <p class="text-sm text-muted-foreground" i18n="@@org.dashboard.risks.scope">
+          Current snapshot, independent of the selected period
+        </p>
+      </div>
+    </div>
+
+    <section hlmCard class="min-w-0" data-testid="org-statistics-chart-inspections">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ inspectionsSeriesName }}</h3>
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="text-2xl font-semibold tabular-nums">{{
+            inspectionsTotal() === null ? '—' : (inspectionsTotal() | number)
+          }}</span>
+          @if (inspectionsDeltaLine(); as delta) {
+            <span class="text-xs text-muted-foreground">{{ delta }}</span>
+          }
+        </div>
+        <p class="text-xs text-muted-foreground">
+          {{ formatLoadedPeriod(overviewTrendStore.queryData()?.inspections?.period) }}
+        </p>
+      </div>
+      <div hlmCardContent class="mt-auto" [attr.aria-busy]="overviewTrendStore.isQueryLoading()">
+        @if (overviewTrendStore.queryHasError()) {
+          <app-organization-trend-chart-notice
+            [icon]="
+              isForbidden(overviewTrendStore.queryError()) ? 'lucideLock' : 'lucideTriangleAlert'
+            "
+            [message]="
+              isForbidden(overviewTrendStore.queryError())
+                ? forbiddenMessage
+                : trendLoadErrorMessage
+            "
+          >
+            @if (!isForbidden(overviewTrendStore.queryError())) {
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="max-sm:min-h-11"
+                (click)="retryOverviewTrend()"
+                i18n="@@org.statistics.retry"
+              >
+                Retry
+              </button>
+            }
+          </app-organization-trend-chart-notice>
+        } @else {
+          <app-line-chart
+            [series]="inspectionsChartSeries()"
+            [label]="inspectionsChartLabel"
+            [loading]="overviewTrendStore.isQueryLoading() && !overviewTrendStore.queryData()"
+            [height]="240"
+            [showPoints]="false"
+            integerAxis
+            area
+          />
+        }
+      </div>
+    </section>
 
     @if (!dashboardStore.queryHasError()) {
-      <div hlmCard>
+      <app-organization-dashboard-risk
+        [overview]="dashboardStore.queryData()?.overview ?? null"
+        [loading]="aggregateLoading()"
+      />
+    } @else {
+      <section hlmCard>
         <div hlmCardHeader>
-          <h3 hlmCardTitle i18n="@@org.statistics.severity.title">Non-conformities by severity</h3>
-          <p hlmCardDescription>{{ severitySummaryLine() }}</p>
+          <h3 hlmCardTitle i18n="@@org.dashboard.risk.title">Non-conformity follow-up</h3>
         </div>
-        <div hlmCardContent class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          @if (dashboardStore.isQueryLoading()) {
-            <div
-              class="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-              role="status"
-              aria-label="Loading severity breakdown…"
-              i18n-aria-label="@@org.statistics.severity.loadingAria"
-            >
-              @for (row of severitySkeletonRows; track row) {
-                <div class="flex flex-col gap-1.5">
-                  <hlm-skeleton class="h-4 w-24" />
-                  <hlm-skeleton class="h-1.5 w-full rounded-full" />
-                </div>
-              }
-            </div>
-          } @else if (severityTotal() === 0) {
-            <div hlmEmpty class="col-span-full">
-              <div hlmEmptyHeader>
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-                </div>
-                <p hlmEmptyTitle i18n="@@org.statistics.severity.empty">
-                  No non-conformities recorded.
-                </p>
-              </div>
-            </div>
-          } @else {
-            @for (entry of severityBreakdown(); track entry.severity) {
-              <div
-                class="flex flex-col gap-1.5"
-                [attr.data-testid]="'org-statistics-severity-' + entry.severity"
-              >
-                <div class="flex items-center justify-between gap-3 text-sm">
-                  <span class="flex items-center gap-1.5 text-foreground">
-                    <ng-icon
-                      [name]="entry.descriptor.icon"
-                      class="shrink-0 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    {{ entry.descriptor.label }}
-                  </span>
-                  <span class="font-medium text-foreground tabular-nums">{{ entry.count }}</span>
-                </div>
-                <hlm-progress [value]="entry.percent" [attr.aria-label]="entry.descriptor.label">
-                  <hlm-progress-indicator />
-                </hlm-progress>
-              </div>
-            }
-          }
+        <div hlmCardContent>
+          <app-organization-trend-chart-notice
+            icon="lucideTriangleAlert"
+            [message]="
+              isForbidden(dashboardStore.queryError()) ? forbiddenMessage : trendLoadErrorMessage
+            "
+          />
         </div>
-      </div>
+      </section>
     }
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div hlmCard data-testid="org-statistics-chart-inspections">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>{{ inspectionsSeriesName }}</h3>
-          @if (inspectionsSummaryLine(); as line) {
-            <p hlmCardDescription>{{ line }}</p>
-          }
-        </div>
-        <div hlmCardContent>
-          @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
-            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
-          } @else if (overviewTrendStore.queryHasError()) {
-            <app-organization-trend-chart-notice
-              icon="lucideTriangleAlert"
-              variant="error"
-              [message]="trendLoadErrorMessage"
-            >
+    <section hlmCard class="min-w-0" data-testid="org-statistics-chart-non-conformities">
+      <div hlmCardHeader>
+        <h3 hlmCardTitle>{{ nonConformitiesChartTitle }}</h3>
+        @if (nonConformitiesSummaryLine(); as summary) {
+          <p hlmCardDescription>{{ summary }}</p>
+        }
+        <p class="text-xs text-muted-foreground">
+          {{ formatLoadedPeriod(overviewTrendStore.queryData()?.inspections?.period) }}
+        </p>
+      </div>
+      <div hlmCardContent class="mt-auto" [attr.aria-busy]="overviewTrendStore.isQueryLoading()">
+        @if (overviewTrendStore.queryHasError()) {
+          <app-organization-trend-chart-notice
+            [icon]="
+              isForbidden(overviewTrendStore.queryError()) ? 'lucideLock' : 'lucideTriangleAlert'
+            "
+            [message]="
+              isForbidden(overviewTrendStore.queryError())
+                ? forbiddenMessage
+                : trendLoadErrorMessage
+            "
+          >
+            @if (!isForbidden(overviewTrendStore.queryError())) {
               <button
                 hlmBtn
                 variant="outline"
                 size="sm"
-                class="gap-2 max-sm:min-h-11"
+                class="max-sm:min-h-11"
                 (click)="retryOverviewTrend()"
+                i18n="@@org.statistics.retry"
               >
-                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
-                <span i18n="@@org.statistics.retry">Retry</span>
+                Retry
               </button>
-            </app-organization-trend-chart-notice>
-          } @else {
-            <app-line-chart
-              [series]="inspectionsChartSeries()"
-              [label]="inspectionsChartLabel"
-              [loading]="overviewTrendStore.isQueryLoading()"
-            />
-          }
-        </div>
+            }
+          </app-organization-trend-chart-notice>
+        } @else {
+          <app-line-chart
+            [series]="nonConformitiesChartSeries()"
+            [label]="nonConformitiesChartLabel"
+            [loading]="overviewTrendStore.isQueryLoading() && !overviewTrendStore.queryData()"
+            [height]="200"
+            [showPoints]="false"
+            integerAxis
+          />
+        }
       </div>
+    </section>
 
-      <div hlmCard data-testid="org-statistics-chart-non-conformities">
-        <div hlmCardHeader>
-          <h3 hlmCardTitle>{{ nonConformitiesChartTitle }}</h3>
-          @if (nonConformitiesSummaryLine(); as line) {
-            <p hlmCardDescription>{{ line }}</p>
-          }
-        </div>
-        <div hlmCardContent>
-          @if (overviewTrendStore.queryHasError() && isForbidden(overviewTrendStore.queryError())) {
-            <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
-          } @else if (overviewTrendStore.queryHasError()) {
-            <app-organization-trend-chart-notice
-              icon="lucideTriangleAlert"
-              variant="error"
-              [message]="trendLoadErrorMessage"
-            >
-              <button
-                hlmBtn
-                variant="outline"
-                size="sm"
-                class="gap-2 max-sm:min-h-11"
-                (click)="retryOverviewTrend()"
+    @if (!dashboardStore.queryHasError()) {
+      <app-organization-dashboard-alerts [rows]="alertRows()" [loading]="aggregateLoading()" />
+    }
+  </section>
+  @if (canReadInterventions() && !dashboardStore.queryHasError()) {
+    @if (organizationContext.selectedOrganizationId(); as organizationId) {
+      <app-organization-dashboard-recent
+        [organizationId]="organizationId"
+        [rows]="dashboardStore.queryData()?.recentInterventions ?? null"
+        [loading]="aggregateLoading()"
+      />
+    }
+  }
+  <div hlmCollapsible class="border-t border-border pt-4">
+    <button
+      hlmCollapsibleTrigger
+      hlmBtn
+      variant="ghost"
+      class="group w-full justify-between max-sm:min-h-11"
+      data-testid="org-dashboard-additional"
+    >
+      <span i18n="@@org.dashboard.additional.title">Additional analysis</span
+      ><ng-icon
+        name="lucideChevronDown"
+        class="transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+        aria-hidden="true"
+      />
+    </button>
+    <div hlmCollapsibleContent class="flex flex-col gap-4 pt-4">
+      @if (!dashboardStore.queryHasError()) {
+        <div hlmCard>
+          <div hlmCardHeader>
+            <h3 hlmCardTitle i18n="@@org.statistics.severity.title">
+              Non-conformities by severity
+            </h3>
+            @if (severitySummaryLine(); as summary) {
+              <p hlmCardDescription>{{ summary }}</p>
+            }
+          </div>
+          <div hlmCardContent class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            @if (aggregateLoading()) {
+              <div
+                class="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                role="status"
+                aria-label="Loading severity breakdown…"
+                i18n-aria-label="@@org.statistics.severity.loadingAria"
               >
-                <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
-                <span i18n="@@org.statistics.retry">Retry</span>
-              </button>
-            </app-organization-trend-chart-notice>
-          } @else {
-            <app-line-chart
-              [series]="nonConformitiesChartSeries()"
-              [label]="nonConformitiesChartLabel"
-              [loading]="overviewTrendStore.isQueryLoading()"
-            />
-          }
+                @for (row of severitySkeletonRows; track row) {
+                  <div class="flex flex-col gap-1.5">
+                    <hlm-skeleton class="h-4 w-24" />
+                    <hlm-skeleton class="h-1.5 w-full rounded-full" />
+                  </div>
+                }
+              </div>
+            } @else if (!severityAvailable()) {
+              <div hlmEmpty class="col-span-full">
+                <div hlmEmptyHeader>
+                  <p hlmEmptyTitle i18n="@@org.dashboard.severity.unavailable">
+                    Severity breakdown unavailable
+                  </p>
+                </div>
+              </div>
+            } @else if (severityTotal() === 0) {
+              <div hlmEmpty class="col-span-full">
+                <div hlmEmptyHeader>
+                  <div hlmEmptyMedia variant="icon">
+                    <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+                  </div>
+                  <p hlmEmptyTitle i18n="@@org.statistics.severity.empty">
+                    No non-conformities recorded.
+                  </p>
+                </div>
+              </div>
+            } @else {
+              @for (entry of severityBreakdown(); track entry.severity) {
+                <div
+                  class="flex flex-col gap-1.5"
+                  [attr.data-testid]="'org-statistics-severity-' + entry.severity"
+                >
+                  <div class="flex items-center justify-between gap-3 text-sm">
+                    <span class="flex items-center gap-1.5 text-foreground">
+                      <ng-icon
+                        [name]="entry.descriptor.icon"
+                        class="shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      {{ entry.descriptor.label }}
+                    </span>
+                    <span class="font-medium text-foreground tabular-nums">{{ entry.count }}</span>
+                  </div>
+                  <hlm-progress [value]="entry.percent" [attr.aria-label]="entry.descriptor.label">
+                    <hlm-progress-indicator />
+                  </hlm-progress>
+                </div>
+              }
+            }
+          </div>
         </div>
-      </div>
-    </div>
-    <div hlmCollapsible>
-      <button
-        hlmCollapsibleTrigger
-        hlmBtn
-        variant="ghost"
-        class="w-full justify-start max-sm:min-h-11"
-        i18n="@@org.dashboard.assetGrowth"
-      >
-        Resource additions — equipment and facilities
-      </button>
-      <div hlmCollapsibleContent class="grid gap-4 pt-4 lg:grid-cols-2">
+      }
+
+      <div class="grid gap-4 @[960px]/dashboard:grid-cols-2">
         <div hlmCard data-testid="org-statistics-chart-equipment">
           <div hlmCardHeader>
             <h3 hlmCardTitle>{{ equipmentSeriesName }}</h3>
@@ -282,6 +389,9 @@
             }
           </div>
           <div hlmCardContent>
+            <p class="mb-3 text-xs text-muted-foreground">
+              {{ formatLoadedPeriod(assetGrowthTrendStore.queryData()?.equipment?.period) }}
+            </p>
             @if (!assetGrowthTrendStore.canReadEquipment()) {
               <app-organization-trend-chart-notice icon="lucideLock" [message]="forbiddenMessage" />
             } @else if (assetGrowthTrendStore.queryHasError()) {
@@ -305,7 +415,12 @@
               <app-line-chart
                 [series]="equipmentChartSeries()"
                 [label]="equipmentChartLabel"
-                [loading]="assetGrowthTrendStore.isQueryLoading()"
+                [loading]="
+                  assetGrowthTrendStore.isQueryLoading() && !assetGrowthTrendStore.queryData()
+                "
+                [height]="220"
+                [showPoints]="false"
+                integerAxis
                 area
               />
             }
@@ -315,6 +430,9 @@
         <div hlmCard data-testid="org-statistics-chart-facilities">
           <div hlmCardHeader>
             <h3 hlmCardTitle>{{ facilitiesSeriesName }}</h3>
+            <p class="text-xs text-muted-foreground">
+              {{ formatLoadedPeriod(assetGrowthTrendStore.queryData()?.facilities?.period) }}
+            </p>
             @if (facilitiesSummaryLine(); as line) {
               <p hlmCardDescription>{{ line }}</p>
             }
@@ -343,7 +461,12 @@
               <app-line-chart
                 [series]="facilitiesChartSeries()"
                 [label]="facilitiesChartLabel"
-                [loading]="assetGrowthTrendStore.isQueryLoading()"
+                [loading]="
+                  assetGrowthTrendStore.isQueryLoading() && !assetGrowthTrendStore.queryData()
+                "
+                [height]="220"
+                [showPoints]="false"
+                integerAxis
                 area
               />
             }
@@ -351,21 +474,5 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </div>
-<ng-template #pageActions>
-  @if (canCreateInterventions()) {
-    <button
-      hlmBtn
-      class="min-w-0 shrink gap-2 max-sm:min-h-11"
-      i18n-aria-label="@@org.today.newIntervention"
-      aria-label="New intervention"
-      (click)="startIntervention()"
-    >
-      <ng-icon name="lucidePlus" class="text-sm" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@org.today.newIntervention"
-        >New intervention</span
-      >
-    </button>
-  }
-</ng-template>

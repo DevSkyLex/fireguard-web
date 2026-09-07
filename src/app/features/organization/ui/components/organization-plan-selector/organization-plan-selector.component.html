@@ -49,7 +49,8 @@
     @for (row of rows(); track row.id) {
       <div
         hlmCard
-        class="relative h-full w-full"
+        class="relative h-full w-full border border-border"
+        [class.border-2]="row.isPopular"
         [class.border-primary]="row.isPopular"
         [attr.data-testid]="'organization-plan-card-' + row.key"
       >

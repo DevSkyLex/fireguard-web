@@ -3,6 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
   untracked,
   computed,
   effect,
@@ -13,8 +16,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { Observable } from 'rxjs';
-import { catchError, forkJoin, map, of, tap } from 'rxjs';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronDown } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
+import { forkJoin } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import {
   idleCallState,
@@ -22,13 +27,24 @@ import {
   successCallState,
   errorCallState,
   toStoreError,
+  toStoreFailureEventPayload,
   type CallState,
   type StoreError,
 } from '@core/request-state';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
-import type { OnboardingStepKey, OnboardingStepOutput } from '@features/onboarding/models';
-import { OnboardingStore } from '@features/onboarding/state';
+import type {
+  OnboardingOutput,
+  OnboardingStepKey,
+  OnboardingStepOutput,
+  OnboardingSetupStep,
+} from '@features/onboarding/models';
+import {
+  OnboardingStore,
+  FacilityAddressSearchStore,
+  OnboardingSetupStore,
+  onboardingSetupEvents,
+} from '@features/onboarding/state';
 import { OnboardingStepRail } from '@features/onboarding/ui/components';
 import {
   OnboardingEquipmentForm,
@@ -84,13 +100,13 @@ export function redirectToStripe(documentRef: Document, url: string): void {
  * @class OnboardingWizardPage
  *
  * @description
- * The mandatory activation wizard's route entry, `/onboarding`. Orchestrates
+ * The organization creation wizard's route entry, `/onboarding/create`. Orchestrates
  * the whole flow: bootstraps the onboarding record, renders the current
- * step's rail and form, lazily loads each step's own catalog data (plans,
+ * step's compact collapsible progress above the form, lazily loads each step's own catalog data (plans,
  * pricing, roles), creates the underlying resource through
  * `@features/organization/setup`, and confirms every step through
  * `OnboardingStore` — the step bodies themselves never call a service
- * (`ARCHITECTURE.md` §10.1, §10.3). Under the heading it names the step that
+ * (`ARCHITECTURE.md` §10.1, §10.3). Below the form it names the step that
  * comes next, so the operator always knows where the flow leads; the skip
  * affordance lives in each form's footer and is relayed here. Redirects to
  * `/` the moment the record reports `completed`, announcing it with a toast.
@@ -107,6 +123,7 @@ export function redirectToStripe(documentRef: Document, url: string): void {
 @Component({
   selector: 'app-onboarding-wizard-page',
   imports: [
+    NgIcon,
     ...HlmAlertImports,
     ...HlmCollapsibleImports,
     ...HlmProgressImports,
@@ -121,10 +138,45 @@ export function redirectToStripe(documentRef: Document, url: string): void {
     OnboardingPlanForm,
     PageHeading,
   ],
+  providers: [
+    provideIcons({ lucideChevronDown }),
+    FacilityAddressSearchStore,
+    OnboardingSetupStore,
+  ],
   templateUrl: './onboarding-wizard-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingWizardPage {
+  /**
+   * Property addressSearch
+   * @readonly
+   * @description Page-scoped suggestions; the form only consumes state and emits query changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {InstanceType<typeof FacilityAddressSearchStore>}
+   */
+  protected readonly addressSearch: InstanceType<typeof FacilityAddressSearchStore> = inject(
+    FacilityAddressSearchStore,
+  );
+
+  /**
+   * Method searchFacilityAddress
+   * @method searchFacilityAddress
+   * @description Queries suggestions only for the current creator organization; clearing cancels obsolete work.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} query - Typed address query.
+   * @returns {void}
+   */
+  protected searchFacilityAddress(query: string): void {
+    const organizationId: string | null = this.store.targetOrganizationId();
+    if (!organizationId || query.trim().length < 3) {
+      this.addressSearch.clear();
+      return;
+    }
+    this.addressSearch.search({ organizationId, query });
+  }
+
   /** @description Releases in-flight setup work when the route closes. */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
@@ -152,13 +204,176 @@ export class OnboardingWizardPage {
         return null;
     }
   });
-  protected readonly completedInvitations: WritableSignal<readonly SetupInviteMemberInput[]> =
-    signal([]);
-  protected readonly completedFacilityDrafts: WritableSignal<readonly SetupCreateFacilityInput[]> =
-    signal([]);
-  protected readonly failedInvitations: WritableSignal<readonly string[]> = signal([]);
-  protected readonly failedFacilities: WritableSignal<readonly string[]> = signal([]);
-  private readonly createdSteps: Set<OnboardingStepKey> = new Set();
+  /**
+   * Property setupStore
+   * @readonly
+   * @description Browser journal that owns preparation, durable replay and batch request state.
+   * @access protected
+   * @since 1.1.0
+   * @type {InstanceType<typeof OnboardingSetupStore>}
+   */
+  protected readonly setupStore = inject(OnboardingSetupStore);
+
+  /**
+   * Property restoredInvitations
+   * @readonly
+   * @description Prepared member rows restored from the server.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly SetupInviteMemberInput[]>}
+   */
+  protected readonly restoredInvitations = computed(() =>
+    this.setupStore
+      .operations()
+      .filter((op) => op.stepKey === 'invite_members')
+      .map((op) => op.payload as SetupInviteMemberInput),
+  );
+  /**
+   * Property completedInvitations
+   * @readonly
+   * @description Member rows durably created by this session.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly SetupInviteMemberInput[]>}
+   */
+  protected readonly completedInvitations = computed(() =>
+    this.setupStore
+      .operations()
+      .filter((op) => op.stepKey === 'invite_members' && op.status === 'completed')
+      .map((op) => op.payload as SetupInviteMemberInput),
+  );
+  /**
+   * Property restoredFacilities
+   * @readonly
+   * @description Prepared facility rows restored from the server.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly SetupCreateFacilityInput[]>}
+   */
+  protected readonly restoredFacilities = computed(() =>
+    this.setupStore
+      .operations()
+      .filter((op) => op.stepKey === 'create_first_facility')
+      .map((op) => op.payload as SetupCreateFacilityInput),
+  );
+  /**
+   * Property completedFacilityDrafts
+   * @readonly
+   * @description Facility rows durably created by this session.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly SetupCreateFacilityInput[]>}
+   */
+  protected readonly completedFacilityDrafts = computed(() =>
+    this.setupStore
+      .operations()
+      .filter((op) => op.stepKey === 'create_first_facility' && op.status === 'completed')
+      .map((op) => op.payload as SetupCreateFacilityInput),
+  );
+  /**
+   * Property singleOperation
+   * @readonly
+   * @description Persisted result or draft for the singleton organization/equipment step.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<OnboardingSetupOperation | undefined>}
+   */
+  protected readonly singleOperation = computed(() =>
+    this.setupStore
+      .operations()
+      .find(
+        (op) =>
+          op.stepKey === this.store.nextStep() &&
+          (op.stepKey === 'create_organization' || op.stepKey === 'create_first_equipment'),
+      ),
+  );
+  /**
+   * Property restoredOrganization
+   * @readonly
+   * @description Prepared organization name, only editable before creation.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<SetupCreateOrganizationInput | null>}
+   */
+  protected readonly restoredOrganization: Signal<SetupCreateOrganizationInput | null> = computed(
+    () => {
+      const operation = this.singleOperation();
+      return operation?.stepKey === 'create_organization'
+        ? (operation.payload as SetupCreateOrganizationInput)
+        : null;
+    },
+  );
+  /**
+   * Property restoredEquipment
+   * @readonly
+   * @description Prepared equipment fields and assigned facility.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<SetupCreateEquipmentInput | null>}
+   */
+  protected readonly restoredEquipment = computed(() => {
+    const operation = this.singleOperation();
+    if (operation?.stepKey !== 'create_first_equipment') return null;
+    const { facility, ...payload } = operation.payload as SetupCreateEquipmentInput & {
+      facility?: string | null;
+    };
+    return { ...payload, facilityId: facility?.split('/').pop() };
+  });
+  /**
+   * Property failedInvitations
+   * @readonly
+   * @description Failed member rows remain identifiable beside their retry action.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly failedInvitations = computed(() =>
+    this.setupStore
+      .operations()
+      .filter(
+        (op) =>
+          op.stepKey === 'invite_members' && this.setupStore.failedItemKeys().includes(op.itemKey),
+      )
+      .map((op) => (op.payload as SetupInviteMemberInput).email),
+  );
+  /**
+   * Property failedFacilities
+   * @readonly
+   * @description Failed facility rows remain identifiable beside their retry action.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly failedFacilities = computed(() =>
+    this.setupStore
+      .operations()
+      .filter(
+        (op) =>
+          op.stepKey === 'create_first_facility' &&
+          this.setupStore.failedItemKeys().includes(op.itemKey),
+      )
+      .map((op) => (op.payload as SetupCreateFacilityInput).name),
+  );
+  /**
+   * Property host
+   * @readonly
+   * @description Locates the rendered step heading for keyboard focus after progression.
+   * @access private
+   * @since 1.1.0
+   * @type {ElementRef<HTMLElement>}
+   */
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Property injector
+   * @readonly
+   * @description Schedules browser-only focus after the new step has rendered.
+   * @access private
+   * @since 1.1.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
   protected readonly stepNumberLabel: Signal<string> = computed(() => {
     const position = Math.max(
       1,
@@ -242,6 +457,31 @@ export class OnboardingWizardPage {
    * @type {Document}
    */
   private readonly document: Document = inject<Document>(DOCUMENT);
+
+  /**
+   * Property actionFocus
+   * @description Remembers the initiating control while a request temporarily disables it.
+   * @access private
+   * @since 1.1.0
+   * @type {{ element: HTMLElement; stepKey: OnboardingStepKey | null } | null}
+   */
+  private actionFocus: { element: HTMLElement; stepKey: OnboardingStepKey | null } | null = null;
+
+  /**
+   * Method rememberActionFocus
+   * @method rememberActionFocus
+   * @description Captures the initiating control before native disabling blurs it; restoration never overrides another focused control.
+   * @access private
+   * @since 1.1.0
+   * @returns {void}
+   */
+  private rememberActionFocus(): void {
+    const active = this.document.activeElement;
+    this.actionFocus =
+      active && this.host.nativeElement.contains(active) && 'focus' in active
+        ? { element: active as HTMLElement, stepKey: this.store.nextStep() }
+        : null;
+  }
 
   /**
    * Property currentStep
@@ -378,7 +618,7 @@ export class OnboardingWizardPage {
   /**
    * Property actionState
    * @readonly
-   * @description The resource-creation phase's explicit request state.
+   * @description The Billing checkout request state; resource creation belongs to OnboardingSetupStore.
    * @access protected
    * @since 1.0.0
    * @type {WritableSignal<CallState<void>>}
@@ -388,7 +628,7 @@ export class OnboardingWizardPage {
   /**
    * Property stepPending
    * @readonly
-   * @description Combines the local creation phase with the store's own confirm/skip call states, driving every step form's `pending` input.
+   * @description Combines durable setup, Billing and progression requests to prevent competing commands.
    * @access protected
    * @since 1.0.0
    * @type {Signal<boolean>}
@@ -396,27 +636,92 @@ export class OnboardingWizardPage {
   protected readonly stepPending: Signal<boolean> = computed(
     () =>
       this.actionState().status === 'pending' ||
+      this.setupStore.pending() ||
       this.store.isExecutingStep() ||
       this.store.isSkippingStep() ||
       this.store.isRollingBack(),
   );
 
-  /**
-   * Property stepError
-   * @readonly
-   * @description Combines the local creation error with the store's own confirm error, driving every step form's `serverError` input.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<unknown>}
-   */
-  protected readonly stepError: Signal<unknown> = computed(
-    () => this.actionState().error ?? this.store.executeStepError(),
-  );
   //#endregion
 
   //#region Lifecycle
   constructor() {
     void this.store.initialize();
+    let wasPending = false;
+    effect(() => {
+      const pending = this.stepPending();
+      const failed = !!(
+        this.lifecycleError() ||
+        this.store.executeStepError() ||
+        this.setupStore.batchCallState().error ||
+        this.setupStore.loadCallState().error ||
+        this.actionState().error
+      );
+      const settled = wasPending && !pending;
+      wasPending = pending;
+      if (!settled || !failed || !this.actionFocus) return;
+      const origin = this.actionFocus;
+      this.actionFocus = null;
+      afterNextRender(
+        () => {
+          if (this.store.nextStep() !== origin.stepKey) return;
+          const document = origin.element.ownerDocument;
+          const active = document.activeElement;
+          if (
+            active &&
+            active !== document.body &&
+            active !== document.documentElement &&
+            active !== origin.element
+          )
+            return;
+          const target = origin.element.isConnected
+            ? origin.element
+            : this.host.nativeElement.querySelector<HTMLElement>(
+                '[data-testid="onboarding-setup-confirm"]',
+              );
+          if (target && !target.hasAttribute('disabled')) target.focus();
+        },
+        { injector: this.injector },
+      );
+    });
+    inject(Events)
+      .on(onboardingSetupEvents.completed)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ payload }) => {
+        this.store.executeStep({ stepKey: payload.stepKey });
+      });
+    let setupSnapshot: OnboardingOutput | null = null;
+    effect(() => {
+      const snapshot = this.store.onboarding();
+      if (!snapshot || snapshot === setupSnapshot || this.setupStore.pending()) return;
+      setupSnapshot = snapshot;
+      untracked(() => this.setupStore.load(snapshot));
+    });
+
+    let previousStep: OnboardingStepKey | null = null;
+    effect(() => {
+      const step = this.store.nextStep();
+      if (step === null) return;
+      const changed = previousStep !== null && previousStep !== step;
+      previousStep = step;
+      if (!changed) return;
+      afterNextRender(
+        () => {
+          if (this.store.nextStep() !== step) return;
+          const heading = this.host.nativeElement.querySelector<HTMLElement>(
+            '[data-step-heading] h1, [data-step-heading] h2',
+          );
+          if (!heading) return;
+          heading.setAttribute('tabindex', '-1');
+          heading.setAttribute(
+            'aria-label',
+            `${this.stepNumberLabel()} — ${this.stepPresentation()?.label ?? ''}`,
+          );
+          heading.focus();
+        },
+        { injector: this.injector },
+      );
+    });
 
     effect(() => {
       if (this.store.isCompleted()) {
@@ -441,15 +746,33 @@ export class OnboardingWizardPage {
       if (step.key === 'create_first_equipment' && this.facilitiesCallState().status === 'idle')
         untracked(() => this.loadFacilities());
     });
-    effect(() => {
-      if (this.store.rollbackCallState().status !== 'success') return;
-      const step = this.currentStep();
-      if (step) this.createdSteps.delete(step.key);
-    });
   }
   //#endregion
 
   //#region Methods
+  /**
+   * Method chooseWorkspace
+   * @method chooseWorkspace
+   *
+   * @description
+   * Opens organization discovery without rolling back the current creation record.
+   * Retains only a validated local destination through the alternate entry path.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected chooseWorkspace(): void {
+    if (this.stepPending() || this.store.isBusy()) return;
+    const returnUrl: string = resolveReturnUrl(
+      this.route.snapshot.queryParamMap.get('returnUrl'),
+      '/',
+    );
+    void this.router.navigateByUrl(
+      `/onboarding/workspace?returnUrl=${encodeURIComponent(returnUrl)}`,
+    );
+  }
+
   /**
    * Method submitOrganization
    * @description Creates the organization, then confirms `create_organization`.
@@ -459,9 +782,8 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected submitOrganization(input: SetupCreateOrganizationInput): void {
-    this.confirmStep('create_organization', () =>
-      this.organizationSetupService.createOrganization(input),
-    );
+    this.rememberActionFocus();
+    this.setupStore.run({ stepKey: 'create_organization', payloads: [input] });
   }
 
   /**
@@ -469,60 +791,26 @@ export class OnboardingWizardPage {
    * @description Sends the staged invitations, then confirms `invite_members`.
    * @access protected
    * @since 1.0.0
-   * @param {readonly SetupInviteMemberInput[]} invitations - The staged batch, possibly empty.
+   * @param {readonly SetupInviteMemberInput[]} invitations - The non-empty staged batch.
    * @returns {void}
    */
   protected submitMembers(invitations: readonly SetupInviteMemberInput[]): void {
-    const organizationId: string | null = this.store.targetOrganizationId();
-    if (organizationId === null) return;
-
-    if (this.stepPending()) return;
-    const remaining = invitations.filter(
-      (input) => !this.completedInvitations().some((done) => done.email === input.email),
-    );
-    this.failedInvitations.set([]);
-    const requests = remaining.map((input) =>
-      this.organizationSetupService.inviteMembers(organizationId, [input]).pipe(
-        tap(() => this.completedInvitations.update((done) => [...done, input])),
-        map(() => null),
-        catchError((error: unknown) => {
-          this.failedInvitations.update((failed) => [...failed, input.email]);
-          return of(toStoreError(error));
-        }),
-      ),
-    );
-    this.confirmBatch('invite_members', requests);
+    if (invitations.length === 0) return;
+    this.rememberActionFocus();
+    this.setupStore.run({ stepKey: 'invite_members', payloads: invitations });
   }
 
   /**
    * Method submitFacilities
-   * @description Creates the staged facilities, memorizes them for the equipment step, then confirms `create_first_facility`.
+   * @description Prepares and creates the facility batch through the durable setup store.
    * @access protected
    * @since 1.0.0
    * @param {readonly SetupCreateFacilityInput[]} facilities - The staged batch.
    * @returns {void}
    */
   protected submitFacilities(facilities: readonly SetupCreateFacilityInput[]): void {
-    const organizationId: string | null = this.store.targetOrganizationId();
-    if (organizationId === null) return;
-
-    if (this.stepPending()) return;
-    const remaining = facilities.filter((input) => !this.completedFacilityDrafts().includes(input));
-    this.failedFacilities.set([]);
-    const requests = remaining.map((input) =>
-      this.organizationSetupService.createFacilities(organizationId, [input]).pipe(
-        tap((created) => {
-          this.completedFacilityDrafts.update((done) => [...done, input]);
-          this.createdFacilities.update((done) => [...done, ...created]);
-        }),
-        map(() => null),
-        catchError((error: unknown) => {
-          this.failedFacilities.update((failed) => [...failed, input.name]);
-          return of(toStoreError(error));
-        }),
-      ),
-    );
-    this.confirmBatch('create_first_facility', requests);
+    this.rememberActionFocus();
+    this.setupStore.run({ stepKey: 'create_first_facility', payloads: facilities });
   }
 
   /**
@@ -534,12 +822,29 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected submitEquipment(input: SetupCreateEquipmentInput): void {
-    const organizationId: string | null = this.store.targetOrganizationId();
-    if (organizationId === null) return;
+    this.rememberActionFocus();
+    const { facilityId, ...payload } = input;
+    this.setupStore.run({
+      stepKey: 'create_first_equipment',
+      payloads: [
+        { ...payload, facility: facilityId ? `/api/facilities/${facilityId}` : undefined },
+      ],
+    });
+  }
 
-    this.confirmStep('create_first_equipment', () =>
-      this.organizationSetupService.createEquipment(organizationId, input),
-    );
+  /**
+   * Method confirmSavedStep
+   * @method confirmSavedStep
+   * @description Confirms a server-recorded singleton resource without recreating it.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected confirmSavedStep(): void {
+    this.rememberActionFocus();
+    const operation = this.singleOperation();
+    if (this.stepPending() || operation?.status !== 'completed') return;
+    this.store.executeStep({ stepKey: operation.stepKey as OnboardingSetupStep });
   }
 
   /**
@@ -558,8 +863,9 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected submitPlan(selection: OnboardingPlanSelection): void {
+    this.rememberActionFocus();
     if (this.stepPending()) return;
-    if (!selection.requiresPayment) {
+    if (selection.pricingState === 'free') {
       this.store.executeStep({ stepKey: 'select_plan' });
       return;
     }
@@ -581,7 +887,7 @@ export class OnboardingWizardPage {
           redirectToStripe(this.document, session.url);
         },
         error: (error: unknown) => {
-          this.actionState.set(errorCallState(toStoreError(error)));
+          this.reportActionFailure(toStoreError(error));
         },
       });
   }
@@ -599,6 +905,7 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected skipCurrentStep(): void {
+    this.rememberActionFocus();
     const step: OnboardingStepOutput | null = this.currentStep();
     if (step === null || !this.canSkip() || this.stepPending()) return;
 
@@ -618,6 +925,7 @@ export class OnboardingWizardPage {
    * @returns {void}
    */
   protected rollbackStep(): void {
+    this.rememberActionFocus();
     if (!this.store.canRollback() || this.stepPending()) return;
     this.store.rollback();
   }
@@ -625,48 +933,22 @@ export class OnboardingWizardPage {
 
   //#region Internals
   /**
-   * Method confirmStep
-   *
-   * @description
-   * The two-phase confirmation every resource-backed step shares: create the
-   * resource through the setup boundary, then confirm the step through the
-   * store. The store's own `executeStepCallState` takes over as the
-   * authoritative pending/error source once the creation phase succeeds.
-   *
+   * Method reportActionFailure
+   * @method reportActionFailure
+   * @description Keeps retry state and publishes one toast for a failed resource or batch request.
    * @access private
    * @since 1.0.0
-   *
-   * @param {OnboardingStepKey} stepKey - The step being confirmed.
-   * @param {() => Observable<TResult>} resourceCreation - The setup-boundary call that creates the underlying resource.
-   * @param {(result: TResult) => void} [onCreated] - Invoked with the creation result before the step is confirmed.
-   *
+   * @param {StoreError} failure - Normalized API failure.
    * @returns {void}
    */
-  private confirmStep<TResult>(
-    stepKey: OnboardingStepKey,
-    resourceCreation: () => Observable<TResult>,
-    onCreated?: (result: TResult) => void,
-  ): void {
-    if (this.stepPending()) return;
-    if (this.createdSteps.has(stepKey)) {
-      this.store.executeStep({ stepKey });
-      return;
-    }
-    this.actionState.set(pendingCallState());
-
-    resourceCreation()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (result: TResult) => {
-          this.actionState.set(successCallState(undefined));
-          this.createdSteps.add(stepKey);
-          onCreated?.(result);
-          this.store.executeStep({ stepKey });
-        },
-        error: (error: unknown) => {
-          this.actionState.set(errorCallState(toStoreError(error)));
-        },
-      });
+  private reportActionFailure(failure: StoreError): void {
+    this.actionState.set(errorCallState(failure));
+    this.feedback.show(
+      toStoreFailureEventPayload(
+        failure,
+        $localize`:@@onboarding.wizard.lifecycleFailed:This step could not be updated. Your saved information is still available.`,
+      ),
+    );
   }
 
   /**
@@ -686,8 +968,16 @@ export class OnboardingWizardPage {
           this.pricing.set(pricing.member);
           this.planCatalogCallState.set(successCallState(undefined));
         },
-        error: (error: unknown) =>
-          this.planCatalogCallState.set(errorCallState(toStoreError(error))),
+        error: (error: unknown) => {
+          const failure: StoreError = toStoreError(error);
+          this.planCatalogCallState.set(errorCallState(failure));
+          this.feedback.show(
+            toStoreFailureEventPayload(
+              failure,
+              $localize`:@@onboarding.wizard.catalogFailed:The available choices could not be loaded.`,
+            ),
+          );
+        },
       });
   }
 
@@ -704,7 +994,16 @@ export class OnboardingWizardPage {
           this.roles.set(roles);
           this.rolesCallState.set(successCallState(undefined));
         },
-        error: (error: unknown) => this.rolesCallState.set(errorCallState(toStoreError(error))),
+        error: (error: unknown) => {
+          const failure: StoreError = toStoreError(error);
+          this.rolesCallState.set(errorCallState(failure));
+          this.feedback.show(
+            toStoreFailureEventPayload(
+              failure,
+              $localize`:@@onboarding.wizard.catalogFailed:The available choices could not be loaded.`,
+            ),
+          );
+        },
       });
   }
 
@@ -721,8 +1020,16 @@ export class OnboardingWizardPage {
           this.createdFacilities.set(facilities);
           this.facilitiesCallState.set(successCallState(undefined));
         },
-        error: (error: unknown) =>
-          this.facilitiesCallState.set(errorCallState(toStoreError(error))),
+        error: (error: unknown) => {
+          const failure: StoreError = toStoreError(error);
+          this.facilitiesCallState.set(errorCallState(failure));
+          this.feedback.show(
+            toStoreFailureEventPayload(
+              failure,
+              $localize`:@@onboarding.wizard.catalogFailed:The available choices could not be loaded.`,
+            ),
+          );
+        },
       });
   }
 
@@ -744,30 +1051,11 @@ export class OnboardingWizardPage {
 
   /** @description Retries the failed lifecycle command without creating a resource again. */
   protected retryLifecycle(): void {
+    this.rememberActionFocus();
     if (this.store.isBusy()) return;
     if (this.store.startCallState().error) void this.store.initialize();
     else if (this.store.skipStepCallState().error) this.skipCurrentStep();
     else if (this.store.rollbackCallState().error) this.rollbackStep();
     else this.store.load();
-  }
-
-  /** @description Awaits every row and confirms only when the full batch succeeded; successful rows stay recorded for retry. */
-  private confirmBatch(
-    stepKey: OnboardingStepKey,
-    requests: readonly Observable<StoreError | null>[],
-  ): void {
-    this.actionState.set(pendingCallState());
-    (requests.length ? forkJoin(requests) : of([]))
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((errors) => {
-        const error = errors.find((item) => item !== null);
-        if (error) {
-          this.actionState.set(errorCallState(error));
-          return;
-        }
-        this.actionState.set(successCallState(undefined));
-        this.createdSteps.add(stepKey);
-        this.store.executeStep({ stepKey });
-      });
   }
 }

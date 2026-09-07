@@ -31,3 +31,5 @@ export type { EmailChangeConfirmState } from './email-change-confirm';
 export { RegisterStore } from './register';
 export type { RegisterState, RegisterStoreType } from './register';
 export { registerStoreEvents } from './register';
+export { FederatedAuthStore } from './federated-auth';
+export type { FederatedAuthState, FederatedAuthStoreType } from './federated-auth';

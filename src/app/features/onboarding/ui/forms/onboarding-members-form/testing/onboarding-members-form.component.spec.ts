@@ -20,6 +20,21 @@ describe('OnboardingMembersForm', () => {
     await fixture.whenStable();
   };
 
+  const addDraft = async (email: string, roleId = ''): Promise<void> => {
+    await setDraft({ email, roleId });
+    element.querySelector<HTMLButtonElement>('[data-testid="onboarding-member-add"]')?.click();
+    await fixture.whenStable();
+  };
+
+  const prepareBatch = (count: number): Promise<void> =>
+    Array.from({ length: count }, (_, index) => `member${index}@example.com`).reduce(
+      async (previous, address) => {
+        await previous;
+        await addDraft(address);
+      },
+      Promise.resolve(),
+    );
+
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
@@ -29,7 +44,7 @@ describe('OnboardingMembersForm', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
-  it('should submit an empty batch when nothing was staged (the step is skippable)', async () => {
+  it('does not submit an empty batch when the server requires invitations', async () => {
     const emitted: Array<readonly SetupInviteMemberInput[]> = [];
     fixture.componentInstance.submitted.subscribe(
       (value: readonly SetupInviteMemberInput[]): void => {
@@ -39,7 +54,8 @@ describe('OnboardingMembersForm', () => {
 
     await submit();
 
-    expect(emitted).toEqual([[]]);
+    expect(emitted).toEqual([]);
+    expect(element.textContent).toContain('Add at least one email.');
   });
 
   it('should close the send and name the way out while skippable with nothing typed or staged', async () => {
@@ -146,15 +162,133 @@ describe('OnboardingMembersForm', () => {
     expect(element.querySelector('[data-testid="onboarding-members-staged"]')).toBeNull();
   });
 
-  it('should surface the API rejection above the form', async () => {
-    fixture.componentRef.setInput('serverError', {
-      status: 422,
-      violations: [{ propertyPath: 'email', message: 'This member was already invited.' }],
-    });
-    await fixture.whenStable();
+  it('shows selected and default roles with native item separators between prepared rows', async () => {
+    fixture.componentRef.setInput('roles', [{ id: 'reviewer', name: 'Reviewer' }]);
+    await addDraft('reviewer@example.com', 'reviewer');
+    await addDraft('member@example.com');
+    const list = element.querySelector('[data-testid="onboarding-members-staged"]');
+    expect(list?.textContent).toContain('Reviewer');
+    expect(list?.textContent).toContain('Default role');
+    expect(list?.querySelectorAll('[hlmItemSeparator]').length).toBe(1);
+  });
 
+  it('blocks a duplicate on add and on submit after trimming and ignoring case', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await addDraft('Jordan@example.com');
+    await setDraft({ email: '  JORDAN@EXAMPLE.COM  ', roleId: '' });
     expect(
-      element.querySelector('[data-testid="onboarding-members-error"]')?.textContent,
-    ).toContain('This member was already invited.');
+      element.querySelector<HTMLButtonElement>('[data-testid="onboarding-member-add"]')?.disabled,
+    ).toBe(true);
+    await submit();
+    expect(submitted).not.toHaveBeenCalled();
+    expect(element.textContent).toContain('This email is already in this invitation batch.');
+    expect(
+      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]').length,
+    ).toBe(1);
+  });
+
+  it('rejects an edited row changed to another prepared address without losing either draft', async () => {
+    await addDraft('first@example.com');
+    await addDraft('second@example.com');
+    element.querySelector<HTMLButtonElement>('[aria-label="Edit first@example.com"]')?.click();
+    await fixture.whenStable();
+    await setDraft({ email: 'SECOND@example.com', roleId: '' });
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await submit();
+    expect(submitted).not.toHaveBeenCalled();
+    expect(
+      element.querySelector('[data-testid="onboarding-members-staged"]')?.textContent,
+    ).toContain('second@example.com');
+    expect(
+      element.querySelector<HTMLInputElement>('[data-testid="onboarding-member-email"]')?.value,
+    ).toBe('SECOND@example.com');
+    await setDraft({ email: 'updated@example.com', roleId: '' });
+    await submit();
+    expect(submitted).toHaveBeenCalledWith([
+      { email: 'second@example.com', roleIds: undefined },
+      { email: 'updated@example.com', roleIds: undefined },
+    ]);
+  });
+
+  it('does not replace an existing draft or remove a row when editing would stage a duplicate', async () => {
+    await addDraft('first@example.com');
+    await addDraft('second@example.com');
+    await setDraft({ email: 'FIRST@example.com', roleId: '' });
+    element.querySelector<HTMLButtonElement>('[aria-label="Edit second@example.com"]')?.click();
+    await fixture.whenStable();
+    expect(
+      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]').length,
+    ).toBe(2);
+    expect(
+      element.querySelector<HTMLInputElement>('[data-testid="onboarding-member-email"]')?.value,
+    ).toBe('FIRST@example.com');
+  });
+
+  it('allows five invitations including the current draft but rejects a sixth at submission', async () => {
+    await prepareBatch(4);
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await setDraft({ email: 'member4@example.com', roleId: '' });
+    await submit();
+    expect(submitted).toHaveBeenCalledTimes(1);
+    expect(submitted.mock.calls[0][0]).toHaveLength(5);
+    expect(element.querySelector('[data-testid="onboarding-member-email"]')).toBeNull();
+    expect(
+      element.querySelector('[data-testid="onboarding-members-capacity"]')?.textContent,
+    ).toContain('5 invitations');
+    await setDraft({ email: 'member5@example.com', roleId: '' });
+    await submit();
+    expect(submitted).toHaveBeenCalledTimes(1);
+    expect(
+      element.querySelector<HTMLButtonElement>('[data-testid="onboarding-member-add"]')?.disabled,
+    ).toBe(true);
+  });
+
+  it('counts persisted successes and keeps them immutable when parent objects are recreated', async () => {
+    await prepareBatch(5);
+    fixture.componentRef.setInput('completed', [
+      { email: 'MEMBER0@example.com' },
+      { email: 'member1@example.com' },
+    ]);
+    await fixture.whenStable();
+    expect(
+      element.querySelector<HTMLButtonElement>('[data-testid="onboarding-members-remove-0"]')
+        ?.disabled,
+    ).toBe(true);
+    expect(
+      element.querySelector<HTMLButtonElement>('[aria-label="Edit member0@example.com"]')?.disabled,
+    ).toBe(true);
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="onboarding-members-remove-4"]')
+      ?.click();
+    await fixture.whenStable();
+    await setDraft({ email: 'member0@EXAMPLE.COM', roleId: '' });
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await submit();
+    expect(submitted).not.toHaveBeenCalled();
+    await setDraft({ email: 'replacement@example.com', roleId: '' });
+    await submit();
+    expect(submitted.mock.calls[0][0]).toHaveLength(5);
+  });
+
+  it('counts completed invitations even when they are no longer present in local prepared rows', async () => {
+    fixture.componentRef.setInput(
+      'completed',
+      Array.from({ length: 4 }, (_, i) => ({ email: `sent${i}@example.com` })),
+    );
+    await addDraft('last@example.com');
+    expect(element.querySelector('[data-testid="onboarding-member-email"]')).toBeNull();
+    expect(element.querySelector('[data-testid="onboarding-members-capacity"]')).not.toBeNull();
+  });
+
+  it('trims surrounding whitespace before validating and sending the current draft', async () => {
+    await setDraft({ email: '  member@example.com  ', roleId: '' });
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await submit();
+    expect(submitted).toHaveBeenCalledWith([{ email: 'member@example.com', roleIds: undefined }]);
   });
 });

@@ -45,4 +45,12 @@ describe('CollectionSearchBox', () => {
 
     expect(emitted).toEqual(['valve']);
   });
+
+  it('should use the native Spartan input surface', () => {
+    const group = fixture.nativeElement.querySelector('hlm-input-group');
+
+    expect(group?.classList.contains('bg-input/30')).toBe(false);
+    expect(group?.classList.contains('border-input/30')).toBe(false);
+    expect(group?.classList.contains('dark:bg-input/30')).toBe(true);
+  });
 });

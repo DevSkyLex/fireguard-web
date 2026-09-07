@@ -98,14 +98,16 @@ test.describe('Organization dashboard', () => {
     await dashboard.goto(E2E_ORGANIZATION_ID);
     await expect(dashboard.kpiSection.locator('app-stat-tile')).toHaveCount(4);
     await expect(dashboard.kpiTile('open-interventions')).toContainText('7');
-    await expect(dashboard.kpiTile('open-non-conformities')).toContainText('5');
+    await expect(dashboard.kpiTile('open-non-conformities')).toContainText('8');
     await expect(dashboard.kpiTile('inspections-completed')).toContainText('32');
     await expect(dashboard.kpiTile('equipment-under-maintenance')).toContainText('3');
     await expect(dashboard.root.getByRole('tablist')).toHaveCount(0);
     await expect(page.getByTestId('org-dashboard-identity')).toHaveCount(0);
     await expect(page.getByTestId('org-today-queues-card')).toHaveCount(0);
-    await expect(dashboard.root.locator('tanstack-chart[hlmChart]')).toHaveCount(4);
-    await expect(dashboard.newInterventionButton).toBeVisible();
+    await expect(dashboard.root.locator('tanstack-chart[hlmChart]')).toHaveCount(5);
+    await expect(page.getByRole('button', { name: 'New intervention', exact: true })).toHaveCount(
+      0,
+    );
   });
   test('keeps permitted trends available when the aggregate dashboard is forbidden', async ({
     page,
@@ -230,6 +232,7 @@ test.describe('Organization dashboard', () => {
 
     await dashboard.goto(E2E_ORGANIZATION_ID);
 
+    await page.getByTestId('org-dashboard-additional').click();
     await expect(dashboard.severityRows).toHaveCount(4);
 
     const critical = dashboard.severityRow('critical');
@@ -254,7 +257,7 @@ test.describe('Organization dashboard', () => {
     await expect(low).toBeVisible();
     await expect(low.locator('ng-icon')).toBeVisible();
     await expect(low).toContainText('Low');
-    await expect(low).toContainText('1');
+    await expect(low).toContainText('18');
   });
 
   test('shows a permission-degraded card when a trend endpoint returns 403, leaving the rest of the page intact', async ({
@@ -293,6 +296,7 @@ test.describe('Organization dashboard', () => {
     ).toBeVisible();
 
     await expect(dashboard.kpiTile('open-interventions')).toContainText('7');
+    await page.getByTestId('org-dashboard-additional').click();
     await expect(dashboard.severityRows).toHaveCount(4);
     await expect(dashboard.chartSvg(dashboard.equipmentChartCard)).toBeVisible();
     await expect(dashboard.chartSvg(dashboard.facilitiesChartCard)).toBeVisible();

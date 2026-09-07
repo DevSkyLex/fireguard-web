@@ -22,8 +22,15 @@ import {
   UserStore,
 } from '@features/account/state';
 import { AUTH_SESSION_PORT } from '@features/auth';
-import type { SessionOutput, TrustedDeviceOutput } from '@features/auth/models';
-import { SessionStore, TrustedDeviceStore } from '@features/auth/state';
+import type {
+  FederatedConnectionsOutput,
+  FederatedProvider,
+  PasswordSetupChallengeOutput,
+  PasswordSetupConfirmOutput,
+  SessionOutput,
+  TrustedDeviceOutput,
+} from '@features/auth/models';
+import { FederatedAuthStore, SessionStore, TrustedDeviceStore } from '@features/auth/state';
 import { AccountSecurityPage } from '../account-security-page.component';
 
 const SETUP: SetupTotpOutput = {
@@ -101,6 +108,32 @@ describe('AccountSecurityPage', () => {
     hasPendingRequest: WritableSignal<boolean>;
     requestError: WritableSignal<StoreError | null>;
   };
+  let federatedStore: {
+    loadProviders: ReturnType<typeof vi.fn>;
+    loadConnections: ReturnType<typeof vi.fn>;
+    startLink: ReturnType<typeof vi.fn>;
+    disconnect: ReturnType<typeof vi.fn>;
+    requestPasswordSetup: ReturnType<typeof vi.fn>;
+    confirmPasswordSetup: ReturnType<typeof vi.fn>;
+    resetPasswordSetup: ReturnType<typeof vi.fn>;
+    resetStart: ReturnType<typeof vi.fn>;
+    resetDisconnect: ReturnType<typeof vi.fn>;
+    enabledProviders: WritableSignal<readonly FederatedProvider[]>;
+    connections: WritableSignal<FederatedConnectionsOutput | null>;
+    providersLoading: WritableSignal<boolean>;
+    providersCallState: WritableSignal<CallState<null>>;
+    connectionsLoading: WritableSignal<boolean>;
+    startPending: WritableSignal<boolean>;
+    pendingProvider: WritableSignal<FederatedProvider | null>;
+    connectionsError: WritableSignal<StoreError | null>;
+    startUrl: WritableSignal<string | null>;
+    startCallState: WritableSignal<CallState<null>>;
+    disconnectCallState: WritableSignal<CallState<null>>;
+    passwordConfigured: WritableSignal<boolean | null>;
+    passwordSetupChallenge: WritableSignal<string | null>;
+    passwordSetupRequestCallState: WritableSignal<CallState<PasswordSetupChallengeOutput | null>>;
+    passwordSetupConfirmCallState: WritableSignal<CallState<PasswordSetupConfirmOutput | null>>;
+  };
   let authSession: { clearSession: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -171,6 +204,34 @@ describe('AccountSecurityPage', () => {
       hasPendingRequest: signal(false),
       requestError: signal<StoreError | null>(null),
     };
+    federatedStore = {
+      loadProviders: vi.fn(),
+      loadConnections: vi.fn(),
+      startLink: vi.fn(),
+      disconnect: vi.fn(),
+      requestPasswordSetup: vi.fn(),
+      confirmPasswordSetup: vi.fn(),
+      resetPasswordSetup: vi.fn(),
+      resetStart: vi.fn(),
+      resetDisconnect: vi.fn(),
+      enabledProviders: signal<readonly FederatedProvider[]>([]),
+      connections: signal<FederatedConnectionsOutput | null>(null),
+      providersLoading: signal(false),
+      providersCallState: signal<CallState<null>>(idleCallState()),
+      connectionsLoading: signal(false),
+      startPending: signal(false),
+      pendingProvider: signal<FederatedProvider | null>(null),
+      connectionsError: signal<StoreError | null>(null),
+      startUrl: signal<string | null>(null),
+      startCallState: signal<CallState<null>>(idleCallState()),
+      disconnectCallState: signal<CallState<null>>(idleCallState()),
+      passwordConfigured: signal(true),
+      passwordSetupChallenge: signal<string | null>(null),
+      passwordSetupRequestCallState:
+        signal<CallState<PasswordSetupChallengeOutput | null>>(idleCallState()),
+      passwordSetupConfirmCallState:
+        signal<CallState<PasswordSetupConfirmOutput | null>>(idleCallState()),
+    };
     authSession = { clearSession: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -190,6 +251,7 @@ describe('AccountSecurityPage', () => {
             { provide: TrustedDeviceStore, useValue: trustedDeviceStore },
             { provide: AccountDeactivationStore, useValue: deactivationStore },
             { provide: AccountEmailChangeStore, useValue: emailChangeStore },
+            { provide: FederatedAuthStore, useValue: federatedStore },
           ],
         },
       })
@@ -197,6 +259,36 @@ describe('AccountSecurityPage', () => {
 
     fixture = TestBed.createComponent(AccountSecurityPage);
     await fixture.whenStable();
+  });
+
+  it('should load the available federated methods and current connections', () => {
+    expect(federatedStore.loadProviders).toHaveBeenCalledOnce();
+    expect(federatedStore.loadConnections).toHaveBeenCalledOnce();
+  });
+
+  it('should retry provider availability and connected methods together', () => {
+    fixture.componentInstance['retrySignInMethods']();
+
+    expect(federatedStore.loadProviders).toHaveBeenCalledTimes(2);
+    expect(federatedStore.loadConnections).toHaveBeenCalledTimes(2);
+    expect(federatedStore.resetStart).toHaveBeenCalledOnce();
+    expect(federatedStore.resetDisconnect).toHaveBeenCalledOnce();
+  });
+
+  it('should discard one-time password setup state when the dialog closes', () => {
+    fixture.componentInstance['settingPassword'].set(true);
+
+    fixture.componentInstance['onPasswordSetupVisibilityChanged'](false);
+
+    expect(fixture.componentInstance['settingPassword']()).toBe(false);
+    expect(federatedStore.resetPasswordSetup).toHaveBeenCalledOnce();
+  });
+
+  it('should replace an unusable password setup challenge', () => {
+    fixture.componentInstance['restartPasswordSetup']();
+
+    expect(federatedStore.resetPasswordSetup).toHaveBeenCalledOnce();
+    expect(federatedStore.requestPasswordSetup).toHaveBeenCalledOnce();
   });
 
   it('should read two-factor state from the profile, not from the enrollment store', async () => {

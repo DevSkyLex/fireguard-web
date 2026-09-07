@@ -465,6 +465,36 @@ export abstract class HydraApiService {
   }
 
   /**
+   * Method deleteOne
+   * @method deleteOne
+   *
+   * @description
+   * Performs a DELETE request whose successful response contains the updated
+   * Hydra resource. Use this when the server returns authoritative post-delete
+   * state and a follow-up GET would duplicate the mutation contract.
+   *
+   * @access protected
+   * @since 1.6.0
+   *
+   * @template TOutput - Type of the returned Hydra item.
+   * @param {string} endpoint - API endpoint path.
+   * @param {ApiRequestOptions} [options] - Request options.
+   * @returns {Observable<TOutput>} Observable emitting the post-delete resource.
+   */
+  protected deleteOne<TOutput extends HydraItem>(
+    endpoint: string,
+    options?: ApiRequestOptions,
+  ): Observable<TOutput> {
+    return this.http
+      .delete<TOutput>(this.buildUrl(endpoint), {
+        headers: this.buildHeaders(options),
+        params: this.buildParams(options),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Method handleError
    *
    * @description
@@ -492,7 +522,12 @@ export abstract class HydraApiService {
       body.detail.trim()
         ? body.detail
         : null;
+    const code =
+      typeof body === 'object' && body !== null && 'code' in body && typeof body.code === 'string'
+        ? body.code
+        : undefined;
     const apiError: ApiError = {
+      ...(code ? { code } : {}),
       '@id': '',
       '@type': 'Error',
       status: error.status || 0,

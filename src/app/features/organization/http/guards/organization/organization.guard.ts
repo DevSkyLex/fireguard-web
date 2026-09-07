@@ -21,7 +21,7 @@ import type { OrganizationOutput } from '@features/organization/models';
  * Always redirects to the user's default organization workspace. The last
  * organization persisted in the `last-organization` cookie wins when it is
  * still accessible; otherwise the first accessible organization is used.
- * Users without any organization are sent to `/onboarding`.
+ * Users without any organization are sent directly to `/onboarding/workspace`.
  *
  * An `excluded` query parameter names an organization that must not be picked
  * again (set by guards that just failed to resolve it), breaking redirect
@@ -105,8 +105,8 @@ export const organizationGuard: CanActivateFn = (
           return router.createUrlTree(['/error/403']);
         }
 
-        // No organizations: redirect to onboarding
-        return router.createUrlTree(['/onboarding']);
+        // A stale onboarding access cache must not send this account back here.
+        return router.createUrlTree(['/onboarding/workspace']);
       }),
       catchError(() => of(router.createUrlTree(['/error/500']))),
     );

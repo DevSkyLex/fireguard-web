@@ -8,6 +8,7 @@ import {
   viewChild,
   type ElementRef,
   input,
+  linkedSignal,
   output,
   signal,
   type InputSignal,
@@ -20,15 +21,14 @@ import {
   form,
   FormField,
   required,
+  validate,
   type FieldTree,
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMail, lucidePlus, lucidePencil, lucideX } from '@ng-icons/lucide';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import type { SetupInviteMemberInput, SetupOrganizationRole } from '@features/organization/setup';
-import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
-import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -43,6 +43,16 @@ const NO_ROLE = '';
 const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
 
 /**
+ * Property MAX_INVITATIONS
+ * @readonly
+ * @description Maximum invitations in this step, including successful batch entries.
+ * @access private
+ * @since 1.1.0
+ * @type {number}
+ */
+const MAX_INVITATIONS: number = 5;
+
+/**
  * Component OnboardingMembersForm
  * @class OnboardingMembersForm
  *
@@ -53,8 +63,8 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
  * staged automatically first, so the common path is "type one address, send"
  * with no explicit add. While the step is skippable and nothing has been
  * typed or staged, the primary action closes and names the two ways out —
- * add an address, or skip — rather than sending an empty batch; when the
- * backend does not offer the skip, an empty batch stays a valid continue.
+ * add an address, or skip — rather than sending an empty batch; a required
+ * step requires at least one prepared invitation.
  *
  * No draft row is ever sent to the API on its own — staging is local state,
  * so it never touches a service (`ARCHITECTURE.md` §10.4). The wizard page
@@ -73,7 +83,6 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
 @Component({
   selector: 'app-onboarding-members-form',
   imports: [
-    ...HlmAlertImports,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -90,24 +99,82 @@ const EMPTY_VALUES: OnboardingMemberDraft = { email: '', roleId: NO_ROLE };
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingMembersForm {
-  /** Draft input focus is restored only after an explicit row edit. */
-  private readonly draftInput = viewChild<ElementRef<HTMLInputElement>>('draftInput');
-  private readonly injector = inject(Injector);
+  /**
+   * Property restored
+   * @readonly
+   * @description Complete durable batch restored after reload or a partial creation response.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<readonly SetupInviteMemberInput[]>}
+   */
+  public readonly restored: InputSignal<readonly SetupInviteMemberInput[]> = input<
+    readonly SetupInviteMemberInput[]
+  >([]);
 
-  /** Wait for the draft to reappear when editing a full batch. */
+  /**
+   * Property draftInput
+   * @readonly
+   * @description Draft input restored after an explicit row edit, including a full batch.
+   * @access private
+   * @since 1.1.0
+   * @type {Signal<ElementRef<HTMLInputElement> | undefined>}
+   */
+  private readonly draftInput: Signal<ElementRef<HTMLInputElement> | undefined> =
+    viewChild<ElementRef<HTMLInputElement>>('draftInput');
+  /**
+   * Property injector
+   * @readonly
+   * @description Injection context for the post-render focus callback.
+   * @access private
+   * @since 1.1.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
+  /**
+   * Method focusDraft
+   * @method focusDraft
+   * @description Focuses the editable draft after Angular restores it for a full-batch edit.
+   * @access private
+   * @since 1.1.0
+   * @returns {void}
+   */
   private focusDraft(): void {
     afterNextRender(() => this.draftInput()?.nativeElement.focus(), { injector: this.injector });
   }
 
-  /** Names the staged entry edited by this action. */
+  /**
+   * Method editMemberLabel
+   * @method editMemberLabel
+   * @description Names the specific invitation edited by this action.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} email - Prepared address.
+   * @returns {string} Localized accessible name.
+   */
   protected editMemberLabel(email: string): string {
     return $localize`:@@onboarding.membersForm.editNamed:Edit ${email}:email:`;
   }
 
-  /** @description Successful batch entries remain visible but cannot be edited or resubmitted. */
+  /**
+   * Property completed
+   * @readonly
+   * @description Successful entries count toward capacity and cannot be edited or removed locally.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<readonly SetupInviteMemberInput[]>}
+   */
   public readonly completed: InputSignal<readonly SetupInviteMemberInput[]> = input<
     readonly SetupInviteMemberInput[]
   >([]);
+  /**
+   * Property failed
+   * @readonly
+   * @description Addresses whose latest attempt failed and may be retried.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<readonly string[]>}
+   */
   public readonly failed: InputSignal<readonly string[]> = input<readonly string[]>([]);
   //#region Inputs
   /**
@@ -133,16 +200,6 @@ export class OnboardingMembersForm {
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Property serverError
-   * @readonly
-   * @description Whatever the invitation request failed with.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<unknown>}
-   */
-  public readonly serverError: InputSignal<unknown> = input<unknown>(null);
-
-  /**
    * Property skippable
    * @readonly
    * @description Whether the backend currently lets this step be skipped, which renders the footer's skip control and closes an empty send.
@@ -157,7 +214,7 @@ export class OnboardingMembersForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the staged batch — possibly empty — once the operator continues.
+   * @description Emits a non-empty staged batch once the operator continues.
    * @access public
    * @since 1.0.0
    * @type {OutputEmitterRef<readonly SetupInviteMemberInput[]>}
@@ -177,14 +234,72 @@ export class OnboardingMembersForm {
   //#endregion
 
   //#region Properties
-  /** The currently-edited row. */
+  /**
+   * Property model
+   * @readonly
+   * @description Current invitation draft, retained when validation prevents staging.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<OnboardingMemberDraft>}
+   */
   protected readonly model: WritableSignal<OnboardingMemberDraft> =
     signal<OnboardingMemberDraft>(EMPTY_VALUES);
 
-  /** Rows already staged for submission. */
-  protected readonly staged: WritableSignal<readonly SetupInviteMemberInput[]> = signal<
-    readonly SetupInviteMemberInput[]
-  >([]);
+  /**
+   * Property staged
+   * @readonly
+   * @description Prepared invitation rows retained across partial batch failures.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<readonly SetupInviteMemberInput[]>}
+   */
+  protected readonly staged: WritableSignal<readonly SetupInviteMemberInput[]> = linkedSignal(() =>
+    this.restored(),
+  );
+
+  /**
+   * Property batchEmails
+   * @readonly
+   * @description Normalized addresses reserved by prepared or already persisted invitations.
+   * @access private
+   * @since 1.1.0
+   * @type {Signal<ReadonlySet<string>>}
+   */
+  private readonly batchEmails: Signal<ReadonlySet<string>> = computed(
+    () => new Set([...this.staged(), ...this.completed()].map((row) => this.emailKey(row.email))),
+  );
+
+  /**
+   * Property atCapacity
+   * @readonly
+   * @description Whether another invitation would exceed the complete batch limit.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly atCapacity: Signal<boolean> = computed(
+    () => this.batchEmails().size >= MAX_INVITATIONS,
+  );
+
+  /**
+   * Property capacityMessage
+   * @readonly
+   * @description Explains the batch limit and where additional invitations remain available.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly capacityMessage: string = $localize`:@@onboarding.membersForm.capacity:This step is limited to 5 invitations, including those already sent. You can invite more people from your organization later.`;
+
+  /**
+   * Property defaultRoleLabel
+   * @readonly
+   * @description Names the server-assigned role when no explicit role was selected.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly defaultRoleLabel: string = $localize`:@@onboarding.membersForm.defaultRole:Default role`;
 
   /**
    * Property draftForm
@@ -198,28 +313,27 @@ export class OnboardingMembersForm {
     required(path.email, {
       message: $localize`:@@onboarding.membersForm.emailRequired:Enter an email address.`,
     });
+    validate(path.email, ({ value }) =>
+      this.batchEmails().has(this.emailKey(value()))
+        ? {
+            kind: 'duplicateEmail',
+            message: $localize`:@@onboarding.membersForm.duplicateEmail:This email is already in this invitation batch.`,
+          }
+        : null,
+    );
     emailRule(path.email, {
       message: $localize`:@@onboarding.membersForm.emailInvalid:Enter a valid email address.`,
     });
   });
 
   /**
-   * Property serverMessages
+   * Property roleLabelOf
    * @readonly
-   * @description Everything the API said about the rejected batch, as flat lines above the form.
+   * @description Resolves picked roles for both the select trigger and prepared invitations.
    * @access protected
    * @since 1.0.0
-   * @type {Signal<readonly string[]>}
+   * @type {(value: string) => string}
    */
-  protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
-    serverMessagesOf(
-      this.serverError(),
-      [],
-      $localize`:@@onboarding.membersForm.inviteFailed:The invitations could not be sent.`,
-    ),
-  );
-
-  /** Names a picked role on the closed select trigger. */
   protected readonly roleLabelOf: (value: string) => string = (value) =>
     this.roles().find((role) => role.id === value)?.name ?? '';
 
@@ -244,7 +358,7 @@ export class OnboardingMembersForm {
 
       return {
         email: row.email,
-        completed: this.completed().includes(row),
+        completed: this.isCompleted(row),
         failed: this.failed().includes(row.email),
         roleName: typeof roleId === 'string' ? this.roleLabelOf(roleId) || null : null,
       };
@@ -254,28 +368,46 @@ export class OnboardingMembersForm {
   /**
    * Property gateReason
    * @readonly
-   * @description Why the send is closed — nothing typed and nothing staged while the step can be skipped — or `null`.
+   * @description Explains an empty skippable batch or an additional draft beyond capacity.
    * @access protected
    * @since 1.1.0
    * @type {Signal<string | null>}
    */
   protected readonly gateReason: Signal<string | null> = computed<string | null>(() => {
-    if (this.pending() || !this.skippable()) return null;
+    if (this.pending()) return null;
+    if (this.atCapacity() && this.model().email.trim() !== '') return this.capacityMessage;
     if (this.staged().length > 0 || this.model().email.trim() !== '') return null;
 
-    return $localize`:@@onboarding.membersForm.emptyGate:Add at least one email, or skip this step.`;
+    return this.skippable()
+      ? $localize`:@@onboarding.membersForm.emptyGate:Add at least one email, or skip this step.`
+      : $localize`:@@onboarding.membersForm.requiredGate:Add at least one email.`;
   });
 
-  /** The footer's resting label. */
+  /**
+   * Property submitLabel
+   * @readonly
+   * @description The footer's resting invitation action.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly submitLabel: string = $localize`:@@onboarding.membersForm.submit:Send invitations`;
 
-  /** The footer's label while the batch is being sent. */
+  /**
+   * Property pendingLabel
+   * @readonly
+   * @description The footer's action while the batch is being sent.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly pendingLabel: string = $localize`:@@onboarding.membersForm.submitting:Sending…`;
   //#endregion
 
   //#region Methods
   /**
    * Method addMember
+   * @method addMember
    *
    * @description
    * Stages the current row and resets both the draft and its interaction
@@ -284,10 +416,15 @@ export class OnboardingMembersForm {
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {boolean} Whether the invitation was added without exceeding the batch constraints.
    */
-  protected addMember(): void {
-    if (this.draftForm().invalid()) return;
+  protected addMember(): boolean {
+    if (this.pending() || this.atCapacity()) return false;
+    this.normalizeDraftEmail();
+    if (this.draftForm().invalid()) {
+      this.draftForm().markAsTouched();
+      return false;
+    }
 
     const draft: OnboardingMemberDraft = this.model();
 
@@ -300,6 +437,7 @@ export class OnboardingMembersForm {
     ]);
     this.model.set(EMPTY_VALUES);
     this.draftForm().reset();
+    return true;
   }
 
   /**
@@ -331,7 +469,7 @@ export class OnboardingMembersForm {
    * @returns {void}
    */
   protected removeMember(index: number): void {
-    if (this.pending() || this.completed().includes(this.staged()[index])) return;
+    if (this.pending() || this.isCompleted(this.staged()[index])) return;
     this.staged.update((rows) => rows.filter((_, i) => i !== index));
   }
 
@@ -341,7 +479,7 @@ export class OnboardingMembersForm {
    * @description
    * Stages the current row first when it is valid — a typed but un-added
    * invitation must not be lost silently — then emits the batch. An empty
-   * batch remains a valid continue, since this step is skippable.
+   * batch remains disabled; optional invitations use the explicit skip action.
    *
    * @access protected
    * @since 1.0.0
@@ -355,30 +493,72 @@ export class OnboardingMembersForm {
 
     if (this.pending() || this.gateReason() !== null) return;
 
-    if (!this.draftForm().invalid()) {
-      this.addMember();
-    } else if (this.model().email.trim() !== '') {
-      this.draftForm().markAsTouched();
-      return;
-    }
+    if (this.model().email.trim() !== '' && !this.addMember()) return;
 
     this.submitted.emit(this.staged());
   }
-  /** @description Moves an unsent row back into the draft; preserves any valid draft already being entered. */
+  /**
+   * Method editMember
+   * @method editMember
+   * @description Moves an unsent row into the draft, staging the current draft only if it is unique and fits the batch.
+   * @access protected
+   * @since 1.1.0
+   * @param {number} index - Prepared row to edit.
+   * @returns {void}
+   */
   protected editMember(index: number): void {
     const row = this.staged()[index];
-    if (!row || this.pending() || this.completed().includes(row)) return;
+    if (!row || this.pending() || this.isCompleted(row)) return;
     if (this.model().email.trim() !== '') {
-      if (this.draftForm().invalid()) {
-        this.draftForm().markAsTouched();
+      if (!this.addMember()) {
         this.focusDraft();
         return;
       }
-      this.addMember();
     }
     this.removeMember(index);
     this.model.set({ email: row.email, roleId: row.roleIds?.[0] ?? NO_ROLE });
     this.focusDraft();
+  }
+
+  /**
+   * Method normalizeDraftEmail
+   * @method normalizeDraftEmail
+   * @description Trims pasted whitespace before field validation and batch staging.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected normalizeDraftEmail(): void {
+    this.model.update((draft) => ({ ...draft, email: draft.email.trim() }));
+  }
+
+  /**
+   * Method emailKey
+   * @method emailKey
+   * @description Matches invitation addresses without surrounding whitespace or case differences.
+   * @access private
+   * @since 1.1.0
+   * @param {string} email - Address to compare.
+   * @returns {string} Canonical batch key.
+   */
+  private emailKey(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  /**
+   * Method isCompleted
+   * @method isCompleted
+   * @description Preserves successful rows even when the parent recreates their transport objects.
+   * @access private
+   * @since 1.1.0
+   * @param {SetupInviteMemberInput | undefined} row - Prepared invitation.
+   * @returns {boolean} Whether the address was already sent successfully.
+   */
+  private isCompleted(row: SetupInviteMemberInput | undefined): boolean {
+    return (
+      row !== undefined &&
+      this.completed().some((done) => this.emailKey(done.email) === this.emailKey(row.email))
+    );
   }
 
   //#endregion

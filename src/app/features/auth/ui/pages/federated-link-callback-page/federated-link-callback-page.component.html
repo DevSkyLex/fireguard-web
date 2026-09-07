@@ -1,0 +1,42 @@
+<div class="flex min-h-48 min-w-0 flex-col items-center justify-center gap-4 text-center">
+  @if (callbackInvalid()) {
+    <div class="flex flex-col gap-2" role="alert">
+      <h1
+        class="text-xl font-semibold tracking-tight"
+        i18n="@@account.signInMethods.linkFailedTitle"
+      >
+        Provider couldn't be connected
+      </h1>
+      <p class="text-sm text-muted-foreground" i18n="@@account.signInMethods.linkFailedDescription">
+        The provider response is no longer valid. Start the connection again.
+      </p>
+    </div>
+    <a hlmBtn variant="outline" routerLink="/account/security" i18n="@@account.signInMethods.back">
+      Back to Security
+    </a>
+  } @else if (federatedStore.completeLinkError(); as error) {
+    <div class="flex flex-col gap-2" role="alert">
+      <h1
+        class="text-xl font-semibold tracking-tight"
+        i18n="@@account.signInMethods.linkFailedTitle"
+      >
+        Provider couldn't be connected
+      </h1>
+      <p class="text-sm text-muted-foreground">
+        {{ federatedErrorMessage(error.message) }}
+      </p>
+    </div>
+    <a hlmBtn variant="outline" routerLink="/account/security" i18n="@@account.signInMethods.back">
+      Back to Security
+    </a>
+  } @else {
+    <hlm-spinner
+      class="text-primary"
+      aria-label="Connecting provider"
+      i18n-aria-label="@@account.signInMethods.connecting"
+    />
+    <p class="text-sm text-muted-foreground" i18n="@@account.signInMethods.connectingDescription">
+      Securely connecting your provider…
+    </p>
+  }
+</div>

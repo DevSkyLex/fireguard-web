@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { OrganizationInvitationService } from '@features/organization/data-access';
 import type {
   OrganizationInvitationPreviewOutput,
@@ -23,7 +23,7 @@ const preview = {
   expiresAt: '2026-02-01',
 } as unknown as OrganizationInvitationPreviewOutput;
 
-const membership = { id: 'm1' } as unknown as OrganizationMemberOutput;
+const membership = { id: 'm1', organizationId: 'org-1' } as OrganizationMemberOutput;
 
 describe('OrganizationInvitationAcceptStore', () => {
   let store: OrganizationInvitationAcceptStore;
@@ -97,5 +97,48 @@ describe('OrganizationInvitationAcceptStore', () => {
     expect(store.isAcceptError()).toBe(true);
     expect(store.isAccepted()).toBe(false);
     expect(store.acceptError()).not.toBeNull();
+  });
+  it('emits one toast and one membership event from the accepted result despite repeated clicks and a changed preview', () => {
+    const response = new Subject<OrganizationMemberOutput>();
+    invitationService.accept.mockReturnValue(response);
+    const accepted = vi.fn();
+    const feedback = vi.fn();
+    const events = TestBed.inject(Events);
+    const membershipSubscription = events
+      .on(organizationInvitationAcceptStoreEvents.acceptSucceeded)
+      .subscribe(accepted);
+    const feedbackSubscription = events
+      .on(organizationInvitationAcceptStoreEvents.acceptFeedback)
+      .subscribe(feedback);
+    store.loadPreview('tok-1');
+    store.accept('tok-1');
+    store.accept('tok-1');
+    invitationService.preview.mockReturnValue(of({ ...preview, organizationId: 'other-org' }));
+    store.loadPreview('other-token');
+    response.next(membership);
+    response.complete();
+    expect(invitationService.accept).toHaveBeenCalledTimes(1);
+    expect(accepted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ payload: { organizationId: 'org-1' } }),
+    );
+    expect(feedback).toHaveBeenCalledTimes(1);
+    expect(store.acceptedOrganizationId()).toBe('org-1');
+    membershipSubscription.unsubscribe();
+    feedbackSubscription.unsubscribe();
+  });
+  it('emits one failure toast per attempt and no toast when preview loading fails', () => {
+    const feedback = vi.fn();
+    const subscription = TestBed.inject(Events)
+      .on(organizationInvitationAcceptStoreEvents.acceptFailed)
+      .subscribe(feedback);
+    invitationService.preview.mockReturnValue(throwError(() => new Error('Invalid')));
+    store.loadPreview('tok');
+    expect(feedback).not.toHaveBeenCalled();
+    invitationService.accept.mockReturnValue(throwError(() => new Error('Expired')));
+    store.accept('tok');
+    expect(feedback).toHaveBeenCalledTimes(1);
+    store.accept('tok');
+    expect(feedback).toHaveBeenCalledTimes(2);
+    subscription.unsubscribe();
   });
 });

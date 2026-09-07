@@ -5,6 +5,7 @@ import { firstValueFrom, Subject, of, throwError } from 'rxjs';
 import { authStoreEvents } from '@features/auth';
 import { OnboardingService } from '@features/onboarding/data-access';
 import type { OnboardingOutput, OnboardingStepOutput } from '@features/onboarding/models';
+import { onboardingSetupEvents } from '@features/onboarding/state/setup';
 import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { OnboardingStore } from '../onboarding.store';
 
@@ -77,6 +78,54 @@ describe('OnboardingStore', () => {
     configure();
   });
 
+  it.each([
+    ['load', 'get', (subject: OnboardingStore) => subject.load()],
+    ['start', 'start', (subject: OnboardingStore) => subject.start({ reset: false })],
+    [
+      'execute',
+      'executeStep',
+      (subject: OnboardingStore) => subject.executeStep({ stepKey: 'create_organization' }),
+    ],
+    ['skip', 'skipStep', (subject: OnboardingStore) => subject.skipStep('invite_members')],
+    ['rollback', 'rollback', (subject: OnboardingStore) => subject.rollback()],
+  ] as const)('cancels an old %s response when onboarding is invalidated', (_name, method, run) => {
+    const previous = new Subject<OnboardingOutput>();
+    mockOnboardingService[method].mockReturnValue(previous);
+    run(store);
+    expect(previous.observed).toBe(true);
+    store.clear();
+    expect(previous.observed).toBe(false);
+    previous.next({ ...onboarding, targetOrganizationId: 'previous-account' });
+    expect(store.onboarding()).toBeNull();
+    expect(store.isBusy()).toBe(false);
+    expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('settles a cancelled guard read without caching another account record or SSR handoff', async () => {
+    configure('server');
+    const previous = new Subject<OnboardingOutput>();
+    mockOnboardingService.get.mockReturnValueOnce(previous).mockReturnValue(of(onboarding));
+    const pending = firstValueFrom(store.ensureLoaded());
+    store.clear();
+    previous.next({ ...onboarding, targetOrganizationId: 'previous-account' });
+    await expect(pending).resolves.toBeNull();
+    expect(store.onboarding()).toBeNull();
+    expect(transferState.hasKey(makeStateKey('organization-onboarding'))).toBe(false);
+    await expect(firstValueFrom(store.ensureLoaded())).resolves.toEqual(onboarding);
+    expect(mockOnboardingService.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('settles cancelled initialization without restoring the previous creation', async () => {
+    const previous = new Subject<OnboardingOutput>();
+    mockOnboardingService.start.mockReturnValue(previous);
+    const pending = store.initialize();
+    store.clear();
+    previous.next({ ...onboarding, targetOrganizationId: 'previous-creation' });
+    await expect(pending).resolves.toBeUndefined();
+    expect(store.onboarding()).toBeNull();
+    expect(store.startCallState().status).toBe('idle');
+  });
+
   // The SSR handoff hangs off `ensureLoaded()`, not `initialize()`: the guards
   // call it first on both sides, so that is the only place that sees the very
   // first load.
@@ -114,6 +163,32 @@ describe('OnboardingStore', () => {
     expect(
       transferState.hasKey(makeStateKey<OnboardingOutput | null>('organization-onboarding')),
     ).toBe(false);
+  });
+
+  it('omits prepared email and address payloads from the SSR handoff', async () => {
+    configure('server');
+    const full = {
+      ...onboarding,
+      sessionId: 'session-1',
+      setupOperations: [
+        {
+          stepKey: 'invite_members' as const,
+          itemKey: 'item-1',
+          payload: { email: 'private@example.com' },
+          status: 'prepared' as const,
+          resourceId: null,
+        },
+      ],
+    };
+    mockOnboardingService.get.mockReturnValue(of(full));
+    await firstValueFrom(store.ensureLoaded());
+    const transferred = transferState.get(
+      makeStateKey<OnboardingOutput | null>('organization-onboarding'),
+      null,
+    );
+    expect(transferred?.sessionId).toBe('session-1');
+    expect(transferred).not.toHaveProperty('setupOperations');
+    expect(JSON.stringify(transferred)).not.toContain('private@example.com');
   });
 
   it('should only bootstrap onboarding once when state is already present', async () => {
@@ -548,6 +623,46 @@ describe('OnboardingStore', () => {
 
       TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
 
+      expect(store.onboarding()).toBeNull();
+    });
+
+    it('keeps committed setup receipts in the root cache when the creator page is remounted', async () => {
+      configureWithRealDispatcher();
+      const initial = { ...onboarding, sessionId: 'session-1', setupOperations: [] };
+      mockOnboardingService.get.mockReturnValue(of(initial));
+      await firstValueFrom(store.ensureLoaded());
+      const saved: OnboardingOutput = {
+        ...initial,
+        setupOperations: [
+          {
+            stepKey: 'create_organization',
+            itemKey: 'organization-key',
+            payload: { name: 'Acme' },
+            resourceId: 'org-1',
+            status: 'completed',
+          },
+        ],
+      };
+      TestBed.inject(Dispatcher).dispatch(onboardingSetupEvents.snapshotUpdated(saved));
+      mockOnboardingService.executeStep.mockReturnValue(
+        throwError(() => new Error('Confirmation failed')),
+      );
+      store.executeStep({ stepKey: 'create_organization' });
+      expect(await firstValueFrom(store.ensureLoaded())).toEqual(saved);
+      expect(mockOnboardingService.get).toHaveBeenCalledOnce();
+    });
+
+    it('ignores recovery snapshots from a previous or ended session', async () => {
+      configureWithRealDispatcher();
+      const current = { ...onboarding, sessionId: 'current-session', setupOperations: [] };
+      mockOnboardingService.get.mockReturnValue(of(current));
+      await firstValueFrom(store.ensureLoaded());
+      TestBed.inject(Dispatcher).dispatch(
+        onboardingSetupEvents.snapshotUpdated({ ...current, sessionId: 'old-session' }),
+      );
+      expect(store.onboarding()).toEqual(current);
+      TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+      TestBed.inject(Dispatcher).dispatch(onboardingSetupEvents.snapshotUpdated(current));
       expect(store.onboarding()).toBeNull();
     });
 

@@ -1,6 +1,6 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { OrganizationService } from '@features/organization/data-access';
 import type {
   OrganizationDashboardOutput,
@@ -22,6 +22,7 @@ describe('DashboardStore', () => {
   };
 
   const organization = { id: 'org-1', name: 'Fireguard' } as unknown as OrganizationOutput;
+  const selectedOrganizationId = signal<string | null>(organization.id);
   const recentIntervention = {
     id: 'int-1',
     number: 2048,
@@ -62,6 +63,7 @@ describe('DashboardStore', () => {
   } as unknown as OrganizationDashboardOutput;
 
   beforeEach(() => {
+    selectedOrganizationId.set(organization.id);
     mockOrganizationService = {
       getDashboard: vi.fn().mockReturnValue(of(dashboard)),
     };
@@ -74,7 +76,7 @@ describe('DashboardStore', () => {
           provide: ActiveOrganizationStore,
           useValue: {
             selectedOrganization: signal<OrganizationOutput | null>(organization),
-            selectedOrganizationId: signal<string | null>(organization.id),
+            selectedOrganizationId,
           },
         },
         { provide: PLATFORM_ID, useValue: 'browser' },
@@ -115,5 +117,114 @@ describe('DashboardStore', () => {
     await flushEffects();
 
     expect(store.recentInterventions()).toEqual([recentIntervention]);
+  });
+
+  it('clears organization A data while B loads and keeps a B failure free of A data', async () => {
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+
+    selectedOrganizationId.set('org-2');
+    await flushEffects();
+
+    expect(store.queryOrganizationId()).toBe('org-2');
+    expect(store.isQueryLoading()).toBe(true);
+    expect(store.queryData()).toBeNull();
+    expect(store.facilityCount()).toBeNull();
+    expect(store.facilitiesSparkline()).toBeNull();
+    expect(store.recentInterventions()).toEqual([]);
+
+    pending.error(new Error('Organization B unavailable'));
+
+    expect(store.queryHasError()).toBe(true);
+    expect(store.queryError()?.message).toBe('Organization B unavailable');
+    expect(store.queryData()).toBeNull();
+    expect(store.recentInterventions()).toEqual([]);
+  });
+
+  it('cancels an A refresh when B becomes active and ignores out-of-order results', async () => {
+    await flushEffects();
+    const stale = new Subject<OrganizationDashboardOutput>();
+    const current = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValueOnce(stale).mockReturnValueOnce(current);
+    store.load('org-1');
+    expect(stale.observed).toBe(true);
+
+    selectedOrganizationId.set('org-2');
+    await flushEffects();
+    expect(stale.observed).toBe(false);
+
+    const organizationBData = { ...dashboard, recentInterventions: [] };
+    current.next(organizationBData);
+    stale.next(dashboard);
+
+    expect(store.queryOrganizationId()).toBe('org-2');
+    expect(store.queryData()).toEqual(organizationBData);
+    expect(store.recentInterventions()).toEqual([]);
+  });
+
+  it.each(['success', 'error'] as const)(
+    'ignores a stale %s before Angular processes the changed organization',
+    async (outcome) => {
+      const pending = new Subject<OrganizationDashboardOutput>();
+      mockOrganizationService.getDashboard.mockReturnValue(pending);
+      await flushEffects();
+
+      selectedOrganizationId.set('org-2');
+      if (outcome === 'success') pending.next(dashboard);
+      else pending.error(new Error('Stale failure'));
+
+      expect(store.queryData()).toBeNull();
+      expect(store.queryError()).toBeNull();
+    },
+  );
+
+  it('cancels a pending refresh and clears data and errors when organization disappears', async () => {
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+    store.load('org-1');
+
+    selectedOrganizationId.set(null);
+    await flushEffects();
+    pending.next(dashboard);
+
+    expect(pending.observed).toBe(false);
+    expect(store.queryOrganizationId()).toBeNull();
+    expect(store.queryData()).toBeNull();
+    expect(store.queryError()).toBeNull();
+    expect(store.isQueryLoading()).toBe(false);
+    expect(store.isQueryLoaded()).toBe(false);
+  });
+
+  it('retains same-organization data during a refresh and recoverable failure', async () => {
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+    store.load('org-1');
+
+    expect(store.isQueryLoading()).toBe(true);
+    expect(store.queryData()).toEqual(dashboard);
+    pending.error(new Error('Refresh unavailable'));
+    expect(store.queryHasError()).toBe(true);
+    expect(store.queryData()).toEqual(dashboard);
+  });
+
+  it('does not issue a manual refresh with an obsolete organization identifier', async () => {
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+    selectedOrganizationId.set('org-2');
+    await flushEffects();
+    const calls = mockOrganizationService.getDashboard.mock.calls.length;
+
+    store.load('org-1');
+
+    expect(mockOrganizationService.getDashboard).toHaveBeenCalledTimes(calls);
+    expect(store.queryOrganizationId()).toBe('org-2');
+    expect(pending.observed).toBe(true);
+    pending.next({ ...dashboard, recentInterventions: [] });
+    expect(store.isQueryLoaded()).toBe(true);
+    expect(store.recentInterventions()).toEqual([]);
   });
 });

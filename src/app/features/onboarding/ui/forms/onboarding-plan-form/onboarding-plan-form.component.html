@@ -1,65 +1,96 @@
-<form novalidate (submit)="submit($event)">
-  <hlm-field-group class="gap-5">
-    @if (serverMessages().length > 0) {
-      <div hlmAlert variant="destructive" data-testid="onboarding-plan-error">
-        @for (message of serverMessages(); track message) {
-          <p hlmAlertDescription>{{ message }}</p>
-        }
-      </div>
-    }
-
-    <hlm-field>
-      <label hlmFieldLabel id="onboarding-plan-label" i18n="@@onboarding.planForm.choose">
-        Choose a plan
-      </label>
-      <hlm-radio-group
-        class="flex flex-col gap-2"
-        [formField]="planForm.planKey"
-        aria-labelledby="onboarding-plan-label"
-        data-testid="onboarding-plan-group"
-      >
-        @for (row of rows(); track row.key) {
-          <label
-            hlmFieldLabel
-            [for]="'onboarding-plan-' + row.key"
-            class="flex w-full cursor-pointer items-start gap-3 rounded-lg border border-input p-3 data-[selected=true]:border-primary data-[selected=true]:bg-muted/50 max-sm:min-h-11"
-            [attr.data-selected]="selectedKey() === row.key"
-            [attr.data-testid]="'onboarding-plan-card-' + row.key"
-          >
-            <hlm-radio [value]="row.key" [inputId]="'onboarding-plan-' + row.key">
-              <hlm-radio-indicator indicator />
-            </hlm-radio>
-            <span class="flex min-w-0 flex-1 flex-col gap-1">
-              <span class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span class="flex min-w-0 items-center gap-2">
-                  <span class="text-sm font-medium">{{ row.name }}</span>
-                  @if (row.isDefault) {
-                    <span hlmBadge variant="secondary" i18n="@@onboarding.planForm.currentPlan"
-                      >Current plan</span
-                    >
+<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+  <div class="min-w-0">
+    <hlm-field-group>
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          class="sr-only"
+          id="onboarding-plan-label"
+          i18n="@@onboarding.planForm.choose"
+        >
+          Choose a plan
+        </label>
+        <hlm-radio-group
+          class="grid grid-cols-1 items-stretch gap-3"
+          [formField]="planForm.planKey"
+          aria-labelledby="onboarding-plan-label"
+          data-testid="onboarding-plan-group"
+        >
+          @for (row of rows(); track row.key) {
+            <label
+              hlmFieldLabel
+              [for]="'onboarding-plan-' + row.key"
+              class="h-full cursor-pointer"
+              [attr.data-selected]="selectedKey() === row.key"
+              [attr.data-testid]="'onboarding-plan-card-' + row.key"
+            >
+              <div hlmField orientation="horizontal" class="h-full">
+                <hlm-radio
+                  [value]="row.key"
+                  [disabled]="row.pricingState === 'unavailable'"
+                  [inputId]="'onboarding-plan-' + row.key"
+                  [aria-labelledby]="'onboarding-plan-name-' + row.key"
+                >
+                  <hlm-radio-indicator indicator />
+                </hlm-radio>
+                <div hlmFieldContent class="min-w-0 self-stretch">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="flex min-w-0 flex-col gap-1">
+                      <span class="flex flex-wrap items-center gap-2">
+                        <span
+                          class="text-lg font-semibold"
+                          [id]="'onboarding-plan-name-' + row.key"
+                          >{{ row.name }}</span
+                        >
+                        @if (row.isDefault) {
+                          <span
+                            hlmBadge
+                            variant="secondary"
+                            i18n="@@onboarding.planForm.currentPlan"
+                            >Current plan</span
+                          >
+                        }
+                      </span>
+                      @if (row.description; as description) {
+                        <p hlmFieldDescription>{{ description }}</p>
+                      }
+                    </div>
+                    <span class="shrink-0 text-lg font-semibold tabular-nums">{{
+                      row.priceLabel
+                    }}</span>
+                  </div>
+                  @if (row.quotas.length > 0) {
+                    <hlm-separator />
+                    <ul class="flex flex-col gap-2 text-sm text-muted-foreground">
+                      @for (quota of row.quotas; track quota.resource) {
+                        <li class="flex items-start gap-2">
+                          <ng-icon
+                            name="lucideCheck"
+                            class="shrink-0 text-success"
+                            aria-hidden="true"
+                          />
+                          <span>{{ quota.summary }}</span>
+                        </li>
+                      }
+                    </ul>
                   }
-                </span>
-                <span class="shrink-0 text-sm font-semibold tabular-nums">{{
-                  row.priceLabel
-                }}</span>
-              </span>
-              @if (row.description; as description) {
-                <span class="text-xs text-muted-foreground">{{ description }}</span>
-              }
-            </span>
-          </label>
-        }
-      </hlm-radio-group>
-      <hlm-field-error>{{ planForm.planKey().errors()[0]?.message }}</hlm-field-error>
-    </hlm-field>
+                </div>
+              </div>
+            </label>
+          }
+        </hlm-radio-group>
+        <hlm-field-error>{{ planForm.planKey().errors()[0]?.message }}</hlm-field-error>
+      </hlm-field>
+    </hlm-field-group>
+  </div>
 
-    <app-onboarding-step-footer
-      [label]="submitLabel()"
-      [pendingLabel]="pendingLabel"
-      [pending]="pending()"
-      [skippable]="skippable()"
-      submitTestId="onboarding-plan-submit"
-      (skipped)="skipped.emit()"
-    />
-  </hlm-field-group>
+  <app-onboarding-step-footer
+    [label]="submitLabel()"
+    [pendingLabel]="pendingLabel"
+    [pending]="pending()"
+    [gateReason]="unavailableReason()"
+    [skippable]="skippable()"
+    submitTestId="onboarding-plan-submit"
+    (skipped)="skipped.emit()"
+  />
 </form>

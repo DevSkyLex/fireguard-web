@@ -134,20 +134,6 @@ describe('OnboardingEquipmentForm', () => {
     expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-2' }]);
   });
 
-  it('should surface the API rejection above the form', async () => {
-    fixture.componentRef.setInput('serverError', {
-      status: 422,
-      violations: [
-        { propertyPath: 'serialNumber', message: 'This serial number is already used.' },
-      ],
-    });
-    await fixture.whenStable();
-
-    expect(
-      element.querySelector('[data-testid="onboarding-equipment-error"]')?.textContent,
-    ).toContain('This serial number is already used.');
-  });
-
   it('should lock the submit control while a request is in flight', async () => {
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();

@@ -1,5 +1,10 @@
 import type { CallState } from '@core/request-state';
-import type { LoginOutput, LogoutOutput } from '@features/auth/models';
+import type {
+  AuthenticatedLoginOutput,
+  LoginOutput,
+  LogoutOutput,
+  MfaChallengeLoginOutput,
+} from '@features/auth/models';
 
 /**
  * Interface AuthState
@@ -124,7 +129,7 @@ export interface AuthState {
    *
    * @since 1.0.0
    *
-   * @type {CallState<LoginOutput>}
+   * @type {CallState<AuthenticatedLoginOutput>}
    */
   readonly loginCallState: CallState<LoginOutput>;
 
@@ -154,7 +159,7 @@ export interface AuthState {
    *
    * @type {CallState<LoginOutput>}
    */
-  readonly refreshCallState: CallState<LoginOutput>;
+  readonly refreshCallState: CallState<AuthenticatedLoginOutput>;
 
   /**
    * Property mfaVerifyCallState
@@ -166,9 +171,9 @@ export interface AuthState {
    *
    * @since 1.0.0
    *
-   * @type {CallState<LoginOutput>}
+   * @type {CallState<AuthenticatedLoginOutput>}
    */
-  readonly mfaVerifyCallState: CallState<LoginOutput>;
+  readonly mfaVerifyCallState: CallState<AuthenticatedLoginOutput>;
 
   /**
    * Property mfaResendCallState
@@ -180,8 +185,8 @@ export interface AuthState {
    *
    * @since 1.0.0
    *
-   * @type {CallState<LoginOutput>}
+   * @type {CallState<MfaChallengeLoginOutput>}
    */
-  readonly mfaResendCallState: CallState<LoginOutput>;
+  readonly mfaResendCallState: CallState<MfaChallengeLoginOutput>;
   //#endregion
 }

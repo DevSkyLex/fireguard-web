@@ -39,6 +39,17 @@ describe('onboardingRequiredGuard', () => {
     await expect(runGuard()).resolves.toBe(true);
   });
 
+  it('allows joined access without completing a separate pinned creation', async () => {
+    mockStore.ensureLoaded.mockReturnValue(
+      of({
+        ...onboardingWith('in_progress'),
+        accessibleOrganizationId: 'joined-organization',
+        targetOrganizationId: 'unfinished-creation',
+      }),
+    );
+    await expect(runGuard()).resolves.toBe(true);
+    expect(mockRouter.createUrlTree).not.toHaveBeenCalled();
+  });
   it('should redirect to the wizard while onboarding is in progress', async () => {
     mockStore.ensureLoaded.mockReturnValue(of(onboardingWith('in_progress')));
     await expect(runGuard()).resolves.toBe(onboardingUrlTree);
@@ -57,5 +68,17 @@ describe('onboardingRequiredGuard', () => {
 
     await expect(runGuard()).resolves.toBe(true);
     expect(mockRouter.createUrlTree).not.toHaveBeenCalled();
+  });
+  it('preserves the requested deep link through workspace selection', async () => {
+    mockStore.ensureLoaded.mockReturnValue(of(null));
+    const result = TestBed.runInInjectionContext(() =>
+      onboardingRequiredGuard(route, { url: '/organizations/org/equipment' } as Parameters<
+        typeof onboardingRequiredGuard
+      >[1]),
+    );
+    if (isObservable(result)) await firstValueFrom(result);
+    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/onboarding'], {
+      queryParams: { returnUrl: '/organizations/org/equipment' },
+    });
   });
 });

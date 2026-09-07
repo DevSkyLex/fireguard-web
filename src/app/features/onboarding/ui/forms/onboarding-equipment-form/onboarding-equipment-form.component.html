@@ -1,159 +1,158 @@
-<form novalidate (submit)="submit($event)">
-  <hlm-field-group class="gap-5">
-    @if (serverMessages().length > 0) {
-      <div hlmAlert variant="destructive" data-testid="onboarding-equipment-error">
-        @for (message of serverMessages(); track message) {
-          <p hlmAlertDescription>{{ message }}</p>
-        }
-      </div>
-    }
-
-    <hlm-field>
-      <label hlmFieldLabel for="onboarding-equipment-type"
-        ><span i18n="@@onboarding.equipmentForm.type"> Type</span><app-required-marker
-      /></label>
-
-      <hlm-select [itemToString]="typeLabelOf" [formField]="equipmentForm.type">
-        <hlm-select-trigger
-          buttonId="onboarding-equipment-type"
-          class="w-full max-sm:min-h-11"
-          data-testid="onboarding-equipment-type"
-        >
-          <hlm-select-value
-            placeholder="Select an equipment type"
-            i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
-          />
-        </hlm-select-trigger>
-
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of typeOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
-
-      <hlm-field-error>{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error>
-    </hlm-field>
-
-    @if (facilities().length === 1) {
-      <div class="flex flex-col gap-1 text-sm" data-testid="onboarding-equipment-facility-summary">
-        <span class="text-muted-foreground" i18n="@@onboarding.equipmentForm.facility"
-          >Facility</span
-        >
-
-        <span class="font-medium">{{ facilityLabelOf(facilities()[0].id) }}</span>
-      </div>
-    } @else if (facilities().length > 1) {
+<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+  <div class="min-w-0">
+    <hlm-field-group>
       <hlm-field>
-        <label
-          hlmFieldLabel
-          for="onboarding-equipment-facility"
-          i18n="@@onboarding.equipmentForm.facility"
-          >Facility</label
-        >
+        <label hlmFieldLabel for="onboarding-equipment-type"
+          ><span i18n="@@onboarding.equipmentForm.type"> Type</span><app-required-marker
+        /></label>
 
-        <hlm-combobox [formField]="equipmentForm.facilityId" [itemToString]="facilityLabelOf">
-          <hlm-combobox-input
-            class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
-            inputId="onboarding-equipment-facility"
-            data-testid="onboarding-equipment-facility"
-            placeholder="Select a facility"
-            i18n-placeholder="@@onboarding.equipmentForm.facilityPlaceholder"
-          />
+        <hlm-select [itemToString]="typeLabelOf" [formField]="equipmentForm.type">
+          <hlm-select-trigger
+            buttonId="onboarding-equipment-type"
+            class="w-full max-sm:min-h-11"
+            data-testid="onboarding-equipment-type"
+          >
+            <hlm-select-value
+              placeholder="Select an equipment type"
+              i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
+            />
+          </hlm-select-trigger>
 
-          <hlm-combobox-content *hlmComboboxPortal>
-            <hlm-combobox-empty i18n="@@onboarding.equipmentForm.noMatchingFacility"
-              >No matching facility.</hlm-combobox-empty
-            >
-
-            <div hlmComboboxList>
-              @for (facility of facilityRows(); track facility.id) {
-                <hlm-combobox-item [value]="facility.id"
-                  >{{ facility.name }} · {{ facility.typeLabel }}</hlm-combobox-item
-                >
+          <hlm-select-content *hlmSelectPortal>
+            <hlm-select-group>
+              @for (option of typeOptions; track option.value) {
+                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
               }
-            </div>
-          </hlm-combobox-content>
-        </hlm-combobox>
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
 
-        <hlm-field-error>{{ equipmentForm.facilityId().errors()[0]?.message }}</hlm-field-error>
+        <hlm-field-error>{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error>
       </hlm-field>
-    }
 
-    <div hlmFieldGroup class="grid gap-4 sm:grid-cols-2">
+      @if (facilities().length === 1) {
+        <div
+          class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm"
+          data-testid="onboarding-equipment-facility-summary"
+        >
+          <span class="text-muted-foreground" i18n="@@onboarding.equipmentForm.facility">
+            Facility
+          </span>
+
+          <span class="min-w-0 font-medium break-words">{{
+            facilityLabelOf(facilities()[0].id)
+          }}</span>
+        </div>
+      } @else if (facilities().length > 1) {
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="onboarding-equipment-facility"
+            i18n="@@onboarding.equipmentForm.facility"
+            >Facility</label
+          >
+
+          <hlm-combobox [formField]="equipmentForm.facilityId" [itemToString]="facilityLabelOf">
+            <hlm-combobox-input
+              class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
+              inputId="onboarding-equipment-facility"
+              data-testid="onboarding-equipment-facility"
+              placeholder="Select a facility"
+              i18n-placeholder="@@onboarding.equipmentForm.facilityPlaceholder"
+            />
+
+            <hlm-combobox-content *hlmComboboxPortal>
+              <hlm-combobox-empty i18n="@@onboarding.equipmentForm.noMatchingFacility"
+                >No matching facility.</hlm-combobox-empty
+              >
+
+              <div hlmComboboxList>
+                @for (facility of facilityRows(); track facility.id) {
+                  <hlm-combobox-item [value]="facility.id"
+                    >{{ facility.name }} · {{ facility.typeLabel }}</hlm-combobox-item
+                  >
+                }
+              </div>
+            </hlm-combobox-content>
+          </hlm-combobox>
+
+          <hlm-field-error>{{ equipmentForm.facilityId().errors()[0]?.message }}</hlm-field-error>
+        </hlm-field>
+      }
+
+      <div hlmFieldGroup class="grid items-start gap-4 sm:grid-cols-2">
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="onboarding-equipment-brand"
+            i18n="@@onboarding.equipmentForm.brand"
+          >
+            Brand
+          </label>
+
+          <input
+            class="max-sm:min-h-11"
+            hlmInput
+            id="onboarding-equipment-brand"
+            type="text"
+            data-testid="onboarding-equipment-brand"
+            placeholder="Kidde"
+            i18n-placeholder="@@onboarding.equipmentForm.brandPlaceholder"
+            [formField]="equipmentForm.brand"
+          />
+        </hlm-field>
+
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="onboarding-equipment-model"
+            i18n="@@onboarding.equipmentForm.model"
+          >
+            Model
+          </label>
+
+          <input
+            class="max-sm:min-h-11"
+            hlmInput
+            id="onboarding-equipment-model"
+            type="text"
+            data-testid="onboarding-equipment-model"
+            placeholder="Pro 210"
+            i18n-placeholder="@@onboarding.equipmentForm.modelPlaceholder"
+            [formField]="equipmentForm.model"
+          />
+        </hlm-field>
+      </div>
+
       <hlm-field>
         <label
           hlmFieldLabel
-          for="onboarding-equipment-brand"
-          i18n="@@onboarding.equipmentForm.brand"
+          for="onboarding-equipment-serial"
+          i18n="@@onboarding.equipmentForm.serial"
         >
-          Brand
+          Serial number
         </label>
 
         <input
           class="max-sm:min-h-11"
           hlmInput
-          id="onboarding-equipment-brand"
+          id="onboarding-equipment-serial"
           type="text"
-          data-testid="onboarding-equipment-brand"
-          placeholder="Kidde"
-          i18n-placeholder="@@onboarding.equipmentForm.brandPlaceholder"
-          [formField]="equipmentForm.brand"
+          data-testid="onboarding-equipment-serial"
+          placeholder="SN-2024-001"
+          i18n-placeholder="@@onboarding.equipmentForm.serialPlaceholder"
+          [formField]="equipmentForm.serialNumber"
         />
       </hlm-field>
+    </hlm-field-group>
+  </div>
 
-      <hlm-field>
-        <label
-          hlmFieldLabel
-          for="onboarding-equipment-model"
-          i18n="@@onboarding.equipmentForm.model"
-        >
-          Model
-        </label>
-
-        <input
-          class="max-sm:min-h-11"
-          hlmInput
-          id="onboarding-equipment-model"
-          type="text"
-          data-testid="onboarding-equipment-model"
-          placeholder="Pro 210"
-          i18n-placeholder="@@onboarding.equipmentForm.modelPlaceholder"
-          [formField]="equipmentForm.model"
-        />
-      </hlm-field>
-    </div>
-
-    <hlm-field>
-      <label
-        hlmFieldLabel
-        for="onboarding-equipment-serial"
-        i18n="@@onboarding.equipmentForm.serial"
-      >
-        Serial number
-      </label>
-
-      <input
-        class="max-sm:min-h-11"
-        hlmInput
-        id="onboarding-equipment-serial"
-        type="text"
-        data-testid="onboarding-equipment-serial"
-        placeholder="SN-2024-001"
-        i18n-placeholder="@@onboarding.equipmentForm.serialPlaceholder"
-        [formField]="equipmentForm.serialNumber"
-      />
-    </hlm-field>
-
-    <app-onboarding-step-footer
-      [label]="submitLabel"
-      [pendingLabel]="pendingLabel"
-      [pending]="pending()"
-      [skippable]="skippable()"
-      submitTestId="onboarding-equipment-submit"
-      (skipped)="skipped.emit()"
-    />
-  </hlm-field-group>
+  <app-onboarding-step-footer
+    [label]="submitLabel"
+    [pendingLabel]="pendingLabel"
+    [pending]="pending()"
+    [skippable]="skippable()"
+    submitTestId="onboarding-equipment-submit"
+    (skipped)="skipped.emit()"
+  />
 </form>

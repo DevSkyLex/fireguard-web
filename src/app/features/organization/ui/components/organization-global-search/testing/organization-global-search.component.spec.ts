@@ -95,6 +95,19 @@ describe('OrganizationGlobalSearch', () => {
     expect(palette()).not.toBeNull();
   });
 
+  it('should use the standard Spartan command input with compact vertical spacing', async () => {
+    trigger()?.click();
+    await fixture.whenStable();
+
+    const commandInput: HTMLElement | null = document.querySelector('hlm-command-input');
+    const inputSection: HTMLElement | null = commandInput?.parentElement ?? null;
+
+    expect(commandInput?.getAttribute('class') ?? '').not.toContain('[&_');
+    expect(commandInput?.classList.contains('p-0')).toBe(true);
+    expect(inputSection?.className).toContain('py-0.5');
+    expect(inputSection?.className).not.toContain('py-2.5');
+  });
+
   it('should not react to Ctrl+K without an active organization', async () => {
     selectedOrganizationId.set(null);
     await fixture.whenStable();

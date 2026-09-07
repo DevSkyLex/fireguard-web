@@ -1,0 +1,153 @@
+<section
+  id="account-sign-in-methods"
+  class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+>
+  <header class="min-w-0">
+    <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.signInMethods.title">
+      Sign-in methods
+    </h2>
+    <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.signInMethods.description">
+      Choose how you access Fireguard. Provider accounts are only linked after you sign in here.
+    </p>
+  </header>
+
+  <div
+    class="min-w-0 divide-y divide-border rounded-lg border border-border"
+    [attr.aria-busy]="loading() ? 'true' : null"
+  >
+    @if (!connections()) {
+      @if (error(); as message) {
+        <div
+          class="flex min-h-28 flex-col items-center justify-center gap-3 p-4 text-center"
+          role="alert"
+        >
+          <p class="text-sm text-destructive">{{ message }}</p>
+          <button hlmBtn variant="outline" size="sm" (click)="retried.emit()">
+            <span i18n="@@common.retry">Retry</span>
+          </button>
+        </div>
+      } @else {
+        @for (item of [1, 2, 3]; track item) {
+          <div class="flex items-center gap-3 p-4">
+            <hlm-skeleton class="size-9 rounded-lg" />
+            <div class="flex flex-1 flex-col gap-2">
+              <hlm-skeleton class="h-4 w-28" />
+              <hlm-skeleton class="h-3 w-44" />
+            </div>
+          </div>
+        }
+      }
+    } @else if (connections(); as methods) {
+      <div class="flex min-w-0 flex-wrap items-center gap-3 p-4">
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <ng-icon name="lucideKeyRound" aria-hidden="true" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium" i18n="@@account.signInMethods.password">Password</p>
+          <p class="text-xs text-muted-foreground">
+            @if (methods.password_configured) {
+              <span i18n="@@account.signInMethods.passwordConfigured">Configured</span>
+            } @else {
+              <span i18n="@@account.signInMethods.passwordMissing">Not configured</span>
+            }
+          </p>
+        </div>
+        @if (!methods.password_configured) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="min-h-11 sm:min-h-8"
+            (click)="passwordSetupRequested.emit()"
+          >
+            <span i18n="@@account.signInMethods.setPassword">Set password</span>
+          </button>
+        } @else {
+          <ng-icon class="text-success" name="lucideCheck" aria-hidden="true" />
+        }
+      </div>
+
+      @for (provider of visibleProviders(); track provider) {
+        <div class="flex min-w-0 flex-wrap items-center gap-3 p-4">
+          <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <ng-icon [name]="provider" size="16" aria-hidden="true" />
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium">{{ providerName(provider) }}</p>
+            @if (connection(provider); as connection) {
+              <p class="truncate text-xs text-muted-foreground">{{ connection.email }}</p>
+            } @else {
+              <p class="text-xs text-muted-foreground" i18n="@@account.signInMethods.notConnected">
+                Not connected
+              </p>
+            }
+          </div>
+
+          @if (connection(provider)) {
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              class="min-h-11 gap-2 sm:min-h-8"
+              [disabled]="pending()"
+              (click)="requestDisconnect(provider)"
+            >
+              <ng-icon name="lucideUnlink" aria-hidden="true" />
+              <span i18n="@@account.signInMethods.disconnect">Disconnect</span>
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="min-h-11 gap-2 sm:min-h-8"
+              [disabled]="pending()"
+              [attr.aria-busy]="pendingProvider() === provider && pending() ? 'true' : null"
+              (click)="connectRequested.emit(provider)"
+            >
+              <ng-icon name="lucideLink" aria-hidden="true" />
+              <span i18n="@@account.signInMethods.connect">Connect</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (error(); as message) {
+        <div class="flex flex-wrap items-center justify-between gap-3 p-4" role="alert">
+          <p class="text-sm text-destructive">{{ message }}</p>
+          <button hlmBtn variant="outline" size="sm" (click)="retried.emit()">
+            <span i18n="@@common.retry">Retry</span>
+          </button>
+        </div>
+      }
+    }
+  </div>
+</section>
+
+<hlm-alert-dialog [state]="dialogState()" (stateChanged)="onDialogStateChanged($event)">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header>
+      <h3 hlmAlertDialogTitle i18n="@@account.signInMethods.disconnectTitle">
+        Disconnect this provider?
+      </h3>
+      <p hlmAlertDialogDescription i18n="@@account.signInMethods.disconnectDescription">
+        You will no longer be able to use this provider to sign in. Fireguard keeps at least one
+        sign-in method on your account.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel class="min-h-11 sm:min-h-8" i18n="@@common.cancel">
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        class="min-h-11 sm:min-h-8"
+        [attr.aria-disabled]="pending() ? 'true' : null"
+        (click)="confirmDisconnect()"
+      >
+        <span i18n="@@account.signInMethods.disconnect">Disconnect</span>
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

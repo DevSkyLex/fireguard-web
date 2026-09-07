@@ -76,6 +76,11 @@ describe('unauthorizedInterceptor', () => {
   it.each([
     ['/api/auth/mfa/verify', 'a mistyped MFA code'],
     ['/api/auth/mfa/resend', 'a resend on an expired challenge'],
+    ['/api/auth/federated/providers', 'provider discovery is unavailable'],
+    ['/api/auth/federated/google/start', 'Google sign-in cannot start'],
+    ['/api/auth/federated/google/complete', 'Google rejects the callback'],
+    ['/api/auth/federated/microsoft/start', 'Microsoft sign-in cannot start'],
+    ['/api/auth/federated/microsoft/complete', 'Microsoft rejects the callback'],
     ['/api/auth/password/reset/request', 'an unknown reset address'],
     ['/api/auth/password/reset/confirm', 'a mistyped reset code'],
     ['/api/auth/password/reset/resend', 'a resend on an expired reset'],

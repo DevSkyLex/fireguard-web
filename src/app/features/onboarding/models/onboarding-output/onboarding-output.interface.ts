@@ -2,6 +2,7 @@ import type { HydraItem } from '@core/api/models';
 import type { OnboardingStepHistoryEntry } from '../onboarding-step/onboarding-step-history-entry.interface';
 import type { OnboardingStepKey } from '../onboarding-step/onboarding-step-key.type';
 import type { OnboardingStepOutput } from '../onboarding-step/onboarding-step-output.interface';
+import type { OnboardingSetupOperation } from '../setup-operation/onboarding-setup-operation.interface';
 import type { OnboardingState } from './onboarding-state.type';
 
 /**
@@ -13,6 +14,35 @@ import type { OnboardingState } from './onboarding-state.type';
  * for the current user journey.
  */
 export interface OnboardingOutput extends HydraItem {
+  /**
+   * Property sessionId
+   * @readonly
+   * @description Stable server identity of the creator session; absent in legacy responses.
+   * @access public
+   * @since 1.1.0
+   * @type {string | undefined}
+   */
+  readonly sessionId?: string;
+
+  /**
+   * Property setupOperations
+   * @readonly
+   * @description Durable prepared inputs and completed resource IDs, omitted from SSR handoffs.
+   * @access public
+   * @since 1.1.0
+   * @type {readonly OnboardingSetupOperation[] | undefined}
+   */
+  readonly setupOperations?: readonly OnboardingSetupOperation[];
+
+  /**
+   * Property accessibleOrganizationId
+   * @readonly
+   * @description Accessible external membership independent of a pinned creation workflow.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly accessibleOrganizationId?: string;
   //#region Properties
   /**
    * Property flow

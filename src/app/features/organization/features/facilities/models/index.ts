@@ -13,6 +13,7 @@ export type {
 export type { FacilityExportOptions } from './facility/facility-export-options.interface';
 export type { FacilityOption } from './facility-option/facility-option.interface';
 export type { FacilityGeocodeOutput } from './facility/facility-geocode-output.interface';
+export type { FacilityAddressSuggestionsOutput } from './facility/facility-address-suggestions-output.interface';
 export type { FacilitySortField, FacilityListSort } from './facility/facility-list-sort.interface';
 export type { CreateFacilityInput } from './facility/create-facility-input.interface';
 export type { UpdateFacilityInput } from './facility/update-facility-input.interface';

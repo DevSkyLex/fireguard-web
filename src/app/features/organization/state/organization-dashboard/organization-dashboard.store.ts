@@ -1,14 +1,22 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withComputed, withHooks, withMethods } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, pipe, switchMap } from 'rxjs';
+import { EMPTY, filter, pipe, switchMap } from 'rxjs';
 import {
   withQueryState,
   setPendingQuery,
   setSuccessQuery,
   setErrorQuery,
+  resetQuery,
   toStoreError,
 } from '@core/request-state';
 import { OrganizationService } from '@features/organization/data-access';
@@ -62,7 +70,10 @@ function extractSparkline(
 ): readonly number[] | null {
   const points = trends?.[key];
   if (!points?.length) return null;
-  return points.map(getDashboardTrendPointValue);
+  const values: number[] = points
+    .map(getDashboardTrendPointValue)
+    .filter((value): value is number => value !== null);
+  return values.length > 0 ? values : null;
 }
 
 /**
@@ -73,7 +84,8 @@ function extractSparkline(
  * Component-scoped NgRx SignalStore for the aggregate `/dashboard`
  * endpoint. Fetches KPI summary and comparison data for the active
  * organization and exposes derived signals for the four KPI cards
- * and their period-over-period comparison deltas.
+ * and their period-over-period comparison deltas. Query state belongs to
+ * `queryOrganizationId`; changing that identity clears data and errors.
  *
  * @example
  * ```typescript
@@ -99,6 +111,7 @@ export const DashboardStore = signalStore(
    * @since 1.0.0
    */
   withQueryState<OrganizationDashboardOutput>(),
+  withState({ queryOrganizationId: null as string | null }),
   //#endregion
 
   //#region Computed
@@ -336,38 +349,64 @@ export const DashboardStore = signalStore(
    *
    * @since 1.0.0
    */
-  withMethods((store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
-    /**
-     * Method load
-     *
-     * @description
-     * NgRx `rxMethod` that fetches the dashboard KPI payload
-     * whenever the organization ID signal emits a new value.
-     * Undefined params are silently ignored via an `EMPTY` return.
-     *
-     * @since 1.0.0
-     */
-    load: rxMethod<string | undefined>(
-      pipe(
-        switchMap((organizationId) => {
-          if (!organizationId) return EMPTY;
+  withMethods(
+    (
+      store,
+      organizationService = inject<OrganizationService>(OrganizationService),
+      activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
+    ) => ({
+      /**
+       * Method load
+       * @method load
+       *
+       * @description
+       * NgRx `rxMethod` that fetches the dashboard KPI payload
+       * whenever the organization ID signal emits a new value.
+       * Changing organization clears the previous payload before loading. A refresh
+       * retains data only in the same organization; obsolete responses are ignored.
+       *
+       * @access public
+       * @since 1.0.0
+       * @param {string | undefined} organizationId - Active organization, or cancellation.
+       * @returns {void}
+       */
+      load: rxMethod<string | undefined>(
+        pipe(
+          filter(
+            (organizationId) =>
+              !organizationId ||
+              organizationId === activeOrganizationStore.selectedOrganizationId(),
+          ),
+          switchMap((organizationId) => {
+            const activeOrganizationId = activeOrganizationStore.selectedOrganizationId();
+            if (store.queryOrganizationId() !== activeOrganizationId) {
+              patchState(store, resetQuery(), { queryOrganizationId: activeOrganizationId });
+            }
+            if (!organizationId || organizationId !== activeOrganizationId) return EMPTY;
 
-          patchState(store, setPendingQuery());
+            patchState(store, setPendingQuery());
 
-          const now: Date = new Date();
-          const to: string = now.toISOString();
-          const from: string = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+            const now: Date = new Date();
+            const to: string = now.toISOString();
+            const from: string = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
 
-          return organizationService.getDashboard(organizationId, { from, to }).pipe(
-            tapResponse({
-              next: (data) => patchState(store, setSuccessQuery(data)),
-              error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-            }),
-          );
-        }),
+            return organizationService.getDashboard(organizationId, { from, to }).pipe(
+              tapResponse({
+                next: (data) => {
+                  if (activeOrganizationStore.selectedOrganizationId() !== organizationId) return;
+                  patchState(store, setSuccessQuery(data));
+                },
+                error: (err) => {
+                  if (activeOrganizationStore.selectedOrganizationId() !== organizationId) return;
+                  patchState(store, setErrorQuery(toStoreError(err)));
+                },
+              }),
+            );
+          }),
+        ),
       ),
-    ),
-  })),
+    }),
+  ),
   //#endregion
 
   //#region Hooks
@@ -398,15 +437,22 @@ export const DashboardStore = signalStore(
    * Feature withHooks
    *
    * @description
-   * Connects {@link loadParams} to {@link load} on store init.
+   * Connects {@link loadParams} to {@link load} on store init and clears the
+   * query scope when its organization disappears.
    *
    * @since 1.0.0
    */
-  withHooks({
-    onInit(store) {
+  withHooks((store, activeOrganizationStore = inject(ActiveOrganizationStore)) => ({
+    onInit() {
       store.load(store.loadParams);
+      effect(() => {
+        const organizationId = activeOrganizationStore.selectedOrganizationId();
+        untracked(() => {
+          if (store.queryOrganizationId() !== organizationId) store.load(undefined);
+        });
+      });
     },
-  }),
+  })),
   //#endregion
 );
 

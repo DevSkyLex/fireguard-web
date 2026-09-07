@@ -4,9 +4,7 @@ import type { HydraItem } from '@core/api/models';
  * Type TokenType
  * @type TokenType
  *
- * @description
- * Type alias for the Bearer token type literal (always 'Bearer' per OAuth2).
- *
+ * @description Bearer token type returned by authentication endpoints.
  * @since 1.0.0
  */
 export type TokenType = 'Bearer';
@@ -15,128 +13,68 @@ export type TokenType = 'Bearer';
  * Type MfaMethod
  * @type MfaMethod
  *
- * @description
- * MFA delivery method types.
- *
+ * @description Supported delivery methods for a Fireguard MFA challenge.
  * @since 1.0.0
  */
 export type MfaMethod = 'email' | 'sms' | 'totp';
 
 /**
- * Interface LoginOutput
- * @interface LoginOutput
+ * Interface LoginOutputBase
+ * @interface LoginOutputBase
  *
  * @description
- * Response from successful authentication.
- * Returned by POST /api/auth/login and POST /api/auth/refresh endpoints.
+ * Fields shared by authenticated sessions and pending MFA challenges.
  *
- * When MFA is required, access_token will be empty and mfa_required will be true.
- *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
- *
- * @example
- * ```typescript
- * // Successful login (no MFA)
- * const response: LoginOutput = {
- *   '@id': '/api/auth/login',
- *   '@type': 'Token',
- *   access_token: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...',
- *   token_type: 'Bearer',
- *   expires_in: 3600,
- *   scope: 'openid profile email'
- * };
- *
- * // MFA required
- * const mfaResponse: LoginOutput = {
- *   '@id': '/api/auth/login',
- *   '@type': 'Token',
- *   access_token: '',
- *   token_type: 'Bearer',
- *   expires_in: 0,
- *   mfa_required: true,
- *   mfa_token: 'eyJ...',
- *   challenge_token: 'abc...'
- * };
- * ```
  */
-export interface LoginOutput extends HydraItem {
-  /**
-   * Property access_token
-   * @readonly
-   *
-   * @description
-   * JWT access token for API authentication.
-   * Empty string when MFA is required.
-   *
-   * @since 1.0.0
-   *
-   * @type {string}
-   */
-  readonly access_token: string;
-
+interface LoginOutputBase extends HydraItem {
   /**
    * Property token_type
    * @readonly
    *
-   * @description
-   * Token type (always 'Bearer' per OAuth2 specification).
-   *
+   * @description Bearer token type used when the response establishes a session.
    * @since 1.0.0
-   *
    * @type {TokenType}
    */
   readonly token_type: TokenType;
 
   /**
-   * Property expires_in
-   * @readonly
-   *
-   * @description
-   * Token lifetime in seconds from the time of issuance.
-   *
-   * @since 1.0.0
-   *
-   * @type {number}
-   */
-  readonly expires_in: number;
-
-  /**
    * Property scope
    * @readonly
    *
-   * @description
-   * Space-separated list of granted OAuth2 scopes.
-   *
+   * @description Space-separated OAuth scopes granted to an established session.
    * @since 1.0.0
-   *
    * @type {string | null | undefined}
    */
   readonly scope?: string | null;
 
   /**
-   * Property mfa_required
+   * Property return_url
    * @readonly
    *
-   * @description
-   * If true, authentication is incomplete and user must verify MFA code.
+   * @description Validated application-local destination returned by federated sign-in.
+   * @since 1.1.0
+   * @type {string | null | undefined}
+   */
+  readonly return_url?: string | null;
+
+  /**
+   * Property new_account
+   * @readonly
    *
-   * @since 1.0.0
-   *
+   * @description Whether federated sign-in provisioned the Fireguard account.
+   * @since 1.1.0
    * @type {boolean | null | undefined}
    */
-  readonly mfa_required?: boolean | null;
+  readonly new_account?: boolean | null;
 
   /**
    * Property mfa_token
    * @readonly
    *
-   * @description
-   * Temporary Pre-Auth Token (JWT) covering the partial authentication state.
-   * Required for MFA verification step.
-   *
+   * @description Temporary pre-authentication token when an MFA challenge is pending.
    * @since 1.0.0
-   *
    * @type {string | null | undefined}
    */
   readonly mfa_token?: string | null;
@@ -145,12 +83,8 @@ export interface LoginOutput extends HydraItem {
    * Property challenge_token
    * @readonly
    *
-   * @description
-   * The OTP challenge token reference.
-   * Used to check challenge status or resend OTP.
-   *
+   * @description Server challenge reference when an MFA challenge is pending.
    * @since 1.0.0
-   *
    * @type {string | null | undefined}
    */
   readonly challenge_token?: string | null;
@@ -159,12 +93,8 @@ export interface LoginOutput extends HydraItem {
    * Property mfa_method
    * @readonly
    *
-   * @description
-   * MFA code delivery method.
-   * Indicates where the user should check for the verification code.
-   *
+   * @description Delivery method when an MFA challenge is pending.
    * @since 1.0.0
-   *
    * @type {MfaMethod | null | undefined}
    */
   readonly mfa_method?: MfaMethod | null;
@@ -173,16 +103,8 @@ export interface LoginOutput extends HydraItem {
    * Property mfa_destination
    * @readonly
    *
-   * @description
-   * Masked destination where the MFA code was sent, or a method label when
-   * there is no delivery destination.
-   * Examples:
-   * - Email: "c*****t@v*************n.pro"
-   * - Phone: "+336****5678"
-   * - TOTP: "Authenticator App" (code is generated locally, not delivered)
-   *
+   * @description Masked delivery destination when one exists.
    * @since 1.0.0
-   *
    * @type {string | null | undefined}
    */
   readonly mfa_destination?: string | null;
@@ -191,14 +113,115 @@ export interface LoginOutput extends HydraItem {
    * Property mfa_resend_in
    * @readonly
    *
-   * @description
-   * Seconds to wait before allowing another MFA code resend request.
-   * Used for rate limiting and countdown display.
-   * Present when mfa_required is true.
-   *
+   * @description Seconds before another MFA code may be requested.
    * @since 1.0.0
-   *
    * @type {number | null | undefined}
    */
   readonly mfa_resend_in?: number | null;
 }
+
+/**
+ * Interface AuthenticatedLoginOutput
+ * @interface AuthenticatedLoginOutput
+ *
+ * @description Successful authentication response containing a usable access token.
+ *
+ * @version 1.1.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface AuthenticatedLoginOutput extends LoginOutputBase {
+  /**
+   * Property mfa_required
+   * @readonly
+   *
+   * @description Discriminant showing that authentication is complete.
+   * @since 1.0.0
+   * @type {false | null | undefined}
+   */
+  readonly mfa_required?: false | null;
+
+  /**
+   * Property access_token
+   * @readonly
+   *
+   * @description JWT access token for authenticated API requests.
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly access_token: string;
+
+  /**
+   * Property expires_in
+   * @readonly
+   *
+   * @description Access-token lifetime in seconds.
+   * @since 1.0.0
+   * @type {number}
+   */
+  readonly expires_in: number;
+}
+
+/**
+ * Interface MfaChallengeLoginOutput
+ * @interface MfaChallengeLoginOutput
+ *
+ * @description
+ * Partial authentication response that must be completed on the MFA screen.
+ * API Platform may omit null session fields, so they stay optional here.
+ *
+ * @version 1.1.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
+export interface MfaChallengeLoginOutput extends LoginOutputBase {
+  /**
+   * Property mfa_required
+   * @readonly
+   *
+   * @description Discriminant showing that a second factor is required.
+   * @since 1.0.0
+   * @type {true}
+   */
+  readonly mfa_required: true;
+
+  /**
+   * Property access_token
+   * @readonly
+   *
+   * @description No access token exists before MFA verification.
+   * @since 1.0.0
+   * @type {null | undefined}
+   */
+  readonly access_token?: null;
+
+  /**
+   * Property expires_in
+   * @readonly
+   *
+   * @description No access-token lifetime exists before MFA verification.
+   * @since 1.0.0
+   * @type {null | undefined}
+   */
+  readonly expires_in?: null;
+
+  /**
+   * Property mfa_token
+   * @readonly
+   *
+   * @description Temporary pre-authentication token submitted with the OTP.
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly mfa_token: string;
+}
+
+/**
+ * Type LoginOutput
+ * @type LoginOutput
+ *
+ * @description
+ * Discriminated authentication result. `mfa_required: true` carries a pending
+ * challenge; every other response carries a complete session.
+ *
+ * @since 1.1.0
+ */
+export type LoginOutput = AuthenticatedLoginOutput | MfaChallengeLoginOutput;

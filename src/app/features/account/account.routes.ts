@@ -32,6 +32,12 @@ export const ACCOUNT_ROUTES: Routes = [
         data: { breadcrumb: $localize`:@@route.accountProfile:Your account` },
       },
       {
+        path: 'security/federated/:provider/callback',
+        loadComponent: () => import('@features/auth').then((m) => m.FederatedLinkCallbackPage),
+        title: $localize`:@@route.federatedLinkCallback:Connecting sign-in provider`,
+        data: { breadcrumb: $localize`:@@route.accountSecurity:Security` },
+      },
+      {
         path: 'security',
         loadComponent: () =>
           import('./ui/pages/account-security-page/account-security-page.component').then(

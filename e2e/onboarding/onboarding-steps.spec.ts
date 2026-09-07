@@ -52,6 +52,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     page,
   }) => {
     const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
     await api.mockAuthenticatedSession();
     await api.mockOnboarding(onboardingAt('select_plan', ['create_organization']));
     await api.mockPlans([]);
@@ -122,7 +123,9 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     await onboarding.equipmentSerialInput.fill('SN-E2E-001');
     await onboarding.equipmentSubmit.click();
 
-    await expect(page).not.toHaveURL(/\/onboarding$/, { timeout: 10_000 });
+    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}$`), {
+      timeout: 10_000,
+    });
     await expect(onboarding.completedToast).toBeVisible();
   });
 
@@ -130,6 +133,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     page,
   }) => {
     const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
     await api.mockAuthenticatedSession();
     await api.mockOnboarding(
       onboardingAt('create_first_facility', [
@@ -168,6 +172,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
 
     await onboarding.pickFacilityType('Site');
     await onboarding.facilityNameInput.fill('Main warehouse');
+    await onboarding.chooseFacilityAddress();
     await expect(onboarding.facilitiesSubmit).toHaveText(/Create facility/);
     await onboarding.facilitiesSubmit.click();
 
@@ -179,6 +184,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     page,
   }) => {
     const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
     await api.mockAuthenticatedSession();
     await api.mockOnboarding(
       onboardingAt('invite_members', ['create_organization', 'select_plan']),
@@ -201,6 +207,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
 
 test('returns focus to the draft when editing a prepared invitation or site', async ({ page }) => {
   const api = new ApiMock(page);
+  await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
   await api.mockAuthenticatedSession();
   await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, []);
   await api.mockOnboarding(onboardingAt('invite_members', ['create_organization', 'select_plan']));
@@ -220,4 +227,38 @@ test('returns focus to the draft when editing a prepared invitation or site', as
   await page.getByRole('button', { name: 'Edit Main warehouse', exact: true }).click();
   await expect(onboarding.facilityNameInput).toBeFocused();
   await expect(onboarding.facilityNameInput).toHaveValue('Main warehouse');
+});
+
+test('requires a suggested address and invalidates it after editing the text', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession();
+  await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+  await api.mockOnboarding(
+    onboardingAt('create_first_facility', ['create_organization', 'select_plan', 'invite_members']),
+  );
+  const onboarding = new OnboardingPage(page);
+  await onboarding.goto();
+  await onboarding.pickFacilityType('Site');
+  await onboarding.facilityNameInput.fill('HQ');
+  await onboarding.facilityAddressInput.fill('12 Quai des Docks');
+  await expect(page.getByTestId('onboarding-address-suggestion')).toBeVisible();
+  await expect(onboarding.facilityAddressInput).toHaveValue('12 Quai des Docks');
+  await page.screenshot({
+    path: 'e2e/artifacts/onboarding-annotations-20260907/address-suggestions-mobile.png',
+    animations: 'disabled',
+  });
+  await onboarding.facilityAddressInput.press('ArrowDown');
+  await onboarding.facilityAddressInput.press('Enter');
+  await expect(onboarding.facilityAddressInput).toHaveValue('12 Quai des Docks');
+  await expect(page.locator('#onboarding-facility-city')).toHaveValue('Le Havre');
+  await expect(page.locator('#onboarding-facility-country')).toHaveValue('France');
+  await expect(page.locator('#onboarding-facility-postalCode')).toHaveValue('76600');
+  await expect(onboarding.facilityAddButton).toBeEnabled();
+  await onboarding.facilityAddressInput.fill('Other address');
+  await onboarding.facilityNameInput.click();
+  await expect(onboarding.facilityAddButton).toBeDisabled();
+  await onboarding.facilitiesSubmit.click();
+  await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
+  await expect(onboarding.facilityAddressInput).toHaveAttribute('aria-invalid', 'true');
 });

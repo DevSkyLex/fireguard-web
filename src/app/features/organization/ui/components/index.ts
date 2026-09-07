@@ -14,3 +14,8 @@ export type {
   StatTileLink,
   StatTileTone,
 } from './stat-tile';
+
+export { OrganizationDashboardRisk } from './organization-dashboard-risk/organization-dashboard-risk.component';
+export { OrganizationDashboardAlerts } from './organization-dashboard-alerts/organization-dashboard-alerts.component';
+export type { OrganizationDashboardAlertRow } from './organization-dashboard-alerts/models/organization-dashboard-alert-row.interface';
+export { OrganizationDashboardRecent } from './organization-dashboard-recent/organization-dashboard-recent.component';

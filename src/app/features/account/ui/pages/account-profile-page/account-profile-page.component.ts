@@ -2,22 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   LOCALE_ID,
   OnInit,
-  signal,
-  untracked,
-  type EffectRef,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
-import type {
-  UpdateCurrentUserProfileInput,
-  UserLocale,
-  UserProfileOutput,
-} from '@features/account/models';
-import { USER_LOCALE_OPTIONS } from '@features/account/options';
+import type { UpdateCurrentUserProfileInput, UserProfileOutput } from '@features/account/models';
 import { AccountProfileEditStore, UserStore } from '@features/account/state';
 import { AccountAvatarPicker } from '@features/account/ui/components/account-avatar-picker';
 import { AccountProfileForm, type AccountProfileFormValues } from '@features/account/ui/forms';
@@ -34,8 +24,8 @@ import { HlmAvatarImports } from '@shared/ui/avatar';
  * @class AccountProfilePage
  *
  * @description
- * Your own profile: read-only by default, with an explicit control to change
- * the parts you own.
+ * Your own profile, with the fields this account owns available directly in
+ * the page for quick, one-at-a-time editing.
  *
  * The editable group is edited **in place**, next to the values being changed,
  * rather than in a dialog that would hide them (`ARCHITECTURE.md` §10.5). What
@@ -95,23 +85,6 @@ export class AccountProfilePage implements OnInit {
     inject<AccountProfileEditStore>(AccountProfileEditStore);
 
   /**
-   * Property editing
-   * @readonly
-   *
-   * @description
-   * Whether the editable group is showing its form rather than its values.
-   *
-   * Local by design: it is an interaction state, not a fact about the account,
-   * and nothing outside this surface has any business knowing it.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly editing: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
    * Property formValues
    * @readonly
    *
@@ -135,25 +108,6 @@ export class AccountProfilePage implements OnInit {
       };
     },
   );
-
-  /**
-   * Property localeLabel
-   * @readonly
-   *
-   * @description
-   * The chosen interface language, named rather than shown as its stored code:
-   * `fr` is not a thing to display to a reader.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly localeLabel: Signal<string> = computed((): string => {
-    const locale: UserLocale = this.userStore.profile()?.locale ?? 'system';
-
-    return USER_LOCALE_OPTIONS.find((option): boolean => option.value === locale)?.label ?? '';
-  });
 
   /**
    * Property roles
@@ -273,45 +227,6 @@ export class AccountProfilePage implements OnInit {
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /**
-   * Property previousSaveStatus
-   *
-   * @description
-   * The save call state as of the last time {@link leaveEditOnSave} ran, so it
-   * can spot the transition into success rather than the state of being in it.
-   *
-   * @access private
-   * @since 2.0.0
-   *
-   * @type {string}
-   */
-  private previousSaveStatus: string = 'idle';
-  //#endregion
-
-  //#region Lifecycle
-  /**
-   * Property leaveEditOnSave
-   * @readonly
-   *
-   * @description
-   * Returns to the read-only view once a save lands.
-   *
-   * Keyed on the **transition** into success rather than on being in it: the
-   * call state stays `success` afterwards, so a plain equality check would slam
-   * the form shut the instant the reader reopened it.
-   *
-   * @access private
-   * @since 2.0.0
-   */
-  private readonly leaveEditOnSave: EffectRef = effect((): void => {
-    const status: string = this.editStore.saveCallState().status;
-    const previous: string = this.previousSaveStatus;
-    this.previousSaveStatus = status;
-
-    if (previous !== 'pending' || status !== 'success') return;
-
-    untracked((): void => this.editing.set(false));
-  });
   //#endregion
 
   //#region Methods
@@ -332,40 +247,6 @@ export class AccountProfilePage implements OnInit {
    */
   public ngOnInit(): void {
     this.userStore.load();
-  }
-
-  /**
-   * Method startEditing
-   * @method startEditing
-   *
-   * @description
-   * Swaps the editable group for its form.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
-   */
-  protected startEditing(): void {
-    this.editing.set(true);
-  }
-
-  /**
-   * Method cancelEditing
-   * @method cancelEditing
-   *
-   * @description
-   * Abandons the edit. Nothing needs undoing: the form seeds itself from the
-   * stored profile every time it is shown, so reopening it starts from the
-   * saved values rather than from the abandoned draft.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
-   */
-  protected cancelEditing(): void {
-    this.editing.set(false);
   }
 
   /**

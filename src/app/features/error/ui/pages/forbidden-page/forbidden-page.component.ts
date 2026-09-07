@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLogOut, lucideShieldX } from '@ng-icons/lucide';
+import { lucideLogOut, lucideShieldX, lucideLockKeyhole, lucideKeyRound } from '@ng-icons/lucide';
 import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth/ports';
 import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
@@ -24,8 +24,9 @@ import { HlmButton } from '@shared/ui/button';
 @Component({
   selector: 'app-forbidden-page',
   imports: [RouterLink, NgIcon, PageHeading, HlmButton],
-  providers: [provideIcons({ lucideLogOut, lucideShieldX })],
+  providers: [provideIcons({ lucideLockKeyhole, lucideKeyRound, lucideLogOut, lucideShieldX })],
   templateUrl: './forbidden-page.component.html',
+  host: { class: 'my-auto block w-full max-w-xl shrink-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ForbiddenPage {

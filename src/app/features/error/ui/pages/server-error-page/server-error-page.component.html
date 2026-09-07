@@ -1,11 +1,37 @@
-<div id="server-error-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
-  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-    <ng-icon name="lucideServerCrash" class="text-2xl" aria-hidden="true" />
-  </div>
-
+<div id="server-error-page" class="flex w-full max-w-xl flex-col items-center gap-8 text-center">
   <div class="flex flex-col gap-2">
-    <p class="font-mono text-sm text-muted-foreground">500</p>
+    <div
+      class="relative mx-auto mb-6 flex w-full max-w-lg items-center justify-center py-8 sm:py-10"
+    >
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 text-primary">
+        <div
+          class="absolute inset-x-4 inset-y-8 -rotate-12 rounded-[50%] border border-dashed border-primary/25 sm:inset-x-8"
+        ></div>
+        <div
+          class="absolute top-0 left-5 -rotate-12 motion-safe:animate-[bounce_4s_ease-in-out_1] sm:left-10"
+        >
+          <ng-icon name="lucideSettings" size="32" />
+        </div>
+        <div
+          class="absolute right-4 bottom-1 rotate-12 motion-safe:animate-[bounce_3s_ease-in-out_1] sm:right-10"
+        >
+          <ng-icon name="lucideWrench" size="36" />
+        </div>
+        <div class="absolute top-2 right-9 rotate-12 opacity-60 sm:right-16">
+          <ng-icon name="lucideServerCrash" size="24" />
+        </div>
+        <span class="absolute bottom-7 left-12 size-2 rounded-full bg-primary/50"></span>
+        <span class="absolute top-1/2 right-0 size-2 rotate-45 border border-primary/50"></span>
+        <span class="absolute top-1/2 left-0 size-1.5 rounded-full bg-primary/30"></span>
+      </div>
+      <p
+        class="relative font-mono text-[clamp(7rem,24vw,12rem)] leading-none font-semibold tracking-tighter text-foreground"
+      >
+        500
+      </p>
+    </div>
     <app-page-heading
+      size="large"
       heading="Something went wrong on our side"
       i18n-heading="@@error.serverError.title"
       description="Your workspace could not be reached. This is usually temporary — try again in a moment."
@@ -13,8 +39,10 @@
     />
   </div>
 
-  <div class="flex flex-wrap items-center justify-center gap-3">
-    <button hlmBtn size="sm" class="gap-2 max-sm:min-h-11" (click)="retry()">
+  <div
+    class="flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center"
+  >
+    <button hlmBtn size="lg" class="min-h-11 gap-2" (click)="retry()">
       <ng-icon name="lucideRotateCcw" class="text-sm" aria-hidden="true" />
       <span i18n="@@error.serverError.retry">Try again</span>
     </button>

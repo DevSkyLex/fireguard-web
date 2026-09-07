@@ -42,7 +42,7 @@ describe('OnboardingOrganizationForm', () => {
     expect(element.textContent).toContain("Enter your organization's name.");
   });
 
-  it('should emit the trimmed name and drop a blank slug', async () => {
+  it('should emit the trimmed name and leave slug generation to the server', async () => {
     const emitted: SetupCreateOrganizationInput[] = [];
     fixture.componentInstance.submitted.subscribe((value: SetupCreateOrganizationInput): void => {
       emitted.push(value);
@@ -51,32 +51,7 @@ describe('OnboardingOrganizationForm', () => {
     await fill('onboarding-org-name', ' Acme Fire Safety ');
     await submit();
 
-    expect(emitted).toEqual([{ name: 'Acme Fire Safety', slug: undefined }]);
-  });
-
-  it('should emit a trimmed slug when one is entered', async () => {
-    const emitted: SetupCreateOrganizationInput[] = [];
-    fixture.componentInstance.submitted.subscribe((value: SetupCreateOrganizationInput): void => {
-      emitted.push(value);
-    });
-
-    await fill('onboarding-org-name', 'Acme Fire Safety');
-    await fill('onboarding-org-slug', ' acme-fire-safety ');
-    await submit();
-
-    expect(emitted).toEqual([{ name: 'Acme Fire Safety', slug: 'acme-fire-safety' }]);
-  });
-
-  it('should surface the API rejection above the form', async () => {
-    fixture.componentRef.setInput('serverError', {
-      status: 422,
-      violations: [{ propertyPath: 'name', message: 'This name is already used.' }],
-    });
-    await fixture.whenStable();
-
-    expect(element.querySelector('[data-testid="onboarding-org-error"]')?.textContent).toContain(
-      'This name is already used.',
-    );
+    expect(emitted).toEqual([{ name: 'Acme Fire Safety' }]);
   });
 
   it('should lock the submit control while a request is in flight', async () => {

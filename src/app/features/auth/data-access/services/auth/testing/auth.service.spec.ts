@@ -64,9 +64,9 @@ describe('AuthService', () => {
       const mfaResponse: LoginOutput = {
         '@id': '/api/auth/login',
         '@type': 'Token',
-        access_token: '',
+        access_token: null,
         token_type: 'Bearer',
-        expires_in: 0,
+        expires_in: null,
         mfa_required: true,
         mfa_token: 'mfa-pre-auth-token',
         challenge_token: 'otp-challenge-token',

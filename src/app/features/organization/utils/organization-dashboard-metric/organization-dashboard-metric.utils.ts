@@ -10,7 +10,7 @@ import type {
  *
  * @description
  * Maps each non-conformity severity to the `overview.nonConformities`
- * summary key the backend reports its current open+unresolved count under
+ * summary key the backend reports its count across all statuses under
  * (`GetOrganizationDashboardProvider::normalizeOverview`).
  *
  * @since 1.0.0
@@ -47,17 +47,19 @@ export function getOrganizationDashboardOverviewMetricValue(
   metricKey: string,
 ): number | null {
   const summary = overview?.[widgetKey]?.['summary'];
-  const entry = summary?.find((item) => item['key'] === metricKey);
+  const entry = Array.isArray(summary)
+    ? summary.find((item) => item['key'] === metricKey)
+    : undefined;
   const value = entry?.['value'];
 
-  return typeof value === 'number' ? value : null;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 /**
  * Function getOrganizationDashboardNonConformitySeverityBreakdown
  *
  * @description
- * Resolves the current open+unresolved non-conformity count for every
+ * Resolves the current non-conformity count across all statuses for every
  * severity level, ordered from most to least urgent, from the dashboard's
  * `overview.nonConformities` widget.
  *
@@ -108,7 +110,7 @@ export function getOrganizationDashboardHealthValue(
   const entry = metrics?.find((item) => item['key'] === metricKey);
   const value = entry?.['value'];
 
-  return typeof value === 'number' ? value : null;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 /**

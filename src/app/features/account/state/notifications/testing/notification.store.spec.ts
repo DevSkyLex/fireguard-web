@@ -303,6 +303,7 @@ describe('NotificationStore', () => {
 
       expect(store.notifications()).toEqual([notification]);
       expect(store.totalNotifications()).toBe(1);
+
       expect(store.currentPage()).toBe(1);
       expect(store.listCallState().status).toBe('success');
     });
@@ -395,6 +396,7 @@ describe('NotificationStore', () => {
 
       expect(store.notifications()).toEqual([otherNotification]);
       expect(store.totalNotifications()).toBe(1);
+      expect(store.revision()).toBe(1);
     });
 
     it('should reset the guard when the SSE stream errors', () => {

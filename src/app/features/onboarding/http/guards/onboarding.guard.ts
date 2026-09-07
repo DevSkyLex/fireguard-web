@@ -33,7 +33,8 @@ export const onboardingGuard: CanActivateFn = (route): MaybeAsync<GuardResult> =
     map((onboarding: OnboardingOutput | null): GuardResult => {
       if (onboarding?.state !== 'completed') return true;
       const returnUrl = resolveReturnUrl(route.queryParamMap.get('returnUrl'), '');
-      if (returnUrl) return router.parseUrl(returnUrl);
+      if (returnUrl && !returnUrl.split('?')[0].startsWith('/onboarding'))
+        return router.parseUrl(returnUrl);
       return onboarding.targetOrganizationId
         ? router.createUrlTree(['/organizations', onboarding.targetOrganizationId])
         : router.createUrlTree(['/']);

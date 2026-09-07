@@ -5,6 +5,7 @@ import {
   buildPercentageSeries,
   formatDashboardTrendBucket,
   getDashboardTrendPointBucket,
+  getDashboardTrendPointValue,
   getDashboardTrendSeriesValues,
   sumDashboardTrendValues,
   sumTrendSeries,
@@ -25,6 +26,11 @@ describe('organization dashboard trend utils', () => {
 
   it('formats day buckets into a single-day label under day granularity', () => {
     expect(formatDashboardTrendBucket('2026-04-15', 'day')).toBe('Apr 15, 2026');
+  });
+
+  it('formats buckets in the requested application locale', () => {
+    expect(formatDashboardTrendBucket('2026-04-15', 'day', 'fr-FR')).toBe('15 avr. 2026');
+    expect(formatDashboardTrendBucket('2026-04', 'month', 'es-ES')).toBe('abr 2026');
   });
 
   it('formats an unrecognised bucket string via Date parsing', () => {
@@ -49,6 +55,13 @@ describe('organization dashboard trend utils', () => {
     expect(sumDashboardTrendValues([1, 2, 3])).toBe(6);
   });
 
+  it('preserves missing and non-finite values as unavailable', () => {
+    expect(getDashboardTrendPointValue({ bucket: '2026-03' })).toBeNull();
+    expect(getDashboardTrendPointValue({ bucket: '2026-03', value: 'not-a-number' })).toBeNull();
+    expect(getDashboardTrendPointValue({ bucket: '2026-03', value: '4' })).toBe(4);
+    expect(sumDashboardTrendValues([null, null])).toBeNull();
+  });
+
   it('aligns sparse trend series onto shared buckets', () => {
     const inspections: readonly OrganizationDashboardTrendSeriesPoint[] = [
       { bucket: '2026-03', value: 4 },
@@ -67,6 +80,28 @@ describe('organization dashboard trend utils', () => {
         [0, 2, 5],
       ],
     });
+  });
+
+  it('distinguishes an unavailable point from an absent sparse bucket', () => {
+    expect(
+      alignDashboardTrendSeries(
+        [
+          [{ bucket: '2026-03' }, { bucket: '2026-04', value: 2 }],
+          [{ bucket: '2026-03', value: 3 }],
+        ],
+        'month',
+      ).datasets,
+    ).toEqual([
+      [null, 2],
+      [3, 0],
+    ]);
+  });
+
+  it('keeps an unavailable series distinct from a valid empty series', () => {
+    expect(
+      alignDashboardTrendSeries([[{ bucket: '2026-03', value: 3 }], undefined, []], 'month')
+        .datasets,
+    ).toEqual([[3], [null], [0]]);
   });
 
   it('builds difference series bucket by bucket', () => {

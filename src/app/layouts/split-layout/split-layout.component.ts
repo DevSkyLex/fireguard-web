@@ -3,10 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  type ElementRef,
   inject,
   input,
   type InputSignal,
   type Signal,
+  viewChild,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {
@@ -119,20 +121,36 @@ export class SplitLayout {
   //#endregion
 
   //#region Properties
-  /** @description Bounds the desktop presentation so the two columns remain related on wide screens. */
+  /**
+   * Property layoutClass
+   * @readonly
+   *
+   * @description Fills the viewport so the form and presentation columns meet both edges.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
   protected readonly layoutClass: Signal<string> = computed((): string =>
-    hlm(
-      'mx-auto flex h-dvh w-full overflow-hidden bg-background text-foreground',
-      this.splitShowcase() === 'panel' && 'lg:max-w-[1600px]',
-    ),
+    hlm('flex h-dvh w-full overflow-hidden bg-background text-foreground'),
   );
 
-  /** @description Sizes the contributed content according to the mounting route, without knowing its feature. */
+  /**
+   * Property showcaseClass
+   * @readonly
+   *
+   * @description
+   * Sizes the contributed content according to the mounting route. Auth panels
+   * use the primary surface in light mode and a restrained graphite surface in
+   * dark mode so the large brand area stays comfortable beside the form.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
   protected readonly showcaseClass: Signal<string> = computed((): string =>
     hlm(
       'hidden min-w-0 shrink-0 overflow-y-auto text-foreground lg:order-first lg:grid',
       this.splitShowcase() === 'panel'
-        ? 'border-r border-border bg-muted/50 lg:w-[42%] xl:w-[44%]'
+        ? 'overflow-hidden border-r border-primary-foreground/15 bg-primary text-primary-foreground dark:border-border dark:bg-background dark:text-foreground lg:w-1/2 xl:w-1/2'
         : 'border-r border-border bg-muted/40 lg:w-64 xl:w-72',
     ),
   );
@@ -246,8 +264,8 @@ export class SplitLayout {
    * @readonly
    *
    * @description
-   * The form column's class list, its {@link resolvedSplitWidth} floor
-   * resolved through {@link SPLIT_COLUMN_MIN_WIDTH_CLASS}.
+   * The form column's class list. Equal-width showcase panels let forms shrink
+   * within their half viewport; only compact rails retain the preferred form floor.
    *
    * @access protected
    * @since 1.1.0
@@ -257,8 +275,47 @@ export class SplitLayout {
   protected readonly columnClass: Signal<string> = computed((): string =>
     hlm(
       'relative flex min-h-0 min-w-0 flex-1 flex-col',
-      SPLIT_COLUMN_MIN_WIDTH_CLASS[this.resolvedSplitWidth()],
+      this.splitShowcase() !== 'panel' && SPLIT_COLUMN_MIN_WIDTH_CLASS[this.resolvedSplitWidth()],
     ),
   );
+
+  /**
+   * Property content
+   * @readonly
+   *
+   * @description
+   * The shell's scroll container. Auth and onboarding routes reuse the same
+   * split layout instance, so it must be reset when a child route activates.
+   *
+   * @access private
+   * @since 1.1.1
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly content: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('content');
+
+  /**
+   * Method resetContentScroll
+   * @method resetContentScroll
+   *
+   * @description
+   * Returns the split shell to the top whenever a routed form is replaced.
+   * Without this reset, navigating from a long registration form to a shorter
+   * login form can leave its first field above the viewport on small screens.
+   *
+   * @access protected
+   * @since 1.1.1
+   *
+   * @returns {void}
+   */
+  protected resetContentScroll(): void {
+    const content = this.content()?.nativeElement;
+
+    if (!content) return;
+
+    content.scrollTop = 0;
+    content.scrollLeft = 0;
+  }
   //#endregion
 }

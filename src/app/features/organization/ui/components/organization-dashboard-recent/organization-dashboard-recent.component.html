@@ -1,0 +1,127 @@
+<section hlmCard data-testid="org-dashboard-recent" class="@container/recent">
+  <div hlmCardHeader class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-col gap-1">
+      <h2 id="org-dashboard-recent-title" hlmCardTitle i18n="@@org.dashboard.recent.title">
+        Recently updated interventions
+      </h2>
+      <p hlmCardDescription i18n="@@org.dashboard.recent.description">
+        Pick up where your team left off
+      </p>
+    </div>
+    <a
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="max-sm:min-h-11"
+      [routerLink]="['/organizations', organizationId(), 'interventions']"
+      i18n="@@org.dashboard.recent.all"
+      >View all interventions</a
+    >
+  </div>
+  <div hlmCardContent class="p-0">
+    @if (loading()) {
+      <div class="flex flex-col gap-4">
+        <hlm-skeleton class="h-10 w-full" /><hlm-skeleton class="h-10 w-full" /><hlm-skeleton
+          class="h-10 w-full"
+        />
+      </div>
+    } @else if (rows() === null) {
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@org.dashboard.recent.unavailable">
+            Recent interventions unavailable
+          </p>
+        </div>
+      </div>
+    } @else if (visibleRows().length === 0) {
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@org.dashboard.recent.empty">No recent interventions</p>
+          <p hlmEmptyDescription i18n="@@org.dashboard.recent.emptyDescription">
+            Interventions will appear here when your team creates or updates them.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div hlmTableContainer class="hidden @[700px]/recent:block">
+        <table hlmTable class="w-full table-fixed" aria-labelledby="org-dashboard-recent-title">
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh class="w-[34%]" i18n="@@org.dashboard.recent.intervention">Intervention</th>
+              <th hlmTh class="w-[17%]" i18n="@@org.dashboard.recent.status">Status</th>
+              <th hlmTh class="w-[18%]" i18n="@@org.dashboard.recent.site">Site</th>
+              <th hlmTh class="w-[19%]" i18n="@@org.dashboard.recent.responsible">Responsible</th>
+              <th hlmTh class="w-[12%]" i18n="@@org.dashboard.recent.due">Due</th>
+            </tr>
+          </thead>
+          <tbody hlmTBody>
+            @for (row of visibleRows(); track row.id) {
+              <tr hlmTr>
+                <td hlmTd>
+                  <a
+                    class="flex min-h-10 min-w-0 items-center gap-3 rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                    [routerLink]="['/organizations', organizationId(), 'interventions', row.id]"
+                    [title]="row.name"
+                    ><span class="shrink-0 font-mono text-xs text-muted-foreground"
+                      >FG-{{ row.number }}</span
+                    ><span class="truncate">{{ row.name }}</span></a
+                  >
+                </td>
+                <td hlmTd><app-intervention-tag kind="status" [value]="row.status" /></td>
+                <td hlmTd>
+                  <span class="block truncate text-muted-foreground" [title]="row.siteName ?? ''">{{
+                    row.siteName ?? '—'
+                  }}</span>
+                </td>
+                <td hlmTd>
+                  <span class="flex min-w-0 items-center gap-2">
+                    @if (row.responsibleName; as name) {
+                      <hlm-avatar size="sm">
+                        @if (row.responsibleAvatarUrl; as avatar) {
+                          <img hlmAvatarImage [src]="avatar" alt="" />
+                        }
+                        <span hlmAvatarFallback>{{ name.slice(0, 1) }}</span></hlm-avatar
+                      ><span class="truncate">{{ name }}</span>
+                    } @else {
+                      <span class="text-muted-foreground" i18n="@@org.dashboard.recent.unassigned"
+                        >Unassigned</span
+                      >
+                    }
+                  </span>
+                </td>
+                <td hlmTd class="tabular-nums">
+                  <span class="whitespace-nowrap text-muted-foreground">{{
+                    row.dueAt ? (row.dueAt | date: 'mediumDate') : '—'
+                  }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <ul class="flex flex-col divide-y divide-border px-4 @[700px]/recent:hidden">
+        @for (row of visibleRows(); track row.id) {
+          <li>
+            <a
+              class="flex min-h-11 flex-col gap-2 rounded-sm py-4 focus-visible:outline-2 focus-visible:outline-ring"
+              [routerLink]="['/organizations', organizationId(), 'interventions', row.id]"
+            >
+              <span class="flex items-center justify-between gap-2"
+                ><span class="font-mono text-xs text-muted-foreground">FG-{{ row.number }}</span
+                ><app-intervention-tag kind="status" [value]="row.status"
+              /></span>
+              <span class="font-medium">{{ row.name }}</span
+              ><span class="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"
+                ><span>{{ row.siteName ?? '—' }}</span
+                ><span>{{ row.dueAt ? (row.dueAt | date: 'mediumDate') : '—' }}</span></span
+              >
+              @if (row.responsibleName; as name) {
+                <span class="text-xs text-muted-foreground">{{ name }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

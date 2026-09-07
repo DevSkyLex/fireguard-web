@@ -27,6 +27,10 @@ This feature does not own user profile presentation or notification UX. Those be
 ## Routes
 
 - `/auth/login`
+- `/auth/federated/:provider/callback` — uses client rendering, exchanges a single-use Google or
+  Microsoft callback in the browser only, removes `code` and `state` from browser history before
+  the exchange, and applies the resulting password-equivalent session through
+  `AuthStore.applySession`.
 - `/auth/register`
 - `/auth/register/verify` — carries the challenge token as its `token` query param.
   `registerVerifyGuard` rehydrates `RegisterStore` from it, so the step survives a reload,
@@ -48,6 +52,11 @@ This feature does not own user profile presentation or notification UX. Those be
 
 Route access is enforced by auth-owned guards such as `guestGuard`, `mfaGuard`, `registerVerifyGuard`, `passwordResetVerifyGuard`, and `passwordResetNewGuard`.
 
+`authGuard` preserves the safe requested path through sign-in. An expired authenticated OAuth
+connection callback resumes at account security without retaining its authorization code or state.
+The dashboard parent authenticates before the Account/Organization child onboarding guards and
+rechecks authentication when its shell is reused. Bootstrap resolves session restoration before routing.
+
 All seven screens are mounted. Each page owns orchestration only: it maps form values onto the
 transport DTO, calls the store, and reacts to the resulting state. Every form is a **Signal Forms**
 component under `ui/forms/` (`ARCHITECTURE.md` §10.4) that owns its own model and rules and emits
@@ -62,6 +71,9 @@ local resend-cooldown countdown; the owning stores keep the cooldown as an absol
 `resendAvailableAt` timestamp fed by the API's `mfa_resend_in`/`canResendIn` on success and by
 the parsed 429 detail on a refused resend (`utils/resend-delay/` — parsing the detail was chosen
 over propagating the `Retry-After` header through `HydraApiService`, which no other call needs).
+
+The workspace proof form passes an opaque `challengeKey` in memory so a replacement challenge
+restarts its resend cooldown even when the API returns the same delay. The key is never rendered.
 
 **Backend submit failures surface inline in the owning form.** Each auth form takes a
 `serverError` input (`StoreError | null`) bound by its page to the store's error signal and
@@ -91,6 +103,8 @@ Primary stores:
 - `RegisterStore`
 - `EmailChangeConfirmStore` — page-scoped (provided by `EmailChangeConfirmPage`): one call,
   one outcome, rendered inline rather than toasted, because the outcome is the page's content
+- `FederatedAuthStore` — root-scoped provider availability, redirects, callback completion,
+  connected methods and first-password setup. Its call states remain independent.
 
 Primary services:
 
@@ -101,6 +115,8 @@ Primary services:
 - `RegistrationService`
 - `EmailChangeService` — the public confirm endpoint only (`POST /api/me/email-change/confirm`);
   request and cancel belong to account's `UserProfileService`, which owns the authenticated `/me` surface
+- `FederatedAuthService` — provider availability, full-page redirects, callback completion,
+  authenticated connections and OTP-protected first-password setup.
 
 ## Published Contracts
 
@@ -145,11 +161,39 @@ every surface at once.
 - SSR initialization attempts session restoration only when a real browser or per-request server context exists.
 - Auth bootstrap is allowed to await account-owned user profile initialization, but it must not serialize the bearer token into `TransferState`.
 - Global TransferCache must not serialize authenticated API responses; auth-sensitive hydration is handled explicitly by owning features.
+- Provider availability is the only federated-auth payload handed through `TransferState`.
+  Authorization URLs, callback state, codes, sessions and connection lists are never serialized.
+- Federated sign-in callbacks use client rendering. The browser exclusively owns the one-time code
+  exchange so its session cookie and MFA state remain in the active runtime.
 
 ## Invariants
 
 - Auth session state is owned by `AuthStore` and published through `AUTH_SESSION_PORT`.
+- Organization member-access and intervention offline prefetch consume `AUTH_SESSION_PORT`:
+  remembered workspace preferences must not trigger protected reads before session establishment,
+  including while an OAuth callback or MFA challenge is pending.
 - Public auth routes must stay lazy-loaded under `/auth`.
+- Federated login uses full-page Authorization Code + PKCE S256 redirects. The frontend never
+  receives a provider secret or persists a provider token.
+- Provider logos use the SVGL Ng Icons set on login, registration and linked-account surfaces;
+  no separate public brand assets are maintained.
+- Disabled providers are absent from the login page. An existing Fireguard account is never linked
+  by matching provider email; the user signs in first and links it from `/account/security`.
+- Password and provider sign-in starts are mutually exclusive. Completing a password session
+  cancels and clears any outstanding provider-start response before navigation.
+- Stable federated API error codes are mapped by Auth to localized, non-sensitive copy; unknown
+  details use the same neutral fallback and are never rendered verbatim.
+- Disconnect consumes the updated `FederatedConnectionsOutput` returned by the `DELETE`; it does
+  not issue a follow-up connections query.
+- Callback destinations pass through `resolveReturnUrl`; only local application paths are accepted.
+- Immediately before a provider redirect, Auth retains only the provider and validated local return
+  destination in tab-local session storage for at most thirty minutes. The callback consumes this
+  context into its cleaned `returnUrl`, including cancellation and error outcomes, so password,
+  registration and MFA retries retain invitation intent. OAuth `code` and `state` are never return
+  destinations or persisted context. Returning to sign-in/registration, consuming the context or
+  ending the session clears it; blocked browser storage and SSR are safe no-ops.
+- Provider cancellations with a valid `state` are completed through the API as `state + error`, so
+  the single-use flow and callback cookie are consumed before localized cancellation feedback.
 - Auth interceptors and guards belong to this feature, not to `core`.
 - Password reset and MFA are auth workflows even when rendered in separate pages.
 - Registration creates a `pending_verification` account; the email-verification
@@ -177,3 +221,7 @@ every surface at once.
 
 - MFA offers an explicit return to sign-in: clear the pending challenge before navigation,
   preserve the validated destination, and keep the action unavailable while verification or resend is pending.
+
+Onboarding consumes `EmailOwnershipService`, its proof contracts and `OtpForm` through the
+published data-access, models and ui/forms barrels. Proof challenges stay page-local. This
+Fireguard mailbox proof is distinct from OAuth profile verification and does not alter MFA.

@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
-  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto">
     <hlm-field>
       <label hlmFieldLabel for="channel-create-name"
         ><span i18n="@@channels.newDialog.name">Name</span><app-required-marker
@@ -54,7 +54,7 @@
     }
   </hlm-field-group>
 
-  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+  <hlm-dialog-footer class="flex-col sm:flex-row sm:justify-end">
     <button
       hlmBtn
       type="button"
@@ -75,5 +75,5 @@
     >
       <span i18n="@@channels.newDialog.submit">Create channel</span>
     </button>
-  </hlm-sheet-footer>
+  </hlm-dialog-footer>
 </form>

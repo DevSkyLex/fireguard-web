@@ -109,4 +109,20 @@ describe('SplitLayout', () => {
     expect(element.querySelector('#split-layout-content-box')?.className).toContain('max-w-2xl');
     expect(element.querySelector('#split-layout-column')?.className).toContain('lg:min-w-[46rem]');
   });
+
+  it('lets panel content shrink within half the viewport instead of imposing a form floor', async () => {
+    const fixture = await render([{ provide: SPLIT_SHOWCASE_SLOT, useValue: [showcase(true)] }]);
+    fixture.componentRef.setInput('splitShowcase', 'panel');
+    fixture.componentRef.setInput('splitWidth', 'xl');
+    fixture.componentRef.setInput('splitAlign', 'start');
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('#split-layout-showcase')?.className).toContain('lg:w-1/2');
+    expect(element.querySelector('#split-layout-column')?.className).not.toContain('lg:min-w-');
+    expect(element.querySelector('#split-layout-content-box')?.className).toContain('max-w-xl');
+    expect(element.querySelector('#split-layout-content-box')?.className).not.toContain(
+      'sm:my-auto',
+    );
+  });
 });

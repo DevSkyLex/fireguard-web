@@ -92,6 +92,104 @@ export interface SetupInviteMemberInput {
 export type SetupFacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
 
 /**
+ * Interface SetupFacilityAddressMatch
+ * @interface SetupFacilityAddressMatch
+ * @description Single geocoded address offered for explicit selection during facility setup.
+ * @since 1.0.0
+ */
+export interface SetupFacilityAddressMatch {
+  /**
+   * Property displayName
+   * @readonly
+   * @description Canonical postal address returned by the geocoding provider.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly displayName: string;
+
+  /**
+   * Property street
+   * @readonly
+   * @description Provider-supplied street and optional house number; absent on older API responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly street?: string;
+
+  /**
+   * Property city
+   * @readonly
+   * @description Provider-supplied locality; absent on older API responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly city?: string;
+
+  /**
+   * Property region
+   * @readonly
+   * @description Provider-supplied state or province when available; absent on older API responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly region?: string;
+
+  /**
+   * Property country
+   * @readonly
+   * @description Provider-supplied country name; absent on older API responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly country?: string;
+
+  /**
+   * Property countryCode
+   * @readonly
+   * @description ISO 3166-1 alpha-2 country code from the provider; absent on older responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly countryCode?: string;
+
+  /**
+   * Property postalCode
+   * @readonly
+   * @description Provider-supplied postal code when available; absent on older API responses.
+   * @access public
+   * @since 1.0.0
+   * @type {string | undefined}
+   */
+  readonly postalCode?: string;
+
+  /**
+   * Property latitude
+   * @readonly
+   * @description Latitude of the selected address in decimal degrees.
+   * @access public
+   * @since 1.0.0
+   * @type {number}
+   */
+  readonly latitude: number;
+
+  /**
+   * Property longitude
+   * @readonly
+   * @description Longitude of the selected address in decimal degrees.
+   * @access public
+   * @since 1.0.0
+   * @type {number}
+   */
+  readonly longitude: number;
+}
+
+/**
  * Interface SetupCreateFacilityInput
  * @interface SetupCreateFacilityInput
  *
@@ -134,6 +232,26 @@ export interface SetupCreateFacilityInput {
    * @type {string | null | undefined}
    */
   readonly address?: string | null;
+
+  /**
+   * Property latitude
+   * @readonly
+   * @description Optional latitude selected from an address suggestion.
+   * @access public
+   * @since 1.0.0
+   * @type {number | null | undefined}
+   */
+  readonly latitude?: number | null;
+
+  /**
+   * Property longitude
+   * @readonly
+   * @description Optional longitude selected from an address suggestion.
+   * @access public
+   * @since 1.0.0
+   * @type {number | null | undefined}
+   */
+  readonly longitude?: number | null;
 }
 
 /**
@@ -430,4 +548,15 @@ export interface SetupCreateInspectionInput {
    * @type {string}
    */
   readonly inspectorName: string;
+}
+
+/**
+ * Interface SetupOperationContext
+ * @interface SetupOperationContext
+ * @description Optional durable creation receipt. Both fields are validated together by the server.
+ * @since 1.1.0
+ */
+export interface SetupOperationContext {
+  readonly onboardingSessionId: string;
+  readonly onboardingItemKey: string;
 }

@@ -1,15 +1,30 @@
-<div id="focused-layout" class="grid h-dvh grid-rows-[auto_1fr_auto] bg-background text-foreground">
+<div
+  id="focused-layout"
+  class="relative isolate grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] bg-background text-foreground"
+>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-x-0 top-20 bottom-0 -z-10 [background-image:radial-gradient(circle,var(--foreground)_1.25px,transparent_1.5px)] [mask-image:radial-gradient(ellipse_24%_42%_at_0%_22%,black,transparent),radial-gradient(ellipse_24%_42%_at_100%_78%,black,transparent)] [background-size:24px_24px] opacity-15"
+  ></div>
   @if (header.length > 0) {
     <header class="flex items-center justify-between gap-4 px-6 py-5 sm:px-8">
-      <app-slot-outlet [contributions]="header" />
+      <div class="flex items-center gap-2.5">
+        <img src="favicon.svg" width="28" height="28" alt="" />
+        <span class="text-base font-semibold tracking-tight">Fireguard</span>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <app-slot-outlet [contributions]="header" />
+      </div>
     </header>
   }
 
   <main
     id="focused-layout-content"
-    class="flex flex-col justify-center overflow-y-auto px-6 py-10 sm:px-8"
+    class="flex min-h-0 flex-col items-center overflow-y-auto px-6 py-10 sm:px-8"
   >
-    <router-outlet />
+    <div class="my-auto flex w-full shrink-0 flex-col items-center">
+      <router-outlet />
+    </div>
   </main>
 
   @if (footer.length > 0) {

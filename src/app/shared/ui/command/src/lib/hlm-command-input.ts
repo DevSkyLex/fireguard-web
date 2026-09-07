@@ -1,10 +1,26 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  type InputSignal,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
 import { BrnCommandInput } from '@spartan-ng/brain/command';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { classes } from '@shared/ui/utils';
 
+/**
+ * Component HlmCommandInput
+ * @class HlmCommandInput
+ *
+ * @description
+ * Spartan Nova command query field composed from the Brain command input and
+ * the shared input-group surface. Consumers may override host layout spacing.
+ *
+ * @version 1.0.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ */
 @Component({
   selector: 'hlm-command-input',
   imports: [HlmInputGroupImports, NgIcon, BrnCommandInput],
@@ -32,10 +48,37 @@ import { classes } from '@shared/ui/utils';
   `,
 })
 export class HlmCommandInput {
-  public readonly inputId = input<string | undefined>();
-  public readonly placeholder = input<string>('');
+  /**
+   * Property inputId
+   * @readonly
+   *
+   * @description Optional native identifier for the command search input.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly inputId: InputSignal<string | undefined> = input<string | undefined>();
 
-  constructor() {
+  /**
+   * Property placeholder
+   * @readonly
+   *
+   * @description Hint displayed while the command query is empty.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string>}
+   */
+  public readonly placeholder: InputSignal<string> = input<string>('');
+
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description Applies the native Spartan Nova spacing to the command input wrapper.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
     classes(() => 'p-1 pb-0');
   }
 }

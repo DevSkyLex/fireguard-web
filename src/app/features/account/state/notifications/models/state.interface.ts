@@ -21,6 +21,14 @@ import type {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface NotificationStoreState {
+  /**
+   * Property revision
+   * @description Changes on a private realtime notification, so workflow consumers can refresh without reading its payload.
+   * @since 1.0.0
+   * @type {number}
+   */
+  revision: number;
+
   //#region Pagination
   /**
    * Property totalNotifications

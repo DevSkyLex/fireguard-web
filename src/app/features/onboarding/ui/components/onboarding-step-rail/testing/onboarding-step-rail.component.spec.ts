@@ -74,6 +74,15 @@ describe('OnboardingStepRail', () => {
     expect(element.textContent).toContain('completed');
   });
 
+  it('should omit the duplicate progress summary in the compact mobile disclosure', async () => {
+    fixture.componentRef.setInput('progress', { done: 1, total: 5 });
+    fixture.componentRef.setInput('compact', true);
+    await fixture.whenStable();
+
+    expect(element.textContent).not.toContain('1 of 5 completed');
+    expect(element.querySelector('hlm-progress')).toBeNull();
+  });
+
   it('should label every step status so it never depends on colour alone', async () => {
     fixture.componentRef.setInput('steps', [stepOf('create_organization', 'blocked')]);
     await fixture.whenStable();
@@ -98,7 +107,7 @@ describe('OnboardingStepRail', () => {
     expect(rows[1].textContent).not.toContain('Blocked');
   });
 
-  it('should only spell out the sublabel and status on the active step', async () => {
+  it('should describe the active step while keeping ordinary statuses accessible', async () => {
     fixture.componentRef.setInput('steps', [
       stepOf('create_organization', 'completed'),
       stepOf('select_plan', 'pending'),
@@ -111,6 +120,7 @@ describe('OnboardingStepRail', () => {
     expect(rows[0].textContent).not.toContain('Your structure');
     expect(rows[0].querySelector('.sr-only')?.textContent).toContain('Completed');
     expect(rows[1].textContent).toContain('Your subscription');
-    expect(rows[1].querySelector('.sr-only')).toBeNull();
+    expect(rows[1].querySelector('.sr-only')?.textContent).toContain('Not started');
+    expect(rows[1].getAttribute('data-variant')).toBe('muted');
   });
 });

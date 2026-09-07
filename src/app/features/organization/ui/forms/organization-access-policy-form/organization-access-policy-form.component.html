@@ -1,0 +1,93 @@
+<form class="flex flex-col gap-6" novalidate (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@org.access.policyLegend">How people join</legend>
+    <hlm-radio-group [formField]="policyForm.mode">
+      @for (option of options; track option.value) {
+        <label hlmFieldLabel [for]="'access-mode-' + option.value">
+          <div hlmField orientation="horizontal">
+            <hlm-radio [id]="'access-mode-' + option.value" [value]="option.value" />
+            <div hlmFieldContent>
+              <span hlmFieldTitle>{{ option.label }}</span>
+              <p hlmFieldDescription>{{ option.description }}</p>
+            </div>
+          </div>
+        </label>
+      }
+    </hlm-radio-group>
+  </fieldset>
+  @if (automatic()) {
+    <div hlmField>
+      <label hlmFieldLabel for="access-role" i18n="@@org.access.role">Role for new members</label>
+      <hlm-select [formField]="policyForm.roleId" [itemToString]="roleLabelOf"
+        ><hlm-select-trigger buttonId="access-role" class="w-full"
+          ><hlm-select-value
+        /></hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          @for (role of policy().eligibleRoles; track role.id) {
+            <hlm-select-item [value]="role.id">{{ role.label }}</hlm-select-item>
+          }
+        </hlm-select-content></hlm-select
+      >
+      <p hlmFieldDescription i18n="@@org.access.roleHelp">
+        Only roles with permissions no greater than Member are eligible.
+      </p>
+      @if (policyForm.roleId().touched() && policyForm.roleId().invalid()) {
+        <hlm-field-error>{{ policyForm.roleId().errors()[0]?.message }}</hlm-field-error>
+      }
+    </div>
+  }
+  <button
+    hlmBtn
+    type="submit"
+    class="w-fit max-sm:min-h-11 max-sm:w-full"
+    [disabled]="pending()"
+    i18n="@@org.access.save"
+  >
+    Save access policy
+  </button>
+</form>
+<hlm-dialog
+  [state]="confirming() ? 'open' : 'closed'"
+  (stateChanged)="confirming.set($event === 'open')"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg"
+  >
+    <hlm-dialog-header
+      ><h2 hlmDialogTitle i18n="@@org.access.automaticTitle">Allow immediate membership?</h2>
+      <p hlmDialogDescription i18n="@@org.access.automaticDescription">
+        People with a verified company email can join without administrator approval.
+      </p></hlm-dialog-header
+    >
+    <dl class="grid gap-3 text-sm">
+      <div>
+        <dt class="text-muted-foreground" i18n="@@org.access.role">Role for new members</dt>
+        <dd>{{ roleLabel() }}</dd>
+      </div>
+      <div>
+        <dt class="text-muted-foreground" i18n="@@org.access.verifiedDomains">Verified domains</dt>
+        <dd class="break-words">{{ verifiedDomains() || noDomainText }}</dd>
+      </div>
+    </dl>
+    <hlm-dialog-footer
+      ><button
+        hlmBtn
+        variant="outline"
+        hlmDialogClose
+        class="max-sm:min-h-11"
+        i18n="@@org.access.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmBtn
+        class="max-sm:min-h-11"
+        (click)="confirm()"
+        i18n="@@org.access.enableAutomatic"
+      >
+        Enable immediate membership
+      </button></hlm-dialog-footer
+    >
+  </hlm-dialog-content>
+</hlm-dialog>

@@ -194,14 +194,13 @@ for (const viewport of [
       await page.screenshot({ animations: 'disabled', path: `${CAPTURES}/${mode}-detail.png` });
       const geometry = await page.getByTestId('intervention-detail-properties').evaluate((region) =>
         ['priority', 'site', 'responsible', 'schedule'].map((name) => {
-          const cell = region.querySelector(`[data-testid="intervention-field-${name}"]`);
-          const value = cell?.querySelector('[fieldValue]');
-          const outer = cell?.getBoundingClientRect();
-          const inner = value?.getBoundingClientRect();
+          const cell = region.querySelector<HTMLElement>(
+            `[data-testid="intervention-field-${name}"]`,
+          );
           return {
             name,
-            width: outer?.width,
-            overflow: inner && outer ? Math.max(0, inner.right - outer.right) : null,
+            width: cell?.clientWidth,
+            overflow: cell ? Math.max(0, cell.scrollWidth - cell.clientWidth) : null,
           };
         }),
       );
@@ -221,11 +220,12 @@ for (const viewport of [
       });
       await page.keyboard.press('Escape');
       await page.keyboard.press('Escape');
-      await page.getByRole('button', { name: 'More details', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'About', exact: true })).toHaveAttribute(
-        'aria-expanded',
-        'true',
-      );
+      const about = page.getByRole('button', { name: 'About', exact: true });
+      await expect(about).toHaveAttribute('aria-expanded', 'true');
+      await about.click();
+      await expect(about).toHaveAttribute('aria-expanded', 'false');
+      await about.click();
+      await expect(about).toHaveAttribute('aria-expanded', 'true');
       await page.screenshot({
         animations: 'disabled',
         path: `${CAPTURES}/${mode}-details-expanded.png`,

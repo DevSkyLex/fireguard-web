@@ -18,8 +18,8 @@ import { InspectionsPage } from '../support/pages/inspections.page';
  * segment redirects there, and a dirty draft confirms before it is lost.
  *
  * Calendar events and organization teams have no other e2e coverage yet, so
- * their own gate tests live here too — the same "New …" button opens the
- * sheet and the same shared confirmation guards a dirty draft.
+ * their own gate tests live here too. Their "New …" buttons open the owning
+ * dialog or sheet, and the same shared confirmation guards a dirty draft.
  */
 test.describe('Creation sheets', () => {
   test('the facility list opens its sheet from the header button and guards a dirty draft', async ({
@@ -87,7 +87,7 @@ test.describe('Creation sheets', () => {
     await expect(inspections.createEquipmentCombobox).toBeVisible();
   });
 
-  test('the calendar opens its event sheet from the header button and guards a dirty draft', async ({
+  test('the calendar opens its event dialog from the header button and guards a dirty draft', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -108,17 +108,17 @@ test.describe('Creation sheets', () => {
     await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
 
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/calendar`);
-    const sheet = page.getByTestId('calendar-event-sheet');
-    await expect(sheet).toBeHidden();
+    const dialog = page.getByTestId('calendar-event-dialog');
+    await expect(dialog).toBeHidden();
 
     await page.getByTestId('calendar-new-event').click();
-    await expect(sheet).toBeVisible();
+    await expect(dialog).toBeVisible();
 
     const titleInput = page.getByTestId('calendar-event-title');
     await titleInput.click();
     await titleInput.pressSequentially('Fire drill');
 
-    await expectSheetGuardHolds(page, sheet, () => page.keyboard.press('Escape'));
+    await expectSheetGuardHolds(page, dialog, () => page.keyboard.press('Escape'));
   });
 
   test('the teams tab opens its create sheet from the header button and guards a dirty draft', async ({

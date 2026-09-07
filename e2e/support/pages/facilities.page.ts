@@ -40,6 +40,7 @@ export class FacilitiesPage {
   public readonly createPickOnMap: Locator = this.page.getByTestId('facility-create-pick-on-map');
 
   public readonly mapRoot: Locator = this.page.locator('#facility-map');
+  public readonly mapEmpty: Locator = this.page.getByTestId('facility-map-empty');
   public readonly mapUnplacedBanner: Locator = this.page.getByTestId(
     'facility-map-unplaced-banner',
   );

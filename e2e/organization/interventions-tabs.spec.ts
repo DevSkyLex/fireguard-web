@@ -37,30 +37,30 @@ test.describe('Interventions tabs — header survives a tab switch', () => {
 
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
 
     await boardTab.click();
     await expect(page).toHaveURL(/view=board/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(boardTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(boardTab).toHaveAttribute('aria-selected', 'true');
 
     await listTab.click();
     await expect(page).not.toHaveURL(/view=/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
 
     await calendarTab.click();
     await expect(page).toHaveURL(/view=calendar/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(calendarTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(calendarTab).toHaveAttribute('aria-selected', 'true');
 
     await listTab.click();
     await expect(page).not.toHaveURL(/view=/);
     await expect(tabList).toBeVisible();
     await expect(newButton).toBeVisible();
-    await expect(listTab).toHaveAttribute('aria-pressed', 'true');
+    await expect(listTab).toHaveAttribute('aria-selected', 'true');
   });
 });

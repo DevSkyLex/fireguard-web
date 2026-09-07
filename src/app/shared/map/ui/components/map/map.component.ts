@@ -4,7 +4,6 @@ import {
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -278,16 +277,6 @@ export class Map {
   private readonly injector: Injector = inject(Injector);
 
   /**
-   * Property destroyRef
-   * @readonly
-   * @description Tears the MapLibre instance down when this component is destroyed.
-   * @access private
-   * @since 1.0.0
-   * @type {DestroyRef}
-   */
-  private readonly destroyRef: DestroyRef = inject(DestroyRef);
-
-  /**
    * Property containerRef
    * @readonly
    * @description The host element MapLibre mounts into, present only in the browser branch.
@@ -306,6 +295,15 @@ export class Map {
    * @type {MapLibreMap | null}
    */
   private instance: MapLibreMap | null = null;
+
+  /**
+   * Property mountGeneration
+   * @description Invalidates a pending dynamic import when its host view is removed.
+   * @access private
+   * @since 1.1.0
+   * @type {number}
+   */
+  private mountGeneration: number = 0;
 
   /**
    * Property markerElements
@@ -378,10 +376,15 @@ export class Map {
     if (this.isBrowser) {
       effect(
         (onCleanup): void => {
-          if (this.containerRef() === undefined) return;
+          const container: HTMLDivElement | undefined = this.containerRef()?.nativeElement;
+          if (!container) return;
 
-          untracked((): void => void this.mount());
-          onCleanup((): void => void this.instance?.remove());
+          const generation: number = ++this.mountGeneration;
+          untracked((): void => void this.mount(container, generation));
+          onCleanup((): void => {
+            if (this.mountGeneration === generation) this.mountGeneration += 1;
+            this.destroyMap();
+          });
         },
         { injector: this.injector },
       );
@@ -420,14 +423,17 @@ export class Map {
    *
    * @access private
    * @since 1.0.0
+   * @param {HTMLDivElement} container - The container captured before the dynamic import.
+   * @param {number} generation - Mount attempt invalidated by the owning effect cleanup.
    * @returns {Promise<void>}
    */
-  private async mount(): Promise<void> {
-    const container: HTMLDivElement | undefined = this.containerRef()?.nativeElement;
-    if (!container || this.instance) return;
+  private async mount(container: HTMLDivElement, generation: number): Promise<void> {
+    if (this.instance) return;
 
     this.ensureStylesheet();
     const maplibregl = await import('maplibre-gl');
+    if (generation !== this.mountGeneration || !container.isConnected || this.instance) return;
+
     maplibregl.setWorkerUrl('/map/maplibre-gl-worker.mjs');
     const initialCenter: MapCoordinates = this.center() ?? DEFAULT_CENTER;
 
@@ -448,7 +454,6 @@ export class Map {
       });
     }
     this.instance = map;
-    this.destroyRef.onDestroy((): void => void map.remove());
 
     effect(
       (): void => {
@@ -473,6 +478,24 @@ export class Map {
   }
 
   /**
+   * Method destroyMap
+   * @description Removes the current map and its DOM markers during effect cleanup.
+   * @access private
+   * @since 1.1.0
+   * @returns {void}
+   */
+  private destroyMap(): void {
+    for (const marker of Object.values(this.markerElements)) marker.remove();
+    for (const marker of Object.values(this.clusterElements)) marker.remove();
+    for (const id of Object.keys(this.markerElements)) delete this.markerElements[id];
+    for (const id of Object.keys(this.clusterElements)) delete this.clusterElements[Number(id)];
+
+    this.instance?.remove();
+    this.instance = null;
+    this.loaded.set(false);
+  }
+
+  /**
    * Method onLoad
    * @description Adds the clustering source and its tile-loading anchor layer, once the style is ready.
    * @access private
@@ -482,6 +505,8 @@ export class Map {
    * @returns {void}
    */
   private onLoad(map: MapLibreMap, markerCtor: typeof import('maplibre-gl').Marker): void {
+    if (this.instance !== map) return;
+
     this.loaded.set(true);
     map.addSource(SOURCE_ID, {
       type: 'geojson',

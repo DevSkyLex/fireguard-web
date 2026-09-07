@@ -109,7 +109,7 @@ test.describe('Facility map', () => {
 
     await facilities.gotoMap(E2E_ORGANIZATION_ID);
 
-    await expect(page.locator('app-empty-state')).toBeVisible();
+    await expect(facilities.mapEmpty).toBeVisible();
     await expect(facilities.mapMarkers).toHaveCount(0);
   });
 

@@ -43,17 +43,28 @@ for (const width of [1562, 375]) {
 
       const dimensions = await page.getByTestId('intervention-tabs-list').evaluate((element) => ({
         height: element.clientHeight,
+        overflowY: getComputedStyle(element).overflowY,
         scrollHeight: element.scrollHeight,
         width: element.clientWidth,
         scrollWidth: element.scrollWidth,
       }));
-      expect(dimensions.scrollHeight).toBe(dimensions.height);
+      expect(dimensions.overflowY).not.toMatch(/auto|scroll/);
+      expect(dimensions.scrollHeight - dimensions.height).toBeLessThanOrEqual(1);
       if (width > 1000) expect(dimensions.scrollWidth).toBe(dimensions.width);
       await expectNoHorizontalOverflow(page);
-      await page.getByRole('tab', { name: /Inspections/ }).focus();
-      await expect(page.getByRole('tab', { name: /Inspections/ })).toBeInViewport();
-      await page.getByRole('tab', { name: /Attachments/ }).focus();
-      await expect(page.getByRole('tab', { name: /Attachments/ })).toBeInViewport();
+      const attachmentsTab = page.getByRole('tab', { name: /Attachments/ });
+      const inspectionsTab = page.getByRole('tab', { name: /Inspections/ });
+      await attachmentsTab.focus();
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('ArrowRight');
+      await expect(inspectionsTab).toBeFocused();
+      await expect(inspectionsTab).toBeInViewport();
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowLeft');
+      await expect(attachmentsTab).toBeFocused();
+      await expect(attachmentsTab).toBeInViewport();
       await page.screenshot({
         path: 'e2e/artifacts/intervention-native-attachments-' + width + '.png',
         animations: 'disabled',

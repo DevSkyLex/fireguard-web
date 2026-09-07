@@ -65,9 +65,11 @@ describe('FederatedReturnContextService', () => {
   });
 
   it.each([-1, 30 * 60 * 1000 + 1])('purges a record outside its lifetime (%s ms)', (age) => {
+    const now = 2_000_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
     storage.setItem(
       key,
-      JSON.stringify({ provider: 'google', returnUrl: invitation, createdAt: Date.now() - age }),
+      JSON.stringify({ provider: 'google', returnUrl: invitation, createdAt: now - age }),
     );
     expect(service.consume('google')).toBe('');
     expect(storage.getItem(key)).toBeNull();

@@ -84,8 +84,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ vars.VPS_PORT || '22' }}
-          script_stop: true
           script: |
+            set -eu
             available_kib=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
             free_kib=$(df -Pk /srv | awk 'NR==2 {print $4}')
             test "$available_kib" -ge 2621440 || { echo "At least 2.5 GiB of available memory is required."; exit 1; }
@@ -100,7 +100,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ vars.VPS_PORT || '22' }}
-          script_stop: true
           script: mkdir -p "${{ env.APP_DIR }}"
 
       - name: Upload Docker Compose files
@@ -137,7 +136,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ vars.VPS_PORT || '22' }}
           envs: DEPLOY_ENVIRONMENT,APP_DIR,APP_HOST,APP_PORT,APP_API_URL,APP_MERCURE_HUB_URL,APP_NAME,APP_MAINTENANCE,COMPOSE_PROJECT_NAME,CONTAINER_NAME,TRAEFIK_ROUTER_NAME,BASIC_AUTH_USERS,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
-          script_stop: true
           script: |
             set -eu
             mkdir -p "$APP_DIR"
@@ -193,8 +191,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ vars.VPS_PORT || '22' }}
           envs: DEPLOY_ENVIRONMENT,APP_DIR,CONTAINER_NAME
-          script_stop: true
           script: |
+            set -eu
             cd "$APP_DIR"
             if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
               compose_files="-f docker-compose.prod.yml -f docker-compose.dev.yml"

@@ -152,20 +152,20 @@ jobs:
               basic_auth_users=""
             fi
 
-            {
-              printf 'IMAGE_REF=%s\n' "$IMAGE_REF"
-              printf 'APP_HOST=%s\n' "$APP_HOST"
-              printf 'APP_PORT=%s\n' "$APP_PORT"
-              printf 'APP_API_URL=%s\n' "$APP_API_URL"
-              printf 'APP_MERCURE_HUB_URL=%s\n' "$APP_MERCURE_HUB_URL"
-              printf 'APP_NAME=%s\n' "$APP_NAME"
-              printf 'APP_MAINTENANCE=%s\n' "$APP_MAINTENANCE"
-              printf 'COMPOSE_PROJECT_NAME=%s\n' "$COMPOSE_PROJECT_NAME"
-              printf 'CONTAINER_NAME=%s\n' "$CONTAINER_NAME"
-              printf 'TRAEFIK_ROUTER_NAME=%s\n' "$TRAEFIK_ROUTER_NAME"
-              printf 'TRAEFIK_SECURE_MIDDLEWARES=%s\n' "$secure_middlewares"
-              printf 'BASIC_AUTH_USERS=%s\n' "$basic_auth_users"
-            } > "$APP_DIR/.env"
+            cat > "$APP_DIR/.env" <<EOF
+            IMAGE_REF=$IMAGE_REF
+            APP_HOST=$APP_HOST
+            APP_PORT=$APP_PORT
+            APP_API_URL=$APP_API_URL
+            APP_MERCURE_HUB_URL=$APP_MERCURE_HUB_URL
+            APP_NAME=$APP_NAME
+            APP_MAINTENANCE=$APP_MAINTENANCE
+            COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
+            CONTAINER_NAME=$CONTAINER_NAME
+            TRAEFIK_ROUTER_NAME=$TRAEFIK_ROUTER_NAME
+            TRAEFIK_SECURE_MIDDLEWARES=$secure_middlewares
+            BASIC_AUTH_USERS=$basic_auth_users
+            EOF
 
             cd "$APP_DIR"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin

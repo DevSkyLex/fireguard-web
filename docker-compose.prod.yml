@@ -1,4 +1,4 @@
-name: fireguard-web
+name: ${COMPOSE_PROJECT_NAME:-fireguard-web}
 
 services:
   fireguard-web:
@@ -7,7 +7,12 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 4000
+      PORT: ${APP_PORT:-4000}
+      FIREGUARD_RUNTIME_CONFIG: 'true'
+      APP_API_URL: ${APP_API_URL:?APP_API_URL is required}
+      APP_MERCURE_HUB_URL: ${APP_MERCURE_HUB_URL:?APP_MERCURE_HUB_URL is required}
+      APP_NAME: ${APP_NAME:-Fireguard}
+      APP_MAINTENANCE: ${APP_MAINTENANCE:-false}
       # Unions with the loopback names baked into the build manifest by
       # angular.json; the engine merges both sources, it does not replace one.
       NG_ALLOWED_HOSTS: ${APP_HOST:?APP_HOST is required}
@@ -16,15 +21,17 @@ services:
     labels:
       - 'traefik.enable=true'
 
-      - 'traefik.http.routers.fireguard-web-http.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
-      - 'traefik.http.routers.fireguard-web-http.entrypoints=web'
-      - 'traefik.http.routers.fireguard-web-http.middlewares=fireguard-web-https-redirect'
-      - 'traefik.http.middlewares.fireguard-web-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.fireguard-web.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
-      - 'traefik.http.routers.fireguard-web.entrypoints=websecure'
-      - 'traefik.http.routers.fireguard-web.tls=true'
-      - 'traefik.http.routers.fireguard-web.tls.certresolver=letsencrypt'
-      - 'traefik.http.services.fireguard-web.loadbalancer.server.port=4000'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}-http.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}-http.entrypoints=web'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}-http.middlewares=${TRAEFIK_ROUTER_NAME:-fireguard-web}-https-redirect'
+      - 'traefik.http.middlewares.${TRAEFIK_ROUTER_NAME:-fireguard-web}-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}.rule=Host(`${APP_HOST:?APP_HOST is required}`)'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}.entrypoints=websecure'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}.tls=true'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.${TRAEFIK_ROUTER_NAME:-fireguard-web}.middlewares=${TRAEFIK_SECURE_MIDDLEWARES:?TRAEFIK_SECURE_MIDDLEWARES is required}'
+      - 'traefik.http.middlewares.${TRAEFIK_ROUTER_NAME:-fireguard-web}-security.headers.contenttypenosniff=true'
+      - 'traefik.http.services.${TRAEFIK_ROUTER_NAME:-fireguard-web}.loadbalancer.server.port=${APP_PORT:-4000}'
 
 networks:
   traefik_proxy:

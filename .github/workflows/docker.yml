@@ -6,6 +6,7 @@ on:
       - CI
     branches:
       - main
+      - develop
     types:
       - completed
   workflow_dispatch:
@@ -23,13 +24,21 @@ jobs:
   publish:
     name: Build and publish image
     runs-on: ubuntu-latest
-    environment: production
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 30
     env:
+      SOURCE_BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
       SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
     steps:
+      - name: Validate release branch
+        shell: bash
+        run: |
+          case "$SOURCE_BRANCH" in
+            main|develop) ;;
+            *) echo "Unsupported release branch: $SOURCE_BRANCH"; exit 1 ;;
+          esac
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -41,11 +50,15 @@ jobs:
         run: |
           image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
           image_ref="${image_name}:sha-${SOURCE_SHA}"
-          latest_ref="${image_name}:latest"
+          if [ "$SOURCE_BRANCH" = "main" ]; then
+            channel_ref="${image_name}:latest"
+          else
+            channel_ref="${image_name}:develop"
+          fi
 
           echo "image_name=${image_name}" >> "$GITHUB_OUTPUT"
           echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
-          echo "latest_ref=${latest_ref}" >> "$GITHUB_OUTPUT"
+          echo "channel_ref=${channel_ref}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -65,13 +78,12 @@ jobs:
           push: true
           tags: |
             ${{ steps.image.outputs.image_ref }}
-            ${{ steps.image.outputs.latest_ref }}
+            ${{ steps.image.outputs.channel_ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Trigger VPS deployment
-        if: github.event_name == 'workflow_run' || github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
           IMAGE_REF: ${{ steps.image.outputs.image_ref }}
-        run: gh workflow run deploy-vps.yml --repo "$GITHUB_REPOSITORY" --ref main -f image_ref="$IMAGE_REF"
+        run: gh workflow run deploy-vps.yml --repo "$GITHUB_REPOSITORY" --ref "$SOURCE_BRANCH" -f image_ref="$IMAGE_REF"

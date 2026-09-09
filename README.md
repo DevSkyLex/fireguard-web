@@ -118,8 +118,9 @@ Top-level features (each documented in its own `FEATURE.md`):
 ## Deployment
 
 Deployed to a VPS via GitHub Actions (CI → Docker image → GHCR → deploy) with
-Docker Compose and Traefik. See `DEPLOYMENT.md` for the full pipeline,
-required GitHub secrets/variables, and first-deployment checklist.
+Docker Compose and Traefik. `main` targets production and `develop` targets the
+isolated dev stack. See `DEPLOYMENT.md` for runtime SSR configuration, required
+GitHub environments, Basic Auth, and rollback instructions.
 
 ## License
 

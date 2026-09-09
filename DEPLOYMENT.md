@@ -1,73 +1,62 @@
-# Deployment VPS
+# Déploiement VPS
 
-Ce projet est prepare pour un deploiement GitHub Actions vers un VPS avec Docker Compose et une image publiee sur GHCR.
+Le frontend Angular SSR est construit une seule fois puis configuré au démarrage du conteneur. `main` déploie la production et `develop` déploie l’environnement de développement sur le même VPS, dans deux projets Docker distincts.
 
-## Fichiers ajoutes
+| Environnement GitHub | Branche   | Domaine                                 | Répertoire VPS                          | Projet Docker                | Image de canal |
+| -------------------- | --------- | --------------------------------------- | --------------------------------------- | ---------------------------- | -------------- |
+| `production`         | `main`    | `app.fireguard.valentin-fortin.pro`     | `/srv/apps/fireguard/production/front`  | `fireguard-production-front` | `latest`       |
+| `development`        | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front`        | `develop`      |
 
-- `Dockerfile`: build multi-stage pour l'application Angular SSR.
-- `docker-compose.prod.yml`: definition du service a lancer sur le VPS.
-- `.github/workflows/ci.yml`: controles qualite.
-- `.github/workflows/docker.yml`: build et publication de l'image Docker sur GHCR.
-- `.github/workflows/deploy-vps.yml`: deploiement VPS.
-- `package.json`: scripts `test:ci` et `quality` pour reproduire localement les controles CI.
+Chaque image reçoit aussi un tag immuable `sha-<commit complet>` utilisé par le déploiement et les rollbacks.
 
-Le build Docker utilise directement les fichiers Angular `src/environments/environment.ts` et `src/environments/environment.development.ts` deja presents dans le depot.
+## Configuration runtime
 
-## Environnement GitHub
+Le serveur SSR lit ces variables au démarrage :
 
-Cree un environnement GitHub nomme `production` dans `Settings > Environments`.
+- `APP_API_URL`
+- `APP_MERCURE_HUB_URL`
+- `APP_NAME`
+- `APP_MAINTENANCE`
 
-Les secrets ci-dessous peuvent etre crees dans cet environnement. Les workflows `Docker Image` et `Deploy VPS` declarent `environment: production`.
+La configuration publique résolue côté serveur est transmise au navigateur avec `TransferState`. Les fichiers `src/environments/environment*.ts` restent les valeurs de secours des commandes Angular locales et ne portent aucune configuration propre au VPS.
 
-## Secrets GitHub a creer
+## Environnements GitHub
 
-### Obligatoires
+`production` accepte uniquement `main`. `development` accepte uniquement `develop`. Les valeurs de connexion au VPS sont enregistrées séparément dans chaque environnement afin qu’un job de `develop` ne puisse pas lire les secrets de production.
 
-- `VPS_HOST`: hostname ou IP du VPS.
-- `VPS_USER`: utilisateur SSH du VPS.
-- `VPS_SSH_KEY`: cle privee SSH pour se connecter au VPS.
+Secrets requis :
 
-### Optionnels
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_KEY`
+- `GHCR_TOKEN` si le jeton du workflow ne suffit pas
+- `BASIC_AUTH_USERS` dans `development`, au format htpasswd reconnu par Traefik
+- `BASIC_AUTH_CREDENTIALS` dans `development`, au format `utilisateur:mot-de-passe`, uniquement pour le contrôle de santé public
 
-- `VPS_PORT`: port SSH si different de `22`.
+Variables requises :
 
-## Variables GitHub optionnelles
+- `VPS_PORT`, `VPS_APP_DIR`, `VPS_APP_PORT`
+- `APP_HOST`, `APP_API_URL`, `APP_MERCURE_HUB_URL`, `APP_NAME`, `APP_MAINTENANCE`
+- `DOCKER_PROJECT_NAME`, `DOCKER_CONTAINER_NAME`, `TRAEFIK_ROUTER_NAME`
+- `GHCR_USERNAME`
 
-- `VPS_APP_DIR`: dossier de deploiement sur le VPS, relatif au home de l'utilisateur SSH. Valeur par defaut: `apps/fireguard-web`.
-- `APP_HOST`: domaine public expose par Traefik. Valeur par defaut: `app.fireguard.valentin-fortin.pro`.
+La surcharge `docker-compose.dev.yml` applique Basic Auth au seul frontend et ajoute `X-Robots-Tag: noindex, nofollow, noarchive`. L’API conserve ses en-têtes Bearer sans middleware Basic Auth.
 
-## Prerequis sur le VPS
+## Pipeline
 
-- Docker Engine installe.
-- Plugin Docker Compose installe (`docker compose`).
-- L'utilisateur SSH doit pouvoir executer Docker.
-- Traefik doit deja tourner sur le VPS.
-- Le reseau Docker externe `traefik_proxy` doit exister.
-- Traefik doit exposer l'entrypoint `websecure` et le certresolver `letsencrypt`.
+1. `CI` contrôle les pull requests et les pushes sur `main` et `develop`.
+2. `Docker Image` publie l’image `sha-*` et met à jour `latest` ou `develop` après une CI réussie.
+3. `Deploy VPS` choisit l’environnement GitHub depuis la branche, vérifie au moins 2,5 Gio de mémoire disponible et 10 Gio de disque libre, puis valide la configuration Compose.
+4. Le conteneur doit devenir sain. Le contrôle public suit les redirections, vérifie Basic Auth en dev et confirme la présence de `noindex`.
 
-## Fonctionnement du pipeline
+## Pré-requis VPS
 
-1. `CI` lance en parallele: le formatage (`npm run format:check`), le lint (`npm run lint`), les tests unitaires avec couverture (`ng test --watch=false --coverage`), le build de production (`npm run build`), un audit de securite (`npm audit --omit=dev --audit-level=high`, bloquant) et les tests end-to-end Playwright (projet `chromium` par defaut, elargissable via l'entree manuelle `e2e_browsers`). Un job non-bloquant signale en plus la derive des catalogues i18n. Declenchement: pull request, push `main`, execution manuelle ou appel depuis un autre workflow.
-2. `Docker Image` se lance apres un `CI` reussi sur `main`, ou manuellement, build l'image Docker SSR avec les fichiers d'environnement Angular presents dans le depot puis pousse l'image sur GHCR.
-3. Apres une publication Docker reussie, `Docker Image` declenche `Deploy VPS` avec la reference exacte de l'image a deployer.
-4. `Deploy VPS` peut aussi etre lance manuellement avec une image precise ou, sans saisie, avec l'image `latest`.
+- Docker Engine et le plugin Docker Compose
+- accès SSH de GitHub Actions
+- réseau externe `traefik_proxy`
+- Traefik avec l’entrypoint `websecure` et le résolveur `letsencrypt`
+- enregistrements DNS A des domaines vers le VPS
 
-## Verification locale avant push
+## Rollback
 
-- `npm run quality`: reproduit les controles bloquants de la CI.
-
-## Premiere mise en service
-
-1. Cree les secrets et variables GitHub.
-2. Verifie que le VPS accepte la connexion SSH depuis GitHub Actions.
-3. Verifie que `docker` et `docker compose` fonctionnent avec l'utilisateur cible.
-4. Pousse sur `main` pour declencher `CI`, puis `Docker Image`, puis `Deploy VPS`.
-5. Verifie que le DNS de `APP_HOST` pointe vers le VPS, puis teste `https://app.fireguard.valentin-fortin.pro/auth/login`.
-
-## Point important
-
-La configuration front publique reste compilee dans l'image via le mecanisme Angular `environment.ts`. Si tu changes une valeur de production dans `src/environments/environment.ts`, il faut reconstruire puis redeployer l'image.
-
-## Methode Angular retenue
-
-L'application utilise le pattern officiel Angular de configuration par fichier d'environnement compile au build. Le code Angular importe `@env/environment`; la production utilise `src/environments/environment.ts` et le developpement utilise `src/environments/environment.development.ts` via les file replacements definis dans `angular.json`.
+Relancer `Deploy VPS` depuis la branche de l’environnement avec une ancienne référence `ghcr.io/devskylex/fireguard-web:sha-<commit>`. Le rollback dev agit uniquement dans `/srv/apps/fireguard/development/front` et le projet `fireguard-dev-front`.

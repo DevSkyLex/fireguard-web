@@ -221,8 +221,6 @@ jobs:
           BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
         run: |
           if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
-            unauthenticated=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${APP_HOST}/")
-            test "$unauthenticated" = "401" || { echo "Expected Basic Auth 401, got $unauthenticated."; exit 1; }
             curl_options=(-u "$BASIC_AUTH_CREDENTIALS")
           else
             curl_options=()
@@ -230,16 +228,28 @@ jobs:
 
           attempt=1
           while [ "$attempt" -le 10 ]; do
-            result=$(curl "${curl_options[@]}" -sSL -o /dev/null -w '%{http_code} %{url_effective}' --max-time 15 "https://${APP_HOST}/") || true
-            [ -n "$result" ] || result="000 -"
-            code=${result%% *}
-            if [ "$code" = "200" ]; then
-              if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
-                curl "${curl_options[@]}" -sSIL "https://${APP_HOST}/" | grep -qi '^x-robots-tag:.*noindex'
+            if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+              unauthenticated=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${APP_HOST}/") || true
+              if [ "$unauthenticated" != "401" ]; then
+                echo "attempt ${attempt}/10: expected Basic Auth 401, got ${unauthenticated:-000}"
+                attempt=$((attempt + 1))
+                sleep 6
+                continue
               fi
-              exit 0
             fi
-            echo "attempt ${attempt}/10: HTTP ${code}"
+
+            result=$(curl "${curl_options[@]}" -sSL -o /dev/null -w '%{http_code}|%header{x-robots-tag}' --max-time 15 "https://${APP_HOST}/") || true
+            [ -n "$result" ] || result="000|"
+            code=${result%%|*}
+            robots_header=${result#*|}
+            if [ "$code" = "200" ]; then
+              if [ "$DEPLOY_ENVIRONMENT" != "development" ] || [[ "${robots_header,,}" == *noindex* ]]; then
+                exit 0
+              fi
+              echo "attempt ${attempt}/10: final response is missing X-Robots-Tag noindex"
+            else
+              echo "attempt ${attempt}/10: HTTP ${code}"
+            fi
             attempt=$((attempt + 1))
             sleep 6
           done

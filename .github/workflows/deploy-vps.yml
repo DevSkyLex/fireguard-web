@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       image_ref:
-        description: Full Docker image reference to deploy. Defaults to the latest GHCR image.
+        description: Full Docker image reference to deploy. Defaults to the branch channel image.
         required: false
         type: string
 
 concurrency:
-  group: deploy-vps
+  group: deploy-vps-${{ github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -20,20 +20,43 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    environment: production
-    timeout-minutes: 20
+    environment: ${{ github.ref_name == 'develop' && 'development' || 'production' }}
+    timeout-minutes: 25
     env:
-      APP_DIR: ${{ vars.VPS_APP_DIR || 'apps/fireguard-web' }}
-      APP_HOST: ${{ vars.APP_HOST || 'app.fireguard.valentin-fortin.pro' }}
-      CONTAINER_NAME: fireguard-web
+      DEPLOY_ENVIRONMENT: ${{ github.ref_name == 'develop' && 'development' || 'production' }}
+      APP_DIR: ${{ vars.VPS_APP_DIR }}
+      APP_HOST: ${{ vars.APP_HOST }}
+      APP_PORT: ${{ vars.VPS_APP_PORT || '4000' }}
+      APP_API_URL: ${{ vars.APP_API_URL }}
+      APP_MERCURE_HUB_URL: ${{ vars.APP_MERCURE_HUB_URL }}
+      APP_NAME: ${{ vars.APP_NAME || 'Fireguard' }}
+      APP_MAINTENANCE: ${{ vars.APP_MAINTENANCE || 'false' }}
+      COMPOSE_PROJECT_NAME: ${{ vars.DOCKER_PROJECT_NAME }}
+      CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
+      TRAEFIK_ROUTER_NAME: ${{ vars.TRAEFIK_ROUTER_NAME }}
+      BASIC_AUTH_USERS: ${{ secrets.BASIC_AUTH_USERS }}
 
     steps:
       - name: Validate deploy configuration
         shell: bash
         run: |
+          case "$GITHUB_REF_NAME" in
+            main|develop) ;;
+            *) echo "Unsupported deployment branch: $GITHUB_REF_NAME"; exit 1 ;;
+          esac
+
+          for value in APP_DIR APP_HOST APP_API_URL APP_MERCURE_HUB_URL COMPOSE_PROJECT_NAME CONTAINER_NAME TRAEFIK_ROUTER_NAME; do
+            test -n "${!value}" || { echo "$value is required."; exit 1; }
+          done
+
           test -n "${{ secrets.VPS_HOST }}" || { echo "VPS_HOST secret is required."; exit 1; }
           test -n "${{ secrets.VPS_USER }}" || { echo "VPS_USER secret is required."; exit 1; }
           test -n "${{ secrets.VPS_SSH_KEY }}" || { echo "VPS_SSH_KEY secret is required."; exit 1; }
+
+          if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+            test -n "$BASIC_AUTH_USERS" || { echo "BASIC_AUTH_USERS secret is required for development."; exit 1; }
+            test -n "${{ secrets.BASIC_AUTH_CREDENTIALS }}" || { echo "BASIC_AUTH_CREDENTIALS secret is required for development checks."; exit 1; }
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,14 +68,30 @@ jobs:
           INPUT_IMAGE_REF: ${{ inputs.image_ref }}
         run: |
           image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
-
           if [ -n "$INPUT_IMAGE_REF" ]; then
             image_ref="$INPUT_IMAGE_REF"
-          else
+          elif [ "$GITHUB_REF_NAME" = "main" ]; then
             image_ref="${image_name}:latest"
+          else
+            image_ref="${image_name}:develop"
           fi
-
           echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Check VPS capacity and Docker projects
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ vars.VPS_PORT || '22' }}
+          script: |
+            set -eu
+            available_kib=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
+            free_kib=$(df -Pk /srv | awk 'NR==2 {print $4}')
+            test "$available_kib" -ge 2621440 || { echo "At least 2.5 GiB of available memory is required."; exit 1; }
+            test "$free_kib" -ge 10485760 || { echo "At least 10 GiB of free disk is required."; exit 1; }
+            docker compose ls
+            docker network inspect traefik_proxy >/dev/null
 
       - name: Prepare remote directory
         uses: appleboy/ssh-action@v1.2.0
@@ -60,77 +99,107 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || '22' }}
-          script_stop: true
-          script: |
-            mkdir -p "${{ env.APP_DIR }}"
+          port: ${{ vars.VPS_PORT || '22' }}
+          script: mkdir -p "${{ env.APP_DIR }}"
 
-      - name: Upload Docker Compose file
+      - name: Upload Docker Compose files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || '22' }}
-          source: docker-compose.prod.yml
+          port: ${{ vars.VPS_PORT || '22' }}
+          source: docker-compose.prod.yml,docker-compose.dev.yml
           target: ${{ env.APP_DIR }}
 
       - name: Deploy application
         uses: appleboy/ssh-action@v1.2.0
         env:
+          DEPLOY_ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
           APP_DIR: ${{ env.APP_DIR }}
           APP_HOST: ${{ env.APP_HOST }}
+          APP_PORT: ${{ env.APP_PORT }}
+          APP_API_URL: ${{ env.APP_API_URL }}
+          APP_MERCURE_HUB_URL: ${{ env.APP_MERCURE_HUB_URL }}
+          APP_NAME: ${{ env.APP_NAME }}
+          APP_MAINTENANCE: ${{ env.APP_MAINTENANCE }}
+          COMPOSE_PROJECT_NAME: ${{ env.COMPOSE_PROJECT_NAME }}
           CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
-          GHCR_USERNAME: ${{ github.actor }}
-          GHCR_TOKEN: ${{ github.token }}
+          TRAEFIK_ROUTER_NAME: ${{ env.TRAEFIK_ROUTER_NAME }}
+          BASIC_AUTH_USERS: ${{ env.BASIC_AUTH_USERS }}
+          GHCR_USERNAME: ${{ vars.GHCR_USERNAME || github.actor }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || github.token }}
           IMAGE_REF: ${{ steps.image.outputs.image_ref }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || '22' }}
-          envs: APP_DIR,APP_HOST,CONTAINER_NAME,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
-          script_stop: true
+          port: ${{ vars.VPS_PORT || '22' }}
+          envs: DEPLOY_ENVIRONMENT,APP_DIR,APP_HOST,APP_PORT,APP_API_URL,APP_MERCURE_HUB_URL,APP_NAME,APP_MAINTENANCE,COMPOSE_PROJECT_NAME,CONTAINER_NAME,TRAEFIK_ROUTER_NAME,BASIC_AUTH_USERS,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
           script: |
+            set -eu
             mkdir -p "$APP_DIR"
+
+            if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+              compose_files="-f docker-compose.prod.yml -f docker-compose.dev.yml"
+              secure_middlewares="${TRAEFIK_ROUTER_NAME}-security,${TRAEFIK_ROUTER_NAME}-auth,${TRAEFIK_ROUTER_NAME}-noindex"
+              basic_auth_users=$(printf '%s' "$BASIC_AUTH_USERS" | sed 's/\$/$$/g')
+            else
+              compose_files="-f docker-compose.prod.yml"
+              secure_middlewares="${TRAEFIK_ROUTER_NAME}-security"
+              basic_auth_users=""
+            fi
 
             cat > "$APP_DIR/.env" <<EOF
             IMAGE_REF=$IMAGE_REF
             APP_HOST=$APP_HOST
+            APP_PORT=$APP_PORT
+            APP_API_URL=$APP_API_URL
+            APP_MERCURE_HUB_URL=$APP_MERCURE_HUB_URL
+            APP_NAME=$APP_NAME
+            APP_MAINTENANCE=$APP_MAINTENANCE
+            COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
             CONTAINER_NAME=$CONTAINER_NAME
+            TRAEFIK_ROUTER_NAME=$TRAEFIK_ROUTER_NAME
+            TRAEFIK_SECURE_MIDDLEWARES=$secure_middlewares
+            BASIC_AUTH_USERS=$basic_auth_users
             EOF
 
             cd "$APP_DIR"
-
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            docker compose -f docker-compose.prod.yml pull
-            docker network inspect traefik_proxy >/dev/null
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            docker compose -f docker-compose.prod.yml ps
+            docker compose $compose_files config --quiet
+
+            existing_project=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$CONTAINER_NAME" 2>/dev/null || true)
+            if [ -n "$existing_project" ] && [ "$existing_project" != "$COMPOSE_PROJECT_NAME" ]; then
+              docker rm -f "$CONTAINER_NAME"
+            fi
+
+            docker compose $compose_files pull
+            docker compose $compose_files up -d --remove-orphans
+            docker compose $compose_files ps
             docker logout ghcr.io
 
-      # `docker compose ps` above runs a second after `up -d`, when health is still
-      # `starting`, and the job ended there. So the deploy reported success while
-      # the site served Traefik's 404 -- it could not structurally say anything
-      # else. These two steps are the difference between "the ssh command exited 0"
-      # and "the site answers".
       - name: Wait for the container to become healthy
         uses: appleboy/ssh-action@v1.2.0
         env:
+          DEPLOY_ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
           APP_DIR: ${{ env.APP_DIR }}
           CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || '22' }}
-          envs: APP_DIR,CONTAINER_NAME
-          script_stop: true
+          port: ${{ vars.VPS_PORT || '22' }}
+          envs: DEPLOY_ENVIRONMENT,APP_DIR,CONTAINER_NAME
           script: |
+            set -eu
             cd "$APP_DIR"
+            if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+              compose_files="-f docker-compose.prod.yml -f docker-compose.dev.yml"
+            else
+              compose_files="-f docker-compose.prod.yml"
+            fi
 
-            # The image declares HEALTHCHECK with a 20s start period, so give it
-            # room: 30 attempts, 5s apart.
             attempt=1
             while [ "$attempt" -le 30 ]; do
               status=$(docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo missing)
@@ -143,41 +212,37 @@ jobs:
               sleep 5
             done
 
-            # Never fail silently: the container's own logs are the only place the
-            # reason lives, and nobody can read them without SSH otherwise.
-            echo "the container never became healthy — last 200 log lines:"
-            docker compose -f docker-compose.prod.yml logs --tail=200 --no-color || true
+            docker compose $compose_files logs --tail=200 --no-color || true
             exit 1
 
-      # Deliberately fatal. A deploy that leaves the site unreachable is a failed
-      # deploy, and saying so is the entire point: the run of 2026-08-27 reported
-      # success while every path under the host answered Traefik's 404.
-      - name: Verify the site answers publicly
+      - name: Verify the site publicly
         shell: bash
         env:
-          APP_HOST: ${{ env.APP_HOST }}
+          BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
         run: |
-          # `-L` because `/` is a 302 to the locale prefix (`/en`), which is a
-          # correct answer, not a failure. Without it this step failed ten times
-          # against a site that was serving perfectly -- and the container's own
-          # HEALTHCHECK passed all along, because Node's fetch follows redirects.
+          if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+            unauthenticated=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${APP_HOST}/")
+            test "$unauthenticated" = "401" || { echo "Expected Basic Auth 401, got $unauthenticated."; exit 1; }
+            curl_options=(-u "$BASIC_AUTH_CREDENTIALS")
+          else
+            curl_options=()
+          fi
+
           attempt=1
           while [ "$attempt" -le 10 ]; do
-            # curl still emits its `-w` line when it exits non-zero, so a `||`
-            # fallback would append to it rather than replace it. Tolerate the
-            # failure, then fill in only when nothing was written at all.
-            result=$(curl -sSL -o /dev/null -w '%{http_code} %{url_effective}' --max-time 15 "https://${APP_HOST}/") || true
+            result=$(curl "${curl_options[@]}" -sSL -o /dev/null -w '%{http_code} %{url_effective}' --max-time 15 "https://${APP_HOST}/") || true
             [ -n "$result" ] || result="000 -"
             code=${result%% *}
-            final=${result#* }
             if [ "$code" = "200" ]; then
-              echo "https://${APP_HOST}/ answered 200 at ${final} after ${attempt} attempt(s)"
+              if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
+                curl "${curl_options[@]}" -sSIL "https://${APP_HOST}/" | grep -qi '^x-robots-tag:.*noindex'
+              fi
               exit 0
             fi
-            echo "attempt ${attempt}/10: HTTP ${code} at ${final}"
+            echo "attempt ${attempt}/10: HTTP ${code}"
             attempt=$((attempt + 1))
             sleep 6
           done
 
-          echo "::error::https://${APP_HOST}/ never answered 200, redirects followed. A plain-text '404 page not found' is Traefik's, not the application's: no router matched the host, so check the container's labels and its attachment to traefik_proxy."
+          echo "::error::https://${APP_HOST}/ never answered 200."
           exit 1

@@ -1,0 +1,5 @@
+services:
+  fireguard-web:
+    labels:
+      - 'traefik.http.middlewares.${TRAEFIK_ROUTER_NAME:-fireguard-dev-front}-auth.basicauth.users=${BASIC_AUTH_USERS:?BASIC_AUTH_USERS is required}'
+      - 'traefik.http.middlewares.${TRAEFIK_ROUTER_NAME:-fireguard-dev-front}-noindex.headers.customresponseheaders.X-Robots-Tag=noindex,nofollow,noarchive'

@@ -6,6 +6,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { pickAvatarUrl } from '@core/api/utils';
+import { LocalePreferenceService } from '@core/locale';
 import {
   idleCallState,
   pendingCallState,
@@ -249,6 +250,7 @@ export const UserStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       userProfileService = inject<UserProfileService>(UserProfileService),
+      localePreference = inject<LocalePreferenceService>(LocalePreferenceService),
       platformId = inject<object>(PLATFORM_ID),
       transferState = inject<TransferState>(TransferState),
     ) => ({
@@ -280,6 +282,7 @@ export const UserStore = signalStore(
                     profile: response,
                     loadCallState: successCallState(response),
                   });
+                  localePreference.applyPreference(response.locale);
                 },
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
@@ -317,7 +320,8 @@ export const UserStore = signalStore(
        *
        * @description
        * Replaces the current authenticated-user profile with an authoritative
-       * profile response without issuing another API request.
+       * profile response without issuing another API request, then reconciles
+       * its display-language preference with the active localized bundle.
        *
        * @since 1.0.0
        *
@@ -328,6 +332,7 @@ export const UserStore = signalStore(
           profile,
           loadCallState: successCallState(profile),
         });
+        localePreference.applyPreference(profile.locale);
       },
 
       /**
@@ -378,6 +383,7 @@ export const UserStore = signalStore(
               profile: transferred,
               loadCallState: successCallState(transferred),
             });
+            localePreference.applyPreference(transferred.locale);
             return;
           }
 
@@ -393,6 +399,7 @@ export const UserStore = signalStore(
                   profile: response,
                   loadCallState: successCallState(response),
                 });
+                localePreference.applyPreference(response.locale);
                 // Store result for browser hydration (SSR only, no-op in browser).
                 transferState.set(USER_TRANSFER_KEY, response);
               },

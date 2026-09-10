@@ -170,7 +170,8 @@ inside a layout: it reads user identity, and rendering location does not transfe
 (`ARCHITECTURE.md` §2.7). A shell contributes it to its sidebar-footer slot through
 `withAccountMenu()` — the shell renders the component without importing it, and never learns that
 a user profile exists. The menu consumes `AUTH_LOGOUT_PORT` for sign-out rather than reaching into
-auth state.
+auth state, and listens to Auth's public `sessionEnded` event so the persistent dashboard shell
+returns to `/auth/login` after the local session is dropped, including when the logout request fails.
 
 It is the entry point into the account, so it carries every route-level section and the notification
 preferences matrix. `AccountPage` mirrors those sections as persistent local navigation; adding an
@@ -190,6 +191,13 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 - May be initialized or cleared by `features/auth` through `USER_PROFILE_PORT` after successful
   session restoration or logout.
+- Consumes `core/locale`'s `LocalePreferenceService` in `UserStore`: every authoritative `/api/me`
+  profile (including the hydrated handoff and a successful profile save) reconciles its `locale`
+  with the active `/en`, `/fr` or `/es` bundle. `system` clears an explicit locale cookie once and
+  lets the SSR server resolve the browser language.
+- Consumes `features/auth`'s public `authStoreEvents.sessionEnded` event in `AccountMenu` to leave
+  the dashboard shell after sign-out; the event is used instead of the request outcome because a
+  failed logout still ends the local session.
 - **Consumes `features/auth`'s published password policy** — `applyPasswordRules` and
   `applyPasswordConfirmation` — in the change-password form. Account owns the form; auth owns the
   policy, and is the single authority mirroring the API's constraints. Recorded in auth's
@@ -284,6 +292,9 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   would then persist.
 - `UserLocale` mirrors the backend `Locale::VALUES` byte for byte. TypeScript cannot catch a drift
   here; the symptom is a rejected `PATCH`.
+- The locale returned by `/api/me` is authoritative for the compiled language bundle. `UserStore`
+  applies it whenever a profile is loaded or replaced, so changing the profile language takes
+  effect immediately after the successful save instead of waiting for an unrelated reload.
 
 ## Not Built Yet
 

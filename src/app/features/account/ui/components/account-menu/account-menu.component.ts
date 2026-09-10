@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -10,8 +11,9 @@ import {
   lucideShieldCheck,
   lucideUserRound,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
-import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
+import { authStoreEvents, AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import {
   HlmDropdownMenu,
@@ -251,6 +253,28 @@ export class AccountMenu {
   );
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Subscribes to the auth session-ended event so the persistent dashboard
+   * shell leaves for sign-in after a logout started from this menu.
+   *
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    inject<Events>(Events)
+      .on(authStoreEvents.sessionEnded)
+      .pipe(takeUntilDestroyed())
+      .subscribe((): void => {
+        void this.router.navigate(['/auth/login']);
+      });
+  }
+  //#endregion
+
   //#region Methods
   /**
    * Method goToProfile
@@ -339,8 +363,8 @@ export class AccountMenu {
    * @method logout
    *
    * @description
-   * Ends the session. Navigation away is the auth feature's own consequence of
-   * the logout, not this menu's to perform.
+   * Ends the session; navigation is triggered by the auth session-ended event
+   * so failed logout requests also leave the authenticated shell.
    *
    * @access protected
    * @since 1.0.0

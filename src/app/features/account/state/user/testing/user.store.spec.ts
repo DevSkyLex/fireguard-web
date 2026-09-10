@@ -2,6 +2,7 @@ import { makeStateKey, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
+import { LocalePreferenceService } from '@core/locale';
 import { UserProfileService } from '@features/account/data-access';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
 import type { UserProfileOutput } from '@features/account/models';
@@ -16,6 +17,7 @@ describe('UserStore', () => {
   let transferState: TransferState;
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockUserProfileService: { getCurrentProfile: ReturnType<typeof vi.fn> };
+  let mockLocalePreference: { applyPreference: ReturnType<typeof vi.fn> };
 
   const profile: UserProfileOutput = {
     '@id': '/api/me',
@@ -42,11 +44,13 @@ describe('UserStore', () => {
     mockUserProfileService = {
       getCurrentProfile: vi.fn(),
     };
+    mockLocalePreference = { applyPreference: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: UserProfileService, useValue: mockUserProfileService },
+        { provide: LocalePreferenceService, useValue: mockLocalePreference },
       ],
     });
 
@@ -66,6 +70,7 @@ describe('UserStore', () => {
     expect(store.initials()).toBe('JD');
     expect(store.avatarUrl()).toBe('https://example.com/avatar.png');
     expect(store.isLoaded()).toBe(true);
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledWith('system');
   });
 
   it('should resolve avatar size variants from avatarUrls with legacy fallback', () => {
@@ -145,6 +150,7 @@ describe('UserStore', () => {
     expect(store.displayName()).toBe('Janet Updated');
     expect(store.loadCallState().status).toBe('success');
     expect(mockUserProfileService.getCurrentProfile).not.toHaveBeenCalled();
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledWith('system');
   });
 
   it('should retry current profile loading in the browser when SSR transfer state contains null', async () => {
@@ -155,6 +161,21 @@ describe('UserStore', () => {
 
     expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
     expect(store.profile()).toEqual(profile);
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledWith('system');
+  });
+
+  it('should apply the locale from a profile transferred after SSR hydration', async () => {
+    const transferredProfile: UserProfileOutput = { ...profile, locale: 'fr' };
+    transferState.set(makeStateKey<UserProfileOutput | null>('user-profile'), transferredProfile);
+
+    await store.initialize();
+
+    expect(mockUserProfileService.getCurrentProfile).not.toHaveBeenCalled();
+    expect(store.profile()).toEqual(transferredProfile);
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledWith('fr');
+    expect(transferState.hasKey(makeStateKey<UserProfileOutput | null>('user-profile'))).toBe(
+      false,
+    );
   });
 
   it('should clear profile and operation state', async () => {

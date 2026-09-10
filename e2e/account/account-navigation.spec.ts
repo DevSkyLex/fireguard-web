@@ -17,4 +17,19 @@ test.describe('Account navigation', () => {
     await expect(page.locator('#account-profile')).toBeVisible();
     await expect(page.getByTestId('account-tab-profile')).toHaveAttribute('aria-selected', 'true');
   });
+
+  test('logs out from the sidebar account menu and returns to sign-in', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockLogout();
+
+    await page.goto(`/organizations/${E2E_ORGANIZATION_ID}`);
+    await expect(page.locator('#dashboard-layout')).toBeVisible();
+
+    await page.locator('#account-menu-trigger').click();
+    await page.getByRole('menuitem', { name: 'Log out', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/auth\/login$/);
+    await expect(page.locator('#login-page')).toBeVisible();
+  });
 });

@@ -95,7 +95,7 @@ describe('OrganizationGlobalSearch', () => {
     expect(palette()).not.toBeNull();
   });
 
-  it('should use the standard Spartan command input with compact vertical spacing', async () => {
+  it('should use the standard Spartan command input with comfortable vertical spacing', async () => {
     trigger()?.click();
     await fixture.whenStable();
 
@@ -104,8 +104,8 @@ describe('OrganizationGlobalSearch', () => {
 
     expect(commandInput?.getAttribute('class') ?? '').not.toContain('[&_');
     expect(commandInput?.classList.contains('p-0')).toBe(true);
-    expect(inputSection?.className).toContain('py-0.5');
-    expect(inputSection?.className).not.toContain('py-2.5');
+    expect(inputSection?.className).toContain('py-2');
+    expect(inputSection?.className).not.toContain('py-0.5');
   });
 
   it('should not react to Ctrl+K without an active organization', async () => {

@@ -1,6 +1,8 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { Events } from '@ngrx/signals/events';
+import { Subject } from 'rxjs';
 import type { MockInstance } from 'vitest';
 import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
@@ -12,6 +14,7 @@ describe('AccountMenu', () => {
   let displayName: WritableSignal<string | null>;
   let isLoading: WritableSignal<boolean>;
   let logout: ReturnType<typeof vi.fn>;
+  let sessionEnded: Subject<void>;
   let navigate: MockInstance;
 
   beforeEach(async () => {
@@ -25,6 +28,7 @@ describe('AccountMenu', () => {
     displayName = signal<string | null>('Ada Lovelace');
     isLoading = signal(false);
     logout = vi.fn();
+    sessionEnded = new Subject<void>();
 
     TestBed.configureTestingModule({
       providers: [
@@ -42,6 +46,7 @@ describe('AccountMenu', () => {
           },
         },
         { provide: AUTH_LOGOUT_PORT, useValue: { logout, isLoggingOut: signal(false) } },
+        { provide: Events, useValue: { on: vi.fn().mockReturnValue(sessionEnded) } },
       ],
     });
 
@@ -99,9 +104,13 @@ describe('AccountMenu', () => {
   it('should end the session through the auth port', () => {
     fixture.componentInstance['logout']();
 
-    // Navigation away is the auth feature's consequence of the logout, not
-    // this menu's to perform.
     expect(logout).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('should leave for the sign-in screen once the session has ended', () => {
+    sessionEnded.next();
+
+    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
   });
 });

@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
   "index": "/index.html",
+  "navigationRequestStrategy": "freshness",
   "assetGroups": [
     {
       "name": "app",
@@ -15,6 +16,18 @@
       "updateMode": "prefetch",
       "resources": {
         "files": ["/assets/**", "/media/**", "/*.(png|svg|webp|woff2)"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "runtime-environment",
+      "urls": ["/runtime-config.json"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 1,
+        "maxAge": "1d",
+        "timeout": "3s"
       }
     }
   ]

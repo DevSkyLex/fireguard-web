@@ -5,7 +5,8 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
+import { readServerRuntimeEnvironment } from './app/core/config/environment/runtime-env.server';
 import { LANG_COOKIE_NAME } from './app/core/locale/constants/app-locale.constants';
 import {
   isSupportedLocale,
@@ -17,6 +18,40 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+/**
+ * Function serveRuntimeEnvironment
+ *
+ * @description
+ * Exposes the public container configuration to browser bootstraps that start
+ * from the PWA shell instead of an SSR response.
+ *
+ * @access private
+ * @since 1.2.0
+ *
+ * @param {Request} _request - Same-origin runtime configuration request.
+ * @param {Response} response - Express response used to serialize the public contract.
+ * @param {NextFunction} next - Express error continuation.
+ * @returns {void}
+ */
+const serveRuntimeEnvironment = (
+  _request: Request,
+  response: Response,
+  next: NextFunction,
+): void => {
+  try {
+    const runtimeEnvironment = readServerRuntimeEnvironment();
+    if (runtimeEnvironment === null) {
+      response.sendStatus(404);
+      return;
+    }
+
+    response.setHeader('Cache-Control', 'no-store, must-revalidate');
+    response.json(runtimeEnvironment);
+  } catch (error: unknown) {
+    next(error);
+  }
+};
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -49,6 +84,8 @@ app.use((_req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
 });
+
+app.get('/runtime-config.json', serveRuntimeEnvironment);
 
 /**
  * Serve static files from /browser

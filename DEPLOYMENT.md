@@ -18,7 +18,9 @@ Le serveur SSR lit ces variables au démarrage :
 - `APP_NAME`
 - `APP_MAINTENANCE`
 
-La configuration publique résolue côté serveur est transmise au navigateur avec `TransferState`. Les fichiers `src/environments/environment*.ts` restent les valeurs de secours des commandes Angular locales et ne portent aucune configuration propre au VPS.
+La configuration publique résolue côté serveur est transmise au navigateur avec `TransferState`. Le serveur expose aussi la même configuration sur `/runtime-config.json` : le bootstrap navigateur la charge avant de créer les services, ce qui garde un shell PWA mis en cache sur l'environnement qui le sert. Le service worker privilégie le SSR pour les navigations et conserve cette configuration publique comme secours hors ligne pendant 24 heures.
+
+Les fichiers `src/environments/environment*.ts` restent les valeurs de secours des commandes Angular locales et ne portent aucune configuration propre au VPS. Un déploiement hébergé échoue au démarrage si son endpoint runtime est indisponible ou invalide au lieu de retomber sur la configuration d'un autre environnement.
 
 ## Environnements GitHub
 

@@ -94,4 +94,22 @@ describe('provideEnv', () => {
     expect(TestBed.inject(ENV_CONFIG)).toEqual(transferred);
     expect(transferState.hasKey(key)).toBe(false);
   });
+
+  it('uses the browser runtime configuration when a cached shell has no hydration state', () => {
+    const runtime: EnvironmentConfig = {
+      ...SECURE_PRODUCTION,
+      apiUrl: 'https://dev.api.fireguard.valentin-fortin.pro',
+      mercureHubUrl: 'https://dev.mercure.fireguard.valentin-fortin.pro/.well-known/mercure',
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideEnv(SECURE_PRODUCTION),
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: RUNTIME_ENV_CONFIG, useValue: runtime },
+      ],
+    });
+
+    expect(TestBed.inject(ENV_CONFIG)).toEqual(runtime);
+  });
 });

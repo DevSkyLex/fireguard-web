@@ -127,13 +127,16 @@ Two further mechanisms are equally true and support it, but do not lead:
 - **Mark:** three identical, evenly spaced rounded lamellae in the Sillage C
   geometry on transparent surfaces. Approved neutral fills are dark (`#171717`),
   white (`#FFFFFF`) and primary vermilion (`#F4511E`); the repeated spacing and
-  soft turns are the identity. `public/favicon.svg` and the PWA icons use the
-  primary variant, while the three standalone SVG variants are available for
-  light, dark and primary surfaces.
+  soft turns are the identity. Neutral application surfaces use dark in the light
+  appearance and white in the dark appearance; the primary showcase uses white,
+  while the muted onboarding rail uses primary in light mode and white in dark
+  mode. The browser favicon follows the light/dark contrast of the browser
+  surface, and the PWA icons keep the primary variant.
 - **Theme:** restrained neutral gray surfaces, Nova style, in light and dark mode.
   Primary controls use vivid vermilion orange (`#F4511E` light / `#FF7043` dark) with
   white or near-black text (`#FFFFFF` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and
-  application surfaces stay neutral. Browser/PWA chrome uses `#171717`.
+  application surfaces stay neutral. The browser favicon follows the resolved
+  light/dark contrast; PWA chrome keeps the primary mark on transparent surfaces.
   Functional status colors and chart series remain labeled, never color-only.
   `src/styles.css` and `DESIGN.md` hold the token and composition conventions.
 - **Type:** Geist Variable for UI, Geist Mono for code and identifiers
@@ -166,8 +169,8 @@ Two further mechanisms are equally true and support it, but do not lead:
 - The working application itself: the full intervention lifecycle, offline
   execution, organization administration, the unified calendar, and
   collaboration are implemented and demonstrable.
-- Brand assets: `favicon.svg` / `favicon.ico`, PWA icons (192/512, maskable),
-  and eight country flag SVGs in `public/flags`.
+- Brand assets: `favicon.svg`, the transparent dark/white/primary logo variants,
+  PWA icons (192/512, maskable), and eight country flag SVGs in `public/flags`.
 - Shipped translation catalogs: `messages.fr.xlf`, `messages.es.xlf`.
 - Per-feature normative documentation: a `FEATURE.md` for each top-level and
   nested business feature.

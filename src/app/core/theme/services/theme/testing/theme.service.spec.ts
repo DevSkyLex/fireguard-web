@@ -29,4 +29,36 @@ describe('ThemeService', () => {
   it('should create', () => {
     expect(service).toBeTruthy();
   });
+
+  it('should switch marked logos and the favicon with the resolved theme', () => {
+    const logo: HTMLImageElement = document.createElement('img');
+    logo.setAttribute('data-theme-logo', '');
+    document.body.appendChild(logo);
+
+    const onboardingLogo: HTMLImageElement = document.createElement('img');
+    onboardingLogo.setAttribute('data-theme-logo', 'onboarding');
+    document.body.appendChild(onboardingLogo);
+
+    const icon: HTMLLinkElement = document.createElement('link');
+    icon.setAttribute('data-theme-icon', '');
+    document.head.appendChild(icon);
+
+    service.setTheme('dark');
+    TestBed.tick();
+
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-white.svg');
+    expect(onboardingLogo.getAttribute('src')).toBe('fireguard-logo-white.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-white.svg');
+
+    service.setTheme('light');
+    TestBed.tick();
+
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-dark.svg');
+    expect(onboardingLogo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-dark.svg');
+
+    logo.remove();
+    onboardingLogo.remove();
+    icon.remove();
+  });
 });

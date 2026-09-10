@@ -276,6 +276,60 @@ export class ThemeService {
   private applyThemeToDocument(mode: ThemeMode): void {
     const resolvedTheme: 'light' | 'dark' = this.resolveTheme(mode);
     this.document.documentElement.setAttribute('data-theme', resolvedTheme);
+    this.applyThemeAssets(resolvedTheme);
+  }
+
+  /**
+   * Method applyThemeAssets
+   * @method applyThemeAssets
+   *
+   * @description
+   * Switches marked neutral application logos and the browser favicon to the
+   * transparent variant matching the resolved theme.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @param {'light' | 'dark'} resolvedTheme - The concrete theme to render.
+   *
+   * @returns {void} - Nothing.
+   */
+  private applyThemeAssets(resolvedTheme: 'light' | 'dark'): void {
+    const faviconSource: string =
+      resolvedTheme === 'dark' ? 'fireguard-logo-white.svg' : 'fireguard-logo-dark.svg';
+
+    for (const logo of this.document.querySelectorAll<HTMLImageElement>('[data-theme-logo]')) {
+      logo.setAttribute('src', this.resolveLogoSource(logo.dataset['themeLogo'], resolvedTheme));
+    }
+
+    for (const icon of this.document.querySelectorAll<HTMLLinkElement>('[data-theme-icon]')) {
+      icon.setAttribute('href', faviconSource);
+    }
+  }
+
+  /**
+   * Method resolveLogoSource
+   * @method resolveLogoSource
+   *
+   * @description
+   * Selects a surface-specific mark for a marked application logo. Neutral
+   * shell surfaces use dark or white; the onboarding rail uses primary in
+   * light mode and white in dark mode.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @param {string | undefined} variant - Optional surface variant marker.
+   * @param {'light' | 'dark'} resolvedTheme - The concrete theme to render.
+   *
+   * @returns {string} - The transparent logo asset path.
+   */
+  private resolveLogoSource(variant: string | undefined, resolvedTheme: 'light' | 'dark'): string {
+    if (variant === 'onboarding' && resolvedTheme === 'light') {
+      return 'fireguard-logo-primary.svg';
+    }
+
+    return resolvedTheme === 'dark' ? 'fireguard-logo-white.svg' : 'fireguard-logo-dark.svg';
   }
 
   /**

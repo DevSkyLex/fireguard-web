@@ -11,9 +11,14 @@
     [attr.aria-label]="triggerLabel()"
   >
     <ng-icon name="lucideBell" aria-hidden="true" />
+    <span
+      class="hidden in-data-[mobile-actions=true]:inline"
+      i18n="@@account.notificationBell.title"
+      >Notifications</span
+    >
     @if (hasUnread()) {
       <span
-        class="absolute end-1 top-1 size-2 rounded-full bg-destructive"
+        class="absolute end-1 top-1 size-2 rounded-full bg-destructive in-data-[mobile-actions=true]:static in-data-[mobile-actions=true]:ms-auto"
         data-testid="notification-bell-dot"
         aria-hidden="true"
       ></span>

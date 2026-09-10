@@ -9,6 +9,7 @@
   align="end"
 >
   <ng-icon [name]="triggerIcon()" aria-hidden="true" />
+  <span class="hidden in-data-[mobile-actions=true]:inline">{{ triggerLabel() }}</span>
 </button>
 
 <ng-template #menu>

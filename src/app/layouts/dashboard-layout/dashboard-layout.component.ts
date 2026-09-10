@@ -75,7 +75,8 @@ import {
  * the standard page spacing, while full-height workspaces explicitly opt out. The header
  * backgrounds and separators still span the full content column.
  * On phones, the right-hand tools move into one native bottom drawer behind a single
- * trigger; wider screens keep the direct tool cluster.
+ * trigger. The drawer presents those contributed controls as full-width menu rows with
+ * their native icon and label; wider screens keep the direct icon-button cluster.
  *
  * @version 1.0.0
  *

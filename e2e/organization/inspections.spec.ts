@@ -112,18 +112,46 @@ test.describe('Inspection list', () => {
     const mobileActionsDrawer = page.getByTestId('dashboard-mobile-actions-drawer');
     const mobileActions = page.getByTestId('dashboard-mobile-actions');
     const globalSearch = mobileActions.getByRole('button', { name: 'Search this organization' });
+    const actionButtons = mobileActions.locator('button');
 
     await expect(mobileActionsDrawer).toBeVisible();
     await expect(mobileActionsDrawer.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
     await expect(globalSearch).toBeVisible();
+    await expect(globalSearch.getByText('Search this organization', { exact: true })).toBeVisible();
     await expect(mobileActions.getByTestId('notification-bell-trigger')).toBeVisible();
-    await expect(mobileActions.getByTestId('intervention-sync-status')).toBeVisible();
+    await expect(mobileActions.getByText('Notifications', { exact: true })).toBeVisible();
+    const syncStatus = mobileActions.getByTestId('intervention-sync-status');
+    await expect(syncStatus).toBeVisible();
+    await expect(syncStatus.getByText('Up to date', { exact: true })).toBeVisible();
+    await expect(mobileActions.getByText('Assistant', { exact: true })).toBeVisible();
+    await expect(mobileActions.getByText(/^Appearance:/)).toBeVisible();
     await expect(mobileActions.locator('#theme-switcher-trigger')).toBeVisible();
-    await expect.poll(async () => (await globalSearch.boundingBox())?.width).toBeCloseTo(28, 0);
+    await expect(actionButtons).toHaveCount(5);
+    const actionButtonBoxes = await actionButtons.evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const box = button.getBoundingClientRect();
+
+        return { height: box.height, width: box.width, y: box.y };
+      }),
+    );
+    expect(actionButtonBoxes).toHaveLength(5);
+    let previousY = Number.NEGATIVE_INFINITY;
+    for (const box of actionButtonBoxes) {
+      expect(box.height).toBe(48);
+      expect(box.width).toBeGreaterThan(300);
+      expect(box.y).toBeGreaterThan(previousY);
+      previousY = box.y;
+    }
     await page.screenshot({
       path: `${SCREENSHOT_DIR}/inspections-quick-actions-drawer-dark-mobile.png`,
       animations: 'disabled',
     });
+
+    await globalSearch.click();
+    await expect(page.getByTestId('global-search-palette')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('global-search-palette')).toHaveCount(0);
+    await expect(mobileActionsDrawer).toBeVisible();
 
     await mobileActionsDrawer.getByRole('button', { name: 'Close' }).click();
     await expect(mobileActionsDrawer).toHaveCount(0);

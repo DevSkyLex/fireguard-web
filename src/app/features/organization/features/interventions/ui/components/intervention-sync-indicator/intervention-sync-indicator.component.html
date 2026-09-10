@@ -31,13 +31,20 @@
       }
     }
     @if (triggerSize() === 'sm') {
-      <span class="hidden text-xs sm:inline">{{ triggerLabel() }}</span>
+      <span class="hidden text-xs in-data-[mobile-actions=true]:hidden sm:inline">{{
+        triggerLabel()
+      }}</span>
     }
+    <span
+      class="hidden in-data-[mobile-actions=true]:inline"
+      data-testid="intervention-sync-mobile-label"
+      >{{ triggerLabel() }}</span
+    >
     @if (state() === 'blocked') {
       <span
         hlmBadge
         variant="destructive"
-        class="max-sm:absolute max-sm:-top-1 max-sm:-right-1"
+        class="in-data-[mobile-actions=true]:static in-data-[mobile-actions=true]:ms-auto max-sm:absolute max-sm:-top-1 max-sm:-right-1"
         data-testid="intervention-sync-blocked-count"
         >{{ blockedCount() }}</span
       >
@@ -45,7 +52,7 @@
       <span
         hlmBadge
         variant="secondary"
-        class="max-sm:absolute max-sm:-top-1 max-sm:-right-1"
+        class="in-data-[mobile-actions=true]:static in-data-[mobile-actions=true]:ms-auto max-sm:absolute max-sm:-top-1 max-sm:-right-1"
         data-testid="intervention-sync-pending-count"
         >{{ pendingCount() }}</span
       >

@@ -102,7 +102,11 @@
                 <ng-icon name="lucideEllipsis" aria-hidden="true" />
               </button>
 
-              <hlm-drawer-content *hlmDrawerPortal data-testid="dashboard-mobile-actions-drawer">
+              <hlm-drawer-content
+                *hlmDrawerPortal
+                class="overflow-hidden"
+                data-testid="dashboard-mobile-actions-drawer"
+              >
                 <hlm-drawer-header>
                   <h2 hlmDrawerTitle i18n="@@dashboard.mobileActions.title">Quick actions</h2>
                   <p hlmDrawerDescription i18n="@@dashboard.mobileActions.description">
@@ -111,8 +115,9 @@
                 </hlm-drawer-header>
 
                 <div
-                  class="flex flex-wrap items-center gap-2 px-4 pb-4"
+                  class="flex flex-col gap-1 px-3 pb-2 [&_button]:h-12 [&_button]:w-full [&_button]:justify-start [&_button]:gap-3 [&_button]:rounded-lg [&_button]:border-transparent [&_button]:bg-transparent [&_button]:px-3 [&_button]:text-start [&_button]:shadow-none [&_button]:hover:bg-muted [&_button]:active:bg-muted [&_button>ng-icon]:text-base [&>app-slot-outlet>*]:block [&>app-slot-outlet>*]:w-full"
                   data-testid="dashboard-mobile-actions"
+                  data-mobile-actions="true"
                 >
                   <app-slot-outlet [contributions]="headerActions" />
                 </div>

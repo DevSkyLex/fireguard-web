@@ -124,11 +124,11 @@ Two further mechanisms are equally true and support it, but do not lead:
 ## Brand Commitments
 
 - **Name:** Fireguard (`Fireguard Field Operations` as the installed PWA name).
-- **Mark:** three stable blocks plus a 45°-pivoted "guard" square in Ember
-  orange (`#F97316`), on a near-black rounded tile (`#0C0C0E`). It survives as
-  `public/favicon.svg`, `favicon.ico` and the PWA icons (192/512, maskable).
-  The geometry is the identity and is not open for redecoration; its colour
-  remains part of the existing brand assets.
+- **Mark:** three identical, evenly spaced rounded lamellae in the Sillage C
+  geometry, set in the application vermilion (`#F4511E`) on a graphite tile
+  (`#171717`). It survives as `public/favicon.svg`, `favicon.ico` and the PWA
+  icons (192/512, maskable). The repeated spacing and soft turns are the
+  identity; keep them consistent across sizes and surfaces.
 - **Theme:** restrained neutral gray surfaces, Nova style, in light and dark mode.
   Primary controls use vivid vermilion orange (`#F4511E` light / `#FF7043` dark) with
   white or near-black text (`#FFFFFF` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and

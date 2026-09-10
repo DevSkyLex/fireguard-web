@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" fill="none">
-  <rect width="64" height="64" fill="#0C0C0E" />
-  <g transform="translate(15.8 15.8) scale(1.35)">
-    <rect x="3" y="3" width="8" height="8" rx="2.2" fill="#fafafa" />
-    <rect x="3" y="13" width="8" height="8" rx="2.2" fill="#fafafa" />
-    <rect x="13" y="13" width="8" height="8" rx="2.2" fill="#fafafa" />
-    <rect x="13.4" y="3.4" width="7.2" height="7.2" rx="1.9" fill="#F97316" transform="rotate(45 17 7)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Fireguard</title>
+  <rect width="64" height="64" fill="#171717" />
+  <g fill="#F4511E" transform="translate(8 8) scale(0.5)">
+    <path d="M4 47Q4 40 8.95 35.05L23.05 20.95Q28 16 35 16h2Q44 16 39.05 20.95L24.95 35.05Q20 40 20 47v16Q20 70 15.05 74.95L8.95 81.05Q4 86 4 79V47Z" />
+    <path d="M28 47Q28 40 32.95 35.05L47.05 20.95Q52 16 59 16h2Q68 16 63.05 20.95L48.95 35.05Q44 40 44 47v16Q44 70 39.05 74.95L32.95 81.05Q28 86 28 79V47Z" />
+    <path d="M52 47Q52 40 56.95 35.05L71.05 20.95Q76 16 83 16h2Q92 16 87.05 20.95L72.95 35.05Q68 40 68 47v16Q68 70 63.05 74.95L56.95 81.05Q52 86 52 79V47Z" />
   </g>
 </svg>

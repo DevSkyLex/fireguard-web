@@ -127,16 +127,14 @@ Two further mechanisms are equally true and support it, but do not lead:
 - **Mark:** three identical, evenly spaced rounded lamellae in the Sillage C
   geometry on transparent surfaces. Approved neutral fills are dark (`#171717`),
   white (`#FFFFFF`) and primary vermilion (`#F4511E`); the repeated spacing and
-  soft turns are the identity. Neutral application surfaces use dark in the light
-  appearance and white in the dark appearance; the primary showcase uses white,
-  while the muted onboarding rail uses primary in light mode and white in dark
-  mode. The browser favicon follows the light/dark contrast of the browser
-  surface, and the PWA icons keep the primary variant.
+  soft turns are the identity. Non-primary application surfaces prioritize the
+  primary mark; the primary showcase uses white for contrast. The browser favicon
+  and PWA icons keep the primary variant.
 - **Theme:** restrained neutral gray surfaces, Nova style, in light and dark mode.
   Primary controls use vivid vermilion orange (`#F4511E` light / `#FF7043` dark) with
   white or near-black text (`#FFFFFF` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and
-  application surfaces stay neutral. The browser favicon follows the resolved
-  light/dark contrast; PWA chrome keeps the primary mark on transparent surfaces.
+  application surfaces stay neutral. The browser favicon and PWA chrome keep the
+  primary mark on transparent surfaces.
   Functional status colors and chart series remain labeled, never color-only.
   `src/styles.css` and `DESIGN.md` hold the token and composition conventions.
 - **Type:** Geist Variable for UI, Geist Mono for code and identifiers

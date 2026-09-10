@@ -30,7 +30,7 @@ describe('ThemeService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should switch marked logos and the favicon with the resolved theme', () => {
+  it('should keep marked logos and the favicon on the primary variant', () => {
     const logo: HTMLImageElement = document.createElement('img');
     logo.setAttribute('data-theme-logo', '');
     document.body.appendChild(logo);
@@ -46,16 +46,16 @@ describe('ThemeService', () => {
     service.setTheme('dark');
     TestBed.tick();
 
-    expect(logo.getAttribute('src')).toBe('fireguard-logo-white.svg');
-    expect(onboardingLogo.getAttribute('src')).toBe('fireguard-logo-white.svg');
-    expect(icon.getAttribute('href')).toBe('fireguard-logo-white.svg');
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
+    expect(onboardingLogo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary.svg');
 
     service.setTheme('light');
     TestBed.tick();
 
-    expect(logo.getAttribute('src')).toBe('fireguard-logo-dark.svg');
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
     expect(onboardingLogo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
-    expect(icon.getAttribute('href')).toBe('fireguard-logo-dark.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary.svg');
 
     logo.remove();
     onboardingLogo.remove();

@@ -148,19 +148,7 @@ html[data-theme='dark'] {
 }
 
 img[data-theme-logo] {
-  content: url('/fireguard-logo-dark.svg');
-}
-
-html[data-theme='dark'] img[data-theme-logo] {
-  content: url('/fireguard-logo-white.svg');
-}
-
-img[data-theme-logo='onboarding'] {
   content: url('/fireguard-logo-primary.svg');
-}
-
-html[data-theme='dark'] img[data-theme-logo='onboarding'] {
-  content: url('/fireguard-logo-white.svg');
 }
 
 @layer base {

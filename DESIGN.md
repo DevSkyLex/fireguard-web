@@ -26,11 +26,9 @@ composition conventions, not a separate design system.
 - The Fireguard mark uses the Sillage C geometry: three identical, evenly spaced
   rounded lamellae on transparent surfaces. Use the neutral fills dark `#171717`,
   white `#FFFFFF` or primary vermilion `#F4511E` according to the surrounding
-  surface. Neutral application surfaces use the dark mark in light mode and the
-  white mark in dark mode. The primary auth showcase uses white, the muted
-  onboarding rail uses primary in light mode and white in dark mode, and the
-  browser favicon follows light/dark contrast. Preserve the mark's repeated
-  spacing and soft turns when scaling it.
+  surface. Non-primary application surfaces prioritize the primary mark; the
+  primary auth showcase uses white for contrast. The browser favicon also uses
+  primary. Preserve the mark's repeated spacing and soft turns when scaling it.
 - Keep locally hosted Geist Variable and Geist Mono. Use the installed Nova
   type, radius, control, spacing and variant defaults. Page titles are normally
   `text-2xl font-semibold`; labels and data stay compact and readable.

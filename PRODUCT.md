@@ -128,8 +128,9 @@ Two further mechanisms are equally true and support it, but do not lead:
   geometry on transparent surfaces. Approved neutral fills are dark (`#171717`),
   white (`#FFFFFF`) and primary vermilion (`#F4511E`); the repeated spacing and
   soft turns are the identity. Non-primary application surfaces prioritize the
-  primary mark; the primary showcase uses white for contrast. The browser favicon
-  and PWA icons keep the primary variant.
+  primary mark; the auth showcase uses white on its light primary panel and
+  primary on its dark neutral panel. The browser favicon and PWA icons keep the
+  primary variant.
 - **Theme:** restrained neutral gray surfaces, Nova style, in light and dark mode.
   Primary controls use vivid vermilion orange (`#F4511E` light / `#FF7043` dark) with
   white or near-black text (`#FFFFFF` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and

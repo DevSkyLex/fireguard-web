@@ -46,6 +46,19 @@ describe('SplitLayoutShowcase', () => {
     expect(fixture.nativeElement.textContent).toContain('Fireguard');
   });
 
+  it('should match the logo to the showcase background', async () => {
+    const logo = fixture.nativeElement.querySelector(
+      '[data-testid="auth-showcase-logo"]',
+    ) as HTMLImageElement;
+
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-white.svg');
+
+    theme.set('dark');
+    await fixture.whenStable();
+
+    expect(logo.getAttribute('src')).toBe('fireguard-logo-primary.svg');
+  });
+
   it('should pair a concrete product promise with real workspace previews', () => {
     expect(fixture.nativeElement.textContent).toContain('publish the report');
     expect(fixture.nativeElement.querySelector('#auth-showcase-preview')).not.toBeNull();

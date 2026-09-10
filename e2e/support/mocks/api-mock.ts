@@ -408,6 +408,18 @@ export class ApiMock {
     });
   }
 
+  /** Mocks the successful logout action used by the shell account menu. */
+  public async mockLogout(): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/logout`, async (route) => {
+      await fulfillJson(route, 200, {
+        '@id': '/api/auth/logout',
+        '@type': 'Logout',
+        message: 'Logged out',
+      });
+    });
+  }
+
   /**
    * Mocks everything a logged-in session needs downstream of authentication:
    * /api/me -> notifications -> onboarding -> organizations. Does NOT touch

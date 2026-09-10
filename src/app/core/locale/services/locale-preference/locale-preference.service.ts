@@ -133,8 +133,8 @@ export class LocalePreferenceService {
    *
    * @description
    * Persists an explicit language choice and navigates to the same route under
-   * the selected locale sub-path. No-op on the server or when the locale is
-   * already active.
+   * the selected locale sub-path. When that bundle is already active it still
+   * repairs a missing or stale preference cookie, but skips navigation.
    *
    * @access public
    * @since 1.0.0
@@ -143,15 +143,19 @@ export class LocalePreferenceService {
    * @returns {void}
    */
   public setLocale(subPath: AppLocaleSubPath): void {
-    if (!isPlatformBrowser(this.platformId) || subPath === this.current()) return;
+    if (!isPlatformBrowser(this.platformId)) return;
 
-    this.cookieService.setCookie({
-      name: LANG_COOKIE_NAME,
-      value: subPath,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: 'Lax',
-    });
+    if (this.cookieService.getCookie<AppLocaleSubPath>(LANG_COOKIE_NAME) !== subPath) {
+      this.cookieService.setCookie({
+        name: LANG_COOKIE_NAME,
+        value: subPath,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'Lax',
+      });
+    }
+
+    if (subPath === this.current()) return;
 
     const location = this.document.location;
     this.document.location.assign(
@@ -182,6 +186,36 @@ export class LocalePreferenceService {
     this.document.location.assign(
       `${stripLocaleFromPathname(location.pathname)}${location.search}${location.hash}`,
     );
+  }
+
+  /**
+   * Method applyPreference
+   * @method applyPreference
+   *
+   * @description
+   * Reconciles a persisted application preference with the active locale
+   * bundle. Explicit languages are remembered even when their bundle is
+   * already active; `system` clears an existing explicit cookie exactly once,
+   * avoiding a locale-less redirect loop after the server resolves the browser
+   * language.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @param {AppLocaleSubPath | 'system'} preference - Persisted display-language preference.
+   * @returns {void}
+   */
+  public applyPreference(preference: AppLocaleSubPath | 'system'): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (preference !== 'system') {
+      this.setLocale(preference);
+      return;
+    }
+
+    if (this.cookieService.getCookie<string>(LANG_COOKIE_NAME) !== null) {
+      this.useBrowserDefault();
+    }
   }
 
   /**

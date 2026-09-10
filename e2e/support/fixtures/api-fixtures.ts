@@ -79,7 +79,9 @@ export interface UserProfileOutputFixture {
   readonly lastName: string;
   readonly avatarUrl: string | null;
   readonly status: string;
+  readonly locale: 'system' | 'en' | 'fr' | 'es';
   readonly emailVerified: boolean;
+  readonly totpEnabled: boolean;
   readonly tenantId: string | null;
   readonly createdAt: string;
   readonly lastLoginAt: string;
@@ -100,7 +102,9 @@ export function userProfileOutput(
     lastName: 'Uzer',
     avatarUrl: null,
     status: 'active',
+    locale: 'system',
     emailVerified: true,
+    totpEnabled: false,
     tenantId: 'e2e-tenant-1',
     createdAt: '2026-01-01T00:00:00+00:00',
     lastLoginAt: '2026-07-08T00:00:00+00:00',

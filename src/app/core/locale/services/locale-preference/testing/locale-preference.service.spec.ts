@@ -7,7 +7,7 @@ import { LocalePreferenceService } from '../locale-preference.service';
 
 describe('LocalePreferenceService', () => {
   const assign = vi.fn();
-  const cookie = { setCookie: vi.fn(), deleteCookie: vi.fn() };
+  const cookie = { getCookie: vi.fn(), setCookie: vi.fn(), deleteCookie: vi.fn() };
 
   function setup(pathname: string, localeId = 'es'): LocalePreferenceService {
     const document = {
@@ -45,11 +45,40 @@ describe('LocalePreferenceService', () => {
     expect(assign).toHaveBeenCalledWith('/fr/account');
   });
 
-  it('does nothing when selecting the active locale', () => {
+  it('persists an explicit preference without navigating when its locale is already active', () => {
     setup('/es/account').setLocale('es');
 
-    expect(cookie.setCookie).not.toHaveBeenCalled();
+    expect(cookie.setCookie).toHaveBeenCalledWith(
+      expect.objectContaining({ name: LANG_COOKIE_NAME, value: 'es', path: '/' }),
+    );
     expect(assign).not.toHaveBeenCalled();
+  });
+
+  it('applies an explicit profile preference to the current route', () => {
+    setup('/en/account').applyPreference('fr');
+
+    expect(cookie.setCookie).toHaveBeenCalledWith(
+      expect.objectContaining({ name: LANG_COOKIE_NAME, value: 'fr', path: '/' }),
+    );
+    expect(assign).toHaveBeenCalledWith('/fr/account');
+  });
+
+  it('leaves a browser-default preference alone when no explicit cookie remains', () => {
+    cookie.getCookie.mockReturnValue(null);
+
+    setup('/fr/account').applyPreference('system');
+
+    expect(cookie.deleteCookie).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it('clears a previous explicit locale when the profile returns to browser default', () => {
+    cookie.getCookie.mockReturnValue('fr');
+
+    setup('/fr/account').applyPreference('system');
+
+    expect(cookie.deleteCookie).toHaveBeenCalledWith(LANG_COOKIE_NAME);
+    expect(assign).toHaveBeenCalledWith('/account');
   });
 
   it('clears the cookie and navigates to the locale-less path on browser default', () => {

@@ -125,10 +125,11 @@ Two further mechanisms are equally true and support it, but do not lead:
 
 - **Name:** Fireguard (`Fireguard Field Operations` as the installed PWA name).
 - **Mark:** three identical, evenly spaced rounded lamellae in the Sillage C
-  geometry, set in the application vermilion (`#F4511E`) on a graphite tile
-  (`#171717`). It survives as `public/favicon.svg`, `favicon.ico` and the PWA
-  icons (192/512, maskable). The repeated spacing and soft turns are the
-  identity; keep them consistent across sizes and surfaces.
+  geometry on transparent surfaces. Approved neutral fills are dark (`#171717`),
+  white (`#FFFFFF`) and primary vermilion (`#F4511E`); the repeated spacing and
+  soft turns are the identity. `public/favicon.svg` and the PWA icons use the
+  primary variant, while the three standalone SVG variants are available for
+  light, dark and primary surfaces.
 - **Theme:** restrained neutral gray surfaces, Nova style, in light and dark mode.
   Primary controls use vivid vermilion orange (`#F4511E` light / `#FF7043` dark) with
   white or near-black text (`#FFFFFF` light / `#0A0A0A` dark). Secondary actions, text links, keyboard focus and

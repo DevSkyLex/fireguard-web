@@ -24,9 +24,10 @@ composition conventions, not a separate design system.
   underline weight without reducing text contrast. The orange primary is a fill,
   not small text on a light surface. Do not tint the application shell.
 - The Fireguard mark uses the Sillage C geometry: three identical, evenly spaced
-  rounded lamellae in vermilion `#F4511E` on graphite `#171717`. Browser and PWA
-  chrome use neutral `#171717`; the light PWA background is white. Preserve the
-  mark's repeated spacing and soft turns when scaling it.
+  rounded lamellae on transparent surfaces. Use the neutral fills dark `#171717`,
+  white `#FFFFFF` or primary vermilion `#F4511E` according to the surrounding
+  surface. Browser and PWA chrome use neutral `#171717`; preserve the mark's
+  repeated spacing and soft turns when scaling it.
 - Keep locally hosted Geist Variable and Geist Mono. Use the installed Nova
   type, radius, control, spacing and variant defaults. Page titles are normally
   `text-2xl font-semibold`; labels and data stay compact and readable.

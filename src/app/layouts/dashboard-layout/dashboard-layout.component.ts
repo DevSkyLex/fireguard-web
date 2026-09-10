@@ -9,6 +9,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideEllipsis } from '@ng-icons/lucide';
 import { BreadcrumbService } from '@core/breadcrumb';
 import {
   type ExclusiveSlotContribution,
@@ -16,6 +18,8 @@ import {
   type SlotContribution,
   SlotOutlet,
 } from '@shared/layout-slot';
+import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmSeparator } from '@shared/ui/separator';
 import {
   HlmSidebar,
@@ -25,6 +29,7 @@ import {
   HlmSidebarInset,
   HlmSidebarTrigger,
   HlmSidebarWrapper,
+  HlmSidebarService,
 } from '@shared/ui/sidebar';
 import { hlm } from '@shared/ui/utils';
 import { DashboardPageHeader } from './components';
@@ -69,6 +74,8 @@ import {
  * responsive `container`. That shared container owns horizontal alignment and
  * the standard page spacing, while full-height workspaces explicitly opt out. The header
  * backgrounds and separators still span the full content column.
+ * On phones, the right-hand tools move into one native bottom drawer behind a single
+ * trigger; wider screens keep the direct tool cluster.
  *
  * @version 1.0.0
  *
@@ -92,9 +99,12 @@ import {
   selector: 'app-dashboard-layout',
   imports: [
     NgComponentOutlet,
+    NgIcon,
     RouterOutlet,
     SlotOutlet,
     DashboardPageHeader,
+    HlmButton,
+    HlmDrawerImports,
     HlmSeparator,
     HlmSidebar,
     HlmSidebarContent,
@@ -104,7 +114,7 @@ import {
     HlmSidebarTrigger,
     HlmSidebarWrapper,
   ],
-  providers: [BreadcrumbService],
+  providers: [BreadcrumbService, provideIcons({ lucideEllipsis })],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -236,6 +246,21 @@ export class DashboardLayout {
    */
   protected readonly headerActions: readonly SlotContribution[] =
     inject<SlotContribution[]>(DASHBOARD_HEADER_ACTIONS_SLOT, { optional: true }) ?? [];
+
+  /**
+   * Property isMobile
+   * @readonly
+   *
+   * @description
+   * Whether header tools belong in the compact mobile actions drawer.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobile: Signal<boolean> =
+    inject<HlmSidebarService>(HlmSidebarService).isMobile;
 
   /**
    * Property panelContributions

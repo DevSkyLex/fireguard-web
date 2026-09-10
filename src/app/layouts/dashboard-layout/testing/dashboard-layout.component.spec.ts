@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
+import { HlmSidebarService } from '@shared/ui/sidebar';
 import { DashboardLayout } from '../dashboard-layout.component';
 import type { SidebarExtensionContribution } from '../models';
 import {
@@ -146,6 +147,45 @@ describe('DashboardLayout', () => {
     expect(element.querySelector('[data-slot="sidebar-content"] #nav-stub')).not.toBeNull();
     expect(element.querySelector('[data-slot="sidebar-footer"] #nav-stub')).not.toBeNull();
     expect(element.querySelectorAll('header #nav-stub')).toHaveLength(2);
+  });
+
+  it('moves header actions into the native drawer on mobile', async () => {
+    const fixture = await render([
+      {
+        provide: HlmSidebarService,
+        useValue: {
+          isMobile: signal(true),
+          openMobile: signal(false),
+          state: signal<'expanded' | 'collapsed'>('expanded'),
+          variant: signal<'sidebar' | 'floating' | 'inset'>('sidebar'),
+          setVariant: vi.fn(),
+          setOpenMobile: vi.fn(),
+          toggleSidebar: vi.fn(),
+        },
+      },
+      { provide: DASHBOARD_HEADER_ACTIONS_SLOT, useValue: [additive('tools', NavStub)] },
+    ]);
+    const element: HTMLElement = fixture.nativeElement;
+    const trigger: HTMLButtonElement | null = element.querySelector(
+      '[data-testid="dashboard-mobile-actions-trigger"]',
+    );
+
+    expect(trigger).not.toBeNull();
+    expect(element.querySelector('[data-testid="dashboard-desktop-actions"]')).toBeNull();
+
+    trigger?.click();
+    await fixture.whenStable();
+
+    const drawer: HTMLElement | null = document.querySelector(
+      '[data-testid="dashboard-mobile-actions-drawer"]',
+    );
+    expect(drawer?.querySelector('#nav-stub')).not.toBeNull();
+    expect(drawer?.querySelector('[data-slot="drawer-title"]')?.textContent?.trim()).toBe(
+      'Quick actions',
+    );
+
+    (drawer?.querySelector('[data-slot="drawer-close"]') as HTMLButtonElement | null)?.click();
+    await fixture.whenStable();
   });
 
   it('gives the panel to the highest priority active contribution', async () => {

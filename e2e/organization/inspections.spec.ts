@@ -88,8 +88,10 @@ test.describe('Inspection list', () => {
     await expect(sidebarTrigger.locator('ng-icon[name="lucideMenu"]')).toBeVisible();
     await expect(sidebarTrigger.locator('ng-icon[name="lucidePanelLeft"]')).toHaveCount(0);
 
-    const globalSearch = page.getByRole('button', { name: 'Search this organization' });
-    await expect.poll(async () => (await globalSearch.boundingBox())?.width).toBeCloseTo(28, 0);
+    const mobileActionsTrigger = page.getByRole('button', { name: 'Open quick actions' });
+    await expect(mobileActionsTrigger).toBeVisible();
+    await expect(page.getByTestId('dashboard-desktop-actions')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Search this organization' })).toHaveCount(0);
 
     const toolbarBox = await page.getByTestId('collection-toolbar').boundingBox();
     const searchBox = await page.getByTestId('inspections-search-group').boundingBox();
@@ -105,6 +107,27 @@ test.describe('Inspection list', () => {
 
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-dark-mobile.png` });
+
+    await mobileActionsTrigger.click();
+    const mobileActionsDrawer = page.getByTestId('dashboard-mobile-actions-drawer');
+    const mobileActions = page.getByTestId('dashboard-mobile-actions');
+    const globalSearch = mobileActions.getByRole('button', { name: 'Search this organization' });
+
+    await expect(mobileActionsDrawer).toBeVisible();
+    await expect(mobileActionsDrawer.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
+    await expect(globalSearch).toBeVisible();
+    await expect(mobileActions.getByTestId('notification-bell-trigger')).toBeVisible();
+    await expect(mobileActions.getByTestId('intervention-sync-status')).toBeVisible();
+    await expect(mobileActions.locator('#theme-switcher-trigger')).toBeVisible();
+    await expect.poll(async () => (await globalSearch.boundingBox())?.width).toBeCloseTo(28, 0);
+    await page.screenshot({
+      path: `${SCREENSHOT_DIR}/inspections-quick-actions-drawer-dark-mobile.png`,
+      animations: 'disabled',
+    });
+
+    await mobileActionsDrawer.getByRole('button', { name: 'Close' }).click();
+    await expect(mobileActionsDrawer).toHaveCount(0);
+    await expect(mobileActionsTrigger).toBeFocused();
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 
@@ -119,6 +142,8 @@ test.describe('Inspection list', () => {
 
     await inspections.gotoList(E2E_ORGANIZATION_ID);
     await expect(inspections.listRoot).toBeVisible();
+    await expect(page.getByTestId('dashboard-desktop-actions')).toBeVisible();
+    await expect(page.getByTestId('dashboard-mobile-actions-trigger')).toHaveCount(0);
     await expect(
       page
         .getByRole('button', { name: 'Toggle sidebar' })

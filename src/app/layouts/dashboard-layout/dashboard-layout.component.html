@@ -86,9 +86,60 @@
           <app-slot-outlet [contributions]="header" />
         </div>
 
-        <div class="flex min-w-0 shrink-0 items-center gap-1">
-          <app-slot-outlet [contributions]="headerActions" />
-        </div>
+        @if (headerActions.length > 0) {
+          @if (isMobile()) {
+            <hlm-drawer direction="bottom">
+              <button
+                hlmDrawerTrigger
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                data-testid="dashboard-mobile-actions-trigger"
+                i18n-aria-label="@@dashboard.mobileActions.open"
+                aria-label="Open quick actions"
+              >
+                <ng-icon name="lucideEllipsis" aria-hidden="true" />
+              </button>
+
+              <hlm-drawer-content *hlmDrawerPortal data-testid="dashboard-mobile-actions-drawer">
+                <hlm-drawer-header>
+                  <h2 hlmDrawerTitle i18n="@@dashboard.mobileActions.title">Quick actions</h2>
+                  <p hlmDrawerDescription i18n="@@dashboard.mobileActions.description">
+                    Tools available for this workspace.
+                  </p>
+                </hlm-drawer-header>
+
+                <div
+                  class="flex flex-wrap items-center gap-2 px-4 pb-4"
+                  data-testid="dashboard-mobile-actions"
+                >
+                  <app-slot-outlet [contributions]="headerActions" />
+                </div>
+
+                <hlm-drawer-footer>
+                  <button
+                    hlmDrawerClose
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="w-full"
+                    i18n="@@common.close"
+                  >
+                    Close
+                  </button>
+                </hlm-drawer-footer>
+              </hlm-drawer-content>
+            </hlm-drawer>
+          } @else {
+            <div
+              class="flex min-w-0 shrink-0 items-center gap-1"
+              data-testid="dashboard-desktop-actions"
+            >
+              <app-slot-outlet [contributions]="headerActions" />
+            </div>
+          }
+        }
       </div>
     </header>
 

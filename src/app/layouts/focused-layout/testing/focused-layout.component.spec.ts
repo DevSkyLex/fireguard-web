@@ -52,7 +52,9 @@ describe('FocusedLayout', () => {
 
     expect(element.querySelector('header #header-stub')).not.toBeNull();
     expect(element.querySelector('header')?.textContent).toContain('Fireguard');
-    expect(element.querySelector('header img')?.getAttribute('src')).toBe('favicon.svg');
+    expect(element.querySelector('header img')?.getAttribute('src')).toBe(
+      'fireguard-logo-primary.svg',
+    );
     expect(element.querySelector('footer #footer-stub')).not.toBeNull();
   });
 });

@@ -276,6 +276,33 @@ export class ThemeService {
   private applyThemeToDocument(mode: ThemeMode): void {
     const resolvedTheme: 'light' | 'dark' = this.resolveTheme(mode);
     this.document.documentElement.setAttribute('data-theme', resolvedTheme);
+    this.applyThemeAssets();
+  }
+
+  /**
+   * Method applyThemeAssets
+   * @method applyThemeAssets
+   *
+   * @description
+   * Keeps marked non-primary-surface logos and the browser favicon on the
+   * transparent primary variant. Primary surfaces opt into their white mark
+   * directly in their templates.
+   *
+   * @access private
+   * @since 1.3.0
+   *
+   * @returns {void} - Nothing.
+   */
+  private applyThemeAssets(): void {
+    const primarySource: string = 'fireguard-logo-primary.svg';
+
+    for (const logo of this.document.querySelectorAll<HTMLImageElement>('[data-theme-logo]')) {
+      logo.setAttribute('src', primarySource);
+    }
+
+    for (const icon of this.document.querySelectorAll<HTMLLinkElement>('[data-theme-icon]')) {
+      icon.setAttribute('href', primarySource);
+    }
   }
 
   /**

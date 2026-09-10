@@ -11,19 +11,23 @@
   >
     @switch (state()) {
       @case ('offline') {
-        <ng-icon name="lucideCloudOff" class="text-muted-foreground" aria-hidden="true" />
+        <ng-icon name="lucideCloudOff" class="text-base text-muted-foreground" aria-hidden="true" />
       }
       @case ('blocked') {
-        <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+        <ng-icon name="lucideTriangleAlert" class="text-base text-destructive" aria-hidden="true" />
       }
       @case ('syncing') {
         <hlm-spinner size="xs" aria-hidden="true" />
       }
       @case ('pending') {
-        <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+        <ng-icon name="lucideCloudUpload" class="text-base" aria-hidden="true" />
       }
       @default {
-        <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
+        <ng-icon
+          name="lucideCloudCheck"
+          class="text-base text-muted-foreground"
+          aria-hidden="true"
+        />
       }
     }
     @if (triggerSize() === 'sm') {

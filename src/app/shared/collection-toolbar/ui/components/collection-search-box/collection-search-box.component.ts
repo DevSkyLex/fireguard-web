@@ -22,8 +22,8 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
  * (`ARCHITECTURE.md` §10.3) — it holds no debounce and touches no URL; it
  * takes the current draft value as an input and emits {@link queryChanged}
  * on every keystroke, leaving the debounce and the `?q=` round-trip to the
- * owning page (route orchestration, §10.3). Fixed at `w-full sm:w-72`
- * because every call site sized it identically before this extraction.
+ * owning page (route orchestration, §10.3). It fills the toolbar's start row
+ * on phones and returns to the shared compact width from `sm` upward.
  *
  * @version 1.0.0
  *
@@ -34,6 +34,7 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
   imports: [NgIcon, ...HlmInputGroupImports],
   providers: [provideIcons({ lucideSearch })],
   templateUrl: './collection-search-box.component.html',
+  host: { class: 'block min-w-0 max-sm:w-full' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CollectionSearchBox {

@@ -14,7 +14,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  * can never absorb the toolbar's width itself — only the slot's own
  * `flex-wrap` can move a whole button to the next line, which is why
  * callers must never add `min-w-0 flex-1` to a button or a popover wrapper
- * inside either slot. Moved from `features/organization` to `shared` as a
+ * inside either slot. On phones, the start slot and each direct projected
+ * start group span the available width so search fields do not leave an
+ * arbitrary empty column; end actions retain their intrinsic widths and wrap
+ * beneath it. Moved from `features/organization` to `shared` as a
  * deliberate uniformity bet, recorded in `organization/FEATURE.md` § UI
  * Conventions — the folder held only organization consumers at the time of
  * the move.

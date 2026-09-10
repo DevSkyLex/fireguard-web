@@ -15,6 +15,9 @@ panel and form tabs remain beside their content.
 The routed-content container owns the standard `py-4 md:py-6` page spacing so
 feature pages align without repeating shell geometry. Full-height sidebar
 workspaces set `contentPadding: false` on their extension contribution.
+On phones, the toolbar, page header and routed content share a compact 16px
+horizontal gutter. The sidebar trigger uses the familiar menu glyph there and
+keeps the panel glyph on wider screens.
 
 ## Sidebar footer
 

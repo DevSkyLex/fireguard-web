@@ -70,7 +70,10 @@
     [class.max-lg:hidden]="sidebarExtension()?.mobileVisible() === true"
   >
     <header class="h-12 shrink-0 border-b border-border">
-      <div class="container mx-auto flex h-full items-center gap-2">
+      <div
+        class="container mx-auto flex h-full items-center gap-2 max-sm:px-4"
+        data-testid="dashboard-toolbar-container"
+      >
         <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
 
         <div class="mr-2 flex h-4 items-center">

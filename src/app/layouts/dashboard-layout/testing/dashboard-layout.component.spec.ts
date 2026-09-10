@@ -77,6 +77,23 @@ describe('DashboardLayout', () => {
 
     expect(content?.classList.contains('py-4')).toBe(true);
     expect(content?.classList.contains('md:py-6')).toBe(true);
+    expect(content?.classList.contains('max-sm:px-4')).toBe(true);
+  });
+
+  it('shares the compact phone gutter across the shell bands', async () => {
+    const fixture = await render();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(
+      element
+        .querySelector('[data-testid="dashboard-toolbar-container"]')
+        ?.classList.contains('max-sm:px-4'),
+    ).toBe(true);
+    expect(
+      element
+        .querySelector('[data-testid="dashboard-page-header-container"]')
+        ?.classList.contains('max-sm:px-4'),
+    ).toBe(true);
   });
 
   it('lets a full-height sidebar workspace remove the standard content spacing', async () => {

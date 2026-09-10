@@ -182,7 +182,7 @@
   >
     @if (activeView() !== 'recurrences') {
       <app-collection-toolbar>
-        <div toolbarStart class="flex items-center gap-2">
+        <div toolbarStart class="flex flex-wrap items-center gap-2">
           @if (activeView() === 'list' || activeView() === 'board') {
             <app-collection-search-box
               testIdPrefix="interventions"

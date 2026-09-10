@@ -15,8 +15,7 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { InspectionsPage } from '../support/pages/inspections.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'e2e/artifacts/inspections';
 
 test.describe('Inspection list', () => {
   test('renders the status/result filter chip bar, pagination and New inspection', async ({
@@ -67,6 +66,43 @@ test.describe('Inspection list', () => {
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(inspections.listRoot).toBeVisible();
+
+    await Promise.all(
+      [
+        page.getByTestId('dashboard-toolbar-container'),
+        page.getByTestId('dashboard-page-header-container'),
+        page.getByTestId('dashboard-content-container'),
+      ].map(async (container) => {
+        await expect
+          .poll(() =>
+            container.evaluate((element) => {
+              const styles = getComputedStyle(element);
+              return [styles.paddingLeft, styles.paddingRight];
+            }),
+          )
+          .toEqual(['16px', '16px']);
+      }),
+    );
+
+    const sidebarTrigger = page.getByRole('button', { name: 'Toggle sidebar' }).first();
+    await expect(sidebarTrigger.locator('ng-icon[name="lucideMenu"]')).toBeVisible();
+    await expect(sidebarTrigger.locator('ng-icon[name="lucidePanelLeft"]')).toHaveCount(0);
+
+    const globalSearch = page.getByRole('button', { name: 'Search this organization' });
+    await expect.poll(async () => (await globalSearch.boundingBox())?.width).toBeCloseTo(28, 0);
+
+    const toolbarBox = await page.getByTestId('collection-toolbar').boundingBox();
+    const searchBox = await page.getByTestId('inspections-search-group').boundingBox();
+    const filtersBox = await inspections.filtersToggle.boundingBox();
+
+    expect(toolbarBox).not.toBeNull();
+    expect(searchBox).not.toBeNull();
+    expect(filtersBox).not.toBeNull();
+    expect(searchBox?.width).toBeCloseTo(toolbarBox?.width ?? 0, 0);
+    expect(filtersBox?.y ?? 0).toBeGreaterThanOrEqual(
+      (searchBox?.y ?? 0) + (searchBox?.height ?? 0),
+    );
+
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
@@ -83,6 +119,17 @@ test.describe('Inspection list', () => {
 
     await inspections.gotoList(E2E_ORGANIZATION_ID);
     await expect(inspections.listRoot).toBeVisible();
+    await expect(
+      page
+        .getByRole('button', { name: 'Toggle sidebar' })
+        .first()
+        .locator('ng-icon[name="lucidePanelLeft"]'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Search this organization' })).toHaveCSS(
+      'width',
+      '224px',
+    );
+    await expect(page.getByTestId('inspections-search-group')).toHaveCSS('width', '224px');
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-light-desktop.png` });
   });
 });

@@ -52,4 +52,15 @@ describe('CollectionToolbar', () => {
     expect(byTestId('start-content')?.textContent).toContain('start');
     expect(byTestId('end-content')?.textContent).toContain('end');
   });
+
+  it('should give both mobile rows the available width', () => {
+    const slots: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll(
+      'app-collection-toolbar > div > div',
+    );
+
+    expect(slots[0]?.classList.contains('w-full')).toBe(true);
+    expect(slots[0]?.classList.contains('max-sm:[&>*]:w-full')).toBe(true);
+    expect(slots[1]?.classList.contains('w-full')).toBe(true);
+    expect(slots[1]?.classList.contains('sm:w-auto')).toBe(true);
+  });
 });

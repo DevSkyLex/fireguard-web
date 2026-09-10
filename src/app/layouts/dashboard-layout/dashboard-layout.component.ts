@@ -157,7 +157,7 @@ export class DashboardLayout {
    */
   protected readonly contentClass: Signal<string> = computed((): string =>
     hlm(
-      'container mx-auto flex min-h-0 flex-1 flex-col',
+      'container mx-auto flex min-h-0 flex-1 flex-col max-sm:px-4',
       this.sidebarExtension()?.contentPadding === false ? null : 'py-4 md:py-6',
     ),
   );

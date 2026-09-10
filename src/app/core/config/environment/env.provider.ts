@@ -81,9 +81,13 @@ const resolveEnvironmentConfig = (fallback: EnvironmentConfig): EnvironmentConfi
   const runtimeConfig = inject(RUNTIME_ENV_CONFIG);
 
   if (isPlatformBrowser(platformId)) {
-    const transferred = transferState.get(ENV_CONFIG_TRANSFER_KEY, fallback);
-    transferState.remove(ENV_CONFIG_TRANSFER_KEY);
-    return transferred;
+    if (transferState.hasKey(ENV_CONFIG_TRANSFER_KEY)) {
+      const transferred = transferState.get(ENV_CONFIG_TRANSFER_KEY, fallback);
+      transferState.remove(ENV_CONFIG_TRANSFER_KEY);
+      return transferred;
+    }
+
+    return runtimeConfig ?? fallback;
   }
 
   const resolved = runtimeConfig ?? fallback;

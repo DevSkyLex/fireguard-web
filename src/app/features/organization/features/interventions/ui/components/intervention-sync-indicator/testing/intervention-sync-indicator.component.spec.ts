@@ -145,9 +145,7 @@ describe('InterventionSyncIndicator', () => {
     expect(trigger()?.querySelector('[data-testid="intervention-sync-blocked-count"]')).toBeNull();
     expect(trigger()?.querySelector('[data-testid="intervention-sync-pending-count"]')).toBeNull();
     expect(trigger()?.className).toContain('size-7');
-    const mobileLabel = trigger()?.querySelector('[data-testid="intervention-sync-mobile-label"]');
-    expect(mobileLabel?.textContent).toContain('Up to date');
-    expect(mobileLabel?.classList.contains('hidden')).toBe(true);
+    expect(trigger()?.textContent).not.toContain('Up to date');
   });
 
   it('should show "Up to date" before the first clean replay', async () => {

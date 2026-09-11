@@ -5,6 +5,7 @@ import {
   computed,
   type ElementRef,
   inject,
+  Injector,
   type Signal,
   viewChild,
 } from '@angular/core';
@@ -15,11 +16,13 @@ import { BreadcrumbService } from '@core/breadcrumb';
 import {
   type ExclusiveSlotContribution,
   resolveExclusiveSlot,
+  SLOT_PRESENTATION,
   type SlotContribution,
   SlotOutlet,
 } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmItemGroup } from '@shared/ui/item';
 import { HlmSeparator } from '@shared/ui/separator';
 import {
   HlmSidebar,
@@ -75,8 +78,8 @@ import {
  * the standard page spacing, while full-height workspaces explicitly opt out. The header
  * backgrounds and separators still span the full content column.
  * On phones, the right-hand tools move into one native bottom drawer behind a single
- * trigger. The drawer presents those contributed controls as full-width menu rows with
- * their native icon and label; wider screens keep the direct icon-button cluster.
+ * trigger. A Spartan ItemGroup presents those contributions as Item rows with their
+ * native icon and label; wider screens keep the direct icon-button cluster.
  *
  * @version 1.0.0
  *
@@ -106,6 +109,7 @@ import {
     DashboardPageHeader,
     HlmButton,
     HlmDrawerImports,
+    HlmItemGroup,
     HlmSeparator,
     HlmSidebar,
     HlmSidebarContent,
@@ -121,6 +125,25 @@ import {
 })
 export class DashboardLayout {
   //#region Properties
+  /**
+   * Property mobileActionsInjector
+   * @readonly
+   *
+   * @description
+   * Child context asking action contributions to render their native Spartan
+   * menu-row anatomy inside the mobile drawer. Desktop contributions keep the
+   * token's default compact trigger presentation.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Injector}
+   */
+  protected readonly mobileActionsInjector: Injector = Injector.create({
+    parent: inject(Injector),
+    providers: [{ provide: SLOT_PRESENTATION, useValue: 'menu' }],
+  });
+
   /**
    * Property sidebarExtensionContributions
    * @readonly

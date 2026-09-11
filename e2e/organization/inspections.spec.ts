@@ -112,10 +112,17 @@ test.describe('Inspection list', () => {
     const mobileActionsDrawer = page.getByTestId('dashboard-mobile-actions-drawer');
     const mobileActions = page.getByTestId('dashboard-mobile-actions');
     const globalSearch = mobileActions.getByRole('button', { name: 'Search this organization' });
-    const actionButtons = mobileActions.locator('button');
+    const actionButtons = mobileActions.locator('button:has(> [data-slot="item-media"])');
 
     await expect(mobileActionsDrawer).toBeVisible();
     await expect(mobileActionsDrawer.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
+    await expect(mobileActions).toHaveAttribute('data-slot', 'item-group');
+    await expect(mobileActions.locator('[data-slot="item-title"]')).toHaveCount(5);
+    expect(
+      await mobileActionsDrawer
+        .locator('[data-slot="drawer-header"]')
+        .evaluate((element) => getComputedStyle(element).textAlign),
+    ).toBe('start');
     await expect(globalSearch).toBeVisible();
     await expect(globalSearch.getByText('Search this organization', { exact: true })).toBeVisible();
     await expect(mobileActions.getByTestId('notification-bell-trigger')).toBeVisible();

@@ -5,3 +5,4 @@ export type {
   ExclusiveSlotFeature,
   SlotFeature,
 } from './slot-feature.interface';
+export type { SlotPresentation } from './slot-presentation.type';

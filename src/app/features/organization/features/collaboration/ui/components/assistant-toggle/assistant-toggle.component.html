@@ -5,22 +5,38 @@
     [state]="store.panelOpen() ? 'open' : 'closed'"
     (stateChanged)="onSheetStateChanged($event)"
   >
-    <button
-      hlmSheetTrigger
-      hlmBtn
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      class="max-sm:size-11"
-      data-testid="assistant-toggle"
-      i18n-aria-label="@@workspace.assistant.toggle.aria"
-      aria-label="Assistant"
-    >
-      <ng-icon name="lucideSparkles" class="text-base" aria-hidden="true" />
-      <span class="hidden in-data-[mobile-actions=true]:inline" i18n="@@workspace.assistant.title"
-        >Assistant</span
+    @if (slotPresentation === 'menu') {
+      <button
+        hlmSheetTrigger
+        hlmItem
+        type="button"
+        class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+        data-testid="assistant-toggle"
+        i18n-aria-label="@@workspace.assistant.toggle.aria"
+        aria-label="Assistant"
       >
-    </button>
+        <span hlmItemMedia variant="icon">
+          <ng-icon name="lucideSparkles" aria-hidden="true" />
+        </span>
+        <span hlmItemContent>
+          <span hlmItemTitle i18n="@@workspace.assistant.title">Assistant</span>
+        </span>
+      </button>
+    } @else {
+      <button
+        hlmSheetTrigger
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        class="max-sm:size-11"
+        data-testid="assistant-toggle"
+        i18n-aria-label="@@workspace.assistant.toggle.aria"
+        aria-label="Assistant"
+      >
+        <ng-icon name="lucideSparkles" class="text-base" aria-hidden="true" />
+      </button>
+    }
 
     <hlm-sheet-content *hlmSheetPortal class="overflow-hidden sm:max-w-xl!">
       <hlm-sheet-header class="flex-row items-center gap-2.5 pe-12">

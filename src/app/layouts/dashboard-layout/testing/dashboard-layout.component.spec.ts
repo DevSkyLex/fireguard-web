@@ -1,8 +1,13 @@
-import { Component, signal, type Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
+import {
+  type ExclusiveSlotContribution,
+  SLOT_PRESENTATION,
+  type SlotContribution,
+  type SlotPresentation,
+} from '@shared/layout-slot';
 import { HlmSidebarService } from '@shared/ui/sidebar';
 import { DashboardLayout } from '../dashboard-layout.component';
 import type { SidebarExtensionContribution } from '../models';
@@ -21,6 +26,15 @@ class NavStub {}
 
 @Component({ selector: 'app-panel-stub', template: '<p id="panel-stub">panel</p>' })
 class PanelStub {}
+
+@Component({
+  selector: 'app-presentation-stub',
+  template: '<p id="presentation-stub">{{ presentation }}</p>',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class PresentationStub {
+  protected readonly presentation: SlotPresentation = inject<SlotPresentation>(SLOT_PRESENTATION);
+}
 
 function additive(id: string, component: Type<unknown>): SlotContribution {
   return { id, order: 10, component };
@@ -163,7 +177,10 @@ describe('DashboardLayout', () => {
           toggleSidebar: vi.fn(),
         },
       },
-      { provide: DASHBOARD_HEADER_ACTIONS_SLOT, useValue: [additive('tools', NavStub)] },
+      {
+        provide: DASHBOARD_HEADER_ACTIONS_SLOT,
+        useValue: [additive('tools', PresentationStub)],
+      },
     ]);
     const element: HTMLElement = fixture.nativeElement;
     const trigger: HTMLButtonElement | null = element.querySelector(
@@ -179,7 +196,13 @@ describe('DashboardLayout', () => {
     const drawer: HTMLElement | null = document.querySelector(
       '[data-testid="dashboard-mobile-actions-drawer"]',
     );
-    expect(drawer?.querySelector('#nav-stub')).not.toBeNull();
+    expect(drawer?.querySelector('#presentation-stub')?.textContent).toBe('menu');
+    expect(
+      drawer?.querySelector('[data-testid="dashboard-mobile-actions"]')?.getAttribute('data-slot'),
+    ).toBe('item-group');
+    expect(drawer?.querySelector('[data-slot="drawer-header"]')?.classList).toContain(
+      'text-start!',
+    );
     expect(drawer?.querySelector('[data-slot="drawer-title"]')?.textContent?.trim()).toBe(
       'Quick actions',
     );

@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, type Signal } fro
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideMonitor, lucideMoon, lucideSun } from '@ng-icons/lucide';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuItem,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmItem, HlmItemContent, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
 import type { ThemeOption } from './models';
 
 /**
@@ -41,13 +43,40 @@ import type { ThemeOption } from './models';
  */
 @Component({
   selector: 'app-theme-switcher',
-  imports: [NgIcon, HlmButton, HlmDropdownMenu, HlmDropdownMenuItem, HlmDropdownMenuTrigger],
+  imports: [
+    NgIcon,
+    HlmButton,
+    HlmDropdownMenu,
+    HlmDropdownMenuItem,
+    HlmDropdownMenuTrigger,
+    HlmItem,
+    HlmItemContent,
+    HlmItemMedia,
+    HlmItemTitle,
+  ],
   providers: [provideIcons({ lucideCheck, lucideMonitor, lucideMoon, lucideSun })],
   templateUrl: './theme-switcher.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitcher {
   //#region Properties
+  /**
+   * Property slotPresentation
+   * @readonly
+   *
+   * @description
+   * Presentation requested by the layout slot hosting this theme trigger. The
+   * mobile drawer uses a Spartan item row; desktop keeps the compact icon
+   * button.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @type {SlotPresentation}
+   */
+  protected readonly slotPresentation: SlotPresentation =
+    inject<SlotPresentation>(SLOT_PRESENTATION);
+
   /**
    * Property themePort
    * @readonly

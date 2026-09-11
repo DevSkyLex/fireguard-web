@@ -107,20 +107,19 @@
                 class="overflow-hidden"
                 data-testid="dashboard-mobile-actions-drawer"
               >
-                <hlm-drawer-header>
+                <hlm-drawer-header class="px-5 text-start!">
                   <h2 hlmDrawerTitle i18n="@@dashboard.mobileActions.title">Quick actions</h2>
                   <p hlmDrawerDescription i18n="@@dashboard.mobileActions.description">
                     Tools available for this workspace.
                   </p>
                 </hlm-drawer-header>
 
-                <div
-                  class="flex flex-col gap-1 px-3 pb-2 [&_button]:h-12 [&_button]:w-full [&_button]:justify-start [&_button]:gap-3 [&_button]:rounded-lg [&_button]:border-transparent [&_button]:bg-transparent [&_button]:px-3 [&_button]:text-start [&_button]:shadow-none [&_button]:hover:bg-muted [&_button]:active:bg-muted [&_button>ng-icon]:text-base [&>app-slot-outlet>*]:block [&>app-slot-outlet>*]:w-full"
-                  data-testid="dashboard-mobile-actions"
-                  data-mobile-actions="true"
-                >
-                  <app-slot-outlet [contributions]="headerActions" />
-                </div>
+                <hlm-item-group class="gap-1 px-3 pb-2" data-testid="dashboard-mobile-actions">
+                  <app-slot-outlet
+                    [contributions]="headerActions"
+                    [componentInjector]="mobileActionsInjector"
+                  />
+                </hlm-item-group>
 
                 <hlm-drawer-footer>
                   <button

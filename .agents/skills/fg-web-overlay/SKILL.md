@@ -1,0 +1,105 @@
+---
+name: fg-web-overlay
+description: 'Choose and implement FireGuard Spartan overlays—popover, menu, mobile drawer, sheet, dialog or alert dialog—when interaction scope, consequence, density or responsive behavior determines the correct surface.'
+---
+
+# fg-web-overlay
+
+Locate the repository from this skill: its root is three directories above this folder.
+Read `AGENTS.md`, `.codex/workflow.md`, the applicable entries in `.codex/rules.md`, and the
+owning `FEATURE.md` including its parent for nested features. `ARCHITECTURE.md` remains
+normative. Read `DESIGN.md`, `PRODUCT.md` and the official `spartan` plus `fg-web-spartan`
+skills before presentation changes.
+
+Use this skill when an interaction opens or may need an overlay: a select, combobox, menu,
+popover, picker, command palette, creation/editing panel, confirmation, drawer, sheet or dialog.
+Also use it when a desktop anchored overlay becomes cramped, clipped, hard to scan or difficult
+to operate by touch on a phone. Do not use it for ordinary responsive page reflow that opens no
+temporary surface.
+
+Inspect the installed Spartan catalog and the current feature composition before choosing a
+primitive. Treat `src/app/shared/ui/` as read-only for work governed by this skill: never modify a
+Spartan or Helm primitive to encode feature behavior or a responsive rule. Compose adaptive
+behavior in the owning FireGuard feature. Do not create a generic wrapper around an existing
+primitive unless multiple proven consumers share the same full interaction contract.
+
+## Choose from intent
+
+Classify the interaction before writing markup:
+
+1. Is it anchored assistance or a compact choice, or a blocking task?
+2. Must the operator keep seeing the current page as context?
+3. Is the task one decision, a short edit, or a longer workflow?
+4. Is dismissal harmless, or could it discard work or confirm a consequential action?
+5. Does a phone require more width, scrolling, search, richer rows or thumb-reachable actions?
+
+Use the smallest surface that safely carries the task:
+
+| Surface                          | Use when                                                                                                                          | Do not use when                                                                                         |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Select / dropdown menu / popover | The interaction is compact, anchored to its trigger and remains readable and operable in the available viewport.                  | It becomes clipped, needs a long searchable list, contains a form, or represents a workflow.            |
+| Drawer                           | A phone needs a short, temporary choice or action list in the thumb zone; dismissal is harmless and the page remains the context. | The task is destructive confirmation, a long form, or contains unsaved work that a swipe could discard. |
+| Sheet                            | A contextual create/edit/detail workflow needs more room while preserving the route and surrounding page context.                 | The task is one compact decision or a global blocking question unrelated to page context.               |
+| Dialog                           | A short focused task or decision must interrupt the page and can finish without a persistent side context.                        | The task is a long workflow, dense browsing surface or consequential confirmation.                      |
+| Alert dialog                     | The user must explicitly confirm a destructive, irreversible or high-consequence action.                                          | The content is informational, exploratory or safely dismissible.                                        |
+| Command dialog                   | The user searches or invokes global commands across the workspace.                                                                | The options are a normal form field or a page-local action list.                                        |
+
+“Modal” describes blocking behavior, not a separate visual component. In FireGuard it normally
+maps to `hlm-dialog` or `hlm-alert-dialog`; a drawer or sheet can also be modal, but its spatial
+role still determines whether it is appropriate.
+
+## Detect an adaptive mobile overlay
+
+Keep the native select, menu or popover on mobile when its options are short, its rows fit, its
+touch targets are at least 44px and it neither clips nor hides important context. Do not convert
+every overlay merely because the viewport is narrow.
+
+Prefer a bottom drawer on mobile while retaining the native anchored surface on desktop when one
+or more of these constraints materially affects use:
+
+- the anchored overlay is clipped or forced into an unreadable width;
+- options need search, scrolling, descriptions, icons, status or grouped sections;
+- nested or hover-oriented menu behavior does not translate to touch;
+- the trigger lives in a dense mobile toolbar and the choices need a stable full-width surface;
+- one-handed operation benefits from actions entering from the bottom.
+
+For two to seven short comparable choices, consider a native toggle or radio group before adding
+an overlay. For a short enum, a select may remain the better mobile control.
+
+When implementing a desktop/mobile surface pair, read
+[adaptive composition](references/adaptive-composition.md).
+
+## Overlay invariants
+
+- Every drawer, sheet and dialog has a native title and description; use `sr-only` only when the
+  visible design genuinely makes them redundant.
+- Preserve the primitive's focus trap, Escape behavior, outside-click policy and focus restoration.
+  Do not recreate them with document listeners or manual z-index values.
+- Keep one typed value source and one request state. In forms, bind both presentations to the same
+  Signal Forms field; otherwise use the owning store or component signal.
+- Keep loading, empty, error, disabled and offline states inside the active surface. Retain the
+  current selection while replacement data loads.
+- Drawer and sheet bodies scroll independently; headers and optional footers must not cover the
+  first or last option. Long labels wrap, including French and Spanish strings.
+- Mobile actions and options have at least 44px touch targets. Selection and status are not
+  conveyed by color alone.
+- Use native Spartan anatomy: command or item rows for action menus, radio rows for short
+  exclusive choices, checkbox rows plus an explicit Apply action for multi-select, and a searchable
+  command list for long option catalogs.
+- Separate a destructive action from routine choices and route it through an alert dialog when it
+  needs confirmation.
+
+## Verification
+
+Use `fg-web-test` for state and output contracts, `fg-web-e2e` for real overlay behavior and
+`fg-web-quality` for scoped gates. Verify at minimum:
+
+- desktop and mobile select the same value or invoke the same action;
+- opening, Escape/backdrop dismissal, successful selection and focus restoration;
+- keyboard and touch operation, scroll containment and absence of document overflow;
+- light/dark rendering, long localized labels, loading/empty/error states and relevant offline
+  behavior;
+- resizing does not strand an open overlay or leave focus on a removed trigger.
+
+Report the chosen primitive, the evidence that justified it, the adaptive behavior, and the
+actual browser sizes and checks performed.

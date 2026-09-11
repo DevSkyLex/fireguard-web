@@ -8,7 +8,7 @@ La configuration de l’autre client reste conservée, sans chemin vers elle dan
 
 | Emplacement                           | Rôle                                                                                                               |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `.agents/skills/fg-web-*/`            | 14 skills FireGuard, avec instructions autonomes et métadonnées Codex.                                             |
+| `.agents/skills/fg-web-*/`            | 15 skills FireGuard, avec instructions autonomes et métadonnées Codex.                                             |
 | `.agents/skills/spartan/`             | Skill officiel Spartan pour la découverte, la composition, le CLI et le MCP de la bibliothèque.                    |
 | `.agents/skills/impeccable/`          | Impeccable 4.1.3 officiel, avec adaptation locale supprimant les chemins Claude.                                   |
 | `.agents/skills/ui-ux-pro-max/`       | Paquet produit par l'installateur officiel `ui-ux-pro-max-cli` 2.15.0 pour Codex : données, scripts et références. |
@@ -26,7 +26,8 @@ et [subagents](https://developers.openai.com/codex/subagents).
 ## Utilisation
 
 Exemples : `$spartan` fournit la procédure officielle de la bibliothèque et
-`$fg-web-spartan` y ajoute les contraintes FireGuard ; `$fg-web-e2e` sert à une
+`$fg-web-spartan` y ajoute les contraintes FireGuard ; `$fg-web-overlay` choisit entre
+popover, menu, drawer, sheet et dialog selon l'intention et le viewport ; `$fg-web-e2e` sert à une
 vérification dans le navigateur, `$impeccable critique` à une critique et
 `$ui-ux-pro-max` pour une recherche UX ciblée. Les demandes ordinaires peuvent aussi
 sélectionner un skill via sa description. Les principes de `third-party-skills.md`
@@ -66,7 +67,7 @@ les serveurs sont initialisés seulement lorsqu'ils sont utiles.
 
 ## Nettoyage des anciens adaptateurs
 
-Les 23 entrées initiales sont remplacées par 14 skills métier et 2 skills externes.
+Les 23 entrées initiales sont remplacées par 15 skills métier et 2 skills externes.
 Les références utiles ont été rapprochées du skill qui les consomme :
 
 | Ancienne entrée              | Destination                                   |

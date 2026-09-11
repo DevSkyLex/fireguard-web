@@ -10,11 +10,19 @@ ancestors into an ellipsis menu.
 The page header owns the route title, registered actions and optional primary
 navigation. Pages register a `#pageTabs` template through `PageTabsService`; that
 template uses Spartan's paginated tab list with `variant="line"`, while nested
-panel and form tabs remain beside their content.
+panel and form tabs remain beside their content. Long route titles wrap on phones
+and truncate only in the denser desktop header.
 
 The routed-content container owns the standard `py-4 md:py-6` page spacing so
 feature pages align without repeating shell geometry. Full-height sidebar
 workspaces set `contentPadding: false` on their extension contribution.
+On phones, the toolbar, page header and routed content share a compact 16px
+horizontal gutter. The sidebar trigger uses the familiar menu glyph there and
+keeps the panel glyph on wider screens. Header tools collapse into one quick-actions
+trigger that opens a native bottom drawer; desktop keeps the direct tool cluster.
+Inside the drawer, the contributed controls become full-width command-style rows with
+their icon, visible label and a 48px touch target. Their feature-owned dialogs, popovers
+and sheets remain unchanged.
 
 ## Sidebar footer
 

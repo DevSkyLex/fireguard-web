@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   input,
+  type Injector,
   type InputSignal,
   type Signal,
 } from '@angular/core';
@@ -55,6 +56,22 @@ export class SlotOutlet {
    */
   public readonly contributions: InputSignal<readonly SlotContribution[]> =
     input.required<readonly SlotContribution[]>();
+
+  /**
+   * Property componentInjector
+   * @readonly
+   *
+   * @description
+   * Optional child injector inherited by every dynamically rendered
+   * contribution. Layouts use it to provide presentation context without
+   * coupling the contribution to the owning shell.
+   *
+   * @access public
+   * @since 1.1.0
+   *
+   * @type {InputSignal<Injector | undefined>}
+   */
+  public readonly componentInjector: InputSignal<Injector | undefined> = input<Injector>();
   //#endregion
 
   //#region Properties

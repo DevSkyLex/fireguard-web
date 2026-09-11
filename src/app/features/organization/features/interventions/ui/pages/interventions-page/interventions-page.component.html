@@ -132,7 +132,7 @@
     <hlm-paginated-tabs-list
       variant="line"
       class="w-full"
-      tabListClass="justify-start"
+      tabListClass="justify-start max-sm:group-data-horizontal/tabs:h-11"
       data-testid="intervention-view-toggle"
       aria-label="Change view"
       i18n-aria-label="@@intervention.list.viewToggleLabel"
@@ -182,7 +182,7 @@
   >
     @if (activeView() !== 'recurrences') {
       <app-collection-toolbar>
-        <div toolbarStart class="flex items-center gap-2">
+        <div toolbarStart class="flex flex-wrap items-center gap-2">
           @if (activeView() === 'list' || activeView() === 'board') {
             <app-collection-search-box
               testIdPrefix="interventions"

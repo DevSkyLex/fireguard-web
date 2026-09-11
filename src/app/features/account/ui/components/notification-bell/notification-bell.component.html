@@ -1,24 +1,52 @@
 <hlm-popover sideOffset="5" [align]="panelAlign()" (stateChanged)="onPanelState($event)">
-  <button
-    hlmPopoverTrigger
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="icon-sm"
-    class="relative max-sm:size-11"
-    id="notification-bell-trigger"
-    data-testid="notification-bell-trigger"
-    [attr.aria-label]="triggerLabel()"
-  >
-    <ng-icon name="lucideBell" aria-hidden="true" />
-    @if (hasUnread()) {
-      <span
-        class="absolute end-1 top-1 size-2 rounded-full bg-destructive"
-        data-testid="notification-bell-dot"
-        aria-hidden="true"
-      ></span>
-    }
-  </button>
+  @if (slotPresentation === 'menu') {
+    <button
+      hlmPopoverTrigger
+      hlmItem
+      type="button"
+      class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+      id="notification-bell-trigger"
+      data-testid="notification-bell-trigger"
+      [attr.aria-label]="triggerLabel()"
+    >
+      <span hlmItemMedia variant="icon">
+        <ng-icon name="lucideBell" aria-hidden="true" />
+      </span>
+      <span hlmItemContent>
+        <span hlmItemTitle i18n="@@account.notificationBell.title">Notifications</span>
+      </span>
+      @if (hasUnread()) {
+        <span hlmItemActions>
+          <span
+            class="size-2 rounded-full bg-destructive"
+            data-testid="notification-bell-dot"
+            aria-hidden="true"
+          ></span>
+        </span>
+      }
+    </button>
+  } @else {
+    <button
+      hlmPopoverTrigger
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      class="relative max-sm:size-11"
+      id="notification-bell-trigger"
+      data-testid="notification-bell-trigger"
+      [attr.aria-label]="triggerLabel()"
+    >
+      <ng-icon name="lucideBell" aria-hidden="true" />
+      @if (hasUnread()) {
+        <span
+          class="absolute end-1 top-1 size-2 rounded-full bg-destructive"
+          data-testid="notification-bell-dot"
+          aria-hidden="true"
+        ></span>
+      }
+    </button>
+  }
 
   <hlm-popover-content *hlmPopoverPortal class="w-80 gap-0 overflow-hidden p-0">
     <div hlmItem size="xs">

@@ -25,8 +25,16 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { formatInterventionRelativeTime } from '@features/organization/features/interventions/utils';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import {
+  HlmItem,
+  HlmItemActions,
+  HlmItemContent,
+  HlmItemMedia,
+  HlmItemTitle,
+} from '@shared/ui/item';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionSyncDiscardDialog } from '../../dialogs/intervention-sync-discard-dialog';
@@ -81,6 +89,11 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
     NgIcon,
     HlmBadge,
     HlmButton,
+    HlmItem,
+    HlmItemActions,
+    HlmItemContent,
+    HlmItemMedia,
+    HlmItemTitle,
     InterventionSyncDiscardDialog,
     ...HlmPopoverImports,
     ...HlmSpinnerImports,
@@ -100,6 +113,23 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
 })
 export class InterventionSyncIndicator {
   //#region Properties
+  /**
+   * Property slotPresentation
+   * @readonly
+   *
+   * @description
+   * Presentation requested by the layout slot hosting this synchronization
+   * trigger. The mobile drawer uses a Spartan item row; desktop keeps the
+   * compact status button.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {SlotPresentation}
+   */
+  protected readonly slotPresentation: SlotPresentation =
+    inject<SlotPresentation>(SLOT_PRESENTATION);
+
   /**
    * Property sync
    * @readonly

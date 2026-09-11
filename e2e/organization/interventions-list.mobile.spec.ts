@@ -72,7 +72,37 @@ test.describe('Interventions list on a phone', () => {
 
     await expect(page.getByTestId('intervention-statistics-analysis-trigger')).toHaveCount(0);
     await expect(page.getByTestId('intervention-kpi-strip')).toHaveCount(0);
-    await expect(page.getByTestId('intervention-view-toggle')).toBeInViewport();
+    const viewToggle = page.getByTestId('intervention-view-toggle');
+    await expect(viewToggle).toBeInViewport();
+
+    const tabGeometry = await viewToggle.evaluate((rail) => {
+      const list = rail.querySelector<HTMLElement>('[role="tablist"] > div');
+      const active = rail.querySelector<HTMLElement>('[aria-selected="true"]');
+      const pageHeader = rail.closest<HTMLElement>('#dashboard-page-header');
+      if (!list || !active || !pageHeader) return null;
+
+      const listRect = list.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      const headerRect = pageHeader.getBoundingClientRect();
+      const indicator = getComputedStyle(active, '::after');
+      const indicatorTop = activeRect.bottom - Number(indicator.bottom.replace('px', ''));
+
+      return {
+        activeBottom: activeRect.bottom,
+        activeTop: activeRect.top,
+        headerBottom: headerRect.bottom,
+        indicatorTop,
+        listBottom: listRect.bottom,
+        listTop: listRect.top,
+      };
+    });
+
+    expect(tabGeometry).not.toBeNull();
+    expect(tabGeometry?.activeTop).toBeGreaterThanOrEqual((tabGeometry?.listTop ?? 0) - 1);
+    expect(tabGeometry?.activeBottom).toBeLessThanOrEqual((tabGeometry?.listBottom ?? 0) + 1);
+    expect(
+      Math.abs((tabGeometry?.indicatorTop ?? 0) - (tabGeometry?.headerBottom ?? 0)),
+    ).toBeLessThanOrEqual(6);
     await page.screenshot({
       path: 'e2e/artifacts/interventions-summary/mobile.png',
       animations: 'disabled',

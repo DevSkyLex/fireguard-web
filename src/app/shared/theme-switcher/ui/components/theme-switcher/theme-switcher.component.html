@@ -1,15 +1,34 @@
-<button
-  hlmBtn
-  variant="ghost"
-  size="icon-sm"
-  class="max-sm:size-11"
-  id="theme-switcher-trigger"
-  [attr.aria-label]="triggerLabel()"
-  [hlmDropdownMenuTrigger]="menu"
-  align="end"
->
-  <ng-icon [name]="triggerIcon()" aria-hidden="true" />
-</button>
+@if (slotPresentation === 'menu') {
+  <button
+    hlmItem
+    type="button"
+    class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+    id="theme-switcher-trigger"
+    [attr.aria-label]="triggerLabel()"
+    [hlmDropdownMenuTrigger]="menu"
+    align="end"
+  >
+    <span hlmItemMedia variant="icon">
+      <ng-icon [name]="triggerIcon()" aria-hidden="true" />
+    </span>
+    <span hlmItemContent>
+      <span hlmItemTitle>{{ triggerLabel() }}</span>
+    </span>
+  </button>
+} @else {
+  <button
+    hlmBtn
+    variant="ghost"
+    size="icon-sm"
+    class="max-sm:size-11"
+    id="theme-switcher-trigger"
+    [attr.aria-label]="triggerLabel()"
+    [hlmDropdownMenuTrigger]="menu"
+    align="end"
+  >
+    <ng-icon [name]="triggerIcon()" aria-hidden="true" />
+  </button>
+}
 
 <ng-template #menu>
   <hlm-dropdown-menu class="min-w-40">

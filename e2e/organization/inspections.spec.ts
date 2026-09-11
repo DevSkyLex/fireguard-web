@@ -15,8 +15,7 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { InspectionsPage } from '../support/pages/inspections.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
+const SCREENSHOT_DIR = 'e2e/artifacts/inspections';
 
 test.describe('Inspection list', () => {
   test('renders the status/result filter chip bar, pagination and New inspection', async ({
@@ -67,8 +66,103 @@ test.describe('Inspection list', () => {
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(inspections.listRoot).toBeVisible();
+
+    await Promise.all(
+      [
+        page.getByTestId('dashboard-toolbar-container'),
+        page.getByTestId('dashboard-page-header-container'),
+        page.getByTestId('dashboard-content-container'),
+      ].map(async (container) => {
+        await expect
+          .poll(() =>
+            container.evaluate((element) => {
+              const styles = getComputedStyle(element);
+              return [styles.paddingLeft, styles.paddingRight];
+            }),
+          )
+          .toEqual(['16px', '16px']);
+      }),
+    );
+
+    const sidebarTrigger = page.getByRole('button', { name: 'Toggle sidebar' }).first();
+    await expect(sidebarTrigger.locator('ng-icon[name="lucideMenu"]')).toBeVisible();
+    await expect(sidebarTrigger.locator('ng-icon[name="lucidePanelLeft"]')).toHaveCount(0);
+
+    const mobileActionsTrigger = page.getByRole('button', { name: 'Open quick actions' });
+    await expect(mobileActionsTrigger).toBeVisible();
+    await expect(page.getByTestId('dashboard-desktop-actions')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Search this organization' })).toHaveCount(0);
+
+    const toolbarBox = await page.getByTestId('collection-toolbar').boundingBox();
+    const searchBox = await page.getByTestId('inspections-search-group').boundingBox();
+    const filtersBox = await inspections.filtersToggle.boundingBox();
+
+    expect(toolbarBox).not.toBeNull();
+    expect(searchBox).not.toBeNull();
+    expect(filtersBox).not.toBeNull();
+    expect(searchBox?.width).toBeCloseTo(toolbarBox?.width ?? 0, 0);
+    expect(filtersBox?.y ?? 0).toBeGreaterThanOrEqual(
+      (searchBox?.y ?? 0) + (searchBox?.height ?? 0),
+    );
+
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-dark-mobile.png` });
+
+    await mobileActionsTrigger.click();
+    const mobileActionsDrawer = page.getByTestId('dashboard-mobile-actions-drawer');
+    const mobileActions = page.getByTestId('dashboard-mobile-actions');
+    const globalSearch = mobileActions.getByRole('button', { name: 'Search this organization' });
+    const actionButtons = mobileActions.locator('button:has(> [data-slot="item-media"])');
+
+    await expect(mobileActionsDrawer).toBeVisible();
+    await expect(mobileActionsDrawer.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
+    await expect(mobileActions).toHaveAttribute('data-slot', 'item-group');
+    await expect(mobileActions.locator('[data-slot="item-title"]')).toHaveCount(5);
+    expect(
+      await mobileActionsDrawer
+        .locator('[data-slot="drawer-header"]')
+        .evaluate((element) => getComputedStyle(element).textAlign),
+    ).toBe('start');
+    await expect(globalSearch).toBeVisible();
+    await expect(globalSearch.getByText('Search this organization', { exact: true })).toBeVisible();
+    await expect(mobileActions.getByTestId('notification-bell-trigger')).toBeVisible();
+    await expect(mobileActions.getByText('Notifications', { exact: true })).toBeVisible();
+    const syncStatus = mobileActions.getByTestId('intervention-sync-status');
+    await expect(syncStatus).toBeVisible();
+    await expect(syncStatus.getByText('Up to date', { exact: true })).toBeVisible();
+    await expect(mobileActions.getByText('Assistant', { exact: true })).toBeVisible();
+    await expect(mobileActions.getByText(/^Appearance:/)).toBeVisible();
+    await expect(mobileActions.locator('#theme-switcher-trigger')).toBeVisible();
+    await expect(actionButtons).toHaveCount(5);
+    const actionButtonBoxes = await actionButtons.evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const box = button.getBoundingClientRect();
+
+        return { height: box.height, width: box.width, y: box.y };
+      }),
+    );
+    expect(actionButtonBoxes).toHaveLength(5);
+    let previousY = Number.NEGATIVE_INFINITY;
+    for (const box of actionButtonBoxes) {
+      expect(box.height).toBe(48);
+      expect(box.width).toBeGreaterThan(300);
+      expect(box.y).toBeGreaterThan(previousY);
+      previousY = box.y;
+    }
+    await page.screenshot({
+      path: `${SCREENSHOT_DIR}/inspections-quick-actions-drawer-dark-mobile.png`,
+      animations: 'disabled',
+    });
+
+    await globalSearch.click();
+    await expect(page.getByTestId('global-search-palette')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('global-search-palette')).toHaveCount(0);
+    await expect(mobileActionsDrawer).toBeVisible();
+
+    await mobileActionsDrawer.getByRole('button', { name: 'Close' }).click();
+    await expect(mobileActionsDrawer).toHaveCount(0);
+    await expect(mobileActionsTrigger).toBeFocused();
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 
@@ -83,6 +177,19 @@ test.describe('Inspection list', () => {
 
     await inspections.gotoList(E2E_ORGANIZATION_ID);
     await expect(inspections.listRoot).toBeVisible();
+    await expect(page.getByTestId('dashboard-desktop-actions')).toBeVisible();
+    await expect(page.getByTestId('dashboard-mobile-actions-trigger')).toHaveCount(0);
+    await expect(
+      page
+        .getByRole('button', { name: 'Toggle sidebar' })
+        .first()
+        .locator('ng-icon[name="lucidePanelLeft"]'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Search this organization' })).toHaveCSS(
+      'width',
+      '224px',
+    );
+    await expect(page.getByTestId('inspections-search-group')).toHaveCSS('width', '224px');
     await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-light-desktop.png` });
   });
 });

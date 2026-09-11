@@ -11,6 +11,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideBell } from '@ng-icons/lucide';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
 import {
   HlmItem,
@@ -114,6 +115,23 @@ const RELATIVE_UNITS: ReadonlyArray<{
 })
 export class NotificationBell {
   //#region Properties
+  /**
+   * Property slotPresentation
+   * @readonly
+   *
+   * @description
+   * Presentation requested by the layout slot hosting this notification
+   * trigger. The mobile drawer uses a Spartan item row; desktop keeps the
+   * compact icon button.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {SlotPresentation}
+   */
+  protected readonly slotPresentation: SlotPresentation =
+    inject<SlotPresentation>(SLOT_PRESENTATION);
+
   /**
    * Property store
    * @readonly

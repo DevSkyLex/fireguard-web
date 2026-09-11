@@ -1,8 +1,14 @@
-import { Component, signal, type Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
-import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
+import {
+  type ExclusiveSlotContribution,
+  SLOT_PRESENTATION,
+  type SlotContribution,
+  type SlotPresentation,
+} from '@shared/layout-slot';
+import { HlmSidebarService } from '@shared/ui/sidebar';
 import { DashboardLayout } from '../dashboard-layout.component';
 import type { SidebarExtensionContribution } from '../models';
 import {
@@ -20,6 +26,15 @@ class NavStub {}
 
 @Component({ selector: 'app-panel-stub', template: '<p id="panel-stub">panel</p>' })
 class PanelStub {}
+
+@Component({
+  selector: 'app-presentation-stub',
+  template: '<p id="presentation-stub">{{ presentation }}</p>',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class PresentationStub {
+  protected readonly presentation: SlotPresentation = inject<SlotPresentation>(SLOT_PRESENTATION);
+}
 
 function additive(id: string, component: Type<unknown>): SlotContribution {
   return { id, order: 10, component };
@@ -77,6 +92,23 @@ describe('DashboardLayout', () => {
 
     expect(content?.classList.contains('py-4')).toBe(true);
     expect(content?.classList.contains('md:py-6')).toBe(true);
+    expect(content?.classList.contains('max-sm:px-4')).toBe(true);
+  });
+
+  it('shares the compact phone gutter across the shell bands', async () => {
+    const fixture = await render();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(
+      element
+        .querySelector('[data-testid="dashboard-toolbar-container"]')
+        ?.classList.contains('max-sm:px-4'),
+    ).toBe(true);
+    expect(
+      element
+        .querySelector('[data-testid="dashboard-page-header-container"]')
+        ?.classList.contains('max-sm:px-4'),
+    ).toBe(true);
   });
 
   it('lets a full-height sidebar workspace remove the standard content spacing', async () => {
@@ -129,6 +161,61 @@ describe('DashboardLayout', () => {
     expect(element.querySelector('[data-slot="sidebar-content"] #nav-stub')).not.toBeNull();
     expect(element.querySelector('[data-slot="sidebar-footer"] #nav-stub')).not.toBeNull();
     expect(element.querySelectorAll('header #nav-stub')).toHaveLength(2);
+  });
+
+  it('moves header actions into the native drawer on mobile', async () => {
+    const toggleSidebar = vi.fn();
+    const fixture = await render([
+      {
+        provide: HlmSidebarService,
+        useValue: {
+          isMobile: signal(true),
+          openMobile: signal(false),
+          state: signal<'expanded' | 'collapsed'>('expanded'),
+          variant: signal<'sidebar' | 'floating' | 'inset'>('sidebar'),
+          setVariant: vi.fn(),
+          setOpenMobile: vi.fn(),
+          toggleSidebar,
+        },
+      },
+      {
+        provide: DASHBOARD_HEADER_ACTIONS_SLOT,
+        useValue: [additive('tools', PresentationStub)],
+      },
+    ]);
+    const element: HTMLElement = fixture.nativeElement;
+    const trigger: HTMLButtonElement | null = element.querySelector(
+      '[data-testid="dashboard-mobile-actions-trigger"]',
+    );
+
+    expect(trigger).not.toBeNull();
+    expect(element.querySelector('[data-testid="dashboard-desktop-actions"]')).toBeNull();
+    const sidebarTrigger = element.querySelector<HTMLButtonElement>(
+      '[data-testid="dashboard-sidebar-trigger"]',
+    );
+    expect(sidebarTrigger?.querySelector('ng-icon')?.getAttribute('name')).toBe('lucideMenu');
+    sidebarTrigger?.click();
+    expect(toggleSidebar).toHaveBeenCalledOnce();
+
+    trigger?.click();
+    await fixture.whenStable();
+
+    const drawer: HTMLElement | null = document.querySelector(
+      '[data-testid="dashboard-mobile-actions-drawer"]',
+    );
+    expect(drawer?.querySelector('#presentation-stub')?.textContent).toBe('menu');
+    expect(
+      drawer?.querySelector('[data-testid="dashboard-mobile-actions"]')?.getAttribute('data-slot'),
+    ).toBe('item-group');
+    expect(drawer?.querySelector('[data-slot="drawer-header"]')?.classList).toContain(
+      'text-start!',
+    );
+    expect(drawer?.querySelector('[data-slot="drawer-title"]')?.textContent?.trim()).toBe(
+      'Quick actions',
+    );
+
+    (drawer?.querySelector('[data-slot="drawer-close"]') as HTMLButtonElement | null)?.click();
+    await fixture.whenStable();
   });
 
   it('gives the panel to the highest priority active contribution', async () => {

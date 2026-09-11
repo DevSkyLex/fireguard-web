@@ -29,9 +29,11 @@ import {
   OrganizationSearchStore,
   type OrganizationSearchStoreType,
 } from '@features/organization/state/organization-search';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCommandImports } from '@shared/ui/command';
+import { HlmItem, HlmItemContent, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
 import { HlmKbdImports } from '@shared/ui/kbd';
 import { HlmSpinner } from '@shared/ui/spinner';
 
@@ -109,7 +111,18 @@ type OrganizationSearchGroupVm = {
  */
 @Component({
   selector: 'app-organization-global-search',
-  imports: [NgIcon, HlmBadge, HlmButton, HlmCommandImports, ...HlmKbdImports, HlmSpinner],
+  imports: [
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    HlmCommandImports,
+    HlmItem,
+    HlmItemContent,
+    HlmItemMedia,
+    HlmItemTitle,
+    ...HlmKbdImports,
+    HlmSpinner,
+  ],
   providers: [
     OrganizationSearchStore,
     provideIcons({
@@ -130,6 +143,23 @@ type OrganizationSearchGroupVm = {
 })
 export class OrganizationGlobalSearch {
   //#region Properties
+  /**
+   * Property slotPresentation
+   * @readonly
+   *
+   * @description
+   * Presentation requested by the layout slot hosting this search trigger.
+   * The mobile actions drawer requests a Spartan item row; every other host
+   * keeps the compact header button.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {SlotPresentation}
+   */
+  protected readonly slotPresentation: SlotPresentation =
+    inject<SlotPresentation>(SLOT_PRESENTATION);
+
   /**
    * Property store
    * @readonly

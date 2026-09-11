@@ -1,6 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityPlanToolbar } from '../facility-plan-toolbar.component';
 
 describe('FacilityPlanToolbar', () => {
@@ -16,6 +18,25 @@ describe('FacilityPlanToolbar', () => {
     fixture = TestBed.createComponent(FacilityPlanToolbar);
     await fixture.whenStable();
   });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(FacilityPlanToolbar);
+    await fixture.whenStable();
+  }
 
   it('names each layer switch by its visible label alone, carrying no separate aria-label', async () => {
     fixture.componentRef.setInput('overlayHasContent', true);
@@ -108,5 +129,60 @@ describe('FacilityPlanToolbar', () => {
     (byTestId('facility-plan-open-panel') as HTMLButtonElement).click();
 
     expect(requested).toHaveBeenCalled();
+  });
+
+  it('uses a searchable drawer for a dense zone catalog on compact viewports', async () => {
+    await useCompactFixture();
+    fixture.componentRef.setInput('canWrite', true);
+    fixture.componentRef.setInput('zoneCandidates', [
+      { id: 'zone-a', name: 'Assembly hall' } as FacilityOutput,
+      { id: 'zone-b', name: 'Boiler room' } as FacilityOutput,
+    ]);
+    await fixture.whenStable();
+
+    const picked = vi.fn();
+    fixture.componentInstance.zoneDrawTargetPicked.subscribe(picked);
+    byTestId('facility-plan-editor-draw-zone-picker')?.click();
+    await fixture.whenStable();
+
+    const drawer: HTMLElement | null = document.querySelector(
+      '[data-testid="facility-plan-editor-draw-zone-drawer"]',
+    );
+    expect(drawer).not.toBeNull();
+
+    const input = drawer?.querySelector<HTMLInputElement>('#facility-plan-zone-search');
+    if (input) {
+      input.value = 'boiler';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    await fixture.whenStable();
+
+    expect(drawer?.textContent).not.toContain('Assembly hall');
+    drawer?.querySelector<HTMLButtonElement>('[hlmitem]')?.click();
+    await fixture.whenStable();
+
+    expect(picked).toHaveBeenCalledWith('zone-b');
+  });
+
+  it('uses a searchable drawer for equipment candidates on compact viewports', async () => {
+    await useCompactFixture();
+    fixture.componentRef.setInput('canEditEquipment', true);
+    fixture.componentRef.setInput('equipmentCandidates', [
+      {
+        id: 'equipment-a',
+        type: 'extinguisher',
+        serialNumber: 'EXT-42',
+        locationLabel: 'Lobby',
+      } as EquipmentOutput,
+    ]);
+    await fixture.whenStable();
+
+    byTestId('facility-plan-editor-place-pin-picker')?.click();
+    await fixture.whenStable();
+
+    expect(
+      document.querySelector('[data-testid="facility-plan-editor-place-pin-drawer"]'),
+    ).not.toBeNull();
+    expect(document.body.textContent).toContain('Lobby');
   });
 });

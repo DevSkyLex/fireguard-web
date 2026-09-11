@@ -70,6 +70,25 @@ describe('CollectionFilterDate', () => {
     await fixture.whenStable();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(CollectionFilterDateHost);
+    await fixture.whenStable();
+  }
+
   it('should open the popover when state changes to open, and mirror its own dismissal back through stateChanged', async () => {
     fixture.componentInstance.state.set('open');
     await fixture.whenStable();
@@ -180,5 +199,23 @@ describe('CollectionFilterDate', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.lastValue).toBeInstanceOf(Date);
+  });
+
+  it('should open a mobile drawer from controlled state and close it after a date pick', async () => {
+    await useCompactFixture();
+    fixture.componentInstance.state.set('open');
+    await fixture.whenStable();
+
+    expect(
+      document.querySelector('[data-testid="interventions-filter-due-drawer"]'),
+    ).not.toBeNull();
+
+    calendarDayButtons()
+      .find((button: HTMLButtonElement): boolean => !button.disabled)
+      ?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.lastValue).toBeInstanceOf(Date);
+    expect(fixture.componentInstance.lastState).toBe('closed');
   });
 });

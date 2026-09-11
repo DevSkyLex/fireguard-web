@@ -1,25 +1,48 @@
 @if (organizationContext.selectedOrganizationId() !== null) {
-  <button
-    #trigger
-    hlmBtn
-    type="button"
-    variant="outline"
-    class="max-sm:size-11 md:w-56 md:justify-start md:pe-1.5"
-    data-testid="global-search-trigger"
-    i18n-aria-label="@@org.search.trigger.aria"
-    aria-label="Search this organization"
-    aria-haspopup="dialog"
-    aria-keyshortcuts="Control+K Meta+K"
-    [attr.aria-expanded]="open()"
-    (click)="open.set(true)"
-  >
-    <ng-icon name="lucideSearch" class="text-base" aria-hidden="true" />
-    <span class="max-sm:hidden" i18n="@@org.search.trigger.label">Search</span>
-    <kbd hlmKbdGroup class="max-md:hidden md:ms-auto">
-      <kbd hlmKbd>{{ shortcutModifier() }}</kbd>
-      <kbd hlmKbd>K</kbd>
-    </kbd>
-  </button>
+  @if (slotPresentation === 'menu') {
+    <button
+      #trigger
+      hlmItem
+      type="button"
+      class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+      data-testid="global-search-trigger"
+      i18n-aria-label="@@org.search.trigger.aria"
+      aria-label="Search this organization"
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Control+K Meta+K"
+      [attr.aria-expanded]="open()"
+      (click)="open.set(true)"
+    >
+      <span hlmItemMedia variant="icon">
+        <ng-icon name="lucideSearch" aria-hidden="true" />
+      </span>
+      <span hlmItemContent>
+        <span hlmItemTitle i18n="@@org.search.visibleTitle">Search this organization</span>
+      </span>
+    </button>
+  } @else {
+    <button
+      #trigger
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="max-sm:size-7 max-sm:px-0 md:w-56 md:justify-start md:pe-1.5"
+      data-testid="global-search-trigger"
+      i18n-aria-label="@@org.search.trigger.aria"
+      aria-label="Search this organization"
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Control+K Meta+K"
+      [attr.aria-expanded]="open()"
+      (click)="open.set(true)"
+    >
+      <ng-icon name="lucideSearch" class="text-base" aria-hidden="true" />
+      <span class="max-sm:hidden" i18n="@@org.search.trigger.label">Search</span>
+      <kbd hlmKbdGroup class="max-md:hidden md:ms-auto">
+        <kbd hlmKbd>{{ shortcutModifier() }}</kbd>
+        <kbd hlmKbd>K</kbd>
+      </kbd>
+    </button>
+  }
 
   <hlm-command-dialog
     [state]="open() ? 'open' : 'closed'"

@@ -56,7 +56,16 @@
       [class.hidden]="!extension.mobileVisible()"
     >
       <div class="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
-        <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          [attr.aria-label]="toggleSidebarLabel"
+          (click)="toggleSidebar()"
+        >
+          <ng-icon name="lucideMenu" aria-hidden="true" />
+        </button>
         <span class="text-sm font-semibold">Fireguard</span>
       </div>
       <ng-container *ngComponentOutlet="extension.component" />
@@ -70,8 +79,25 @@
     [class.max-lg:hidden]="sidebarExtension()?.mobileVisible() === true"
   >
     <header class="h-12 shrink-0 border-b border-border">
-      <div class="container mx-auto flex h-full items-center gap-2">
-        <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
+      <div
+        class="container mx-auto flex h-full items-center gap-2 max-sm:px-4"
+        data-testid="dashboard-toolbar-container"
+      >
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          data-testid="dashboard-sidebar-trigger"
+          [attr.aria-label]="toggleSidebarLabel"
+          (click)="toggleSidebar()"
+        >
+          @if (isMobile()) {
+            <ng-icon name="lucideMenu" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucidePanelLeft" aria-hidden="true" />
+          }
+        </button>
 
         <div class="mr-2 flex h-4 items-center">
           <hlm-separator orientation="vertical" />
@@ -83,9 +109,64 @@
           <app-slot-outlet [contributions]="header" />
         </div>
 
-        <div class="flex min-w-0 shrink-0 items-center gap-1">
-          <app-slot-outlet [contributions]="headerActions" />
-        </div>
+        @if (headerActions.length > 0) {
+          @if (isMobile()) {
+            <hlm-drawer direction="bottom">
+              <button
+                hlmDrawerTrigger
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                data-testid="dashboard-mobile-actions-trigger"
+                i18n-aria-label="@@dashboard.mobileActions.open"
+                aria-label="Open quick actions"
+              >
+                <ng-icon name="lucideEllipsis" aria-hidden="true" />
+              </button>
+
+              <hlm-drawer-content
+                *hlmDrawerPortal
+                class="overflow-hidden"
+                data-testid="dashboard-mobile-actions-drawer"
+              >
+                <hlm-drawer-header class="px-5 text-start!">
+                  <h2 hlmDrawerTitle i18n="@@dashboard.mobileActions.title">Quick actions</h2>
+                  <p hlmDrawerDescription i18n="@@dashboard.mobileActions.description">
+                    Tools available for this workspace.
+                  </p>
+                </hlm-drawer-header>
+
+                <hlm-item-group class="gap-1 px-3 pb-2" data-testid="dashboard-mobile-actions">
+                  <app-slot-outlet
+                    [contributions]="headerActions"
+                    [componentInjector]="mobileActionsInjector"
+                  />
+                </hlm-item-group>
+
+                <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  <button
+                    hlmDrawerClose
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="w-full"
+                    i18n="@@common.close"
+                  >
+                    Close
+                  </button>
+                </hlm-drawer-footer>
+              </hlm-drawer-content>
+            </hlm-drawer>
+          } @else {
+            <div
+              class="flex min-w-0 shrink-0 items-center gap-1"
+              data-testid="dashboard-desktop-actions"
+            >
+              <app-slot-outlet [contributions]="headerActions" />
+            </div>
+          }
+        }
       </div>
     </header>
 

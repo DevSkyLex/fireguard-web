@@ -2,19 +2,37 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   output,
+  signal,
   type EffectRef,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type TemplateRef,
+  type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCheck } from '@ng-icons/lucide';
 import { BrnFieldA11yService } from '@spartan-ng/brain/field';
+import { isCompact } from '@shared/breakpoint';
+import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmInput } from '@shared/ui/input';
+import { HlmItem, HlmItemActions, HlmItemContent, HlmItemTitle } from '@shared/ui/item';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterOption, CollectionFilterPopoverState } from '../../../models';
+
+/** One visual group in a single-choice catalog. */
+interface CollectionFilterOptionGroup {
+  readonly key: string;
+  readonly label: string | null;
+  readonly options: readonly CollectionFilterOption[];
+}
 
 /**
  * Component CollectionFilterSelect
@@ -107,8 +125,19 @@ import type { CollectionFilterOption, CollectionFilterPopoverState } from '../..
  */
 @Component({
   selector: 'app-collection-filter-select',
-  imports: [NgTemplateOutlet, ...HlmComboboxImports],
-  providers: [BrnFieldA11yService],
+  imports: [
+    NgIcon,
+    NgTemplateOutlet,
+    HlmButton,
+    HlmInput,
+    HlmItem,
+    HlmItemActions,
+    HlmItemContent,
+    HlmItemTitle,
+    ...HlmComboboxImports,
+    ...HlmDrawerImports,
+  ],
+  providers: [BrnFieldA11yService, provideIcons({ lucideCheck })],
   templateUrl: './collection-filter-select.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -303,6 +332,47 @@ export class CollectionFilterSelect {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
+  /** Whether this choice should use the touch-first bottom drawer. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
+  /** Ephemeral search text owned by the mobile drawer. */
+  protected readonly mobileSearch: WritableSignal<string> = signal<string>('');
+
+  /** Options matching the mobile drawer's local search text. */
+  protected readonly mobileOptions: Signal<readonly CollectionFilterOption[]> = computed<
+    readonly CollectionFilterOption[]
+  >(() => {
+    const term: string = this.mobileSearch().trim().toLocaleLowerCase();
+    if (term.length === 0) return this.options();
+    return this.options().filter((option: CollectionFilterOption): boolean =>
+      option.label.toLocaleLowerCase().includes(term),
+    );
+  });
+
+  /** Search-filtered options grouped in first-seen order for both adaptive surfaces. */
+  protected readonly optionGroups: Signal<readonly CollectionFilterOptionGroup[]> = computed<
+    readonly CollectionFilterOptionGroup[]
+  >(() => {
+    const groups = new Map<string, CollectionFilterOptionGroup>();
+
+    for (const option of this.mobileOptions()) {
+      const key: string = option.group ?? '';
+      const existing: CollectionFilterOptionGroup | undefined = groups.get(key);
+      if (existing) {
+        (existing.options as CollectionFilterOption[]).push(option);
+        continue;
+      }
+
+      groups.set(key, {
+        key,
+        label: option.groupLabel ?? null,
+        options: [option],
+      });
+    }
+
+    return Array.from(groups.values());
+  });
+
   /**
    * Property labelOf
    * @readonly
@@ -354,6 +424,17 @@ export class CollectionFilterSelect {
   protected onValuePicked(value: string | null | undefined): void {
     if (this.disabled()) return;
     this.valueChanged.emit(value ?? null);
+  }
+
+  /** Mirrors drawer state to the existing popover state contract and clears transient search. */
+  protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
+    if (state === 'closed') this.mobileSearch.set('');
+    this.stateChanged.emit(state);
+  }
+
+  /** Updates the drawer's local search query without introducing form state. */
+  protected onMobileSearchChanged(event: Event): void {
+    this.mobileSearch.set((event.target as HTMLInputElement).value);
   }
 
   /**

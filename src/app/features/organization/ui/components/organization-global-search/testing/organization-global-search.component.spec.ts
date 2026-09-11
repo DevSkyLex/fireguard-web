@@ -84,6 +84,8 @@ describe('OrganizationGlobalSearch', () => {
   it('should render the trigger and advertise the shortcut', () => {
     expect(trigger()).not.toBeNull();
     expect(trigger()?.getAttribute('aria-keyshortcuts')).toBe('Control+K Meta+K');
+    expect(trigger()?.classList.contains('max-sm:size-7')).toBe(true);
+    expect(trigger()?.classList.contains('max-sm:size-11')).toBe(false);
   });
 
   it('should open the palette on Ctrl+K', async () => {

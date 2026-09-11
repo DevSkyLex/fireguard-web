@@ -112,6 +112,25 @@ describe('CollectionFilterMultiSelect', () => {
     await fixture.whenStable();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(CollectionFilterMultiSelectHost);
+    await fixture.whenStable();
+  }
+
   it('should read as the field label while nothing is selected', () => {
     expect(trigger().textContent).toContain('Status');
   });
@@ -319,5 +338,69 @@ describe('CollectionFilterMultiSelect', () => {
     expect(document.querySelector('hlm-combobox-empty')?.textContent).toContain(
       'No status matches.',
     );
+  });
+
+  describe('mobile drawer', () => {
+    it('should replace the anchored multi-combobox with a Spartan drawer below sm', async () => {
+      await useCompactFixture();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('hlm-combobox-multiple'),
+      ).toBeNull();
+
+      trigger().click();
+      await fixture.whenStable();
+
+      expect(
+        document.querySelector('[data-testid="interventions-filter-status-drawer"]'),
+      ).not.toBeNull();
+    });
+
+    it('should stage checkbox changes until Apply is activated', async () => {
+      await useCompactFixture();
+      trigger().click();
+      await fixture.whenStable();
+
+      const plannedRow: HTMLElement | undefined = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-slot="item"]'),
+      ).find((row: HTMLElement): boolean => row.textContent?.includes('Planned') ?? false);
+      plannedRow?.querySelector<HTMLElement>('[role="checkbox"]')?.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.lastSelection).toBeNull();
+
+      Array.from(document.querySelectorAll<HTMLButtonElement>('hlm-drawer-content button'))
+        .find(
+          (button: HTMLButtonElement): boolean => button.textContent?.includes('Apply') ?? false,
+        )
+        ?.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.lastSelection).toEqual(['planned']);
+    });
+
+    it('should discard staged changes when Cancel closes the drawer', async () => {
+      await useCompactFixture();
+      fixture.componentInstance.values.set(['published']);
+      await fixture.whenStable();
+      trigger().click();
+      await fixture.whenStable();
+
+      const plannedRow: HTMLElement | undefined = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-slot="item"]'),
+      ).find((row: HTMLElement): boolean => row.textContent?.includes('Planned') ?? false);
+      plannedRow?.querySelector<HTMLElement>('[role="checkbox"]')?.click();
+      await fixture.whenStable();
+
+      Array.from(document.querySelectorAll<HTMLButtonElement>('hlm-drawer-content button'))
+        .find(
+          (button: HTMLButtonElement): boolean => button.textContent?.includes('Cancel') ?? false,
+        )
+        ?.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.lastSelection).toBeNull();
+      expect(fixture.componentInstance.values()).toEqual(['published']);
+    });
   });
 });

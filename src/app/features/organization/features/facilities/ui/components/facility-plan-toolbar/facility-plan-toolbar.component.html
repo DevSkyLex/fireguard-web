@@ -53,51 +53,297 @@
     }
 
     @if (canWrite()) {
-      <hlm-select
-        [value]="null"
-        [disabled]="editMode() !== 'none'"
-        (valueChange)="onZoneDrawTargetPicked($event)"
-      >
-        <hlm-select-trigger
-          class="w-56"
-          data-testid="facility-plan-editor-draw-zone-picker"
-          (click)="zonePickerOpened.emit()"
+      @if (compact()) {
+        <hlm-drawer direction="bottom" (stateChanged)="onZoneDrawerStateChanged($event)">
+          <button
+            hlmDrawerTrigger
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="min-h-11"
+            data-testid="facility-plan-editor-draw-zone-picker"
+            [disabled]="editMode() !== 'none'"
+            (click)="zonePickerOpened.emit()"
+          >
+            <ng-icon name="lucideMapPin" aria-hidden="true" />
+            <span>{{ drawZonePlaceholder }}</span>
+          </button>
+
+          <hlm-drawer-content
+            *hlmDrawerPortal
+            class="max-h-[85dvh] overflow-hidden"
+            data-testid="facility-plan-editor-draw-zone-drawer"
+          >
+            <hlm-drawer-header class="px-5 text-start!">
+              <h2 hlmDrawerTitle i18n="@@facility.plans.editor.drawZoneTitle">Choose a zone</h2>
+              <p hlmDrawerDescription i18n="@@facility.plans.editor.drawZoneDescription">
+                Pick the zone whose outline you want to draw.
+              </p>
+            </hlm-drawer-header>
+
+            <div class="border-y border-border px-5 py-3">
+              <label
+                for="facility-plan-zone-search"
+                class="sr-only"
+                i18n="@@facility.plans.editor.searchZones"
+                >Search zones</label
+              >
+              <input
+                hlmInput
+                id="facility-plan-zone-search"
+                type="search"
+                class="min-h-11"
+                placeholder="Search zones…"
+                i18n-placeholder="@@facility.plans.editor.searchZonesPlaceholder"
+                [value]="zoneSearch()"
+                (input)="onZoneSearchChanged($event)"
+              />
+            </div>
+
+            <div hlmItemGroup class="min-h-0 overflow-y-auto px-3 py-2">
+              @if (zoneCandidatesLoading()) {
+                <p
+                  class="px-3 py-8 text-center text-sm text-muted-foreground"
+                  role="status"
+                  i18n="@@facility.plans.editor.loadingZones"
+                >
+                  Loading zones…
+                </p>
+              } @else if (zoneCandidatesFailed()) {
+                <div class="flex flex-col items-center gap-3 px-3 py-8 text-center">
+                  <p
+                    class="text-sm text-muted-foreground"
+                    role="alert"
+                    i18n="@@facility.plans.editor.zonesError"
+                  >
+                    The zones could not be loaded.
+                  </p>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="min-h-11"
+                    (click)="zonePickerOpened.emit()"
+                    i18n="@@common.retry"
+                  >
+                    Retry
+                  </button>
+                </div>
+              } @else {
+                @for (candidate of filteredZoneCandidates(); track candidate.id) {
+                  <button
+                    hlmItem
+                    hlmDrawerClose
+                    type="button"
+                    class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+                    (click)="onZoneDrawTargetPicked(candidate.id)"
+                  >
+                    <span hlmItemMedia variant="icon">
+                      <ng-icon name="lucideMapPin" aria-hidden="true" />
+                    </span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ candidate.name }}</span>
+                    </span>
+                  </button>
+                } @empty {
+                  <p
+                    class="px-3 py-8 text-center text-sm text-muted-foreground"
+                    i18n="@@facility.plans.editor.noZones"
+                  >
+                    No zones available.
+                  </p>
+                }
+              }
+            </div>
+
+            <hlm-drawer-footer
+              class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            >
+              <button
+                hlmDrawerClose
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="min-h-11 w-full"
+                i18n="@@common.cancel"
+              >
+                Cancel
+              </button>
+            </hlm-drawer-footer>
+          </hlm-drawer-content>
+        </hlm-drawer>
+      } @else {
+        <hlm-select
+          [value]="null"
+          [disabled]="editMode() !== 'none'"
+          (valueChange)="onZoneDrawTargetPicked($event)"
         >
-          <hlm-select-value [placeholder]="drawZonePlaceholder" />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal class="w-56">
-          <hlm-select-group>
-            @for (candidate of zoneCandidates(); track candidate.id) {
-              <hlm-select-item [value]="candidate.id">{{ candidate.name }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          <hlm-select-trigger
+            class="w-56"
+            data-testid="facility-plan-editor-draw-zone-picker"
+            (click)="zonePickerOpened.emit()"
+          >
+            <hlm-select-value [placeholder]="drawZonePlaceholder" />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-56">
+            <hlm-select-group>
+              @for (candidate of zoneCandidates(); track candidate.id) {
+                <hlm-select-item [value]="candidate.id">{{ candidate.name }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
     }
 
     @if (canEditEquipment()) {
-      <hlm-select
-        [value]="null"
-        [disabled]="editMode() !== 'none'"
-        (valueChange)="onEquipmentPlacePicked($event)"
-      >
-        <hlm-select-trigger
-          class="w-56"
-          data-testid="facility-plan-editor-place-pin-picker"
-          (click)="equipmentPickerOpened.emit()"
+      @if (compact()) {
+        <hlm-drawer direction="bottom" (stateChanged)="onEquipmentDrawerStateChanged($event)">
+          <button
+            hlmDrawerTrigger
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="min-h-11"
+            data-testid="facility-plan-editor-place-pin-picker"
+            [disabled]="editMode() !== 'none'"
+            (click)="equipmentPickerOpened.emit()"
+          >
+            <ng-icon name="lucideBox" aria-hidden="true" />
+            <span>{{ placePinPlaceholder }}</span>
+          </button>
+
+          <hlm-drawer-content
+            *hlmDrawerPortal
+            class="max-h-[85dvh] overflow-hidden"
+            data-testid="facility-plan-editor-place-pin-drawer"
+          >
+            <hlm-drawer-header class="px-5 text-start!">
+              <h2 hlmDrawerTitle i18n="@@facility.plans.editor.placeEquipmentTitle">
+                Choose equipment
+              </h2>
+              <p hlmDrawerDescription i18n="@@facility.plans.editor.placeEquipmentDescription">
+                Pick the equipment you want to place on this plan.
+              </p>
+            </hlm-drawer-header>
+
+            <div class="border-y border-border px-5 py-3">
+              <label
+                for="facility-plan-equipment-search"
+                class="sr-only"
+                i18n="@@facility.plans.editor.searchEquipment"
+                >Search equipment</label
+              >
+              <input
+                hlmInput
+                id="facility-plan-equipment-search"
+                type="search"
+                class="min-h-11"
+                placeholder="Search equipment…"
+                i18n-placeholder="@@facility.plans.editor.searchEquipmentPlaceholder"
+                [value]="equipmentSearch()"
+                (input)="onEquipmentSearchChanged($event)"
+              />
+            </div>
+
+            <div hlmItemGroup class="min-h-0 overflow-y-auto px-3 py-2">
+              @if (equipmentCandidatesLoading()) {
+                <p
+                  class="px-3 py-8 text-center text-sm text-muted-foreground"
+                  role="status"
+                  i18n="@@facility.plans.editor.loadingEquipment"
+                >
+                  Loading equipment…
+                </p>
+              } @else if (equipmentCandidatesFailed()) {
+                <div class="flex flex-col items-center gap-3 px-3 py-8 text-center">
+                  <p
+                    class="text-sm text-muted-foreground"
+                    role="alert"
+                    i18n="@@facility.plans.editor.equipmentError"
+                  >
+                    The equipment could not be loaded.
+                  </p>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="min-h-11"
+                    (click)="equipmentPickerOpened.emit()"
+                    i18n="@@common.retry"
+                  >
+                    Retry
+                  </button>
+                </div>
+              } @else {
+                @for (candidate of filteredEquipmentCandidates(); track candidate.id) {
+                  <button
+                    hlmItem
+                    hlmDrawerClose
+                    type="button"
+                    class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+                    (click)="onEquipmentPlacePicked(candidate.id)"
+                  >
+                    <span hlmItemMedia variant="icon">
+                      <ng-icon name="lucideBox" aria-hidden="true" />
+                    </span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ equipmentCandidateLabel(candidate) }}</span>
+                    </span>
+                  </button>
+                } @empty {
+                  <p
+                    class="px-3 py-8 text-center text-sm text-muted-foreground"
+                    i18n="@@facility.plans.editor.noEquipment"
+                  >
+                    No equipment available.
+                  </p>
+                }
+              }
+            </div>
+
+            <hlm-drawer-footer
+              class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            >
+              <button
+                hlmDrawerClose
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="min-h-11 w-full"
+                i18n="@@common.cancel"
+              >
+                Cancel
+              </button>
+            </hlm-drawer-footer>
+          </hlm-drawer-content>
+        </hlm-drawer>
+      } @else {
+        <hlm-select
+          [value]="null"
+          [disabled]="editMode() !== 'none'"
+          (valueChange)="onEquipmentPlacePicked($event)"
         >
-          <hlm-select-value [placeholder]="placePinPlaceholder" />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal class="w-56">
-          <hlm-select-group>
-            @for (candidate of equipmentCandidates(); track candidate.id) {
-              <hlm-select-item [value]="candidate.id">{{
-                equipmentCandidateLabel(candidate)
-              }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          <hlm-select-trigger
+            class="w-56"
+            data-testid="facility-plan-editor-place-pin-picker"
+            (click)="equipmentPickerOpened.emit()"
+          >
+            <hlm-select-value [placeholder]="placePinPlaceholder" />
+          </hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal class="w-56">
+            <hlm-select-group>
+              @for (candidate of equipmentCandidates(); track candidate.id) {
+                <hlm-select-item [value]="candidate.id">{{
+                  equipmentCandidateLabel(candidate)
+                }}</hlm-select-item>
+              }
+            </hlm-select-group>
+          </hlm-select-content>
+        </hlm-select>
+      }
     }
 
     @if (editMode() !== 'none') {

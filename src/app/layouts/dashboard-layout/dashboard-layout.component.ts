@@ -5,17 +5,24 @@ import {
   computed,
   type ElementRef,
   inject,
+  Injector,
   type Signal,
   viewChild,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideEllipsis, lucideMenu, lucidePanelLeft } from '@ng-icons/lucide';
 import { BreadcrumbService } from '@core/breadcrumb';
 import {
   type ExclusiveSlotContribution,
   resolveExclusiveSlot,
+  SLOT_PRESENTATION,
   type SlotContribution,
   SlotOutlet,
 } from '@shared/layout-slot';
+import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmItemGroup } from '@shared/ui/item';
 import { HlmSeparator } from '@shared/ui/separator';
 import {
   HlmSidebar,
@@ -23,8 +30,8 @@ import {
   HlmSidebarFooter,
   HlmSidebarHeader,
   HlmSidebarInset,
-  HlmSidebarTrigger,
   HlmSidebarWrapper,
+  HlmSidebarService,
 } from '@shared/ui/sidebar';
 import { hlm } from '@shared/ui/utils';
 import { DashboardPageHeader } from './components';
@@ -69,6 +76,9 @@ import {
  * responsive `container`. That shared container owns horizontal alignment and
  * the standard page spacing, while full-height workspaces explicitly opt out. The header
  * backgrounds and separators still span the full content column.
+ * On phones, the right-hand tools move into one native bottom drawer behind a single
+ * trigger. A Spartan ItemGroup presents those contributions as Item rows with their
+ * native icon and label; wider screens keep the direct icon-button cluster.
  *
  * @version 1.0.0
  *
@@ -92,24 +102,46 @@ import {
   selector: 'app-dashboard-layout',
   imports: [
     NgComponentOutlet,
+    NgIcon,
     RouterOutlet,
     SlotOutlet,
     DashboardPageHeader,
+    HlmButton,
+    HlmDrawerImports,
+    HlmItemGroup,
     HlmSeparator,
     HlmSidebar,
     HlmSidebarContent,
     HlmSidebarFooter,
     HlmSidebarHeader,
     HlmSidebarInset,
-    HlmSidebarTrigger,
     HlmSidebarWrapper,
   ],
-  providers: [BreadcrumbService],
+  providers: [BreadcrumbService, provideIcons({ lucideEllipsis, lucideMenu, lucidePanelLeft })],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayout {
   //#region Properties
+  /**
+   * Property mobileActionsInjector
+   * @readonly
+   *
+   * @description
+   * Child context asking action contributions to render their native Spartan
+   * menu-row anatomy inside the mobile drawer. Desktop contributions keep the
+   * token's default compact trigger presentation.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Injector}
+   */
+  protected readonly mobileActionsInjector: Injector = Injector.create({
+    parent: inject(Injector),
+    providers: [{ provide: SLOT_PRESENTATION, useValue: 'menu' }],
+  });
+
   /**
    * Property sidebarExtensionContributions
    * @readonly
@@ -157,7 +189,7 @@ export class DashboardLayout {
    */
   protected readonly contentClass: Signal<string> = computed((): string =>
     hlm(
-      'container mx-auto flex min-h-0 flex-1 flex-col',
+      'container mx-auto flex min-h-0 flex-1 flex-col max-sm:px-4',
       this.sidebarExtension()?.contentPadding === false ? null : 'py-4 md:py-6',
     ),
   );
@@ -236,6 +268,22 @@ export class DashboardLayout {
    */
   protected readonly headerActions: readonly SlotContribution[] =
     inject<SlotContribution[]>(DASHBOARD_HEADER_ACTIONS_SLOT, { optional: true }) ?? [];
+
+  /**
+   * Property isMobile
+   * @readonly
+   *
+   * @description
+   * Whether header tools belong in the compact mobile actions drawer.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<boolean>}
+   */
+  private readonly sidebarService: HlmSidebarService = inject<HlmSidebarService>(HlmSidebarService);
+
+  protected readonly isMobile: Signal<boolean> = this.sidebarService.isMobile;
 
   /**
    * Property panelContributions
@@ -343,6 +391,10 @@ export class DashboardLayout {
       ? mainContent
       : (this.extensionContent()?.nativeElement ?? mainContent);
     target?.focus();
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarService.toggleSidebar();
   }
   //#endregion
 }

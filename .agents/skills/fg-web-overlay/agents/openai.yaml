@@ -1,0 +1,4 @@
+interface:
+  display_name: 'FireGuard · adaptive overlays'
+  short_description: 'Choose responsive Spartan overlay patterns'
+  default_prompt: 'Use $fg-web-overlay to choose and implement the correct responsive overlay for this FireGuard interaction.'

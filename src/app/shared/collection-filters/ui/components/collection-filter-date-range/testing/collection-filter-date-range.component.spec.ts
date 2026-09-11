@@ -85,6 +85,25 @@ describe('CollectionFilterDateRange', () => {
     await fixture.whenStable();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(CollectionFilterDateRangeHost);
+    await fixture.whenStable();
+  }
+
   it('should open the popover when state changes to open, and mirror its own dismissal back through stateChanged', async () => {
     fixture.componentInstance.state.set('open');
     await fixture.whenStable();
@@ -197,6 +216,31 @@ describe('CollectionFilterDateRange', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.lastValue).not.toBeNull();
+    expect(fixture.componentInstance.lastValue?.[0]).toBeInstanceOf(Date);
+    expect(fixture.componentInstance.lastValue?.[1]).toBeInstanceOf(Date);
+  });
+
+  it('should stage a mobile range in a drawer until Apply is activated', async () => {
+    await useCompactFixture();
+    fixture.componentInstance.state.set('open');
+    await fixture.whenStable();
+
+    expect(
+      document.querySelector('[data-testid="interventions-filter-due-range-drawer"]'),
+    ).not.toBeNull();
+
+    currentMonthDayButtons()[0]?.click();
+    await fixture.whenStable();
+    currentMonthDayButtons()[10]?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.lastValue).toBeNull();
+
+    Array.from(document.querySelectorAll<HTMLButtonElement>('hlm-drawer-content button'))
+      .find((button: HTMLButtonElement): boolean => button.textContent?.includes('Apply') ?? false)
+      ?.click();
+    await fixture.whenStable();
+
     expect(fixture.componentInstance.lastValue?.[0]).toBeInstanceOf(Date);
     expect(fixture.componentInstance.lastValue?.[1]).toBeInstanceOf(Date);
   });

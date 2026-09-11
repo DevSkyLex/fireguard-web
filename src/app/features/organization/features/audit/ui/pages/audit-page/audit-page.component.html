@@ -36,41 +36,23 @@
   }
 
   <ng-template #actionChip>
-    <hlm-combobox
+    <app-collection-filter-select
+      [options]="actionOptions"
       [value]="action()"
-      [itemToString]="actionLabelOf"
+      placeholder="Action"
+      i18n-placeholder="@@audit.filter.action"
+      searchPlaceholder="Search an action"
+      i18n-searchPlaceholder="@@audit.filter.searchPlaceholder"
+      emptyLabel="No action matches."
+      i18n-emptyLabel="@@audit.filter.noAction"
+      accessibleName="Action"
+      i18n-accessibleName="@@audit.filter.action"
+      triggerId="audit-filter-action"
+      testId="audit-filter-action"
       [state]="fieldPopoverState('action')"
-      (valueChange)="applyAction($any($event))"
+      (valueChanged)="applyAction($event)"
       (stateChanged)="onFieldPopoverStateChanged('action', $event)"
-    >
-      <label for="audit-filter-action" class="sr-only" i18n="@@audit.filter.action">Action</label>
-      <hlm-combobox-input
-        inputId="audit-filter-action"
-        class="h-full rounded-none border-0 bg-transparent px-2 py-1 shadow-none max-sm:min-h-11 dark:bg-transparent"
-        placeholder="Search an action"
-        i18n-placeholder="@@audit.filter.searchPlaceholder"
-        showClear
-        clearAriaLabel="Clear action filter"
-        i18n-clearAriaLabel="@@audit.filter.clearAriaLabel"
-        data-testid="audit-filter-action"
-      />
-      <hlm-combobox-content *hlmComboboxPortal>
-        <hlm-combobox-empty i18n="@@audit.filter.noAction">No action matches.</hlm-combobox-empty>
-        @for (group of actionGroups; track group.module) {
-          <div hlmComboboxGroup>
-            <span hlmComboboxLabel>{{ group.moduleLabel }}</span>
-            @for (option of group.options; track option.value) {
-              <hlm-combobox-item
-                [value]="option.value"
-                [attr.data-testid]="'audit-filter-action-' + option.value"
-              >
-                {{ option.label }}
-              </hlm-combobox-item>
-            }
-          </div>
-        }
-      </hlm-combobox-content>
-    </hlm-combobox>
+    />
   </ng-template>
 
   <ng-template #dateRangeChip>

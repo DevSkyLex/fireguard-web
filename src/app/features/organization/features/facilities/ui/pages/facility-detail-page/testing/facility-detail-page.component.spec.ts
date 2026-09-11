@@ -171,6 +171,8 @@ describe('FacilityDetailPage', () => {
   let planIsSavingPinPosition: WritableSignal<boolean>;
   let planAvailableZoneCandidates: WritableSignal<readonly FacilityOutput[]>;
   let planAvailableEquipmentCandidates: WritableSignal<readonly EquipmentOutput[]>;
+  let planZoneCandidatesCallState: WritableSignal<CallState>;
+  let planFacilityEquipmentCallState: WritableSignal<CallState>;
   let planEnterDrawZoneMode: ReturnType<typeof vi.fn>;
   let planEnterPlacePinMode: ReturnType<typeof vi.fn>;
   let planCancelEditing: ReturnType<typeof vi.fn>;
@@ -239,6 +241,8 @@ describe('FacilityDetailPage', () => {
     planIsSavingPinPosition = signal(false);
     planAvailableZoneCandidates = signal<readonly FacilityOutput[]>([]);
     planAvailableEquipmentCandidates = signal<readonly EquipmentOutput[]>([]);
+    planZoneCandidatesCallState = signal<CallState>(idleCallState());
+    planFacilityEquipmentCallState = signal<CallState>(idleCallState());
     planEnterDrawZoneMode = vi.fn();
     planEnterPlacePinMode = vi.fn();
     planCancelEditing = vi.fn();
@@ -339,6 +343,8 @@ describe('FacilityDetailPage', () => {
               isSavingPinPosition: planIsSavingPinPosition,
               availableZoneCandidates: planAvailableZoneCandidates,
               availableEquipmentCandidates: planAvailableEquipmentCandidates,
+              zoneCandidatesCallState: planZoneCandidatesCallState,
+              facilityEquipmentCallState: planFacilityEquipmentCallState,
               enterDrawZoneMode: planEnterDrawZoneMode,
               enterPlacePinMode: planEnterPlacePinMode,
               cancelEditing: planCancelEditing,
@@ -777,7 +783,7 @@ describe('FacilityDetailPage', () => {
 
       expect(byTestId('facility-plan-viewer')).not.toBeNull();
       // The list left the row — it would have squeezed the plan to 281 px at a
-      // 1280 px viewport — and now sits inside the toolbar's picker popover,
+      // 1280 px viewport — and now sits inside the toolbar's adaptive picker,
       // which renders its content only once opened.
       expect(byTestId('facility-plan-picker-trigger')).not.toBeNull();
       expect(root().querySelector('app-facility-plan-list')).toBeNull();

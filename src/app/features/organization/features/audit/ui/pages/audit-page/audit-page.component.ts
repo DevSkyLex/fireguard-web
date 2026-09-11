@@ -23,14 +23,8 @@ import {
   lucideLock,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
-import type {
-  AuditActionModule,
-  AuditEventOutput,
-} from '@features/organization/features/audit/models';
-import {
-  listAuditActionOptions,
-  resolveAuditActionTag,
-} from '@features/organization/features/audit/models';
+import type { AuditEventOutput } from '@features/organization/features/audit/models';
+import { listAuditActionOptions } from '@features/organization/features/audit/models';
 import {
   AuditEventsStore,
   type AuditEventsStoreType,
@@ -42,16 +36,17 @@ import {
 import {
   CollectionFilterBar,
   CollectionFilterDateRange,
+  CollectionFilterSelect,
   CollectionFilterToggle,
   initialCollectionFilterBarVisibility,
   type CollectionFilterField,
+  type CollectionFilterOption,
   type CollectionFilterPopoverState,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
-import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { AuditEventTable } from '../../tables/audit-event-table';
 
@@ -65,45 +60,20 @@ const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 type AuditFilterKey = 'action' | 'dateRange';
 
 /** One filter combobox option: the raw action id and its resolved presentation. */
-interface AuditActionOption {
-  readonly value: string;
-  readonly label: string;
-  readonly module: AuditActionModule;
-}
-
-/** One module's group of options, in the order the combobox renders them. */
-interface AuditActionOptionGroup {
-  readonly module: AuditActionModule;
-  readonly moduleLabel: string;
-  readonly options: ReadonlyArray<AuditActionOption>;
-}
-
 /**
- * Function buildActionOptionGroups
- * @description Groups the full action catalog by module, for the combobox's group headers.
+ * Function buildActionOptions
+ * @description Maps the full action catalog to the shared filter option contract, retaining module headings.
  * @access private
  * @since 1.0.0
- * @returns {ReadonlyArray<AuditActionOptionGroup>} The module-grouped catalog.
+ * @returns {ReadonlyArray<CollectionFilterOption>} The grouped catalog.
  */
-function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
-  const groups = new Map<AuditActionModule, AuditActionOptionGroup>();
-
-  for (const { value, descriptor } of listAuditActionOptions()) {
-    const existing = groups.get(descriptor.module);
-    const option: AuditActionOption = { value, label: descriptor.label, module: descriptor.module };
-
-    if (existing) {
-      (existing.options as AuditActionOption[]).push(option);
-    } else {
-      groups.set(descriptor.module, {
-        module: descriptor.module,
-        moduleLabel: descriptor.moduleLabel,
-        options: [option],
-      });
-    }
-  }
-
-  return Array.from(groups.values());
+function buildActionOptions(): ReadonlyArray<CollectionFilterOption> {
+  return listAuditActionOptions().map(({ value, descriptor }) => ({
+    value,
+    label: descriptor.label,
+    group: descriptor.module,
+    groupLabel: descriptor.moduleLabel,
+  }));
 }
 
 /**
@@ -132,18 +102,12 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
  * the backend accepts nine more (`actorType`, `subjectId`, `tenantId`, …) that
  * no page exposes yet, a separate decision.
  *
- * The "dateRange" chip renders `app-collection-filter-date-range`
- * (`@shared/collection-filters`), the same component `InterventionsPage` uses
- * for its own date-range chips. The "action" chip stays a hand-rolled
- * `hlm-combobox`: its options are grouped by module through
- * `hlmComboboxGroup`, a shape `CollectionFilterSelect` cannot render, and it
- * is the sole consumer of that shape — below `CLAUDE.md` rule 8's
- * third-consumer threshold for extracting a generic grouped-combobox
- * variant. Both still open on a "+ Filter" pick and close themselves back
- * out through the bar's `state`/`stateChanged` contract
- * ({@link fieldPopoverState}/{@link onFieldPopoverStateChanged}) — the
- * "action" combobox because `HlmCombobox` hosts the very same `BrnPopover`
- * `app-collection-filter-select` wraps, not because it was converted.
+ * Both chips use the shared adaptive collection controls. The 68-entry action
+ * catalog retains its module headings through `CollectionFilterOption` group
+ * metadata: a grouped searchable combobox on desktop and a grouped searchable
+ * bottom drawer on compact viewports. The date range uses the same adaptive
+ * date component as interventions. Both open from "+ Filter" and mirror their
+ * state through {@link fieldPopoverState}/{@link onFieldPopoverStateChanged}.
  *
  * @version 3.0.0
  *
@@ -162,7 +126,7 @@ function buildActionOptionGroups(): ReadonlyArray<AuditActionOptionGroup> {
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
-    ...HlmComboboxImports,
+    CollectionFilterSelect,
   ],
   providers: [
     provideIcons({
@@ -209,9 +173,8 @@ export class AuditPage {
   /** The journal dataset, provided by this route. */
   protected readonly store: AuditEventsStoreType = inject<AuditEventsStoreType>(AuditEventsStore);
 
-  /** The full action catalog, grouped by module, for the filter combobox. */
-  protected readonly actionGroups: ReadonlyArray<AuditActionOptionGroup> =
-    buildActionOptionGroups();
+  /** The full action catalog with module grouping metadata for the adaptive filter picker. */
+  protected readonly actionOptions: ReadonlyArray<CollectionFilterOption> = buildActionOptions();
 
   /** The active action narrowing, or `null` for every action. */
   protected readonly action: WritableSignal<string | null> = signal<string | null>(null);
@@ -366,16 +329,6 @@ export class AuditPage {
   //#endregion
 
   //#region Methods
-  /**
-   * Method actionLabelOf
-   * @description Resolves a raw action id to its presentation label, for the combobox trigger.
-   * @access protected
-   * @since 1.0.0
-   * @param {string} value - The raw action id.
-   * @returns {string} The resolved label.
-   */
-  protected actionLabelOf = (value: string): string => resolveAuditActionTag(value).label;
-
   /**
    * Method applyAction
    * @description Narrows the list to one action, or clears the narrowing. The "action" chip's own popover closes itself on a pick — see {@link onFieldPopoverStateChanged}, the same contract every converted chip in this bar uses.

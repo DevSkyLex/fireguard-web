@@ -56,7 +56,16 @@
       [class.hidden]="!extension.mobileVisible()"
     >
       <div class="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
-        <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          [attr.aria-label]="toggleSidebarLabel"
+          (click)="toggleSidebar()"
+        >
+          <ng-icon name="lucideMenu" aria-hidden="true" />
+        </button>
         <span class="text-sm font-semibold">Fireguard</span>
       </div>
       <ng-container *ngComponentOutlet="extension.component" />
@@ -74,7 +83,21 @@
         class="container mx-auto flex h-full items-center gap-2 max-sm:px-4"
         data-testid="dashboard-toolbar-container"
       >
-        <button hlmSidebarTrigger [srOnlyText]="toggleSidebarLabel"></button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          data-testid="dashboard-sidebar-trigger"
+          [attr.aria-label]="toggleSidebarLabel"
+          (click)="toggleSidebar()"
+        >
+          @if (isMobile()) {
+            <ng-icon name="lucideMenu" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucidePanelLeft" aria-hidden="true" />
+          }
+        </button>
 
         <div class="mr-2 flex h-4 items-center">
           <hlm-separator orientation="vertical" />
@@ -121,7 +144,7 @@
                   />
                 </hlm-item-group>
 
-                <hlm-drawer-footer>
+                <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <button
                     hlmDrawerClose
                     hlmBtn

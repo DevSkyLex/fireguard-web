@@ -368,6 +368,11 @@ setting a new primary can flip both the previous and the new plan's
 re-fetch. `selectedPlan` defaults to the primary plan, then the first
 uploaded one, until a row is explicitly selected.
 
+The plan catalog stays an anchored Spartan popover on desktop and becomes a
+bottom drawer below `sm`, where its row actions and long filenames have the
+full viewport width. Selecting a plan closes that drawer through the same
+`onPlanSelected` path that updates `selectedPlan`.
+
 `FacilityAttachmentOutput` carries no download URL — bytes are only ever
 served at `GET /api/facility-attachments/{id}/download`
 (`Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`,
@@ -449,7 +454,9 @@ stays a tab of `FacilityDetailPage`.
   editor's picker/status bar — laid out like `FacilityBuilding3dPage`'s own
   toolbar (a left group, a right group, `lucide` icons). Presentational:
   inputs/outputs only, including the pickers' `null`-clearing `valueChange`,
-  which it filters itself before emitting.
+  which it filters itself before emitting. The zone/equipment candidate
+  catalogs can each contain up to 200 records: they remain Spartan selects on
+  desktop and become searchable, scroll-contained bottom drawers below `sm`.
 - **A side panel** (`ui/components/facility-plan-panel`, `FacilityPlanPanel`)
   is the tab's **only** browsing/editing surface for zones and equipment,
   mirroring `FacilityBuilding3dRoomPanel`'s `hlm-card`/`hlm-sheet` breakpoint

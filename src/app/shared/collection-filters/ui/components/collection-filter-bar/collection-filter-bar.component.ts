@@ -22,8 +22,18 @@ import {
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideX } from '@ng-icons/lucide';
+import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import {
+  HlmItem,
+  HlmItemContent,
+  HlmItemDescription,
+  HlmItemGroup,
+  HlmItemMedia,
+  HlmItemTitle,
+} from '@shared/ui/item';
 import type {
   CollectionFilterField,
   CollectionFilterOperator,
@@ -139,7 +149,20 @@ import { FilterChip } from '../filter-chip';
  */
 @Component({
   selector: 'app-collection-filter-bar',
-  imports: [NgIcon, NgTemplateOutlet, FilterChip, HlmButton, ...HlmDropdownMenuImports],
+  imports: [
+    NgIcon,
+    NgTemplateOutlet,
+    FilterChip,
+    HlmButton,
+    HlmItem,
+    HlmItemContent,
+    HlmItemDescription,
+    HlmItemGroup,
+    HlmItemMedia,
+    HlmItemTitle,
+    ...HlmDrawerImports,
+    ...HlmDropdownMenuImports,
+  ],
   providers: [provideIcons({ lucidePlus, lucideX })],
   templateUrl: './collection-filter-bar.component.html',
   host: { class: 'contents' },
@@ -256,6 +279,9 @@ export class CollectionFilterBar {
   //#endregion
 
   //#region Properties
+  /** Whether the add-filter catalog should use a touch-first bottom drawer. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
   /**
    * Property injector
    * @readonly

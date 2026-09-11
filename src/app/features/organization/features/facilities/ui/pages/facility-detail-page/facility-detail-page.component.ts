@@ -74,6 +74,7 @@ import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-forma
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmPopoverImports } from '@shared/ui/popover';
@@ -204,6 +205,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityPlanDeleteDialog,
     FacilityPlanEditor,
     FacilityPlanList,
+    ...HlmDrawerImports,
     ...HlmPopoverImports,
     FacilityPlanPanel,
     FacilityPlanPinPositionDialog,
@@ -367,18 +369,24 @@ export class FacilityDetailPage {
   protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * The plan picker popover's accessible name.
+   * The adaptive plan picker's accessible name.
    *
    * The plan list used to be a 320 px column of its own. Measured at a
    * 1280 px viewport, that column plus the detail panel left the plan itself
    * 281 px wide — narrower than either of them. The list is the surface a
    * reader consults least once a plan is chosen, so it moved behind this
-   * trigger and the plan took the width back.
+   * trigger and the plan took the width back. The trigger opens an anchored
+   * popover on desktop and a bottom drawer on compact viewports.
    */
   protected readonly planPickerLabel: string = $localize`:@@facility.plans.pickerLabel:Floor plans`;
 
   /** The picker trigger's label while no plan is selected yet. */
   protected readonly planPickerFallbackLabel: string = $localize`:@@facility.plans.pickerEmpty:Choose a plan`;
+
+  /** Controlled state for the compact floor-plan picker drawer. */
+  protected readonly planPickerDrawerState: WritableSignal<'closed' | 'open'> = signal<
+    'closed' | 'open'
+  >('closed');
 
   /** Whether the viewport is narrow enough that {@link FacilityPlanPanel} renders as a dismissible sheet — mirrors `FacilityBuilding3dPage`'s own `isCompact`. */
   protected readonly isCompactPanel: Signal<boolean> = isCompact();
@@ -840,6 +848,7 @@ export class FacilityDetailPage {
     this.plans.selectPlan(planId);
     this.selectedZoneId.set(null);
     this.selectedEquipmentId.set(null);
+    this.planPickerDrawerState.set('closed');
   }
 
   /**

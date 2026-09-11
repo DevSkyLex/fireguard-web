@@ -425,6 +425,12 @@
                 [editMode]="plans.editMode()"
                 [zoneCandidates]="plans.availableZoneCandidates()"
                 [equipmentCandidates]="plans.availableEquipmentCandidates()"
+                [zoneCandidatesLoading]="plans.zoneCandidatesCallState().status === 'pending'"
+                [zoneCandidatesFailed]="plans.zoneCandidatesCallState().status === 'error'"
+                [equipmentCandidatesLoading]="
+                  plans.facilityEquipmentCallState().status === 'pending'
+                "
+                [equipmentCandidatesFailed]="plans.facilityEquipmentCallState().status === 'error'"
                 [draftPointCount]="plans.draftPoints().length"
                 [isSavingZoneGeometry]="plans.isSavingZoneGeometry()"
                 [statusLabel]="editModeStatusLabel()"
@@ -441,42 +447,108 @@
                 (editingCancelled)="plans.cancelEditing()"
                 (panelOpenRequested)="planPanelOpen.set(true)"
               >
-                <hlm-popover planPicker sideOffset="5" align="start">
-                  <button
-                    hlmPopoverTrigger
-                    hlmBtn
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    data-testid="facility-plan-picker-trigger"
+                @if (isCompactPanel()) {
+                  <hlm-drawer
+                    planPicker
+                    direction="bottom"
+                    [state]="planPickerDrawerState()"
+                    (stateChanged)="planPickerDrawerState.set($event)"
                   >
-                    <ng-icon name="lucideLayers" aria-hidden="true" />
-                    <span class="max-w-40 truncate">{{
-                      plans.selectedPlan()?.fileName ?? planPickerFallbackLabel
-                    }}</span>
-                    <span class="text-muted-foreground">({{ plans.orderedPlans().length }})</span>
-                  </button>
+                    <button
+                      hlmDrawerTrigger
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="min-h-11"
+                      data-testid="facility-plan-picker-trigger"
+                    >
+                      <ng-icon name="lucideLayers" aria-hidden="true" />
+                      <span class="max-w-40 truncate">{{
+                        plans.selectedPlan()?.fileName ?? planPickerFallbackLabel
+                      }}</span>
+                      <span class="text-muted-foreground">({{ plans.orderedPlans().length }})</span>
+                    </button>
 
-                  <hlm-popover-content
-                    *hlmPopoverPortal
-                    class="w-80 max-w-[90vw]"
-                    role="region"
-                    [attr.aria-label]="planPickerLabel"
-                  >
-                    <app-facility-plan-list
-                      [plans]="plans.orderedPlans()"
-                      [selectedPlanId]="plans.selectedPlan()?.id ?? null"
-                      [canManage]="canWrite()"
-                      [uploading]="plans.isUploading()"
-                      [settingPrimaryId]="plans.settingPrimaryId()"
-                      [deletingId]="plans.deletingId()"
-                      (planSelected)="onPlanSelected($event)"
-                      (filePicked)="onPlanFilePicked($event)"
-                      (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
-                      (deleteRequested)="onPlanDeleteRequested($event)"
-                    />
-                  </hlm-popover-content>
-                </hlm-popover>
+                    <hlm-drawer-content
+                      *hlmDrawerPortal
+                      class="max-h-[85dvh] overflow-hidden"
+                      data-testid="facility-plan-picker-drawer"
+                    >
+                      <hlm-drawer-header class="px-5 text-start!">
+                        <h2 hlmDrawerTitle>{{ planPickerLabel }}</h2>
+                        <p hlmDrawerDescription i18n="@@facility.plans.pickerDescription">
+                          Choose the floor plan to display and manage.
+                        </p>
+                      </hlm-drawer-header>
+                      <div class="min-h-0 overflow-y-auto px-3 py-2">
+                        <app-facility-plan-list
+                          [plans]="plans.orderedPlans()"
+                          [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+                          [canManage]="canWrite()"
+                          [uploading]="plans.isUploading()"
+                          [settingPrimaryId]="plans.settingPrimaryId()"
+                          [deletingId]="plans.deletingId()"
+                          (planSelected)="onPlanSelected($event)"
+                          (filePicked)="onPlanFilePicked($event)"
+                          (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+                          (deleteRequested)="onPlanDeleteRequested($event)"
+                        />
+                      </div>
+                      <hlm-drawer-footer
+                        class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+                      >
+                        <button
+                          hlmDrawerClose
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          class="min-h-11 w-full"
+                          i18n="@@common.close"
+                        >
+                          Close
+                        </button>
+                      </hlm-drawer-footer>
+                    </hlm-drawer-content>
+                  </hlm-drawer>
+                } @else {
+                  <hlm-popover planPicker sideOffset="5" align="start">
+                    <button
+                      hlmPopoverTrigger
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      data-testid="facility-plan-picker-trigger"
+                    >
+                      <ng-icon name="lucideLayers" aria-hidden="true" />
+                      <span class="max-w-40 truncate">{{
+                        plans.selectedPlan()?.fileName ?? planPickerFallbackLabel
+                      }}</span>
+                      <span class="text-muted-foreground">({{ plans.orderedPlans().length }})</span>
+                    </button>
+
+                    <hlm-popover-content
+                      *hlmPopoverPortal
+                      class="w-80 max-w-[90vw]"
+                      role="region"
+                      [attr.aria-label]="planPickerLabel"
+                    >
+                      <app-facility-plan-list
+                        [plans]="plans.orderedPlans()"
+                        [selectedPlanId]="plans.selectedPlan()?.id ?? null"
+                        [canManage]="canWrite()"
+                        [uploading]="plans.isUploading()"
+                        [settingPrimaryId]="plans.settingPrimaryId()"
+                        [deletingId]="plans.deletingId()"
+                        (planSelected)="onPlanSelected($event)"
+                        (filePicked)="onPlanFilePicked($event)"
+                        (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
+                        (deleteRequested)="onPlanDeleteRequested($event)"
+                      />
+                    </hlm-popover-content>
+                  </hlm-popover>
+                }
               </app-facility-plan-toolbar>
 
               <div

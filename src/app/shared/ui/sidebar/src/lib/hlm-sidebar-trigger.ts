@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, input, type Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMenu, lucidePanelLeft } from '@ng-icons/lucide';
+import { lucidePanelLeft } from '@ng-icons/lucide';
 import { HlmButton, provideBrnButtonConfig } from '@shared/ui/button';
 import { HlmSidebarService } from './hlm-sidebar.service';
 
@@ -9,7 +9,7 @@ import { HlmSidebarService } from './hlm-sidebar.service';
   selector: 'button[hlmSidebarTrigger]',
   imports: [NgIcon],
   providers: [
-    provideIcons({ lucideMenu, lucidePanelLeft }),
+    provideIcons({ lucidePanelLeft }),
     provideBrnButtonConfig({ variant: 'ghost', size: 'icon-sm' }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,11 +20,7 @@ import { HlmSidebarService } from './hlm-sidebar.service';
     '(click)': '_onClick()',
   },
   template: `
-    @if (isMobile()) {
-      <ng-icon name="lucideMenu" aria-hidden="true" />
-    } @else {
-      <ng-icon name="lucidePanelLeft" aria-hidden="true" />
-    }
+    <ng-icon name="lucidePanelLeft" />
     <span class="sr-only">{{ srOnlyText() }}</span>
   `,
 })
@@ -32,8 +28,6 @@ export class HlmSidebarTrigger {
   private readonly _sidebarService = inject(HlmSidebarService);
 
   public readonly srOnlyText = input<string>('Toggle Sidebar');
-
-  protected readonly isMobile: Signal<boolean> = this._sidebarService.isMobile;
 
   protected _onClick(): void {
     this._sidebarService.toggleSidebar();

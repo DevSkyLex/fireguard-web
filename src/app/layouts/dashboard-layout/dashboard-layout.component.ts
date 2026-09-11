@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis } from '@ng-icons/lucide';
+import { lucideEllipsis, lucideMenu, lucidePanelLeft } from '@ng-icons/lucide';
 import { BreadcrumbService } from '@core/breadcrumb';
 import {
   type ExclusiveSlotContribution,
@@ -30,7 +30,6 @@ import {
   HlmSidebarFooter,
   HlmSidebarHeader,
   HlmSidebarInset,
-  HlmSidebarTrigger,
   HlmSidebarWrapper,
   HlmSidebarService,
 } from '@shared/ui/sidebar';
@@ -116,10 +115,9 @@ import {
     HlmSidebarFooter,
     HlmSidebarHeader,
     HlmSidebarInset,
-    HlmSidebarTrigger,
     HlmSidebarWrapper,
   ],
-  providers: [BreadcrumbService, provideIcons({ lucideEllipsis })],
+  providers: [BreadcrumbService, provideIcons({ lucideEllipsis, lucideMenu, lucidePanelLeft })],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -283,8 +281,9 @@ export class DashboardLayout {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly isMobile: Signal<boolean> =
-    inject<HlmSidebarService>(HlmSidebarService).isMobile;
+  private readonly sidebarService: HlmSidebarService = inject<HlmSidebarService>(HlmSidebarService);
+
+  protected readonly isMobile: Signal<boolean> = this.sidebarService.isMobile;
 
   /**
    * Property panelContributions
@@ -392,6 +391,10 @@ export class DashboardLayout {
       ? mainContent
       : (this.extensionContent()?.nativeElement ?? mainContent);
     target?.focus();
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarService.toggleSidebar();
   }
   //#endregion
 }

@@ -14,8 +14,11 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCalendar } from '@shared/ui/calendar';
 import { HlmDatePicker } from '@shared/ui/date-picker';
+import { HlmDrawer, HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmPopoverTrigger } from '@shared/ui/popover';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterPopoverState } from '../../../models';
@@ -102,7 +105,7 @@ import type { CollectionFilterPopoverState } from '../../../models';
  */
 @Component({
   selector: 'app-collection-filter-date',
-  imports: [HlmButton, HlmDatePicker, HlmPopoverTrigger],
+  imports: [HlmButton, HlmCalendar, HlmDatePicker, HlmPopoverTrigger, ...HlmDrawerImports],
   templateUrl: './collection-filter-date.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -248,6 +251,9 @@ export class CollectionFilterDate {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
+  /** Whether this calendar should use the touch-first bottom drawer. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
   /**
    * Property picker
    * @readonly
@@ -258,6 +264,9 @@ export class CollectionFilterDate {
    */
   protected readonly picker: Signal<HlmDatePicker<Date> | undefined> =
     viewChild<HlmDatePicker<Date>>(HlmDatePicker);
+
+  /** The compact drawer, used to close immediately after a single date pick. */
+  private readonly drawer: Signal<HlmDrawer | undefined> = viewChild<HlmDrawer>(HlmDrawer);
 
   /**
    * Property injector
@@ -281,6 +290,11 @@ export class CollectionFilterDate {
     const popover = this.picker()?.popover();
     if (!popover) return;
 
+    if (this.compact()) {
+      popover.close();
+      return;
+    }
+
     if (this.state() === 'open') {
       afterNextRender(
         (): void => {
@@ -303,12 +317,13 @@ export class CollectionFilterDate {
    * @type {EffectRef}
    */
   private readonly forwardPopoverState: EffectRef = effect((onCleanup): void => {
+    if (this.compact()) return;
     const popover = this.picker()?.popover();
     if (!popover) return;
 
-    const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void =>
-      this.stateChanged.emit(state),
-    );
+    const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void => {
+      if (!this.compact()) this.stateChanged.emit(state);
+    });
     onCleanup((): void => subscription.unsubscribe());
   });
   //#endregion
@@ -325,6 +340,18 @@ export class CollectionFilterDate {
   protected onDatePicked(date: Date | null): void {
     if (this.disabled()) return;
     this.valueChanged.emit(date);
+  }
+
+  /** Commits one mobile calendar pick through the existing picker and closes its drawer. */
+  protected onMobileDatePicked(date: Date | undefined): void {
+    if (this.disabled()) return;
+    this.picker()?.updateDate(date ?? null);
+    this.drawer()?.close();
+  }
+
+  /** Mirrors the compact drawer's state through the component's existing overlay contract. */
+  protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
+    this.stateChanged.emit(state);
   }
   //#endregion
 }

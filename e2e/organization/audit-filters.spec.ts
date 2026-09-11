@@ -6,12 +6,9 @@ import { AuditPage } from '../support/pages/audit.page';
 
 /**
  * A regression net for `app-collection-filter-bar` on the audit journal,
- * written against the page's own bespoke "Action" `hlm-combobox` — kept
- * hand-rolled by design (its options are grouped by module, a shape
- * `CollectionFilterSelect` cannot render, and it is the sole consumer of
- * that shape) — so only the shared bar/chip chrome and the `state`/
- * `stateChanged` open-on-pick contract are asserted on, never the
- * combobox's own internal markup.
+ * written against the shared adaptive Action control. This suite proves its
+ * grouped desktop combobox path while both adaptive surfaces share the same
+ * state and request contract.
  *
  * `AuditPage` keeps its narrowing in component state, never the query
  * string, so the picked value is proven on the wire — the outbound list

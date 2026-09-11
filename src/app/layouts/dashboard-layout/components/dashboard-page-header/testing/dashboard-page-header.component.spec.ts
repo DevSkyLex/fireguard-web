@@ -38,6 +38,8 @@ describe('DashboardPageHeader', () => {
     const heading: HTMLElement | null = fixture.nativeElement.querySelector('h1');
 
     expect(heading?.textContent?.trim()).toBe('Dashboard');
+    expect(heading?.classList.contains('sm:truncate')).toBe(true);
+    expect(heading?.classList.contains('max-sm:wrap-break-word')).toBe(true);
   });
 
   it('reacts to a title change on navigation', async () => {

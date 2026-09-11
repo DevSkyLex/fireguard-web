@@ -14,8 +14,8 @@ import type { CollectionFilterOption, CollectionFilterPopoverState } from '../..
 import { CollectionFilterSelect } from '../collection-filter-select.component';
 
 const OPTIONS: readonly CollectionFilterOption[] = [
-  { value: 'planned', label: 'Planned' },
-  { value: 'in_progress', label: 'In progress' },
+  { value: 'planned', label: 'Planned', group: 'planning', groupLabel: 'Planning' },
+  { value: 'in_progress', label: 'In progress', group: 'execution', groupLabel: 'Execution' },
 ];
 
 @Component({
@@ -107,6 +107,25 @@ describe('CollectionFilterSelect', () => {
     fixture = TestBed.createComponent(CollectionFilterSelectHost);
     await fixture.whenStable();
   });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(CollectionFilterSelectHost);
+    await fixture.whenStable();
+  }
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Status');
@@ -218,6 +237,15 @@ describe('CollectionFilterSelect', () => {
     expect(fixture.componentInstance.lastValue).toBe('in_progress');
   });
 
+  it('should retain option group headings in the desktop combobox', async () => {
+    trigger().querySelector('button')?.click();
+    await fixture.whenStable();
+
+    const content: string = document.querySelector('hlm-combobox-content')?.textContent ?? '';
+    expect(content).toContain('Planning');
+    expect(content).toContain('Execution');
+  });
+
   it('should normalize a cleared combobox value to null rather than passing undefined through', () => {
     fixture.componentInstance.lastValue = 'sentinel';
 
@@ -298,5 +326,59 @@ describe('CollectionFilterSelect', () => {
     expect(document.querySelector('hlm-combobox-empty')?.textContent).toContain(
       'No status matches.',
     );
+  });
+
+  describe('mobile drawer', () => {
+    it('should replace the anchored combobox with a Spartan drawer below sm', async () => {
+      await useCompactFixture();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('hlm-combobox')).toBeNull();
+
+      trigger().click();
+      await fixture.whenStable();
+
+      expect(
+        document.querySelector('[data-testid="interventions-filter-status-drawer"]'),
+      ).not.toBeNull();
+    });
+
+    it('should search the drawer options and commit a picked value immediately', async () => {
+      await useCompactFixture();
+      trigger().click();
+      await fixture.whenStable();
+
+      const input: HTMLInputElement | null = document.querySelector(
+        '#interventions-filter-status-mobile-search',
+      );
+      if (input) {
+        input.value = 'progress';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await fixture.whenStable();
+
+      const options: HTMLElement[] = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      );
+      expect(
+        options.map((option: HTMLElement): string => option.textContent?.trim() ?? ''),
+      ).toEqual(['In progress']);
+
+      options[0]?.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.lastValue).toBe('in_progress');
+    });
+
+    it('should retain option group headings in the mobile drawer', async () => {
+      await useCompactFixture();
+      trigger().click();
+      await fixture.whenStable();
+
+      const drawer: HTMLElement | null = document.querySelector(
+        '[data-testid="interventions-filter-status-drawer"]',
+      );
+      expect(drawer?.textContent).toContain('Planning');
+      expect(drawer?.textContent).toContain('Execution');
+    });
   });
 });

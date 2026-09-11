@@ -1,27 +1,115 @@
 <hlm-date-range-picker #picker (dateChange)="onRangePicked($event)">
   <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
 
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    [id]="triggerId()"
-    hlmPopoverTrigger
-    [hlmPopoverTriggerFor]="picker.popover()"
-    [class.opacity-60]="disabled()"
-    [attr.data-testid]="testId()"
-    [attr.aria-disabled]="disabled()"
-    [attr.aria-describedby]="describedBy() ?? null"
-    class="flex h-full min-h-7 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid max-sm:min-h-11 sm:max-w-52 dark:bg-transparent dark:hover:bg-foreground/10"
-  >
-    <span class="flex min-w-0 items-center gap-1 overflow-hidden">
-      @if (value()) {
-        <span data-testid="collection-filter-value" [class]="valueClass">
-          <span class="truncate">{{ picker.formattedDate() }}</span>
-        </span>
+  @if (compact()) {
+    <hlm-drawer direction="bottom" [state]="state()" (stateChanged)="onMobileStateChanged($event)">
+      @if (disabled()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          [id]="triggerId()"
+          class="flex h-full min-h-11 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal opacity-60 shadow-none"
+          [attr.data-testid]="testId()"
+          aria-disabled="true"
+        >
+          <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+            @if (value()) {
+              <span data-testid="collection-filter-value" [class]="valueClass">
+                <span class="truncate">{{ picker.formattedDate() }}</span>
+              </span>
+            } @else {
+              <span class="truncate">{{ placeholder() }}</span>
+            }
+          </span>
+        </button>
       } @else {
-        <span class="truncate">{{ placeholder() }}</span>
+        <button
+          hlmDrawerTrigger
+          hlmBtn
+          type="button"
+          variant="ghost"
+          [id]="triggerId()"
+          class="flex h-full min-h-11 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground"
+          [attr.data-testid]="testId()"
+          [attr.aria-describedby]="describedBy() ?? null"
+        >
+          <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+            @if (value()) {
+              <span data-testid="collection-filter-value" [class]="valueClass">
+                <span class="truncate">{{ picker.formattedDate() }}</span>
+              </span>
+            } @else {
+              <span class="truncate">{{ placeholder() }}</span>
+            }
+          </span>
+        </button>
       }
-    </span>
-  </button>
+
+      <hlm-drawer-content
+        *hlmDrawerPortal
+        class="overflow-hidden"
+        [attr.data-testid]="testId() + '-drawer'"
+      >
+        <hlm-drawer-header class="px-5 text-start!">
+          <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
+          <p hlmDrawerDescription i18n="@@collectionFilters.mobile.dateRangeDescription">
+            Choose a start date and an end date, then apply.
+          </p>
+        </hlm-drawer-header>
+
+        <div class="min-h-0 overflow-y-auto px-5 pb-3">
+          <hlm-calendar-range
+            class="mx-auto w-full max-w-sm border-0 p-0 [--cell-size:--spacing(11)]"
+            [startDate]="mobileStart() ?? undefined"
+            [endDate]="mobileEnd() ?? undefined"
+            (startDateChange)="onMobileStartChanged($event)"
+            (endDateChange)="onMobileEndChanged($event)"
+          />
+        </div>
+
+        <hlm-drawer-footer
+          class="grid grid-cols-2 gap-2 border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
+          <button hlmDrawerClose hlmBtn type="button" variant="outline" class="min-h-11">
+            <span i18n="@@common.cancel">Cancel</span>
+          </button>
+          <button
+            hlmDrawerClose
+            hlmBtn
+            type="button"
+            class="min-h-11"
+            [disabled]="!mobileRangeComplete()"
+            (click)="applyMobileRange()"
+          >
+            <span i18n="@@common.apply">Apply</span>
+          </button>
+        </hlm-drawer-footer>
+      </hlm-drawer-content>
+    </hlm-drawer>
+  } @else {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      [id]="triggerId()"
+      hlmPopoverTrigger
+      [hlmPopoverTriggerFor]="picker.popover()"
+      [class.opacity-60]="disabled()"
+      [attr.data-testid]="testId()"
+      [attr.aria-disabled]="disabled()"
+      [attr.aria-describedby]="describedBy() ?? null"
+      class="flex h-full min-h-7 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid sm:max-w-52 dark:bg-transparent dark:hover:bg-foreground/10"
+    >
+      <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+        @if (value()) {
+          <span data-testid="collection-filter-value" [class]="valueClass">
+            <span class="truncate">{{ picker.formattedDate() }}</span>
+          </span>
+        } @else {
+          <span class="truncate">{{ placeholder() }}</span>
+        }
+      </span>
+    </button>
+  }
 </hlm-date-range-picker>

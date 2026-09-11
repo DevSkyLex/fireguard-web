@@ -7,14 +7,22 @@ import {
   inject,
   input,
   output,
+  signal,
   type EffectRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type TemplateRef,
+  type WritableSignal,
 } from '@angular/core';
 import { BrnFieldA11yService } from '@spartan-ng/brain/field';
+import { isCompact } from '@shared/breakpoint';
+import { HlmButton } from '@shared/ui/button';
+import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmInput } from '@shared/ui/input';
+import { HlmItem, HlmItemContent, HlmItemTitle } from '@shared/ui/item';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterOption, CollectionFilterPopoverState } from '../../../models';
 
@@ -104,7 +112,17 @@ import type { CollectionFilterOption, CollectionFilterPopoverState } from '../..
  */
 @Component({
   selector: 'app-collection-filter-multi-select',
-  imports: [NgTemplateOutlet, ...HlmComboboxImports],
+  imports: [
+    NgTemplateOutlet,
+    HlmButton,
+    HlmCheckbox,
+    HlmInput,
+    HlmItem,
+    HlmItemContent,
+    HlmItemTitle,
+    ...HlmComboboxImports,
+    ...HlmDrawerImports,
+  ],
   providers: [BrnFieldA11yService],
   templateUrl: './collection-filter-multi-select.component.html',
   host: { class: 'contents' },
@@ -310,6 +328,28 @@ export class CollectionFilterMultiSelect {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
+  /** Whether this multi-choice should use the touch-first bottom drawer. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
+  /** Selection staged inside the mobile drawer until Apply is activated. */
+  protected readonly stagedSelection: WritableSignal<readonly string[]> = signal<readonly string[]>(
+    [],
+  );
+
+  /** Ephemeral search text owned by the mobile drawer. */
+  protected readonly mobileSearch: WritableSignal<string> = signal<string>('');
+
+  /** Options matching the mobile drawer's local search text. */
+  protected readonly mobileOptions: Signal<readonly CollectionFilterOption[]> = computed<
+    readonly CollectionFilterOption[]
+  >(() => {
+    const term: string = this.mobileSearch().trim().toLocaleLowerCase();
+    if (term.length === 0) return this.options();
+    return this.options().filter((option: CollectionFilterOption): boolean =>
+      option.label.toLocaleLowerCase().includes(term),
+    );
+  });
+
   /**
    * Property selection
    * @readonly
@@ -369,6 +409,11 @@ export class CollectionFilterMultiSelect {
     this.fieldA11y.registerDescription(id);
     onCleanup((): void => this.fieldA11y.unregisterDescription(id));
   });
+
+  /** Seeds the mobile draft whenever its controlled drawer opens or source values change. */
+  private readonly syncMobileSelection: EffectRef = effect((): void => {
+    if (this.state() === 'open') this.stagedSelection.set(this.selection());
+  });
   //#endregion
 
   //#region Methods
@@ -383,6 +428,47 @@ export class CollectionFilterMultiSelect {
   protected onValuesPicked(values: readonly string[] | null | undefined): void {
     if (this.disabled()) return;
     this.valuesChanged.emit(values ?? []);
+  }
+
+  /** Mirrors drawer state to the existing popover contract and clears transient state on close. */
+  protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
+    if (state === 'open') {
+      this.stagedSelection.set(this.selection());
+    } else {
+      this.mobileSearch.set('');
+    }
+    this.stateChanged.emit(state);
+  }
+
+  /** Updates the drawer's local search query without introducing form state. */
+  protected onMobileSearchChanged(event: Event): void {
+    this.mobileSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  /** Returns whether one option belongs to the staged mobile selection. */
+  protected isStaged(value: string): boolean {
+    return this.stagedSelection().includes(value);
+  }
+
+  /** Adds or removes one option in the staged mobile selection. */
+  protected onStagedChanged(value: string, checked: boolean): void {
+    this.stagedSelection.update((selection: readonly string[]): readonly string[] =>
+      checked
+        ? selection.includes(value)
+          ? selection
+          : [...selection, value]
+        : selection.filter((entry: string): boolean => entry !== value),
+    );
+  }
+
+  /** Commits the staged mobile selection through the component's existing output. */
+  protected applyMobileSelection(): void {
+    this.onValuesPicked(this.stagedSelection());
+  }
+
+  /** Builds a stable, hydration-safe checkbox id from the trigger and option index. */
+  protected mobileOptionId(index: number): string {
+    return `${this.triggerId()}-mobile-option-${index}`;
   }
 
   /**

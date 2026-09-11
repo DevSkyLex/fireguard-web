@@ -2,20 +2,26 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
   Injector,
   output,
+  signal,
   viewChild,
   type EffectRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCalendarRange } from '@shared/ui/calendar';
 import { HlmDateRangePicker } from '@shared/ui/date-picker';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmPopoverTrigger } from '@shared/ui/popover';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterPopoverState } from '../../../models';
@@ -71,7 +77,13 @@ import type { CollectionFilterPopoverState } from '../../../models';
  */
 @Component({
   selector: 'app-collection-filter-date-range',
-  imports: [HlmButton, HlmDateRangePicker, HlmPopoverTrigger],
+  imports: [
+    HlmButton,
+    HlmCalendarRange,
+    HlmDateRangePicker,
+    HlmPopoverTrigger,
+    ...HlmDrawerImports,
+  ],
   templateUrl: './collection-filter-date-range.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -208,6 +220,20 @@ export class CollectionFilterDateRange {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
+  /** Whether this range calendar should use the touch-first bottom drawer. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
+  /** Start bound staged inside the mobile drawer. */
+  protected readonly mobileStart: WritableSignal<Date | null> = signal<Date | null>(null);
+
+  /** End bound staged inside the mobile drawer. */
+  protected readonly mobileEnd: WritableSignal<Date | null> = signal<Date | null>(null);
+
+  /** Whether the staged mobile range can be applied. */
+  protected readonly mobileRangeComplete: Signal<boolean> = computed<boolean>(
+    () => this.mobileStart() !== null && this.mobileEnd() !== null,
+  );
+
   /**
    * Property picker
    * @readonly
@@ -255,6 +281,14 @@ export class CollectionFilterDateRange {
     this.picker()?.writeValue(value ? [value[0], value[1]] : null);
   });
 
+  /** Seeds the mobile draft whenever its controlled drawer opens or source range changes. */
+  private readonly syncMobileRange: EffectRef = effect((): void => {
+    if (this.state() !== 'open') return;
+    const value = this.value();
+    this.mobileStart.set(value?.[0] ?? null);
+    this.mobileEnd.set(value?.[1] ?? null);
+  });
+
   /**
    * Property syncPopoverState
    * @readonly
@@ -266,6 +300,11 @@ export class CollectionFilterDateRange {
   private readonly syncPopoverState: EffectRef = effect((): void => {
     const popover = this.picker()?.popover();
     if (!popover) return;
+
+    if (this.compact()) {
+      popover.close();
+      return;
+    }
 
     if (this.state() === 'open') {
       afterNextRender(
@@ -289,12 +328,13 @@ export class CollectionFilterDateRange {
    * @type {EffectRef}
    */
   private readonly forwardPopoverState: EffectRef = effect((onCleanup): void => {
+    if (this.compact()) return;
     const popover = this.picker()?.popover();
     if (!popover) return;
 
-    const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void =>
-      this.stateChanged.emit(state),
-    );
+    const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void => {
+      if (!this.compact()) this.stateChanged.emit(state);
+    });
     onCleanup((): void => subscription.unsubscribe());
   });
   //#endregion
@@ -311,6 +351,35 @@ export class CollectionFilterDateRange {
   protected onRangePicked(range: [Date, Date] | null): void {
     if (this.disabled()) return;
     this.valueChanged.emit(range);
+  }
+
+  /** Starts a fresh staged range from the first mobile calendar pick. */
+  protected onMobileStartChanged(start: Date | undefined): void {
+    this.mobileStart.set(start ?? null);
+    this.mobileEnd.set(null);
+  }
+
+  /** Completes the staged range with the mobile calendar's second pick. */
+  protected onMobileEndChanged(end: Date | undefined): void {
+    this.mobileEnd.set(end ?? null);
+  }
+
+  /** Commits a complete staged mobile range through the existing date picker. */
+  protected applyMobileRange(): void {
+    const start = this.mobileStart();
+    const end = this.mobileEnd();
+    if (!start || !end || this.disabled()) return;
+    this.picker()?.updateDate([start, end]);
+  }
+
+  /** Mirrors drawer state through the component's existing overlay contract. */
+  protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
+    if (state === 'open') {
+      const value = this.value();
+      this.mobileStart.set(value?.[0] ?? null);
+      this.mobileEnd.set(value?.[1] ?? null);
+    }
+    this.stateChanged.emit(state);
   }
   //#endregion
 }

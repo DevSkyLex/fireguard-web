@@ -1,64 +1,215 @@
-<hlm-combobox-multiple
-  [value]="selection()"
-  [itemToString]="labelOf"
-  [state]="state()"
-  [class.opacity-60]="disabled()"
-  (valueChange)="onValuesPicked($any($event))"
-  (stateChanged)="stateChanged.emit($event)"
->
-  <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
+@if (compact()) {
+  <hlm-drawer direction="bottom" [state]="state()" (stateChanged)="onMobileStateChanged($event)">
+    <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
 
-  <span class="inline-flex h-full min-w-0 items-stretch">
-    <hlm-combobox-trigger
-      variant="ghost"
-      [buttonId]="triggerId()"
-      class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 sm:max-w-52 dark:bg-transparent [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
-      [attr.data-testid]="testId()"
-      [attr.aria-disabled]="disabled()"
-      [ariaDisabled]="disabled()"
-    >
-      <span class="flex min-w-0 items-center gap-1 overflow-hidden">
-        <hlm-combobox-placeholder>{{ placeholder() }}</hlm-combobox-placeholder>
-        <ng-template hlmComboboxValues let-values>
-          @for (value of values; track value; let index = $index) {
+    @if (disabled()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        [id]="triggerId()"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal opacity-60 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        [attr.data-testid]="testId()"
+        aria-disabled="true"
+      >
+        <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+          @for (entry of selection(); track entry; let index = $index) {
             @if (index < visibleCount()) {
               <span data-testid="collection-filter-value" [class]="valueClass">
                 @if (valueTemplate(); as template) {
                   <ng-container
-                    *ngTemplateOutlet="template; context: { $implicit: optionOf(value) }"
+                    *ngTemplateOutlet="template; context: { $implicit: optionOf(entry) }"
                   />
                 } @else {
-                  <span class="truncate">{{ labelOf(value) }}</span>
+                  <span class="truncate">{{ labelOf(entry) }}</span>
                 }
               </span>
             }
+          } @empty {
+            <span class="truncate">{{ placeholder() }}</span>
           }
-          @if (values.length > visibleCount()) {
-            <span class="shrink-0 text-xs whitespace-nowrap text-muted-foreground"
-              >+{{ values.length - visibleCount()
-              }}<span class="sr-only">{{ hiddenValuesLabel(values) }}</span></span
-            >
+          @if (selection().length > visibleCount()) {
+            <span class="shrink-0 text-xs whitespace-nowrap text-muted-foreground">
+              +{{ selection().length - visibleCount() }}
+              <span class="sr-only">{{ hiddenValuesLabel(selection()) }}</span>
+            </span>
           }
-        </ng-template>
-      </span>
-    </hlm-combobox-trigger>
-  </span>
-
-  <hlm-combobox-content *hlmComboboxPortal class="w-max max-w-[calc(100vw---spacing(8))]">
-    @if (searchPlaceholder(); as placeholder) {
-      <hlm-combobox-input showTrigger="false" [placeholder]="placeholder" />
+        </span>
+      </button>
+    } @else {
+      <button
+        hlmDrawerTrigger
+        hlmBtn
+        type="button"
+        variant="ghost"
+        [id]="triggerId()"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 dark:bg-transparent"
+        [attr.data-testid]="testId()"
+        [attr.aria-describedby]="describedBy() ?? null"
+      >
+        <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+          @for (entry of selection(); track entry; let index = $index) {
+            @if (index < visibleCount()) {
+              <span data-testid="collection-filter-value" [class]="valueClass">
+                @if (valueTemplate(); as template) {
+                  <ng-container
+                    *ngTemplateOutlet="template; context: { $implicit: optionOf(entry) }"
+                  />
+                } @else {
+                  <span class="truncate">{{ labelOf(entry) }}</span>
+                }
+              </span>
+            }
+          } @empty {
+            <span class="truncate">{{ placeholder() }}</span>
+          }
+          @if (selection().length > visibleCount()) {
+            <span class="shrink-0 text-xs whitespace-nowrap text-muted-foreground">
+              +{{ selection().length - visibleCount() }}
+              <span class="sr-only">{{ hiddenValuesLabel(selection()) }}</span>
+            </span>
+          }
+        </span>
+      </button>
     }
-    <hlm-combobox-empty>{{ emptyLabel() }}</hlm-combobox-empty>
-    <div hlmComboboxList>
-      @for (option of options(); track option.value) {
-        <hlm-combobox-item [value]="option.value">
-          @if (optionTemplate(); as template) {
-            <ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
-          } @else {
-            <span class="whitespace-nowrap">{{ option.label }}</span>
-          }
-        </hlm-combobox-item>
+
+    <hlm-drawer-content
+      *hlmDrawerPortal
+      class="overflow-hidden"
+      [attr.data-testid]="testId() + '-drawer'"
+    >
+      <hlm-drawer-header class="px-5 text-start!">
+        <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
+        <p hlmDrawerDescription i18n="@@collectionFilters.mobile.multipleDescription">
+          Select one or more options, then apply.
+        </p>
+      </hlm-drawer-header>
+
+      @if (searchPlaceholder(); as searchLabel) {
+        <div class="border-y border-border px-5 py-3">
+          <label [attr.for]="triggerId() + '-mobile-search'" class="sr-only">{{
+            searchLabel
+          }}</label>
+          <input
+            hlmInput
+            [id]="triggerId() + '-mobile-search'"
+            type="search"
+            class="min-h-11"
+            [placeholder]="searchLabel"
+            [value]="mobileSearch()"
+            (input)="onMobileSearchChanged($event)"
+          />
+        </div>
       }
-    </div>
-  </hlm-combobox-content>
-</hlm-combobox-multiple>
+
+      <div class="min-h-0 overflow-y-auto px-3 py-2">
+        @for (option of mobileOptions(); track option.value; let index = $index) {
+          <label
+            hlmItem
+            class="min-h-12 cursor-pointer text-start focus-within:bg-muted hover:bg-muted"
+            [attr.for]="mobileOptionId(index)"
+          >
+            <hlm-checkbox
+              [inputId]="mobileOptionId(index)"
+              [checked]="isStaged(option.value)"
+              (checkedChange)="onStagedChanged(option.value, $event)"
+            />
+            <span hlmItemContent>
+              <span hlmItemTitle>
+                @if (optionTemplate(); as template) {
+                  <ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
+                } @else {
+                  {{ option.label }}
+                }
+              </span>
+            </span>
+          </label>
+        } @empty {
+          <p class="px-3 py-8 text-center text-sm text-muted-foreground">{{ emptyLabel() }}</p>
+        }
+      </div>
+
+      <hlm-drawer-footer
+        class="grid grid-cols-2 gap-2 border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
+        <button hlmDrawerClose hlmBtn type="button" variant="outline" class="min-h-11">
+          <span i18n="@@common.cancel">Cancel</span>
+        </button>
+        <button
+          hlmDrawerClose
+          hlmBtn
+          type="button"
+          class="min-h-11"
+          (click)="applyMobileSelection()"
+        >
+          <span i18n="@@common.apply">Apply</span>
+        </button>
+      </hlm-drawer-footer>
+    </hlm-drawer-content>
+  </hlm-drawer>
+} @else {
+  <hlm-combobox-multiple
+    [value]="selection()"
+    [itemToString]="labelOf"
+    [state]="state()"
+    [class.opacity-60]="disabled()"
+    (valueChange)="onValuesPicked($any($event))"
+    (stateChanged)="stateChanged.emit($event)"
+  >
+    <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
+
+    <span class="inline-flex h-full min-w-0 items-stretch">
+      <hlm-combobox-trigger
+        variant="ghost"
+        [buttonId]="triggerId()"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 sm:max-w-52 dark:bg-transparent [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
+        [attr.data-testid]="testId()"
+        [attr.aria-disabled]="disabled()"
+        [ariaDisabled]="disabled()"
+      >
+        <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+          <hlm-combobox-placeholder>{{ placeholder() }}</hlm-combobox-placeholder>
+          <ng-template hlmComboboxValues let-values>
+            @for (value of values; track value; let index = $index) {
+              @if (index < visibleCount()) {
+                <span data-testid="collection-filter-value" [class]="valueClass">
+                  @if (valueTemplate(); as template) {
+                    <ng-container
+                      *ngTemplateOutlet="template; context: { $implicit: optionOf(value) }"
+                    />
+                  } @else {
+                    <span class="truncate">{{ labelOf(value) }}</span>
+                  }
+                </span>
+              }
+            }
+            @if (values.length > visibleCount()) {
+              <span class="shrink-0 text-xs whitespace-nowrap text-muted-foreground"
+                >+{{ values.length - visibleCount()
+                }}<span class="sr-only">{{ hiddenValuesLabel(values) }}</span></span
+              >
+            }
+          </ng-template>
+        </span>
+      </hlm-combobox-trigger>
+    </span>
+
+    <hlm-combobox-content *hlmComboboxPortal class="w-max max-w-[calc(100vw---spacing(8))]">
+      @if (searchPlaceholder(); as placeholder) {
+        <hlm-combobox-input showTrigger="false" [placeholder]="placeholder" />
+      }
+      <hlm-combobox-empty>{{ emptyLabel() }}</hlm-combobox-empty>
+      <div hlmComboboxList>
+        @for (option of options(); track option.value) {
+          <hlm-combobox-item [value]="option.value">
+            @if (optionTemplate(); as template) {
+              <ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
+            } @else {
+              <span class="whitespace-nowrap">{{ option.label }}</span>
+            }
+          </hlm-combobox-item>
+        }
+      </div>
+    </hlm-combobox-content>
+  </hlm-combobox-multiple>
+}

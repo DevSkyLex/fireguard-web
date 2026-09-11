@@ -10,7 +10,8 @@ ancestors into an ellipsis menu.
 The page header owns the route title, registered actions and optional primary
 navigation. Pages register a `#pageTabs` template through `PageTabsService`; that
 template uses Spartan's paginated tab list with `variant="line"`, while nested
-panel and form tabs remain beside their content.
+panel and form tabs remain beside their content. Long route titles wrap on phones
+and truncate only in the denser desktop header.
 
 The routed-content container owns the standard `py-4 md:py-6` page spacing so
 feature pages align without repeating shell geometry. Full-height sidebar

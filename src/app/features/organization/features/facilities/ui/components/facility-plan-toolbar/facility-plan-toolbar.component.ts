@@ -1,18 +1,26 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   output,
+  signal,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBoxes, lucideList } from '@ng-icons/lucide';
+import { lucideBox, lucideBoxes, lucideList, lucideMapPin } from '@ng-icons/lucide';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type { FacilityPlanEditMode } from '@features/organization/features/facilities/state';
+import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmInput } from '@shared/ui/input';
+import { HlmItem, HlmItemContent, HlmItemGroup, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSwitch } from '@shared/ui/switch';
 import { equipmentPlanLabel } from '../../../utils';
@@ -28,6 +36,9 @@ import { equipmentPlanLabel } from '../../../utils';
  * like `FacilityBuilding3dPage`'s own toolbar: one `flex-wrap` group on the
  * left (layer switches, the compact panel opener), one on the right (the 3D
  * link, the `draw-zone`/`place-pin` pickers and their in-mode controls).
+ * Candidate catalogs may contain hundreds of records, so those two pickers
+ * remain Spartan selects on desktop and become searchable Spartan bottom
+ * drawers on compact viewports.
  *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3). The page owns every store write a control here
@@ -39,8 +50,21 @@ import { equipmentPlanLabel } from '../../../utils';
  */
 @Component({
   selector: 'app-facility-plan-toolbar',
-  imports: [RouterLink, NgIcon, HlmButton, HlmSwitch, ...HlmSelectImports],
-  providers: [provideIcons({ lucideBoxes, lucideList })],
+  imports: [
+    RouterLink,
+    NgIcon,
+    HlmButton,
+    HlmInput,
+    HlmItem,
+    HlmItemContent,
+    HlmItemGroup,
+    HlmItemMedia,
+    HlmItemTitle,
+    HlmSwitch,
+    ...HlmDrawerImports,
+    ...HlmSelectImports,
+  ],
+  providers: [provideIcons({ lucideBox, lucideBoxes, lucideList, lucideMapPin })],
   templateUrl: './facility-plan-toolbar.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +109,18 @@ export class FacilityPlanToolbar {
   public readonly equipmentCandidates: InputSignal<ReadonlyArray<EquipmentOutput>> = input<
     ReadonlyArray<EquipmentOutput>
   >([]);
+
+  /** Whether the zone candidate request is in flight. */
+  public readonly zoneCandidatesLoading: InputSignal<boolean> = input<boolean>(false);
+
+  /** Whether the last zone candidate request failed. */
+  public readonly zoneCandidatesFailed: InputSignal<boolean> = input<boolean>(false);
+
+  /** Whether the equipment candidate request is in flight. */
+  public readonly equipmentCandidatesLoading: InputSignal<boolean> = input<boolean>(false);
+
+  /** Whether the last equipment candidate request failed. */
+  public readonly equipmentCandidatesFailed: InputSignal<boolean> = input<boolean>(false);
 
   /** The in-progress `draw-zone` outline's vertex count — disables "Undo"/"Close polygon" below the minimum. */
   public readonly draftPointCount: InputSignal<number> = input<number>(0);
@@ -144,6 +180,37 @@ export class FacilityPlanToolbar {
   /** The compact-viewport panel opener's label. */
   protected readonly panelOpenerLabel: string = $localize`:@@facility.plans.toolbar.openPanel:Zones and equipment`;
 
+  /** Whether dense editor candidate lists should use touch-first bottom drawers. */
+  protected readonly compact: Signal<boolean> = isCompact();
+
+  /** Ephemeral query for the compact zone picker. */
+  protected readonly zoneSearch: WritableSignal<string> = signal<string>('');
+
+  /** Ephemeral query for the compact equipment picker. */
+  protected readonly equipmentSearch: WritableSignal<string> = signal<string>('');
+
+  /** Zone candidates matching the compact drawer query. */
+  protected readonly filteredZoneCandidates: Signal<ReadonlyArray<FacilityOutput>> = computed(
+    () => {
+      const query: string = this.zoneSearch().trim().toLocaleLowerCase();
+      if (query.length === 0) return this.zoneCandidates();
+      return this.zoneCandidates().filter((candidate: FacilityOutput): boolean =>
+        candidate.name.toLocaleLowerCase().includes(query),
+      );
+    },
+  );
+
+  /** Equipment candidates matching the compact drawer query. */
+  protected readonly filteredEquipmentCandidates: Signal<ReadonlyArray<EquipmentOutput>> = computed(
+    () => {
+      const query: string = this.equipmentSearch().trim().toLocaleLowerCase();
+      if (query.length === 0) return this.equipmentCandidates();
+      return this.equipmentCandidates().filter((candidate: EquipmentOutput): boolean =>
+        this.equipmentCandidateLabel(candidate).toLocaleLowerCase().includes(query),
+      );
+    },
+  );
+
   //#endregion
 
   //#region Methods
@@ -189,6 +256,26 @@ export class FacilityPlanToolbar {
     if (!equipmentId) return;
 
     this.equipmentPlacePicked.emit(equipmentId);
+  }
+
+  /** Mirrors a mobile zone search input into its ephemeral query. */
+  protected onZoneSearchChanged(event: Event): void {
+    this.zoneSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  /** Mirrors a mobile equipment search input into its ephemeral query. */
+  protected onEquipmentSearchChanged(event: Event): void {
+    this.equipmentSearch.set((event.target as HTMLInputElement).value);
+  }
+
+  /** Clears the compact zone query when its drawer closes. */
+  protected onZoneDrawerStateChanged(state: 'closed' | 'open'): void {
+    if (state === 'closed') this.zoneSearch.set('');
+  }
+
+  /** Clears the compact equipment query when its drawer closes. */
+  protected onEquipmentDrawerStateChanged(state: 'closed' | 'open'): void {
+    if (state === 'closed') this.equipmentSearch.set('');
   }
   //#endregion
 }

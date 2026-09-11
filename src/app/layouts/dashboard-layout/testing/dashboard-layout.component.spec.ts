@@ -164,6 +164,7 @@ describe('DashboardLayout', () => {
   });
 
   it('moves header actions into the native drawer on mobile', async () => {
+    const toggleSidebar = vi.fn();
     const fixture = await render([
       {
         provide: HlmSidebarService,
@@ -174,7 +175,7 @@ describe('DashboardLayout', () => {
           variant: signal<'sidebar' | 'floating' | 'inset'>('sidebar'),
           setVariant: vi.fn(),
           setOpenMobile: vi.fn(),
-          toggleSidebar: vi.fn(),
+          toggleSidebar,
         },
       },
       {
@@ -189,6 +190,12 @@ describe('DashboardLayout', () => {
 
     expect(trigger).not.toBeNull();
     expect(element.querySelector('[data-testid="dashboard-desktop-actions"]')).toBeNull();
+    const sidebarTrigger = element.querySelector<HTMLButtonElement>(
+      '[data-testid="dashboard-sidebar-trigger"]',
+    );
+    expect(sidebarTrigger?.querySelector('ng-icon')?.getAttribute('name')).toBe('lucideMenu');
+    sidebarTrigger?.click();
+    expect(toggleSidebar).toHaveBeenCalledOnce();
 
     trigger?.click();
     await fixture.whenStable();

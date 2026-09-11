@@ -232,6 +232,25 @@ describe('CollectionFilterBar', () => {
     await fixture.whenStable();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function useCompactFixture(): Promise<void> {
+    fixture.destroy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    fixture = TestBed.createComponent(CollectionFilterBarHost);
+    await fixture.whenStable();
+  }
+
   function byTestId(testId: string): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
   }
@@ -255,6 +274,25 @@ describe('CollectionFilterBar', () => {
     const options = document.querySelectorAll('[data-testid="widgets-filters-add-option"]');
     expect(options.length).toBe(2);
     expect(Array.from(options).map((el) => el.textContent?.trim())).toEqual(['Type', 'Priority']);
+  });
+
+  it('should present the add-filter catalog in a Spartan drawer on compact viewports', async () => {
+    await useCompactFixture();
+
+    byTestId('widgets-filters-add')?.click();
+    await fixture.whenStable();
+
+    expect(document.querySelector('[data-testid="widgets-filters-add-drawer"]')).not.toBeNull();
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+
+    Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]'),
+    )
+      .find((option: HTMLButtonElement): boolean => option.textContent?.includes('Type') ?? false)
+      ?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.picked).toEqual(['type']);
   });
 
   it('should emit fieldPicked and render the pending chip once a field is picked from the menu', async () => {

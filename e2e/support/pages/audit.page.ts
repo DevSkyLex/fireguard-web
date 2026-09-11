@@ -17,8 +17,8 @@ export class AuditPage {
   public readonly addFilterTrigger: Locator = this.page.getByTestId('audit-filters-add');
   public readonly filterChips: Locator = this.page.getByTestId('audit-filter-chip');
 
-  /** The desktop "Action" chip combobox, targeted by its accessible name. Mobile specs target its drawer explicitly. */
-  public readonly actionFilter: Locator = this.page.getByRole('combobox', { name: 'Action' });
+  /** The adaptive "Action" filter trigger. The desktop combobox also owns a searchable combobox input. */
+  public readonly actionFilter: Locator = this.page.getByTestId('audit-filter-action');
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/audit`);

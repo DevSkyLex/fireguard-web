@@ -43,7 +43,7 @@ test.describe('Audit journal — filter bar', () => {
     expect(new URL((await narrowedRequest).url()).searchParams.get('action')).toBe(
       'organization.created',
     );
-    await expect(audit.actionFilter).toHaveValue('Organization created');
+    await expect(audit.actionFilter).toContainText('Organization created');
 
     const clearedRequest = page.waitForRequest((request) =>
       /\/api\/organizations\/.+\/audit-events(\?.*)?$/.test(request.url()),

@@ -13,6 +13,7 @@
         ><span i18n="@@org.teams.form.name">Name</span><app-required-marker
       /></label>
       <input
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmInput
         id="organization-team-edit-name"
         type="text"
@@ -34,6 +35,7 @@
         >Description</label
       >
       <textarea
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmTextarea
         id="organization-team-edit-description"
         rows="2"
@@ -51,7 +53,7 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="organization-team-edit-cancel"
         (click)="cancelled.emit()"
       >
@@ -60,7 +62,7 @@
       <button
         hlmBtn
         type="submit"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="organization-team-edit-submit"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"

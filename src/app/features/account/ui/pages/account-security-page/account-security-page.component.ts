@@ -43,6 +43,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component AccountSecurityPage
@@ -81,6 +82,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     HlmButton,
     ...HlmCardImports,
     HlmSkeleton,
+    HlmSpinner,
   ],
   providers: [
     AccountDeactivationStore,

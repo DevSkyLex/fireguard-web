@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,6 +18,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { ConnectivityService } from '@core/connectivity';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { INTERVENTION_OUTBOX_LABEL } from '@features/organization/features/interventions/constants';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
@@ -28,6 +30,7 @@ import { formatInterventionRelativeTime } from '@features/organization/features/
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmItem,
   HlmItemActions,
@@ -86,6 +89,8 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
 @Component({
   selector: 'app-intervention-sync-indicator',
   imports: [
+    NgTemplateOutlet,
+    ...HlmDrawerImports,
     NgIcon,
     HlmBadge,
     HlmButton,
@@ -112,6 +117,27 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionSyncIndicator {
+  /**
+   * Property mobilePanelVisible
+   * @readonly
+   * @description Keeps the queue drawer mounted through an interaction mode change until it closes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly mobilePanelVisible: WritableSignal<boolean> = signal(false);
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Properties
   /**
    * Property slotPresentation
@@ -499,4 +525,17 @@ export class InterventionSyncIndicator {
     }
   }
   //#endregion
+
+  /**
+   * Method onMobilePanelClosed
+   * @method onMobilePanelClosed
+   * @description Opens the blocked-operation discard confirmation after the mobile panel has closed.
+   * @access protected
+   * @since 1.0.0
+   * @param {unknown} action - The explicit native drawer close result.
+   * @returns {void}
+   */
+  protected onMobilePanelClosed(action: unknown): void {
+    if (action === 'discard' && this.state() === 'blocked') this.discardConfirmVisible.set(true);
+  }
 }

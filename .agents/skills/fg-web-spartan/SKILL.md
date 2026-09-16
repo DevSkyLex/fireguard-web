@@ -1,6 +1,6 @@
 ---
 name: fg-web-spartan
-description: 'Build or refine FireGuard interfaces using installed Spartan Nova primitives, neutral semantic tokens and native interaction patterns.'
+description: 'Build or refine FireGuard interfaces using installed Spartan Nova primitives, FireGuard semantic tokens and native interaction patterns.'
 ---
 
 # fg-web-spartan
@@ -24,7 +24,9 @@ Prefer an installed helm primitive, then an official missing primitive installed
 project CLI, then brain composition only for a real gap. Do not create a parallel design
 system or a generic wrapper around an existing select, card, button or overlay.
 
-Keep official neutral/Nova defaults, Geist, semantic tokens and `html[data-theme="dark"]`.
+Keep Nova, Geist, the neutral surfaces and vermilion brand tokens defined in DESIGN.md,
+and `html[data-theme="dark"]`. Installed `src/app/shared/ui/**` primitives are read-only;
+compose changes in the owning application feature.
 Compose field groups, native cards/items, tabs, menus and sheets according to their intended
 purpose. Keep one clear commitment per active surface, useful density, visible focus,
 local errors and task context across navigation. Preserve permissions, SSR and offline behavior.

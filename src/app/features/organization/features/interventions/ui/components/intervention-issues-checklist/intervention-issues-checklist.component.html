@@ -1,12 +1,20 @@
 @if (loading()) {
-  <p class="py-2 text-sm text-muted-foreground" role="status" i18n="@@intervention.issues.checking">
+  <p
+    class="flex items-center gap-2 py-2 text-sm text-muted-foreground"
+    role="status"
+    i18n="@@intervention.issues.checking"
+  >
     Checking publication requirements…
   </p>
 }
 @if (error(); as message) {
-  <div class="space-y-2 py-2" role="alert">
+  <div
+    class="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3"
+    role="alert"
+  >
     <p class="text-sm text-destructive">{{ message }}</p>
     <button
+      class="mobile-ui:min-h-11"
       hlmBtn
       variant="outline"
       size="sm"
@@ -19,13 +27,15 @@
 }
 @if (blockers().length > 0 || secondaryIssues().length > 0 || showClearNotice()) {
   <section
-    class="flex flex-col gap-3"
+    class="flex flex-col gap-4"
     aria-label="Publication issues"
     i18n-aria-label="@@intervention.issues.title"
     data-testid="intervention-issues-checklist"
   >
-    <div class="flex flex-col gap-1">
-      <h3 class="text-sm font-semibold" i18n="@@intervention.issues.title">Publication issues</h3>
+    <div class="flex flex-col gap-1.5">
+      <h3 class="text-sm font-semibold tracking-tight" i18n="@@intervention.issues.title">
+        Publication issues
+      </h3>
       <p
         class="text-xs leading-relaxed text-muted-foreground"
         i18n="@@intervention.issues.description"
@@ -35,18 +45,18 @@
     </div>
 
     @if (blockers().length > 0) {
-      <ul hlmItemGroup>
+      <ul hlmItemGroup class="gap-2">
         @for (issue of blockers(); track issue['@id']) {
           <li>
             <button
               hlmItem
               type="button"
               variant="outline"
-              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 text-start"
+              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 bg-muted/25 text-start hover:bg-muted/40 mobile-ui:min-h-11"
               data-testid="intervention-issues-checklist-blocker-item"
               (click)="activate(issue)"
             >
-              <span hlmItemContent class="min-w-0">
+              <span hlmItemContent class="min-w-0 gap-1.5">
                 <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
                 <span class="flex min-w-0 flex-col gap-1"
                   ><span class="text-sm">{{ issue.message }}</span>
@@ -66,7 +76,7 @@
       </ul>
     } @else if (showClearNotice()) {
       <p
-        class="flex items-center gap-2 text-sm text-muted-foreground"
+        class="flex items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 py-2.5 text-sm text-foreground"
         data-testid="intervention-issues-checklist-clear"
       >
         <ng-icon name="lucideCircleCheck" class="text-success" aria-hidden="true" />
@@ -75,60 +85,35 @@
     }
 
     @if (secondaryIssues().length > 0) {
-      <div
-        hlmCollapsible
-        [expanded]="secondaryExpanded()"
-        (expandedChange)="secondaryExpanded.set($event)"
-      >
-        <button
-          hlmCollapsibleTrigger
-          hlmBtn
-          variant="ghost"
-          type="button"
-          class="flex min-h-11 w-full items-center justify-between gap-2 text-sm text-muted-foreground"
-          data-testid="intervention-issues-checklist-secondary-toggle"
-        >
-          <span>{{ secondaryToggleLabel() }}</span>
-          <ng-icon
-            name="lucideChevronDown"
-            class="shrink-0 transition-transform"
-            [class.rotate-180]="secondaryExpanded()"
-            aria-hidden="true"
-          />
-        </button>
-
-        <div hlmCollapsibleContent>
-          <ul hlmItemGroup class="pt-2">
-            @for (issue of secondaryIssues(); track issue['@id']) {
-              <li>
-                <button
-                  hlmItem
-                  type="button"
-                  variant="default"
-                  class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 text-start"
-                  data-testid="intervention-issues-checklist-secondary-item"
-                  (click)="activate(issue)"
-                >
-                  <span hlmItemContent class="min-w-0">
-                    <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
-                    <span class="flex min-w-0 flex-col gap-1"
-                      ><span class="text-sm">{{ issue.message }}</span>
-                      @if (issue.field) {
-                        <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
-                      }
-                    </span>
-                  </span>
-                  <ng-icon
-                    name="lucideChevronRight"
-                    class="shrink-0 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </button>
-              </li>
-            }
-          </ul>
-        </div>
-      </div>
+      <ul hlmItemGroup class="gap-2">
+        @for (issue of secondaryIssues(); track issue['@id']) {
+          <li>
+            <button
+              hlmItem
+              type="button"
+              variant="outline"
+              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 bg-muted/25 text-start hover:bg-muted/40 mobile-ui:min-h-11"
+              data-testid="intervention-issues-checklist-secondary-item"
+              (click)="activate(issue)"
+            >
+              <span hlmItemContent class="min-w-0 gap-1.5">
+                <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
+                <span class="flex min-w-0 flex-col gap-1"
+                  ><span class="text-sm">{{ issue.message }}</span>
+                  @if (issue.field) {
+                    <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
+                  }
+                </span>
+              </span>
+              <ng-icon
+                name="lucideChevronRight"
+                class="shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </button>
+          </li>
+        }
+      </ul>
     }
   </section>
 }

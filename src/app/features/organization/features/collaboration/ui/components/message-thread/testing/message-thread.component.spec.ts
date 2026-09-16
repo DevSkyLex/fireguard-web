@@ -1,5 +1,9 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import type { MessageView } from '@features/organization/features/collaboration/models';
 import { MessageThread } from '../message-thread.component';
 
@@ -40,7 +44,19 @@ describe('MessageThread', () => {
   }
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal<'desktop'>('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          } satisfies InteractionCapabilitiesPort,
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(MessageThread);
     await setMessages([view()]);

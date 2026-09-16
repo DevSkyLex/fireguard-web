@@ -2,6 +2,7 @@
  * Interventions model public exports.
  */
 export type { InterventionExportOptions } from './intervention/intervention-export-options.interface';
+export type { InterventionChangePatchLine } from './intervention-change/intervention-change-patch-line.interface';
 export type { InterventionIssueOutput } from './intervention/intervention-issue-output.interface';
 export type { InterventionIssueSeverity } from './intervention/intervention-issue-severity.type';
 export type { InterventionListOptions } from './intervention/intervention-list-options.interface';
@@ -101,6 +102,12 @@ export type {
   SelectOption,
 } from './intervention-workflow';
 export type { MemberAvatar } from './member-avatar/member-avatar.interface';
+export type { InterventionCollectionsChange } from './intervention-table-query/intervention-collections-change.interface';
+export type { InterventionWorkItemTableQuery } from './intervention-table-query/intervention-work-item-table-query.interface';
+export type { InterventionChangeTableQuery } from './intervention-table-query/intervention-change-table-query.interface';
+export type { InterventionFacilitiesTableQuery } from './intervention-table-query/intervention-facilities-table-query.interface';
+export type { InterventionEquipmentTableQuery } from './intervention-table-query/intervention-equipment-table-query.interface';
+export type { InterventionInspectionsTableQuery } from './intervention-table-query/intervention-inspections-table-query.interface';
 export type { InterventionMentionSegment } from './intervention-mention/intervention-mention-segment.interface';
 export type { InterventionMentionQuery } from './intervention-mention/intervention-mention-query.interface';
 
@@ -123,3 +130,5 @@ export type {
   PlanningCatalogueState,
   PlanningCatalogueRequest,
 } from './planning/planning-catalogue.interface';
+export type { InterventionWorkspaceData } from './intervention-table-query/intervention-workspace-data.interface';
+export type { InterventionTableSource } from './intervention-table-query/intervention-table-source.type';

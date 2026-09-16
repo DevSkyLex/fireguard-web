@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
-  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto mobile-ui:gap-4">
     @if (serverMessage(); as message) {
       <div role="alert" data-testid="calendar-event-dialog-error" class="text-sm text-destructive">
         <p>{{ message }}</p>
@@ -20,6 +20,7 @@
         [formField]="eventForm.title"
         [attr.aria-required]="true"
         [attr.aria-invalid]="eventForm.title().touched() && eventForm.title().invalid()"
+        class="mobile-ui:min-h-11"
       />
       @if (eventForm.title().touched() && eventForm.title().invalid()) {
         <hlm-field-error>{{ eventForm.title().errors()[0].message }}</hlm-field-error>
@@ -46,12 +47,12 @@
       }
     </hlm-field>
 
-    <div class="grid grid-cols-1 gap-4">
+    <div class="grid grid-cols-1 gap-4 mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4">
       <hlm-field>
         <label hlmFieldLabel for="calendar-event-starts-at-date"
           ><span i18n="@@calendar.eventDialog.startsAt">Starts</span><app-required-marker
         /></label>
-        <div class="flex gap-2">
+        <div class="flex gap-2 mobile-ui:max-sm:flex-col">
           <div class="min-w-0 flex-1">
             <hlm-date-picker
               class="w-full [&>hlm-date-picker-trigger]:block"
@@ -59,14 +60,16 @@
             >
               <hlm-date-picker-trigger
                 buttonId="calendar-event-starts-at-date"
-                class="w-full justify-between max-sm:min-h-11"
+                class="w-full justify-between mobile-ui:min-h-11"
                 data-testid="calendar-event-starts-at"
               >
                 <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
               </hlm-date-picker-trigger>
             </hlm-date-picker>
           </div>
-          <label class="sr-only" for="calendar-event-starts-at-time"
+          <label
+            class="sr-only mobile-ui:max-sm:not-sr-only mobile-ui:max-sm:text-sm mobile-ui:max-sm:font-medium"
+            for="calendar-event-starts-at-time"
             ><span i18n="@@calendar.eventDialog.startsAtTimeLabel">Start time</span
             ><span aria-hidden="true">&nbsp;*</span></label
           >
@@ -75,7 +78,7 @@
             id="calendar-event-starts-at-time"
             type="time"
             data-testid="calendar-event-starts-at-time"
-            class="w-28 shrink-0 max-sm:min-h-11"
+            class="w-28 shrink-0 mobile-ui:min-h-11 mobile-ui:max-sm:w-full"
             [formField]="eventForm.startsAtTime"
             [attr.aria-required]="true"
             [attr.aria-invalid]="
@@ -94,7 +97,7 @@
         <label hlmFieldLabel for="calendar-event-ends-at-date" i18n="@@calendar.eventDialog.endsAt"
           >Ends</label
         >
-        <div class="flex gap-2">
+        <div class="flex gap-2 mobile-ui:max-sm:flex-col">
           <div class="min-w-0 flex-1">
             <hlm-date-picker
               class="w-full [&>hlm-date-picker-trigger]:block"
@@ -102,7 +105,7 @@
             >
               <hlm-date-picker-trigger
                 buttonId="calendar-event-ends-at-date"
-                class="w-full justify-between max-sm:min-h-11"
+                class="w-full justify-between mobile-ui:min-h-11"
                 data-testid="calendar-event-ends-at"
               >
                 <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
@@ -110,7 +113,7 @@
             </hlm-date-picker>
           </div>
           <label
-            class="sr-only"
+            class="sr-only mobile-ui:max-sm:not-sr-only mobile-ui:max-sm:text-sm mobile-ui:max-sm:font-medium"
             for="calendar-event-ends-at-time"
             i18n="@@calendar.eventDialog.endsAtTimeLabel"
             >End time</label
@@ -120,7 +123,7 @@
             id="calendar-event-ends-at-time"
             type="time"
             data-testid="calendar-event-ends-at-time"
-            class="w-28 shrink-0 max-sm:min-h-11"
+            class="w-28 shrink-0 mobile-ui:min-h-11 mobile-ui:max-sm:w-full"
             [formField]="eventForm.endsAtTime"
           />
         </div>
@@ -130,7 +133,10 @@
       </hlm-field>
     </div>
 
-    <hlm-field orientation="horizontal" class="justify-between">
+    <hlm-field
+      orientation="horizontal"
+      class="justify-between mobile-ui:border-b mobile-ui:border-border mobile-ui:pb-4"
+    >
       <label hlmFieldLabel for="calendar-event-all-day" i18n="@@calendar.eventDialog.allDay"
         >All day</label
       >
@@ -148,7 +154,7 @@
       <hlm-select [formField]="eventForm.facilityId" [itemToString]="facilityLabelOf">
         <hlm-select-trigger
           buttonId="calendar-event-facility"
-          class="w-full max-sm:min-h-11"
+          class="w-full mobile-ui:min-h-11"
           data-testid="calendar-event-facility"
         >
           <hlm-select-value
@@ -158,11 +164,16 @@
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
-            <hlm-select-item [value]="noFacilityValue" i18n="@@calendar.eventDialog.noFacility"
+            <hlm-select-item
+              [value]="noFacilityValue"
+              i18n="@@calendar.eventDialog.noFacility"
+              class="mobile-ui:min-h-11"
               >No facility</hlm-select-item
             >
             @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+                option.label
+              }}</hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>
@@ -170,12 +181,14 @@
     </hlm-field>
   </hlm-field-group>
 
-  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+  <hlm-sheet-footer
+    class="flex-col mobile-ui:grid mobile-ui:grid-cols-1 desktop-ui:sm:flex-row desktop-ui:sm:justify-end"
+  >
     <button
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11 mobile-ui:w-full"
       data-testid="calendar-event-dialog-cancel"
       [disabled]="pending()"
       (click)="cancelled.emit()"
@@ -185,7 +198,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="calendar-event-dialog-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"

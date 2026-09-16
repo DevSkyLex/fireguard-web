@@ -1,5 +1,7 @@
+import { computed, signal } from '@angular/core';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { DirectMessagePicker } from '../direct-message-picker.component';
 
@@ -19,7 +21,21 @@ function overlay(): HTMLElement | null {
 }
 
 describe('DirectMessagePicker', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<DirectMessagePicker>;
+
+  beforeAll(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {}
+      },
+    );
+  });
+
+  afterAll(() => vi.unstubAllGlobals());
 
   function candidates(): readonly HTMLButtonElement[] {
     return Array.from(
@@ -31,7 +47,7 @@ describe('DirectMessagePicker', () => {
 
   async function search(text: string): Promise<void> {
     const field: HTMLInputElement | null =
-      overlay()?.querySelector('[data-testid="new-direct-message-search"]') ?? null;
+      overlay()?.querySelector('[data-testid="new-direct-message-search"] input') ?? null;
 
     if (field === null) throw new Error('The picker has no search field.');
 
@@ -47,6 +63,13 @@ describe('DirectMessagePicker', () => {
     });
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
+    mobile.set(false);
+    TestBed.overrideProvider(INTERACTION_CAPABILITIES_PORT, {
+      useValue: {
+        isMobileInteractionMode: mobile,
+        mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+      },
+    });
     fixture = TestBed.createComponent(DirectMessagePicker);
     fixture.componentRef.setInput('members', [
       member(),
@@ -99,5 +122,24 @@ describe('DirectMessagePicker', () => {
     await fixture.whenStable();
 
     expect(picked).toEqual([]);
+  });
+  it('searches and selects the same recipient from the mobile drawer', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+    await search('BRUNO');
+    const picked: string[] = [];
+    fixture.componentInstance.selected.subscribe((id) => picked.push(id));
+    candidates()[0].click();
+    await fixture.whenStable();
+    expect(picked).toEqual(['member-8']);
+  });
+
+  it('keeps pending recipients disabled in the mobile drawer', async () => {
+    mobile.set(true);
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    expect(candidates()).toHaveLength(2);
+    expect(candidates().every((candidate) => candidate.disabled)).toBe(true);
   });
 });

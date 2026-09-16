@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { InterventionEquipmentTable } from '../intervention-equipment-table.component';
 
@@ -33,10 +34,20 @@ describe('InterventionEquipmentTable', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(InterventionEquipmentTable);
+    fixture.componentInstance.queryChanged.subscribe((query) =>
+      fixture.componentRef.setInput('query', query),
+    );
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
@@ -59,6 +70,42 @@ describe('InterventionEquipmentTable', () => {
     expect(row.textContent).toContain('Sicli CO2-6');
     expect(row.textContent).toContain('Operational');
     expect(row.textContent).toContain('Hall A');
+  });
+
+  it('should expose shared search and filters for the linked equipment', async () => {
+    fixture.componentRef.setInput('items', [
+      equipment({ id: 'eq-1', serialNumber: 'SN-001', locationLabel: 'Hall A' }),
+      equipment({ id: 'eq-2', serialNumber: 'SN-002', locationLabel: 'Hall B' }),
+    ]);
+    await fixture.whenStable();
+
+    const search: HTMLInputElement = byTestId('intervention-equipment-search') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    expect(byTestId('intervention-equipment-filters-toggle')).not.toBeNull();
+
+    search.value = 'sn-002';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-equipment-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().textContent).toContain('SN-002');
+    expect(root().textContent).not.toContain('SN-001');
+  });
+
+  it('should emit search changes when the host enables server filtering', async () => {
+    fixture.componentRef.setInput('serverFiltering', true);
+    await fixture.whenStable();
+    const searches: string[] = [];
+    fixture.componentInstance.queryChanged.subscribe(({ search }) => searches.push(search));
+
+    const search = byTestId('intervention-equipment-search') as HTMLInputElement;
+    search.value = 'sn-002';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(searches).toContain('sn-002');
   });
 
   it('should link a published equipment row to its detail route', async () => {

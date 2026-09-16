@@ -20,13 +20,15 @@
         (valueChange)="pickType($any($event))"
       >
         <label for="equipment-prop-type" class="sr-only" i18n="@@equipment.info.type">Type</label>
-        <hlm-select-trigger buttonId="equipment-prop-type" class="w-full">
+        <hlm-select-trigger buttonId="equipment-prop-type" class="w-full mobile-ui:min-h-11">
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (option of typeOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+                option.label
+              }}</hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>
@@ -60,7 +62,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="subTypeField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -94,7 +96,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="brandField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -128,7 +130,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="modelField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -162,7 +164,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="serialField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -196,7 +198,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="locationField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"

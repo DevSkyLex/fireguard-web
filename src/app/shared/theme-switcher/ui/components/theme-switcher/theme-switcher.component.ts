@@ -1,15 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideMonitor, lucideMoon, lucideSun } from '@ng-icons/lucide';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuItem,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmItem, HlmItemContent, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
+import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 import type { ThemeOption } from './models';
 
 /**
@@ -31,6 +38,9 @@ import type { ThemeOption } from './models';
  *
  * Generic by design: it injects the theme port published by `core/theme`, never
  * the concrete service (`ARCHITECTURE.md` §8.5).
+ * The mobile drawer focuses its heading and declares public CDK region boundaries:
+ * the installed iOS tabbability heuristic excludes its radio/button-only content.
+ * This preserves native focus trapping without replacing keyboard or radio behavior.
  *
  * @version 1.1.0
  *
@@ -49,6 +59,9 @@ import type { ThemeOption } from './models';
     HlmDropdownMenu,
     HlmDropdownMenuItem,
     HlmDropdownMenuTrigger,
+    ...HlmDrawerImports,
+    ...HlmRadioGroupImports,
+    ...HlmFieldImports,
     HlmItem,
     HlmItemContent,
     HlmItemMedia,
@@ -60,6 +73,17 @@ import type { ThemeOption } from './models';
 })
 export class ThemeSwitcher {
   //#region Properties
+  /**
+   * Property interactionCapabilities
+   * @readonly
+   * @description Stable interaction mode used to choose the native overlay presentation.
+   * @access protected
+   * @since 1.3.0
+   * @type {InteractionCapabilitiesPort}
+   */
+  protected readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  );
   /**
    * Property slotPresentation
    * @readonly
@@ -200,5 +224,19 @@ export class ThemeSwitcher {
   protected select(mode: ThemeMode): void {
     this.themePort.setTheme(mode);
   }
+
+  /**
+   * Method selectTheme
+   * @method selectTheme
+   * @description Validates a native radio-group value before applying appearance.
+   * @access protected
+   * @since 1.3.0
+   * @param {unknown} value - Selected radio value.
+   * @returns {void}
+   */
+  protected selectTheme(value: unknown): void {
+    if (value === 'light' || value === 'dark' || value === 'system') this.select(value);
+  }
+
   //#endregion
 }

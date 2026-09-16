@@ -16,66 +16,68 @@
         <hlm-paginated-tabs-list
           variant="line"
           class="w-full"
-          tabListClass="justify-start"
+          tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+          paginationButtonClass="mobile-ui:size-11 mobile-ui:shrink-0"
           data-testid="org-settings-tabs-list"
           aria-label="Organization settings sections"
           i18n-aria-label="@@org.settings.tabsAriaLabel"
         >
           <button
             hlmTabsTrigger="general"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-general"
           >
-            <ng-icon name="lucideSettings" aria-hidden="true" />
+            <ng-icon name="lucideSettings" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.general">General</span>
           </button>
           <button
             hlmTabsTrigger="subscription"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-subscription"
           >
-            <ng-icon name="lucideCreditCard" aria-hidden="true" />
+            <ng-icon name="lucideCreditCard" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.subscription">Subscription</span>
           </button>
           <button
             hlmTabsTrigger="usage"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-usage"
           >
-            <ng-icon name="lucideGauge" aria-hidden="true" />
+            <ng-icon name="lucideGauge" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.usage">Usage</span>
           </button>
           <button
             hlmTabsTrigger="notifications"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-notifications"
           >
-            <ng-icon name="lucideBell" aria-hidden="true" />
+            <ng-icon name="lucideBell" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.notifications">Notifications</span>
           </button>
           <button
             hlmTabsTrigger="regional"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-regional"
           >
-            <ng-icon name="lucideGlobe" aria-hidden="true" />
+            <ng-icon name="lucideGlobe" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.regional">Regional & formats</span>
           </button>
           <button
             hlmTabsTrigger="compliance"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="org-settings-tab-compliance"
           >
-            <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+            <ng-icon name="lucideShieldCheck" class="mobile-ui:hidden" aria-hidden="true" />
             <span i18n="@@org.settings.tabs.compliance">Compliance</span>
           </button>
           @if (canManageAccess()) {
             <button
               hlmTabsTrigger="access"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11 mobile-ui:px-3"
               data-testid="org-settings-tab-access"
             >
-              <ng-icon name="lucideGlobe" aria-hidden="true" /><span i18n="@@org.access.tab"
+              <ng-icon name="lucideGlobe" class="mobile-ui:hidden" aria-hidden="true" /><span
+                i18n="@@org.access.tab"
                 >Access and domains</span
               >
             </button>
@@ -83,10 +85,14 @@
           @if (canDelete()) {
             <button
               hlmTabsTrigger="danger"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11 mobile-ui:px-3"
               data-testid="org-settings-tab-danger"
             >
-              <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+              <ng-icon
+                name="lucideTriangleAlert"
+                class="text-destructive mobile-ui:hidden"
+                aria-hidden="true"
+              />
               <span i18n="@@org.settings.tabs.danger">Danger zone</span>
             </button>
           }
@@ -127,7 +133,7 @@
         <ng-template hlmTabsContentLazy>
           <div class="flex min-w-0 flex-col divide-y divide-border">
             <section
-              class="grid min-w-0 gap-6 pb-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+              class="grid min-w-0 gap-6 pb-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4 mobile-ui:pb-6"
             >
               <header class="min-w-0">
                 <h2
@@ -168,7 +174,7 @@
             </section>
 
             <section
-              class="grid min-w-0 gap-6 pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+              class="grid min-w-0 gap-6 pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4 mobile-ui:pt-6"
             >
               <header class="min-w-0">
                 <h2
@@ -235,7 +241,7 @@
                       type="button"
                       variant="outline"
                       size="sm"
-                      class="gap-2 max-sm:min-h-11"
+                      class="gap-2 mobile-ui:min-h-11"
                       data-testid="org-settings-billing-portal"
                       [disabled]="billingStore.isStartingPortal()"
                       (click)="startPortal()"
@@ -250,7 +256,7 @@
                       type="button"
                       variant="outline"
                       size="sm"
-                      class="gap-2 max-sm:min-h-11"
+                      class="gap-2 mobile-ui:min-h-11"
                       data-testid="org-settings-billing-checkout"
                       [disabled]="billingStore.isStartingCheckout() || currentPlanKey() === null"
                       (click)="startCheckout()"
@@ -267,7 +273,7 @@
                         type="button"
                         variant="outline"
                         size="sm"
-                        class="gap-2 max-sm:min-h-11"
+                        class="gap-2 mobile-ui:min-h-11"
                         data-testid="org-settings-subscription-cancel"
                         [disabled]="billingStore.isCanceling()"
                         (click)="openCancelSubscriptionDialog()"
@@ -283,7 +289,7 @@
                         type="button"
                         variant="outline"
                         size="sm"
-                        class="gap-2 max-sm:min-h-11"
+                        class="gap-2 mobile-ui:min-h-11"
                         data-testid="org-settings-subscription-resume"
                         [disabled]="billingStore.isResuming()"
                         [attr.aria-busy]="billingStore.isResuming() ? 'true' : null"
@@ -408,6 +414,7 @@
                       @if (invoice.invoicePdf ?? invoice.hostedInvoiceUrl; as downloadUrl) {
                         <div hlmItemActions>
                           <a
+                            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
                             hlmBtn
                             variant="ghost"
                             size="icon-sm"
@@ -571,7 +578,7 @@
                         hlmBtn
                         type="button"
                         variant="outline"
-                        class="w-fit gap-2 max-sm:min-h-11"
+                        class="w-fit gap-2 mobile-ui:min-h-11"
                         data-testid="org-settings-danger-suspend-open"
                         (click)="openSuspendDialog()"
                       >
@@ -584,7 +591,7 @@
                         hlmBtn
                         type="button"
                         variant="outline"
-                        class="w-fit gap-2 max-sm:min-h-11"
+                        class="w-fit gap-2 mobile-ui:min-h-11"
                         data-testid="org-settings-danger-restore"
                         [disabled]="settingsStore.isChangingStatus()"
                         [attr.aria-busy]="settingsStore.isChangingStatus() ? 'true' : null"
@@ -644,7 +651,7 @@
                       hlmBtn
                       type="button"
                       variant="outline"
-                      class="w-fit gap-2 max-sm:min-h-11"
+                      class="w-fit gap-2 mobile-ui:min-h-11"
                       data-testid="org-settings-danger-transfer-open"
                       (click)="openTransferDialog()"
                     >
@@ -685,7 +692,7 @@
                     hlmBtn
                     type="button"
                     variant="destructive"
-                    class="w-fit gap-2 max-sm:min-h-11"
+                    class="w-fit gap-2 mobile-ui:min-h-11"
                     data-testid="org-settings-danger-open"
                     (click)="openDeleteDialog()"
                   >

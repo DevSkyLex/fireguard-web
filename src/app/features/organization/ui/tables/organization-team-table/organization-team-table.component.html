@@ -51,38 +51,44 @@
   </ng-container>
 
   <ng-container surfaceCards>
-    @for (team of items(); track team.id) {
-      <div
-        class="flex flex-col gap-1.5 rounded-md border border-border p-3"
-        data-testid="organization-team-table-row-card"
-      >
-        <div class="flex items-start gap-2">
-          <span class="min-w-0 flex-1 truncate font-medium text-foreground">{{ team.name }}</span>
-
-          <ng-container
-            [ngTemplateOutlet]="rowActions"
-            [ngTemplateOutletContext]="{ item: team }"
-          />
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
-          <span>{{ memberCountLabel(team.memberCount) }}</span>
-
-          <span class="inline-flex items-center gap-1 truncate">
-            <span i18n="@@org.teams.table.colCreated">Created</span>
-            <span class="tabular-nums">{{
-              team.createdAt | appOrgDate: 'date' : regionalFormatting()
-            }}</span>
-          </span>
-        </div>
-
-        @if (team.description) {
-          <span class="line-clamp-2 ps-1 text-xs text-muted-foreground">{{
-            team.description
-          }}</span>
+    <div hlmItemGroup class="gap-0">
+      @for (team of items(); track team.id) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
         }
-      </div>
-    }
+        <div hlmItem size="sm" data-testid="organization-team-table-row-card">
+          <div hlmItemContent class="min-w-0 gap-2">
+            <div class="flex items-start gap-2">
+              <span hlmItemTitle class="line-clamp-none min-h-11 min-w-0 flex-1 wrap-anywhere">{{
+                team.name
+              }}</span>
+
+              <ng-container
+                [ngTemplateOutlet]="rowActions"
+                [ngTemplateOutletContext]="{ item: team }"
+              />
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
+              <span>{{ memberCountLabel(team.memberCount) }}</span>
+
+              <span class="inline-flex items-center gap-1 truncate">
+                <span i18n="@@org.teams.table.colCreated">Created</span>
+                <span class="tabular-nums">{{
+                  team.createdAt | appOrgDate: 'date' : regionalFormatting()
+                }}</span>
+              </span>
+            </div>
+
+            @if (team.description) {
+              <span hlmItemDescription class="line-clamp-none wrap-anywhere">{{
+                team.description
+              }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
   </ng-container>
 
   <p
@@ -101,7 +107,7 @@
     variant="ghost"
     size="icon-sm"
     align="end"
-    class="max-sm:size-11"
+    class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
     data-testid="organization-team-table-row-menu"
     [hlmDropdownMenuTrigger]="rowMenu"
   >
@@ -113,6 +119,7 @@
     <hlm-dropdown-menu class="w-48">
       @if (canEdit()) {
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           data-testid="organization-team-table-row-edit"
           (click)="editRequested.emit(team)"
@@ -123,6 +130,7 @@
       }
 
       <button
+        class="mobile-ui:min-h-11"
         hlmDropdownMenuItem
         data-testid="organization-team-table-row-members"
         (click)="membersRequested.emit(team)"
@@ -134,6 +142,7 @@
       @if (canDelete()) {
         <hlm-dropdown-menu-separator />
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           variant="destructive"
           data-testid="organization-team-table-row-delete"

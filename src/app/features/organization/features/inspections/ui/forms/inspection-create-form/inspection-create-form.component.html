@@ -1,5 +1,5 @@
 <form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
-  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
+  <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4 mobile-ui:gap-4 mobile-ui:pb-4">
     @if (serverMessages().length > 0) {
       <div role="alert" data-testid="inspection-create-error" class="text-sm text-destructive">
         @for (message of serverMessages(); track message) {
@@ -12,39 +12,124 @@
       <label hlmFieldLabel for="inspection-create-equipment"
         ><span i18n="@@inspection.form.equipment">Equipment</span><app-required-marker
       /></label>
-      <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
-        <hlm-combobox-input
-          inputId="inspection-create-equipment"
-          placeholder="Search equipment"
-          i18n-placeholder="@@inspection.form.equipmentPlaceholder"
-          data-testid="inspection-create-equipment"
-        />
-        <hlm-combobox-content *hlmComboboxPortal>
-          <hlm-combobox-empty i18n="@@inspection.form.noEquipment"
-            >No equipment matches.</hlm-combobox-empty
+      @if (isMobileInteractionMode() || equipmentPickerVisible()) {
+        <hlm-drawer
+          direction="bottom"
+          (stateChanged)="equipmentPickerVisible.set($event === 'open')"
+        >
+          <button
+            hlmDrawerTrigger
+            hlmBtn
+            variant="outline"
+            type="button"
+            id="inspection-create-equipment"
+            class="min-h-11 w-full justify-start text-start whitespace-normal"
+            data-testid="inspection-create-equipment-mobile"
+            [disabled]="pending()"
+            [attr.aria-required]="true"
+            [attr.aria-invalid]="
+              createForm.equipmentId().touched() && createForm.equipmentId().invalid()
+            "
           >
-          <div hlmComboboxList>
-            @for (option of equipmentOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">
-                <div class="flex min-w-0 flex-col">
-                  <span class="truncate">{{ option.label }}</span>
-                  <span class="truncate text-xs text-muted-foreground">
-                    @if (option.label !== option.typeLabel) {
-                      {{ option.typeLabel }}
-                    }
-                    @if (option.secondary; as where) {
-                      @if (option.label !== option.typeLabel) {
-                        ·
-                      }
-                      {{ where }}
-                    }
-                  </span>
-                </div>
-              </hlm-combobox-item>
+            @if (createForm.equipmentId().value(); as equipmentId) {
+              {{ equipmentLabelOf(equipmentId) }}
+            } @else {
+              <span i18n="@@inspection.form.equipmentPlaceholder">Search equipment</span>
             }
-          </div>
-        </hlm-combobox-content>
-      </hlm-combobox>
+          </button>
+          <hlm-drawer-content
+            *hlmDrawerPortal="let drawer"
+            class="pb-[env(safe-area-inset-bottom)]"
+          >
+            <hlm-drawer-header>
+              <div class="text-start">
+                <h3 hlmDrawerTitle i18n="@@inspection.form.equipment">Equipment</h3>
+                <p hlmDrawerDescription i18n="@@inspection.form.equipmentDrawerDescription">
+                  Search by equipment, type or location, then select the equipment to inspect.
+                </p>
+              </div>
+            </hlm-drawer-header>
+            <hlm-command class="min-h-0">
+              <label
+                class="sr-only"
+                for="inspection-equipment-search"
+                i18n="@@inspection.form.equipmentPlaceholder"
+                >Search equipment</label
+              >
+              <hlm-input-group class="min-h-11">
+                <input
+                  brnCommandInput
+                  hlmInputGroupInput
+                  class="text-base"
+                  id="inspection-equipment-search"
+                  placeholder="Search equipment"
+                  i18n-placeholder="@@inspection.form.equipmentPlaceholder"
+                />
+              </hlm-input-group>
+              <div hlmCommandList class="max-h-[50svh] overscroll-contain">
+                <div *hlmCommandEmptyState hlmCommandEmpty i18n="@@inspection.form.noEquipment">
+                  No equipment matches.
+                </div>
+                @for (option of equipmentOptions(); track option.value) {
+                  <button
+                    hlmCommandItem
+                    type="button"
+                    class="min-h-11 text-start whitespace-normal"
+                    [value]="option.label + ' ' + option.typeLabel + ' ' + option.secondary"
+                    [disabled]="pending()"
+                    (selected)="selectEquipment(option.value) && drawer.close()"
+                    data-testid="inspection-equipment-mobile-option"
+                  >
+                    <span class="flex min-w-0 flex-1 flex-col">
+                      <span>{{ option.label }}</span>
+                      <span class="text-xs text-muted-foreground"
+                        >{{ option.typeLabel }} · {{ option.secondary }}</span
+                      >
+                    </span>
+                    @if (createForm.equipmentId().value() === option.value) {
+                      <span class="text-xs" i18n="@@common.selected">Selected</span>
+                    }
+                  </button>
+                }
+              </div>
+            </hlm-command>
+          </hlm-drawer-content>
+        </hlm-drawer>
+      } @else {
+        <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
+          <hlm-combobox-input
+            inputId="inspection-create-equipment"
+            placeholder="Search equipment"
+            i18n-placeholder="@@inspection.form.equipmentPlaceholder"
+            data-testid="inspection-create-equipment"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@inspection.form.noEquipment"
+              >No equipment matches.</hlm-combobox-empty
+            >
+            <div hlmComboboxList>
+              @for (option of equipmentOptions(); track option.value) {
+                <hlm-combobox-item [value]="option.value">
+                  <div class="flex min-w-0 flex-col">
+                    <span class="truncate">{{ option.label }}</span>
+                    <span class="truncate text-xs text-muted-foreground">
+                      @if (option.label !== option.typeLabel) {
+                        {{ option.typeLabel }}
+                      }
+                      @if (option.secondary; as where) {
+                        @if (option.label !== option.typeLabel) {
+                          ·
+                        }
+                        {{ where }}
+                      }
+                    </span>
+                  </div>
+                </hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+      }
       @if (createForm.equipmentId().touched() && createForm.equipmentId().invalid()) {
         <hlm-field-error>{{ createForm.equipmentId().errors()[0].message }}</hlm-field-error>
       }
@@ -57,7 +142,7 @@
       <hlm-select [formField]="createForm.result">
         <hlm-select-trigger
           buttonId="inspection-create-result"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="inspection-create-result"
         >
           @if (createForm.result().value(); as result) {
@@ -89,7 +174,10 @@
         ><span i18n="@@inspection.form.performedAt">Performed on</span><app-required-marker
       /></label>
       <hlm-date-picker [formField]="createForm.performedAt">
-        <hlm-date-picker-trigger buttonId="inspection-create-performed-at" class="w-full">
+        <hlm-date-picker-trigger
+          buttonId="inspection-create-performed-at"
+          class="w-full mobile-ui:min-h-11"
+        >
           <span i18n="@@inspection.form.performedAtPlaceholder">Select a date</span>
         </hlm-date-picker-trigger>
       </hlm-date-picker>
@@ -108,7 +196,7 @@
       <hlm-select [itemToString]="inspectorTypeLabelOf" [formField]="createForm.inspectorType">
         <hlm-select-trigger
           buttonId="inspection-create-inspector-type"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="inspection-create-inspector-type"
         >
           <hlm-select-value />
@@ -129,6 +217,7 @@
       /></label>
       <input
         hlmInput
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         id="inspection-create-inspector-name"
         type="text"
         data-testid="inspection-create-inspector-name"
@@ -152,7 +241,7 @@
       <hlm-select [itemToString]="checklistLabelOf" [formField]="createForm.checklistId">
         <hlm-select-trigger
           buttonId="inspection-create-checklist"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="inspection-create-checklist"
         >
           <hlm-select-value
@@ -179,7 +268,7 @@
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11 mobile-ui:w-full"
       data-testid="inspection-create-cancel"
       (click)="cancelled.emit()"
     >
@@ -188,7 +277,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="inspection-create-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"

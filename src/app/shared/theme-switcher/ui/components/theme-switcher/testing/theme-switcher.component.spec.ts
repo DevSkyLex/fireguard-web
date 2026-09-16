@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { THEME_PORT, type ThemeMode } from '@core/theme';
 import { ThemeSwitcher } from '../theme-switcher.component';
 
@@ -8,6 +9,7 @@ describe('ThemeSwitcher', () => {
   let theme: WritableSignal<ThemeMode>;
   let resolvedTheme: WritableSignal<'light' | 'dark'>;
   let setTheme: ReturnType<typeof vi.fn>;
+  let mobile: WritableSignal<boolean>;
 
   /**
    * The trigger button.
@@ -20,11 +22,16 @@ describe('ThemeSwitcher', () => {
     theme = signal<ThemeMode>('system');
     resolvedTheme = signal<'light' | 'dark'>('light');
     setTheme = vi.fn();
+    mobile = signal(false);
 
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: THEME_PORT, useValue: { theme, resolvedTheme, setTheme } },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobile },
+        },
       ],
     });
 
@@ -88,6 +95,7 @@ describe('ThemeSwitcher', () => {
     ]);
     expect(items[2].getAttribute('aria-current')).toBe('true');
     expect(items[0].getAttribute('aria-current')).toBeNull();
+    expect(document.querySelector('[role="menu"]')?.textContent).not.toContain('Appearance');
   });
 
   it('should apply the mode the user picked', async () => {
@@ -101,5 +109,23 @@ describe('ThemeSwitcher', () => {
     await fixture.whenStable();
 
     expect(setTheme).toHaveBeenCalledWith('dark');
+  });
+
+  it('should use one native appearance radio group in the mobile interaction mode', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    const button = fixture.nativeElement.querySelector('[hlmDrawerTrigger]') as HTMLButtonElement;
+    button.click();
+    await fixture.whenStable();
+    expect(document.querySelectorAll('[role="dialog"] [role="radiogroup"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[role="dialog"] input[type="radio"]')).toHaveLength(3);
+    const focusStart = document.querySelector<HTMLElement>('[cdkFocusRegionStart]');
+    const focusEnd = document.querySelector<HTMLButtonElement>('[cdkFocusRegionEnd]');
+    expect(focusStart?.tagName).toBe('H2');
+    expect(focusStart?.getAttribute('tabindex')).toBe('-1');
+    expect(focusEnd?.hasAttribute('hlmDrawerClose')).toBe(true);
+    expect(focusEnd?.disabled).toBe(false);
+    expect(document.body.textContent).not.toContain('Interface layout');
+    expect(document.querySelector('[role="menu"]')).toBeNull();
   });
 });

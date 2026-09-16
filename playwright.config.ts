@@ -15,6 +15,7 @@ const E2E_PORT = 4273;
  */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/harness/**', '**/ssr/**'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -64,19 +65,19 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /.*\.mobile\.spec\.ts/,
+      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**'],
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /.*\.mobile\.spec\.ts/,
+      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**'],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /.*\.mobile\.spec\.ts/,
+      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**'],
     },
 
     {
@@ -109,7 +110,9 @@ export default defineConfig({
    */
   webServer: {
     command: `npx ng serve --configuration=e2e --port=${E2E_PORT}`,
-    url: `http://localhost:${E2E_PORT}`,
+    // Angular accepts document requests before its first compilation has
+    // produced executable chunks. The entry bundle is the readiness signal.
+    url: `http://localhost:${E2E_PORT}/main.js`,
     reuseExistingServer: !process.env['CI'],
     timeout: 120_000,
   },

@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   computed,
   ElementRef,
   input,
@@ -14,13 +15,13 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMap, lucideX } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   FacilityBuildingModelFloor,
   FacilityPlanOverlayZone,
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
-import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmSheetImports } from '@shared/ui/sheet';
@@ -59,7 +60,7 @@ import { FacilityStatusTag } from '../facility-status-tag';
  *
  * Renders as an `hlm-card` at and above `sm`, an `hlm-sheet` (bottom side,
  * `disableClose`) beneath it, switching on `@shared/breakpoint`'s own
- * `isCompact`. `disableClose` keeps the sheet from being dismissed by
+ * `isMobileInteractionMode`. `disableClose` keeps the sheet from being dismissed by
  * `Escape`, a backdrop click or a swipe: were it closable, dismissing it
  * would remove this feature's only keyboard-reachable surface with no way
  * back except a pointer tap on the canvas — exactly the trap this
@@ -192,8 +193,17 @@ export class FacilityBuilding3dRoomPanel {
   //#endregion
 
   //#region Properties
-  /** Whether the viewport is narrow enough to render the `hlm-sheet` branch instead of the `hlm-card` one. */
-  protected readonly isCompact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
   /** The sheet's own open/closed state, derived from {@link compactVisible}. */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>

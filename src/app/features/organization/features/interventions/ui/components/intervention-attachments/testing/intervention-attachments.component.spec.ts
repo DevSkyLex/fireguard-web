@@ -372,9 +372,14 @@ describe('InterventionAttachments', () => {
   it('should invite the manager to add the first file when the list is empty', async () => {
     await create(0);
 
-    expect(
-      root().querySelector('[data-testid="intervention-attachments-empty"]')?.textContent,
-    ).toContain('Add photos or documents to keep with this intervention.');
+    const empty = root().querySelector<HTMLElement>(
+      '[data-testid="intervention-attachments-empty"]',
+    );
+
+    expect(empty?.classList.contains('border-dashed')).toBe(true);
+    expect(empty?.classList.contains('border-border')).toBe(true);
+    expect(empty?.querySelector('ng-icon[name="lucidePaperclip"]')).not.toBeNull();
+    expect(empty?.textContent).toContain('Add photos or documents to keep with this intervention.');
   });
 
   it('should tell a read-only viewer that nothing has been attached, without inviting a pick', async () => {

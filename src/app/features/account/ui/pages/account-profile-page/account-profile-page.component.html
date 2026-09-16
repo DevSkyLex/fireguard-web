@@ -16,7 +16,7 @@
             hlmBtn
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             (click)="retryProfile()"
           >
             <span i18n="@@account.profile.retry">Retry</span>
@@ -45,7 +45,9 @@
         </div>
       </div>
     } @else {
-      <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+      <section
+        class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4"
+      >
         <header class="min-w-0">
           <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.pictureTitle">
             Profile picture
@@ -55,7 +57,9 @@
           </p>
         </header>
 
-        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-border p-4">
+        <div
+          class="flex flex-wrap items-center gap-4 rounded-lg border border-border p-4 mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:p-0"
+        >
           <hlm-avatar class="size-16 shrink-0 rounded-full">
             @if (userStore.avatarUrlMedium(); as pictureUrl) {
               <img hlmAvatarImage [src]="pictureUrl" alt="" />
@@ -75,7 +79,7 @@
       </section>
 
       <section
-        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4 mobile-ui:pt-6"
       >
         <header class="min-w-0">
           <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.detailsTitle">
@@ -96,7 +100,7 @@
       </section>
 
       <section
-        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+        class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4 mobile-ui:pt-6"
       >
         <header class="min-w-0">
           <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.profile.accountTitle">
@@ -143,7 +147,9 @@
               <dt class="text-xs text-muted-foreground" i18n="@@account.profile.rolesLabel">
                 Roles
               </dt>
-              <dd class="text-foreground">{{ roles().join(', ') }}</dd>
+              <dd class="wrap-anywhere text-foreground" data-testid="account-profile-roles">
+                {{ roles().join(', ') }}
+              </dd>
             </div>
           }
         </dl>

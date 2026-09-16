@@ -173,7 +173,14 @@ export class AuditPage {
   /** The journal dataset, provided by this route. */
   protected readonly store: AuditEventsStoreType = inject<AuditEventsStoreType>(AuditEventsStore);
 
-  /** The full action catalog with module grouping metadata for the adaptive filter picker. */
+  /**
+   * Property actionOptions
+   * @readonly
+   * @description Supplies the complete, module-grouped action catalog to the adaptive filter picker.
+   * @access protected
+   * @since 1.0.0
+   * @type {ReadonlyArray<CollectionFilterOption>}
+   */
   protected readonly actionOptions: ReadonlyArray<CollectionFilterOption> = buildActionOptions();
 
   /** The active action narrowing, or `null` for every action. */

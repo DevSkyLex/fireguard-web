@@ -17,6 +17,7 @@
         ><span i18n="@@org.team.form.name">Name</span><app-required-marker
       /></label>
       <input
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmInput
         id="organization-role-create-name"
         type="text"
@@ -43,6 +44,7 @@
         >Description</label
       >
       <textarea
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmTextarea
         id="organization-role-create-description"
         rows="2"
@@ -76,7 +78,9 @@
           <div class="flex flex-col gap-1.5">
             <p class="text-sm font-medium text-foreground">{{ group.label }}</p>
             @for (permission of group.permissions; track permission.name) {
-              <label class="flex items-start gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
+              <label
+                class="flex items-start gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent mobile-ui:min-h-11"
+              >
                 <hlm-checkbox
                   class="mt-0.5"
                   data-testid="organization-role-create-permission"
@@ -98,12 +102,14 @@
     </fieldset>
   </hlm-field-group>
 
-  <hlm-sheet-footer class="flex-col sm:flex-row sm:justify-end">
+  <hlm-sheet-footer
+    class="flex-row flex-wrap justify-end mobile-ui:flex-col mobile-ui:pb-[env(safe-area-inset-bottom)]"
+  >
     <button
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="organization-role-create-cancel"
       (click)="cancelled.emit()"
     >
@@ -112,7 +118,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="organization-role-create-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"

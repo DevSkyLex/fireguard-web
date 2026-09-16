@@ -18,6 +18,7 @@
         ><span i18n="@@intervention.recurrences.nameLabel">Name</span><app-required-marker
       /></label>
       <input
+        class="mobile-ui:min-h-11"
         hlmInput
         id="intervention-recurrence-name"
         type="text"
@@ -41,6 +42,7 @@
         (searchChange)="catalogueSearched.emit({ kind: 'templates', search: $event })"
       >
         <hlm-combobox-input
+          class="mobile-ui:min-h-11"
           inputId="intervention-recurrence-template"
           data-testid="intervention-recurrence-template"
         />
@@ -50,7 +52,9 @@
           >
           <div hlmComboboxList>
             @for (template of templates(); track template.id) {
-              <hlm-combobox-item [value]="template.id">{{ template.name }}</hlm-combobox-item>
+              <hlm-combobox-item class="mobile-ui:min-h-11" [value]="template.id">{{
+                template.name
+              }}</hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>
@@ -79,7 +83,7 @@
         >
           <hlm-select-trigger
             buttonId="intervention-recurrence-frequency"
-            class="w-full"
+            class="w-full mobile-ui:min-h-11"
             data-testid="intervention-recurrence-frequency"
           >
             <hlm-select-value />
@@ -87,7 +91,7 @@
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
               @for (frequency of frequencyValues; track frequency) {
-                <hlm-select-item [value]="frequency">{{
+                <hlm-select-item class="mobile-ui:min-h-11" [value]="frequency">{{
                   frequencyLabelOf(frequency)
                 }}</hlm-select-item>
               }
@@ -107,6 +111,7 @@
           >Every</label
         >
         <input
+          class="mobile-ui:min-h-11"
           hlmInput
           id="intervention-recurrence-interval"
           type="number"
@@ -131,7 +136,7 @@
         <hlm-date-picker [formField]="recurrenceForm.anchorDate" [attr.aria-required]="true">
           <hlm-date-picker-trigger
             buttonId="intervention-recurrence-anchor"
-            class="w-full"
+            class="w-full mobile-ui:min-h-11"
             data-testid="intervention-recurrence-anchor"
           >
             <span i18n="@@intervention.recurrences.anchorPlaceholder">Pick a date</span>
@@ -153,6 +158,7 @@
           ><app-required-marker
         /></label>
         <input
+          class="mobile-ui:min-h-11"
           hlmInput
           id="intervention-recurrence-timezone"
           type="text"
@@ -178,6 +184,7 @@
           >Lead time (days)</label
         >
         <input
+          class="mobile-ui:min-h-11"
           hlmInput
           id="intervention-recurrence-lead-time"
           type="number"
@@ -202,7 +209,7 @@
         <hlm-date-picker [formField]="recurrenceForm.endAt">
           <hlm-date-picker-trigger
             buttonId="intervention-recurrence-end"
-            class="w-full"
+            class="w-full mobile-ui:min-h-11"
             data-testid="intervention-recurrence-end"
           >
             <span i18n="@@intervention.recurrences.endPlaceholder">No end</span>
@@ -232,6 +239,7 @@
         (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
       >
         <hlm-combobox-input
+          class="mobile-ui:min-h-11"
           inputId="intervention-recurrence-site"
           data-testid="intervention-recurrence-site"
         />
@@ -241,7 +249,9 @@
           >
           <div hlmComboboxList>
             @for (option of siteOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">{{ option.label }}</hlm-combobox-item>
+              <hlm-combobox-item class="mobile-ui:min-h-11" [value]="option.value">{{
+                option.label
+              }}</hlm-combobox-item>
             }
           </div>
         </hlm-combobox-content>
@@ -266,6 +276,7 @@
         [itemToString]="memberLabelOf"
       >
         <hlm-combobox-input
+          class="mobile-ui:min-h-11"
           inputId="intervention-recurrence-responsible"
           placeholder="Use template default"
           i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
@@ -277,7 +288,7 @@
           >
           <div hlmComboboxList>
             @for (option of memberOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">
+              <hlm-combobox-item class="mobile-ui:min-h-11" [value]="option.value">
                 <div hlmItem size="xs" class="min-w-0 border-0 p-0">
                   <div hlmItemMedia>
                     <hlm-avatar class="size-8 shrink-0">
@@ -312,7 +323,7 @@
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11 mobile-ui:w-full"
       data-testid="intervention-recurrence-cancel"
       (click)="cancelled.emit()"
     >
@@ -321,7 +332,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="intervention-recurrence-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"

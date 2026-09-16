@@ -1,4 +1,4 @@
-<form novalidate (submit)="submit($event)">
+<form class="mobile-ui:[&_input]:text-base" novalidate (submit)="submit($event)">
   <hlm-field-group>
     <hlm-field>
       <label hlmFieldLabel for="account-email-change-new"
@@ -10,7 +10,7 @@
         type="email"
         autocomplete="email"
         inputmode="email"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         placeholder="you@company.com"
         i18n-placeholder="@@account.email.newPlaceholder"
         data-testid="account-email-change-new"
@@ -42,12 +42,14 @@
       }
     </hlm-field>
 
-    <div class="flex flex-wrap items-center justify-end gap-2">
+    <div
+      class="flex flex-wrap items-center justify-end gap-2 mobile-ui:flex-col mobile-ui:items-stretch"
+    >
       <button
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:w-full mobile-ui:whitespace-normal"
         data-testid="account-email-change-cancel"
         [disabled]="pending()"
         (click)="cancelled.emit()"
@@ -57,13 +59,14 @@
       <button
         hlmBtn
         type="submit"
-        class="max-sm:min-h-11"
+        class="mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:whitespace-normal"
         data-testid="account-email-change-submit"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"
         aria-live="polite"
       >
         @if (pending()) {
+          <hlm-spinner aria-hidden="true" />
           <span i18n="@@account.email.submitting">Sending…</span>
         } @else {
           <span i18n="@@account.email.submit">Send confirmation link</span>

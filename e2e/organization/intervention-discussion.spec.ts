@@ -7,6 +7,7 @@ import {
   subjectConversationOutput,
 } from '../support/fixtures/channel-fixtures';
 import { E2E_MEMBER_IRI, interventionOutput } from '../support/fixtures/intervention-fixtures';
+import { organizationMemberOutput } from '../support/fixtures/member-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { InterventionDetailPage } from '../support/pages/intervention-detail.page';
 
@@ -45,9 +46,12 @@ async function mockDetailPage(api: ApiMock): Promise<void> {
   await api.mockInterventionIssues(interventionId, []);
   await api.mockInterventionActivities(interventionId, []);
   await api.mockInterventionAttachments(interventionId, []);
+  await api.mockInterventionFacilities(interventionId, []);
+  await api.mockInterventionInspections(interventionId, []);
+  await api.mockInterventionEquipment(interventionId, []);
   await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
   await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
-  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
+  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
   await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
 }
 
@@ -113,6 +117,7 @@ test.describe('Intervention detail — live discussion', () => {
 
     await detail.openDiscussion();
     await detail.discussionComposerInput.fill('Draft not sent yet.');
+    await expect(detail.discussionSheet).toHaveAttribute('data-dirty', 'true');
 
     await page.keyboard.press('Escape');
 

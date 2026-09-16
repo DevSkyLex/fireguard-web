@@ -6,7 +6,8 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    class="w-full! overflow-hidden overscroll-contain mobile-ui:max-h-[85dvh] desktop-ui:w-[min(480px,100vw)]! desktop-ui:max-w-none!"
+    [showCloseButton]="side() !== 'bottom'"
     data-testid="organization-role-permissions-sheet"
   >
     @if (role(); as role) {
@@ -23,7 +24,7 @@
         }
       </hlm-sheet-header>
 
-      <div class="flex flex-col gap-4 px-4 pb-4">
+      <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         @if (serverMessages().length > 0) {
           <div
             role="alert"
@@ -41,7 +42,7 @@
             <p class="text-sm font-medium text-foreground">{{ group.label }}</p>
             @for (permission of group.permissions; track permission.name) {
               <label
-                class="flex items-start gap-2 rounded-md px-2 py-1 text-sm"
+                class="flex items-start gap-2 rounded-md px-2 py-1 text-sm mobile-ui:min-h-11"
                 [class.opacity-60]="readOnly()"
               >
                 <hlm-checkbox
@@ -62,6 +63,20 @@
           </div>
         }
       </div>
+    }
+    @if (side() === 'bottom') {
+      <hlm-sheet-footer class="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button
+          hlmSheetClose
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="min-h-11 w-full"
+          [disabled]="pending()"
+        >
+          <span i18n="@@common.close">Close</span>
+        </button>
+      </hlm-sheet-footer>
     }
   </hlm-sheet-content>
 </hlm-sheet>

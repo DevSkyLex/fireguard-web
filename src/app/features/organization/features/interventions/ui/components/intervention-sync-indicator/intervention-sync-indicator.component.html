@@ -1,274 +1,371 @@
-<hlm-popover sideOffset="5" align="end" (stateChanged)="onPanelState($event)">
-  @if (slotPresentation === 'menu') {
-    <button
-      hlmPopoverTrigger
-      hlmItem
-      type="button"
-      class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
-      data-testid="intervention-sync-status"
-      [attr.aria-label]="triggerAriaLabel()"
+@if (isMobileInteractionMode() || mobilePanelVisible()) {
+  <hlm-drawer
+    direction="bottom"
+    [class.block]="slotPresentation === 'menu'"
+    [class.w-full]="slotPresentation === 'menu'"
+    (stateChanged)="mobilePanelVisible.set($event === 'open'); onPanelState($event)"
+    (closed)="onMobilePanelClosed($event)"
+  >
+    @if (slotPresentation === 'menu') {
+      <button
+        hlmDrawerTrigger
+        hlmItem
+        type="button"
+        class="min-h-12 w-full cursor-pointer flex-nowrap justify-start text-start hover:bg-muted focus-visible:bg-muted"
+        data-testid="intervention-sync-status"
+        [attr.aria-label]="triggerAriaLabel()"
+        [attr.aria-busy]="state() === 'syncing' ? 'true' : null"
+      >
+        <span hlmItemMedia variant="icon">
+          @if (state() === 'offline') {
+            <ng-icon name="lucideCloudOff" class="text-muted-foreground" aria-hidden="true" />
+          } @else if (state() === 'blocked') {
+            <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+          } @else if (state() === 'syncing') {
+            <hlm-spinner size="xs" aria-hidden="true" />
+          } @else if (state() === 'pending') {
+            <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
+          }
+        </span>
+        <span hlmItemContent>
+          <span hlmItemTitle>{{ triggerLabel() }}</span>
+        </span>
+        @if (state() === 'blocked') {
+          <span hlmItemActions>
+            <span hlmBadge variant="destructive" data-testid="intervention-sync-blocked-count">{{
+              blockedCount()
+            }}</span>
+          </span>
+        } @else if (pendingCount() > 0) {
+          <span hlmItemActions>
+            <span hlmBadge variant="secondary" data-testid="intervention-sync-pending-count">{{
+              pendingCount()
+            }}</span>
+          </span>
+        }
+      </button>
+    } @else {
+      <button
+        hlmDrawerTrigger
+        hlmBtn
+        variant="ghost"
+        type="button"
+        class="min-h-11 min-w-11 gap-2 mobile-ui:min-h-11"
+        data-testid="intervention-sync-status"
+        [attr.aria-label]="triggerAriaLabel()"
+        [attr.aria-busy]="state() === 'syncing' ? 'true' : null"
+      >
+        @if (state() === 'offline') {
+          <ng-icon name="lucideCloudOff" aria-hidden="true" />
+        } @else if (state() === 'blocked') {
+          <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+        } @else if (state() === 'syncing') {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        } @else if (state() === 'pending') {
+          <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideCloudCheck" aria-hidden="true" />
+        }
+        <span class="text-start whitespace-normal">{{ triggerLabel() }}</span>
+        @if (state() === 'blocked') {
+          <span hlmBadge variant="destructive" data-testid="intervention-sync-blocked-count">{{
+            blockedCount()
+          }}</span>
+        } @else if (pendingCount() > 0) {
+          <span hlmBadge variant="secondary" data-testid="intervention-sync-pending-count">{{
+            pendingCount()
+          }}</span>
+        }
+      </button>
+    }
+    <hlm-drawer-content
+      *hlmDrawerPortal="let drawer"
+      class="pb-[env(safe-area-inset-bottom)]"
+      data-testid="intervention-sync-mobile-panel"
     >
-      <span hlmItemMedia variant="icon">
+      <hlm-drawer-header>
+        <div class="text-start">
+          <h3 hlmDrawerTitle i18n="@@intervention.sync.title">Synchronization</h3>
+          <p hlmDrawerDescription>{{ triggerAriaLabel() }}</p>
+        </div>
+      </hlm-drawer-header>
+      <div class="flex min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-4">
+        <ng-container
+          [ngTemplateOutlet]="syncDetails"
+          [ngTemplateOutletContext]="{ $implicit: drawer }"
+        />
+      </div>
+    </hlm-drawer-content>
+  </hlm-drawer>
+} @else {
+  <hlm-popover sideOffset="5" align="end" (stateChanged)="onPanelState($event)">
+    @if (slotPresentation === 'menu') {
+      <button
+        hlmPopoverTrigger
+        hlmItem
+        type="button"
+        class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted mobile-ui:min-h-11"
+        data-testid="intervention-sync-status"
+        [attr.aria-label]="triggerAriaLabel()"
+      >
+        <span hlmItemMedia variant="icon">
+          @switch (state()) {
+            @case ('offline') {
+              <ng-icon name="lucideCloudOff" class="text-muted-foreground" aria-hidden="true" />
+            }
+            @case ('blocked') {
+              <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+            }
+            @case ('syncing') {
+              <hlm-spinner size="xs" aria-hidden="true" />
+            }
+            @case ('pending') {
+              <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+            }
+            @default {
+              <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
+            }
+          }
+        </span>
+        <span hlmItemContent>
+          <span hlmItemTitle>{{ triggerLabel() }}</span>
+        </span>
+        @if (state() === 'blocked') {
+          <span hlmItemActions>
+            <span hlmBadge variant="destructive" data-testid="intervention-sync-blocked-count">{{
+              blockedCount()
+            }}</span>
+          </span>
+        } @else if (pendingCount() > 0) {
+          <span hlmItemActions>
+            <span hlmBadge variant="secondary" data-testid="intervention-sync-pending-count">{{
+              pendingCount()
+            }}</span>
+          </span>
+        }
+      </button>
+    } @else {
+      <button
+        hlmPopoverTrigger
+        hlmBtn
+        type="button"
+        variant="ghost"
+        [size]="triggerSize()"
+        class="relative gap-1.5"
+        data-testid="intervention-sync-status"
+        [attr.aria-label]="triggerAriaLabel()"
+      >
         @switch (state()) {
           @case ('offline') {
-            <ng-icon name="lucideCloudOff" class="text-muted-foreground" aria-hidden="true" />
+            <ng-icon
+              name="lucideCloudOff"
+              class="text-base text-muted-foreground"
+              aria-hidden="true"
+            />
           }
           @case ('blocked') {
-            <ng-icon name="lucideTriangleAlert" class="text-destructive" aria-hidden="true" />
+            <ng-icon
+              name="lucideTriangleAlert"
+              class="text-base text-destructive"
+              aria-hidden="true"
+            />
           }
           @case ('syncing') {
             <hlm-spinner size="xs" aria-hidden="true" />
           }
           @case ('pending') {
-            <ng-icon name="lucideCloudUpload" aria-hidden="true" />
+            <ng-icon name="lucideCloudUpload" class="text-base" aria-hidden="true" />
           }
           @default {
-            <ng-icon name="lucideCloudCheck" class="text-muted-foreground" aria-hidden="true" />
+            <ng-icon
+              name="lucideCloudCheck"
+              class="text-base text-muted-foreground"
+              aria-hidden="true"
+            />
           }
         }
-      </span>
-      <span hlmItemContent>
-        <span hlmItemTitle>{{ triggerLabel() }}</span>
-      </span>
-      @if (state() === 'blocked') {
-        <span hlmItemActions>
+        @if (triggerSize() === 'sm') {
+          <span class="text-xs">{{ triggerLabel() }}</span>
+        }
+        @if (state() === 'blocked') {
           <span hlmBadge variant="destructive" data-testid="intervention-sync-blocked-count">{{
             blockedCount()
           }}</span>
-        </span>
-      } @else if (pendingCount() > 0) {
-        <span hlmItemActions>
+        } @else if (pendingCount() > 0) {
           <span hlmBadge variant="secondary" data-testid="intervention-sync-pending-count">{{
             pendingCount()
           }}</span>
-        </span>
-      }
-    </button>
-  } @else {
-    <button
-      hlmPopoverTrigger
-      hlmBtn
-      type="button"
-      variant="ghost"
-      [size]="triggerSize()"
-      class="relative gap-1.5 max-sm:size-11 max-sm:px-0"
-      data-testid="intervention-sync-status"
-      [attr.aria-label]="triggerAriaLabel()"
-    >
-      @switch (state()) {
-        @case ('offline') {
-          <ng-icon
-            name="lucideCloudOff"
-            class="text-base text-muted-foreground"
-            aria-hidden="true"
-          />
         }
-        @case ('blocked') {
-          <ng-icon
-            name="lucideTriangleAlert"
-            class="text-base text-destructive"
-            aria-hidden="true"
-          />
-        }
-        @case ('syncing') {
-          <hlm-spinner size="xs" aria-hidden="true" />
-        }
-        @case ('pending') {
-          <ng-icon name="lucideCloudUpload" class="text-base" aria-hidden="true" />
-        }
-        @default {
-          <ng-icon
-            name="lucideCloudCheck"
-            class="text-base text-muted-foreground"
-            aria-hidden="true"
-          />
-        }
-      }
-      @if (triggerSize() === 'sm') {
-        <span class="hidden text-xs sm:inline">{{ triggerLabel() }}</span>
-      }
-      @if (state() === 'blocked') {
-        <span
-          hlmBadge
-          variant="destructive"
-          class="max-sm:absolute max-sm:-top-1 max-sm:-right-1"
-          data-testid="intervention-sync-blocked-count"
-          >{{ blockedCount() }}</span
-        >
-      } @else if (pendingCount() > 0) {
-        <span
-          hlmBadge
-          variant="secondary"
-          class="max-sm:absolute max-sm:-top-1 max-sm:-right-1"
-          data-testid="intervention-sync-pending-count"
-          >{{ pendingCount() }}</span
-        >
-      }
-    </button>
-  }
+      </button>
+    }
 
-  <hlm-popover-content *hlmPopoverPortal class="flex w-72 flex-col gap-3 p-3">
-    <div class="flex flex-col gap-1">
+    <hlm-popover-content *hlmPopoverPortal class="flex w-72 flex-col gap-3 p-3">
+      <ng-container [ngTemplateOutlet]="syncDetails" />
+    </hlm-popover-content>
+  </hlm-popover>
+}
+
+<ng-template #syncDetails let-drawer>
+  <div class="flex flex-col gap-1">
+    @if (!isMobileInteractionMode() && !mobilePanelVisible()) {
       <p class="text-sm font-medium text-foreground" i18n="@@intervention.sync.title">
         Synchronization
       </p>
-      @switch (state()) {
-        @case ('offline') {
-          <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.offlineExplain">
-            You're offline. Changes are saved on this device and will sync automatically once you're
-            back online.
-          </p>
-          @if (pendingCount() > 0) {
-            <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.pending">
-              Some changes are waiting to sync.
-            </p>
-          }
-        }
-        @case ('blocked') {
-          <p class="text-xs text-destructive" i18n="@@intervention.sync.blocked">
-            {{ blockedCount() }} change(s) could not be replayed.
-          </p>
-          @if (blockedReason(); as reason) {
-            <p class="text-xs text-muted-foreground" data-testid="intervention-sync-problem">
-              {{ reason }}
-            </p>
-          }
-        }
-        @case ('syncing') {
-          <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.running">
-            Replaying queued changes…
-          </p>
-        }
-        @case ('pending') {
+    }
+    @switch (state()) {
+      @case ('offline') {
+        <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.offlineExplain">
+          You're offline. Changes are saved on this device and will sync automatically once you're
+          back online.
+        </p>
+        @if (pendingCount() > 0) {
           <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.pending">
             Some changes are waiting to sync.
           </p>
         }
-        @default {
-          <p class="text-xs text-muted-foreground" data-testid="intervention-sync-last-synced">
-            {{ lastSyncedLabel() }}
+      }
+      @case ('blocked') {
+        <p class="text-xs text-destructive" i18n="@@intervention.sync.blocked">
+          {{ blockedCount() }} change(s) could not be replayed.
+        </p>
+        @if (blockedReason(); as reason) {
+          <p class="text-xs text-muted-foreground" data-testid="intervention-sync-problem">
+            {{ reason }}
           </p>
         }
       }
-    </div>
-
-    @if (queueLoading()) {
-      <p
-        class="text-xs text-muted-foreground"
-        role="status"
-        i18n="@@intervention.sync.queueLoading"
-      >
-        Reading the queue…
-      </p>
-    } @else if (queue().length > 0) {
-      <ul
-        class="flex max-h-56 flex-col gap-1 overflow-y-auto overscroll-contain"
-        data-testid="intervention-sync-queue"
-        aria-label="Waiting to sync"
-        i18n-aria-label="@@intervention.sync.queueAriaLabel"
-      >
-        @for (operation of queue(); track operation.id) {
-          <li
-            class="flex flex-col gap-1 rounded-md border border-border p-2"
-            data-testid="intervention-sync-queue-item"
-          >
-            <div class="flex items-center gap-2">
-              @if (operation.status === 'conflict' || operation.status === 'failed') {
-                <ng-icon
-                  name="lucideTriangleAlert"
-                  class="shrink-0 text-destructive"
-                  aria-hidden="true"
-                />
-              } @else {
-                <ng-icon
-                  name="lucideCloudUpload"
-                  class="shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              }
-              <span class="min-w-0 flex-1 truncate text-xs text-foreground">{{
-                operationLabel(operation.type)
-              }}</span>
-            </div>
-            @if (operation.error) {
-              <p class="text-xs text-muted-foreground">{{ operation.error }}</p>
-            }
-            @if (operation.status === 'conflict' || operation.status === 'failed') {
-              <div class="flex items-center gap-1">
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="max-sm:min-h-11"
-                  data-testid="intervention-sync-queue-retry"
-                  [attr.aria-label]="retryLabel(operation.type)"
-                  (click)="retryOperation(operation.id)"
-                >
-                  <span i18n="@@intervention.sync.queueRetry">Retry</span>
-                </button>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="text-destructive hover:text-destructive max-sm:min-h-11"
-                  data-testid="intervention-sync-queue-discard"
-                  [attr.aria-label]="discardLabel(operation.type)"
-                  (click)="discardOperation(operation.id)"
-                >
-                  <span i18n="@@intervention.sync.queueDiscard">Discard</span>
-                </button>
-              </div>
-            }
-          </li>
-        }
-      </ul>
+      @case ('syncing') {
+        <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.running">
+          Replaying queued changes…
+        </p>
+      }
+      @case ('pending') {
+        <p class="text-xs text-muted-foreground" i18n="@@intervention.sync.pending">
+          Some changes are waiting to sync.
+        </p>
+      }
+      @default {
+        <p class="text-xs text-muted-foreground" data-testid="intervention-sync-last-synced">
+          {{ lastSyncedLabel() }}
+        </p>
+      }
     }
+  </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+  @if (queueLoading()) {
+    <p class="text-xs text-muted-foreground" role="status" i18n="@@intervention.sync.queueLoading">
+      Reading the queue…
+    </p>
+  } @else if (queue().length > 0) {
+    <ul
+      class="flex max-h-56 flex-col gap-1 overflow-y-auto overscroll-contain"
+      data-testid="intervention-sync-queue"
+      aria-label="Waiting to sync"
+      i18n-aria-label="@@intervention.sync.queueAriaLabel"
+    >
+      @for (operation of queue(); track operation.id) {
+        <li
+          class="flex flex-col gap-1 rounded-md border border-border p-2"
+          data-testid="intervention-sync-queue-item"
+        >
+          <div class="flex items-center gap-2">
+            @if (operation.status === 'conflict' || operation.status === 'failed') {
+              <ng-icon
+                name="lucideTriangleAlert"
+                class="shrink-0 text-destructive"
+                aria-hidden="true"
+              />
+            } @else {
+              <ng-icon
+                name="lucideCloudUpload"
+                class="shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            }
+            <span class="min-w-0 flex-1 truncate text-xs text-foreground">{{
+              operationLabel(operation.type)
+            }}</span>
+          </div>
+          @if (operation.error) {
+            <p class="text-xs text-muted-foreground">{{ operation.error }}</p>
+          }
+          @if (operation.status === 'conflict' || operation.status === 'failed') {
+            <div class="flex items-center gap-1">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="mobile-ui:min-h-11"
+                data-testid="intervention-sync-queue-retry"
+                [attr.aria-label]="retryLabel(operation.type)"
+                (click)="retryOperation(operation.id)"
+              >
+                <span i18n="@@intervention.sync.queueRetry">Retry</span>
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="text-destructive hover:text-destructive mobile-ui:min-h-11"
+                data-testid="intervention-sync-queue-discard"
+                [attr.aria-label]="discardLabel(operation.type)"
+                (click)="discardOperation(operation.id)"
+              >
+                <span i18n="@@intervention.sync.queueDiscard">Discard</span>
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="mobile-ui:min-h-11"
+      data-testid="intervention-sync-now"
+      [disabled]="state() === 'syncing'"
+      (click)="syncNow()"
+    >
+      <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+      <span i18n="@@intervention.sync.now">Sync now</span>
+    </button>
+    @if (state() === 'blocked') {
       <button
         hlmBtn
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
-        data-testid="intervention-sync-now"
+        class="mobile-ui:min-h-11"
+        data-testid="intervention-sync-retry"
         [disabled]="state() === 'syncing'"
-        (click)="syncNow()"
+        (click)="retry()"
       >
-        <ng-icon name="lucideRefreshCw" aria-hidden="true" />
-        <span i18n="@@intervention.sync.now">Sync now</span>
+        <span i18n="@@intervention.sync.retry">Retry blocked</span>
       </button>
-      @if (state() === 'blocked') {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          data-testid="intervention-sync-retry"
-          [disabled]="state() === 'syncing'"
-          (click)="retry()"
-        >
-          <span i18n="@@intervention.sync.retry">Retry blocked</span>
-        </button>
-        <button
-          hlmBtn
-          type="button"
-          variant="ghost"
-          size="sm"
-          class="text-destructive hover:text-destructive max-sm:min-h-11"
-          data-testid="intervention-sync-discard"
-          [disabled]="state() === 'syncing'"
-          (click)="discardConfirmVisible.set(true)"
-        >
-          <span i18n="@@intervention.sync.discard">Discard blocked</span>
-        </button>
-      }
-    </div>
-  </hlm-popover-content>
-</hlm-popover>
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="text-destructive hover:text-destructive mobile-ui:min-h-11"
+        data-testid="intervention-sync-discard"
+        [disabled]="state() === 'syncing'"
+        (click)="drawer ? drawer.close('discard') : discardConfirmVisible.set(true)"
+      >
+        <span i18n="@@intervention.sync.discard">Discard blocked</span>
+      </button>
+    }
+  </div>
+</ng-template>
 
 <span
   class="sr-only"

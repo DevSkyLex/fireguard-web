@@ -1,9 +1,11 @@
 import type { Page, Route } from '@playwright/test';
+import { expect } from '@playwright/test';
 import type { OrganizationAccessPolicyOutput } from '../../../src/app/features/organization/models/access/organization-access-policy-output.interface';
 import type { OrganizationJoinOptionsOutput } from '../../../src/app/features/organization/models/access/organization-join-options-output.interface';
 import type { OrganizationJoinRequestOutput } from '../../../src/app/features/organization/models/access/organization-join-request-output.interface';
 import {
   currentOrganizationMemberProfileOutput,
+  E2E_ORGANIZATION_ID,
   hydraCollection,
   loginOutput,
   onboardingOutput,
@@ -367,10 +369,68 @@ export class ApiMock {
     this.page = page;
   }
 
+  /** Successful mutations remain visible to later mocked collection GETs. */
+  private readonly updatedInterventionRows = new Map<string, unknown>();
+
+  /** Applies the requested scalar facets, text and pagination instead of acknowledging every query. */
+  private interventionCollection(rows: readonly unknown[], url: URL): unknown {
+    const search = (url.searchParams.get('search') ?? '').trim().toLowerCase();
+    const status = url.searchParams.get('status');
+    const type = url.searchParams.get('type');
+    const result = url.searchParams.get('result');
+    if ([...url.searchParams.keys()].some((key) => key.startsWith('status[')))
+      throw new Error('Intervention table status queries must be scalar.');
+    const matching = rows
+      .map((row) => {
+        const record = row as { id: string };
+        return this.updatedInterventionRows.get(record.id) ?? row;
+      })
+      .filter((row) => {
+        const record = row as Record<string, unknown>;
+        return (
+          (!status || record['status'] === status) &&
+          (!type || record['type'] === type) &&
+          (!result || record['result'] === result) &&
+          (!search ||
+            Object.values(record)
+              .map((value) => (typeof value === 'string' ? value : JSON.stringify(value)))
+              .join(' ')
+              .toLowerCase()
+              .includes(search))
+        );
+      });
+    const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
+    const size =
+      url.searchParams.get('pagination') === 'false'
+        ? Math.max(1, matching.length)
+        : Math.max(1, Number(url.searchParams.get('itemsPerPage') ?? 30));
+    const next = new URL(url);
+    next.searchParams.set('page', String(page + 1));
+    return {
+      ...hydraCollection(matching.slice((page - 1) * size, page * size), {
+        totalItems: matching.length,
+      }),
+      ...(page * size < matching.length ? { view: { next: next.pathname + next.search } } : {}),
+    };
+  }
+
+  /** Resolves a change PATCH and updates subsequent server-query results. */
+  public async mockInterventionChangeUpdate(
+    changeId: string,
+    updated: Readonly<Record<string, unknown>>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/intervention-changes/${changeId}`, async (route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      this.updatedInterventionRows.set(changeId, updated);
+      await fulfillJson(route, 200, updated);
+    });
+  }
+
   /**
-   * Registers a catch-all 404 for any `/api/*` request not covered by a more
-   * specific mock, so an un-mocked endpoint fails fast instead of hanging
-   * while Playwright waits on a backend that never runs in these tests.
+   * Registers a catch-all 404 and a Playwright failure for any `/api/*` request
+   * not covered by a specific mock, including an accidentally changed backend origin.
+   * A UI that swallows the error still fails the hermetic test.
    * Playwright matches routes last-registered-first, so specific mocks
    * registered afterwards always win over this fallback.
    */
@@ -378,14 +438,16 @@ export class ApiMock {
     if (this.safetyNetInstalled) return;
     this.safetyNetInstalled = true;
 
-    await this.page.route(`${API_BASE_URL}/api/**`, async (route) => {
+    await this.page.route(/\/api(?:\/|\?|$)/, async (route) => {
+      const message = `No E2E mock registered for ${route.request().method()} ${route.request().url()}`;
       await fulfillJson(route, 404, {
         '@id': '/errors/not-mocked',
         '@type': 'Error',
         status: 404,
         type: 'about:blank',
-        title: `No E2E mock registered for ${route.request().method()} ${route.request().url()}`,
+        title: message,
       });
+      expect.soft(false, `Hermetic safety net: ${message}`).toBe(true);
     });
     await this.page.route('http://localhost:3000/.well-known/mercure**', async (route) => {
       await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
@@ -408,10 +470,32 @@ export class ApiMock {
     });
   }
 
-  /** Mocks the successful logout action used by the shell account menu. */
-  public async mockLogout(): Promise<void> {
+  /** Mocks the logout outcome while accepting only the production POST contract. */
+  public async mockLogout(options: { readonly status?: number } = {}): Promise<void> {
     await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/auth/federated/providers`, async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
     await this.page.route(`${API_BASE_URL}/api/auth/logout`, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+
+      const status: number = options.status ?? 200;
+      if (status >= 400) {
+        await fulfillJson(route, status, {
+          '@type': 'hydra:Error',
+          title: 'Logout failed',
+          detail: 'The remote session could not be revoked.',
+        });
+        return;
+      }
+
       await fulfillJson(route, 200, {
         '@id': '/api/auth/logout',
         '@type': 'Logout',
@@ -447,10 +531,12 @@ export class ApiMock {
       await fulfillJson(route, 200, profile);
     });
     await this.page.route(`${API_BASE_URL}/api/notifications/subscription`, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, mercureSubscriptionOutput());
     });
     const notifications: ReadonlyArray<NotificationOutputFixture> = options?.notifications ?? [];
     await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, hydraCollection([...notifications]));
     });
     await this.page.route(/\/api\/notifications\/[^/]+\/read$/, async (route) => {
@@ -461,15 +547,34 @@ export class ApiMock {
       await fulfillJson(route, 200, { ...(target ?? notificationOutput({ id })), isRead: true });
     });
     await this.page.route(/\/api\/inbox\/unread-count(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, { unreadCount: options?.unreadCount ?? 0 });
     });
     // The collaboration sidebar loads on every workspace-shell route; without
     // these, the channel section renders its error state and the DM store
     // surfaces a raw-HTTP error toast that races into screenshots.
     await this.page.route(/\/api\/channels(\?.*)?$/, async (route) => {
+      const request = route.request();
+      if (
+        request.method() !== 'GET' ||
+        !organizations.some(
+          (organization) =>
+            new URL(request.url()).searchParams.get('organization') === organization.id,
+        )
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     await this.page.route(/\/api\/direct-conversations(\?.*)?$/, async (route) => {
+      const request = route.request();
+      if (
+        request.method() !== 'GET' ||
+        !organizations.some(
+          (organization) =>
+            new URL(request.url()).searchParams.get('organization') === organization['@id'],
+        )
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     await this.page.route(`${API_BASE_URL}/api/presence`, async (route) => {
@@ -480,6 +585,15 @@ export class ApiMock {
     // the current member profile then lists interventions `responsible=` them
     // for offline warm-caching. Every authenticated session hits this once.
     await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
+      const request = route.request();
+      if (
+        request.method() !== 'GET' ||
+        !organizations.some(
+          (organization) =>
+            new URL(request.url()).searchParams.get('organization') === organization['@id'],
+        )
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     // `MemberDirectoryStore` (bound to `MEMBER_DIRECTORY_PORT` by
@@ -860,6 +974,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/facilities(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(
           route,
           200,
@@ -962,11 +1077,19 @@ export class ApiMock {
     await this.page.route(
       `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facility.id}`,
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, facility);
       },
     );
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
+      const query = new URL(route.request().url()).searchParams;
+      if (
+        route.request().method() !== 'GET' ||
+        query.get('organization') !== `/api/organizations/${organizationId}` ||
+        query.get('site') !== `/api/facilities/${facility.id}`
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
   }
@@ -988,6 +1111,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/facilities/${facilityId}/descendants(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(descendants));
       },
     );
@@ -1009,6 +1133,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/facilities/${facilityId}/children(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(children));
       },
     );
@@ -1138,6 +1263,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/facilities/${facilityId}/equipment(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(options.equipment ?? []));
       },
     );
@@ -1146,6 +1272,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/facilities/${facilityId}/inspections(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(options.inspections ?? []));
       },
     );
@@ -1195,7 +1322,7 @@ export class ApiMock {
    * `DELETE` — the Plans tab's list and its own upload response. `uploaded`,
    * when given, is returned for the upload; otherwise a fixed fixture is
    * used. `GET /api/facility-attachments/{id}/download` is also mocked with
-   * a tiny inline PNG for every attachment id, so `FacilityPlansStore`'s
+   * a tiny inline PNG only for the listed/uploaded attachment ids, so `FacilityPlansStore`'s
    * `loadImage` — the only source of `PlanViewer`'s `src` — actually
    * resolves instead of settling into the viewer's error state.
    */
@@ -1216,12 +1343,20 @@ export class ApiMock {
 
           return;
         }
-
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(plans));
       },
     );
 
+    const downloadPaths = new Set(
+      [...plans, uploadResponse].map((plan) => `/api/facility-attachments/${plan.id}/download`),
+    );
     await this.page.route(/\/api\/facility-attachments\/.+\/download$/, async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        !downloadPaths.has(new URL(route.request().url()).pathname)
+      )
+        return route.fallback();
       await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
     });
   }
@@ -1242,6 +1377,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/facilities/${facilityId}/plan-overlay(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, overlay);
       },
     );
@@ -1394,10 +1530,12 @@ export class ApiMock {
    * members page and the shell's member directory both read. Registered
    * after `mockAuthenticatedSession`, whose bootstrap installs the same
    * route returning an empty collection.
+   * Opt-in role filtering returns only existing fixture rows matching the requested roleId.
    */
   public async mockOrganizationMembers(
     organizationId: string,
     members: ReadonlyArray<OrganizationMemberOutputFixture> = [],
+    options: { filterByRole?: boolean } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await Promise.all(
@@ -1405,6 +1543,7 @@ export class ApiMock {
         this.page.route(
           new RegExp(`/api/organizations/${organizationId}/members/${member.id}(\\?.*)?$`),
           async (route) => {
+            if (route.request().method() !== 'GET') return route.fallback();
             await fulfillJson(route, 200, member);
           },
         ),
@@ -1413,7 +1552,13 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
       async (route) => {
-        await fulfillJson(route, 200, hydraCollection(members));
+        if (route.request().method() !== 'GET') return route.fallback();
+        const roleId = new URL(route.request().url()).searchParams.get('roleId');
+        const rows =
+          options.filterByRole && roleId
+            ? members.filter((member) => member.roleIds?.includes(roleId))
+            : members;
+        await fulfillJson(route, 200, hydraCollection(rows));
       },
     );
   }
@@ -1683,9 +1828,17 @@ export class ApiMock {
    * shell's channel-section widget. Registered after `mockAuthenticatedSession`,
    * whose bootstrap installs the same route returning an empty collection.
    */
-  public async mockChannelList(channels: ReadonlyArray<ChannelOutputFixture> = []): Promise<void> {
+  public async mockChannelList(
+    channels: ReadonlyArray<ChannelOutputFixture> = [],
+    organizationId = E2E_ORGANIZATION_ID,
+  ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(/\/api\/channels(\?.*)?$/, async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        new URL(route.request().url()).searchParams.get('organization') !== organizationId
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection(channels));
     });
   }
@@ -1859,6 +2012,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/dashboard(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, dashboard);
       },
     );
@@ -1877,6 +2031,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/dashboard(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, error.status ?? 403, {
           '@id': '/errors/dashboard-forbidden',
           '@type': 'Error',
@@ -1902,6 +2057,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/dashboard/trends/inspections(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, trend);
       },
     );
@@ -1922,6 +2078,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/dashboard/trends/inspections(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, error.status ?? 403, {
           '@id': '/errors/dashboard-trend-forbidden',
           '@type': 'Error',
@@ -1948,6 +2105,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/dashboard/trends/non-conformities-opened(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, trend);
       },
     );
@@ -1967,6 +2125,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/dashboard/trends/non-conformities-resolved(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, trend);
       },
     );
@@ -1987,6 +2146,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/dashboard/trends/equipment-created(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, trend);
       },
     );
@@ -2007,6 +2167,7 @@ export class ApiMock {
         `/api/organizations/${organizationId}/dashboard/trends/facilities-created(\\?.*)?$`,
       ),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, trend);
       },
     );
@@ -2103,6 +2264,11 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
       const url = new URL(route.request().url());
+      if (
+        route.request().method() !== 'GET' ||
+        url.searchParams.get('organization') !== `/api/organizations/${organizationId}`
+      )
+        return route.fallback();
       const status = url.searchParams.get('status');
       const member = url.searchParams.get('member');
       const label = url.searchParams.get('label');
@@ -2277,6 +2443,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/checklists(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(checklists));
       },
     );
@@ -2296,6 +2463,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/calendar/feed(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, {
           '@id': `/api/organizations/${organizationId}/calendar/feed`,
           '@type': 'CalendarFeed',
@@ -2320,6 +2488,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/organizations/${organizationId}/equipment-types(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(types));
       },
     );
@@ -2402,7 +2571,17 @@ export class ApiMock {
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(new RegExp('/api/intervention-work-items(\\?.*)?$'), async (route) => {
-      await fulfillJson(route, 200, hydraCollection(workItems));
+      const intervention = new URL(route.request().url()).searchParams.get('intervention');
+      if (
+        route.request().method() !== 'GET' ||
+        intervention !== `/api/interventions/${interventionId}`
+      )
+        return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        this.interventionCollection(workItems, new URL(route.request().url())),
+      );
     });
   }
 
@@ -2423,6 +2602,7 @@ export class ApiMock {
           await route.fallback();
           return;
         }
+        this.updatedInterventionRows.set(workItemId, updated);
         await fulfillJson(route, 200, updated);
       },
     );
@@ -2438,7 +2618,17 @@ export class ApiMock {
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(new RegExp('/api/intervention-changes(\\?.*)?$'), async (route) => {
-      await fulfillJson(route, 200, hydraCollection(changes));
+      const intervention = new URL(route.request().url()).searchParams.get('intervention');
+      if (
+        route.request().method() !== 'GET' ||
+        intervention !== `/api/interventions/${interventionId}`
+      )
+        return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        this.interventionCollection(changes, new URL(route.request().url())),
+      );
     });
   }
 
@@ -2458,6 +2648,7 @@ export class ApiMock {
     await this.page.route(
       `${API_BASE_URL}/api/interventions/${interventionId}/issues`,
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(issues));
       },
     );
@@ -2475,6 +2666,7 @@ export class ApiMock {
     await this.page.route(
       new RegExp(`/api/interventions/${interventionId}/activities(\\?.*)?$`),
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(activities));
       },
     );
@@ -2492,9 +2684,85 @@ export class ApiMock {
     await this.page.route(
       `${API_BASE_URL}/api/interventions/${interventionId}/attachments`,
       async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(attachments));
       },
     );
+  }
+
+  /**
+   * Mocks the canonical `GET /api/facilities?intervention=…` collection
+   * loaded by the intervention detail's linked-resources tab. The query is
+   * checked explicitly so this fixture cannot satisfy another facility read.
+   */
+  public async mockInterventionFacilities(
+    interventionId: string,
+    facilities: ReadonlyArray<FacilityOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/facilities(\\?.*)?$'), async (route) => {
+      const intervention = new URL(route.request().url()).searchParams.get('intervention');
+      if (
+        route.request().method() !== 'GET' ||
+        intervention !== `/api/interventions/${interventionId}`
+      )
+        return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        this.interventionCollection(facilities, new URL(route.request().url())),
+      );
+    });
+  }
+
+  /**
+   * Mocks the canonical `GET /api/inspections?intervention=…` collection
+   * loaded by the intervention detail's linked-resources tab. The intervention
+   * query is checked explicitly so a fixture cannot satisfy a different read.
+   */
+  public async mockInterventionInspections(
+    interventionId: string,
+    inspections: ReadonlyArray<InspectionOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/inspections(\\?.*)?$'), async (route) => {
+      const intervention = new URL(route.request().url()).searchParams.get('intervention');
+      if (
+        route.request().method() !== 'GET' ||
+        intervention !== `/api/interventions/${interventionId}`
+      )
+        return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        this.interventionCollection(inspections, new URL(route.request().url())),
+      );
+    });
+  }
+
+  /**
+   * Mocks the canonical `GET /api/equipment?intervention=…` collection loaded
+   * by the intervention detail's linked-resources tab, with method and
+   * intervention guards matching {@link mockInterventionInspections}.
+   */
+  public async mockInterventionEquipment(
+    interventionId: string,
+    equipment: ReadonlyArray<EquipmentOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(new RegExp('/api/equipment(\\?.*)?$'), async (route) => {
+      const intervention = new URL(route.request().url()).searchParams.get('intervention');
+      if (
+        route.request().method() !== 'GET' ||
+        intervention !== `/api/interventions/${interventionId}`
+      )
+        return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        this.interventionCollection(equipment, new URL(route.request().url())),
+      );
+    });
   }
 
   /**
@@ -2550,9 +2818,17 @@ export class ApiMock {
    * job collection `ImportsPage` reads, `organization` always present as a
    * required query parameter.
    */
-  public async mockImportJobList(jobs: ReadonlyArray<ImportJobOutputFixture> = []): Promise<void> {
+  public async mockImportJobList(
+    jobs: ReadonlyArray<ImportJobOutputFixture> = [],
+    organizationId = E2E_ORGANIZATION_ID,
+  ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(new RegExp(`/api/imports(\\?.*)?$`), async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        new URL(route.request().url()).searchParams.get('organization') !== organizationId
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection(jobs));
     });
   }
@@ -2564,9 +2840,16 @@ export class ApiMock {
    */
   public async mockMaintenanceScheduleList(
     schedules: ReadonlyArray<MaintenanceScheduleOutputFixture> = [],
+    organizationId = E2E_ORGANIZATION_ID,
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(new RegExp(`/api/maintenance/schedules(\\?.*)?$`), async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        new URL(route.request().url()).searchParams.get('organization') !==
+          `/api/organizations/${organizationId}`
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection(schedules));
     });
   }
@@ -2582,13 +2865,21 @@ export class ApiMock {
    * @since 1.0.0
    *
    * @param {ReadonlyArray<ConversationOutputFixture>} conversations - Organization conversations.
+   * @param {string} organizationId - Exact owning organization identifier.
    * @returns {Promise<void>} Resolves when the route is registered.
    */
   public async mockDirectConversationList(
     conversations: ReadonlyArray<ConversationOutputFixture>,
+    organizationId = E2E_ORGANIZATION_ID,
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(/\/api\/direct-conversations(\?.*)?$/, async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        new URL(route.request().url()).searchParams.get('organization') !==
+          `/api/organizations/${organizationId}`
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection(conversations));
     });
   }
@@ -2618,6 +2909,27 @@ export class ApiMock {
   }
 
   /**
+   * Method mockConversationDetail
+   * @method mockConversationDetail
+   * @description Resolves a saved message's exact conversation and owning organization without
+   * acknowledging writes or other conversation identifiers.
+   * @access public
+   * @since 1.0.0
+   * @param {ConversationOutputFixture} conversation - Organization-owned conversation fixture.
+   * @returns {Promise<void>} Exact GET endpoint registered.
+   */
+  public async mockConversationDetail(conversation: ConversationOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      (url) => url.pathname === `/api/conversations/${conversation.id}` && url.search === '',
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, conversation);
+      },
+    );
+  }
+
+  /**
    * Method mockSavedMessages
    * @method mockSavedMessages
    *
@@ -2628,14 +2940,62 @@ export class ApiMock {
    * @since 1.0.0
    *
    * @param {ReadonlyArray<MessageOutputFixture>} messages - Saved messages.
+   * @param {string} organizationId - Exact owning organization identifier.
    * @returns {Promise<void>} Resolves when the route is registered.
    */
   public async mockSavedMessages(
     messages: ReadonlyArray<MessageOutputFixture> = [],
+    organizationId = E2E_ORGANIZATION_ID,
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(/\/api\/saved-messages(\?.*)?$/, async (route) => {
+      if (
+        route.request().method() !== 'GET' ||
+        new URL(route.request().url()).searchParams.get('organization') !== organizationId
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection(messages));
+    });
+  }
+
+  /**
+   * Method mockAccountVisualReads
+   * @method mockAccountVisualReads
+   * @description Supplies empty security catalogs and notification preferences for read-only
+   * visual review. Does not register password, provider or preference mutations.
+   * @access public
+   * @since 1.0.0
+   * @returns {Promise<void>} Account read endpoints registered behind the safety net.
+   */
+  public async mockAccountVisualReads(): Promise<void> {
+    await this.installSafetyNet();
+    for (const path of [
+      'sessions',
+      'trusted-devices',
+      'auth/federated/providers',
+      'notification-types',
+    ]) {
+      // eslint-disable-next-line no-await-in-loop -- Keep Playwright registration order explicit before the specific account routes.
+      await this.page.route(new RegExp(`/api/${path}(\\?.*)?$`), async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      });
+    }
+    await this.page.route(/\/api\/auth\/federated\/connections(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        password_configured: true,
+        last_sign_in_method: 'password',
+        connections: [],
+      });
+    });
+    await this.page.route(/\/api\/notifications\/preferences(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/notifications/preferences',
+        '@type': 'NotificationPreferences',
+        preferences: [],
+      });
     });
   }
 }

@@ -1,33 +1,148 @@
-<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+<form
+  class="flex min-w-0 flex-col gap-6 mobile-ui:[&_input]:text-base"
+  novalidate
+  (submit)="submit($event)"
+>
   <div class="min-w-0">
     <hlm-field-group>
-      <hlm-field>
+      <hlm-field
+        [forceInvalid]="
+          isMobileInteractionMode() &&
+          equipmentForm.type().touched() &&
+          equipmentForm.type().invalid()
+        "
+      >
         <label hlmFieldLabel for="onboarding-equipment-type"
           ><span i18n="@@onboarding.equipmentForm.type"> Type</span><app-required-marker
         /></label>
 
-        <hlm-select [itemToString]="typeLabelOf" [formField]="equipmentForm.type">
-          <hlm-select-trigger
-            buttonId="onboarding-equipment-type"
-            class="w-full max-sm:min-h-11"
-            data-testid="onboarding-equipment-type"
-          >
-            <hlm-select-value
-              placeholder="Select an equipment type"
-              i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
-            />
-          </hlm-select-trigger>
-
-          <hlm-select-content *hlmSelectPortal>
-            <hlm-select-group>
-              @for (option of typeOptions; track option.value) {
-                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+        @if (isMobileInteractionMode()) {
+          <hlm-drawer #typeDrawer="hlmDrawer">
+            <button
+              hlmBtn
+              hlmDrawerTrigger
+              variant="outline"
+              type="button"
+              id="onboarding-equipment-type"
+              class="min-h-11 w-full justify-start text-start whitespace-normal"
+              [disabled]="pending()"
+              [attr.aria-required]="true"
+              [attr.aria-invalid]="equipmentForm.type().touched() && equipmentForm.type().invalid()"
+              [attr.aria-describedby]="
+                equipmentForm.type().touched() && equipmentForm.type().invalid()
+                  ? 'onboarding-equipment-type-error'
+                  : null
+              "
+              data-testid="onboarding-equipment-type"
+            >
+              <ng-icon [name]="typeIconOf(equipmentForm.type().value())" aria-hidden="true" />
+              @if (equipmentForm.type().value()) {
+                {{ typeLabelOf(equipmentForm.type().value()) }}
+              } @else {
+                <span i18n="@@onboarding.equipmentForm.typePlaceholder"
+                  >Select an equipment type</span
+                >
               }
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+            </button>
+            <hlm-drawer-content *hlmDrawerPortal class="pb-[env(safe-area-inset-bottom)]">
+              <hlm-drawer-header>
+                <div class="flex flex-col gap-1 text-start">
+                  <h2 hlmDrawerTitle i18n="@@onboarding.equipmentForm.type">Type</h2>
+                  <p hlmDrawerDescription i18n="@@onboarding.equipmentForm.typePlaceholder">
+                    Select an equipment type
+                  </p>
+                </div>
+              </hlm-drawer-header>
+              <hlm-command class="min-h-0 px-4 pb-4">
+                <label
+                  class="sr-only"
+                  for="onboarding-equipment-type-search"
+                  i18n="@@onboarding.equipmentForm.searchTypes"
+                  >Search equipment types</label
+                >
+                <hlm-input-group class="min-h-11">
+                  <input
+                    hlmInputGroupInput
+                    brnCommandInput
+                    id="onboarding-equipment-type-search"
+                    class="text-base"
+                    placeholder="Search equipment types"
+                    i18n-placeholder="@@onboarding.equipmentForm.searchTypes"
+                  />
+                  <hlm-input-group-addon>
+                    <ng-icon name="lucideSearch" aria-hidden="true" />
+                  </hlm-input-group-addon>
+                </hlm-input-group>
+                <div
+                  hlmCommandEmpty
+                  *hlmCommandEmptyState
+                  i18n="@@onboarding.equipmentForm.noMatchingType"
+                >
+                  No matching type.
+                </div>
+                <div hlmCommandList class="max-h-[50dvh] overscroll-contain">
+                  @for (option of typeOptions; track option.value) {
+                    <button
+                      hlmCommandItem
+                      type="button"
+                      class="min-h-11 gap-3 text-start whitespace-normal"
+                      [value]="option.label"
+                      [disabled]="pending()"
+                      [attr.data-current]="equipmentForm.type().value() === option.value"
+                      (selected)="
+                        equipmentForm.type().value.set(option.value);
+                        equipmentForm.type().markAsTouched();
+                        typeDrawer.close()
+                      "
+                    >
+                      <ng-icon [name]="option.icon" aria-hidden="true" />
+                      <span class="min-w-0 flex-1">{{ option.label }}</span>
+                      @if (equipmentForm.type().value() === option.value) {
+                        <ng-icon name="lucideCheck" aria-hidden="true" />
+                        <span class="sr-only" i18n="@@onboarding.equipmentForm.currentChoice"
+                          >Current choice</span
+                        >
+                      }
+                    </button>
+                  }
+                </div>
+              </hlm-command>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        } @else {
+          <hlm-select [itemToString]="typeLabelOf" [formField]="equipmentForm.type">
+            <hlm-select-trigger
+              buttonId="onboarding-equipment-type"
+              class="w-full mobile-ui:min-h-11"
+              data-testid="onboarding-equipment-type"
+            >
+              <hlm-select-value
+                placeholder="Select an equipment type"
+                i18n-placeholder="@@onboarding.equipmentForm.typePlaceholder"
+              />
+            </hlm-select-trigger>
 
-        <hlm-field-error>{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (option of typeOptions; track option.value) {
+                  <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
+                    option.label
+                  }}</hlm-select-item>
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+        }
+
+        <hlm-field-error
+          id="onboarding-equipment-type-error"
+          [forceShow]="
+            isMobileInteractionMode() &&
+            equipmentForm.type().touched() &&
+            equipmentForm.type().invalid()
+          "
+          >{{ equipmentForm.type().errors()[0]?.message }}</hlm-field-error
+        >
       </hlm-field>
 
       @if (facilities().length === 1) {
@@ -44,7 +159,13 @@
           }}</span>
         </div>
       } @else if (facilities().length > 1) {
-        <hlm-field>
+        <hlm-field
+          [forceInvalid]="
+            isMobileInteractionMode() &&
+            equipmentForm.facilityId().touched() &&
+            equipmentForm.facilityId().invalid()
+          "
+        >
           <label
             hlmFieldLabel
             for="onboarding-equipment-facility"
@@ -52,31 +173,138 @@
             >Facility</label
           >
 
-          <hlm-combobox [formField]="equipmentForm.facilityId" [itemToString]="facilityLabelOf">
-            <hlm-combobox-input
-              class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
-              inputId="onboarding-equipment-facility"
-              data-testid="onboarding-equipment-facility"
-              placeholder="Select a facility"
-              i18n-placeholder="@@onboarding.equipmentForm.facilityPlaceholder"
-            />
-
-            <hlm-combobox-content *hlmComboboxPortal>
-              <hlm-combobox-empty i18n="@@onboarding.equipmentForm.noMatchingFacility"
-                >No matching facility.</hlm-combobox-empty
+          @if (isMobileInteractionMode()) {
+            <hlm-drawer #facilityDrawer="hlmDrawer">
+              <button
+                hlmBtn
+                hlmDrawerTrigger
+                variant="outline"
+                type="button"
+                id="onboarding-equipment-facility"
+                class="min-h-11 w-full justify-start text-start whitespace-normal"
+                [disabled]="pending()"
+                [attr.aria-required]="true"
+                [attr.aria-invalid]="
+                  equipmentForm.facilityId().touched() && equipmentForm.facilityId().invalid()
+                "
+                [attr.aria-describedby]="
+                  equipmentForm.facilityId().touched() && equipmentForm.facilityId().invalid()
+                    ? 'onboarding-equipment-facility-error'
+                    : null
+                "
+                data-testid="onboarding-equipment-facility"
               >
-
-              <div hlmComboboxList>
-                @for (facility of facilityRows(); track facility.id) {
-                  <hlm-combobox-item [value]="facility.id"
-                    >{{ facility.name }} · {{ facility.typeLabel }}</hlm-combobox-item
+                <ng-icon name="lucideMapPin" aria-hidden="true" />
+                @if (equipmentForm.facilityId().value()) {
+                  {{ facilityLabelOf(equipmentForm.facilityId().value()) }}
+                } @else {
+                  <span i18n="@@onboarding.equipmentForm.facilityPlaceholder"
+                    >Select a facility</span
                   >
                 }
-              </div>
-            </hlm-combobox-content>
-          </hlm-combobox>
+              </button>
+              <hlm-drawer-content *hlmDrawerPortal class="pb-[env(safe-area-inset-bottom)]">
+                <hlm-drawer-header>
+                  <div class="flex flex-col gap-1 text-start">
+                    <h2 hlmDrawerTitle i18n="@@onboarding.equipmentForm.facility">Facility</h2>
+                    <p hlmDrawerDescription i18n="@@onboarding.equipmentForm.facilityPlaceholder">
+                      Select a facility
+                    </p>
+                  </div>
+                </hlm-drawer-header>
+                <hlm-command class="min-h-0 px-4 pb-4">
+                  <label
+                    class="sr-only"
+                    for="onboarding-equipment-facility-search"
+                    i18n="@@onboarding.equipmentForm.searchFacilities"
+                    >Search facilities</label
+                  >
+                  <hlm-input-group class="min-h-11">
+                    <input
+                      hlmInputGroupInput
+                      brnCommandInput
+                      id="onboarding-equipment-facility-search"
+                      class="text-base"
+                      placeholder="Search facilities"
+                      i18n-placeholder="@@onboarding.equipmentForm.searchFacilities"
+                    />
+                    <hlm-input-group-addon>
+                      <ng-icon name="lucideSearch" aria-hidden="true" />
+                    </hlm-input-group-addon>
+                  </hlm-input-group>
+                  <div
+                    hlmCommandEmpty
+                    *hlmCommandEmptyState
+                    i18n="@@onboarding.equipmentForm.noMatchingFacility"
+                  >
+                    No matching facility.
+                  </div>
+                  <div hlmCommandList class="max-h-[50dvh] overscroll-contain">
+                    @for (facility of facilityRows(); track facility.id) {
+                      <button
+                        hlmCommandItem
+                        type="button"
+                        class="min-h-11 gap-3 text-start whitespace-normal"
+                        [value]="facility.name + ' ' + facility.typeLabel"
+                        [disabled]="pending()"
+                        [attr.data-current]="equipmentForm.facilityId().value() === facility.id"
+                        (selected)="
+                          equipmentForm.facilityId().value.set(facility.id);
+                          equipmentForm.facilityId().markAsTouched();
+                          facilityDrawer.close()
+                        "
+                      >
+                        <ng-icon name="lucideMapPin" aria-hidden="true" />
+                        <span class="min-w-0 flex-1"
+                          >{{ facility.name }} · {{ facility.typeLabel }}</span
+                        >
+                        @if (equipmentForm.facilityId().value() === facility.id) {
+                          <ng-icon name="lucideCheck" aria-hidden="true" />
+                          <span class="sr-only" i18n="@@onboarding.equipmentForm.currentChoice"
+                            >Current choice</span
+                          >
+                        }
+                      </button>
+                    }
+                  </div>
+                </hlm-command>
+              </hlm-drawer-content>
+            </hlm-drawer>
+          } @else {
+            <hlm-combobox [formField]="equipmentForm.facilityId" [itemToString]="facilityLabelOf">
+              <hlm-combobox-input
+                class="mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
+                inputId="onboarding-equipment-facility"
+                data-testid="onboarding-equipment-facility"
+                placeholder="Select a facility"
+                i18n-placeholder="@@onboarding.equipmentForm.facilityPlaceholder"
+              />
 
-          <hlm-field-error>{{ equipmentForm.facilityId().errors()[0]?.message }}</hlm-field-error>
+              <hlm-combobox-content *hlmComboboxPortal>
+                <hlm-combobox-empty i18n="@@onboarding.equipmentForm.noMatchingFacility"
+                  >No matching facility.</hlm-combobox-empty
+                >
+
+                <div hlmComboboxList>
+                  @for (facility of facilityRows(); track facility.id) {
+                    <hlm-combobox-item class="mobile-ui:min-h-11" [value]="facility.id"
+                      >{{ facility.name }} · {{ facility.typeLabel }}</hlm-combobox-item
+                    >
+                  }
+                </div>
+              </hlm-combobox-content>
+            </hlm-combobox>
+          }
+
+          <hlm-field-error
+            id="onboarding-equipment-facility-error"
+            [forceShow]="
+              isMobileInteractionMode() &&
+              equipmentForm.facilityId().touched() &&
+              equipmentForm.facilityId().invalid()
+            "
+            >{{ equipmentForm.facilityId().errors()[0]?.message }}</hlm-field-error
+          >
         </hlm-field>
       }
 
@@ -91,7 +319,7 @@
           </label>
 
           <input
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             hlmInput
             id="onboarding-equipment-brand"
             type="text"
@@ -112,7 +340,7 @@
           </label>
 
           <input
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             hlmInput
             id="onboarding-equipment-model"
             type="text"
@@ -134,7 +362,7 @@
         </label>
 
         <input
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           hlmInput
           id="onboarding-equipment-serial"
           type="text"

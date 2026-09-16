@@ -1,4 +1,4 @@
-import { Component, type Type } from '@angular/core';
+import { Component, type EnvironmentProviders, type Provider, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { SlotContribution } from '@shared/layout-slot';
@@ -11,10 +11,12 @@ class HeaderStub {}
 @Component({ selector: 'app-footer-stub', template: '<p id="footer-stub">footer</p>' })
 class FooterStub {}
 
-async function render(providers: unknown[] = []): Promise<ComponentFixture<FocusedLayout>> {
+async function render(
+  providers: readonly (Provider | EnvironmentProviders)[] = [],
+): Promise<ComponentFixture<FocusedLayout>> {
   await TestBed.configureTestingModule({
     imports: [FocusedLayout],
-    providers: [provideRouter([]), ...(providers as never[])],
+    providers: [provideRouter([]), ...providers],
   }).compileComponents();
 
   const fixture: ComponentFixture<FocusedLayout> = TestBed.createComponent(FocusedLayout);
@@ -56,5 +58,11 @@ describe('FocusedLayout', () => {
       'fireguard-logo-primary.svg',
     );
     expect(element.querySelector('footer #footer-stub')).not.toBeNull();
+    expect(element.querySelector('footer')?.classList).toContain(
+      'mobile-ui:pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+    );
+    expect(element.querySelector('#focused-layout-content > div')?.classList).toContain(
+      'max-sm:my-0',
+    );
   });
 });

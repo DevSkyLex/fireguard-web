@@ -1,21 +1,23 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { Subject } from 'rxjs';
-import type { MockInstance } from 'vitest';
+import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth';
 import { AccountMenu } from '../account-menu.component';
 
 describe('AccountMenu', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<AccountMenu>;
   let profile: WritableSignal<ShellUserProfile | null>;
   let displayName: WritableSignal<string | null>;
   let isLoading: WritableSignal<boolean>;
   let logout: ReturnType<typeof vi.fn>;
-  let sessionEnded: Subject<void>;
-  let navigate: MockInstance;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
@@ -28,7 +30,6 @@ describe('AccountMenu', () => {
     displayName = signal<string | null>('Ada Lovelace');
     isLoading = signal(false);
     logout = vi.fn();
-    sessionEnded = new Subject<void>();
 
     TestBed.configureTestingModule({
       providers: [
@@ -46,12 +47,18 @@ describe('AccountMenu', () => {
           },
         },
         { provide: AUTH_LOGOUT_PORT, useValue: { logout, isLoggingOut: signal(false) } },
-        { provide: Events, useValue: { on: vi.fn().mockReturnValue(sessionEnded) } },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          },
+        },
       ],
     });
 
-    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-
+    mobile.set(false);
     fixture = TestBed.createComponent(AccountMenu);
     await fixture.whenStable();
   });
@@ -89,28 +96,46 @@ describe('AccountMenu', () => {
     expect(fixture.nativeElement.querySelector('hlm-skeleton')).toBeNull();
   });
 
-  it('should open the account workspace on the profile', () => {
-    fixture.componentInstance['goToProfile']();
+  it('exposes account destinations as native router links', async () => {
+    fixture.nativeElement.querySelector('#account-menu-trigger').click();
+    await fixture.whenStable();
 
-    expect(navigate).toHaveBeenCalledWith(['/account', 'profile']);
-  });
-
-  it('should open the account workspace on the notifications', () => {
-    fixture.componentInstance['goToNotifications']();
-
-    expect(navigate).toHaveBeenCalledWith(['/account', 'notifications']);
+    const menu = document.querySelector('hlm-dropdown-menu');
+    expect(menu?.querySelector('a[href="/account/profile"]')).not.toBeNull();
+    expect(menu?.querySelector('a[href="/account/notifications"]')).not.toBeNull();
+    expect(menu?.textContent).not.toContain('Notification preferences');
+    expect(menu?.querySelector('button[data-variant="destructive"]')).not.toBeNull();
+    expect(
+      Array.from(menu?.querySelectorAll('[data-slot="dropdown-menu-shortcut"]') ?? []).map(
+        (element) => element.textContent?.trim(),
+      ),
+    ).toEqual(['Ctrl+P', 'Ctrl+S', 'Ctrl+O', 'Ctrl+N']);
   });
 
   it('should end the session through the auth port', () => {
     fixture.componentInstance['logout']();
 
     expect(logout).toHaveBeenCalledTimes(1);
-    expect(navigate).not.toHaveBeenCalled();
+  });
+  it('uses the central mobile drawer and keeps notifications as the only notification destination', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    const trigger = fixture.nativeElement.querySelector(
+      '#account-menu-trigger',
+    ) as HTMLButtonElement;
+    trigger.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('hlm-drawer-content');
+    expect(drawer).not.toBeNull();
+    expect(drawer?.querySelector('a[href="/account/notifications"]')).not.toBeNull();
+    expect(drawer?.textContent).not.toContain('Notification preferences');
+    expect(drawer?.querySelector('button.text-destructive')).not.toBeNull();
   });
 
-  it('should leave for the sign-in screen once the session has ended', () => {
-    sessionEnded.next();
-
-    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
+  it('keeps the native menu when the central mode is desktop', async () => {
+    expect(fixture.nativeElement.querySelector('hlm-drawer')).toBeNull();
+    fixture.nativeElement.querySelector('#account-menu-trigger').click();
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-dropdown-menu')).not.toBeNull();
   });
 });

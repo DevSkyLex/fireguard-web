@@ -9,15 +9,17 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead class="w-10">
-        <hlm-checkbox
-          data-testid="intervention-table-select-all"
-          aria-label="Select all interventions"
-          i18n-aria-label="@@intervention.list.selectAllLabel"
-          [checked]="allSelected()"
-          [indeterminate]="someSelected()"
-          (checkedChange)="toggleAll($event)"
-        />
+      <th hlmTableHead class="w-10 px-3">
+        <span class="flex items-center">
+          <hlm-checkbox
+            data-testid="intervention-table-select-all"
+            aria-label="Select all interventions"
+            i18n-aria-label="@@intervention.list.selectAllLabel"
+            [checked]="allSelected()"
+            [indeterminate]="someSelected()"
+            (checkedChange)="toggleAll($event)"
+          />
+        </span>
       </th>
       <th hlmTableHead class="w-[100px]" i18n="@@intervention.list.columnReference">Ref.</th>
       <th hlmTableHead i18n="@@intervention.list.columnIntervention">Intervention</th>
@@ -33,7 +35,7 @@
             type="button"
             variant="ghost"
             size="sm"
-            class="-ms-2 h-8 px-2 max-sm:min-h-11"
+            class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
             data-testid="intervention-table-sort-priority"
             (click)="sortChanged.emit('priority')"
           >
@@ -58,7 +60,7 @@
             type="button"
             variant="ghost"
             size="sm"
-            class="ms-auto -me-2 h-8 px-2 max-sm:min-h-11"
+            class="ms-auto -me-2 h-8 px-2 mobile-ui:min-h-11"
             data-testid="intervention-table-sort-due"
             (click)="sortChanged.emit('dueAt')"
           >
@@ -78,12 +80,14 @@
     @for (item of items(); track item.intervention.id) {
       <tr hlmTableRow data-testid="intervention-table-row">
         <td hlmTableCell>
-          <hlm-checkbox
-            data-testid="intervention-table-row-select"
-            [checked]="isSelected(item.intervention.id)"
-            [aria-label]="selectRowLabel(item.intervention.name)"
-            (checkedChange)="toggleRow(item.intervention.id, $event)"
-          />
+          <span class="flex items-center">
+            <hlm-checkbox
+              data-testid="intervention-table-row-select"
+              [checked]="isSelected(item.intervention.id)"
+              [aria-label]="selectRowLabel(item.intervention.name)"
+              (checkedChange)="toggleRow(item.intervention.id, $event)"
+            />
+          </span>
         </td>
 
         <td hlmTableCell class="font-medium tabular-nums">FG-{{ item.intervention.number }}</td>
@@ -118,22 +122,30 @@
 
         @if (isVisible(column.SITE)) {
           <td hlmTableCell class="text-muted-foreground">
-            <span class="block max-w-36 truncate" [title]="item.siteName">{{ item.siteName }}</span>
+            @if (item.siteName; as siteName) {
+              <span class="block max-w-36 truncate" [title]="siteName">{{ siteName }}</span>
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
           </td>
         }
 
         @if (isVisible(column.DUE)) {
           <td hlmTableCell class="text-right text-muted-foreground tabular-nums">
             <span class="inline-flex items-center justify-end gap-1.5">
-              @if (item.isOverdue) {
-                <ng-icon
-                  name="lucideCircleAlert"
-                  class="text-destructive"
-                  i18n-aria-label="@@intervention.list.overdueLabel"
-                  aria-label="Overdue"
-                />
+              @if (item.intervention.dueAt; as dueAt) {
+                @if (item.isOverdue) {
+                  <ng-icon
+                    name="lucideCircleAlert"
+                    class="text-destructive"
+                    i18n-aria-label="@@intervention.list.overdueLabel"
+                    aria-label="Overdue"
+                  />
+                }
+                {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}
+              } @else {
+                <span aria-hidden="true">—</span>
               }
-              {{ item.intervention.dueAt | appOrgDate: 'date' : regionalFormatting() }}
             </span>
           </td>
         }
@@ -145,12 +157,11 @@
     }
   </ng-container>
 
-  <ng-container surfaceCards>
+  <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
     @for (item of items(); track item.intervention.id) {
       <div
         hlmItem
-        variant="outline"
-        class="flex flex-col items-stretch gap-1"
+        class="flex flex-col items-stretch gap-1 rounded-none px-0"
         data-testid="intervention-table-card"
       >
         <div class="flex items-start gap-2">
@@ -170,11 +181,8 @@
           }
 
           <div class="flex min-w-0 flex-1 flex-col">
-            <span class="text-xs text-muted-foreground tabular-nums"
-              >FG-{{ item.intervention.number }}</span
-            >
             <a
-              class="line-clamp-2 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring max-sm:-my-1.5 max-sm:py-3"
+              class="flex min-h-11 items-center rounded-sm text-base leading-snug font-semibold wrap-anywhere text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               queryParamsHandling="preserve"
               [routerLink]="[...detailRouteBase(), item.intervention.id]"
               >{{ item.intervention.name }}</a
@@ -184,13 +192,18 @@
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        @if (item.siteName) {
-          <p class="truncate text-xs text-muted-foreground">{{ item.siteName }}</p>
-        }
+        <p class="text-sm wrap-anywhere text-muted-foreground">
+          @if (item.siteName; as siteName) {
+            {{ siteName }}
+          } @else {
+            <span aria-hidden="true">—</span>
+          }
+        </p>
         <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <app-intervention-tag kind="status" [value]="item.intervention.status" />
+          <span class="font-mono tabular-nums">FG-{{ item.intervention.number }}</span>
+          <app-intervention-tag kind="status" [value]="item.intervention.status" asOption />
 
-          @if (item.intervention.dueAt) {
+          @if (item.intervention.dueAt; as dueAt) {
             <span class="inline-flex items-center gap-1.5 truncate tabular-nums">
               @if (item.isOverdue) {
                 <ng-icon
@@ -200,13 +213,18 @@
                   aria-label="Overdue"
                 />
               }
-              {{ item.intervention.dueAt | appOrgDate: 'date' : regionalFormatting() }}
+              {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}
             </span>
+          } @else {
+            <span aria-hidden="true">—</span>
           }
         </div>
       </div>
+      @if (!$last) {
+        <hlm-item-separator />
+      }
     }
-  </ng-container>
+  </div>
 
   <p
     surfaceEmpty
@@ -224,7 +242,7 @@
     variant="ghost"
     size="icon-sm"
     align="end"
-    class="max-sm:size-11"
+    class="mobile-ui:size-11 mobile-ui:min-h-11"
     data-testid="intervention-table-row-menu"
     [hlmDropdownMenuTrigger]="rowMenu"
   >
@@ -243,13 +261,18 @@
         <span i18n="@@intervention.list.rowOpen">Open</span>
       </a>
 
-      <button hlmDropdownMenuItem (click)="referenceCopied.emit(item.intervention)">
+      <button
+        class="mobile-ui:min-h-11"
+        hlmDropdownMenuItem
+        (click)="referenceCopied.emit(item.intervention)"
+      >
         <ng-icon name="lucideCopy" aria-hidden="true" />
         <span i18n="@@intervention.list.rowCopyRef">Copy reference</span>
       </button>
 
       @if (canDuplicate()) {
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           data-testid="intervention-table-row-duplicate"
           (click)="duplicateRequested.emit(item.intervention)"
@@ -262,6 +285,7 @@
       @if (isRowAssignable(item.intervention)) {
         <hlm-dropdown-menu-separator />
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           data-testid="intervention-table-row-assign"
           (click)="assignRequested.emit(item.intervention)"
@@ -278,6 +302,7 @@
         >
         @for (target of transitionsFor(item.intervention); track target) {
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="intervention-table-row-transition"
             [disabled]="isTransitionGated(item.intervention, target)"
@@ -309,6 +334,7 @@
       @if (isRowDeletable(item.intervention)) {
         <hlm-dropdown-menu-separator />
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           variant="destructive"
           data-testid="intervention-table-row-delete"

@@ -15,7 +15,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="facility-table-sort-name"
           (click)="sortChanged.emit('name')"
         >
@@ -29,7 +29,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="facility-table-sort-type"
           (click)="sortChanged.emit('type')"
         >
@@ -43,7 +43,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="facility-table-sort-code"
           (click)="sortChanged.emit('code')"
         >
@@ -57,7 +57,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="facility-table-sort-status"
           (click)="sortChanged.emit('status')"
         >
@@ -76,7 +76,7 @@
       <tr hlmTableRow data-testid="facility-table-row">
         <td hlmTableCell>
           <a
-            class="inline-flex max-w-56 items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="inline-flex max-w-56 items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
           >
             <span class="truncate">{{ item.name }}</span>
@@ -94,7 +94,11 @@
         <td hlmTableCell class="text-muted-foreground">{{ typeLabelOf(item.type) }}</td>
 
         <td hlmTableCell class="tabular-nums">
-          {{ item.code }}
+          @if (item.code; as code) {
+            {{ code }}
+          } @else {
+            <span aria-hidden="true">—</span>
+          }
         </td>
 
         <td hlmTableCell>
@@ -111,15 +115,15 @@
   <ng-container surfaceCards>
     @for (item of items(); track item.id) {
       <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        class="flex flex-col gap-1 rounded-md border border-border p-3 mobile-ui:gap-2 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
         data-testid="facility-table-card"
       >
         <div class="flex items-start gap-2">
           <a
-            class="flex min-w-0 flex-1 items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="flex min-w-0 flex-1 items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
           >
-            <span class="line-clamp-2">{{ item.name }}</span>
+            <span class="text-base leading-snug break-words">{{ item.name }}</span>
             @if (item.hasChildren) {
               <ng-icon
                 name="lucideNetwork"
@@ -133,9 +137,16 @@
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+        <p class="text-sm text-muted-foreground">{{ typeLabelOf(item.type) }}</p>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <app-facility-status-tag [value]="item.status" />
-          <span class="truncate tabular-nums">{{ item.code }}</span>
+          <span class="break-words tabular-nums">
+            @if (item.code; as code) {
+              {{ code }}
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
+          </span>
         </div>
       </div>
     }
@@ -157,7 +168,7 @@
     variant="ghost"
     size="icon-sm"
     align="end"
-    class="max-sm:size-11"
+    class="mobile-ui:size-11"
     data-testid="facility-table-row-menu"
     [hlmDropdownMenuTrigger]="rowMenu"
   >
@@ -167,7 +178,11 @@
 
   <ng-template #rowMenu>
     <hlm-dropdown-menu class="w-52">
-      <a hlmDropdownMenuItem [routerLink]="[...detailRouteBase(), item.id]">
+      <a
+        hlmDropdownMenuItem
+        [routerLink]="[...detailRouteBase(), item.id]"
+        class="mobile-ui:min-h-11"
+      >
         <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
         <span i18n="@@facility.list.rowOpen">Open</span>
       </a>
@@ -178,6 +193,7 @@
           hlmDropdownMenuItem
           data-testid="facility-table-row-archive"
           (click)="archiveRequested.emit(item)"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideArchive" aria-hidden="true" />
           <span i18n="@@facility.list.rowArchive">Archive</span>
@@ -190,6 +206,7 @@
           hlmDropdownMenuItem
           data-testid="facility-table-row-restore"
           (click)="restoreRequested.emit(item)"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
           <span i18n="@@facility.list.rowRestore">Restore</span>

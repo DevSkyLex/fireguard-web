@@ -17,6 +17,7 @@
     "src/app/shared/ui/**",
     "public/**",
     ".agents/skills/impeccable/**",
+    ".agents/skills/spartan/**",
     ".agents/skills/ui-ux-pro-max/**"
   ],
   "categories": {

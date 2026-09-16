@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,10 +10,12 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideBell } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { NotificationOutput } from '@features/account/models';
 import { NotificationStore } from '@features/account/state';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmItem,
   HlmItemActions,
@@ -95,6 +98,8 @@ const RELATIVE_UNITS: ReadonlyArray<{
 @Component({
   selector: 'app-notification-bell',
   imports: [
+    NgTemplateOutlet,
+    HlmDrawerImports,
     NgIcon,
     RouterLink,
     HlmButton,
@@ -114,6 +119,18 @@ const RELATIVE_UNITS: ReadonlyArray<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationBell {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Properties
   /**
    * Property slotPresentation

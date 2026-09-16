@@ -92,6 +92,28 @@ suite goes green on an unusable screen.
   assertion about tap targets, touch-only affordances or hover-gated UI belongs
   in one.
 
+The interaction-mode regressions are `organization/interaction-mode.spec.ts`
+and `organization/interaction-mode.mobile.spec.ts`. They distinguish a 375px
+desktop window from phone and tablet contexts, verify automatic classification,
+More permissions and organization switching, drawer keyboard focus, and staged
+filter Apply/Cancel.
+Wide mobile layouts may fit a table while keeping mobile navigation and controls.
+`support/helpers/interaction-mode.ts` completes device platform emulation on
+Windows, where a mobile UA can otherwise retain the host's `navigator.platform`.
+It supplies coherent device signals without overriding the application's result.
+All backend calls still go through `ApiMock` and its existing safety net.
+
+Run this bounded matrix against the configured port 4273 server:
+
+```powershell
+npx playwright test e2e/organization/interaction-mode.spec.ts e2e/organization/interaction-mode.mobile.spec.ts --project=chromium --project="Mobile Chrome" --project="Mobile Safari" --workers=2 --reporter=line --output=e2e/test-results-interaction-mode
+```
+
+Settled captures live under `e2e/artifacts/mobile-visual-review/branch-review/<run>/interaction-mode/<project>/` separately
+from disposable runner output. Inspect those captures for visual review; assertions
+on visibility alone are not visual evidence. These tests emulate devices, not hardware
+keyboards or operating-system safe-area/virtual-keyboard behavior, and do not test SSR.
+
 `expectNoHorizontalOverflow(page)` proves the _document_ does not scroll
 sideways. It cannot see a table scrolling inside its own `overflow-x-auto`
 container, so it passes on a collection the operator cannot read. Pair it with
@@ -122,7 +144,13 @@ page wrapper around it.
 - Every `mock*Session*` call installs a catch-all 404 safety net for any
   `/api/*` request without a specific mock, so a missing mock fails fast with
   a clear "No E2E mock registered for ..." message instead of hanging for the
-  full timeout.
+  full timeout. It also records a Playwright assertion failure, even if the UI
+  catches the HTTP error. The net covers API paths on any origin.
+- Saved messages, channels and imports require `GET` plus the exact
+  bare organization id in `organization`. Direct conversations and maintenance schedules require
+  the exact organization IRI. Their optional final `organizationId` argument defaults
+  to `E2E_ORGANIZATION_ID`; a multi-organization fixture supplies its explicit owner.
+  Wrong methods and missing/wrong organizations fall through to the failing safety net.
 - `mockOnboarding(onboarding)` — registered AFTER `mockAuthenticatedSession`,
   overrides the completed default the session bootstrap installs (Playwright
   matches routes last-registered-first).
@@ -161,4 +189,99 @@ npm run e2e:headed      # chromium, headed
 npm run e2e:ui          # Playwright's interactive UI mode
 npm run e2e:debug       # chromium, Playwright inspector
 npm run e2e:report      # open the last HTML report
+npm run e2e:typecheck   # includes harness files and the SSR config
+npm run e2e:harness     # synthetic Chromium/WebKit checks; no Angular server
+npm run e2e:ssr:build   # build the separate real SSR smoke bundle
+npm run e2e:ssr         # local API stub + real SSR server on ports 4275/4274
 ```
+
+## Harness reliability and visual passes
+
+`FG_VISUAL_PASS=inspection|confirmation` selects the scenarios. `FG_VISUAL_RUN` only
+names their durable output directory; naming a run `confirmation` does not select that pass.
+The inspection selects 100 cases, the bounded confirmation 28. Inspection covers all 30 routes
+at 390px light/dark plus eight representative routes in five complementary modes: phone
+375×812/light, phone 458×915/dark, tablet 1024×1366/dark, narrow desktop 375×844/light and
+desktop 1440×1000/dark. Use a distinct run name and
+runner output directory for each authorized run; do not overwrite prior visual evidence.
+
+```powershell
+$env:FG_VISUAL_PASS = 'inspection'
+$env:FG_VISUAL_RUN = 'branch-inspection-01'
+npx playwright test e2e/organization/mobile-visual-review.spec.ts --project=chromium --workers=2 --retries=0 --reporter=line,./e2e/support/helpers/mobile-visual-reporter.ts --output=e2e/test-results-branch-inspection-01
+```
+
+The current gallery root is `e2e/artifacts/mobile-visual-review/branch-review/<run>/`.
+Reports record actual scenarios, original test outcomes, evidence-generation status, HEAD
+and the authored working-tree fingerprint before/after execution. Fingerprint scope is explicit;
+secret environment files, dependencies and generated output are never read. A changing tree is
+marked `sourceChanged`. Static regeneration preserves these recorded source identities.
+Missing attachments, corrupt PNGs, missing scroll frames/diagnostics, image decode errors,
+or a source/revision change during capture and
+zero executed scenarios fail evidence generation and the reporter/CLI exit status. They do not
+rewrite recorded test outcomes or classify an image-generation failure as a product defect.
+
+```powershell
+node e2e/scripts/render-mobile-visual-report.cjs branch-inspection-01
+```
+
+Use `--legacy` as the third argument only for historical runs directly under
+`e2e/artifacts/mobile-visual-review/`, predating the `branch-review` directory.
+The critical-action probe requires full viewport/clipping-ancestor bounds with 1px tolerance
+and unobstructed center/corner hit tests. It never scrolls an action into view to make it pass.
+The isolated suite proves that a 44px button with only 2px visible fails.
+
+Teams, Checklists, Calendar and Saved messages now have bounded populated visual fixtures.
+The calendar event is relative to today at local noon; saved messages resolve their exact
+conversation through a GET-only mock. Security and notification-preference catalogs remain
+empty and explicitly limited in the matrix. Completed runs and inspected-image limits are
+recorded in `MOBILE-VISUAL-REVIEW.md`; they are not exhaustive state-space coverage.
+
+`organization/inspections.mobile.spec.ts` uses real mobile presets. Its narrow-desktop counterpart
+stays in `inspections.spec.ts`. Quick actions must finish closing before Search opens; Search
+owns focus and Escape restores the persistent quick-actions trigger. Staged filter Apply also
+checks focus restoration after closing. `shell-transitions.mobile.spec.ts` checks notification
+navigation, nested backdrop isolation, topmost parent dismissal, Close/Escape/pointer swipe and
+open- and closed-parent Ctrl/Cmd+K. `facility-plan-focus.mobile.spec.ts` checks each picker closes before
+focus reaches the enabled editor action that replaces its disabled trigger. Adaptive captures
+have source/scenario sidecars and reject Vite compilation overlays.
+
+## Real SSR smoke boundary
+
+The normal suite intentionally stays SSR-off. `playwright.ssr.config.ts` separately launches
+the built SSR server and a local HTTPS API. OpenSSL must be on PATH. The launcher generates
+a two-day local test certificate, trusts it only in its child via `NODE_EXTRA_CA_CERTS`, uses
+the existing `FIREGUARD_RUNTIME_CONFIG` public contract, and removes its key/certificate after
+shutdown. It neither reads nor changes environment files and never disables production origin
+validation. Browser certificate tolerance is restricted to this smoke's isolated contexts.
+
+The API stub acknowledges only anonymous refresh/login and provider discovery. Unknown paths,
+methods or unexpected origins are recorded and fail the smoke. A child preload rejects HTTP,
+HTTPS and fetch requests outside the exact local app/API origins; browser requests have the
+same restriction. No real backend, database, account or federated provider is used.
+
+The smoke verifies raw login HTML and hydration markers before browser JavaScript, actual
+server-side refresh traffic, desktop/mobile hydration and form submission, and the anonymous
+onboarding redirect. Workspace routes remain client-rendered by the application's server-route
+contract; authenticated dashboard SSR is not claimed. Set `FG_SSR_RUN` to a distinct simple name
+before each run. Screenshots and source/request evidence live under
+`e2e/artifacts/ssr-smoke/<run>/`; process IDs are recorded in `server/processes.json`. The scoped
+global teardown asks only this run's launcher to stop, waits for its ephemeral TLS cleanup and
+checks the final request ledger, avoiding broad Windows process-name kills.
+
+`e2e:ssr:build` invokes `e2e/ssr/build.cjs`. It records HEAD, authored inputs before/after compile,
+and a SHA-256 over emitted JS/CSS/HTML in `dist/fireguard-web-e2e-ssr/e2e-build.json`, failing if
+authored source changes during the build. The launcher copies that immutable metadata into the
+run's `server/build.json`; smoke evidence keeps build inputs separate from the runtime checkout.
+A pre-wrapper baseline is explicitly `unrecorded-baseline`, never attributed to current source.
+
+The launcher can validate TLS and both egress guards without loading any Angular source:
+
+```powershell
+node e2e/ssr/start-server.cjs --check
+```
+
+Its two intentional external-request rejections are recorded under `transport-check/` and
+are expected only for this launcher self-check. Real SSR smoke runs require an empty
+unexpected-request ledger. Run the build/smoke and application matrix only after the main
+owner announces that source work is ready.

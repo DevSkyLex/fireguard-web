@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import {
   errorCallState,
   idleCallState,
@@ -63,6 +64,13 @@ describe('ApprovalsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal('desktop'),
+            isMobileInteractionMode: signal(false),
+          },
+        },
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },

@@ -1,6 +1,7 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ORGANIZATION_PERMISSION, type OrganizationOutput } from '@features/organization/models';
 import {
@@ -44,6 +45,11 @@ async function openMenu(fixture: ComponentFixture<OrganizationSwitcher>): Promis
   await fixture.whenStable();
 }
 
+function menuItemLabel(element: Element): string {
+  const shortcut = element.querySelector('[data-slot="dropdown-menu-shortcut"]');
+  return (element.textContent ?? '').replace(shortcut?.textContent ?? '', '').trim();
+}
+
 describe('OrganizationSwitcher', () => {
   let routedId: WritableSignal<string | null>;
   let selected: WritableSignal<OrganizationOutput | null>;
@@ -52,6 +58,7 @@ describe('OrganizationSwitcher', () => {
   let loadCalls: number;
   let hasAnyPermission: ReturnType<typeof vi.fn>;
   let hasAllPermissions: ReturnType<typeof vi.fn>;
+  let mobile: WritableSignal<boolean>;
 
   async function render(): Promise<ComponentFixture<OrganizationSwitcher>> {
     const context: OrganizationContextPort = {
@@ -64,6 +71,10 @@ describe('OrganizationSwitcher', () => {
       imports: [OrganizationSwitcher],
       providers: [
         provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobile, shortcutModifier: signal<'Ctrl'>('Ctrl') },
+        },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: context },
         {
           provide: OrganizationPermissionService,
@@ -85,6 +96,8 @@ describe('OrganizationSwitcher', () => {
   }
 
   beforeEach(() => {
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+    mobile = signal(false);
     loadCalls = 0;
     routedId = signal<string | null>('org-1');
     selected = signal<OrganizationOutput | null>(organization('org-1', 'Acme Inc', 'Enterprise'));
@@ -199,10 +212,16 @@ describe('OrganizationSwitcher', () => {
     await openMenu(fixture);
 
     const labels: ReadonlyArray<string> = Array.from(
-      document.querySelectorAll('a[hlmDropdownMenuItem]'),
-    ).map((element: Element): string => element.textContent?.trim() ?? '');
+      document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
+    ).map(menuItemLabel);
 
     expect(labels).toEqual(['Settings', 'Billing', 'Members', 'Audit journal']);
+    const shortcuts: ReadonlyArray<string> = Array.from(
+      document.querySelectorAll(
+        'a[hlmDropdownMenuItem][href*="/org-1/"] [data-slot="dropdown-menu-shortcut"]',
+      ),
+    ).map((element: Element): string => element.textContent?.trim() ?? '');
+    expect(shortcuts).toEqual(['Ctrl+,', 'Ctrl+B', 'Ctrl+M', 'Ctrl+J']);
     const settingsLink: HTMLAnchorElement | null = document.querySelector('a[hlmDropdownMenuItem]');
     expect(settingsLink?.getAttribute('href')).toBe('/organizations/org-1/settings');
   });
@@ -212,10 +231,10 @@ describe('OrganizationSwitcher', () => {
     await openMenu(fixture);
 
     const links: ReadonlyArray<HTMLAnchorElement> = Array.from(
-      document.querySelectorAll('a[hlmDropdownMenuItem]'),
+      document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
     );
     const billingLink: HTMLAnchorElement | undefined = links.find(
-      (link) => link.textContent?.trim() === 'Billing',
+      (link) => menuItemLabel(link) === 'Billing',
     );
 
     expect(billingLink?.getAttribute('href')).toBe(
@@ -233,8 +252,8 @@ describe('OrganizationSwitcher', () => {
     await openMenu(fixture);
 
     const labels: ReadonlyArray<string> = Array.from(
-      document.querySelectorAll('a[hlmDropdownMenuItem]'),
-    ).map((element: Element): string => element.textContent?.trim() ?? '');
+      document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
+    ).map(menuItemLabel);
 
     expect(labels).toEqual(['Members', 'Audit journal']);
   });
@@ -249,8 +268,8 @@ describe('OrganizationSwitcher', () => {
     await openMenu(fixture);
 
     const labels: ReadonlyArray<string> = Array.from(
-      document.querySelectorAll('a[hlmDropdownMenuItem]'),
-    ).map((element: Element): string => element.textContent?.trim() ?? '');
+      document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
+    ).map(menuItemLabel);
 
     expect(labels).toEqual(['Settings', 'Billing', 'Members']);
   });
@@ -262,7 +281,7 @@ describe('OrganizationSwitcher', () => {
     const fixture = await render();
     await openMenu(fixture);
 
-    expect(document.querySelectorAll('a[hlmDropdownMenuItem]').length).toBe(0);
+    expect(document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]').length).toBe(0);
     expect(document.querySelectorAll('hlm-dropdown-menu-separator').length).toBe(2);
   });
 
@@ -283,6 +302,57 @@ describe('OrganizationSwitcher', () => {
     );
 
     expect(panel).not.toBeNull();
-    expect(panel?.querySelectorAll('button[hlmDropdownMenuItem]').length).toBe(5);
+    expect(panel?.querySelectorAll('a[hlmDropdownMenuItem]').length).toBe(5);
+  });
+
+  it('offers searchable organization choices in a drawer only for mobile interaction mode', async () => {
+    mobile.set(true);
+    const fixture = await render();
+    await openMenu(fixture);
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.querySelector('[role="dialog"] [brnCommandInput]')).not.toBeNull();
+    expect(document.querySelectorAll('[role="dialog"] button[hlmCommandItem]')).toHaveLength(2);
+    expect(document.querySelector('[role="dialog"] [hlmCommandEmpty]')).toBeNull();
+    const search = document.querySelector<HTMLInputElement>('[role="dialog"] [brnCommandInput]');
+    if (!search) throw new Error('Expected the organization search input');
+    search.value = 'No matching organization';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(document.querySelector('[role="dialog"] [hlmCommandEmpty]')?.textContent).toContain(
+      'No organizations found.',
+    );
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('allows a distinct trigger id when the hub and desktop sidebar coexist', async () => {
+    const fixture = await render();
+    fixture.componentRef.setInput('triggerId', 'organization-more-switcher-trigger');
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('#organization-more-switcher-trigger'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#organization-switcher-trigger')).toBeNull();
+  });
+  it('keeps the active command open and commits a different organization before closing', async () => {
+    mobile.set(true);
+    const fixture = await render();
+    await openMenu(fixture);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(async () => {
+      expect(document.querySelector('hlm-drawer-content')?.getAttribute('data-state')).toBe('open');
+      return true;
+    });
+    document
+      .querySelector<HTMLButtonElement>('button[hlmCommandItem][aria-current="true"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+
+    document
+      .querySelector<HTMLButtonElement>('button[hlmCommandItem]:not([aria-current="true"])')
+      ?.click();
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-2']);
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
   });
 });

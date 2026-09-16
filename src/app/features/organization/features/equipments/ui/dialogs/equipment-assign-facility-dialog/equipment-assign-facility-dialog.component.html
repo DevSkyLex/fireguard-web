@@ -26,6 +26,7 @@
           placeholder="Search a facility"
           i18n-placeholder="@@equipment.facility.dialog.placeholder"
           data-testid="equipment-facility-picker-input"
+          class="mobile-ui:min-h-11"
         />
         <hlm-combobox-content *hlmComboboxPortal>
           <hlm-combobox-empty i18n="@@equipment.facility.dialog.noMatch"
@@ -59,7 +60,7 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="equipment-facility-unassign"
           [disabled]="busy()"
           [attr.aria-busy]="unassigning() ? 'true' : null"
@@ -72,13 +73,13 @@
           }
         </button>
       }
-      <button hlmDialogClose hlmBtn type="button" variant="ghost" class="max-sm:min-h-11">
+      <button hlmDialogClose hlmBtn type="button" variant="ghost" class="mobile-ui:min-h-11">
         <span i18n="@@common.cancel">Cancel</span>
       </button>
       <button
         hlmBtn
         type="button"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="equipment-facility-assign"
         [disabled]="!canAssign()"
         [attr.aria-busy]="assigning() ? 'true' : null"

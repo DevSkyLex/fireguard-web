@@ -5,6 +5,7 @@ import {
   interventionStatisticsOutput,
 } from '../support/fixtures/intervention-fixtures';
 import { collectConsoleErrors, expectNoHorizontalOverflow } from '../support/helpers/appearance';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
 import { InterventionsPage } from '../support/pages/interventions.page';
 
@@ -64,6 +65,9 @@ async function gotoList(page: Parameters<typeof collectConsoleErrors>[0]): Promi
 }
 
 test.describe('Interventions list on a phone', () => {
+  test.beforeEach(async ({ context, browserName }) => {
+    await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+  });
   test('starts with view controls and keeps the collection reachable without metric cards', async ({
     page,
   }) => {
@@ -119,15 +123,11 @@ test.describe('Interventions list on a phone', () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  /*
-   * The collection surface landed: below its `@2xl` container breakpoint the
-   * table is gone and the rows render as cards, so there is no inner scroller
-   * left to hide the row menu behind. This used to be a `test.fail()`.
-   */
   test('renders the collection as cards, not as a sideways-scrolling table', async ({ page }) => {
     await gotoList(page);
 
-    await expect(page.getByTestId('intervention-table')).toHaveCount(0);
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
+    await expect(page.getByTestId('intervention-table')).toBeHidden();
     await expect(page.getByTestId('intervention-table-cards')).toBeVisible();
     await expect(page.getByTestId('intervention-table-card')).toHaveCount(INTERVENTIONS.length);
     await expectNoHorizontalOverflow(page);

@@ -36,6 +36,21 @@ describe('InterventionGettingStarted', () => {
     expect(rows()).toHaveLength(4);
   });
 
+  it('should expose the readiness checklist as a flat section', () => {
+    const section = root().querySelector('section[aria-labelledby="intervention-readiness-title"]');
+
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute('data-slot')).toBeNull();
+    expect(section?.querySelector('[data-slot="card"]')).toBeNull();
+  });
+
+  it('should use the 18px section heading scale', () => {
+    const title = root().querySelector('#intervention-readiness-title');
+
+    expect(title?.classList.contains('text-lg')).toBe(true);
+    expect(title?.classList.contains('text-xl')).toBe(false);
+  });
+
   it('should mark a satisfied prerequisite as done and disable it', () => {
     expect(rows()[0]?.disabled).toBe(true);
     expect(rows()[0]?.textContent).toContain('Choose a site');

@@ -15,6 +15,7 @@ import type {
 } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { sheetSide } from '@shared/sheet-side';
+import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
@@ -125,7 +126,7 @@ function permissionDomainLabelOf(domain: string): string {
  */
 @Component({
   selector: 'app-organization-role-permissions-sheet',
-  imports: [HlmCheckbox, ...HlmSheetImports],
+  imports: [HlmButton, HlmCheckbox, ...HlmSheetImports],
   templateUrl: './organization-role-permissions-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

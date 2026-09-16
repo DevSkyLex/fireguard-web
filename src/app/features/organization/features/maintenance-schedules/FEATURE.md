@@ -1,5 +1,15 @@
 # Maintenance Schedules Feature
 
+## Adaptive maintenance interface
+
+The central interaction-capabilities contract controls mobile cards and 44px controls regardless of
+viewport width. Campaign creation uses one Spartan sheet with the same form instance:
+bottom on mobile and right on desktop. Automatic detection can resolve that side
+without recreating the form; validation and server errors remain attached to it.
+Dismissal remains blocked while generation is pending.
+Schedule overrides, scope, permission checks and campaign generation retain their
+existing business behavior.
+
 ## Purpose
 
 Owns the organization's read surface over the backend Maintenance module and

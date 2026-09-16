@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  type InputSignal,
+  type Signal,
+} from '@angular/core';
+import { PageActionsService } from '@core/page-actions';
 import { TitleService } from '@core/title';
 import { DashboardPageActions } from '../dashboard-page-actions';
 import { DashboardPageTabs } from '../dashboard-page-tabs';
@@ -49,6 +57,25 @@ import { DashboardPageTabs } from '../dashboard-page-tabs';
 })
 export class DashboardPageHeader {
   //#region Properties
+  /**
+   * Property showTitle
+   * @readonly
+   * @description Whether this band owns the heading; mobile places it in the toolbar.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showTitle: InputSignal<boolean> = input(true);
+
+  /**
+   * Property pageActions
+   * @readonly
+   * @description Page contributions used to omit an empty mobile title band.
+   * @access protected
+   * @since 1.0.0
+   * @type {PageActionsService}
+   */
+  protected readonly pageActions: PageActionsService = inject(PageActionsService);
   /**
    * Property titleService
    * @readonly

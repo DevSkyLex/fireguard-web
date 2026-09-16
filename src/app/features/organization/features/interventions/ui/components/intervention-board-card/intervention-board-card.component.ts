@@ -2,15 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
+  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideEllipsis } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideCircleAlert, lucideEllipsis } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import {
   resolveInterventionTag,
   type InterventionStatus,
@@ -26,7 +30,9 @@ import {
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
 
@@ -57,14 +63,38 @@ import { InterventionTag } from '../intervention-tag';
     ...HlmSpinnerImports,
     ...HlmAvatarImports,
     ...HlmDropdownMenuImports,
+    ...HlmDrawerImports,
+    ...HlmItemImports,
     ...HlmCardImports,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideEllipsis })],
+  providers: [provideIcons({ lucideArrowRight, lucideCircleAlert, lucideEllipsis })],
   templateUrl: './intervention-board-card.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionBoardCard {
+  /**
+   * Property mobileActionsVisible
+   * @readonly
+   * @description Keeps an open touch action drawer mounted until the primitive restores focus on dismissal.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly mobileActionsVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Inputs
   /** The card's own view model. */
   public readonly item: InputSignal<InterventionBoardCardViewModel> =
@@ -197,11 +227,13 @@ export class InterventionBoardCard {
    * @since 1.0.0
    *
    * @param {InterventionStatus} target - The offered status target.
-   * @returns {void}
+   * @returns {boolean} Whether a move command was emitted.
    */
-  protected requestMove(target: InterventionStatus): void {
-    if (!this.canTransition() || this.locked() || this.moveBlockedReason(target) !== null) return;
+  protected requestMove(target: InterventionStatus): boolean {
+    if (!this.canTransition() || this.locked() || this.moveBlockedReason(target) !== null)
+      return false;
     this.moveRequested.emit(target);
+    return true;
   }
 
   //#endregion

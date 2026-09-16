@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-alert-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
     *hlmAlertDialogPortal
     data-testid="organization-members-remove-dialog"
   >
@@ -24,8 +24,9 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button class="mobile-ui:min-h-11" hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
       <button
+        class="mobile-ui:min-h-11"
         hlmAlertDialogAction
         variant="destructive"
         data-testid="organization-members-remove-confirm"

@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import {
   errorCallState,
   idleCallState,
@@ -112,6 +113,7 @@ const snapshot = (
 });
 
 describe('OrganizationAssetsPage', () => {
+  let mobile: WritableSignal<boolean>;
   let fixture: ComponentFixture<OrganizationAssetsPage>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let loadRoots: ReturnType<typeof vi.fn>;
@@ -140,6 +142,7 @@ describe('OrganizationAssetsPage', () => {
   let downloadingSnapshotIdSignal: WritableSignal<string | null>;
 
   beforeEach(() => {
+    mobile = signal(false);
     hasPermission = vi.fn().mockReturnValue(true);
     loadRoots = vi.fn();
     ensureChildrenLoaded = vi.fn();
@@ -168,6 +171,13 @@ describe('OrganizationAssetsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            interactionMode: () => (mobile() ? 'mobile' : 'desktop'),
+          },
+        },
         provideZonelessChangeDetection(),
         {
           provide: REGIONAL_FORMATTING_PORT,
@@ -246,11 +256,207 @@ describe('OrganizationAssetsPage', () => {
     });
   });
 
+  it('returns to mobile browsing by clearing the site selection without reloading the panes', async () => {
+    mobile.set(true);
+    fixture = await createPage();
+    fixture.componentInstance['onNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: facility(),
+    });
+    await fixture.whenStable();
+    const calls = loadEquipment.mock.calls.length;
+    fixture.componentInstance['clearFacilitySelection']();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['selectedFacilityId']()).toBeNull();
+    expect(fixture.componentInstance['facilityBrowserVisible']()).toBe(true);
+    expect(loadEquipment).toHaveBeenCalledTimes(calls);
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="assets-tree-panel"]')
+        .classList.contains('hidden'),
+    ).toBe(false);
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="assets-detail-panel"]')
+        .classList.contains('hidden'),
+    ).toBe(false);
+  });
+
+  it('keeps the site selection instruction in the visible mobile hierarchy panel', async () => {
+    mobile.set(true);
+    fixture = await createPage();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="assets-tree-panel"]')?.classList).not.toContain(
+      'hidden',
+    );
+    expect(element.querySelector('[data-testid="assets-detail-panel"]')?.classList).toContain(
+      'hidden',
+    );
+    expect(
+      element.querySelector('[data-testid="assets-mobile-select-prompt"]')?.textContent,
+    ).toContain('Select a site');
+  });
+
+  it('returns to the compliance hierarchy by clearing the summary selection', async () => {
+    mobile.set(true);
+    fixture = await createPage();
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+    const calls = loadSummary.mock.calls.length;
+    fixture.componentInstance['clearComplianceSelection']();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['selectedComplianceFacilityId']()).toBeNull();
+    expect(fixture.componentInstance['complianceBrowserVisible']()).toBe(true);
+    expect(loadSummary).toHaveBeenCalledTimes(calls);
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="assets-compliance-tree-panel"]')
+        .classList.contains('hidden'),
+    ).toBe(false);
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="assets-compliance-detail-panel"]')
+        .classList.contains('hidden'),
+    ).toBe(true);
+  });
+
+  it('restores and loads a URL-backed compliance selection', async () => {
+    fixture = await createPage({
+      organizationId: 'org-1',
+      axis: 'compliance',
+      compliance: 'facility-1',
+    });
+
+    expect(fixture.componentInstance['selectedComplianceFacilityId']()).toBe('facility-1');
+    expect(loadTree).toHaveBeenCalledWith('org-1');
+    expect(loadSummary).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
   it('loads the site roots on arrival', async () => {
     fixture = await createPage();
 
     expect(loadRoots).toHaveBeenCalledWith('org-1');
   });
+
+  it('disables mobile dragging while keeping the site menu and desktop drag available', async () => {
+    mobile.set(true);
+    fixture = await createPage();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(
+      element.querySelector('[data-testid="tree-item"]')?.getAttribute('draggable'),
+    ).toBeNull();
+    expect(element.querySelector('[data-testid="assets-tree-node-menu"]')).not.toBeNull();
+
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(element.querySelector('[data-testid="tree-item"]')?.getAttribute('draggable')).toBe(
+      'true',
+    );
+    expect(loadRoots).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the selected site name and ancestor context without refetching on interaction mode changes', async () => {
+    rootsSignal.set([
+      facility({
+        path: [
+          { id: 'campus', name: 'North campus', type: 'site' },
+          { id: 'facility-1', name: 'Headquarters', type: 'building' },
+        ],
+      }),
+    ]);
+    mobile.set(true);
+    fixture = await createPage({ organizationId: 'org-1', facility: 'facility-1' });
+    const element = fixture.nativeElement as HTMLElement;
+    const context = element.querySelector('[data-testid="assets-selected-site-context"]');
+    expect(context?.querySelector('h2')?.textContent).toContain('Headquarters');
+    expect(context?.querySelector('p')?.textContent).toContain('North campus');
+    const calls = loadEquipment.mock.calls.length;
+    mobile.set(false);
+    await fixture.whenStable();
+    mobile.set(true);
+    await fixture.whenStable();
+    expect(
+      element.querySelector('[data-testid="assets-selected-site-context"]')?.textContent,
+    ).toContain('North campus');
+    expect(loadEquipment).toHaveBeenCalledTimes(calls);
+  });
+
+  it.each([
+    {
+      mobileMode: true,
+      equipmentWrite: true,
+      facilityWrite: true,
+      directFacility: false,
+      menu: true,
+    },
+    {
+      mobileMode: true,
+      equipmentWrite: false,
+      facilityWrite: true,
+      directFacility: true,
+      menu: false,
+    },
+    {
+      mobileMode: true,
+      equipmentWrite: true,
+      facilityWrite: false,
+      directFacility: false,
+      menu: false,
+    },
+    {
+      mobileMode: false,
+      equipmentWrite: true,
+      facilityWrite: true,
+      directFacility: true,
+      menu: false,
+    },
+  ])(
+    'preserves permitted creation paths for $mobileMode/$equipmentWrite/$facilityWrite',
+    async ({ mobileMode, equipmentWrite, facilityWrite, directFacility, menu }) => {
+      mobile.set(mobileMode);
+      hasPermission.mockImplementation((permission: string): boolean => {
+        if (permission === 'organization.equipment.write') return equipmentWrite;
+        if (permission === 'organization.facilities.write') return facilityWrite;
+        return true;
+      });
+      fixture = await createPage({ organizationId: 'org-1', facility: 'facility-1' });
+      const template = fixture.componentInstance['pageActions']();
+      if (!template) throw new Error('Missing page actions');
+      const view = template.createEmbeddedView({});
+      view.detectChanges();
+      const host = document.createElement('div');
+      host.append(...(view.rootNodes as Node[]));
+      try {
+        const equipment = host.querySelector<HTMLAnchorElement>(
+          '[data-testid="assets-new-equipment"]',
+        );
+        const facilityLink = host.querySelector<HTMLAnchorElement>(
+          '[data-testid="assets-new-facility"]',
+        );
+        expect(equipment !== null).toBe(equipmentWrite);
+        expect(facilityLink !== null).toBe(directFacility);
+        expect(host.querySelector('[data-testid="assets-create-menu"]') !== null).toBe(menu);
+        if (equipment) expect(equipment.getAttribute('href')).toContain('facility=facility-1');
+        if (facilityLink) expect(facilityLink.getAttribute('href')).toContain('parent=facility-1');
+      } finally {
+        view.destroy();
+      }
+    },
+  );
 
   it('loads nothing in the right pane while on "By site" with no selection', async () => {
     fixture = await createPage();

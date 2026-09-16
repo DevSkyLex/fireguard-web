@@ -1,4 +1,8 @@
-<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+<form
+  class="flex min-w-0 flex-col gap-6 mobile-ui:[&_input]:text-base"
+  novalidate
+  (submit)="submit($event)"
+>
   <div class="min-w-0">
     <hlm-field-group>
       <hlm-field>
@@ -6,7 +10,7 @@
           ><span i18n="@@onboarding.orgForm.name"> Organization name</span><app-required-marker
         /></label>
         <input
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           hlmInput
           id="onboarding-org-name"
           type="text"

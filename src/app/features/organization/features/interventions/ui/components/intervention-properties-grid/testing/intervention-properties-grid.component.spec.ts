@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type {
   InterventionEditState,
+  InterventionEditTarget,
   InterventionOutput,
   MemberSelectOption,
   SelectOption,
@@ -64,6 +65,7 @@ const members: readonly MemberSelectOption[] = [
 describe('InterventionPropertiesGrid', () => {
   let fixture: ComponentFixture<InterventionPropertiesGrid>;
   let patches: UpdateInterventionInput[];
+  let editTargets: (InterventionEditTarget | null)[];
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement | null =>
@@ -86,10 +88,15 @@ describe('InterventionPropertiesGrid', () => {
     await fixture.whenStable();
 
     patches = [];
+    editTargets = [];
     fixture.componentInstance.detailsChanged.subscribe((patch) => patches.push(patch));
+    fixture.componentInstance.editTargetChanged.subscribe((target) => editTargets.push(target));
   });
 
   it('should render one row per property', () => {
+    expect(byTestId('intervention-field-reference')?.textContent).toContain('FG-5');
+    expect(byTestId('intervention-field-type')).not.toBeNull();
+    expect(byTestId('intervention-field-updated')).not.toBeNull();
     expect(byTestId('intervention-property-status')?.textContent).toContain('Draft');
     expect(
       byTestId('intervention-field-priority')?.querySelector('[data-slot="badge"]'),
@@ -100,14 +107,143 @@ describe('InterventionPropertiesGrid', () => {
     expect(byTestId('intervention-field-schedule')).not.toBeNull();
     expect(byTestId('intervention-field-participants')).not.toBeNull();
     expect(byTestId('intervention-field-labels')).not.toBeNull();
+    expect(byTestId('intervention-description-field')).not.toBeNull();
+  });
+
+  it('should hide secondary properties behind a Spartan disclosure by default', async () => {
+    const trigger = byTestId('intervention-properties-details-trigger') as HTMLButtonElement;
+    const content = byTestId('intervention-properties-details-content');
+
+    expect(trigger).not.toBeNull();
+    expect(byTestId('intervention-properties-details-collapse-trigger')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(content?.getAttribute('data-state')).toBe('closed');
+
+    trigger.click();
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-properties-details-trigger')).toBeNull();
+    const collapseTrigger = byTestId(
+      'intervention-properties-details-collapse-trigger',
+    ) as HTMLButtonElement;
+    expect(collapseTrigger).not.toBeNull();
+    expect(collapseTrigger.getAttribute('aria-expanded')).toBe('true');
+    expect(content?.getAttribute('data-state')).toBe('open');
+
+    collapseTrigger.click();
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-properties-details-collapse-trigger')).toBeNull();
+    expect(byTestId('intervention-properties-details-trigger')).not.toBeNull();
+    expect(content?.getAttribute('data-state')).toBe('closed');
+  });
+
+  it('should reset the disclosure when the displayed intervention changes', async () => {
+    const trigger = byTestId('intervention-properties-details-trigger') as HTMLButtonElement;
+
+    trigger.click();
+    await fixture.whenStable();
+    expect(byTestId('intervention-properties-details-trigger')).toBeNull();
+    expect(byTestId('intervention-properties-details-collapse-trigger')).not.toBeNull();
+
+    fixture.componentRef.setInput('intervention', { ...intervention, id: 'intervention-2' });
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-properties-details-trigger')).not.toBeNull();
+    expect(byTestId('intervention-properties-details-trigger')?.getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+    expect(byTestId('intervention-properties-details-collapse-trigger')).toBeNull();
+  });
+
+  it('should order identity, action context, planning and secondary metadata', () => {
+    const expected = [
+      'intervention-field-reference',
+      'intervention-field-type',
+      'intervention-property-status',
+      'intervention-field-priority',
+      'intervention-field-site',
+      'intervention-field-responsible',
+      'intervention-field-schedule',
+      'intervention-field-participants',
+      'intervention-field-labels',
+      'intervention-description-field',
+      'intervention-field-revision',
+      'intervention-field-updated',
+    ];
+    const propertyIds = new Set(expected);
+    const actual = Array.from(root().querySelectorAll<HTMLElement>('[data-testid]'))
+      .map((element) => element.dataset['testid'])
+      .filter((id): id is string => id !== undefined && propertyIds.has(id));
+
+    expect(actual).toEqual(expected);
+  });
+
+  it('should not render the removed activity metadata inside the properties surface', () => {
+    expect(byTestId('intervention-detail-meta')).toBeNull();
+  });
+
+  it('should use the table missing-value marker for unset properties', async () => {
+    fixture.componentRef.setInput('intervention', { ...intervention, participants: [] });
+    await fixture.whenStable();
+
+    const missingPropertyIds = [
+      'intervention-field-site',
+      'intervention-field-responsible',
+      'intervention-field-schedule',
+      'intervention-field-participants',
+      'intervention-field-labels',
+      'intervention-description-field',
+    ];
+
+    for (const id of missingPropertyIds) {
+      expect(byTestId(id)?.querySelector('[fieldvalue]')?.textContent?.trim()).toBe('—');
+    }
+  });
+
+  it('should ask the page to open the description editor', () => {
+    const trigger = byTestId('intervention-description-field') as HTMLElement;
+    (trigger.querySelector('button') as HTMLButtonElement).click();
+
+    expect(editTargets).toEqual(['description']);
+  });
+
+  it('should send an empty description as null, not as an empty string', async () => {
+    fixture.componentRef.setInput('intervention', { ...intervention, description: 'Old text' });
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'description' });
+    await fixture.whenStable();
+
+    const textarea = byTestId('intervention-description-input') as HTMLTextAreaElement;
+    textarea.value = '   ';
+    textarea.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    const saveButton = Array.from(root().querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Save',
+    );
+    saveButton?.click();
+
+    expect(patches).toEqual([{ description: null }]);
+  });
+
+  it('should not save a description equal to the stored one', async () => {
+    fixture.componentRef.setInput('intervention', { ...intervention, description: 'Existing' });
+    await fixture.whenStable();
+
+    const trigger = byTestId('intervention-description-field') as HTMLElement;
+    (trigger.querySelector('button') as HTMLButtonElement).click();
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'description' });
+    await fixture.whenStable();
+
+    const saveButton = Array.from(root().querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Save',
+    );
+
+    expect(saveButton?.hasAttribute('disabled')).toBe(true);
   });
 
   it('should show the revision the whole optimistic-concurrency scheme is pinned to', () => {
     expect(byTestId('intervention-field-revision')?.textContent).toContain('v3');
-  });
-
-  it('should show who is unassigned without a face', () => {
-    expect(byTestId('intervention-field-responsible')?.textContent).toContain('Unassigned');
   });
 
   it('should show the participant count from the resolved member options', () => {

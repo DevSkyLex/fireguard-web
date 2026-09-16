@@ -102,6 +102,9 @@ describe('InspectionTable', () => {
     );
 
     expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Ada Lovelace');
+    expect(cards[0].textContent).toContain('2026-08-10');
+    expect(cards[0].getAttribute('href')).toBe('/organizations/org-1/inspections/inspection-1');
     expect(cards[0].textContent).toContain('Pass');
     expect(cards[1].textContent).toContain('Fail');
   });

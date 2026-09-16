@@ -1,10 +1,18 @@
-<section class="flex min-w-0 flex-col gap-4">
+<section
+  class="flex min-w-0 flex-col gap-4"
+  aria-labelledby="intervention-work-items-title"
+  data-testid="intervention-work-items"
+>
   <div class="flex flex-wrap items-start justify-between gap-3">
-    <div class="min-w-0">
-      <h2 class="text-xl font-semibold tracking-tight" i18n="@@intervention.detail.checklist">
+    <div class="flex min-w-0 flex-col gap-1">
+      <h2
+        id="intervention-work-items-title"
+        class="text-lg font-semibold"
+        i18n="@@intervention.detail.checklist"
+      >
         Work items
       </h2>
-      <p class="mt-1 text-sm text-muted-foreground" i18n="@@intervention.wit.caption">
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.wit.caption">
         The tasks to complete during this intervention, tracked one by one.
       </p>
     </div>
@@ -21,7 +29,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-work-items-add"
           [disabled]="busy()"
           (click)="addRequested.emit()"
@@ -33,7 +41,7 @@
     </div>
   </div>
 
-  <div class="flex flex-col gap-3">
+  <div class="flex min-w-0 flex-col gap-3">
     @if (showProgress() && totalCount() > 0) {
       <div class="flex flex-col gap-2" data-testid="intervention-work-items-progress">
         <div class="flex items-center justify-between gap-2">
@@ -54,102 +62,138 @@
       </div>
     }
 
-    @if (items().length > 0 || loading()) {
-      <div class="flex flex-wrap items-center gap-3">
-        <hlm-select
-          [value]="activeFilter()"
-          [itemToString]="filterLabelOf"
-          (valueChange)="onFilterChanged($event)"
-        >
-          <hlm-select-trigger
-            buttonId="intervention-work-items-filter"
-            size="sm"
-            class="max-sm:min-h-11"
-            data-testid="intervention-work-items-filter"
-          >
-            <ng-icon name="lucideListFilter" aria-hidden="true" />
-            <span class="text-muted-foreground" i18n="@@intervention.wit.filterStatus">Status</span>
-            <hlm-select-value />
-          </hlm-select-trigger>
-          <hlm-select-content *hlmSelectPortal>
-            <hlm-select-group>
-              <hlm-select-item value="all" data-testid="intervention-work-items-filter-all">
-                <span class="flex w-full items-center justify-between gap-6">
-                  <span i18n="@@intervention.wit.filterAll">All</span>
-                  <span class="text-muted-foreground tabular-nums">{{ filterCounts().all }}</span>
-                </span>
-              </hlm-select-item>
-              <hlm-select-item
-                value="remaining"
-                data-testid="intervention-work-items-filter-remaining"
-              >
-                <span class="flex w-full items-center justify-between gap-6">
-                  <span i18n="@@intervention.wit.filterRemaining">Remaining</span>
-                  <span class="text-muted-foreground tabular-nums">{{
-                    filterCounts().remaining
-                  }}</span>
-                </span>
-              </hlm-select-item>
-              <hlm-select-item value="done" data-testid="intervention-work-items-filter-done">
-                <span class="flex w-full items-center justify-between gap-6">
-                  <span i18n="@@intervention.wit.filterDone">Done</span>
-                  <span class="text-muted-foreground tabular-nums">{{ filterCounts().done }}</span>
-                </span>
-              </hlm-select-item>
-              <hlm-select-item value="skipped" data-testid="intervention-work-items-filter-skipped">
-                <span class="flex w-full items-center justify-between gap-6">
-                  <span i18n="@@intervention.wit.filterSkipped">Skipped</span>
-                  <span class="text-muted-foreground tabular-nums">{{
-                    filterCounts().skipped
-                  }}</span>
-                </span>
-              </hlm-select-item>
-            </hlm-select-group>
-          </hlm-select-content>
-        </hlm-select>
+    @if (items().length > 0 || loading() || error() !== null) {
+      <app-collection-toolbar>
+        <app-collection-search-box
+          toolbarStart
+          testIdPrefix="intervention-work-items"
+          placeholder="Search work items..."
+          i18n-placeholder="@@intervention.wit.searchPlaceholder"
+          ariaLabel="Search work items..."
+          i18n-ariaLabel="@@intervention.wit.searchPlaceholder"
+          [value]="searchTerm()"
+          (queryChanged)="onSearchQueryChanged($event)"
+        />
 
-        @if (showMineFirstToggle()) {
+        <div toolbarEnd class="flex flex-wrap items-center gap-2">
+          <app-collection-filter-toggle
+            [visible]="filtersVisible()"
+            [activeCount]="activeFilterKeys().length"
+            label="Filters"
+            i18n-label="@@intervention.wit.filtersButton"
+            testIdPrefix="intervention-work-items"
+            (visibleChange)="toggleFiltersVisible($event)"
+          />
+        </div>
+      </app-collection-toolbar>
+
+      @if (filtersVisible()) {
+        <app-collection-filter-bar
+          [fields]="filterFields"
+          [activeKeys]="activeFilterKeys()"
+          [pendingKey]="openFilterKey()"
+          [templates]="filterTemplates()"
+          testIdPrefix="intervention-work-items"
+          (fieldPicked)="onFieldPicked($event)"
+          (fieldRemoved)="onFieldRemoved($event)"
+          (filtersCleared)="clearFilter()"
+        />
+      }
+
+      @if (showMineFirstToggle()) {
+        <div class="flex flex-wrap items-center gap-3">
           <button
             hlmToggle
             type="button"
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="intervention-work-items-mine-first"
             [state]="mineFirst() ? 'on' : 'off'"
             (stateChange)="mineFirst.set($event === 'on')"
           >
             <span i18n="@@intervention.wit.mineFirst">Mine first</span>
           </button>
-        }
-      </div>
+        </div>
+      }
 
+      <ng-template #statusFilter>
+        <app-collection-filter-select
+          [options]="statusOptions"
+          [value]="statusFilterValue()"
+          placeholder="Status"
+          i18n-placeholder="@@intervention.list.filterStatus"
+          searchPlaceholder="Search a status"
+          i18n-searchPlaceholder="@@intervention.list.filterStatusPlaceholder"
+          emptyLabel="No status matches."
+          i18n-emptyLabel="@@intervention.list.filterNoStatus"
+          [accessibleName]="statusFilterAccessibleName"
+          triggerId="intervention-work-items-filter-status"
+          testId="intervention-work-items-filter-status"
+          [state]="fieldPopoverState()"
+          (valueChanged)="onStatusFilterChanged($event)"
+          (stateChanged)="onFilterPopoverStateChanged($event)"
+        />
+      </ng-template>
+
+      <app-intervention-table-feedback
+        [source]="source()"
+        [error]="error()"
+        [hasResult]="queryItems() !== null || viewItems().length > 0"
+        [loading]="loading()"
+        (retryRequested)="retryRequested.emit()"
+      />
       <app-collection-surface
-        class="[&_[data-slot=table]]:table-fixed"
+        class="[&_[data-slot=table]]:min-w-[57rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-[57px]"
         caption="The intervention's work items."
         i18n-caption="@@intervention.wit.tableCaption"
         testId="intervention-work-item-table"
         density="compact"
         [loading]="loading()"
+        [hasLoaded]="queryItems() !== null"
+        [hasError]="error() !== null && !(queryItems() !== null) && viewItems().length === 0"
         [rowCount]="viewItems().length"
-        [columnCount]="7"
-        [skeletonColumns]="skeletonColumnWidths"
+        [columnCount]="showActionsColumn() ? 7 : 6"
+        [skeletonColumns]="skeletonColumnWidths()"
       >
+        <div hlmEmpty surfaceError role="alert" class="min-h-32">
+          <div hlmEmptyHeader>
+            <div hlmEmptyMedia variant="icon" class="text-destructive">
+              <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            </div>
+            <p hlmEmptyTitle i18n="@@intervention.wit.loadFailed">Work items could not be loaded</p>
+            <p hlmEmptyDescription>{{ error() }}</p>
+          </div>
+
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="loading()"
+            (click)="retryRequested.emit()"
+            i18n="@@intervention.tables.retry"
+          >
+            Retry
+          </button>
+        </div>
         <ng-container surfaceHead>
           <tr hlmTableRow>
-            <th hlmTableHead class="w-[68px]">
+            <th hlmTableHead class="w-16">
               <span class="sr-only" i18n="@@intervention.wit.columnStatus">Status</span>
             </th>
-            <th hlmTableHead class="w-[30%]" i18n="@@intervention.wit.columnTarget">Target</th>
-            <th hlmTableHead class="w-[20%]" i18n="@@intervention.wit.columnAction">Action</th>
+            <th hlmTableHead class="" i18n="@@intervention.wit.columnTarget">Target</th>
+            <th hlmTableHead class="w-36" i18n="@@intervention.wit.columnAction">Action</th>
             <th hlmTableHead class="w-32" i18n="@@intervention.wit.columnRequirement">
               Requirement
             </th>
-            <th hlmTableHead class="w-[22%]" i18n="@@intervention.wit.columnAssignee">Assignee</th>
-            <th hlmTableHead class="w-40" i18n="@@intervention.wit.columnState">State</th>
-            <th hlmTableHead class="w-20">
-              <span class="sr-only" i18n="@@intervention.wit.columnActions">Actions</span>
-            </th>
+            <th hlmTableHead class="w-40" i18n="@@intervention.wit.columnAssignee">Assignee</th>
+            <th hlmTableHead class="w-36" i18n="@@intervention.wit.columnState">State</th>
+            @if (showActionsColumn()) {
+              <th hlmTableHead class="w-20">
+                <span class="sr-only" i18n="@@intervention.wit.columnActions">Actions</span>
+              </th>
+            }
           </tr>
         </ng-container>
 
@@ -229,6 +273,8 @@
                       >{{ assignee.displayName }}</span
                     >
                   </div>
+                } @else {
+                  <span class="text-muted-foreground" aria-hidden="true">—</span>
                 }
               </td>
 
@@ -251,96 +297,101 @@
                 </span>
               </td>
 
-              <td hlmTableCell class="text-right whitespace-nowrap">
-                @if (canAttachEvidence()) {
-                  <button
-                    hlmBtn
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    class="relative mr-1 text-muted-foreground max-sm:size-11"
-                    data-testid="intervention-work-item-evidence"
-                    [attr.aria-label]="evidenceLabelOf(item)"
-                    [disabled]="isEvidencePending(item)"
-                    [attr.aria-busy]="isEvidencePending(item) ? 'true' : null"
-                    (click)="evidenceRequested.emit(item)"
-                  >
-                    @if (isEvidencePending(item)) {
-                      <hlm-spinner
-                        size="xs"
-                        data-testid="intervention-work-item-evidence-pending"
-                        aria-hidden="true"
-                      />
-                    } @else {
-                      <ng-icon name="lucideCamera" aria-hidden="true" />
-                      @if (item.evidenceCount > 0) {
-                        <span
-                          hlmBadge
-                          class="absolute -top-1 -right-1 h-3.5 min-w-3.5 justify-center rounded-full px-0.5 py-0 text-[10px] leading-none"
-                          data-testid="intervention-work-item-evidence-count"
-                          aria-hidden="true"
-                          >{{ item.evidenceCount }}</span
-                        >
-                      }
-                    }
-                  </button>
-                }
-                @if (hasRowActions(item)) {
-                  <button
-                    hlmBtn
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    align="end"
-                    class="max-sm:size-11"
-                    data-testid="intervention-work-item-menu"
-                    [hlmDropdownMenuTrigger]="rowMenu"
-                  >
-                    <ng-icon name="lucideEllipsis" aria-hidden="true" />
-                    <span class="sr-only" i18n="@@intervention.wit.rowActions"
-                      >Work item actions</span
+              @if (showActionsColumn()) {
+                <td hlmTableCell class="text-right whitespace-nowrap">
+                  @if (canAttachEvidence()) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      class="relative mr-1 text-muted-foreground mobile-ui:size-11 mobile-ui:min-h-11"
+                      data-testid="intervention-work-item-evidence"
+                      [attr.aria-label]="evidenceLabelOf(item)"
+                      [disabled]="isEvidencePending(item)"
+                      [attr.aria-busy]="isEvidencePending(item) ? 'true' : null"
+                      (click)="evidenceRequested.emit(item)"
                     >
-                  </button>
-
-                  <ng-template #rowMenu>
-                    <hlm-dropdown-menu class="w-52">
-                      @if (item.evidenceCount > 0) {
-                        <button
-                          hlmDropdownMenuItem
-                          data-testid="intervention-work-item-view-proofs"
-                          (click)="proofsRequested.emit(item)"
-                        >
-                          <ng-icon name="lucideImages" aria-hidden="true" />
-                          <span i18n="@@intervention.proofs.count"
-                            >{{ item.evidenceCount }} proof(s)</span
+                      @if (isEvidencePending(item)) {
+                        <hlm-spinner
+                          size="xs"
+                          data-testid="intervention-work-item-evidence-pending"
+                          aria-hidden="true"
+                        />
+                      } @else {
+                        <ng-icon name="lucideCamera" aria-hidden="true" />
+                        @if (item.evidenceCount > 0) {
+                          <span
+                            hlmBadge
+                            class="absolute -top-1 -right-1 h-3.5 min-w-3.5 justify-center rounded-full px-0.5 py-0 text-[10px] leading-none"
+                            data-testid="intervention-work-item-evidence-count"
+                            aria-hidden="true"
+                            >{{ item.evidenceCount }}</span
                           >
-                        </button>
+                        }
                       }
-                      @if (canSkipItem(item)) {
-                        <button
-                          hlmDropdownMenuItem
-                          data-testid="intervention-work-item-skip"
-                          (click)="skipRequested.emit(item)"
-                        >
-                          <ng-icon name="lucideSkipForward" aria-hidden="true" />
-                          <span i18n="@@intervention.wit.skip">Skip</span>
-                        </button>
-                      }
-                      @if (canDeleteItem(item)) {
-                        <button
-                          hlmDropdownMenuItem
-                          variant="destructive"
-                          data-testid="intervention-work-item-delete"
-                          (click)="deleteRequested.emit(item)"
-                        >
-                          <ng-icon name="lucideTrash2" aria-hidden="true" />
-                          <span i18n="@@common.delete">Delete</span>
-                        </button>
-                      }
-                    </hlm-dropdown-menu>
-                  </ng-template>
-                }
-              </td>
+                    </button>
+                  }
+                  @if (hasRowActions(item)) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      align="end"
+                      class="mobile-ui:size-11 mobile-ui:min-h-11"
+                      data-testid="intervention-work-item-menu"
+                      [hlmDropdownMenuTrigger]="rowMenu"
+                    >
+                      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                      <span class="sr-only" i18n="@@intervention.wit.rowActions"
+                        >Work item actions</span
+                      >
+                    </button>
+
+                    <ng-template #rowMenu>
+                      <hlm-dropdown-menu class="w-52">
+                        @if (item.evidenceCount > 0) {
+                          <button
+                            class="mobile-ui:min-h-11"
+                            hlmDropdownMenuItem
+                            data-testid="intervention-work-item-view-proofs"
+                            (click)="proofsRequested.emit(item)"
+                          >
+                            <ng-icon name="lucideImages" aria-hidden="true" />
+                            <span i18n="@@intervention.proofs.count"
+                              >{{ item.evidenceCount }} proof(s)</span
+                            >
+                          </button>
+                        }
+                        @if (canSkipItem(item)) {
+                          <button
+                            class="mobile-ui:min-h-11"
+                            hlmDropdownMenuItem
+                            data-testid="intervention-work-item-skip"
+                            (click)="skipRequested.emit(item)"
+                          >
+                            <ng-icon name="lucideSkipForward" aria-hidden="true" />
+                            <span i18n="@@intervention.wit.skip">Skip</span>
+                          </button>
+                        }
+                        @if (canDeleteItem(item)) {
+                          <button
+                            class="mobile-ui:min-h-11"
+                            hlmDropdownMenuItem
+                            variant="destructive"
+                            data-testid="intervention-work-item-delete"
+                            (click)="deleteRequested.emit(item)"
+                          >
+                            <ng-icon name="lucideTrash2" aria-hidden="true" />
+                            <span i18n="@@common.delete">Delete</span>
+                          </button>
+                        }
+                      </hlm-dropdown-menu>
+                    </ng-template>
+                  }
+                </td>
+              }
             </tr>
           }
         </ng-container>
@@ -404,6 +455,8 @@
                       </hlm-avatar>
                       <span class="truncate text-foreground">{{ assignee.displayName }}</span>
                     </div>
+                  } @else {
+                    <span aria-hidden="true">—</span>
                   }
                 </div>
 
@@ -422,7 +475,7 @@
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    class="relative mr-1 text-muted-foreground max-sm:size-11"
+                    class="relative mr-1 text-muted-foreground mobile-ui:size-11 mobile-ui:min-h-11"
                     data-testid="intervention-work-item-evidence-card"
                     [attr.aria-label]="evidenceLabelOf(item)"
                     [disabled]="isEvidencePending(item)"
@@ -456,7 +509,7 @@
                     variant="ghost"
                     size="icon-sm"
                     align="end"
-                    class="max-sm:size-11"
+                    class="mobile-ui:size-11 mobile-ui:min-h-11"
                     data-testid="intervention-work-item-menu-card"
                     [hlmDropdownMenuTrigger]="rowMenu"
                   >
@@ -470,6 +523,7 @@
                     <hlm-dropdown-menu class="w-52">
                       @if (item.evidenceCount > 0) {
                         <button
+                          class="mobile-ui:min-h-11"
                           hlmDropdownMenuItem
                           data-testid="intervention-work-item-view-proofs-card"
                           (click)="proofsRequested.emit(item)"
@@ -482,6 +536,7 @@
                       }
                       @if (canSkipItem(item)) {
                         <button
+                          class="mobile-ui:min-h-11"
                           hlmDropdownMenuItem
                           data-testid="intervention-work-item-skip-card"
                           (click)="skipRequested.emit(item)"
@@ -492,6 +547,7 @@
                       }
                       @if (canDeleteItem(item)) {
                         <button
+                          class="mobile-ui:min-h-11"
                           hlmDropdownMenuItem
                           variant="destructive"
                           data-testid="intervention-work-item-delete-card"
@@ -524,8 +580,15 @@
         </div>
       </app-collection-surface>
     } @else {
-      <div hlmEmpty data-testid="intervention-work-items-empty">
+      <div
+        hlmEmpty
+        class="border border-dashed border-border"
+        data-testid="intervention-work-items-empty"
+      >
         <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideListChecks" aria-hidden="true" />
+          </div>
           <p hlmEmptyTitle i18n="@@intervention.wit.emptyTitle">No work items yet</p>
           <p hlmEmptyDescription>{{ emptyDescription() }}</p>
         </div>
@@ -535,7 +598,7 @@
               hlmBtn
               type="button"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="intervention-work-items-empty-add"
               [disabled]="busy()"
               (click)="addRequested.emit()"

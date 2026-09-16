@@ -13,6 +13,7 @@ import {
   provideChannelsWorkspace,
   withGlobalSearch,
   withOrganizationNav,
+  withOrganizationMobileNavigation,
   withOrganizationSwitcher,
   withSyncIndicator,
 } from '@features/organization';
@@ -134,6 +135,7 @@ export const APP_ROUTES: Routes = [
       provideDashboardLayoutSlots({
         sidebarHeader: [withOrganizationSwitcher()],
         sidebarNav: [withOrganizationNav()],
+        mobileNavigation: [withOrganizationMobileNavigation()],
         sidebarExtension: [withDirectMessagesSidebarExtension(), withChannelsSidebarExtension()],
         sidebarFooter: [withCollaborationNav(), withDashboardGlobalNav(), withAccountMenu()],
         header: [withDashboardBreadcrumb()],

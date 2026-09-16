@@ -464,13 +464,13 @@ export class InterventionTable {
    */
   protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
     () => {
-      const widths: string[] = ['size-4', 'h-4 w-14', 'h-4 w-56 max-w-full'];
+      const widths: string[] = ['size-4', 'w-14', 'w-56 max-w-full'];
 
-      if (this.isVisible(INTERVENTION_TABLE_COLUMN.STATUS)) widths.push('h-4 w-24');
-      if (this.isVisible(INTERVENTION_TABLE_COLUMN.PRIORITY)) widths.push('h-4 w-20');
-      if (this.isVisible(INTERVENTION_TABLE_COLUMN.TYPE)) widths.push('h-4 w-28');
-      if (this.isVisible(INTERVENTION_TABLE_COLUMN.SITE)) widths.push('h-4 w-32');
-      if (this.isVisible(INTERVENTION_TABLE_COLUMN.DUE)) widths.push('ms-auto h-4 w-20');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.STATUS)) widths.push('w-24');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.PRIORITY)) widths.push('w-20');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.TYPE)) widths.push('w-28');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.SITE)) widths.push('w-32');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.DUE)) widths.push('ms-auto w-20');
 
       widths.push('ms-auto size-6');
 

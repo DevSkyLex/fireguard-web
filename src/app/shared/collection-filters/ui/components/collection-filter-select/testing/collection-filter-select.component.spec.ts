@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CollectionFilterOption, CollectionFilterPopoverState } from '../../../../models';
 import { CollectionFilterSelect } from '../collection-filter-select.component';
 
@@ -33,7 +34,6 @@ const OPTIONS: readonly CollectionFilterOption[] = [
       testId="interventions-filter-status"
       [state]="state()"
       [disabled]="disabled()"
-      [tooltip]="tooltip()"
       [describedBy]="describedBy()"
       [optionTemplate]="optionTemplate()"
       [valueTemplate]="valueTemplate()"
@@ -55,7 +55,6 @@ class CollectionFilterSelectHost {
   public lastState: CollectionFilterPopoverState | null = null;
   public readonly value: WritableSignal<string | null> = signal<string | null>(null);
   public readonly disabled: WritableSignal<boolean> = signal<boolean>(false);
-  public readonly tooltip: WritableSignal<string> = signal<string>('');
   public readonly describedBy: WritableSignal<string | undefined> = signal<string | undefined>(
     undefined,
   );
@@ -89,6 +88,61 @@ class ResizeObserverStub {
 }
 
 describe('CollectionFilterSelect', () => {
+  it.each([
+    { value: 42 },
+    { value: false },
+    { value: { value: 'planned' } },
+    { value: ['planned'] },
+  ])('should reject malformed combobox output $value', ({ value }) => {
+    fixture.componentInstance.lastValue = 'sentinel';
+    fixture.debugElement.query(By.css('hlm-combobox')).triggerEventHandler('valueChange', value);
+    expect(fixture.componentInstance.lastValue).toBe('sentinel');
+  });
+
+  it.each([null, undefined])('should normalize empty combobox output %s', (value) => {
+    fixture.componentInstance.lastValue = 'sentinel';
+    fixture.debugElement.query(By.css('hlm-combobox')).triggerEventHandler('valueChange', value);
+    expect(fixture.componentInstance.lastValue).toBeNull();
+  });
+
+  it('should preserve frozen catalog order and labels when options share a group', async () => {
+    fixture.destroy();
+    mobileInteractionMode.set(true);
+    const selectFixture = TestBed.createComponent(CollectionFilterSelect);
+    const options: readonly CollectionFilterOption[] = Object.freeze([
+      Object.freeze({ value: 'first', label: 'First', group: 'one', groupLabel: 'Group one' }),
+      Object.freeze({ value: 'second', label: 'Second', group: 'two', groupLabel: 'Group two' }),
+      Object.freeze({
+        value: 'third',
+        label: 'Third',
+        group: 'one',
+        groupLabel: 'Ignored heading',
+      }),
+    ]);
+    for (const name of ['placeholder', 'accessibleName', 'triggerId', 'testId', 'emptyLabel']) {
+      selectFixture.componentRef.setInput(name, name);
+    }
+    selectFixture.componentRef.setInput('options', options);
+    selectFixture.componentRef.setInput('value', null);
+    selectFixture.componentRef.setInput('state', 'open');
+    await selectFixture.whenStable();
+
+    const groups = Array.from(document.querySelectorAll('[hlmCommandGroup]'));
+    expect(
+      groups.map((group) => group.querySelector('[hlmCommandGroupLabel]')?.textContent?.trim()),
+    ).toEqual(['Group one', 'Group two']);
+    expect(
+      groups.map((group) =>
+        Array.from(group.querySelectorAll('[hlmCommandItem]')).map((item) =>
+          item.textContent?.trim(),
+        ),
+      ),
+    ).toEqual([['First', 'Third'], ['Second']]);
+    expect(options.map((option) => option.value)).toEqual(['first', 'second', 'third']);
+    selectFixture.destroy();
+  });
+
+  const mobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CollectionFilterSelectHost>;
 
   const trigger = (): HTMLElement =>
@@ -102,7 +156,16 @@ describe('CollectionFilterSelect', () => {
   });
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(CollectionFilterSelectHost);
     await fixture.whenStable();
@@ -112,20 +175,57 @@ describe('CollectionFilterSelect', () => {
     vi.unstubAllGlobals();
   });
 
-  async function useCompactFixture(): Promise<void> {
+  /**
+   * Function useMobileFixture
+   * @description Creates the host in the mobile interaction mode before its first render.
+   * @access private
+   * @since 1.0.0
+   * @returns {Promise<void>} The stabilized mobile fixture.
+   */
+  async function useMobileFixture(): Promise<void> {
     fixture.destroy();
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: query === '(max-width: 639px)',
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    );
+    mobileInteractionMode.set(true);
     fixture = TestBed.createComponent(CollectionFilterSelectHost);
     await fixture.whenStable();
   }
+
+  it.each([false, true])(
+    'should describe mobile values and preserve caller descriptions with disabled=%s',
+    async (disabled) => {
+      await useMobileFixture();
+      fixture.componentInstance.disabled.set(disabled);
+      await fixture.whenStable();
+
+      const valueId = `${trigger().id}-mobile-value`;
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
+
+      fixture.componentInstance.value.set('planned');
+      fixture.componentInstance.useTemplates.set(true);
+      fixture.componentInstance.describedBy.set('filter-reason filter-hint');
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(
+        `${valueId} filter-reason filter-hint`,
+      );
+      const description = document.getElementById(valueId);
+      expect(trigger().contains(description)).toBe(true);
+      expect(description?.querySelector('[data-testid="value-template-body"]')?.textContent).toBe(
+        'Planned',
+      );
+      if (disabled) expect(trigger().getAttribute('aria-disabled')).toBe('true');
+      expect(trigger().hasAttribute('disabled')).toBe(false);
+
+      fixture.componentInstance.disabled.set(!disabled);
+      fixture.componentInstance.describedBy.set(undefined);
+      fixture.componentInstance.value.set(null);
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
+    },
+  );
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Status');
@@ -170,18 +270,6 @@ describe('CollectionFilterSelect', () => {
     expect(button?.disabled).toBeFalsy();
     expect(trigger().getAttribute('aria-disabled')).toBe('true');
     expect(button?.getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('should render no visible or accessible trace of tooltip — CollectionFilterBar’s own chip owns the reason now', async () => {
-    fixture.componentInstance.disabled.set(true);
-    fixture.componentInstance.tooltip.set('Status cannot be filtered on this view.');
-    await fixture.whenStable();
-
-    const button: HTMLButtonElement | null = trigger().querySelector('button');
-
-    expect(button?.getAttribute('aria-describedby')).toBeNull();
-    expect(trigger().querySelector('[data-slot="field-description"]')).toBeNull();
-    expect(trigger().textContent).not.toContain('Status cannot be filtered on this view.');
   });
 
   it('should carry no aria-describedby while describedBy is unset', () => {
@@ -329,8 +417,8 @@ describe('CollectionFilterSelect', () => {
   });
 
   describe('mobile drawer', () => {
-    it('should replace the anchored combobox with a Spartan drawer below sm', async () => {
-      await useCompactFixture();
+    it('should replace the anchored combobox in mobile interaction mode at any width', async () => {
+      await useMobileFixture();
 
       expect((fixture.nativeElement as HTMLElement).querySelector('hlm-combobox')).toBeNull();
 
@@ -342,8 +430,28 @@ describe('CollectionFilterSelect', () => {
       ).not.toBeNull();
     });
 
+    it('should support keyboard selection through the Spartan command input', async () => {
+      await useMobileFixture();
+      fixture.componentInstance.searchPlaceholder.set(undefined);
+      trigger().click();
+      await fixture.whenStable();
+      const input: HTMLInputElement | null = document.querySelector('input[role="combobox"]');
+      expect(input).not.toBeNull();
+      input?.focus();
+      input?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      await fixture.whenStable();
+      const activeId = input?.getAttribute('aria-activedescendant');
+      expect(activeId).toBeTruthy();
+      input?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await fixture.whenStable();
+      expect(fixture.componentInstance.lastValue).not.toBeNull();
+      expect(
+        document.querySelector('[data-testid="interventions-filter-status-drawer"]'),
+      ).toBeNull();
+    });
+
     it('should search the drawer options and commit a picked value immediately', async () => {
-      await useCompactFixture();
+      await useMobileFixture();
       trigger().click();
       await fixture.whenStable();
 
@@ -358,7 +466,7 @@ describe('CollectionFilterSelect', () => {
 
       const options: HTMLElement[] = Array.from(
         document.querySelectorAll<HTMLElement>('[role="option"]'),
-      );
+      ).filter((option: HTMLElement): boolean => !option.hasAttribute('data-hidden'));
       expect(
         options.map((option: HTMLElement): string => option.textContent?.trim() ?? ''),
       ).toEqual(['In progress']);
@@ -369,8 +477,27 @@ describe('CollectionFilterSelect', () => {
       expect(fixture.componentInstance.lastValue).toBe('in_progress');
     });
 
+    it('should expose the native Command empty state when no option matches', async () => {
+      await useMobileFixture();
+      trigger().click();
+      await fixture.whenStable();
+
+      const input: HTMLInputElement | null = document.querySelector(
+        '#interventions-filter-status-mobile-search',
+      );
+      if (input) {
+        input.value = 'zzz-no-match';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      await fixture.whenStable();
+
+      expect(document.querySelector('[data-slot="command-empty"]')?.textContent).toContain(
+        'No status matches.',
+      );
+    });
+
     it('should retain option group headings in the mobile drawer', async () => {
-      await useCompactFixture();
+      await useMobileFixture();
       trigger().click();
       await fixture.whenStable();
 

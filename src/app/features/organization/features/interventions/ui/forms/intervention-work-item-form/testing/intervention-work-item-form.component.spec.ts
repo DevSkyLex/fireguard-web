@@ -112,4 +112,8 @@ describe('InterventionWorkItemForm', () => {
 
     expect(asterisk?.textContent).toContain('*');
   });
+
+  it('should use compact spacing between the work item fields', () => {
+    expect(root().querySelector('hlm-field-group')?.classList).toContain('gap-4');
+  });
 });

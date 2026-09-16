@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLogOut } from '@ng-icons/lucide';
-import { Events } from '@ngrx/signals/events';
 import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth/ports';
-import { authStoreEvents } from '@features/auth/state';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component LogoutControl
@@ -14,10 +13,8 @@ import { HlmButton } from '@shared/ui/button';
  *
  * @description
  * A discreet sign-out affordance for shells that render no account menu — the
- * onboarding wizard's header being the canonical host. It consumes the auth
- * feature's own logout, then leaves for the sign-in screen once the session
- * has ended: it listens to `sessionEnded` rather than the logout call's
- * outcome, because a failed logout request still ends the local session.
+ * onboarding wizard's header being the canonical host. It delegates logout
+ * while the auth feature owns the resulting navigation.
  *
  * @version 1.0.0
  *
@@ -30,7 +27,7 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-logout-control',
-  imports: [NgIcon, HlmButton],
+  imports: [NgIcon, HlmButton, HlmItemImports, HlmSpinner],
   providers: [provideIcons({ lucideLogOut })],
   templateUrl: './logout-control.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,39 +50,14 @@ export class LogoutControl {
   protected readonly logoutPort: AuthLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
 
   /**
-   * Property router
+   * Property slotPresentation
    * @readonly
-   *
-   * @description
-   * Used to leave for the sign-in screen once the session has ended.
-   *
-   * @access private
+   * @description Presentation requested by a shell or routed navigation directory.
+   * @access protected
    * @since 1.0.0
-   *
-   * @type {Router}
+   * @type {SlotPresentation}
    */
-  private readonly router: Router = inject<Router>(Router);
-  //#endregion
+  protected readonly slotPresentation: SlotPresentation = inject(SLOT_PRESENTATION);
 
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   *
-   * @description
-   * Subscribes to the auth store's `sessionEnded` event for as long as this
-   * control is rendered, and navigates to the sign-in screen when it fires.
-   *
-   * @access public
-   * @since 1.0.0
-   */
-  public constructor() {
-    inject<Events>(Events)
-      .on(authStoreEvents.sessionEnded)
-      .pipe(takeUntilDestroyed())
-      .subscribe((): void => {
-        void this.router.navigate(['/auth/login']);
-      });
-  }
   //#endregion
 }

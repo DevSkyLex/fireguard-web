@@ -162,6 +162,69 @@ describe('InterventionService', () => {
     expect(result).toEqual([first, second]);
   });
 
+  it('fans out multi-status work-item filters as scalar server requests', () => {
+    const planned = { id: 'work-item-planned' } as InterventionWorkItemOutput;
+    const inProgress = { id: 'work-item-in-progress' } as InterventionWorkItemOutput;
+    let result: readonly InterventionWorkItemOutput[] = [];
+
+    service
+      .listAllWorkItems('intervention-1', {
+        search: 'pump',
+        status: ['planned', 'in_progress'],
+      })
+      .subscribe((items) => {
+        result = items;
+      });
+
+    const requests = httpMock.match(
+      (candidate) =>
+        candidate.url === `${mockEnv.apiUrl}/api/intervention-work-items` &&
+        candidate.params.get('search') === 'pump' &&
+        candidate.params.get('intervention') === '/api/interventions/intervention-1',
+    );
+    expect(requests).toHaveLength(2);
+    expect(requests.map((request) => request.request.params.get('status')).toSorted()).toEqual([
+      'in_progress',
+      'planned',
+    ]);
+    expect(requests.every((request) => !request.request.params.has('status[]'))).toBe(true);
+
+    requests
+      .find((request) => request.request.params.get('status') === 'planned')
+      ?.flush({
+        '@id': '/api/intervention-work-items?status=planned',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [planned],
+      });
+    requests
+      .find((request) => request.request.params.get('status') === 'in_progress')
+      ?.flush({
+        '@id': '/api/intervention-work-items?status=in_progress',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [inProgress],
+      });
+
+    expect(result).toEqual([planned, inProgress]);
+  });
+
+  it('forwards one scalar status when listing one work-item page', () => {
+    service.listWorkItems('intervention-1', { status: 'planned' }).subscribe();
+
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === `${mockEnv.apiUrl}/api/intervention-work-items`,
+    );
+    expect(request.request.params.get('status')).toBe('planned');
+    expect(request.request.params.has('status[]')).toBe(false);
+    request.flush({
+      '@id': '/api/intervention-work-items',
+      '@type': 'Collection',
+      totalItems: 0,
+      member: [],
+    });
+  });
+
   it('loads every assigned intervention page for offline prefetch', () => {
     const first = { id: 'intervention-1' } as InterventionOutput;
     const second = { id: 'intervention-101' } as InterventionOutput;
@@ -426,14 +489,19 @@ describe('InterventionService', () => {
 
   it('forwards resource and status filters when listing changes', () => {
     service
-      .listChanges('intervention-1', { resource: '/api/equipment/equipment-1', status: 'open' })
+      .listChanges('intervention-1', {
+        resource: '/api/equipment/equipment-1',
+        status: 'proposed',
+        search: 'pressure',
+      })
       .subscribe();
 
     const request = httpMock.expectOne(
       (req) =>
         req.url === `${mockEnv.apiUrl}/api/intervention-changes` &&
         req.params.get('resource') === '/api/equipment/equipment-1' &&
-        req.params.get('status') === 'open',
+        req.params.get('status') === 'proposed' &&
+        req.params.get('search') === 'pressure',
     );
     request.flush({
       '@id': '/api/intervention-changes',

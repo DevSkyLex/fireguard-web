@@ -1,0 +1,7 @@
+<router-outlet />
+<hlm-toaster
+  [position]="interactionCapabilities.isMobileInteractionMode() ? 'top-center' : 'bottom-right'"
+  [offset]="
+    interactionCapabilities.isMobileInteractionMode() ? 'max(4rem, env(safe-area-inset-top))' : null
+  "
+/>

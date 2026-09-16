@@ -21,6 +21,9 @@ export interface CollectionFilterOption {
   /** The label rendered in the chip and the popover, and matched by the search box. */
   readonly label: string;
 
+  /** Optional semantic color used by the owning feature's option template. */
+  readonly color?: string;
+
   /** Optional stable group key used to keep long catalogs scannable. */
   readonly group?: string;
 

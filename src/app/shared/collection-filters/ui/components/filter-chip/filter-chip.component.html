@@ -1,14 +1,14 @@
 <span
   brnField
-  class="inline-flex max-w-full flex-col overflow-hidden rounded-md border border-border bg-secondary/40 text-xs text-foreground dark:bg-secondary/20 [&_button]:rounded-none!"
+  class="inline-flex max-w-full flex-col overflow-hidden rounded-md border border-border bg-secondary/40 text-sm text-foreground dark:bg-secondary/20 [&_button]:rounded-none!"
   [class.opacity-60]="disabled()"
   [attr.data-testid]="chipTestId()"
 >
-  <span class="flex h-7 items-stretch max-sm:h-11">
+  <span class="flex h-7 items-stretch leading-5 mobile-ui:h-11">
     <span
       class="inline-flex shrink-0 items-center gap-1 px-2 whitespace-nowrap text-muted-foreground"
     >
-      <ng-icon [name]="icon()" class="size-3.5 shrink-0" aria-hidden="true" />
+      <ng-icon [name]="icon()" class="shrink-0 text-[length:--spacing(3.5)]" aria-hidden="true" />
       {{ fieldLabel() }}
     </span>
 
@@ -19,7 +19,7 @@
     <span class="inline-flex shrink-0 items-center self-stretch text-muted-foreground">
       @if (hasOperatorChoice()) {
         <hlm-select
-          class="flex h-full items-center"
+          class="flex h-full items-center justify-center"
           [value]="operator()"
           [itemToString]="operatorLabelOf"
           (valueChange)="onOperatorPicked($event)"
@@ -30,26 +30,28 @@
           <hlm-select-trigger
             size="sm"
             [buttonId]="operatorTriggerId()"
-            class="flex h-full self-stretch rounded-none border-0 bg-transparent px-2 py-1 shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid aria-disabled:cursor-not-allowed max-sm:min-h-11 dark:bg-transparent [&:not(button)]:p-0"
+            class="flex h-full items-center justify-center self-stretch rounded-none border-0 bg-transparent px-2 py-0 leading-5 shadow-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid aria-disabled:cursor-not-allowed dark:bg-transparent mobile-ui:min-h-11 [&:not(button)]:p-0"
             [attr.data-testid]="operatorTestId()"
             [attr.aria-disabled]="disabled()"
             [ariaDisabled]="disabled()"
           >
-            <span class="whitespace-nowrap text-muted-foreground">{{
+            <span class="leading-5 whitespace-nowrap text-muted-foreground">{{
               operatorLabelOf(operator())
             }}</span>
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal class="w-fit">
             <hlm-select-group>
               @for (choice of operatorOptions(); track choice) {
-                <hlm-select-item [value]="choice">{{ operatorLabelOf(choice) }}</hlm-select-item>
+                <hlm-select-item [value]="choice" class="mobile-ui:min-h-11">{{
+                  operatorLabelOf(choice)
+                }}</hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
         </hlm-select>
       } @else {
         <span
-          class="shrink-0 px-2 whitespace-nowrap text-muted-foreground"
+          class="inline-flex h-full shrink-0 items-center px-2 leading-5 whitespace-nowrap text-muted-foreground"
           [attr.data-testid]="operatorTestId()"
         >
           {{ operatorLabelOf(operator()) }}
@@ -73,12 +75,12 @@
       #removeButton
       type="button"
       brnFieldControlDescribedBy
-      class="inline-flex h-full shrink-0 items-center justify-center px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid max-sm:min-w-11"
+      class="inline-flex h-full shrink-0 items-center justify-center px-2 text-muted-foreground transition-colors outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-ring focus-visible:outline-solid mobile-ui:min-w-11"
       [attr.data-testid]="removeTestId()"
       [attr.aria-label]="removeLabel()"
       (click)="onRemoveClicked()"
     >
-      <ng-icon name="lucideX" class="size-3" aria-hidden="true" />
+      <ng-icon name="lucideX" class="text-[length:--spacing(3)]" aria-hidden="true" />
     </button>
   </span>
 

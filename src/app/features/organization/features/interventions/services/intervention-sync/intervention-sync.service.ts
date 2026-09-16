@@ -1,4 +1,5 @@
 import { inject, Service } from '@angular/core';
+import { Dispatcher } from '@ngrx/signals/events';
 import { firstValueFrom } from 'rxjs';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
@@ -7,6 +8,7 @@ import {
   InterventionOfflineService,
   InterventionService,
 } from '@features/organization/features/interventions/data-access';
+import type { InterventionCollectionsChange } from '@features/organization/features/interventions/models';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
 import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
@@ -15,6 +17,7 @@ import {
   HTTP_SERVER_ERROR,
   PERMANENT_FAILURE_STATUSES,
 } from './constants';
+import { interventionSyncEvents } from './events';
 import type { SyncProblemResponse } from './models';
 
 /**
@@ -55,6 +58,15 @@ interface BlockedResources {
  */
 @Service()
 export class InterventionSyncService {
+  /**
+   * Property dispatcher
+   * @readonly
+   * @description Publishes cross-layer consequences; this service never listens to its own group.
+   * @access private
+   * @since 1.0.0
+   * @type {Dispatcher}
+   */
+  private readonly dispatcher: Dispatcher = inject(Dispatcher);
   //#region Properties
   /**
    * Property service
@@ -149,7 +161,7 @@ export class InterventionSyncService {
    * @param {string} organizationId - Active organization identifier.
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<number>} A promise resolving with the number of replayed operations.
+   * @returns {Promise<number>} A promise resolving with the number of replayed operations.
    */
   public async replayOutbox(organizationId: string, interventionId: string): Promise<number> {
     const activeReplay = this.activeReplays.get(interventionId);
@@ -164,17 +176,83 @@ export class InterventionSyncService {
   }
 
   /**
-   * Replays an intervention outbox after intervention-level serialization has been acquired.
+   * Method replayInterventionOutbox
+   * @method replayInterventionOutbox
+   * @description Replays an outbox after intervention-level serialization has been acquired.
+   * @access private
+   * @since 1.0.0
+   * @param {string} organizationId - Active organization identifier.
+   * @param {string} interventionId - Intervention identifier.
+   * @returns {Promise<number>} Number of operations effectively replayed.
    */
   private async replayInterventionOutbox(
     organizationId: string,
     interventionId: string,
   ): Promise<number> {
     const operations = await this.offline.listOutbox(interventionId);
-    return this.replayOperations(organizationId, operations, 0, 0, {
-      permanent: new Set<string>(),
-      transient: new Set<string>(),
-    });
+    const collections = new Set<InterventionCollectionsChange['collections'][number]>();
+    const applied = (operation: InterventionOutboxOperation): void => {
+      switch (operation.type) {
+        case 'work-item.create':
+        case 'work-item.update':
+          collections.add('workItems');
+          collections.add('changes');
+          break;
+        case 'change.create':
+        case 'change.update':
+          collections.add('changes');
+          break;
+        case 'intervention.update':
+          collections.add('workItems');
+          collections.add('changes');
+          collections.add('activity');
+          break;
+        case 'comment.create':
+          collections.add('activity');
+          break;
+        case 'facility.create':
+          collections.add('facilities');
+          collections.add('workItems');
+          break;
+        case 'equipment.create':
+          collections.add('equipment');
+          collections.add('workItems');
+          break;
+        case 'inspection.create':
+          collections.add('inspections');
+          collections.add('workItems');
+          break;
+        case 'media.create':
+          collections.add('equipment');
+          break;
+        case 'attachment.upload':
+          collections.add('attachments');
+          collections.add('workItems');
+          break;
+      }
+    };
+    try {
+      return await this.replayOperations(
+        organizationId,
+        operations,
+        0,
+        0,
+        {
+          permanent: new Set<string>(),
+          transient: new Set<string>(),
+        },
+        applied,
+      );
+    } finally {
+      if (collections.size)
+        this.dispatcher.dispatch(
+          interventionSyncEvents.replaySucceeded({
+            interventionId,
+            source: 'replayed',
+            collections: [...collections],
+          }),
+        );
+    }
   }
 
   /**
@@ -192,8 +270,9 @@ export class InterventionSyncService {
    * @param {number} index - index value.
    * @param {number} replayed - replayed value.
    * @param {BlockedResources} blocked - Resources blocking their dependents this cycle.
+   * @param {(operation: InterventionOutboxOperation) => void} applied - Records affected collections.
    *
-   * @return {Promise<number>} Result of the replay operations operation.
+   * @returns {Promise<number>} Result of the replay operations operation.
    */
   private async replayOperations(
     organizationId: string,
@@ -201,12 +280,13 @@ export class InterventionSyncService {
     index: number,
     replayed: number,
     blocked: BlockedResources,
+    applied: (operation: InterventionOutboxOperation) => void,
   ): Promise<number> {
     const operation = operations[index];
     if (!operation) return replayed;
 
     const advance = (next: number): Promise<number> =>
-      this.replayOperations(organizationId, operations, index + 1, next, blocked);
+      this.replayOperations(organizationId, operations, index + 1, next, blocked, applied);
 
     // A previously failed/conflicted operation keeps permanently blocking its
     // dependents until the user retries or discards it.
@@ -235,6 +315,7 @@ export class InterventionSyncService {
     try {
       await this.replay(organizationId, operation);
       await this.offline.removeOutbox(operation.id);
+      applied(operation);
       return advance(replayed + 1);
     } catch (error: unknown) {
       const response = error as SyncProblemResponse;
@@ -248,6 +329,7 @@ export class InterventionSyncService {
         this.problemType(response) === CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
       ) {
         await this.offline.removeOutbox(operation.id);
+        applied(operation);
         return advance(replayed + 1);
       }
       if (response.status === HTTP_PRECONDITION_FAILED) {

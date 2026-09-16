@@ -139,12 +139,9 @@ below is always mounted, with no prior pointer interaction required:
   `facility-status-tag` registry, a "View on 2D plan" action, and its own
   close control — renders only once a room is actually selected; closing it
   deselects the room alone (`store.selectRoom(null)`), leaving the floor
-  selection — and this panel — untouched. `card` at and above `sm`,
-  `hlm-sheet` (bottom side, `disableClose`) below it, switching on
-  `@shared/breakpoint`'s own `isCompact`. `disableClose` matters: were the
-  sheet dismissible (`Escape`, backdrop, swipe), dismissing it would remove
-  this feature's only keyboard-reachable surface with no way back except a
-  pointer tap on the canvas. Presentational, inputs/outputs only
+  selection — and this panel — untouched. Desktop uses a card; the central mobile
+  interaction mode uses a dismissible bottom sheet at every width. The page's explicit
+  panel opener restores the keyboard path after dismissal. Presentational, inputs/outputs only
   (`ARCHITECTURE.md` §10.3); the page owns every store call its outputs
   trigger.
 - **`ui/components/facility-plan-item-list`** (`FacilityPlanItemList`) is the
@@ -369,7 +366,7 @@ re-fetch. `selectedPlan` defaults to the primary plan, then the first
 uploaded one, until a row is explicitly selected.
 
 The plan catalog stays an anchored Spartan popover on desktop and becomes a
-bottom drawer below `sm`, where its row actions and long filenames have the
+bottom drawer in the central mobile interaction mode, where its row actions and long filenames have the
 full viewport width. Selecting a plan closes that drawer through the same
 `onPlanSelected` path that updates `selectedPlan`.
 
@@ -456,11 +453,11 @@ stays a tab of `FacilityDetailPage`.
   inputs/outputs only, including the pickers' `null`-clearing `valueChange`,
   which it filters itself before emitting. The zone/equipment candidate
   catalogs can each contain up to 200 records: they remain Spartan selects on
-  desktop and become searchable, scroll-contained bottom drawers below `sm`.
+  desktop and become searchable, scroll-contained bottom drawers in the central mobile interaction mode.
 - **A side panel** (`ui/components/facility-plan-panel`, `FacilityPlanPanel`)
   is the tab's **only** browsing/editing surface for zones and equipment,
-  mirroring `FacilityBuilding3dRoomPanel`'s `hlm-card`/`hlm-sheet` breakpoint
-  switch — unlike that panel's `disableClose` sheet, this one is dismissible
+  mirroring `FacilityBuilding3dRoomPanel`'s central `hlm-card`/`hlm-sheet` presentation
+  switch. This sheet is dismissible
   and carries its own visible close button, since the toolbar's own opener
   already reopens a dismissed sheet. It always renders two rosters, both
   `app-facility-plan-item-list` (see generalization below) — every zone on

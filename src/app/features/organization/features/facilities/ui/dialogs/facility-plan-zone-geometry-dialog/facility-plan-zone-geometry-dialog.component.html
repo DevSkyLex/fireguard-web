@@ -27,7 +27,7 @@
             step="0.1"
             min="0"
             max="100"
-            class="flex-1"
+            class="flex-1 mobile-ui:min-h-11 mobile-ui:min-w-11"
             data-testid="facility-plan-zone-geometry-row-x"
             [attr.aria-label]="vertexXLabel($index + 1)"
             [attr.aria-invalid]="isInvalidValue(row.x) ? 'true' : null"
@@ -44,7 +44,7 @@
             step="0.1"
             min="0"
             max="100"
-            class="flex-1"
+            class="flex-1 mobile-ui:min-h-11 mobile-ui:min-w-11"
             data-testid="facility-plan-zone-geometry-row-y"
             [attr.aria-label]="vertexYLabel($index + 1)"
             [attr.aria-invalid]="isInvalidValue(row.y) ? 'true' : null"
@@ -64,6 +64,7 @@
             [attr.aria-label]="removeVertexLabel($index + 1)"
             [disabled]="pending()"
             (click)="removeRow($index)"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           >
             <ng-icon name="lucideTrash2" aria-hidden="true" />
           </button>
@@ -86,7 +87,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="self-start"
+        class="self-start mobile-ui:min-h-11"
         data-testid="facility-plan-zone-geometry-add-row"
         [disabled]="pending()"
         (click)="addRow()"
@@ -111,7 +112,7 @@
         hlmBtn
         type="button"
         variant="destructive"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="facility-plan-zone-geometry-clear"
         [disabled]="pending() || rows().length === 0"
         (click)="requestClear()"
@@ -122,7 +123,7 @@
       <button
         hlmBtn
         type="button"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="facility-plan-zone-geometry-submit"
         [disabled]="pending() || !canSubmit()"
         (click)="submit()"

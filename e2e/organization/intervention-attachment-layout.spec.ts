@@ -28,6 +28,9 @@ for (const width of [1562, 375]) {
           kind: 'file',
         },
       ]);
+      await api.mockInterventionFacilities(intervention.id, []);
+      await api.mockInterventionInspections(intervention.id, []);
+      await api.mockInterventionEquipment(intervention.id, []);
       await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
       await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
       await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);

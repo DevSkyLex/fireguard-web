@@ -23,6 +23,7 @@
           placeholder="Search a facility, or leave empty for the root level"
           i18n-placeholder="@@facility.moveDialog.parentPlaceholder"
           data-testid="facility-move-parent-input"
+          class="mobile-ui:min-h-11"
         />
         <hlm-combobox-content *hlmComboboxPortal>
           <hlm-combobox-empty i18n="@@facility.moveDialog.noMatch"
@@ -54,7 +55,7 @@
     </hlm-field>
 
     <hlm-dialog-footer>
-      <button hlmDialogClose hlmBtn type="button" variant="outline">
+      <button hlmDialogClose hlmBtn type="button" variant="outline" class="mobile-ui:min-h-11">
         <span i18n="@@common.cancel">Cancel</span>
       </button>
       <button
@@ -64,6 +65,7 @@
         [disabled]="busy()"
         [attr.aria-busy]="busy() ? 'true' : null"
         (click)="submit()"
+        class="mobile-ui:min-h-11"
       >
         @if (busy()) {
           <span i18n="@@facility.moveDialog.submitting">Moving…</span>

@@ -1,7 +1,7 @@
 @if (store.isAvailable()) {
   <hlm-sheet
     id="assistant-sheet"
-    side="right"
+    [side]="isMobileInteractionMode() ? 'bottom' : 'right'"
     [state]="store.panelOpen() ? 'open' : 'closed'"
     (stateChanged)="onSheetStateChanged($event)"
   >
@@ -29,7 +29,7 @@
         type="button"
         variant="ghost"
         size="icon-sm"
-        class="max-sm:size-11"
+        class="mobile-ui:size-11"
         data-testid="assistant-toggle"
         i18n-aria-label="@@workspace.assistant.toggle.aria"
         aria-label="Assistant"
@@ -38,7 +38,10 @@
       </button>
     }
 
-    <hlm-sheet-content *hlmSheetPortal class="overflow-hidden sm:max-w-xl!">
+    <hlm-sheet-content
+      *hlmSheetPortal
+      class="overflow-hidden mobile-ui:h-[90dvh] mobile-ui:w-full! mobile-ui:max-w-none! mobile-ui:pb-[env(safe-area-inset-bottom)] desktop-ui:sm:max-w-xl!"
+    >
       <hlm-sheet-header class="flex-row items-center gap-2.5 pe-12">
         <span
           class="grid size-7 shrink-0 place-content-center rounded-md bg-primary/10 text-primary"
@@ -59,7 +62,7 @@
             type="button"
             variant="ghost"
             size="icon-sm"
-            class="shrink-0"
+            class="shrink-0 mobile-ui:min-h-11 mobile-ui:min-w-11"
             data-testid="assistant-new-thread"
             i18n-aria-label="@@workspace.assistant.new"
             aria-label="New conversation"

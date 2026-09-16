@@ -15,7 +15,14 @@
       </p>
     </hlm-alert-dialog-header>
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel [disabled]="pending()" i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogCancel
+        [disabled]="pending()"
+        i18n="@@common.cancel"
+        class="mobile-ui:min-h-11"
+      >
+        Cancel
+      </button>
       <button
         hlmAlertDialogAction
         variant="destructive"
@@ -23,6 +30,7 @@
         [disabled]="pending()"
         (click)="confirm()"
         i18n="@@facility.plans.deleteConfirm"
+        class="mobile-ui:min-h-11"
       >
         Delete
       </button>

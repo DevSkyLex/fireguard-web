@@ -5,6 +5,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CollectionFilterPopoverState } from '../../../../models';
 import { CollectionFilterDate } from '../collection-filter-date.component';
 
@@ -20,7 +21,6 @@ import { CollectionFilterDate } from '../collection-filter-date.component';
       testId="interventions-filter-due"
       [state]="state()"
       [disabled]="disabled()"
-      [tooltip]="tooltip()"
       [describedBy]="describedBy()"
       (valueChanged)="lastValue = $event"
       (stateChanged)="lastState = $event"
@@ -32,7 +32,6 @@ class CollectionFilterDateHost {
   public lastState: CollectionFilterPopoverState | null = null;
   public readonly value: WritableSignal<Date | null> = signal<Date | null>(null);
   public readonly disabled: WritableSignal<boolean> = signal<boolean>(false);
-  public readonly tooltip: WritableSignal<string> = signal<string>('');
   public readonly describedBy: WritableSignal<string | undefined> = signal<string | undefined>(
     undefined,
   );
@@ -51,6 +50,7 @@ const calendarDayButtons = (): HTMLButtonElement[] =>
   Array.from(document.querySelectorAll<HTMLButtonElement>('tbody[role="rowgroup"] button'));
 
 describe('CollectionFilterDate', () => {
+  const mobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CollectionFilterDateHost>;
 
   const trigger = (): HTMLElement =>
@@ -64,7 +64,16 @@ describe('CollectionFilterDate', () => {
   });
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(CollectionFilterDateHost);
     await fixture.whenStable();
@@ -74,17 +83,16 @@ describe('CollectionFilterDate', () => {
     vi.unstubAllGlobals();
   });
 
-  async function useCompactFixture(): Promise<void> {
+  /**
+   * Function useMobileFixture
+   * @description Creates the host in the mobile interaction mode before its first render.
+   * @access private
+   * @since 1.0.0
+   * @returns {Promise<void>} The stabilized mobile fixture.
+   */
+  async function useMobileFixture(): Promise<void> {
     fixture.destroy();
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: query === '(max-width: 639px)',
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    );
+    mobileInteractionMode.set(true);
     fixture = TestBed.createComponent(CollectionFilterDateHost);
     await fixture.whenStable();
   }
@@ -101,6 +109,42 @@ describe('CollectionFilterDate', () => {
     expect(fixture.componentInstance.lastState).toBe('closed');
     expect(document.querySelector('tbody[role="rowgroup"]')).toBeNull();
   });
+
+  it.each([false, true])(
+    'should describe mobile values and preserve caller descriptions with disabled=%s',
+    async (disabled) => {
+      await useMobileFixture();
+      fixture.componentInstance.disabled.set(disabled);
+      await fixture.whenStable();
+
+      const valueId = `${trigger().id}-mobile-value`;
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Due date');
+
+      const date = new Date(2026, 0, 15);
+      fixture.componentInstance.value.set(date);
+      fixture.componentInstance.describedBy.set('filter-reason filter-hint');
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(
+        `${valueId} filter-reason filter-hint`,
+      );
+      const description = document.getElementById(valueId);
+      expect(trigger().contains(description)).toBe(true);
+      expect(description?.textContent?.trim()).toBe(date.toDateString());
+      if (disabled) expect(trigger().getAttribute('aria-disabled')).toBe('true');
+      expect(trigger().hasAttribute('disabled')).toBe(false);
+
+      fixture.componentInstance.disabled.set(!disabled);
+      fixture.componentInstance.describedBy.set(undefined);
+      fixture.componentInstance.value.set(null);
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Due date');
+    },
+  );
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Due date');
@@ -136,18 +180,6 @@ describe('CollectionFilterDate', () => {
 
     expect(button.disabled).toBeFalsy();
     expect(button.getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('should render no visible or accessible trace of tooltip — CollectionFilterBar’s own chip owns the reason now', async () => {
-    fixture.componentInstance.disabled.set(true);
-    fixture.componentInstance.tooltip.set('Due date cannot be filtered on this view.');
-    await fixture.whenStable();
-
-    const button: HTMLButtonElement = trigger() as HTMLButtonElement;
-
-    expect(button.getAttribute('aria-describedby')).toBeNull();
-    expect(button.querySelector('[data-slot="field-description"]')).toBeNull();
-    expect(button.textContent).not.toContain('Due date cannot be filtered on this view.');
   });
 
   it('should carry no aria-describedby while describedBy is unset', () => {
@@ -202,7 +234,7 @@ describe('CollectionFilterDate', () => {
   });
 
   it('should open a mobile drawer from controlled state and close it after a date pick', async () => {
-    await useCompactFixture();
+    await useMobileFixture();
     fixture.componentInstance.state.set('open');
     await fixture.whenStable();
 

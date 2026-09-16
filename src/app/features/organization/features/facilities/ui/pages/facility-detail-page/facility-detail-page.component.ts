@@ -36,6 +36,7 @@ import {
 import { take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { isCallPending, type CallState } from '@core/request-state';
@@ -68,7 +69,6 @@ import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
-import { isCompact } from '@shared/breakpoint';
 import { PlanViewer } from '@shared/plan-viewer';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
@@ -383,22 +383,38 @@ export class FacilityDetailPage {
   /** The picker trigger's label while no plan is selected yet. */
   protected readonly planPickerFallbackLabel: string = $localize`:@@facility.plans.pickerEmpty:Choose a plan`;
 
-  /** Controlled state for the compact floor-plan picker drawer. */
+  /**
+   * Property planPickerDrawerState
+   * @readonly
+   * @description Native state of the mobile plan picker.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<'closed' | 'open'>}
+   */
   protected readonly planPickerDrawerState: WritableSignal<'closed' | 'open'> = signal<
     'closed' | 'open'
   >('closed');
 
-  /** Whether the viewport is narrow enough that {@link FacilityPlanPanel} renders as a dismissible sheet — mirrors `FacilityBuilding3dPage`'s own `isCompact`. */
-  protected readonly isCompactPanel: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
   /**
-   * Property planPanelOpen
+   * Property planPanelVisible
    * @readonly
    *
    * @description
    * Whether the compact-viewport plan panel sheet is showing. Owned here
    * rather than by the panel, exactly like `FacilityBuilding3dPage`'s own
-   * `roomPanelOpen`: the toolbar control that brings a dismissed sheet back
+   * `roomPanelVisible`: the toolbar control that brings a dismissed sheet back
    * lives here, and it starts closed so a small screen is not immediately
    * covered by the very plan it describes.
    *
@@ -406,7 +422,7 @@ export class FacilityDetailPage {
    * @since 1.11.0
    * @type {WritableSignal<boolean>}
    */
-  protected readonly planPanelOpen: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly planPanelVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property selectedZoneId

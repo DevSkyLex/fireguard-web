@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import { MessageService } from '@features/organization/features/collaboration/data-access';
 import type {
   MessageOutput,
@@ -69,6 +70,7 @@ describe('MessageReplySheet', () => {
   async function open(parent: MessageView = parentView()): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        provideInteractionCapabilities(),
         provideZonelessChangeDetection(),
         { provide: MessageService, useValue: service },
         {

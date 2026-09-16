@@ -38,6 +38,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 
 /**
@@ -90,6 +91,7 @@ import { HlmTableImports } from '@shared/ui/table';
     HlmButton,
     HlmCheckbox,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmTableImports,
   ],
   providers: [

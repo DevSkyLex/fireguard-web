@@ -152,8 +152,13 @@ every surface at once.
 - **Publishes `withLogoutControl()`** (feature barrel), a header-slot contribution rendering
   the auth-owned `LogoutControl`. `app.routes.ts` mounts it on `/onboarding`'s split shell so
   the wizard — which renders no account menu and whose guards forbid leaving — still offers a
-  way out of the session. The control listens to `sessionEnded` (not the logout call's outcome,
-  since a failed logout still ends the local session) and then routes to `/auth/login`.
+  way out of the session.
+- Publishes `LogoutControl` through the root barrel for the organization More hub.
+  The hub composes this control without owning session state or duplicating logout navigation.
+- `AuthSessionNavigationService` is the single browser-side owner of post-logout navigation.
+  Successful and failed remote logout outcomes both replace the current history entry with
+  `/auth/login`; the 401 interceptor uses the same navigation owner after clearing local state.
+  Controls issue logout commands only and never subscribe for routing consequences.
 
 ## SSR and Bootstrap Notes
 

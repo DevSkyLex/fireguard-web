@@ -25,7 +25,7 @@
     <hlm-alert-dialog-footer>
       <button
         hlmAlertDialogCancel
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         [disabled]="pending()"
         i18n="@@common.cancel"
       >
@@ -34,14 +34,16 @@
       <button
         hlmAlertDialogAction
         variant="destructive"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="channel-delete-confirm"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"
         (click)="confirm()"
-        i18n="@@channels.room.deleteConfirmAction"
       >
-        Delete
+        @if (pending()) {
+          <hlm-spinner aria-hidden="true" />
+        }
+        <span i18n="@@channels.room.deleteConfirmAction">Delete</span>
       </button>
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>

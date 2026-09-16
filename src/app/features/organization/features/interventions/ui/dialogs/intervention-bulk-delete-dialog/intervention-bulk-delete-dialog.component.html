@@ -22,7 +22,7 @@
     <hlm-alert-dialog-footer>
       <button
         hlmAlertDialogCancel
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         [disabled]="busy()"
         i18n="@@common.cancel"
       >
@@ -31,7 +31,7 @@
       <button
         hlmAlertDialogAction
         variant="destructive"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="interventions-delete-confirm"
         [disabled]="busy()"
         (click)="confirmed.emit()"

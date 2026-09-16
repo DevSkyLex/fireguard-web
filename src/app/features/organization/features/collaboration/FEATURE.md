@@ -39,9 +39,10 @@ contribute route-exclusive lists through `withDirectMessagesSidebarExtension()` 
 `withChannelsSidebarExtension()`, using the dashboard's `SidebarExtensionContribution`.
 Organization providers re-export these factories and `provideChannelsWorkspace()` directly,
 bypassing this feature's root barrel and its `MessagingSyncCoordinatorService`.
-The shell owns column geometry; collaboration owns activation, permissions, URLs and loading.
-The direct-message recipient picker uses a searchable Spartan command list in a popover
-anchored to the sidebar's compose button. It preserves conversation context, keyboard
+The shell owns the resizable desktop column geometry and the narrow-screen panel switch;
+collaboration owns activation, permissions, URLs and loading.
+The direct-message recipient picker uses a searchable Spartan command list in a desktop popover
+or mobile drawer, selected by the central interaction-capabilities contract. It preserves conversation context, keyboard
 selection and viewport bounds; the panel owns opening the chosen conversation.
 `withCollaborationNav()` replaces the retired `withDirectMessagesNav()` public factory.
 
@@ -168,9 +169,17 @@ moves the read pointer backwards.
 
 ## Composer and message bodies
 
+Central mobile mode selects drawers for per-message actions and bottom sheets for replies,
+participants, channel info and the assistant. Desktop retains native menus and right sheets.
+Both presentations share handlers, pending locks and permission decisions. Mobile back links
+remain available on tablets; compact desktop list/thread geometry stays shell-owned. The shell
+reserves bottom navigation while the existing sticky thread footer adds safe-area padding.
+Interaction-mode changes preserve the composer field tree and its unsent draft.
+
 `MessageComposer` is a **plain textarea** built with Signal Forms. The rich-text editor it replaces
-was 904 lines of Quill integration, and Quill left with the legacy UI strip. Enter sends,
-Shift+Enter starts a line, and a composition in progress is left alone — an IME uses Enter to accept
+was 904 lines of Quill integration, and Quill left with the legacy UI strip. Desktop Enter sends;
+Shift+Enter and mobile Enter start a line. Mobile commits through the explicit Send control.
+A composition in progress is left alone — an IME uses Enter to accept
 a candidate, and intercepting it would send half a word.
 
 Two consequences of plain text that are easy to undo by accident:
@@ -238,7 +247,7 @@ it opens over whatever page is showing. So its control lives in the shell's head
 not exist.
 
 **The panel is a sheet at every width, and claims no shell slot.** `AssistantToggle` owns both the
-trigger and the right-anchored `hlm-sheet` that carries `AssistantPanel`, so the assistant never
+trigger and the `hlm-sheet` that carries `AssistantPanel` (right on desktop, bottom on mobile), so the assistant never
 competes with the routed page for width and inherits spartan's backdrop, focus trap and Escape
 dismissal instead of reimplementing them. The trigger and the surface sit in one component because
 both read the single `panelOpen` signal, which is what keeps `aria-expanded` honest. There is no
@@ -592,10 +601,19 @@ the panel nor its toggle renders.
   the store loads the full result in one go; the messaging API has no server-side search for
   channels, so filtering happens in memory over the already-loaded set rather than through the
   server. Do not read this as license to drain an unbounded collection elsewhere.
-- Channel creation uses the compact native `channel-create-dialog`; channel edits remain dialogs. Direct-message recipient selection uses an anchored popover.
+- Channel creation uses the compact native `channel-create-dialog`; channel edits remain dialogs. Direct-message recipient selection uses an anchored desktop popover or mobile drawer.
 - **The creation dialog gates dismissal while the form is dirty.** `ChannelCreateForm` reports its own dirtiness through `dirtyChanged`; `channel-create-dialog` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
 
 The channel header uses a native avatar group showing at most three participants, with
 initials for missing pictures and an overflow count. Its button still opens the full roster.
+In the central mobile interaction mode, one labeled channel-actions trigger replaces the header's
+participants, favorite and overflow controls. Its native item drawer retains information,
+participants, favorite and permitted management actions. The thread and composer stay mounted
+when the interaction mode changes, retaining the current draft and loading state.
+The mobile shell owns the single route heading and back link across messaging views. List panels
+retain their creation action without repeating the route title; channels retain a compact Actions
+row. Direct conversations publish the already-resolved counterpart through TitleService on mobile,
+with the existing neutral fallback, and retain their avatar/name header on desktop. No additional
+directory or conversation query is initiated to obtain a title.
 Rendered mentions inherit their bubble text color with a subtle neutral fill and inset outline,
 including sent white bubbles in dark mode. Labels remain escaped before HTML binding.

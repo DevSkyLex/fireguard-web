@@ -1,4 +1,9 @@
-import { makeEnvironmentProviders, type EnvironmentProviders } from '@angular/core';
+import {
+  inject,
+  makeEnvironmentProviders,
+  provideEnvironmentInitializer,
+  type EnvironmentProviders,
+} from '@angular/core';
 import {
   MEMBER_DIRECTORY_PORT,
   MY_ORGANIZATIONS_PORT,
@@ -6,6 +11,7 @@ import {
   ORGANIZATION_MEMBER_ACCESS_PORT,
   REGIONAL_FORMATTING_PORT,
 } from '@features/organization/ports';
+import { OrganizationGlobalSearchService } from '@features/organization/services/organization-global-search';
 import {
   ActiveOrganizationStore,
   MemberDirectoryStore,
@@ -24,9 +30,14 @@ import {
  * `REGIONAL_FORMATTING_PORT`, `shared` UI such as `OrgDatePipe` call sites,
  * and for `MY_ORGANIZATIONS_PORT`, `features/account` — can inject the ports
  * instead of the concrete stores.
+ * Initializes the organization-owned search shortcut independently of portaled
+ * triggers; browser listener registration is deferred until after hydration.
  *
  * @version 1.2.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @access public
+ * @since 1.0.0
+ * @returns {EnvironmentProviders} Existing store bindings and the SSR-safe search shortcut initializer.
  *
  * @example
  * ```typescript
@@ -35,6 +46,9 @@ import {
  */
 export function provideOrganizationFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
+    provideEnvironmentInitializer(() => {
+      inject(OrganizationGlobalSearchService);
+    }),
     {
       provide: ORGANIZATION_CONTEXT_PORT,
       useExisting: ActiveOrganizationStore,

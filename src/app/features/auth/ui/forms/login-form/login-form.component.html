@@ -1,4 +1,4 @@
-<form novalidate (submit)="submit($event)">
+<form class="mobile-ui:[&_input]:text-base" novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (!pending() && serverError(); as error) {
       <div
@@ -23,7 +23,7 @@
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker
       /></label>
       <input
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         hlmInput
         id="login-email"
         type="email"
@@ -59,9 +59,9 @@
       }
     </hlm-field>
 
-    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mobile-ui:gap-x-3">
       <label
-        class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground max-sm:min-h-11"
+        class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground mobile-ui:min-h-11"
         for="login-remember"
       >
         <hlm-checkbox
@@ -72,7 +72,7 @@
         <span i18n="@@auth.login.rememberMe">Keep me signed in</span>
       </label>
       <a
-        class="inline-flex items-center rounded-sm text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
+        class="inline-flex items-center rounded-sm text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none mobile-ui:min-h-11"
         routerLink="/auth/password-reset/forgot"
         [queryParams]="{ returnUrl: returnUrl() || undefined }"
         i18n="@@auth.login.forgotPassword"

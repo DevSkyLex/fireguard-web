@@ -6,7 +6,7 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! overflow-hidden max-sm:max-h-[85svh] sm:w-[540px]! sm:max-w-none!"
+    class="w-full! overflow-hidden mobile-ui:max-h-[85svh] desktop-ui:w-[540px]! desktop-ui:max-w-[100vw]!"
     data-testid="intervention-create-sheet"
     [attr.data-dirty]="dirty()"
   >
@@ -30,7 +30,7 @@
         >
           <button
             hlmTabsTrigger="blank"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="intervention-create-mode-blank"
             i18n="@@intervention.createSheet.blank"
           >
@@ -38,7 +38,7 @@
           </button>
           <button
             hlmTabsTrigger="template"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="intervention-create-mode-template"
             i18n="@@intervention.createSheet.template"
           >
@@ -81,6 +81,7 @@
                 (searchChange)="catalogueSearched.emit({ kind: 'templates', search: $event })"
               >
                 <hlm-combobox-input
+                  class="mobile-ui:min-h-11"
                   inputId="intervention-create-template"
                   data-testid="intervention-create-template-select"
                   placeholder="Choose a template"
@@ -92,7 +93,7 @@
                   >
                   <div hlmComboboxList>
                     @for (template of templates(); track template.id) {
-                      <hlm-combobox-item [value]="template.id">{{
+                      <hlm-combobox-item class="mobile-ui:min-h-11" [value]="template.id">{{
                         template.name
                       }}</hlm-combobox-item>
                     }
@@ -127,7 +128,7 @@
                   >
                   <input
                     hlmInput
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     id="intervention-create-template-name"
                     type="text"
                     maxlength="160"
@@ -153,7 +154,7 @@
                     (searchChange)="catalogueSearched.emit({ kind: 'sites', search: $event })"
                   >
                     <hlm-combobox-input
-                      class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
+                      class="mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
                       inputId="intervention-create-template-site"
                       data-testid="intervention-create-template-site"
                       placeholder="Use template default"
@@ -165,7 +166,7 @@
                       >
                       <div hlmComboboxList>
                         @for (option of siteOptions(); track option.value) {
-                          <hlm-combobox-item [value]="option.value">{{
+                          <hlm-combobox-item class="mobile-ui:min-h-11" [value]="option.value">{{
                             option.label
                           }}</hlm-combobox-item>
                         }
@@ -193,7 +194,7 @@
                     (searchChange)="catalogueSearched.emit({ kind: 'members', search: $event })"
                   >
                     <hlm-combobox-input
-                      class="max-sm:min-h-11 max-sm:[&_button]:min-h-11 max-sm:[&_button]:min-w-11 max-sm:[&_input]:min-h-11"
+                      class="mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
                       inputId="intervention-create-template-responsible"
                       placeholder="Use template default"
                       i18n-placeholder="@@intervention.cf.templateOverrideDefaultPlaceholder"
@@ -205,7 +206,7 @@
                       >
                       <div hlmComboboxList>
                         @for (option of memberOptions(); track option.value) {
-                          <hlm-combobox-item [value]="option.value">
+                          <hlm-combobox-item class="mobile-ui:min-h-11" [value]="option.value">
                             <div hlmItem size="xs" class="min-w-0 border-0 p-0">
                               <div hlmItemMedia>
                                 <hlm-avatar class="size-8 shrink-0">
@@ -249,7 +250,7 @@
                   >
                     <hlm-date-picker-trigger
                       buttonId="intervention-create-template-planned-start"
-                      class="w-full max-sm:min-h-11"
+                      class="w-full mobile-ui:min-h-11"
                       data-testid="intervention-create-template-planned-start"
                     >
                       <span i18n="@@intervention.cf.templateOverrideDefaultPlaceholder"
@@ -271,7 +272,7 @@
               hlmBtn
               type="button"
               variant="outline"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               (click)="requestClose()"
               i18n="@@common.cancel"
             >
@@ -280,7 +281,7 @@
             <button
               hlmBtn
               type="button"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="intervention-create-template-confirm"
               [disabled]="!selectedTemplateId() || instantiating() || pending()"
               [attr.aria-busy]="instantiating()"

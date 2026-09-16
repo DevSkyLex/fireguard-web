@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CreateTeamInput } from '@features/organization/models';
 import { OrganizationTeamCreateSheet } from '../organization-team-create-sheet.component';
 
@@ -9,18 +10,54 @@ const nameInput = (): HTMLInputElement | null =>
   dialog()?.querySelector('[data-testid="organization-team-create-name"]') ?? null;
 
 describe('OrganizationTeamCreateSheet', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   let fixture: ComponentFixture<OrganizationTeamCreateSheet>;
   let submissions: CreateTeamInput[];
   let visibilities: boolean[];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
+        provideZonelessChangeDetection(),
+      ],
+    });
     fixture = TestBed.createComponent(OrganizationTeamCreateSheet);
 
     submissions = [];
     visibilities = [];
     fixture.componentInstance.submitted.subscribe((value) => submissions.push(value));
     fixture.componentInstance.visibleChange.subscribe((value) => visibilities.push(value));
+  });
+
+  it('preserves one mounted Signal Form and its dirty draft when the interaction mode changes', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    const input = nameInput() as HTMLInputElement;
+    const form = dialog()?.querySelector('form');
+    input.value = 'Field team draft';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['side']()).toBe('right');
+    mobileInteractionMode.set(true);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['side']()).toBe('bottom');
+    expect(nameInput()).toBe(input);
+    expect(dialog()?.querySelector('form')).toBe(form);
+    expect(nameInput()?.value).toBe('Field team draft');
+    expect(fixture.componentInstance['dirty']()).toBe(true);
+    mobileInteractionMode.set(false);
+    await fixture.whenStable();
+    expect(nameInput()).toBe(input);
+    expect(dialog()?.querySelectorAll('form')).toHaveLength(1);
+    expect(visibilities).toEqual([]);
   });
 
   it('should render nothing while closed', async () => {

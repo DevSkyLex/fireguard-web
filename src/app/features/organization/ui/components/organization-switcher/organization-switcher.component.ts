@@ -3,6 +3,10 @@ import {
   Component,
   computed,
   inject,
+  input,
+  signal,
+  type InputSignal,
+  type WritableSignal,
   type OnInit,
   type Signal,
 } from '@angular/core';
@@ -17,20 +21,33 @@ import {
   lucideSettings,
   lucideUsers,
 } from '@ng-icons/lucide';
+import { BrnCommandInput } from '@spartan-ng/brain/command';
+import {
+  formatShortcut as formatPlatformShortcut,
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+  type ShortcutModifier,
+} from '@core/interaction-capabilities';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { OrganizationOutput } from '@features/organization/models';
+import { ORGANIZATION_SWITCHER_QUICK_LINKS } from '@features/organization/navigation';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
 import { OrganizationStore } from '@features/organization/state';
 import { getOrganizationInitials } from '@features/organization/utils';
+import { HlmButton } from '@shared/ui/button';
+import { HlmCommandImports } from '@shared/ui/command';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuItem,
   HlmDropdownMenuSeparator,
+  HlmDropdownMenuShortcut,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import {
   HlmSidebarMenu,
   HlmSidebarMenuButton,
@@ -39,7 +56,6 @@ import {
 } from '@shared/ui/sidebar';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { OrganizationAvatar } from '../organization-avatar';
-import { ORGANIZATION_SWITCHER_QUICK_LINKS } from './constants/organization-switcher-quick-link.constants';
 import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from './models';
 
 /**
@@ -47,8 +63,8 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
  * @class OrganizationSwitcher
  *
  * @description
- * The sidebar header: the organization currently selected, and a menu to switch
- * to another or create one. The paired chevrons are the affordance — without
+ * The organization picker used by the sidebar and mobile More page names the
+ * current workspace and opens a surface to switch or create one. The paired chevrons are the affordance — without
  * them the row reads as a title rather than as a control.
  *
  * There is no "none selected" state: the workspace last worked in stays open
@@ -86,17 +102,23 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
 @Component({
   selector: 'app-organization-switcher',
   imports: [
+    BrnCommandInput,
+    HlmInputGroupImports,
     OrganizationAvatar,
     NgIcon,
     RouterLink,
     HlmDropdownMenu,
     HlmDropdownMenuItem,
     HlmDropdownMenuSeparator,
+    HlmDropdownMenuShortcut,
     HlmDropdownMenuTrigger,
     HlmSidebarMenu,
     HlmSidebarMenuButton,
     HlmSidebarMenuItem,
     HlmSkeleton,
+    HlmButton,
+    ...HlmDrawerImports,
+    ...HlmCommandImports,
   ],
   providers: [
     OrganizationStore,
@@ -115,6 +137,49 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationSwitcher implements OnInit {
+  /**
+   * Property triggerId
+   * @readonly
+   * @description Distinguishes the hub switcher from a simultaneously rendered desktop sidebar.
+   * @access public
+   * @since 4.0.0
+   * @type {InputSignal<string>}
+   */
+  public readonly triggerId: InputSignal<string> = input('organization-switcher-trigger');
+
+  /**
+   * Property interactionCapabilities
+   * @readonly
+   * @description Central interaction-capabilities contract, independent of compact sidebar geometry.
+   * @access protected
+   * @since 4.0.0
+   * @type {InteractionCapabilitiesPort}
+   */
+  protected readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  );
+
+  /**
+   * Property shortcutModifier
+   * @readonly
+   * @description Modifier displayed by the organization dropdown shortcut hints.
+   * @access protected
+   * @since 4.0.0
+   * @type {Signal<ShortcutModifier>}
+   */
+  protected readonly shortcutModifier: Signal<ShortcutModifier> =
+    this.interactionCapabilities.shortcutModifier;
+
+  /**
+   * Property mobileSwitcherState
+   * @readonly
+   * @description Closes keyboard-selected destinations as well as pointer selections.
+   * @access protected
+   * @since 4.0.0
+   * @type {WritableSignal<'open' | 'closed'>}
+   */
+  protected readonly mobileSwitcherState: WritableSignal<'open' | 'closed'> = signal('closed');
+
   //#region Properties
   /**
    * Property organizationStore
@@ -294,6 +359,7 @@ export class OrganizationSwitcher implements OnInit {
         id: definition.id,
         label: definition.label,
         icon: definition.icon,
+        shortcutKey: definition.shortcutKey,
         route: `${prefix}/${definition.path}`,
         queryParams: definition.queryParams,
       }));
@@ -326,6 +392,19 @@ export class OrganizationSwitcher implements OnInit {
 
   //#region Methods
   /**
+   * Method formatShortcut
+   * @method formatShortcut
+   * @description Formats one menu shortcut with the detected platform modifier.
+   * @access protected
+   * @since 4.0.0
+   * @param {string} key - Shortcut key to display.
+   * @returns {string} Platform-appropriate shortcut hint.
+   */
+  protected formatShortcut(key: string): string {
+    return formatPlatformShortcut(this.shortcutModifier(), key);
+  }
+
+  /**
    * Method select
    * @method select
    *
@@ -343,28 +422,13 @@ export class OrganizationSwitcher implements OnInit {
    *
    * @param {OrganizationSwitcherOption} option - Organization the member picked.
    *
-   * @returns {void}
+   * @returns {boolean} Whether another organization was selected.
    */
-  protected select(option: OrganizationSwitcherOption): void {
-    if (option.active) return;
+  protected select(option: OrganizationSwitcherOption): boolean {
+    if (option.active) return false;
 
     void this.router.navigate(['/organizations', option.id]);
-  }
-
-  /**
-   * Method createOrganization
-   * @method createOrganization
-   *
-   * @description
-   * Sends the member to the guided organization setup.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected createOrganization(): void {
-    void this.router.navigate(['/onboarding']);
+    return true;
   }
 
   //#endregion
@@ -375,7 +439,7 @@ export class OrganizationSwitcher implements OnInit {
    * @method toOption
    *
    * @description
-   * Derives the rendered shape of one organization.
+   * Derives the rendered shape of one organization, normalizing omitted nullable fields.
    *
    * @access private
    * @since 1.0.0
@@ -390,8 +454,6 @@ export class OrganizationSwitcher implements OnInit {
       id: organization.id,
       name: organization.name,
       initials: getOrganizationInitials(organization.name),
-      // API Platform omits null fields, so these arrive `undefined` rather than
-      // null — a `=== null` guard would let them through.
       logoUrl: organization.logoUrl ?? null,
       planName: organization.planName ?? null,
       active,

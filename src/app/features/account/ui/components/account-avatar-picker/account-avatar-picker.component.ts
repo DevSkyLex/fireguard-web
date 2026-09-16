@@ -11,6 +11,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideUpload } from '@ng-icons/lucide';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Constant ACCEPTED_TYPES
@@ -64,7 +65,7 @@ const MAX_BYTES: number = 5 * 1024 * 1024;
  */
 @Component({
   selector: 'app-account-avatar-picker',
-  imports: [NgIcon, HlmButton],
+  imports: [NgIcon, HlmButton, HlmSpinner],
   providers: [provideIcons({ lucideUpload })],
   templateUrl: './account-avatar-picker.component.html',
   host: { class: 'block' },

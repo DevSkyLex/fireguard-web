@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CreateChecklistInput } from '@features/organization/features/checklists/models';
 import { ChecklistCreateSheet } from '../checklist-create-sheet.component';
 
@@ -7,7 +8,15 @@ describe('ChecklistCreateSheet', () => {
   let fixture: ComponentFixture<ChecklistCreateSheet>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { interactionMode: signal('mobile'), isMobileInteractionMode: signal(true) },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(ChecklistCreateSheet);
   });

@@ -54,13 +54,14 @@ describe('CollectionSearchBox', () => {
     expect(group?.classList.contains('dark:bg-input/30')).toBe(true);
   });
 
-  it('should fill its toolbar row only on phones', () => {
+  it('should fill its toolbar row only when the row is geometrically narrow', () => {
     const host: HTMLElement = fixture.nativeElement;
     const group: HTMLElement | null = host.querySelector('hlm-input-group');
 
     expect(host.classList.contains('max-sm:w-full')).toBe(true);
     expect(group?.classList.contains('w-full')).toBe(true);
     expect(group?.classList.contains('sm:w-56')).toBe(true);
+    expect(group?.classList.contains('mobile-ui:h-11')).toBe(true);
     expect(group?.getAttribute('data-testid')).toBe('equipments-search-group');
   });
 });

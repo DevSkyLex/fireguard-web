@@ -69,16 +69,9 @@ export const INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON: string = 'lucideActivity
  * giving it the same weight as `created` would compete with the one event
  * actually worth a colour.
  *
- * The size is repeated here rather than left to `hlmMarkerIcon`'s own
- * `[&_ng-icon:not([class*='text-'])]:text-[length:--spacing(4)]` rule: that
- * selector only fires when the icon carries **no** `text-` class at all, so
- * the moment a tint class lands on `<ng-icon>` the rule stops matching and
- * the glyph silently falls back to its inherited `text-xs` (12px) size —
- * shrinking it and throwing off its pixel-alignment with the connecting
- * rail line, which centres on the column rather than the glyph's own box.
- * Bundling size and colour in one literal class sidesteps the
- * selector entirely, the same fix `intervention-work-item-appearance.constants.ts`
- * already applies for the same reason.
+ * The compact size is repeated here rather than left to `hlmMarkerIcon`'s
+ * default rule: tinted icons bypass that rule, so every event glyph declares
+ * its intended 12px size alongside its semantic colour.
  *
  * @since 2.3.0
  *
@@ -87,9 +80,9 @@ export const INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON: string = 'lucideActivity
 export const INTERVENTION_ACTIVITY_EVENT_ICON_CLASS: Readonly<
   Partial<Record<InterventionActivityEvent, string>>
 > = {
-  created: 'text-[length:--spacing(4)] text-success',
-  status_changed: 'text-[length:--spacing(4)] text-muted-foreground',
-  rescheduled: 'text-[length:--spacing(4)] text-warning',
+  created: 'text-[length:--spacing(3)] text-success',
+  status_changed: 'text-[length:--spacing(3)] text-muted-foreground',
+  rescheduled: 'text-[length:--spacing(3)] text-warning',
 };
 
 /**
@@ -104,4 +97,4 @@ export const INTERVENTION_ACTIVITY_EVENT_ICON_CLASS: Readonly<
  * @type {string}
  */
 export const INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON_CLASS: string =
-  'text-[length:--spacing(4)] text-muted-foreground';
+  'text-[length:--spacing(3)] text-muted-foreground';

@@ -2,8 +2,8 @@
   <button
     #trigger
     type="button"
-    class="group flex min-h-11 w-full rounded-md px-2 py-1 text-start ring-ring outline-none focus-visible:ring-2 enabled:hover:bg-accent/50 disabled:cursor-default sm:min-h-9"
-    [class]="triggerLayout()"
+    class="flex min-h-9 w-full min-w-0 cursor-pointer rounded-md border border-transparent text-start ring-ring transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring/50 enabled:hover:border-border/30 enabled:hover:bg-muted/30 enabled:active:bg-muted/40 disabled:cursor-default mobile-ui:min-h-11"
+    [class]="triggerLayout() + ' ' + triggerPadding()"
     [hidden]="editing()"
     [disabled]="!editable()"
     [attr.aria-expanded]="editable() ? editing() : null"
@@ -15,20 +15,13 @@
       <span class="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-sm">
         <ng-content select="[fieldValue]" />
       </span>
-      @if (editable()) {
-        <ng-icon
-          name="lucidePencil"
-          class="shrink-0 text-muted-foreground opacity-100 transition-opacity group-focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-          aria-hidden="true"
-        />
-      }
     </span>
   </button>
 
   @if (editing()) {
     <div
       #editor
-      class="flex flex-col gap-2 rounded-md bg-muted/40 p-2"
+      class="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/40 p-2"
       [id]="editorId"
       [attr.aria-busy]="pending() ? 'true' : null"
       (keydown.escape)="onEscape($event)"
@@ -44,7 +37,7 @@
             type="button"
             variant="ghost"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             [disabled]="pending()"
             (click)="requestCancel()"
             i18n="@@common.cancel"
@@ -55,7 +48,7 @@
             hlmBtn
             type="button"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             [disabled]="pending() || !canSave()"
             (click)="saved.emit()"
           >

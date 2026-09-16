@@ -3,7 +3,6 @@ import {
   afterRenderEffect,
   ElementRef,
   inject,
-  linkedSignal,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
@@ -11,41 +10,57 @@ import {
   input,
   output,
   signal,
+  viewChild,
   type InputSignal,
   type InputSignalWithTransform,
   type OutputEmitterRef,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCamera,
+  lucideCircleAlert,
+  lucideCircleDot,
   lucideEllipsis,
   lucideFilterX,
   lucideImages,
-  lucideListFilter,
   lucideListChecks,
   lucidePlus,
   lucideSkipForward,
   lucideTrash2,
 } from '@ng-icons/lucide';
+import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
+import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import {
   resolveInterventionTag,
+  type InterventionWorkItemTableQuery,
   type InterventionWorkItemOutput,
+  type InterventionWorkItemStatus,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import {
+  CollectionFilterBar,
+  CollectionFilterSelect,
+  CollectionFilterToggle,
+  initialCollectionFilterBarVisibility,
+  type CollectionFilterField,
+  type CollectionFilterOption,
+} from '@shared/collection-filters';
 import { CollectionSurface } from '@shared/collection-surface';
+import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmToggle } from '@shared/ui/toggle';
 import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { InterventionTableFeedback } from '../../components/intervention-table-feedback';
 import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionWorkItemCheckbox } from '../../components/intervention-work-item-checkbox';
 import type { InterventionWorkItemFilter } from './models/intervention-work-item-filter.type';
@@ -80,9 +95,15 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
 @Component({
   selector: 'app-intervention-work-item-table',
   imports: [
+    InterventionTableFeedback,
     NgIcon,
     ...HlmEmptyImports,
     CollectionSurface,
+    CollectionFilterBar,
+    CollectionFilterSelect,
+    CollectionFilterToggle,
+    CollectionSearchBox,
+    CollectionToolbar,
     HlmBadge,
     HlmToggle,
     InterventionTag,
@@ -91,7 +112,6 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     ...HlmButtonImports,
     ...HlmDropdownMenuImports,
     ...HlmProgressImports,
-    ...HlmSelectImports,
     ...HlmSpinnerImports,
     ...HlmTableImports,
     ...HlmTooltipImports,
@@ -99,10 +119,11 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
   providers: [
     provideIcons({
       lucideCamera,
+      lucideCircleAlert,
+      lucideCircleDot,
       lucideEllipsis,
       lucideFilterX,
       lucideImages,
-      lucideListFilter,
       lucideListChecks,
       lucidePlus,
       lucideSkipForward,
@@ -114,6 +135,33 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
 })
 export class InterventionWorkItemTable {
   /**
+   * Property source
+   * @readonly
+   *
+   * @description
+   * Explicit result provenance supplied by the page.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<InterventionTableSource>}
+   */
+  public readonly source: InputSignal<InterventionTableSource> =
+    input<InterventionTableSource>('api');
+  /**
+   * Property retryRequested
+   * @readonly
+   *
+   * @description
+   * Retries the same query or failed page without changing criteria.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retryRequested: OutputEmitterRef<void> = output<void>();
+  /**
    * Property proofsRequested
    * @readonly
    * @description Requests consultation of the selected work item’s existing evidence.
@@ -121,15 +169,23 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    * @type {OutputEmitterRef<InterventionWorkItemOutput>}
    */
-  public readonly proofsRequested = output<InterventionWorkItemOutput>();
+  public readonly proofsRequested: OutputEmitterRef<InterventionWorkItemOutput> =
+    output<InterventionWorkItemOutput>();
   /**
    * Property queuedIds
    * @readonly
-   * @description Work items with operations still waiting on this device.
+   *
+   * @description
+   * Work items with operations still waiting on this device.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {InputSignal<ReadonlySet<string>>}
    */
-  public readonly queuedIds = input<ReadonlySet<string>>(new Set());
+  public readonly queuedIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
+    new Set(),
+  );
   /**
    * Property contextId
    * @readonly
@@ -156,6 +212,19 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    * @type {WritableSignal<number>}
    */
+  /**
+   * Property pendingRevealId
+   *
+   * @description
+   * A targeted reveal is consumed once; later background refreshes never steal focus.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {string | null}
+   */
+  private pendingRevealId: string | null = null;
+
   private readonly focusRequest: WritableSignal<number> = signal(0);
   /**
    * Property hostElement
@@ -176,13 +245,15 @@ export class InterventionWorkItemTable {
   public constructor() {
     afterRenderEffect(() => {
       this.focusRequest();
-      const id = this.focusedItemId();
+      this.viewItems();
+      const id = this.pendingRevealId;
       if (!id) return;
       const row = Array.from(
         this.hostElement.nativeElement.querySelectorAll<HTMLElement>('[data-work-item-id]'),
       ).find(
         (element) => element.dataset['workItemId'] === id && element.getClientRects().length > 0,
       );
+      if (row) this.pendingRevealId = null;
       row?.scrollIntoView({ block: 'nearest' });
       row?.focus({ preventScroll: true });
     });
@@ -197,8 +268,9 @@ export class InterventionWorkItemTable {
    * @returns {void}
    */
   public revealItem(id: string): void {
-    this.activeFilter.set('all');
     this.filterChanged.emit('all');
+    this.emitQuery({ search: '', statuses: null });
+    this.pendingRevealId = id;
     this.focusedItemId.set(id);
     this.focusRequest.update((value) => value + 1);
   }
@@ -232,6 +304,31 @@ export class InterventionWorkItemTable {
    */
   public readonly filterChanged = output<InterventionWorkItemFilter>();
   /**
+   * Property queryChanged
+   * @readonly
+   *
+   * @description
+   * Emits the complete query that the host must evaluate through the API.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionWorkItemTableQuery>}
+   */
+  public readonly queryChanged: OutputEmitterRef<InterventionWorkItemTableQuery> =
+    output<InterventionWorkItemTableQuery>();
+
+  /**
+   * Property query
+   * @readonly
+   * @description Authoritative criteria owned by the page store; the table emits user edits only.
+   * @access public
+   * @since 6.2.0
+   * @type {InputSignal<InterventionWorkItemTableQuery | null>}
+   */
+  public readonly query: InputSignal<InterventionWorkItemTableQuery | null> =
+    input<InterventionWorkItemTableQuery | null>(null);
+  /**
    * Property items
    * @readonly
    * @description The intervention's work items, in the order the API returned them.
@@ -241,6 +338,36 @@ export class InterventionWorkItemTable {
    */
   public readonly items: InputSignal<readonly InterventionWorkItemOutput[]> =
     input.required<readonly InterventionWorkItemOutput[]>();
+
+  /**
+   * Property queryItems
+   * @readonly
+   *
+   * @description
+   * Rows returned by the current API query, or null before its first response.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<readonly InterventionWorkItemOutput[] | null>}
+   */
+  public readonly queryItems: InputSignal<readonly InterventionWorkItemOutput[] | null> = input<
+    readonly InterventionWorkItemOutput[] | null
+  >(null);
+
+  /**
+   * Property error
+   * @readonly
+   *
+   * @description
+   * Normalized failure from the current API query, or null.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly error: InputSignal<string | null> = input<string | null>(null);
 
   /**
    * Property loading
@@ -519,20 +646,210 @@ export class InterventionWorkItemTable {
    * @readonly
    *
    * @description
-   * The active status filter. A view preference local to this table, not route state —
-   * switching intervention detail pages resets it rather than carrying a stale
-   * filter across a different scope.
+   * The active status filter behind the shared collection filter bar. A view
+   * preference local to this table, not route state — switching intervention
+   * detail pages resets it rather than carrying a stale filter across a
+   * different scope.
    *
    * @access protected
    * @since 6.1.0
    *
    * @type {WritableSignal<InterventionWorkItemFilter>}
    */
-  protected readonly activeFilter: WritableSignal<InterventionWorkItemFilter> =
-    linkedSignal<InterventionWorkItemFilter>(() => {
-      this.contextId();
-      return this.preferredFilter() ?? (this.showProgress() ? 'remaining' : 'all');
-    });
+  protected readonly activeFilter: Signal<InterventionWorkItemFilter> = computed(() => {
+    const query = this.query();
+    if (!query) return this.preferredFilter() ?? (this.showProgress() ? 'remaining' : 'all');
+    if (query.statuses?.includes('planned') || query.statuses?.includes('in_progress'))
+      return 'remaining';
+    if (query.statuses?.includes('completed')) return 'done';
+    if (query.statuses?.includes('skipped')) return 'skipped';
+    return 'all';
+  });
+
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * The local text query applied to the loaded work-item rows.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly searchTerm: Signal<string> = computed(() => this.query()?.search ?? '');
+
+  /**
+   * Property hasSearchQuery
+   * @readonly
+   *
+   * @description
+   * Whether the text query currently narrows the loaded work-item rows.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasSearchQuery: Signal<boolean> = computed<boolean>(
+    () => this.searchTerm().trim().length > 0,
+  );
+
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * The one field offered by the shared filter bar for the work-item view.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
+  protected readonly filterFields: readonly CollectionFilterField[] = [
+    {
+      key: 'status',
+      fieldLabel: $localize`:@@intervention.wit.filterStatus:Status`,
+      icon: 'lucideCircleDot',
+      operators: ['equals'],
+    },
+  ];
+
+  /**
+   * Property statusFilterAccessibleName
+   * @readonly
+   *
+   * @description
+   * Accessible name shared with the intervention collection filters.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  protected readonly statusFilterAccessibleName: string = $localize`:@@intervention.list.changeFilter:Change filter: ${this.filterFields[0].fieldLabel}:field:`;
+
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Status facets offered by the shared filter bar; an absent field means all items.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {readonly CollectionFilterOption[]}
+   */
+  protected readonly statusOptions: readonly CollectionFilterOption[] = [
+    {
+      value: 'remaining',
+      label: $localize`:@@intervention.wit.filterRemaining:Remaining`,
+    },
+    {
+      value: 'done',
+      label: $localize`:@@intervention.wit.filterDone:Done`,
+    },
+    {
+      value: 'skipped',
+      label: $localize`:@@intervention.wit.filterSkipped:Skipped`,
+    },
+  ];
+
+  /**
+   * Property activeFilterKeys
+   * @readonly
+   *
+   * @description
+   * Which shared-filter field is currently active — no field represents the all-items view.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
+    () => (this.activeFilter() === 'all' ? [] : ['status']),
+  );
+
+  /**
+   * Property filtersVisible
+   * @readonly
+   *
+   * @description
+   * Whether the shared filter bar is currently mounted below the table toolbar.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
+    computed<boolean>(() => this.activeFilterKeys().length > 0),
+  );
+
+  /**
+   * Property statusFilterValue
+   * @readonly
+   *
+   * @description
+   * The shared filter selector's scalar value, or null while the status field is absent.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly statusFilterValue: Signal<string | null> = computed<string | null>(() =>
+    this.activeFilter() === 'all' ? null : this.activeFilter(),
+  );
+
+  /**
+   * Property statusFilterTemplate
+   * @readonly
+   *
+   * @description
+   * The status selector's projected template, once Angular has resolved the local template ref.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly statusFilterTemplate: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('statusFilter');
+
+  /**
+   * Property filterTemplates
+   * @readonly
+   *
+   * @description
+   * Value-control templates keyed for `CollectionFilterBar`.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal< Readonly<Record<string, TemplateRef<unknown> | undefined>> >}
+   */
+  protected readonly filterTemplates: Signal<
+    Readonly<Record<string, TemplateRef<unknown> | undefined>>
+  > = computed(() => ({ status: this.statusFilterTemplate() }));
+
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * The status value control that the shared bar should force open after a field pick.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<'status' | null>}
+   */
+  protected readonly openFilterKey: WritableSignal<'status' | null> = signal<'status' | null>(null);
 
   /**
    * Property mineFirst
@@ -546,16 +863,25 @@ export class InterventionWorkItemTable {
   //#endregion
 
   //#region Properties
-  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
-  protected readonly skeletonColumnWidths: readonly string[] = [
-    'size-11 rounded-full',
-    'h-4 w-40 max-w-full',
-    'h-4 w-28',
-    'h-4 w-20',
-    'h-4 w-28',
-    'h-4 w-20',
-    'ms-auto size-6',
-  ];
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
+    () => [
+      'ms-3 size-5 rounded-full',
+      'w-32 max-w-full',
+      'w-24',
+      'w-20',
+      'w-32',
+      'w-28',
+      ...(this.showActionsColumn() ? ['ms-auto w-6'] : []),
+    ],
+  );
 
   /**
    * Property filterCounts
@@ -577,22 +903,6 @@ export class InterventionWorkItemTable {
       };
     });
 
-  /** Labels the compact status filter and its native Spartan select value. */
-  protected readonly filterLabelOf: (filter: InterventionWorkItemFilter) => string = (
-    filter: InterventionWorkItemFilter,
-  ): string => {
-    switch (filter) {
-      case 'remaining':
-        return $localize`:@@intervention.wit.filterRemaining:Remaining`;
-      case 'done':
-        return $localize`:@@intervention.wit.filterDone:Done`;
-      case 'skipped':
-        return $localize`:@@intervention.wit.filterSkipped:Skipped`;
-      default:
-        return $localize`:@@intervention.wit.filterAll:All`;
-    }
-  };
-
   /**
    * Property showMineFirstToggle
    * @readonly
@@ -612,8 +922,9 @@ export class InterventionWorkItemTable {
    * @readonly
    *
    * @description
-   * The rows the table actually renders: the active chip, then — only while
-   * {@link mineFirst} is on and available — the operator's own rows first.
+   * The rows the table actually renders. Search and status are evaluated by
+   * the API; this dataview only keeps the optional "mine first" presentation
+   * ordering without narrowing the returned collection.
    *
    * @access protected
    * @since 6.1.0
@@ -622,13 +933,47 @@ export class InterventionWorkItemTable {
    */
   protected readonly viewItems: Signal<readonly InterventionWorkItemOutput[]> = computed<
     readonly InterventionWorkItemOutput[]
-  >(() =>
-    filterAndGroupInterventionWorkItems(
-      this.items(),
-      this.activeFilter(),
+  >(() => {
+    const serverItems: readonly InterventionWorkItemOutput[] | null = this.queryItems();
+    return filterAndGroupInterventionWorkItems(
+      serverItems ?? (this.query() ? [] : this.items()),
+      'all',
       this.mineFirst() && this.showMineFirstToggle() ? this.currentMemberId() : null,
-    ),
-  );
+    );
+  });
+
+  /**
+   * Method statusesForFilter
+   * @method statusesForFilter
+   *
+   * @description
+   * Converts the view-level status facet to the API's concrete statuses.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionWorkItemFilter} filter - The business filter to map to API statuses.
+   * @returns {readonly InterventionWorkItemStatus[] | null} The matching API statuses, or `null` when no status filter applies.
+   */
+  private statusesForFilter(
+    filter: InterventionWorkItemFilter,
+  ): readonly InterventionWorkItemStatus[] | null {
+    if (filter === 'remaining') return ['planned', 'in_progress'];
+    if (filter === 'done') return ['completed'];
+    if (filter === 'skipped') return ['skipped'];
+    return null;
+  }
+
+  /**
+   * Property showActionsColumn
+   * @readonly
+   * @description Evidence inspection is available to every workspace reader, including read-only
+   * users. Reserve its action track before results arrive; write permissions still gate each control.
+   * @access protected
+   * @since 6.2.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly showActionsColumn: Signal<boolean> = computed(() => true);
 
   /**
    * Property progressPercent
@@ -888,6 +1233,18 @@ export class InterventionWorkItemTable {
   }
 
   /**
+   * Method onSearchQueryChanged
+   * @description Keeps the table-local search in sync with the shared search box.
+   * @access protected
+   * @since 6.2.0
+   * @param {string} query - The text entered by the operator.
+   * @returns {void}
+   */
+  protected onSearchQueryChanged(query: string): void {
+    this.emitQuery({ search: query });
+  }
+
+  /**
    * Method toggleLabelOf
    * @description The toggle's accessible name. For an actionable row it states what the press does; for a `skipped` row the control is disabled, so the name states the state instead of promising a "Complete" that will never fire.
    * @access protected
@@ -911,19 +1268,149 @@ export class InterventionWorkItemTable {
   }
 
   /**
-   * Method onFilterChanged
-   * @description Narrows the native Spartan select payload to a known filter, falling back to `all` for anything else.
+   * Method onFieldPicked
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the shared bar's request to add its only field.
+   *
    * @access protected
-   * @since 6.1.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   * @since 1.0.0
+   *
+   * @param {string} key - The filter field key.
+   * @returns {void} No value is returned.
+   */
+  protected onFieldPicked(key: string): void {
+    if (key === 'status') this.openFilterKey.set('status');
+  }
+
+  /**
+   * Method toggleFiltersVisible
+   * @description Reacts to the shared filter toggle's requested visibility.
+   * @access protected
+   * @since 6.2.0
+   * @param {boolean} visible - Whether the filter bar should be mounted.
    * @returns {void}
    */
-  protected onFilterChanged(value: string | readonly string[] | null | undefined): void {
+  protected toggleFiltersVisible(visible: boolean): void {
+    this.filtersVisible.set(visible);
+  }
+
+  /**
+   * Method onFieldRemoved
+   * @method onFieldRemoved
+   *
+   * @description
+   * Clears the status narrowing when its shared filter chip is removed.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} key - The filter field key.
+   * @returns {void} No value is returned.
+   */
+  protected onFieldRemoved(key: string): void {
+    if (key === 'status') this.clearFilter();
+  }
+
+  /**
+   * Method clearFilter
+   * @method clearFilter
+   *
+   * @description
+   * Drops the status narrowing, leaving the shared bar in its all-items state.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void} No value is returned.
+   */
+  protected clearFilter(): void {
+    this.openFilterKey.set(null);
+    this.filterChanged.emit('all');
+    this.emitQuery({ statuses: null });
+  }
+
+  /**
+   * Method onStatusFilterChanged
+   * @method onStatusFilterChanged
+   *
+   * @description
+   * Applies a status facet selected from the shared filter value control.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string | null} value - The selected filter value, or `null` when cleared.
+   * @returns {void} No value is returned.
+   */
+  protected onStatusFilterChanged(value: string | null): void {
     const filter: InterventionWorkItemFilter =
       value === 'remaining' || value === 'done' || value === 'skipped' ? value : 'all';
 
-    this.activeFilter.set(filter);
+    this.openFilterKey.set(null);
     this.filterChanged.emit(filter);
+    this.emitQuery({ statuses: this.statusesForFilter(filter) });
+  }
+
+  /**
+   * Method emitQuery
+   * @method emitQuery
+   *
+   * @description
+   * Emits the complete API query after an explicit search or filter interaction.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {Partial<InterventionWorkItemTableQuery>} overrides - Criteria to merge into the current table query.
+   * @returns {void} No value is returned.
+   */
+  private emitQuery(overrides: Partial<InterventionWorkItemTableQuery> = {}): void {
+    this.pendingRevealId = null;
+    this.queryChanged.emit({
+      search: this.searchTerm(),
+      statuses: this.statusesForFilter(this.activeFilter()),
+      ...overrides,
+    });
+  }
+
+  /**
+   * Method fieldPopoverState
+   * @method fieldPopoverState
+   *
+   * @description
+   * Returns the overlay state that the shared status value control should receive.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {BrnOverlayState} The current overlay state for the filter.
+   */
+  protected fieldPopoverState(): BrnOverlayState {
+    return this.openFilterKey() === 'status' ? 'open' : 'closed';
+  }
+
+  /**
+   * Method onFilterPopoverStateChanged
+   * @method onFilterPopoverStateChanged
+   *
+   * @description
+   * Keeps the shared bar's pending-field memory aligned with its value control.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {BrnOverlayState} state - The filter popover's next state.
+   * @returns {void} No value is returned.
+   */
+  protected onFilterPopoverStateChanged(state: BrnOverlayState): void {
+    if (state === 'open') {
+      this.openFilterKey.set('status');
+      return;
+    }
+
+    if (this.openFilterKey() === 'status') this.openFilterKey.set(null);
   }
   //#endregion
 }

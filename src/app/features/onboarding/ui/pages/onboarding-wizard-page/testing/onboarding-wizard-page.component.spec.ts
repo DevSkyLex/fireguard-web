@@ -4,6 +4,10 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import { idleCallState, type CallState } from '@core/request-state';
 import type {
   OnboardingSetupOperation,
@@ -149,6 +153,14 @@ describe('OnboardingWizardPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal<'desktop'>('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          } satisfies InteractionCapabilitiesPort,
+        },
         { provide: OnboardingStore, useValue: storeMock },
         { provide: OrganizationSetupService, useValue: organizationSetupServiceMock },
         { provide: PlanService, useValue: planServiceMock },

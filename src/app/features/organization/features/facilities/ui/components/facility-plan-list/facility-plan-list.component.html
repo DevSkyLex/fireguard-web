@@ -9,7 +9,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         [disabled]="uploading()"
         [attr.aria-busy]="uploading() ? 'true' : null"
         data-testid="facility-plans-upload"
@@ -53,7 +53,7 @@
         >
           <button
             type="button"
-            class="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            class="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none mobile-ui:min-h-11"
             [attr.aria-current]="selectedPlanId() === plan.id ? 'true' : null"
             data-testid="facility-plan-select"
             (click)="planSelected.emit(plan.id)"
@@ -88,7 +88,7 @@
               type="button"
               variant="ghost"
               size="icon-sm"
-              class="text-muted-foreground max-sm:size-11"
+              class="text-muted-foreground mobile-ui:size-11"
               i18n-aria-label="@@facility.plans.rowMenu"
               aria-label="Plan actions"
               data-testid="facility-plan-menu-trigger"
@@ -107,6 +107,7 @@
                   type="button"
                   data-testid="facility-plan-view"
                   (triggered)="planSelected.emit(plan.id)"
+                  class="mobile-ui:min-h-11"
                 >
                   <span i18n="@@facility.plans.view">View</span>
                 </button>
@@ -117,6 +118,7 @@
                     [disabled]="plan.isPrimaryPlan"
                     data-testid="facility-plan-set-primary"
                     (triggered)="setPrimaryRequested.emit(plan)"
+                    class="mobile-ui:min-h-11"
                   >
                     <span i18n="@@facility.plans.setPrimary">Set as primary</span>
                   </button>
@@ -126,6 +128,7 @@
                     variant="destructive"
                     data-testid="facility-plan-delete"
                     (triggered)="deleteRequested.emit(plan)"
+                    class="mobile-ui:min-h-11"
                   >
                     <span i18n="@@facility.plans.delete">Delete</span>
                   </button>

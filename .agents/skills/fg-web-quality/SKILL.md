@@ -20,6 +20,11 @@ tests, followed by strict `npm run build` when templates, runtime entry points o
 contracts changed. For broad integration use `npm run lint`, `npm run test:ci` and build.
 For tooling-only changes, validate the actual scripts/configuration rather than rebuilding Angular.
 
+For an authored-code review, run `npm run review:check -- --base <review-base>` after focused
+tests. This diff-scoped structural check complements rather than replaces semantic review.
+The current Oxlint command does not run type-aware promise rules; report that limitation and
+do not install a new engine or migrate TypeScript implicitly. See `.codex/README.md`.
+
 Every `ng test --include` glob ends in `*.spec.ts`; use `npx ng test --watch=false`, never
 bare Vitest. Browser tests belong to `fg-web-e2e`. Preserve visual artifacts before any runner
 that cleans its output directory.

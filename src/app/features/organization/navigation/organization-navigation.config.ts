@@ -108,9 +108,11 @@ export interface OrganizationNavigationSection {
  *
  * @description
  * Canonical ordered list of organization destinations gated by organization-member
- * RBAC. Only the sidebar navigation consumes it — an earlier revision of this
- * doc claimed the landing guard did too, which was never true and is worth not
- * believing: guard and navigation are gated independently.
+ * RBAC. Desktop navigation and the mobile navigation model share this catalog;
+ * route guards enforce access independently.
+ * Dashboard is the membership-gated organization home for members able to read
+ * either interventions or dashboard aggregates. Assets replaces the earlier
+ * facilities/equipment pair, while Imports remains available to either reader.
  *
  * `exact` marks the one entry whose `path` is empty, so `routerLinkActive`
  * matches the workspace root exactly instead of as a prefix of every sibling
@@ -122,14 +124,6 @@ export interface OrganizationNavigationSection {
  */
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
-    /**
-     * The organization's home: the merged Dashboard page, combining the
-     * retired Today and Statistics pages into one tabbed surface
-     * (`FEATURE.md`). It shows the Overview tab's work queues to whoever can
-     * read interventions and the Trends tab's KPIs/charts to whoever can
-     * read the dashboard, so either permission earns the entry — the
-     * landing route itself is guarded by membership, not by a permission.
-     */
     id: 'dashboard',
     label: $localize`:@@route.dashboard:Dashboard`,
     icon: 'lucideLayoutDashboard',
@@ -184,11 +178,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.MAINTENANCE_READ],
   },
   {
-    /**
-     * The four-eyes decision surface for the backend Approval module. No
-     * nav counter badge: the backend navigation-counters endpoint has no
-     * approvals count, and this list does not fake one client-side.
-     */
     id: 'approvals',
     label: $localize`:@@route.approvals:Approvals`,
     icon: 'lucideShieldCheck',
@@ -197,12 +186,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.APPROVALS_READ],
   },
   {
-    /**
-     * The estate explorer is the sidebar's single assets entry, replacing the
-     * interim `facilities`/`equipments` pair (`organization/FEATURE.md`
-     * "assets"). Both route trees stay mounted regardless, so records,
-     * creation forms and deep links keep resolving.
-     */
     id: 'assets',
     label: $localize`:@@route.assets:Assets`,
     icon: 'lucideNetwork',
@@ -211,13 +194,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
-    /**
-     * The bulk CSV import surface for equipment and facilities. Gated on
-     * either read permission (`match: 'any'`) so a reader holding only one
-     * still reaches the page and imports that one kind — the backend's own
-     * `create` gate (`EQUIPMENT_WRITE`/`FACILITIES_WRITE` per submitted
-     * `kind`) is the actual write floor.
-     */
     id: 'imports',
     label: $localize`:@@route.imports:Imports`,
     icon: 'lucideUpload',
@@ -274,7 +250,7 @@ export function matchesOrganizationPermission(
  * @description
  * Evaluates one item's permission contract against the active member's grants.
  *
- * @param {OrganizationNavigationItem} item - Destination to evaluate.
+ * @param {Pick<OrganizationNavigationItem, 'permissions' | 'match'>} item - Permission contract to evaluate.
  * @param {ReadonlySet<string>} grantedPermissions - Active member permissions.
  *
  * @returns {boolean} Whether the destination is reachable.
@@ -282,7 +258,7 @@ export function matchesOrganizationPermission(
  * @since 1.0.0
  */
 export function hasOrganizationNavigationAccess(
-  item: OrganizationNavigationItem,
+  item: Pick<OrganizationNavigationItem, 'permissions' | 'match'>,
   grantedPermissions: ReadonlySet<string>,
 ): boolean {
   const hasPermission = (permission: OrganizationPermissionName): boolean =>

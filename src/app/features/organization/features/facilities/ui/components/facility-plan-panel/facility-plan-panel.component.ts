@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   computed,
   ElementRef,
   input,
@@ -21,6 +22,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
@@ -28,7 +30,6 @@ import type {
 } from '@features/organization/features/facilities/models';
 import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
-import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -187,8 +188,17 @@ export class FacilityPlanPanel {
   //#endregion
 
   //#region Properties
-  /** Whether the viewport is narrow enough to render the `hlm-sheet` branch instead of the `hlm-card` one. */
-  protected readonly isCompact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
   /** The sheet's own open/closed state, derived from {@link compactVisible}. */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>

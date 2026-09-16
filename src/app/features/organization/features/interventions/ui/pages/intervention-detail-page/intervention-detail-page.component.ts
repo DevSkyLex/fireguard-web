@@ -1,10 +1,13 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
   effect,
   inject,
+  Injector,
   input,
   linkedSignal,
   LOCALE_ID,
@@ -18,7 +21,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideActivity,
@@ -49,10 +52,11 @@ import {
   lucideUsersRound,
 } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
-import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import type { BrnDialogContext, BrnDialogState } from '@spartan-ng/brain/dialog';
+import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import {
@@ -74,6 +78,7 @@ import type {
   CreateInterventionLabelInput,
   InterventionAttachmentOutput,
   InterventionCapabilities,
+  InterventionCollectionsChange,
   InterventionCommandAction,
   InterventionConfirmAcceptedEvent,
   InterventionConfirmRequest,
@@ -97,6 +102,7 @@ import {
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
   InterventionSyncCoordinatorService,
+  interventionSyncEvents,
 } from '@features/organization/features/interventions/services';
 import {
   InterventionStore,
@@ -123,19 +129,26 @@ import {
   type InterventionPublicationStoreType,
 } from '@features/organization/features/interventions/state/intervention-publication';
 import {
+  InterventionTableQueryStore,
+  type InterventionTableQueryStoreType,
+} from '@features/organization/features/interventions/state/intervention-table-query';
+import {
   InterventionWorkspaceStore,
   interventionWorkspaceStoreEvents,
   type InterventionWorkspaceStoreType,
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
   buildInterventionDuplicatePrefill,
-  buildInterventionMetaLine,
   createInterventionCapabilities,
   formatInterventionScheduleLabel,
   resolveInterventionResponsibleLabel,
   summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
-import { ORGANIZATION_PERMISSION, type TeamOutput } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type MemberSelectOption,
+  type TeamOutput,
+} from '@features/organization/models';
 import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
@@ -147,21 +160,20 @@ import {
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
-import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmKbd } from '@shared/ui/kbd';
-import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
-import { InterventionAbout } from '../../components/intervention-about';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
 import { InterventionAttachments } from '../../components/intervention-attachments';
-import { InterventionChangeList } from '../../components/intervention-change-list';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
@@ -184,13 +196,11 @@ import type { InterventionWorkItemFormValues } from '../../forms/intervention-wo
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
 import { InterventionOperationsSheet } from '../../sheets/intervention-operations-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
+import { InterventionChangeTable } from '../../tables/intervention-change-table';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
 import { InterventionFacilitiesTable } from '../../tables/intervention-facilities-table';
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
-import {
-  InterventionWorkItemTable,
-  type InterventionWorkItemFilter,
-} from '../../tables/intervention-work-item-table';
+import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
 
 /** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
 const LINKED_RESOURCE_TAB_IDS: ReadonlySet<string> = new Set<string>([
@@ -288,24 +298,25 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    ...HlmDrawerImports,
+    ...HlmItemImports,
+    NgTemplateOutlet,
     ...HlmSheetImports,
     NgIcon,
     ...HlmEmptyImports,
     InterventionDiscussionSheet,
-    ...HlmCollapsibleImports,
     HlmKbd,
     HlmButton,
     HlmButtonGroup,
     HlmSpinner,
-    HlmSeparator,
     HlmSkeleton,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
-    InterventionAbout,
+    HlmBadge,
     InterventionActivityThread,
     InterventionAttachmentDeleteDialog,
     InterventionAttachments,
-    InterventionChangeList,
+    InterventionChangeTable,
     InterventionAbandonDialog,
     InterventionConfirmDialog,
     InterventionLabelManageDialog,
@@ -332,6 +343,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionWorkspaceStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
+    InterventionTableQueryStore,
     InterventionPublicationStore,
     InterventionLabelStore,
     provideIcons({
@@ -368,6 +380,74 @@ const IDLE_EDIT_STATE: InterventionEditState = {
   host: { '(document:keydown)': 'onDocumentKeydown($event)' },
 })
 export class InterventionDetailPage {
+  /**
+   * Property tableQueriesReady
+   * @readonly
+   * @description Allows secondary table queries only after browser mounting, never during SSR.
+   * @access private
+   * @since 6.2.0
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly tableQueriesReady: WritableSignal<boolean> = signal(false);
+  /**
+   * Property reloadCollections
+   * @readonly
+   * @description Consequences waiting for a complete, context-guarded workspace reload.
+   * @access private
+   * @since 6.2.0
+   * @type {Set<InterventionCollectionsChange['collections'][number]>}
+   */
+  private readonly reloadCollections: Set<InterventionCollectionsChange['collections'][number]> =
+    new Set<InterventionCollectionsChange['collections'][number]>();
+  /**
+   * Property connectionContext
+   * @description Observed route/network pair; criteria never persist beyond this page context.
+   * @access private
+   * @since 6.2.0
+   * @type {{ id: string; online: boolean } | null}
+   */
+  private connectionContext: { id: string; online: boolean } | null = null;
+
+  /**
+   * Method refreshAfterWorkspace
+   * @method refreshAfterWorkspace
+   * @description Refreshes complete data before dependent queries while preserving pending operations.
+   * @access private
+   * @since 6.2.0
+   * @param {string} interventionId - Intervention whose workspace must be refreshed.
+   * @param {InterventionCollectionsChange['collections']} collections - Dependent queries to invalidate.
+   * @returns {void}
+   */
+  private refreshAfterWorkspace(
+    interventionId: string,
+    collections: InterventionCollectionsChange['collections'],
+  ): void {
+    if (interventionId !== this.interventionId()) return;
+    for (const collection of collections) this.reloadCollections.add(collection);
+    this.store.reload(interventionId);
+  }
+
+  /**
+   * Property mobileActionsVisible
+   * @readonly
+   * @description Keeps the mobile action host mounted until its drawer closes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly mobileActionsVisible: WritableSignal<boolean> = signal(false);
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   /**
    * Property proofItem
    * @readonly
@@ -489,6 +569,17 @@ export class InterventionDetailPage {
    */
   protected readonly linkedResources: InterventionLinkedResourcesStoreType =
     inject<InterventionLinkedResourcesStoreType>(InterventionLinkedResourcesStore);
+
+  /**
+   * Property tableQueries
+   * @readonly
+   * @description Server-filtered rows and criteria for the Work and Changes tables.
+   * @access protected
+   * @since 6.2.0
+   * @type {InterventionTableQueryStoreType}
+   */
+  protected readonly tableQueries: InterventionTableQueryStoreType =
+    inject<InterventionTableQueryStoreType>(InterventionTableQueryStore);
 
   /**
    * Property publicationStore
@@ -691,6 +782,25 @@ export class InterventionDetailPage {
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
+   * Property renderInjector
+   * @readonly
+   * @description Schedules page-local post-render navigation without accessing the DOM during SSR.
+   * @access private
+   * @since 6.2.0
+   * @type {Injector}
+   */
+  private readonly renderInjector: Injector = inject(Injector);
+
+  /**
+   * Property tabNavigationGeneration
+   * @description Cancels ordinary tab scrolls when a newer targeted navigation takes precedence.
+   * @access private
+   * @since 6.2.0
+   * @type {number}
+   */
+  private tabNavigationGeneration: number = 0;
+
+  /**
    * * Registers {@link pageActions} on the shell header.
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
@@ -757,7 +867,15 @@ export class InterventionDetailPage {
    */
   private pendingFocusTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  constructor() {
+  /**
+   * Constructor
+   * @constructor
+   * @description Registers page actions and tabs, route-driven loading, mutation feedback, and lifecycle cleanup.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    afterNextRender(() => this.tableQueriesReady.set(true));
     this.destroyRef.onDestroy((): void => {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
     });
@@ -808,11 +926,39 @@ export class InterventionDetailPage {
       const interventionId: string = this.interventionId();
 
       untracked((): void => {
+        this.reloadCollections.clear();
         this.proofItem.set(null);
         this.operationsVisible.set(false);
+        this.tableQueries.setContext(interventionId);
+        this.linkedResources.setContext(interventionId);
         this.store.load(interventionId);
         this.store.loadActivities(interventionId);
         this.store.loadAttachments(interventionId);
+      });
+    });
+
+    effect((): void => {
+      const id = this.interventionId();
+      const online = this.connectivity.online();
+      const cached = this.store.servedFromLocalCache();
+      untracked(() => {
+        const previous = this.connectionContext;
+        this.connectionContext = { id, online };
+        this.linkedResources.setOnline(online);
+        if (previous?.id === id && !previous.online && online) {
+          this.tableQueries.setOffline(true, false);
+          this.refreshAfterWorkspace(id, [
+            'workItems',
+            'changes',
+            'facilities',
+            'equipment',
+            'inspections',
+            'activity',
+            'attachments',
+          ]);
+        } else if (!online || (cached && this.store.intervention()?.id === id)) {
+          this.tableQueries.setOffline(true);
+        } else if (!this.reloadCollections.size) this.tableQueries.setOffline(false, false);
       });
     });
 
@@ -842,20 +988,47 @@ export class InterventionDetailPage {
       if (!intervention) return;
 
       untracked((): void => {
-        this.titleService.setTitle(intervention.name);
+        if (intervention.id === this.interventionId())
+          this.titleService.setTitle(intervention.name);
         this.publicationStore.reconcilePublished(intervention);
+      });
+    });
+
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event): void => {
+      if (!(event instanceof NavigationEnd)) return;
+      const interventionId: string = this.interventionId();
+      queueMicrotask((): void => {
+        if (this.destroyRef.destroyed || this.interventionId() !== interventionId) return;
+        const intervention: InterventionOutput | null = this.store.intervention();
+        if (intervention?.id === interventionId) this.titleService.setTitle(intervention.name);
       });
     });
 
     effect((): void => {
       const tab: InterventionLinkedResourceTabId = this.activeLinkedTab();
+      if (!this.tableQueriesReady()) return;
       const interventionId: string = this.interventionId();
 
+      const intervention = this.store.intervention();
+      const phase = this.phase();
+      if (intervention?.id !== interventionId) return;
       untracked((): void => {
+        if (tab === 'overview')
+          this.tableQueries.activateWorkItems(interventionId, {
+            search: '',
+            statuses: phase === 'execute' ? ['planned', 'in_progress'] : null,
+          });
+        else if (tab === 'changes')
+          this.tableQueries.activateChanges(interventionId, {
+            search: '',
+            status: intervention.status === 'published' ? 'applied' : 'proposed',
+          });
+        else this.tableQueries.deactivate();
         if (tab === 'facilities') this.linkedResources.ensureFacilitiesLoaded(interventionId);
         else if (tab === 'equipment') this.linkedResources.ensureEquipmentLoaded(interventionId);
         else if (tab === 'inspections')
           this.linkedResources.ensureInspectionsLoaded(interventionId);
+        else this.linkedResources.deactivate();
       });
     });
 
@@ -923,6 +1096,49 @@ export class InterventionDetailPage {
     });
 
     this.events
+      .on(interventionWorkspaceStoreEvents.mutationSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (payload.interventionId !== this.interventionId()) return;
+        if (payload.source === 'queued') this.tableQueries.setOffline(true, false);
+        if (payload.workItem) this.tableQueries.reconcileWorkItem(payload.workItem);
+        if (payload.change) this.tableQueries.reconcileChange(payload.change);
+        if (payload.deletedWorkItemIds)
+          this.tableQueries.removeWorkItems(payload.interventionId, payload.deletedWorkItemIds);
+        this.tableQueries.invalidate(payload.interventionId, payload.collections);
+        this.linkedResources.invalidate(payload.interventionId, payload.collections);
+        if (payload.source === 'remote' && payload.collections.includes('activity'))
+          this.store.loadActivities(payload.interventionId);
+      });
+
+    this.events
+      .on(interventionSyncEvents.replaySucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        this.refreshAfterWorkspace(payload.interventionId, payload.collections);
+      });
+
+    this.events
+      .on(interventionWorkspaceStoreEvents.reloadSucceeded)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }): void => {
+        if (payload.interventionId !== this.interventionId()) return;
+        const collections = [...this.reloadCollections];
+        this.reloadCollections.clear();
+        this.tableQueries.setOffline(
+          !this.connectivity.online() || this.store.servedFromLocalCache(),
+          false,
+        );
+        this.tableQueries.invalidate(payload.interventionId, collections);
+        this.linkedResources.invalidate(payload.interventionId, collections);
+        if (this.connectivity.online() && !this.store.servedFromLocalCache()) {
+          if (collections.includes('activity')) this.store.loadActivities(payload.interventionId);
+          if (collections.includes('attachments'))
+            this.store.loadAttachments(payload.interventionId);
+        }
+      });
+
+    this.events
       .on(interventionWorkspaceStoreEvents.workItemCreateSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }): void => {
@@ -947,9 +1163,17 @@ export class InterventionDetailPage {
     this.events
       .on(interventionPublicationStoreEvents.publishSucceeded)
       .pipe(takeUntilDestroyed())
-      .subscribe((): void => {
-        this.store.reload(this.interventionId());
-        this.publishConfirmOpen.set(false);
+      .subscribe(({ payload }): void => {
+        if (payload.intervention !== '/api/interventions/' + this.interventionId()) return;
+        this.refreshAfterWorkspace(this.interventionId(), [
+          'workItems',
+          'changes',
+          'facilities',
+          'equipment',
+          'inspections',
+          'activity',
+        ]);
+        this.publishConfirmVisible.set(false);
         this.feedback.success(
           $localize`:@@intervention.publication.succeeded:Published to the compliance record`,
         );
@@ -989,18 +1213,6 @@ export class InterventionDetailPage {
   //#endregion
 
   //#region Properties
-  /**
-   * Property workFilter
-   * @readonly
-   * @description Explicit work filter retained across tabs and reset when the intervention changes.
-   * @access protected
-   * @since 1.0.0
-   * @type {WritableSignal<InterventionWorkItemFilter | null>}
-   */
-  protected readonly workFilter = linkedSignal<InterventionWorkItemFilter | null>(() => {
-    this.interventionId();
-    return null;
-  });
   /** The active organization's regional formatting context port. */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
@@ -1116,18 +1328,6 @@ export class InterventionDetailPage {
    */
   protected readonly propertiesRailVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /**
-   * @description
-   * About starts open on the first desktop measurement. Subsequent resizes keep
-   * the user's choice and never hide a focused description editor.
-   * @access protected
-   * @since 6.6.0
-   * @type {WritableSignal<boolean | undefined>}
-   */
-  protected readonly aboutExpanded: WritableSignal<boolean | undefined> = signal<
-    boolean | undefined
-  >(undefined);
-
   /** What the text confirmation is asking about, if anything. */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
@@ -1170,8 +1370,15 @@ export class InterventionDetailPage {
     }
   });
 
-  /** Whether the publish confirmation is open. */
-  protected readonly publishConfirmOpen: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property publishConfirmVisible
+   * @readonly
+   * @description Whether the publication confirmation dialog is visible.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly publishConfirmVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /** What the attachment delete confirmation is asking about, if anything. */
   protected readonly pendingAttachmentDelete: WritableSignal<InterventionAttachmentOutput | null> =
@@ -1225,6 +1432,56 @@ export class InterventionDetailPage {
   protected readonly teams: WritableSignal<readonly TeamOutput[]> = signal<readonly TeamOutput[]>(
     [],
   );
+
+  /**
+   * Property teamMemberIds
+   * @readonly
+   * @description Keeps the first three membership ids returned for each team so the dialog can render a compact preview without loading full rosters.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<Readonly<Record<string, readonly string[]>>>}
+   */
+  protected readonly teamMemberIds: WritableSignal<Readonly<Record<string, readonly string[]>>> =
+    signal<Readonly<Record<string, readonly string[]>>>({});
+
+  /**
+   * Property teamMemberOptions
+   * @readonly
+   * @description Resolves team membership ids against the already-loaded organization member catalogue for avatar and initials previews.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, readonly MemberSelectOption[]>>>}
+   */
+  protected readonly teamMemberOptions: Signal<
+    Readonly<Record<string, readonly MemberSelectOption[]>>
+  > = computed(() => {
+    const memberOptions: readonly MemberSelectOption[] = this.planningOptions.members();
+    const optionsByIri: ReadonlyMap<string, MemberSelectOption> = new Map(
+      memberOptions.map((member): [string, MemberSelectOption] => [member.value, member]),
+    );
+    const optionsByMemberId: ReadonlyMap<string, MemberSelectOption> = new Map(
+      memberOptions.map((member): [string, MemberSelectOption] => [
+        member.value.slice(member.value.lastIndexOf('/') + 1),
+        member,
+      ]),
+    );
+    const organizationId: string = this.organizationId();
+    const resolved: Record<string, readonly MemberSelectOption[]> = {};
+
+    for (const [teamId, memberIds] of Object.entries(this.teamMemberIds())) {
+      resolved[teamId] = memberIds
+        .map((memberId) => {
+          const memberIri: string = memberId.startsWith('/')
+            ? memberId
+            : `/api/organizations/${organizationId}/members/${memberId}`;
+          const memberIdKey: string = memberId.slice(memberId.lastIndexOf('/') + 1);
+          return optionsByIri.get(memberIri) ?? optionsByMemberId.get(memberIdKey);
+        })
+        .filter((option): option is MemberSelectOption => option !== undefined);
+    }
+
+    return resolved;
+  });
 
   /**
    * * Whether {@link teams} is loading.
@@ -1756,33 +2013,6 @@ export class InterventionDetailPage {
   );
 
   /**
-   * Property metaLine
-   * @readonly
-   *
-   * @description
-   * Who acted last and when, plus the revision — the last entry of the loaded
-   * timeline, falling back to `updatedAt` while it is still loading or empty.
-   *
-   * Taking the *last* entry is only correct because the store loads the
-   * timeline's newest page first (the API sorts ascending). Reading page 1
-   * instead, as it once did, made this line report the oldest event on the
-   * record as the latest thing that happened.
-   *
-   * @access protected
-   * @since 3.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly metaLine: Signal<string> = computed<string>(() =>
-    buildInterventionMetaLine(
-      this.store.intervention(),
-      this.store.activities(),
-      this.planningOptions.members(),
-      this.locale,
-    ),
-  );
-
-  /**
    * Property readinessItems
    * @readonly
    *
@@ -1848,7 +2078,7 @@ export class InterventionDetailPage {
    * @description
    * The single forward action for the current phase, or `null` when the member
    * has nothing to do here. Rendered exactly once, in
-   * `app-intervention-status-band`, whatever the phase.
+   * the adaptive workflow action surface, whatever the phase.
    *
    * In `execute` it is a living action: while work remains it sends the
    * operator to the checklist rather than offering a submit they cannot use,
@@ -1945,37 +2175,6 @@ export class InterventionDetailPage {
               ? $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`
               : $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`,
         loading: this.store.saving() || this.publishing(),
-      };
-    });
-
-  /**
-   * Property secondaryCommandAction
-   * @readonly
-   *
-   * @description
-   * The reviewer's "send it back", named as a verb and rendered beside the
-   * primary. Shown to anyone who may review a submitted card — including the
-   * reviewer who cannot publish, for whom {@link commandAction} is `null` and
-   * the band was until now empty.
-   *
-   * @access protected
-   * @since 2.0.0
-   *
-   * @type {Signal<InterventionCommandAction | null>}
-   */
-  protected readonly secondaryCommandAction: Signal<InterventionCommandAction | null> =
-    computed<InterventionCommandAction | null>(() => {
-      const intervention: InterventionOutput | null = this.store.intervention();
-      if (!intervention || intervention.status !== 'submitted' || !this.canReview()) return null;
-
-      return {
-        label: $localize`:@@intervention.cta.requestChanges:Send back for changes`,
-        icon: 'lucideMessageSquareQuote',
-        disabled: !this.online(),
-        disabledReason: this.online()
-          ? null
-          : $localize`:@@intervention.cta.reviewOffline:Reconnect to send your review.`,
-        loading: false,
       };
     });
 
@@ -2488,7 +2687,7 @@ export class InterventionDetailPage {
 
     if (target === null) {
       this.offlineBlockReason.set(null);
-      this.publishConfirmOpen.set(true);
+      this.publishConfirmVisible.set(true);
 
       return;
     }
@@ -2768,23 +2967,81 @@ export class InterventionDetailPage {
    */
   protected openTeamAssign(): void {
     this.teamAssignVisible.set(true);
-    if (this.teamsLoaded) return;
+    if (this.teamsLoaded || this.teamsLoading()) return;
 
     this.teamsLoading.set(true);
+    const organizationId: string = this.organizationId();
     this.teamService
-      .list(this.organizationId())
+      .list(organizationId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (collection): void => {
-          this.teams.set([...collection.member]);
-          this.teamsLoading.set(false);
-          this.teamsLoaded = true;
+          const teams: readonly TeamOutput[] = [...collection.member];
+          this.teams.set(teams);
+          this.loadTeamMemberIds(organizationId, teams);
         },
         error: (): void => {
+          this.teamMemberIds.set({});
           this.teamsLoading.set(false);
           this.feedback.error(
             $localize`:@@intervention.team.assign.loadFailed:Couldn't load the organization's teams.`,
           );
+        },
+      });
+  }
+
+  /**
+   * Method loadTeamMemberIds
+   * @method loadTeamMemberIds
+   * @description Loads only the first three memberships per team; the team's authoritative member count supplies the overflow amount.
+   * @access private
+   * @since 1.0.0
+   * @param {string} organizationId - The owning organization's id.
+   * @param {readonly TeamOutput[]} teams - Teams whose compact previews are needed.
+   * @returns {void}
+   */
+  private loadTeamMemberIds(organizationId: string, teams: readonly TeamOutput[]): void {
+    if (teams.length === 0) {
+      this.teamMemberIds.set({});
+      this.teamsLoading.set(false);
+      this.teamsLoaded = true;
+      return;
+    }
+
+    forkJoin(
+      teams.map((team) =>
+        this.teamService.listMembers(organizationId, team.id, { itemsPerPage: 3 }).pipe(
+          map((collection) => ({
+            teamId: team.id,
+            memberIds: collection.member.slice(0, 3).map((membership) => membership.memberId),
+          })),
+          catchError(() => of({ teamId: team.id, memberIds: [] as readonly string[] })),
+        ),
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (entries): void => {
+          const memberIds: Record<string, readonly string[]> = {};
+          for (const entry of entries) memberIds[entry.teamId] = entry.memberIds;
+          this.teamMemberIds.set(memberIds);
+          this.planningOptions.ensureSelected(
+            organizationId,
+            Object.values(memberIds).flatMap((ids) =>
+              ids.map((memberId) =>
+                memberId.startsWith('/')
+                  ? memberId
+                  : `/api/organizations/${organizationId}/members/${memberId}`,
+              ),
+            ),
+          );
+          this.teamsLoading.set(false);
+          this.teamsLoaded = true;
+        },
+        error: (): void => {
+          this.teamMemberIds.set({});
+          this.teamsLoading.set(false);
+          this.teamsLoaded = true;
         },
       });
   }
@@ -2879,7 +3136,7 @@ export class InterventionDetailPage {
   protected onPublishDialogStateChanged(state: BrnDialogState): void {
     if (state === 'open') return;
 
-    this.publishConfirmOpen.set(false);
+    this.publishConfirmVisible.set(false);
   }
 
   /**
@@ -3029,7 +3286,20 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected onLinkedTabActivated(tab: string): void {
-    if (isInterventionLinkedResourceTabId(tab)) this.setLinkedTab(tab);
+    if (!isInterventionLinkedResourceTabId(tab) || tab === this.activeLinkedTab()) return;
+    this.setLinkedTab(tab);
+    const generation: number = this.tabNavigationGeneration;
+    const interventionId: string = this.interventionId();
+    afterNextRender(
+      (): void => {
+        if (generation !== this.tabNavigationGeneration || interventionId !== this.interventionId())
+          return;
+        const main: HTMLElement | null | undefined =
+          this.detailColumns()?.nativeElement.closest('#dashboard-main');
+        main?.scrollTo?.({ top: 0, behavior: 'instant' });
+      },
+      { injector: this.renderInjector },
+    );
   }
 
   /**
@@ -3052,6 +3322,7 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   private setLinkedTab(tab: InterventionLinkedResourceTabId): void {
+    this.tabNavigationGeneration += 1;
     this.activeLinkedTab.set(tab);
 
     void this.router.navigate([], {
@@ -3098,7 +3369,11 @@ export class InterventionDetailPage {
   protected onDocumentKeydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key !== 'j' && event.key !== 'k') return;
-    if (this.pendingConfirm() !== null || this.publishConfirmOpen() || this.requestChangesVisible())
+    if (
+      this.pendingConfirm() !== null ||
+      this.publishConfirmVisible() ||
+      this.requestChangesVisible()
+    )
       return;
     if (this.signatureDialogVisible()) return;
     if (this.workItemSheetVisible()) return;
@@ -3134,7 +3409,6 @@ export class InterventionDetailPage {
    */
   private applyDetailColumnsWidth(width: number): void {
     this.propertiesRailVisible.set(width >= 896);
-    this.aboutExpanded.update((expanded: boolean | undefined): boolean => expanded ?? width >= 896);
   }
 
   /**
@@ -3311,4 +3585,70 @@ export class InterventionDetailPage {
     );
   }
   //#endregion
+
+  /**
+   * Method onMobileActionsClosed
+   * @method onMobileActionsClosed
+   * @description Opens a permitted secondary surface after the actions drawer has closed and restored focus.
+   * @access protected
+   * @since 1.0.0
+   * @param {unknown} action - The explicit native drawer close result.
+   * @returns {void}
+   */
+  protected onMobileActionsClosed(action: unknown): void {
+    if (!this.store.intervention()) return;
+
+    switch (action) {
+      case 'activity':
+        this.openActivity();
+        break;
+      case 'operations':
+        this.operationsVisible.set(true);
+        this.refreshOperations();
+        break;
+      case 'blockers':
+        if (this.store.blockerCount() > 0) this.revealBlockers();
+        break;
+      case 'discussion':
+        if (this.canDiscuss()) this.discussionSheetVisible.set(true);
+        break;
+      case 'team':
+        if (this.canAssignTeam()) this.openTeamAssign();
+        break;
+      case 'requestChanges':
+        if (this.transitionTargets().includes('changes_requested'))
+          this.onTransitionSelect('changes_requested');
+        break;
+      case 'abandon':
+        if (this.canAbandon()) this.requestAbandon();
+        break;
+      case 'delete':
+        if (this.canDeleteIntervention()) this.requestDeleteIntervention();
+        break;
+    }
+  }
+
+  /**
+   * Method onMobileTransitionSelected
+   * @method onMobileTransitionSelected
+   * @description Commits direct transitions before closing, or defers the changes-request form until the drawer is closed.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionStatus} target - The requested destination status.
+   * @param {BrnDialogContext<unknown>} drawer - The native drawer portal context.
+   * @returns {void}
+   */
+  protected onMobileTransitionSelected(
+    target: InterventionStatus,
+    drawer: BrnDialogContext<unknown>,
+  ): void {
+    if (!this.transitionTargets().includes(target)) return;
+
+    if (target === 'changes_requested') {
+      drawer.close('requestChanges');
+      return;
+    }
+    this.onTransitionSelect(target);
+    drawer.close();
+  }
 }

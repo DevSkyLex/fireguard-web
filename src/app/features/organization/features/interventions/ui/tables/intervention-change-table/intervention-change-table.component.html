@@ -1,0 +1,294 @@
+<section
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="intervention-change-table"
+  aria-labelledby="intervention-change-table-title"
+>
+  <div class="flex flex-col gap-1">
+    <h2
+      id="intervention-change-table-title"
+      class="text-lg font-semibold"
+      i18n="@@intervention.changes.historyTitle"
+    >
+      Resource changes
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.changes.historyHint">
+      Review proposed values and consult rejected or applied changes.
+    </p>
+  </div>
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="intervention-changes"
+      placeholder="Search changes..."
+      i18n-placeholder="@@intervention.changes.searchPlaceholder"
+      ariaLabel="Search changes..."
+      i18n-ariaLabel="@@intervention.changes.searchPlaceholder"
+      [value]="searchTerm()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
+    <div toolbarEnd class="flex flex-wrap items-center gap-2">
+      <app-collection-filter-toggle
+        [visible]="filtersVisible()"
+        [activeCount]="activeFilterKeys().length"
+        label="Filters"
+        i18n-label="@@intervention.changes.filtersButton"
+        testIdPrefix="intervention-changes"
+        (visibleChange)="toggleFiltersVisible($event)"
+      />
+    </div>
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="filterTemplates()"
+      testIdPrefix="intervention-changes"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilter()"
+    />
+  }
+  <ng-template #statusFilter>
+    <app-collection-filter-select
+      [options]="statusOptions"
+      [value]="statusFilterValue()"
+      placeholder="Status"
+      i18n-placeholder="@@intervention.list.filterStatus"
+      searchPlaceholder="Search a status"
+      i18n-searchPlaceholder="@@intervention.list.filterStatusPlaceholder"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@intervention.list.filterNoStatus"
+      [accessibleName]="statusFilterAccessibleName"
+      triggerId="intervention-changes-filter-status"
+      testId="intervention-changes-filter-status"
+      [state]="fieldPopoverState()"
+      (valueChanged)="onStatusFilterChanged($event)"
+      (stateChanged)="onFilterPopoverStateChanged($event)"
+    />
+  </ng-template>
+  <app-intervention-table-feedback
+    [source]="source()"
+    [error]="error()"
+    [hasResult]="queryChanges() !== null || proposedRows().length > 0"
+    [loading]="loading()"
+    (retryRequested)="retryRequested.emit()"
+  />
+  <app-collection-surface
+    [class]="
+      showActionsColumn()
+        ? '[&_[data-slot=table]]:min-w-[43rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-10'
+        : '[&_[data-slot=table]]:min-w-[38rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-10'
+    "
+    caption="The intervention's resource changes."
+    i18n-caption="@@intervention.changes.tableCaption"
+    testId="intervention-changes-table"
+    density="compact"
+    [loading]="loading()"
+    [hasLoaded]="queryChanges() !== null"
+    [hasError]="error() !== null && !(queryChanges() !== null) && proposedRows().length === 0"
+    [rowCount]="proposedRows().length"
+    [columnCount]="showActionsColumn() ? 5 : 4"
+    [skeletonColumns]="skeletonColumnWidths()"
+  >
+    <div hlmEmpty surfaceError role="alert" class="min-h-32">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.changes.loadFailed">Changes could not be loaded</p>
+        <p hlmEmptyDescription>{{ error() }}</p>
+      </div>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="loading()"
+        (click)="retryRequested.emit()"
+        i18n="@@intervention.tables.retry"
+      >
+        Retry
+      </button>
+    </div>
+    <ng-container surfaceHead>
+      <tr hlmTableRow>
+        <th hlmTableHead class="w-32" i18n="@@intervention.changes.columnResource">Resource</th>
+        <th hlmTableHead class="w-32" i18n="@@intervention.changes.columnField">Field</th>
+        <th hlmTableHead i18n="@@intervention.changes.columnValue">Proposed value</th>
+        <th hlmTableHead class="w-28" i18n="@@intervention.changes.columnStatus">Status</th>
+        @if (showActionsColumn()) {
+          <th hlmTableHead class="w-20 text-right">
+            <span class="sr-only" i18n="@@common.actions">Actions</span>
+          </th>
+        }
+      </tr>
+    </ng-container>
+
+    <ng-container surfaceRows>
+      @for (group of groups(); track group.resource) {
+        @for (row of group.rows; track row.change.id) {
+          @for (line of row.patchLines; track $index; let first = $first) {
+            <tr
+              hlmTableRow
+              data-testid="intervention-change-row"
+              [attr.data-change-id]="row.change.id"
+            >
+              @if (first) {
+                <td
+                  hlmTableCell
+                  [attr.rowspan]="row.patchLines.length"
+                  class="align-middle font-medium whitespace-normal text-foreground"
+                >
+                  <span class="block break-words">{{ group.label }}</span>
+                </td>
+              }
+              <td hlmTableCell class="align-middle whitespace-normal">
+                <span class="break-words text-muted-foreground">{{ line.field }}</span>
+              </td>
+              <td hlmTableCell class="align-middle [overflow-wrap:anywhere] whitespace-normal">
+                <span class="font-medium text-foreground">{{ line.value }}</span>
+                @if (first && errors()[row.change.id]; as error) {
+                  <p class="mt-2 text-sm text-destructive" role="alert">{{ error }}</p>
+                }
+              </td>
+              @if (first) {
+                <td
+                  hlmTableCell
+                  [attr.rowspan]="row.patchLines.length"
+                  class="align-middle whitespace-nowrap"
+                >
+                  <app-intervention-tag kind="changeStatus" [value]="row.change.status" />
+                </td>
+                @if (showActionsColumn()) {
+                  <td
+                    hlmTableCell
+                    [attr.rowspan]="row.patchLines.length"
+                    class="text-right align-middle whitespace-nowrap"
+                  >
+                    @if (row.change.status === 'proposed') {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        class="mobile-ui:min-h-11"
+                        data-testid="intervention-change-reject"
+                        [disabled]="row.pending"
+                        (click)="rejected.emit(row.change.id)"
+                      >
+                        @if (row.pending) {
+                          <hlm-spinner size="xs" aria-hidden="true" />
+                        }
+                        <span i18n="@@intervention.changes.reject">Reject</span>
+                      </button>
+                    }
+                  </td>
+                }
+              }
+            </tr>
+          }
+        }
+      }
+    </ng-container>
+
+    <ng-container surfaceCards>
+      @for (group of groups(); track group.resource) {
+        @for (row of group.rows; track row.change.id) {
+          <div
+            class="flex min-w-0 flex-col gap-3 border-b border-border py-4"
+            data-testid="intervention-change-card"
+            [attr.data-change-id]="row.change.id"
+          >
+            <div class="flex min-w-0 items-start justify-between gap-3">
+              <span class="min-w-0 font-medium break-words text-foreground">{{ group.label }}</span>
+              <app-intervention-tag kind="changeStatus" [value]="row.change.status" />
+            </div>
+            <dl
+              class="grid min-w-0 gap-x-4 gap-y-2 text-sm sm:grid-cols-[minmax(8rem,0.75fr)_minmax(0,2fr)]"
+            >
+              @for (line of row.patchLines; track line.field) {
+                <div class="contents">
+                  <dt class="text-muted-foreground">{{ line.field }}</dt>
+                  <dd class="min-w-0 font-medium break-words text-foreground">{{ line.value }}</dd>
+                </div>
+              } @empty {
+                <dt class="text-muted-foreground" i18n="@@intervention.changes.noField">Field</dt>
+                <dd aria-hidden="true">—</dd>
+              }
+            </dl>
+            @if (errors()[row.change.id]; as error) {
+              <p class="text-sm text-destructive" role="alert">{{ error }}</p>
+            }
+            @if (showActionsColumn() && row.change.status === 'proposed') {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="self-start mobile-ui:min-h-11"
+                data-testid="intervention-change-reject-card"
+                [disabled]="row.pending"
+                (click)="rejected.emit(row.change.id)"
+              >
+                @if (row.pending) {
+                  <hlm-spinner size="xs" aria-hidden="true" />
+                }
+                <span i18n="@@intervention.changes.reject">Reject</span>
+              </button>
+            }
+          </div>
+        }
+      }
+    </ng-container>
+
+    <div hlmEmpty surfaceEmpty class="min-h-32" data-testid="intervention-changes-empty">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          <ng-icon name="lucideHistory" aria-hidden="true" />
+        </div>
+        @if (searchTerm().trim()) {
+          <p hlmEmptyTitle i18n="@@intervention.changes.searchEmptyTitle">
+            No changes match this search
+          </p>
+          <p hlmEmptyDescription i18n="@@intervention.changes.searchEmptyHint">
+            Try another term or clear the search.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            (click)="onSearchQueryChanged('')"
+            i18n="@@intervention.tables.clearSearch"
+          >
+            Clear search
+          </button>
+        } @else if (changes().length === 0) {
+          <p hlmEmptyTitle i18n="@@intervention.changes.noDataTitle">No resource changes yet</p>
+          <p hlmEmptyDescription i18n="@@intervention.changes.noDataHint">
+            Proposed changes will appear here as work progresses.
+          </p>
+        } @else {
+          <p hlmEmptyTitle i18n="@@intervention.changes.emptyTitle">No changes in this state</p>
+          <p hlmEmptyDescription i18n="@@intervention.changes.emptyHint">
+            Choose another status to consult the intervention history.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            (click)="clearFilter()"
+            i18n="@@intervention.tables.clearFilters"
+          >
+            Clear filters
+          </button>
+        }
+      </div>
+    </div>
+  </app-collection-surface>
+</section>

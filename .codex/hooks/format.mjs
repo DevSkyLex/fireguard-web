@@ -17,8 +17,9 @@
  * exit 2 so Codex sees it; everything else exits 0.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
+import { isImmutableSource } from './protected-paths.mjs';
 
 /** Locate the project formatter from the edited file, including nested sessions. */
 function findAppRoot(fromFile, markerSegments) {
@@ -74,6 +75,11 @@ if (!FORMATTABLE.has(path.extname(normalized).toLowerCase())) process.exit(0);
 
 const root = findAppRoot(filePath, ['.oxfmtrc.json']);
 if (!root) process.exit(0);
+if (
+  isImmutableSource(root, path.resolve(filePath)) ||
+  isImmutableSource(realpathSync(root), realpathSync(filePath))
+)
+  process.exit(0);
 
 // oxfmt's npm `bin` entry is a JS launcher run by Node itself. Invoking it through
 // `process.execPath` — instead of `npx` with `shell: true` — removes the npx cold

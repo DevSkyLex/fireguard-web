@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import {
   InterventionWorkItemForm,
   type InterventionWorkItemFormValues,
@@ -30,7 +31,9 @@ describe('InterventionWorkItemSheet', () => {
   };
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
 
     fixture = TestBed.createComponent(InterventionWorkItemSheet);
     await fixture.whenStable();
@@ -51,6 +54,15 @@ describe('InterventionWorkItemSheet', () => {
 
     expect(content()).not.toBeNull();
     expect(content().textContent).toContain('Add work item');
+  });
+
+  it('should keep the sheet guidance concise', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+
+    expect(inSheet('[data-slot="sheet-description"]')?.textContent?.trim()).toBe(
+      'Only the action is required; target and assignee can be set now or during execution.',
+    );
   });
 
   it('should relay the form cancellation as a close request', async () => {

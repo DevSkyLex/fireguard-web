@@ -1,14 +1,41 @@
-<button
-  hlmBtn
-  type="button"
-  variant="ghost"
-  size="sm"
-  class="gap-2 max-sm:min-h-11"
-  data-testid="logout-control"
-  [disabled]="logoutPort.isLoggingOut()"
-  [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
-  (click)="logoutPort.logout()"
->
-  <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
-  <span i18n="@@auth.logout.signOut">Sign out</span>
-</button>
+@if (slotPresentation === 'menu') {
+  <button
+    hlmItem
+    type="button"
+    class="min-h-12 w-full cursor-pointer text-start text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10"
+    data-testid="logout-control"
+    [disabled]="logoutPort.isLoggingOut()"
+    [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
+    (click)="logoutPort.logout()"
+  >
+    <span hlmItemMedia variant="icon">
+      @if (logoutPort.isLoggingOut()) {
+        <hlm-spinner aria-hidden="true" />
+      } @else {
+        <ng-icon name="lucideLogOut" aria-hidden="true" />
+      }
+    </span>
+    <span hlmItemContent>
+      <span hlmItemTitle i18n="@@auth.logout.signOut">Sign out</span>
+    </span>
+  </button>
+} @else {
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="gap-2 mobile-ui:min-h-11"
+    data-testid="logout-control"
+    [disabled]="logoutPort.isLoggingOut()"
+    [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
+    (click)="logoutPort.logout()"
+  >
+    @if (logoutPort.isLoggingOut()) {
+      <hlm-spinner aria-hidden="true" />
+    } @else {
+      <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+    }
+    <span i18n="@@auth.logout.signOut">Sign out</span>
+  </button>
+}

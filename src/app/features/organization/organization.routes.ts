@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import type { RedirectFunction, Routes } from '@angular/router';
 import { Router } from '@angular/router';
+import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY, type DashboardRouteData } from '@core/routing';
 import { FacilityTreeStore } from './features/facilities/state';
 import {
   organizationAccessGuard,
@@ -54,6 +55,8 @@ function redirectToOrganizationMembersTab(tab: 'roles' | 'teams'): RedirectFunct
  *
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
+ * Its `more` child is the full secondary navigation directory, available in both
+ * experiences under the same parent guard and resolver without additional reads.
  *
  * The landing page — the merged Dashboard, combining the retired Today and
  * Statistics pages into one tabbed surface (`FEATURE.md`) — the
@@ -93,13 +96,28 @@ export const ORGANIZATION_ROUTES: Routes = [
     title: organizationTitleResolver,
     children: [
       {
+        path: 'more',
+        loadComponent: () =>
+          import('./ui/pages/organization-more-page/organization-more-page.component').then(
+            (m) => m.OrganizationMorePage,
+          ),
+        title: $localize`:@@route.organizationMore:More`,
+        data: {
+          breadcrumb: $localize`:@@route.organizationMore:More`,
+          [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
+        } satisfies DashboardRouteData,
+      },
+      {
         path: '',
         loadComponent: () =>
           import('./ui/pages/organization-dashboard-page/organization-dashboard-page.component').then(
             (m) => m.OrganizationDashboardPage,
           ),
         title: $localize`:@@route.dashboard:Dashboard`,
-        data: { breadcrumb: false },
+        data: {
+          breadcrumb: false,
+          [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
+        } satisfies DashboardRouteData,
       },
       {
         path: 'messages',
@@ -133,7 +151,10 @@ export const ORGANIZATION_ROUTES: Routes = [
             (m) => m.OrganizationAssetsPage,
           ),
         title: $localize`:@@route.assets:Assets`,
-        data: { breadcrumb: $localize`:@@route.assets:Assets` },
+        data: {
+          breadcrumb: $localize`:@@route.assets:Assets`,
+          [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
+        } satisfies DashboardRouteData,
       },
       {
         path: 'equipments',

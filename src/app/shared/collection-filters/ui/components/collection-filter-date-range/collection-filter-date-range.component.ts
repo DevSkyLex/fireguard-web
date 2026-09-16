@@ -17,11 +17,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { isCompact } from '@shared/breakpoint';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCalendarRange } from '@shared/ui/calendar';
 import { HlmDateRangePicker } from '@shared/ui/date-picker';
-import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmDrawer, HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmPopoverTrigger } from '@shared/ui/popover';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterPopoverState } from '../../../models';
@@ -44,8 +44,8 @@ import type { CollectionFilterPopoverState } from '../../../models';
  * symmetry already kept between `CollectionFilterSelect` and
  * `CollectionFilterMultiSelect`.
  *
- * The seam, the hand-rolled trigger, the `disabled` wiring, the inert
- * {@link tooltip}, the deferred-`open()` fix and the layout caveat are all
+ * The seam, the hand-rolled trigger, the `disabled` wiring,
+ * the deferred-`open()` fix and the layout caveat are all
  * identical to `app-collection-filter-date` — see its class doc for the full
  * account, in particular why `open()` runs inside `afterNextRender`, why the
  * trigger never binds `HlmDateRangePicker`'s own `disabled` input, and why
@@ -164,19 +164,9 @@ export class CollectionFilterDateRange {
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Property tooltip
-   * @readonly
-   * @description Inert — see `app-collection-filter-date`'s class doc. `app-filter-chip` (`@shared/collection-filters`) now renders and describes `CollectionFilterField.unavailableReason` itself; this input exists only for homogeneity with `app-collection-filter-select`'s own public API.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string>}
-   */
-  public readonly tooltip: InputSignal<string> = input<string>('');
-
-  /**
    * Property describedBy
    * @readonly
-   * @description The `id` of `app-filter-chip`'s own reason row, when the caller's field is unavailable — set directly on the trigger's `aria-describedby`. See `app-collection-filter-date`'s own doc for why this trigger cannot discover that id through Angular DI and must instead receive it explicitly from the owning page. `undefined` renders no `aria-describedby` at all.
+   * @description The `id` of `app-filter-chip`'s own reason row, when the caller's field is unavailable — set directly on the trigger's `aria-describedby`. See `app-collection-filter-date`'s own doc for why this trigger cannot discover that id through Angular DI and must instead receive it explicitly from the owning page. `undefined` adds no caller description; mobile triggers still describe their formatted value.
    * @access public
    * @since 12.1.0
    * @type {InputSignal<string | undefined>}
@@ -220,16 +210,70 @@ export class CollectionFilterDateRange {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
-  /** Whether this range calendar should use the touch-first bottom drawer. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the mobile interaction mode for touch controls regardless of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
-  /** Start bound staged inside the mobile drawer. */
+  /**
+   * Property mobileValueId
+   * @readonly
+   * @description Stable id of the mobile trigger's displayed value, including any hidden selections.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileValueId: Signal<string> = computed<string>(
+    () => `${this.triggerId()}-mobile-value`,
+  );
+
+  /**
+   * Property mobileDescribedBy
+   * @readonly
+   * @description Describes mobile triggers by their displayed value while preserving caller description ids.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileDescribedBy: Signal<string> = computed<string>(() =>
+    `${this.mobileValueId()} ${this.describedBy() ?? ''}`.trim(),
+  );
+
+  /**
+   * Property mobileStart
+   * @readonly
+   * @description Start bound staged inside the mobile drawer until Apply is activated.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<Date | null>}
+   */
   protected readonly mobileStart: WritableSignal<Date | null> = signal<Date | null>(null);
 
-  /** End bound staged inside the mobile drawer. */
+  /**
+   * Property mobileEnd
+   * @readonly
+   * @description End bound staged inside the mobile drawer until Apply is activated.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<Date | null>}
+   */
   protected readonly mobileEnd: WritableSignal<Date | null> = signal<Date | null>(null);
 
-  /** Whether the staged mobile range can be applied. */
+  /**
+   * Property mobileRangeComplete
+   * @readonly
+   * @description Whether the staged mobile range contains both bounds and can be applied.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
   protected readonly mobileRangeComplete: Signal<boolean> = computed<boolean>(
     () => this.mobileStart() !== null && this.mobileEnd() !== null,
   );
@@ -257,6 +301,7 @@ export class CollectionFilterDateRange {
 
   /**
    * Property syncPickerValue
+   * @readonly
    *
    * @description
    * Pushes {@link value} into {@link picker} through `writeValue` — the
@@ -281,13 +326,24 @@ export class CollectionFilterDateRange {
     this.picker()?.writeValue(value ? [value[0], value[1]] : null);
   });
 
-  /** Seeds the mobile draft whenever its controlled drawer opens or source range changes. */
-  private readonly syncMobileRange: EffectRef = effect((): void => {
-    if (this.state() !== 'open') return;
-    const value = this.value();
-    this.mobileStart.set(value?.[0] ?? null);
-    this.mobileEnd.set(value?.[1] ?? null);
-  });
+  /**
+   * Property drawer
+   * @readonly
+   * @description Owns explicit closure after the committed range has been emitted.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<HlmDrawer | undefined>}
+   */
+  private readonly drawer: Signal<HlmDrawer | undefined> = viewChild<HlmDrawer>(HlmDrawer);
+
+  /**
+   * Property mobileDrawerVisible
+   * @description Tracks actual drawer transitions so one opening owns one draft and one commitment.
+   * @access private
+   * @since 1.0.0
+   * @type {boolean}
+   */
+  private mobileDrawerVisible: boolean = false;
 
   /**
    * Property syncPopoverState
@@ -301,7 +357,7 @@ export class CollectionFilterDateRange {
     const popover = this.picker()?.popover();
     if (!popover) return;
 
-    if (this.compact()) {
+    if (this.isMobileInteractionMode()) {
       popover.close();
       return;
     }
@@ -328,12 +384,12 @@ export class CollectionFilterDateRange {
    * @type {EffectRef}
    */
   private readonly forwardPopoverState: EffectRef = effect((onCleanup): void => {
-    if (this.compact()) return;
+    if (this.isMobileInteractionMode()) return;
     const popover = this.picker()?.popover();
     if (!popover) return;
 
     const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void => {
-      if (!this.compact()) this.stateChanged.emit(state);
+      if (!this.isMobileInteractionMode()) this.stateChanged.emit(state);
     });
     onCleanup((): void => subscription.unsubscribe());
   });
@@ -342,6 +398,7 @@ export class CollectionFilterDateRange {
   //#region Methods
   /**
    * Method onRangePicked
+   * @method onRangePicked
    * @description Reacts to `hlm-date-range-picker`'s `dateChange`. A no-op while {@link disabled} is set — the trigger stays clickable, so this is what keeps a pick inert rather than merely invisible.
    * @access protected
    * @since 1.0.0
@@ -353,32 +410,68 @@ export class CollectionFilterDateRange {
     this.valueChanged.emit(range);
   }
 
-  /** Starts a fresh staged range from the first mobile calendar pick. */
+  /**
+   * Method onMobileStartChanged
+   * @method onMobileStartChanged
+   * @description Starts a fresh staged range from the first mobile calendar pick.
+   * @access protected
+   * @since 1.0.0
+   * @param {Date | undefined} start - The selected start date, or undefined when cleared.
+   * @returns {void}
+   */
   protected onMobileStartChanged(start: Date | undefined): void {
+    if (this.disabled() || !this.mobileDrawerVisible) return;
     this.mobileStart.set(start ?? null);
     this.mobileEnd.set(null);
   }
 
-  /** Completes the staged range with the mobile calendar's second pick. */
+  /**
+   * Method onMobileEndChanged
+   * @method onMobileEndChanged
+   * @description Completes the staged range with the mobile calendar's second pick.
+   * @access protected
+   * @since 1.0.0
+   * @param {Date | undefined} end - The selected end date, or undefined when cleared.
+   * @returns {void}
+   */
   protected onMobileEndChanged(end: Date | undefined): void {
+    if (this.disabled() || !this.mobileDrawerVisible) return;
     this.mobileEnd.set(end ?? null);
   }
 
-  /** Commits a complete staged mobile range through the existing date picker. */
+  /**
+   * Method applyMobileRange
+   * @method applyMobileRange
+   * @description Commits a complete range once before explicitly closing the drawer.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected applyMobileRange(): void {
     const start = this.mobileStart();
     const end = this.mobileEnd();
-    if (!start || !end || this.disabled()) return;
+    if (!start || !end || this.disabled() || !this.mobileDrawerVisible) return;
+    this.mobileDrawerVisible = false;
     this.picker()?.updateDate([start, end]);
+    this.drawer()?.close();
   }
 
-  /** Mirrors drawer state through the component's existing overlay contract. */
+  /**
+   * Method onMobileStateChanged
+   * @method onMobileStateChanged
+   * @description Seeds the draft once on each actual opening, including controlled openings, and forwards dismissal.
+   * @access protected
+   * @since 1.0.0
+   * @param {CollectionFilterPopoverState} state - The drawer's next state.
+   * @returns {void}
+   */
   protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
-    if (state === 'open') {
+    if (state === 'open' && !this.mobileDrawerVisible) {
       const value = this.value();
       this.mobileStart.set(value?.[0] ?? null);
       this.mobileEnd.set(value?.[1] ?? null);
     }
+    this.mobileDrawerVisible = state === 'open';
     this.stateChanged.emit(state);
   }
   //#endregion

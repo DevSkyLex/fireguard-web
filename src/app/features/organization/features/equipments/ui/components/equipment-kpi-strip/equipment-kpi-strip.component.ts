@@ -1,9 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import type { InputSignal, Signal } from '@angular/core';
-import { provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleCheck, lucideClock, lucidePackage } from '@ng-icons/lucide';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import type { InputSignal, Signal, WritableSignal } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideChevronDown,
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideClock,
+  lucidePackage,
+} from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { EquipmentKpiOutput } from '@features/organization/features/equipments/models';
 import { StatTile, type StatTileTone } from '@features/organization/ui/components';
+import { HlmButton } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
  * Type EquipmentKpiTile
@@ -33,6 +43,9 @@ type EquipmentKpiTile = {
  * {@link StatTile} — the same tile the organization's other data-dense
  * surfaces use. Purely derived from {@link statistics} and {@link loading} —
  * it injects no store and calls no service (`ARCHITECTURE.md` §10.2).
+ * Mobile places compact metric rows and their unchanged scope captions in a
+ * Statistics disclosure, initially closed. Desktop retains its stat tiles;
+ * changing central interaction mode preserves the mobile disclosure choice.
  *
  * The open-non-conformities tile's label and caption spell out its
  * organization-wide scope explicitly: `EquipmentKpiOutput.openNonConformities`
@@ -45,8 +58,16 @@ type EquipmentKpiTile = {
  */
 @Component({
   selector: 'app-equipment-kpi-strip',
-  imports: [StatTile],
-  providers: [provideIcons({ lucideCircleAlert, lucideCircleCheck, lucideClock, lucidePackage })],
+  imports: [StatTile, NgIcon, HlmButton, HlmSkeleton, ...HlmCollapsibleImports],
+  providers: [
+    provideIcons({
+      lucideChevronDown,
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucideClock,
+      lucidePackage,
+    }),
+  ],
   templateUrl: './equipment-kpi-strip.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +106,28 @@ export class EquipmentKpiStrip {
   //#endregion
 
   //#region Properties
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the central interaction mode independently of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property statisticsExpanded
+   * @readonly
+   * @description Remembers the mobile disclosure choice without changing KPI requests or the list state.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly statisticsExpanded: WritableSignal<boolean> = signal(false);
+
   /**
    * Property tiles
    * @readonly

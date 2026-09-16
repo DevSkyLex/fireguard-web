@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isImmutableSource } from './protected-paths.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const inside = (parent, file) => {
@@ -101,8 +102,17 @@ export function handle(payload, phase) {
         : [edit.destination || edit.file];
     for (const target of targets) {
       const file = path.resolve(cwd, target);
-      if (!inside(root, file) || !inside(realpathSync(root), canonicalTarget(file))) {
+      const canonical = canonicalTarget(file);
+      if (!inside(root, file) || !inside(realpathSync(root), canonical)) {
         throw new Error('Edit escapes the configured project (including symlinks).');
+      }
+      if (isImmutableSource(root, file) || isImmutableSource(realpathSync(root), canonical)) {
+        if (phase === 'pre') {
+          throw new Error(
+            'Installed Spartan components and third-party skill payloads are read-only. Compose in application code.',
+          );
+        }
+        continue;
       }
       const normalized = file.replaceAll('\\', '/');
       if (phase === 'pre' && /\/src\/environments\/environment[^/]*\.ts$/.test(normalized)) {

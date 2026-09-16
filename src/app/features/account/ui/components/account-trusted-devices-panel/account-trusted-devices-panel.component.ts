@@ -22,6 +22,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component AccountTrustedDevicesPanel
@@ -57,7 +58,15 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-account-trusted-devices-panel',
-  imports: [NgIcon, ...HlmEmptyImports, DatePipe, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
+  imports: [
+    NgIcon,
+    ...HlmEmptyImports,
+    DatePipe,
+    HlmButton,
+    HlmSkeleton,
+    HlmSpinner,
+    ...HlmAlertDialogImports,
+  ],
   providers: [provideIcons({ lucideShieldOff, lucideTrash2, lucideTriangleAlert })],
   templateUrl: './account-trusted-devices-panel.component.html',
   host: { class: 'block' },

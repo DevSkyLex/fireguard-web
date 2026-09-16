@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CollectionFilterOption, CollectionFilterPopoverState } from '../../../../models';
 import { CollectionFilterMultiSelect } from '../collection-filter-multi-select.component';
 
@@ -36,7 +37,6 @@ const OPTIONS: readonly CollectionFilterOption[] = [
       [maxVisible]="maxVisible()"
       [state]="state()"
       [disabled]="disabled()"
-      [tooltip]="tooltip()"
       [describedBy]="describedBy()"
       [optionTemplate]="optionTemplate()"
       [valueTemplate]="valueTemplate()"
@@ -59,7 +59,6 @@ class CollectionFilterMultiSelectHost {
   public readonly values: WritableSignal<readonly string[]> = signal<readonly string[]>([]);
   public readonly maxVisible: WritableSignal<number> = signal<number>(2);
   public readonly disabled: WritableSignal<boolean> = signal<boolean>(false);
-  public readonly tooltip: WritableSignal<string> = signal<string>('');
   public readonly describedBy: WritableSignal<string | undefined> = signal<string | undefined>(
     undefined,
   );
@@ -92,7 +91,73 @@ class ResizeObserverStub {
   public disconnect(): void {}
 }
 
+/**
+ * Function checkbox
+ * @description Finds a rendered choice and fails if its checkbox is missing.
+ * @access private
+ * @since 1.0.0
+ * @param {string} label - Visible control label.
+ * @returns {HTMLElement} The rendered control.
+ */
+function checkbox(label: string): HTMLElement {
+  const row = Array.from(document.querySelectorAll<HTMLElement>('[data-slot="item"]')).find(
+    (item) => item.textContent?.trim() === label,
+  );
+  const control = row?.querySelector<HTMLElement>('[role="checkbox"]');
+  if (!control) throw new Error(`Missing checkbox: ${label}`);
+  return control;
+}
+
+/**
+ * Function action
+ * @description Finds a rendered drawer action and fails if it is missing.
+ * @access private
+ * @since 1.0.0
+ * @param {string} label - Visible control label.
+ * @returns {HTMLButtonElement} The rendered control.
+ */
+function action(label: string): HTMLButtonElement {
+  const button = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('hlm-drawer-footer button'),
+  ).find((item) => item.textContent?.trim() === label);
+  if (!button) throw new Error(`Missing drawer action: ${label}`);
+  return button;
+}
+
 describe('CollectionFilterMultiSelect', () => {
+  it.each([
+    { value: 'planned' },
+    { value: 42 },
+    { value: { value: ['planned'] } },
+    { value: ['planned', 42] },
+    { value: ['planned', null] },
+  ])(
+    'should reject malformed combobox output $value without partially applying it',
+    ({ value }) => {
+      fixture.componentInstance.lastSelection = ['sentinel'];
+      fixture.debugElement
+        .query(By.css('hlm-combobox-multiple'))
+        .triggerEventHandler('valueChange', value);
+      expect(fixture.componentInstance.lastSelection).toEqual(['sentinel']);
+    },
+  );
+
+  it.each([null, undefined])('should normalize empty combobox output %s', (value) => {
+    fixture.componentInstance.lastSelection = ['sentinel'];
+    fixture.debugElement
+      .query(By.css('hlm-combobox-multiple'))
+      .triggerEventHandler('valueChange', value);
+    expect(fixture.componentInstance.lastSelection).toEqual([]);
+  });
+
+  it('should accept a readonly string selection from the combobox', () => {
+    fixture.debugElement
+      .query(By.css('hlm-combobox-multiple'))
+      .triggerEventHandler('valueChange', Object.freeze(['planned', 'published']));
+    expect(fixture.componentInstance.lastSelection).toEqual(['planned', 'published']);
+  });
+
+  const mobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CollectionFilterMultiSelectHost>;
 
   const trigger = (): HTMLElement =>
@@ -106,7 +171,16 @@ describe('CollectionFilterMultiSelect', () => {
   });
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(CollectionFilterMultiSelectHost);
     await fixture.whenStable();
@@ -116,20 +190,63 @@ describe('CollectionFilterMultiSelect', () => {
     vi.unstubAllGlobals();
   });
 
-  async function useCompactFixture(): Promise<void> {
+  /**
+   * Function useMobileFixture
+   * @description Creates the host in the mobile interaction mode before its first render.
+   * @access private
+   * @since 1.0.0
+   * @returns {Promise<void>} The stabilized mobile fixture.
+   */
+  async function useMobileFixture(): Promise<void> {
     fixture.destroy();
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: query === '(max-width: 639px)',
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    );
+    mobileInteractionMode.set(true);
     fixture = TestBed.createComponent(CollectionFilterMultiSelectHost);
     await fixture.whenStable();
   }
+
+  it.each([false, true])(
+    'should describe mobile values and preserve caller descriptions with disabled=%s',
+    async (disabled) => {
+      await useMobileFixture();
+      fixture.componentInstance.disabled.set(disabled);
+      await fixture.whenStable();
+
+      const valueId = `${trigger().id}-mobile-value`;
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
+
+      fixture.componentInstance.values.set(['planned', 'in_progress', 'submitted', 'published']);
+      fixture.componentInstance.useTemplates.set(true);
+      fixture.componentInstance.describedBy.set('filter-reason filter-hint');
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(
+        `${valueId} filter-reason filter-hint`,
+      );
+      const description = document.getElementById(valueId);
+      expect(trigger().contains(description)).toBe(true);
+      expect(description?.querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(
+        2,
+      );
+      expect(description?.textContent).toContain('Planned');
+      expect(description?.textContent).toContain('In progress');
+      expect(description?.textContent).toContain('+2');
+      expect(description?.querySelector('.sr-only')?.textContent).toBe(
+        'Also selected: Submitted, Published',
+      );
+      if (disabled) expect(trigger().getAttribute('aria-disabled')).toBe('true');
+      expect(trigger().hasAttribute('disabled')).toBe(false);
+
+      fixture.componentInstance.disabled.set(!disabled);
+      fixture.componentInstance.describedBy.set(undefined);
+      fixture.componentInstance.values.set([]);
+      await fixture.whenStable();
+
+      expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
+      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
+    },
+  );
 
   it('should read as the field label while nothing is selected', () => {
     expect(trigger().textContent).toContain('Status');
@@ -191,18 +308,6 @@ describe('CollectionFilterMultiSelect', () => {
     expect(button?.disabled).toBeFalsy();
     expect(trigger().getAttribute('aria-disabled')).toBe('true');
     expect(button?.getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('should render no visible or accessible trace of tooltip — CollectionFilterBar’s own chip owns the reason now', async () => {
-    fixture.componentInstance.disabled.set(true);
-    fixture.componentInstance.tooltip.set('Status cannot be filtered on this view.');
-    await fixture.whenStable();
-
-    const button: HTMLButtonElement | null = trigger().querySelector('button');
-
-    expect(button?.getAttribute('aria-describedby')).toBeNull();
-    expect(trigger().querySelector('[data-slot="field-description"]')).toBeNull();
-    expect(trigger().textContent).not.toContain('Status cannot be filtered on this view.');
   });
 
   it('should carry no aria-describedby while describedBy is unset', () => {
@@ -341,8 +446,100 @@ describe('CollectionFilterMultiSelect', () => {
   });
 
   describe('mobile drawer', () => {
-    it('should replace the anchored multi-combobox with a Spartan drawer below sm', async () => {
-      await useCompactFixture();
+    it.each(['trigger', 'controlled'])(
+      'should preserve an edited draft after external values change (%s opening)',
+      async (opening) => {
+        await useMobileFixture();
+        fixture.componentInstance.values.set(['published']);
+        await fixture.whenStable();
+        if (opening === 'controlled') fixture.componentInstance.state.set('open');
+        else trigger().click();
+        await fixture.whenStable();
+
+        expect(checkbox('Published').getAttribute('aria-checked')).toBe('true');
+        checkbox('Planned').click();
+        await fixture.whenStable();
+        fixture.componentInstance.values.set(['submitted']);
+        await fixture.whenStable();
+
+        expect(checkbox('Published').getAttribute('aria-checked')).toBe('true');
+        expect(checkbox('Planned').getAttribute('aria-checked')).toBe('true');
+        action('Apply').click();
+        await fixture.whenStable();
+        expect(fixture.componentInstance.lastSelection).toEqual(['published', 'planned']);
+      },
+    );
+
+    it('should emit one committed value before closing even when Apply is clicked twice', async () => {
+      await useMobileFixture();
+      fixture.componentInstance.values.set(['planned']);
+      await fixture.whenStable();
+      trigger().click();
+      await fixture.whenStable();
+      const control: CollectionFilterMultiSelect = fixture.debugElement.query(
+        By.directive(CollectionFilterMultiSelect),
+      ).componentInstance;
+      const events: string[] = [];
+      control.valuesChanged.subscribe(() => events.push('value'));
+      control.stateChanged.subscribe((state) => events.push(state));
+      const apply = action('Apply');
+      apply.click();
+      apply.click();
+      await fixture.whenStable();
+
+      expect(events).toEqual(['value', 'closed']);
+      expect(document.querySelector('hlm-drawer-content')).toBeNull();
+    });
+
+    it('should keep a disabled draft open without applying or changing its selection', async () => {
+      await useMobileFixture();
+      trigger().click();
+      await fixture.whenStable();
+      checkbox('Planned').click();
+      await fixture.whenStable();
+      fixture.componentInstance.disabled.set(true);
+      await fixture.whenStable();
+      expect(action('Apply').disabled).toBe(true);
+      action('Apply').click();
+      checkbox('Published').click();
+      await fixture.whenStable();
+      expect(fixture.componentInstance.lastSelection).toBeNull();
+      expect(document.querySelector('hlm-drawer-content')?.getAttribute('data-state')).toBe('open');
+      fixture.componentInstance.disabled.set(false);
+      await fixture.whenStable();
+      action('Apply').click();
+      await fixture.whenStable();
+      expect(fixture.componentInstance.lastSelection).toEqual(['planned']);
+    });
+
+    it.each(['Cancel', 'Escape', 'controlled'])(
+      'should seed the next opening from current values after %s',
+      async (dismissal) => {
+        await useMobileFixture();
+        fixture.componentInstance.values.set(['published']);
+        fixture.componentInstance.state.set('open');
+        await fixture.whenStable();
+        checkbox('Planned').click();
+        await fixture.whenStable();
+        if (dismissal === 'Cancel') action('Cancel').click();
+        else if (dismissal === 'Escape')
+          document.body.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+          );
+        fixture.componentInstance.state.set('closed');
+        await fixture.whenStable();
+        expect(fixture.componentInstance.lastSelection).toBeNull();
+        fixture.componentInstance.values.set(['submitted']);
+        fixture.componentInstance.state.set('open');
+        await fixture.whenStable();
+        expect(checkbox('Submitted').getAttribute('aria-checked')).toBe('true');
+        expect(checkbox('Planned').getAttribute('aria-checked')).toBe('false');
+        expect(checkbox('Published').getAttribute('aria-checked')).toBe('false');
+      },
+    );
+
+    it('should replace the anchored multi-combobox in mobile interaction mode at any width', async () => {
+      await useMobileFixture();
 
       expect(
         (fixture.nativeElement as HTMLElement).querySelector('hlm-combobox-multiple'),
@@ -357,7 +554,7 @@ describe('CollectionFilterMultiSelect', () => {
     });
 
     it('should stage checkbox changes until Apply is activated', async () => {
-      await useCompactFixture();
+      await useMobileFixture();
       trigger().click();
       await fixture.whenStable();
 
@@ -380,7 +577,7 @@ describe('CollectionFilterMultiSelect', () => {
     });
 
     it('should discard staged changes when Cancel closes the drawer', async () => {
-      await useCompactFixture();
+      await useMobileFixture();
       fixture.componentInstance.values.set(['published']);
       await fixture.whenStable();
       trigger().click();

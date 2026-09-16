@@ -23,6 +23,7 @@ import {
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   MessageReactionToggle,
   MessageView,
@@ -30,6 +31,7 @@ import type {
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBubble, HlmBubbleContent, type BubbleVariants } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuGroup,
@@ -37,6 +39,7 @@ import {
   HlmDropdownMenuSeparator,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import {
   HlmMessage,
   HlmMessageAvatar,
@@ -76,6 +79,8 @@ import { MessageReactions } from '../message-reactions';
 @Component({
   selector: 'app-message-row',
   imports: [
+    HlmItemImports,
+    HlmDrawerImports,
     NgIcon,
     HlmAvatar,
     HlmAvatarFallback,
@@ -114,6 +119,18 @@ import { MessageReactions } from '../message-reactions';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageRow {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Inputs
   /**
    * Property message
@@ -490,4 +507,23 @@ export class MessageRow {
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
   //#endregion
+
+  /**
+   * Method onMobileActionsClosed
+   * @method onMobileActionsClosed
+   * @description Dispatches an overlay-opening action only after the drawer has closed and restored focus.
+   * @access protected
+   * @since 1.0.0
+   * @param {unknown} action - The explicit native drawer close result.
+   * @returns {void}
+   */
+  protected onMobileActionsClosed(action: unknown): void {
+    if (!this.hasActions()) return;
+
+    const entry: MessageView = this.message();
+    if (action === 'thread' && this.showThreadItem()) this.threadRequested.emit(entry.id);
+    if (this.actionsBusy()) return;
+    if (action === 'edit' && entry.canEdit) this.editRequested.emit(entry.id);
+    if (action === 'delete' && entry.canDelete) this.deleteRequested.emit(entry.id);
+  }
 }

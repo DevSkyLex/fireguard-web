@@ -4,9 +4,12 @@ import type {
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
 
-/** Matches the backend's literal `@{memberUuid}` mention token, capturing the uuid. */
+/**
+ * Matches the canonical token and the HTML-escaped at-sign persisted by older
+ * comment clients, capturing the member uuid in either representation.
+ */
 const MENTION_TOKEN: RegExp =
-  /@\{([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}/g;
+  /(?:@|&#64;|&#x40;)\{([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}/gi;
 
 /** Characters an `@` may follow and still open a mention. */
 const OPENERS: RegExp = /[\s([{<"']/;
@@ -18,11 +21,12 @@ const MAX_TERM_LENGTH: number = 32;
  * Function parseInterventionMentions
  *
  * @description
- * Splits a comment body into text and `@{uuid}` mention runs, in order — the
- * shape both the composer's live "who gets notified" chips and the activity
- * thread's rendering need. The token format is the backend's exactly: an
- * at-sign, a brace-wrapped member uuid. No other `@…` form is recognized, so
- * a stray `@` or an unresolvable id-shaped token both stay literal text.
+ * Splits a comment body into text and mention runs, in order — the shape both
+ * the composer's live "who gets notified" chips and the activity thread's
+ * rendering need. The canonical token is an at-sign followed by a
+ * brace-wrapped member uuid. The HTML-escaped at-sign variants are accepted
+ * for legacy records, but the returned mention value is always the bare uuid.
+ * A stray `@` or an unresolvable id-shaped token stays literal text.
  *
  * @access public
  * @since 1.0.0

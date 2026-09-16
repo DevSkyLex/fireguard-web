@@ -98,6 +98,6 @@ Grep the feature for a sibling spec before writing: reuse its fixtures and build
 
 - Strict TS in specs too: type mocks as `{ method: ReturnType<typeof vi.fn> }`, never `any`.
 - Never leave `test.only`, `it.only`, or `fdescribe` — it silently skips the suite.
-- Never refactor production code to make a test green. If a unit is untestable at its boundary, report it.
+- Never add production-only test hooks or distort behavior for an incorrect assertion. Fix a real defect revealed by a regression at its owning boundary; report an untestable boundary instead of disguising it.
 - Don't weaken an assertion to `toBeTruthy()` where the exact `UrlTree`, enum literal, or emitted payload **is** the contract.
 - A spec that locks in an anti-pattern (§16) — an ad-hoc `isLoading` flag, a raw `HttpErrorResponse` reaching `errorCallState` — is a bug in the spec. Encode the correct contract instead.

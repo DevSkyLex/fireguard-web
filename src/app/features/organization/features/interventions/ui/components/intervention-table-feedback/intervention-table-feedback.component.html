@@ -1,0 +1,45 @@
+@if (source() === 'saved') {
+  <p
+    role="status"
+    class="text-sm text-muted-foreground"
+    data-testid="intervention-table-saved"
+    i18n="@@intervention.tables.savedSource"
+  >
+    Saved workspace on this device, including local changes. Results are not from a live server
+    query.
+  </p>
+} @else if (source() === 'memory') {
+  <p
+    role="status"
+    class="text-sm text-muted-foreground"
+    data-testid="intervention-table-memory"
+    i18n="@@intervention.tables.memorySource"
+  >
+    Last available results in this page. Reconnect to apply search and filters or load more.
+  </p>
+}
+@if (error() && hasResult()) {
+  <div
+    role="alert"
+    class="flex flex-wrap items-center justify-between gap-3 text-sm"
+    data-testid="intervention-table-refresh-error"
+  >
+    <div class="min-w-0">
+      <p class="font-medium" i18n="@@intervention.tables.refreshFailed">
+        Could not update these results. Previously loaded rows are still shown.
+      </p>
+      <p class="break-words text-muted-foreground">{{ error() }}</p>
+    </div>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="loading()"
+      (click)="retryRequested.emit()"
+      i18n="@@intervention.tables.retry"
+    >
+      Retry
+    </button>
+  </div>
+}

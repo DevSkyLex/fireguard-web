@@ -1,12 +1,22 @@
-<section class="flex flex-col gap-4" data-testid="intervention-activity-thread">
+<section
+  class="flex min-w-0 flex-col gap-4"
+  aria-labelledby="intervention-activity-title"
+  data-testid="intervention-activity-thread"
+>
   <div class="flex flex-col gap-1">
-    <h2 class="text-lg font-semibold" i18n="@@intervention.activity.title">Activity</h2>
+    <h2
+      id="intervention-activity-title"
+      class="text-lg font-semibold"
+      i18n="@@intervention.activity.title"
+    >
+      Activity
+    </h2>
     <p class="text-sm text-muted-foreground" i18n="@@intervention.activity.caption">
       System events and comments on this intervention, oldest first.
     </p>
   </div>
 
-  <div class="flex flex-col gap-3">
+  <div class="flex min-w-0 flex-col gap-3">
     @if (loading() && activities().length === 0) {
       <ul class="flex flex-col gap-3" aria-hidden="true">
         @for (row of skeletonRows; track row) {
@@ -26,7 +36,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-activity-retry"
           (click)="retryRequested.emit()"
           i18n="@@common.tryAgain"
@@ -50,7 +60,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="self-start max-sm:min-h-11"
+          class="self-start mobile-ui:min-h-11"
           data-testid="intervention-activity-load-older"
           [disabled]="loading()"
           (click)="olderRequested.emit()"
@@ -73,17 +83,28 @@
           >
             @if (row.activity.kind === 'system') {
               <div hlmMarker class="min-h-11 items-start gap-3 text-xs">
-                <span class="flex h-5 w-6 shrink-0 items-center justify-center">
-                  <span hlmMarkerIcon>
-                    <ng-icon [name]="row.icon" [class]="row.iconClass" aria-hidden="true" />
+                <span
+                  class="flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-background p-0.5"
+                  data-testid="intervention-activity-system-icon"
+                >
+                  <span hlmMarkerIcon class="flex items-center justify-center">
+                    <ng-icon
+                      [name]="row.icon"
+                      class="size-3"
+                      [class]="row.iconClass"
+                      aria-hidden="true"
+                    />
                   </span>
                 </span>
-                <span hlmMarkerContent class="flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
+                <span
+                  hlmMarkerContent
+                  class="flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1 pt-1"
+                >
                   @if (row.statusChange; as change) {
                     <span class="font-medium text-foreground">{{ row.actorName }}</span>
                     <span i18n="@@intervention.activity.statusChangedLine">changed status</span>
                     <app-intervention-tag kind="status" [value]="change.from" />
-                    <ng-icon name="lucideArrowRight" aria-hidden="true" />
+                    <ng-icon name="lucideArrowRight" class="size-2.5 shrink-0" aria-hidden="true" />
                     <app-intervention-tag kind="status" [value]="change.to" />
                   } @else if (row.rescheduleLabel; as windowLabel) {
                     <span class="font-medium text-foreground">{{ row.actorName }}</span>
@@ -111,8 +132,8 @@
               </div>
             } @else {
               <div hlmMessage class="gap-3">
-                <span class="flex w-6 shrink-0 items-start justify-center">
-                  <div hlmMessageAvatar class="min-w-0 self-start">
+                <span class="flex size-6 shrink-0 items-start justify-center">
+                  <div hlmMessageAvatar class="size-6 min-w-0 self-start">
                     <hlm-avatar size="sm" class="shrink-0">
                       @if (row.actorAvatar; as avatarUrl) {
                         <img hlmAvatarImage [src]="avatarUrl" alt="" />
@@ -127,7 +148,7 @@
                     <span class="font-medium text-foreground">{{ row.actorName }}</span>
                     <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
                   </div>
-                  <div hlmBubble variant="muted">
+                  <div hlmBubble variant="muted" class="*:data-[slot=bubble-content]:bg-muted/25">
                     <p hlmBubbleContent class="whitespace-pre-line text-foreground">
                       @for (segment of row.bodySegments; track $index) {
                         @if (segment.kind === 'mention') {
@@ -148,9 +169,8 @@
             }
             @if (!last) {
               <span
-                class="absolute bottom-2 left-3 w-px -translate-x-1/2 bg-muted-foreground/50"
-                [class.top-6]="row.activity.kind === 'system'"
-                [class.top-8]="row.activity.kind !== 'system'"
+                class="absolute top-6 bottom-0 left-3 w-0.5 -translate-x-1/2 bg-border"
+                data-testid="intervention-activity-connector"
                 aria-hidden="true"
               ></span>
             }
@@ -159,4 +179,5 @@
       </ol>
     }
   </div>
+  <ng-content />
 </section>

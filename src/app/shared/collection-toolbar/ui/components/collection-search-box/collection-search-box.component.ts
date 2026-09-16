@@ -23,7 +23,7 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
  * takes the current draft value as an input and emits {@link queryChanged}
  * on every keystroke, leaving the debounce and the `?q=` round-trip to the
  * owning page (route orchestration, §10.3). It fills the toolbar's start row
- * on phones and returns to the shared compact width from `sm` upward.
+ * in narrow rows and returns to the shared compact width from `sm` upward.
  *
  * @version 1.0.0
  *

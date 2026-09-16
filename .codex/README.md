@@ -27,11 +27,11 @@ et [subagents](https://developers.openai.com/codex/subagents).
 
 Exemples : `$spartan` fournit la procédure officielle de la bibliothèque et
 `$fg-web-spartan` y ajoute les contraintes FireGuard ; `$fg-web-overlay` choisit entre
-popover, menu, drawer, sheet et dialog selon l'intention et le viewport ; `$fg-web-e2e` sert à une
+popover, menu, drawer, sheet et dialog selon l'intention et l'expérience centralisée ; `$fg-web-e2e` sert à une
 vérification dans le navigateur, `$impeccable critique` à une critique et
 `$ui-ux-pro-max` pour une recherche UX ciblée. Les demandes ordinaires peuvent aussi
 sélectionner un skill via sa description. Les principes de `third-party-skills.md`
-maintiennent le thème neutral/Nova et les conventions Spartan, sans redéfinir leur direction visuelle.
+maintiennent Nova, Geist, les surfaces neutres et la marque vermillon de DESIGN.md.
 
 Demander un subagent par son nom quand une responsabilité indépendante le justifie.
 Les douze rôles FireGuard conservent leurs noms `fg-web-*`, lisent les skills locaux et
@@ -67,7 +67,7 @@ les serveurs sont initialisés seulement lorsqu'ils sont utiles.
 
 ## Nettoyage des anciens adaptateurs
 
-Les 23 entrées initiales sont remplacées par 15 skills métier et 2 skills externes.
+Les 23 entrées initiales sont remplacées par 15 skills métier et 3 skills externes.
 Les références utiles ont été rapprochées du skill qui les consomme :
 
 | Ancienne entrée              | Destination                                   |
@@ -92,6 +92,8 @@ déjà déclarées par le projet. Aucune dépendance de l'application n'est ajou
 python .codex/scripts/validate.py
 python -B -m unittest discover -s .codex/scripts -p 'test_*.py'
 node --test .codex/hooks/adapter.test.mjs
+node --test .codex/scripts/review-check.test.mjs
+npm run review:check -- --base develop
 codex mcp list
 ```
 
@@ -99,11 +101,34 @@ Le validateur vérifie les manifests, les références des skills FireGuard et l
 paquets externes. Les tests des hooks ne lisent pas de secret et n'exécutent pas de commande Git destructive.
 Pour une modification limitée à cet outillage, ces contrôles remplacent un build Angular inutile.
 
+`review:check` examine les lignes modifiées depuis la base, y compris les changements locaux
+et les sources non suivies. Il utilise les parseurs TypeScript et Angular installés pour les
+types explicites, les docblocks, les modèles type-only, `$any` et l'API des drawers. Les
+associations commande/fermeture sont des avertissements à examiner, pas des bugs présumés.
+`--json` produit des diagnostics stables fichier/ligne/règle/sévérité. Ce contrôle ne remplace
+ni le typage Angular, ni une review sémantique, ni l'inspection de captures récentes.
+
+Le hook préalable refuse les modifications manuelles des composants Spartan et des payloads
+tiers, y compris via un chemin canonique ou un renommage ; le hook de formatage les ignore.
+Les tests vérifient le refus sans écrire dans ces fichiers. Les règles structurelles coûteuses
+restent dans le contrôle explicite plutôt que dans chaque hook d'édition.
+
+Le verrou d'intégrité v2 déclare ses extensions texte UTF-8 : leurs CRLF sont normalisés en
+LF avant SHA-256. Les autres formats restent comparés octet par octet. Les empreintes historiques
+des adaptations restent des preuves de provenance brutes ; les fichiers installés, licences et
+copies d'agents suivent la politique v2. Ne jamais actualiser les empreintes pour masquer un drift.
+
+Limite du lint actuel : `typescript/no-floating-promises` est déclaré mais non exécuté, car
+le moteur type-aware n'est ni activé ni installé. Conserver le contrôle Angular/TypeScript
+strict et vérifier les flux asynchrones modifiés. L'activation d'un moteur compatible est
+différée : ne pas ajouter sa dernière version ni migrer TypeScript implicitement.
+Voir la [compatibilité Oxlint](https://oxc.rs/docs/guide/usage/linter/type-aware).
+
 Mettre à jour les skills externes dans un dossier de préparation avec la source et
 l'installateur officiels, puis comparer le contenu et actualiser le verrou d'intégrité.
 Ne pas lancer un installateur général directement sur les skills FireGuard : UI UX Pro Max
 installe aussi des skills compagnons qui ne font pas partie de cette sélection.
-Les configurations oxfmt et oxlint excluent ces deux paquets pour préserver le contenu officiel.
+Les configurations oxfmt et oxlint excluent les paquets tiers pour préserver le contenu officiel.
 L’adaptation locale d’Impeccable et ses empreintes avant/après sont tracées dans le verrou.
 La réappliquer lors des mises à jour ; le validateur refuse tout retour de chemins Claude.
 Toute autre modification des paquets externes doit être explicitement autorisée. Les quatre copies d'agents

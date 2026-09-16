@@ -24,7 +24,7 @@
         hlmBtn
         size="sm"
         data-testid="account-mfa-setup"
-        class="shrink-0 gap-2 max-sm:min-h-11"
+        class="shrink-0 gap-2 mobile-ui:min-h-11"
         [disabled]="isSettingUp()"
         (click)="setupRequested.emit()"
       >
@@ -43,7 +43,7 @@
         size="sm"
         variant="outline"
         data-testid="account-mfa-disable"
-        class="shrink-0 max-sm:min-h-11"
+        class="shrink-0 mobile-ui:min-h-11"
         (click)="startDisarming()"
       >
         <span i18n="@@account.mfa.disable">Turn off</span>
@@ -85,7 +85,7 @@
                   type="button"
                   size="sm"
                   variant="ghost"
-                  class="gap-1.5 max-sm:min-h-11"
+                  class="gap-1.5 mobile-ui:min-h-11"
                   (click)="copySecret()"
                 >
                   @if (copied()) {

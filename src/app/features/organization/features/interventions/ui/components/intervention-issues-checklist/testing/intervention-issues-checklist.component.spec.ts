@@ -31,9 +31,6 @@ describe('InterventionIssuesChecklist', () => {
     );
   const clearNotice = (): HTMLElement | null =>
     root().querySelector('[data-testid="intervention-issues-checklist-clear"]');
-  const secondaryToggle = (): HTMLButtonElement | null =>
-    root().querySelector('[data-testid="intervention-issues-checklist-secondary-toggle"]');
-
   async function setup(
     issues: readonly InterventionIssueOutput[],
     phase: 'prepare' | 'execute' | 'review' = 'execute',
@@ -76,21 +73,20 @@ describe('InterventionIssuesChecklist', () => {
 
     expect(blockerItems()).toHaveLength(1);
     expect(blockerItems()[0]?.textContent).toContain('Equipment must be assigned to a facility.');
-    expect(secondaryToggle()).not.toBeNull();
-    expect(secondaryToggle()?.textContent).toContain('2');
+    expect(blockerItems()[0]?.classList.contains('bg-muted/25')).toBe(true);
+    expect(blockerItems()[0]?.classList.contains('hover:bg-muted/40')).toBe(true);
+    expect(secondaryItems()).toHaveLength(2);
+    expect(secondaryItems()[0]?.textContent).toContain('No equipment has been inventoried yet.');
   });
 
-  it('should keep warnings and recommendations collapsed until expanded', async () => {
+  it('should render warnings and recommendations directly below blockers', async () => {
     await setup([blocker, warning, recommendation]);
 
-    const content = root().querySelector('[data-slot="collapsible-content"]');
-
-    expect(content?.getAttribute('data-state')).toBe('closed');
-
-    secondaryToggle()?.click();
-    await fixture.whenStable();
-
-    expect(content?.getAttribute('data-state')).toBe('open');
+    expect(
+      root().querySelector('[data-testid="intervention-issues-checklist-secondary-toggle"]'),
+    ).toBeNull();
+    expect(secondaryItems()).toHaveLength(2);
+    expect(secondaryItems()[0]?.classList.contains('border-border')).toBe(true);
   });
 
   it('should emit the resolved target when a blocker is activated', async () => {
@@ -103,8 +99,6 @@ describe('InterventionIssuesChecklist', () => {
 
   it('should emit the resolved target when a secondary issue is activated', async () => {
     await setup([blocker, warning]);
-    secondaryToggle()?.click();
-    await fixture.whenStable();
 
     secondaryItems()[0]?.click();
 

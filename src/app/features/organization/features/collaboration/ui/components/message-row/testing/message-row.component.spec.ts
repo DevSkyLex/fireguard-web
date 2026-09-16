@@ -1,5 +1,7 @@
+import { computed, signal } from '@angular/core';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MessageView } from '@features/organization/features/collaboration/models';
 import { MessageRow } from '../message-row.component';
 
@@ -24,6 +26,7 @@ function view(overrides: Partial<MessageView> = {}): MessageView {
 }
 
 describe('MessageRow', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<MessageRow>;
 
   function text(): string {
@@ -39,6 +42,13 @@ describe('MessageRow', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
+    mobile.set(false);
+    TestBed.overrideProvider(INTERACTION_CAPABILITIES_PORT, {
+      useValue: {
+        isMobileInteractionMode: mobile,
+        mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+      },
+    });
     fixture = TestBed.createComponent(MessageRow);
     await render(view());
   });
@@ -151,5 +161,52 @@ describe('MessageRow', () => {
     await fixture.whenStable();
 
     expect(requested).toEqual(['message-1']);
+  });
+  it('preserves per-message permissions and outputs in the mobile action drawer', async () => {
+    mobile.set(true);
+    fixture.componentRef.setInput('canWrite', true);
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view({ canEdit: true, canDelete: false }));
+    const edited: string[] = [];
+    fixture.componentInstance.editRequested.subscribe((id) => {
+      expect(document.querySelector('hlm-drawer-content')).toBeNull();
+      edited.push(id);
+    });
+    fixture.nativeElement.querySelector('[data-testid="message-row-actions"]').click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('hlm-drawer-content');
+    expect(drawer).not.toBeNull();
+    expect(drawer?.querySelector('[data-testid="message-action-delete"]')).toBeNull();
+    drawer?.querySelector<HTMLButtonElement>('[data-testid="message-action-edit"]')?.click();
+    expect(edited).toEqual([]);
+    await fixture.whenStable();
+    expect(edited).toEqual(['message-1']);
+  });
+  it('commits a bookmark before closing the mobile drawer', async () => {
+    mobile.set(true);
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view());
+    const saved = vi.fn(() => {
+      expect(document.querySelector('hlm-drawer-content')?.getAttribute('data-state')).toBe('open');
+    });
+    fixture.componentInstance.saveToggleRequested.subscribe(saved);
+    fixture.nativeElement.querySelector('[data-testid="message-row-actions"]').click();
+    await fixture.whenStable();
+
+    document.querySelector<HTMLButtonElement>('[data-testid="message-action-save"]')?.click();
+    expect(saved).toHaveBeenCalledWith('message-1');
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
+  });
+
+  it('ignores dismissal and does not dispatch an edit after permissions change', async () => {
+    fixture.componentRef.setInput('actionsEnabled', true);
+    await render(view({ canEdit: true }));
+    const edited = vi.fn();
+    fixture.componentInstance.editRequested.subscribe(edited);
+    fixture.componentInstance['onMobileActionsClosed'](undefined);
+    await render(view({ canEdit: false }));
+    fixture.componentInstance['onMobileActionsClosed']('edit');
+    expect(edited).not.toHaveBeenCalled();
   });
 });

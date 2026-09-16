@@ -10,6 +10,10 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
 import {
+  provideInteractionCapabilities,
+  INTERACTION_CAPABILITIES_PORT,
+} from '@core/interaction-capabilities';
+import {
   errorCallState,
   idleCallState,
   toStoreError,
@@ -56,6 +60,7 @@ function channel(overrides: Partial<ChannelOutput> = {}): ChannelOutput {
 }
 
 describe('ChannelConversationPage', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<ChannelConversationPage>;
   let thread: {
     reset: ReturnType<typeof vi.fn>;
@@ -114,6 +119,14 @@ describe('ChannelConversationPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        provideInteractionCapabilities(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: ActivatedRoute, useValue: {} },
@@ -209,6 +222,7 @@ describe('ChannelConversationPage', () => {
   }
 
   beforeEach(() => {
+    mobile.set(false);
     channelEntityMap = signal<Readonly<Record<string, ChannelOutput>>>({
       'channel-1': channel(),
     });
@@ -463,5 +477,74 @@ describe('ChannelConversationPage', () => {
     expect(
       byTestId('channel-conversation-participants-count')?.getAttribute('aria-label'),
     ).toContain('5');
+  });
+  it('preserves the draft and loaded thread when channel actions switch to mobile', async () => {
+    await createPage();
+    const field = byTestId('message-composer-input') as HTMLTextAreaElement;
+    field.value = 'Inspect the north entrance';
+    field.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    const loads = thread.load.mock.calls.length;
+
+    mobile.set(true);
+    await fixture.whenStable();
+
+    expect(byTestId('message-composer-input')).toBe(field);
+    expect(field.value).toBe('Inspect the north entrance');
+    expect(thread.load).toHaveBeenCalledTimes(loads);
+    expect(byTestId('channel-conversation-participants-count')).toBeNull();
+    expect(byTestId('channel-conversation-favorite')).toBeNull();
+    expect(byTestId('channel-conversation-back')).toBeNull();
+    expect(byTestId('channel-conversation-name')).toBeNull();
+
+    byTestId('channel-conversation-actions')?.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('hlm-drawer-content');
+    expect(drawer).not.toBeNull();
+    expect(
+      drawer?.querySelector('[data-testid="channel-conversation-info-action"]'),
+    ).not.toBeNull();
+    expect(
+      drawer?.querySelector('[data-testid="channel-conversation-participants-action"]'),
+    ).not.toBeNull();
+    expect(drawer?.querySelector('[data-testid="channel-conversation-favorite"]')).not.toBeNull();
+    expect(
+      drawer?.querySelector('[data-testid="channel-conversation-edit-action"]'),
+    ).not.toBeNull();
+    expect(
+      drawer?.querySelector('[data-testid="channel-conversation-delete-action"]'),
+    ).not.toBeNull();
+
+    permissions.set([ORGANIZATION_PERMISSION.MESSAGING_READ]);
+    await fixture.whenStable();
+    expect(drawer?.querySelector('[data-testid="channel-conversation-edit-action"]')).toBeNull();
+    expect(drawer?.querySelector('[data-testid="channel-conversation-delete-action"]')).toBeNull();
+    expect(
+      drawer?.querySelector('[data-testid="channel-conversation-participants-action"]'),
+    ).not.toBeNull();
+  });
+  it('opens channel info only after the mobile action drawer has closed', async () => {
+    mobile.set(true);
+    await createPage();
+    byTestId('channel-conversation-actions')?.click();
+    await fixture.whenStable();
+
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="channel-conversation-info-action"]')
+      ?.click();
+    expect(fixture.componentInstance['infoSheetVisible']()).toBe(false);
+    await fixture.whenStable();
+
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
+    expect(fixture.componentInstance['infoSheetVisible']()).toBe(true);
+  });
+
+  it('ignores drawer dismissal and rechecks management permissions before opening an edit', async () => {
+    await createPage();
+    fixture.componentInstance['onMobileActionsClosed'](undefined);
+    expect(fixture.componentInstance['infoSheetVisible']()).toBe(false);
+    permissions.set([ORGANIZATION_PERMISSION.MESSAGING_READ]);
+    fixture.componentInstance['onMobileActionsClosed']('edit');
+    expect(fixture.componentInstance['editDialogVisible']()).toBe(false);
   });
 });

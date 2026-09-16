@@ -1,7 +1,17 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import {
+  provideInteractionCapabilities,
+  INTERACTION_CAPABILITIES_PORT,
+} from '@core/interaction-capabilities';
 import { idleCallState } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { MessageService } from '@features/organization/features/collaboration/data-access';
 import {
   DirectConversationsStore,
@@ -29,6 +39,8 @@ function directoryEntry(overrides: Partial<MemberDirectoryEntry> = {}): MemberDi
 }
 
 describe('DirectConversationPage', () => {
+  const mobile = signal(false);
+  const setTitle = vi.fn();
   let fixture: ComponentFixture<DirectConversationPage>;
   let thread: {
     reset: ReturnType<typeof vi.fn>;
@@ -73,6 +85,15 @@ describe('DirectConversationPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        provideInteractionCapabilities(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
+        { provide: TitleService, useValue: { setTitle } },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
@@ -126,6 +147,8 @@ describe('DirectConversationPage', () => {
   }
 
   beforeEach(() => {
+    mobile.set(false);
+    setTitle.mockClear();
     counterpart = COUNTERPART_IRI;
     directoryAvailable = signal<boolean>(true);
     directoryEntries = signal<ReadonlyMap<string, MemberDirectoryEntry>>(
@@ -186,6 +209,43 @@ describe('DirectConversationPage', () => {
     await createPage();
 
     expect(headerName()).toBe('Amélie Rousseau');
+  });
+
+  it('should move counterpart context to the mobile title without replacing the composer', async () => {
+    await createPage();
+    const composer: HTMLTextAreaElement = fixture.nativeElement.querySelector(
+      '[data-testid="message-composer-input"]',
+    );
+    composer.value = 'Draft kept across mode changes';
+    composer.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    mobile.set(true);
+    await fixture.whenStable();
+
+    expect(setTitle).toHaveBeenLastCalledWith('Amélie Rousseau');
+    expect(headerName()).toBe('');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="direct-conversation-back"]'),
+    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="message-composer-input"]')).toBe(
+      composer,
+    );
+    expect(composer.value).toBe('Draft kept across mode changes');
+    expect(thread.load).toHaveBeenCalledTimes(1);
+
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(setTitle).toHaveBeenLastCalledWith('Messages');
+    expect(headerName()).toBe('Amélie Rousseau');
+  });
+
+  it('should use the neutral mobile title when the directory is unavailable', async () => {
+    mobile.set(true);
+    directoryAvailable.set(false);
+    await createPage();
+
+    expect(setTitle).toHaveBeenLastCalledWith('Unknown member');
   });
 
   it('should not print a member id when the conversation is not in the loaded list', async () => {

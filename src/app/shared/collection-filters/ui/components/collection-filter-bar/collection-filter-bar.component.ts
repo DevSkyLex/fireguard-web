@@ -1,7 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   afterNextRender,
-  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -12,7 +11,6 @@ import {
   signal,
   viewChild,
   viewChildren,
-  type AfterRenderRef,
   type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
@@ -21,149 +19,31 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideX } from '@ng-icons/lucide';
-import { isCompact } from '@shared/breakpoint';
+import { lucideX } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
-import { HlmDrawerImports } from '@shared/ui/drawer';
-import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
-import {
-  HlmItem,
-  HlmItemContent,
-  HlmItemDescription,
-  HlmItemGroup,
-  HlmItemMedia,
-  HlmItemTitle,
-} from '@shared/ui/item';
 import type {
   CollectionFilterField,
   CollectionFilterOperator,
   CollectionFilterOperatorChangedEvent,
 } from '../../../models';
+import { CollectionFilterFieldPicker } from '../collection-filter-field-picker';
 import { FilterChip } from '../filter-chip';
 
 /**
  * Component CollectionFilterBar
  * @class CollectionFilterBar
- *
- * @description
- * The Linear-style filter row shared by every collection surface: one
- * `app-filter-chip` per active narrowing, a "+ Filter" menu offering the
- * fields still unset, and a "Clear filters" button. Presentational
- * (`ARCHITECTURE.md` §10.3) — the page owns the actual narrowing (its
- * URL-backed `filters` signal) and passes only which keys are currently set
- * ({@link activeKeys}); this bar owns the chip row's display order and the
- * add/clear chrome around it, never the values.
- *
- * A chip's value control is never this bar's concern: a page registers one
- * `TemplateRef` per field key in {@link templates} (typically local
- * `viewChild(TemplateRef)` refs, the same idiom `PageActionsService`
- * consumers already use for `#pageActions`), and this bar projects the
- * matching template inside each rendered chip through `NgTemplateOutlet` —
- * that is what keeps a feature's tag components and models out of `shared/`.
- *
- * Order is remembered internally, oldest-picked-last: a field the page's URL
- * already carried (never explicitly picked through {@link pickField}) sorts
- * ahead of every field picked this visit, and a field picked again after
- * being removed moves to the end rather than back to its earlier position —
- * dead keys are never pruned from the memory, only from what actually
- * renders, since a stale entry is harmless once nothing reads it.
- *
- * A field picked from the "+ Filter" menu keeps its (empty) chip for the rest
- * of the visit, whether or not a value follows: closing a value control
- * without choosing anything is not a decision to drop the filter, and a chip
- * that vanished under the cursor forced the user back through the menu. Only
- * the chip's own remove button or "Clear filters" drops it. {@link pendingKey}
- * — the page's popover-open state — still renders a chip too, which is what
- * keeps a field on screen while an operator change momentarily voids its
- * value.
- *
- * The root carries id `<testIdPrefix>-filter-bar`, the `aria-controls`
- * target `app-collection-filter-toggle` (`@shared/collection-filters`) uses
- * for the toolbar button that mounts or unmounts this bar entirely — visibility
- * itself is the owning page's concern, this component only ever renders or
- * does not exist. It also carries `role="group"` and {@link regionLabel} as
- * its `aria-label`, since the chip row has no visible heading of its own to
- * lend it one.
- *
- * It draws its own box — a hairline border and a small pad — so the chips read
- * as one region rather than as controls loose under the toolbar. That is also
- * why the root no longer pulls itself up with a negative margin: a bordered
- * region sits in the page's normal rhythm instead of overlapping the row above
- * it.
- *
- * Each chip's operator segment reads its field's own
- * `CollectionFilterField.operators` catalog: {@link activeOperators} carries
- * which one is currently picked per key (defaulting to a field's first
- * declared operator through {@link operatorOf}), and a pick re-emits
- * {@link operatorChanged} for the page to resolve — this bar never
- * interprets an operator itself, only routes the pick.
- *
- * An unavailable field's "+ Filter" entry (`CollectionFilterField.unavailableReason`
- * set) carries `aria-disabled`, never the native `disabled` attribute:
- * `hlmDropdownMenuItem` maps `disabled` onto `cdkMenuItemDisabled`, which the
- * CDK's `FocusKeyManager` skips entirely — a keyboard user would never reach
- * the reason already rendered beneath the label. `aria-disabled` keeps the
- * entry in the roving-tabindex order and its pointer events live; its `id`
- * (from {@link reasonIdFor}) is targeted by the entry's own
- * `aria-describedby`. `CdkMenuItem` still emits `triggered` on an
- * `aria-disabled` activation regardless, so {@link pickField} itself refuses
- * an unavailable key — without that guard this would be an active control
- * standing in for a disabled one, not a fix.
- *
- * That `aria-disabled` only reaches the DOM through {@link syncUnsetFieldAriaDisabled}.
- * `hlmDropdownMenuItem` attaches `CdkMenuItem` as a host directive on the very
- * same `<button>`, and `CdkMenuItem` binds its own `'[attr.aria-disabled]':
- * 'disabled || null'` there; since this bar deliberately never sets
- * `disabled` (the paragraph above is why), that binding always resolves to
- * `null` and — being a directive host binding on the same node — wins the
- * same change-detection pass over this template's own `[attr.aria-disabled]`,
- * wiping the true value it just wrote. Angular only re-runs a host binding's
- * DOM write when its own bound expression changes, and `disabled` never does
- * here, so {@link syncUnsetFieldAriaDisabled} — a `write`-phase
- * `afterRenderEffect`, running strictly after that change-detection pass —
- * only has to re-assert the value once per field-list change for it to
- * stick. The template's own `[attr.aria-disabled]` stays too, as the
- * declared intent this effect enforces, not dead weight.
- *
- * Each rendered chip also carries its own field's
- * `unavailableReason !== undefined` down to `app-filter-chip`'s `disabled`
- * input, which dims it and neutralizes its operator segment — but not its
- * remove button, which stays live so the narrowing remains dismissible from
- * the chip itself rather than only through "Clear filters". An active
- * narrowing on a field this surface can no longer apply still needs to say
- * so and stay reachable. The reason text
- * itself is forwarded too, verbatim, through `app-filter-chip`'s own
- * `unavailableReason` input, alongside `reasonIdFor(key)` as its `reasonId` —
- * the chip is what actually renders it, at the chip's own width rather than
- * squeezed inside a value trigger; see its class doc.
- *
- * Removing a chip also moves keyboard focus, since nothing else can: the
- * following chip's own remove button, else the preceding one, else the
- * "+ Filter" trigger, else this bar's own root — see
- * {@link focusAfterRemoval} — rather than letting it fall back to `body`
- * once the removed chip leaves the DOM.
- *
+ * @description Presentational filter row that owns field ordering, chip composition and focus
+ * recovery, while the page owns values, URL state and queries. Feature templates provide each
+ * value control. A local field picker adapts the unset-field catalog to a desktop menu or mobile
+ * drawer without interpreting filter meaning.
  * @version 10.6.0
- *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-collection-filter-bar',
-  imports: [
-    NgIcon,
-    NgTemplateOutlet,
-    FilterChip,
-    HlmButton,
-    HlmItem,
-    HlmItemContent,
-    HlmItemDescription,
-    HlmItemGroup,
-    HlmItemMedia,
-    HlmItemTitle,
-    ...HlmDrawerImports,
-    ...HlmDropdownMenuImports,
-  ],
-  providers: [provideIcons({ lucidePlus, lucideX })],
+  imports: [NgIcon, NgTemplateOutlet, FilterChip, HlmButton, CollectionFilterFieldPicker],
+  providers: [provideIcons({ lucideX })],
   templateUrl: './collection-filter-bar.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -279,8 +159,17 @@ export class CollectionFilterBar {
   //#endregion
 
   //#region Properties
-  /** Whether the add-filter catalog should use a touch-first bottom drawer. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the mobile interaction mode for touch controls regardless of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
   /**
    * Property injector
@@ -303,46 +192,16 @@ export class CollectionFilterBar {
   private readonly chips: Signal<readonly FilterChip[]> = viewChildren(FilterChip);
 
   /**
-   * Property addFilterTrigger
+   * Property fieldPicker
    * @readonly
-   * @description The "+ Filter" button, when it renders — one of {@link focusAfterRemoval}'s fallback targets.
+   * @description Unset-field picker and focus fallback after the final chip is removed.
    * @access private
    * @since 10.3.0
-   * @type {Signal<ElementRef<HTMLButtonElement> | undefined>}
+   * @type {Signal<CollectionFilterFieldPicker | undefined>}
    */
-  private readonly addFilterTrigger: Signal<ElementRef<HTMLButtonElement> | undefined> =
-    viewChild<ElementRef<HTMLButtonElement>>('addFilterButton');
-
-  /**
-   * Property unsetFieldItems
-   * @readonly
-   * @description Every currently rendered "+ Filter" menu entry `<button>`, in {@link unsetFields} order — the `@for` in the template iterates both the same way, so the two stay positionally aligned. Read by {@link syncUnsetFieldAriaDisabled}.
-   * @access private
-   * @since 10.5.0
-   * @type {Signal<readonly ElementRef<HTMLButtonElement>[]>}
-   */
-  private readonly unsetFieldItems: Signal<readonly ElementRef<HTMLButtonElement>[]> =
-    viewChildren<ElementRef<HTMLButtonElement>>('unsetFieldItem');
-
-  /**
-   * Property syncUnsetFieldAriaDisabled
-   * @readonly
-   * @description Re-asserts `aria-disabled` on every "+ Filter" menu entry after each render where {@link unsetFields} changed — see the class doc for why the template's own binding cannot make it stick on its own.
-   * @access private
-   * @since 10.5.0
-   * @type {AfterRenderRef}
-   */
-  private readonly syncUnsetFieldAriaDisabled: AfterRenderRef = afterRenderEffect({
-    write: (): void => {
-      const buttons: readonly ElementRef<HTMLButtonElement>[] = this.unsetFieldItems();
-      const fields: readonly CollectionFilterField[] = this.unsetFields();
-
-      buttons.forEach((button: ElementRef<HTMLButtonElement>, index: number): void => {
-        const isUnavailable: boolean = fields[index]?.unavailableReason !== undefined;
-        button.nativeElement.setAttribute('aria-disabled', isUnavailable ? 'true' : 'false');
-      });
-    },
-  });
+  private readonly fieldPicker: Signal<CollectionFilterFieldPicker | undefined> = viewChild(
+    CollectionFilterFieldPicker,
+  );
 
   /**
    * Property root
@@ -434,22 +293,63 @@ export class CollectionFilterBar {
     () => this.activeKeys().length > 0,
   );
 
-  /** The "+ Filter" trigger's label. */
+  /**
+   * Property isEmpty
+   * @readonly
+   * @description Whether the bar has no chip or pending field and can show its empty-state decoration.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isEmpty: Signal<boolean> = computed<boolean>(
+    () => this.renderedKeys().length === 0,
+  );
+
+  /**
+   * Property addFilterLabel
+   * @readonly
+   * @description The "+ Filter" trigger's label.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly addFilterLabel: string = $localize`:@@shared.collectionFilterBar.addFilterButton:Filter`;
 
-  /** The "+ Filter" menu's heading. */
+  /**
+   * Property addFilterMenuLabel
+   * @readonly
+   * @description The "+ Filter" menu's heading.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly addFilterMenuLabel: string = $localize`:@@shared.collectionFilterBar.addFilterMenuLabel:Filter by`;
 
-  /** The trailing "Clear filters" button's label — the same generic id every list's popover already carried. */
+  /**
+   * Property clearFiltersLabel
+   * @readonly
+   * @description The trailing "Clear filters" button's label — the same generic id every list's popover already carried.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly clearFiltersLabel: string = $localize`:@@common.clearFilters:Clear filters`;
 
-  /** The root's `aria-label` — this bar has no visible heading, so it is the only accessible name a screen reader gets for the chip region. */
+  /**
+   * Property regionLabel
+   * @readonly
+   * @description The root's `aria-label` — this bar has no visible heading, so it is the only accessible name a screen reader gets for the chip region.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly regionLabel: string = $localize`:@@shared.collectionFilterBar.regionLabel:Active filters`;
   //#endregion
 
   //#region Methods
   /**
    * Method testId
+   * @method testId
    * @description Builds a `<prefix>-<suffix>` `data-testid` value from {@link testIdPrefix}.
    * @access protected
    * @since 1.0.0
@@ -462,6 +362,7 @@ export class CollectionFilterBar {
 
   /**
    * Method reasonIdFor
+   * @method reasonIdFor
    * @description The `id` a field's reason text renders under — the "+ Filter" menu's own entry while the field is unset, `app-filter-chip`'s own trailing row while it is active. Safe to share one id between the two: a field is never both active and unset at once, so only one of them ever actually renders that text. Derived from {@link testIdPrefix} and the field's own key — deterministic and stable across renders, not a per-render counter.
    * @access protected
    * @since 10.2.0
@@ -474,6 +375,7 @@ export class CollectionFilterBar {
 
   /**
    * Method operatorTriggerIdFor
+   * @method operatorTriggerIdFor
    * @description The `id` a field's operator select trigger renders under, targeted by its own `sr-only` label's `for`. Derived from {@link testIdPrefix} and the field's own key — deterministic and stable across renders, unlike a per-instance counter, so it renders identically on the server and after client hydration.
    * @access protected
    * @since 10.3.0
@@ -486,6 +388,7 @@ export class CollectionFilterBar {
 
   /**
    * Method removeLabelFor
+   * @method removeLabelFor
    * @description The generic "Remove filter: {field}" accessible name for one field's chip.
    * @access protected
    * @since 1.0.0
@@ -498,6 +401,7 @@ export class CollectionFilterBar {
 
   /**
    * Method changeOperatorLabelFor
+   * @method changeOperatorLabelFor
    * @description The generic "Change operator: {field}" accessible name for one field's operator select.
    * @access protected
    * @since 8.0.0
@@ -510,6 +414,7 @@ export class CollectionFilterBar {
 
   /**
    * Method operatorOf
+   * @method operatorOf
    *
    * @description
    * The operator currently active for one field: {@link activeOperators}'
@@ -528,6 +433,7 @@ export class CollectionFilterBar {
 
   /**
    * Method fieldOf
+   * @method fieldOf
    * @description Looks up a rendered key's catalog entry, falling back to an empty label rather than throwing — every rendered key traces back to {@link fields} or {@link pendingKey}, both page-controlled.
    * @access protected
    * @since 1.0.0
@@ -547,15 +453,14 @@ export class CollectionFilterBar {
 
   /**
    * Method pickField
+   * @method pickField
    *
    * @description
    * Picks a field from the "+ Filter" menu: moves it to the end of
    * {@link order} so its chip renders last, then emits {@link fieldPicked} so
    * the page opens that field's own value control. A no-op for a field
-   * carrying {@link CollectionFilterField.unavailableReason} — its menu entry
-   * stays keyboard-reachable (`aria-disabled`, not `disabled`, per the class
-   * doc), and `CdkMenuItem` still emits `triggered` on activation regardless,
-   * so this guard is what actually keeps it inert.
+   * carrying {@link CollectionFilterField.unavailableReason}; the picker also
+   * exposes that state declaratively, while this guard protects programmatic calls.
    *
    * @access protected
    * @since 1.0.0
@@ -575,6 +480,7 @@ export class CollectionFilterBar {
 
   /**
    * Method clearAll
+   * @method clearAll
    * @description Resets the pick-order memory and emits {@link filtersCleared}.
    * @access protected
    * @since 1.0.0
@@ -588,6 +494,7 @@ export class CollectionFilterBar {
 
   /**
    * Method removeField
+   * @method removeField
    *
    * @description
    * Drops one chip: forgets it was picked this visit, emits
@@ -619,6 +526,7 @@ export class CollectionFilterBar {
 
   /**
    * Method chipByKey
+   * @method chipByKey
    * @description Looks up the rendered `app-filter-chip` instance for one key, matching {@link chips} positionally against {@link renderedKeys} — both iterate the same `@for` in the same order.
    * @access private
    * @since 10.3.0
@@ -633,6 +541,7 @@ export class CollectionFilterBar {
 
   /**
    * Method focusAfterRemoval
+   * @method focusAfterRemoval
    *
    * @description
    * Moves real DOM focus once a chip's removal has actually rendered: the
@@ -664,10 +573,9 @@ export class CollectionFilterBar {
             return;
           }
 
-          const addFilterButton: ElementRef<HTMLButtonElement> | undefined =
-            this.addFilterTrigger();
-          if (addFilterButton) {
-            addFilterButton.nativeElement.focus();
+          const picker: CollectionFilterFieldPicker | undefined = this.fieldPicker();
+          if (picker) {
+            picker.focusTrigger();
             return;
           }
 

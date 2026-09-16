@@ -1,6 +1,6 @@
-<section class="space-y-4" data-testid="intervention-attachments">
-  <div class="relative flex flex-col gap-2">
-    <h2 hlmCardTitle class="flex items-center gap-2">
+<section class="flex flex-col gap-4" data-testid="intervention-attachments">
+  <div class="relative flex flex-col gap-1">
+    <h2 class="flex items-center gap-2 text-lg font-semibold">
       <span i18n="@@intervention.attachments.title">Attachments</span>
       @if (showCounter()) {
         <span
@@ -11,71 +11,71 @@
         >
       }
     </h2>
-    <p hlmCardDescription i18n="@@intervention.attachments.caption">
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.attachments.caption">
       Photos and documents kept with this intervention.
     </p>
-
-    @if (canManage()) {
-      <div hlmCardAction class="flex flex-wrap items-center gap-2 max-sm:mt-2">
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          [disabled]="!canPick()"
-          [attr.aria-busy]="uploading() ? 'true' : null"
-          data-testid="intervention-attachments-add"
-          (click)="pick(filesInput)"
-        >
-          @if (uploading()) {
-            <hlm-spinner size="xs" aria-hidden="true" />
-          } @else {
-            <ng-icon name="lucidePaperclip" aria-hidden="true" />
-          }
-          <span i18n="@@intervention.attachments.add">Add files</span>
-        </button>
-        <input
-          #filesInput
-          type="file"
-          class="sr-only"
-          tabindex="-1"
-          multiple
-          [accept]="acceptedTypes"
-          [disabled]="!canPick()"
-          (change)="onFilesSelected($event)"
-        />
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          class="max-sm:min-h-11"
-          [disabled]="!canPick()"
-          [attr.aria-busy]="uploading() ? 'true' : null"
-          data-testid="intervention-attachments-photo"
-          (click)="pick(photoInput)"
-        >
-          @if (uploading()) {
-            <hlm-spinner size="xs" aria-hidden="true" />
-          } @else {
-            <ng-icon name="lucideCamera" aria-hidden="true" />
-          }
-          <span i18n="@@intervention.attachments.photo">Take a photo</span>
-        </button>
-        <input
-          #photoInput
-          type="file"
-          class="sr-only"
-          tabindex="-1"
-          accept="image/*"
-          capture="environment"
-          [disabled]="!canPick()"
-          (change)="onFilesSelected($event)"
-        />
-      </div>
-    }
   </div>
+
+  @if (canManage()) {
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        [disabled]="!canPick()"
+        [attr.aria-busy]="uploading() ? 'true' : null"
+        data-testid="intervention-attachments-add"
+        (click)="pick(filesInput)"
+      >
+        @if (uploading()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucidePaperclip" aria-hidden="true" />
+        }
+        <span i18n="@@intervention.attachments.add">Add files</span>
+      </button>
+      <input
+        #filesInput
+        type="file"
+        class="sr-only"
+        tabindex="-1"
+        multiple
+        [accept]="acceptedTypes"
+        [disabled]="!canPick()"
+        (change)="onFilesSelected($event)"
+      />
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        [disabled]="!canPick()"
+        [attr.aria-busy]="uploading() ? 'true' : null"
+        data-testid="intervention-attachments-photo"
+        (click)="pick(photoInput)"
+      >
+        @if (uploading()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideCamera" aria-hidden="true" />
+        }
+        <span i18n="@@intervention.attachments.photo">Take a photo</span>
+      </button>
+      <input
+        #photoInput
+        type="file"
+        class="sr-only"
+        tabindex="-1"
+        accept="image/*"
+        capture="environment"
+        [disabled]="!canPick()"
+        (change)="onFilesSelected($event)"
+      />
+    </div>
+  }
 
   <div class="flex flex-col gap-3">
     @if (loading()) {
@@ -137,7 +137,11 @@
     @if (
       !loading() && !loadError() && attachments().length === 0 && queuedAttachments().length === 0
     ) {
-      <div hlmEmpty data-testid="intervention-attachments-empty">
+      <div
+        hlmEmpty
+        class="border border-dashed border-border"
+        data-testid="intervention-attachments-empty"
+      >
         <div hlmEmptyHeader>
           <div hlmEmptyMedia variant="icon">
             <ng-icon name="lucidePaperclip" aria-hidden="true" />
@@ -189,7 +193,7 @@
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                  class="text-muted-foreground hover:text-destructive mobile-ui:size-11 mobile-ui:min-h-11"
                   data-testid="intervention-attachment-queued-delete"
                   i18n-aria-label="@@intervention.attachments.queuedDelete"
                   aria-label="Remove this file from the sync queue"
@@ -248,7 +252,7 @@
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                class="text-muted-foreground max-sm:size-11"
+                class="text-muted-foreground mobile-ui:size-11 mobile-ui:min-h-11"
                 data-testid="intervention-attachment-download"
                 i18n-aria-label="@@intervention.attachments.download"
                 aria-label="Download this file"
@@ -271,7 +275,7 @@
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  class="text-muted-foreground hover:text-destructive max-sm:size-11"
+                  class="text-muted-foreground hover:text-destructive mobile-ui:size-11 mobile-ui:min-h-11"
                   data-testid="intervention-attachment-delete"
                   i18n-aria-label="@@intervention.attachments.delete"
                   aria-label="Delete this file"

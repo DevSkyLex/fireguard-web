@@ -3433,8 +3433,8 @@
         <target>Enviando…</target>
       </trans-unit>
       <trans-unit id="intervention.wif.hint" datatype="html">
-        <source> Add a task to the prepared scope. Only an action is required — target and assignee can be set now or later during execution. </source>
-        <target>Añade una tarea al alcance preparado. Solo se requiere una acción; el objetivo y el asignado se pueden definir ahora o más tarde durante la ejecución.</target>
+        <source> Only the action is required; target and assignee can be set now or during execution. </source>
+        <target>Solo se requiere la acción; el objetivo y el asignado pueden definirse ahora o durante la ejecución.</target>
       </trans-unit>
       <trans-unit id="intervention.wif.target" datatype="html">
         <source>Target resource</source>
@@ -4175,6 +4175,10 @@
       <trans-unit id="dashboard.panel.aria" datatype="html">
         <source>Contextual panel</source>
         <target>Panel contextual</target>
+      </trans-unit>
+      <trans-unit id="dashboard.sidebarExtension.resize" datatype="html">
+        <source>Resize navigation panel</source>
+        <target>Redimensionar el panel de navegación</target>
       </trans-unit>
       <trans-unit id="calendar.today" datatype="html">
         <source>Today</source>
@@ -8991,8 +8995,8 @@
         <target>Cargando etiquetas…</target>
       </trans-unit>
       <trans-unit id="intervention.labels.manage.nameLabel" datatype="html">
-        <source>Name</source>
-        <target>Nombre</target>
+        <source>Label</source>
+        <target>Etiqueta</target>
       </trans-unit>
       <trans-unit id="intervention.labels.manage.namePlaceholder" datatype="html">
         <source>e.g. Compliance</source>
@@ -11217,6 +11221,10 @@
       <trans-unit id="intervention.prop.moreDetails" datatype="html">
         <source>More details</source>
         <target>Más detalles</target>
+      </trans-unit>
+      <trans-unit id="intervention.prop.showLessDetails" datatype="html">
+        <source>Show less</source>
+        <target>Mostrar menos</target>
       </trans-unit>
       <trans-unit id="intervention.sync.label.offline" datatype="html">
         <source>Offline</source>
@@ -14506,6 +14514,630 @@
           <context context-type="sourcefile">src/app/features/onboarding/ui/forms/onboarding-members-form/onboarding-members-form.component.ts</context>
           <context context-type="linenumber">383</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.mobileDescription" datatype="html">
+        <source> Read recent updates or open your notification centre. </source>
+        <target>Lee las últimas novedades o abre tu centro de notificaciones.</target>
+      </trans-unit>
+      <trans-unit id="messages.picker.mobileDescription" datatype="html">
+        <source> Choose a member to open a conversation. </source>
+        <target>Elige un miembro para abrir una conversación.</target>
+      </trans-unit>
+      <trans-unit id="messages.row.actionsDescription" datatype="html">
+        <source> Choose what to do with this message. </source>
+        <target>Elige qué hacer con este mensaje.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.drawZoneTitle" datatype="html">
+        <source>Choose a zone</source>
+        <target>Elegir una zona</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.drawZoneDescription" datatype="html">
+        <source> Pick the zone whose outline you want to draw. </source>
+        <target>Elige la zona cuyo contorno quieres dibujar.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.searchZones" datatype="html">
+        <source>Search zones</source>
+        <target>Buscar zonas</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.searchZonesPlaceholder" datatype="html">
+        <source>Search zones…</source>
+        <target>Buscar zonas…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.loadingZones" datatype="html">
+        <source> Loading zones… </source>
+        <target>Cargando zonas…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.zonesError" datatype="html">
+        <source> The zones could not be loaded. </source>
+        <target>No se pudieron cargar las zonas.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.noZones" datatype="html">
+        <source> No zones available. </source>
+        <target>No hay zonas disponibles.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.placeEquipmentTitle" datatype="html">
+        <source> Choose equipment </source>
+        <target>Elegir un equipo</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.placeEquipmentDescription" datatype="html">
+        <source> Pick the equipment you want to place on this plan. </source>
+        <target>Elige el equipo que quieres colocar en este plano.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.searchEquipment" datatype="html">
+        <source>Search equipment</source>
+        <target>Buscar equipos</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.searchEquipmentPlaceholder" datatype="html">
+        <source>Search equipment…</source>
+        <target>Buscar equipos…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.loadingEquipment" datatype="html">
+        <source> Loading equipment… </source>
+        <target>Cargando equipos…</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.equipmentError" datatype="html">
+        <source> The equipment could not be loaded. </source>
+        <target>No se pudieron cargar los equipos.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.noEquipment" datatype="html">
+        <source> No equipment available. </source>
+        <target>No hay equipos disponibles.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.pickerDescription" datatype="html">
+        <source> Choose the floor plan to display and manage. </source>
+        <target>Elige el plano que quieres ver y gestionar.</target>
+      </trans-unit>
+      <trans-unit id="intervention.board.mobileActionsDescription" datatype="html">
+        <source> Open this intervention or choose an available status. </source>
+        <target>Abre esta intervención o elige un estado disponible.</target>
+      </trans-unit>
+      <trans-unit id="intervention.detail.mobileWorkflowActions" datatype="html">
+        <source>Intervention actions</source>
+        <target>Acciones de la intervención</target>
+      </trans-unit>
+      <trans-unit id="org.more.teams" datatype="html">
+        <source>Teams</source>
+        <target>Equipos</target>
+      </trans-unit>
+      <trans-unit id="org.more.roles" datatype="html">
+        <source>Roles and permissions</source>
+        <target>Roles y permisos</target>
+      </trans-unit>
+      <trans-unit id="org.more.account" datatype="html">
+        <source>Your account</source>
+        <target>Tu cuenta</target>
+      </trans-unit>
+      <trans-unit id="org.mobileNav.home" datatype="html">
+        <source>Home</source>
+        <target>Inicio</target>
+      </trans-unit>
+      <trans-unit id="org.mobileNav.messages" datatype="html">
+        <source>Messages</source>
+        <target>Mensajes</target>
+      </trans-unit>
+      <trans-unit id="route.organizationMore" datatype="html">
+        <source>More</source>
+        <target>Más</target>
+      </trans-unit>
+      <trans-unit id="org.more.collaboration" datatype="html">
+        <source>Collaboration</source>
+        <target>Colaboración</target>
+      </trans-unit>
+      <trans-unit id="org.more.channels" datatype="html">
+        <source>Channels</source>
+        <target>Canales</target>
+      </trans-unit>
+      <trans-unit id="org.more.administration" datatype="html">
+        <source>Administration</source>
+        <target>Administración</target>
+      </trans-unit>
+      <trans-unit id="org.mobileNav.label" datatype="html">
+        <source>Main navigation</source>
+        <target>Navegación principal</target>
+      </trans-unit>
+      <trans-unit id="org.mobileNav.noOrganization" datatype="html">
+        <source> Choose an organization to open your workspace. </source>
+        <target>Elige una organización para abrir tu espacio de trabajo.</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.choose" datatype="html">
+        <source>Switch organization</source>
+        <target>Cambiar de organización</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.chooseDescription" datatype="html">
+        <source> Choose the workspace you want to open. </source>
+        <target>Elige el espacio de trabajo que quieres abrir.</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.search" datatype="html">
+        <source>Search organizations</source>
+        <target>Buscar organizaciones</target>
+      </trans-unit>
+      <trans-unit id="org.switcher.empty" datatype="html">
+        <source>No organizations found.</source>
+        <target>No se encontraron organizaciones.</target>
+      </trans-unit>
+      <trans-unit id="org.more.workspace" datatype="html">
+        <source> Current organization </source>
+        <target>Organización actual</target>
+      </trans-unit>
+      <trans-unit id="org.more.appearance" datatype="html">
+        <source> Appearance </source>
+        <target>Apariencia</target>
+      </trans-unit>
+      <trans-unit id="org.more.session" datatype="html">
+        <source> Account and sign out </source>
+        <target>Cuenta y cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="common.back" datatype="html">
+        <source>Back</source>
+        <target>Volver</target>
+      </trans-unit>
+      <trans-unit id="dashboard.mobileActions.open" datatype="html">
+        <source>Open quick actions</source>
+        <target>Abrir acciones rápidas</target>
+      </trans-unit>
+      <trans-unit id="dashboard.mobileActions.title" datatype="html">
+        <source>Quick actions</source>
+        <target>Acciones rápidas</target>
+      </trans-unit>
+      <trans-unit id="dashboard.mobileActions.description" datatype="html">
+        <source> Tools available for this workspace. </source>
+        <target>Herramientas disponibles para este espacio de trabajo.</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.mobile.addDescription" datatype="html">
+        <source> Choose a field to narrow the results. </source>
+        <target>Elige un campo para filtrar los resultados.</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.mobile.dateRangeDescription" datatype="html">
+        <source> Choose a start date and an end date, then apply. </source>
+        <target>Elige una fecha de inicio y una de fin y aplica los cambios.</target>
+      </trans-unit>
+      <trans-unit id="common.apply" datatype="html">
+        <source>Apply</source>
+        <target>Aplicar</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.mobile.dateDescription" datatype="html">
+        <source> Choose a date. </source>
+        <target>Elige una fecha.</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.mobile.multipleDescription" datatype="html">
+        <source> Select one or more options, then apply. </source>
+        <target>Selecciona una o varias opciones y aplica los cambios.</target>
+      </trans-unit>
+      <trans-unit id="collectionFilters.mobile.singleDescription" datatype="html">
+        <source> Choose one option. </source>
+        <target>Elige una opción.</target>
+      </trans-unit>
+      <trans-unit id="uiExperience.appearance" datatype="html">
+        <source>Appearance</source>
+        <target>Apariencia</target>
+      </trans-unit>
+      <trans-unit id="uiExperience.appearanceDescription" datatype="html">
+        <source> Choose how Fireguard looks on this device. </source>
+        <target>Elige la apariencia de Fireguard en este dispositivo.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.searchTypes" datatype="html">
+        <source>Search equipment types</source>
+        <target>Buscar tipos de equipo</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.noMatchingType" datatype="html">
+        <source> No matching type. </source>
+        <target>Ningún tipo coincide.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.searchFacilities" datatype="html">
+        <source>Search facilities</source>
+        <target>Buscar instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.panel.description" datatype="html">
+        <source> Browse zones and equipment on the selected plan. </source>
+        <target>Explore las zonas y los equipos del plano seleccionado.</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.equipmentDrawerDescription" datatype="html">
+        <source> Search by equipment, type or location, then select the equipment to inspect. </source>
+        <target>Busque por equipo, tipo o ubicación y seleccione el equipo que desea inspeccionar.</target>
+      </trans-unit>
+      <trans-unit id="common.selected" datatype="html">
+        <source>Selected</source>
+        <target>Seleccionado</target>
+      </trans-unit>
+      <trans-unit id="inspection.table.unnamedInspection" datatype="html">
+        <source>Inspection</source>
+        <target>Inspección</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.tools" datatype="html">
+        <source>Tools</source>
+        <target>Herramientas</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.toolsTitle" datatype="html">
+        <source>Intervention tools</source>
+        <target>Herramientas de intervenciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.toolsDescription" datatype="html">
+        <source> Select interventions, adjust the display or export this list. </source>
+        <target>Seleccione intervenciones, ajuste la vista o exporte esta lista.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.returnToList" datatype="html">
+        <source> Return to list </source>
+        <target>Volver a la lista</target>
+      </trans-unit>
+      <trans-unit id="org.teams.membersSheet.selectedMember" datatype="html">
+        <source>Selected</source>
+        <target>Seleccionado</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.mobile.work" datatype="html">
+        <source>Current work and attention items</source>
+        <target>Trabajo actual y puntos de atención</target>
+      </trans-unit>
+      <trans-unit id="org.dashboard.mobile.analysis" datatype="html">
+        <source>Activity and risk analysis</source>
+        <target>Análisis de actividad y riesgos</target>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilter.mobileDescription" datatype="html">
+        <source> Choose a role to filter the member directory. </source>
+        <target>Elija un rol para filtrar el directorio de miembros.</target>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilter.search" datatype="html">
+        <source>Search roles</source>
+        <target>Buscar roles</target>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilter.empty" datatype="html">
+        <source> No matching roles. </source>
+        <target>Ningún rol coincide.</target>
+      </trans-unit>
+      <trans-unit id="org.members.roleFilter.selected" datatype="html">
+        <source>Selected</source>
+        <target>Seleccionado</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.sortLabel" datatype="html">
+        <source>Sort members</source>
+        <target>Ordenar miembros</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.sortAscending" datatype="html">
+        <source>Ascending</source>
+        <target>Ascendente</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.sortDescending" datatype="html">
+        <source>Descending</source>
+        <target>Descendente</target>
+      </trans-unit>
+      <trans-unit id="equipment.kpi.statistics" datatype="html">
+        <source>Statistics</source>
+        <target>Estadísticas</target>
+      </trans-unit>
+      <trans-unit id="account.menu.logout" datatype="html">
+        <source>Log out</source>
+        <target>Cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="account.menu.notifications" datatype="html">
+        <source>Notifications</source>
+        <target>Notificaciones</target>
+      </trans-unit>
+      <trans-unit id="calendar.dayEmpty" datatype="html">
+        <source> Nothing scheduled this day. </source>
+        <target> No hay nada programado para este día. </target>
+      </trans-unit>
+      <trans-unit id="intervention.list.selectRows" datatype="html">
+        <source>Select</source>
+        <target>Seleccionar</target>
+      </trans-unit>
+      <trans-unit id="messages.composer.send" datatype="html">
+        <source>Send message</source>
+        <target>Enviar mensaje</target>
+      </trans-unit>
+      <trans-unit id="messages.picker.emptyDescription" datatype="html">
+        <source> No active member of this organization matches. </source>
+        <target> Ningún miembro activo de esta organización coincide. </target>
+      </trans-unit>
+      <trans-unit id="messages.picker.emptyTitle" datatype="html">
+        <source>No one to message</source>
+        <target>No hay destinatarios</target>
+      </trans-unit>
+      <trans-unit id="messages.picker.searchLabel" datatype="html">
+        <source>Search members</source>
+        <target>Buscar miembros</target>
+      </trans-unit>
+      <trans-unit id="messages.picker.searchPlaceholder" datatype="html">
+        <source>Search members</source>
+        <target>Buscar miembros</target>
+      </trans-unit>
+      <trans-unit id="messages.picker.title" datatype="html">
+        <source>New message</source>
+        <target>Nuevo mensaje</target>
+      </trans-unit>
+      <trans-unit id="org.assets.backToTree" datatype="html">
+        <source>Back to the hierarchy</source>
+        <target>Volver a la jerarquía</target>
+      </trans-unit>
+      <trans-unit id="org.members.table.colJoined" datatype="html">
+        <source>Joined</source>
+        <target>Fecha de incorporación</target>
+      </trans-unit>
+      <trans-unit id="account.profile.role.user" datatype="html">
+        <source>User</source>
+        <target>Usuario</target>
+      </trans-unit>
+      <trans-unit id="account.profile.role.assigned" datatype="html">
+        <source>Assigned role</source>
+        <target>Rol asignado</target>
+      </trans-unit>
+      <trans-unit id="account.notificationBell.unread" datatype="html">
+        <source>Unread</source>
+        <target>Sin leer</target>
+      </trans-unit>
+      <trans-unit id="onboarding.equipmentForm.currentChoice" datatype="html">
+        <source>Current choice</source>
+        <target>Opción actual</target>
+      </trans-unit>
+      <trans-unit id="org.search.close.aria" datatype="html">
+        <source>Close search</source>
+        <target>Cerrar búsqueda</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.linkedOffline" datatype="html">
+        <source>Linked resources cannot be queried offline. Reconnect and retry.</source>
+        <target>No se pueden consultar los recursos vinculados sin conexión. Vuelve a conectarte e inténtalo de nuevo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.offlineUnavailable" datatype="html">
+        <source>This intervention has not been saved on this device. Reconnect to load its tables.</source>
+        <target>Esta intervención no se ha guardado en este dispositivo. Vuelve a conectarte para cargar sus tablas.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.savedSource" datatype="html">
+        <source> Saved workspace on this device, including local changes. Results are not from a live server query. </source>
+        <target>Espacio de trabajo guardado en este dispositivo, incluidos los cambios locales. Estos resultados no proceden de una consulta en directo al servidor.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.memorySource" datatype="html">
+        <source> Last available results in this page. Reconnect to apply search and filters or load more. </source>
+        <target>Últimos resultados disponibles en esta página. Vuelve a conectarte para aplicar la búsqueda y los filtros o cargar más.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.refreshFailed" datatype="html">
+        <source> Could not update these results. Previously loaded rows are still shown. </source>
+        <target>No se pudieron actualizar estos resultados. Se siguen mostrando los resultados anteriores.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.retry" datatype="html">
+        <source> Retry </source>
+        <target>Reintentar</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.searchPlaceholder" datatype="html">
+        <source>Search changes...</source>
+        <target>Buscar cambios…</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.tableCaption" datatype="html">
+        <source>The intervention's resource changes.</source>
+        <target>Los cambios de recursos de esta intervención.</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.loadFailed" datatype="html">
+        <source>Changes could not be loaded</source>
+        <target>No se pudieron cargar los cambios</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.columnResource" datatype="html">
+        <source>Resource</source>
+        <target>Recurso</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.columnField" datatype="html">
+        <source>Field</source>
+        <target>Campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.columnValue" datatype="html">
+        <source>Proposed value</source>
+        <target>Valor propuesto</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.columnStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.noField" datatype="html">
+        <source>Field</source>
+        <target>Campo</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.searchEmptyTitle" datatype="html">
+        <source> No changes match this search </source>
+        <target>Ningún cambio coincide con esta búsqueda</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.searchEmptyHint" datatype="html">
+        <source> Try another term or clear the search. </source>
+        <target>Prueba otro término o borra la búsqueda.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.clearSearch" datatype="html">
+        <source> Clear search </source>
+        <target>Borrar búsqueda</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.noDataTitle" datatype="html">
+        <source>No resource changes yet</source>
+        <target>Todavía no hay cambios de recursos</target>
+      </trans-unit>
+      <trans-unit id="intervention.changes.noDataHint" datatype="html">
+        <source> Proposed changes will appear here as work progresses. </source>
+        <target>Los cambios propuestos aparecerán aquí a medida que avance el trabajo.</target>
+      </trans-unit>
+      <trans-unit id="intervention.tables.clearFilters" datatype="html">
+        <source> Clear filters </source>
+        <target>Borrar filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.searchPlaceholder" datatype="html">
+        <source>Search equipment...</source>
+        <target>Buscar equipos…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterTypePlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Buscar un tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Ningún tipo coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterTypeAccessibleName" datatype="html">
+        <source>Filter equipment by type</source>
+        <target>Filtrar equipos por tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterStatusPlaceholder" datatype="html">
+        <source>Search a status</source>
+        <target>Buscar un estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filterStatusAccessibleName" datatype="html">
+        <source>Filter equipment by status</source>
+        <target>Filtrar equipos por estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filteredEmptyTitle" datatype="html">
+        <source> No equipment matches the current search or filters </source>
+        <target>Ningún equipo coincide con la búsqueda o los filtros actuales</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.filteredEmptyDesc" datatype="html">
+        <source> Change the search or remove a filter to see more equipment. </source>
+        <target>Modifica la búsqueda o elimina un filtro para ver más equipos.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.loadingMore" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.equipment.loadMore" datatype="html">
+        <source>Show more</source>
+        <target>Mostrar más</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.searchPlaceholder" datatype="html">
+        <source>Search facilities...</source>
+        <target>Buscar instalaciones…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterType" datatype="html">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterTypePlaceholder" datatype="html">
+        <source>Search a type</source>
+        <target>Buscar un tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterNoType" datatype="html">
+        <source>No type matches.</source>
+        <target>Ningún tipo coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterTypeAccessibleName" datatype="html">
+        <source>Filter facilities by type</source>
+        <target>Filtrar instalaciones por tipo</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterStatusPlaceholder" datatype="html">
+        <source>Search a status</source>
+        <target>Buscar un estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filterStatusAccessibleName" datatype="html">
+        <source>Filter facilities by status</source>
+        <target>Filtrar instalaciones por estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filteredEmptyTitle" datatype="html">
+        <source> No facilities match the current search or filters </source>
+        <target>Ninguna instalación coincide con la búsqueda o los filtros actuales</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.filteredEmptyDesc" datatype="html">
+        <source> Change the search or remove a filter to see more facilities. </source>
+        <target>Modifica la búsqueda o elimina un filtro para ver más instalaciones.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.loadingMore" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.facilities.loadMore" datatype="html">
+        <source>Show more</source>
+        <target>Mostrar más</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.searchPlaceholder" datatype="html">
+        <source>Search inspections...</source>
+        <target>Buscar inspecciones…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterStatus" datatype="html">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterStatusPlaceholder" datatype="html">
+        <source>Search a status</source>
+        <target>Buscar un estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterNoStatus" datatype="html">
+        <source>No status matches.</source>
+        <target>Ningún estado coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterStatusAccessibleName" datatype="html">
+        <source>Filter inspections by status</source>
+        <target>Filtrar inspecciones por estado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterResult" datatype="html">
+        <source>Result</source>
+        <target>Resultado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterResultPlaceholder" datatype="html">
+        <source>Search a result</source>
+        <target>Buscar un resultado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterNoResult" datatype="html">
+        <source>No result matches.</source>
+        <target>Ningún resultado coincide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filterResultAccessibleName" datatype="html">
+        <source>Filter inspections by result</source>
+        <target>Filtrar inspecciones por resultado</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filteredEmptyTitle" datatype="html">
+        <source> No inspections match the current search or filters </source>
+        <target>Ninguna inspección coincide con la búsqueda o los filtros actuales</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.filteredEmptyDesc" datatype="html">
+        <source> Change the search or remove a filter to see more inspections. </source>
+        <target>Modifica la búsqueda o elimina un filtro para ver más inspecciones.</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.loadingMore" datatype="html">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="intervention.linked.inspections.loadMore" datatype="html">
+        <source>Show more</source>
+        <target>Mostrar más</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.searchPlaceholder" datatype="html">
+        <source>Search work items...</source>
+        <target>Buscar tareas…</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.filtersButton" datatype="html">
+        <source>Filters</source>
+        <target>Filtros</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.loadFailed" datatype="html">
+        <source>Work items could not be loaded</source>
+        <target>No se pudieron cargar las tareas</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSurface.refreshing" datatype="html">
+        <source>Refreshing…</source>
+        <target>Actualizando…</target>
       </trans-unit>
     </body>
   </file>

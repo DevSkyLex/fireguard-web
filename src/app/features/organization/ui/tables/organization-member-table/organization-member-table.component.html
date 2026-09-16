@@ -1,3 +1,41 @@
+<div
+  class="mb-3 flex flex-wrap items-center gap-2 desktop-ui:hidden"
+  role="group"
+  aria-label="Sort members"
+  i18n-aria-label="@@org.members.table.sortLabel"
+>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="min-h-11"
+    data-testid="organization-member-table-mobile-sort-member"
+    [attr.aria-pressed]="sortOrder().field === 'displayName'"
+    (click)="sortChanged.emit('displayName')"
+  >
+    <span i18n="@@org.members.table.colMember">Member</span>
+    <ng-icon [name]="sortIcon('displayName')" aria-hidden="true" />
+  </button>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="min-h-11"
+    data-testid="organization-member-table-mobile-sort-joined"
+    [attr.aria-pressed]="sortOrder().field === 'joinedAt'"
+    (click)="sortChanged.emit('joinedAt')"
+  >
+    <span i18n="@@org.members.table.colJoined">Joined</span>
+    <ng-icon [name]="sortIcon('joinedAt')" aria-hidden="true" />
+  </button>
+  <span class="text-xs text-muted-foreground" aria-live="polite">
+    @if (sortOrder().direction === 'asc') {
+      <span i18n="@@org.members.table.sortAscending">Ascending</span>
+    } @else {
+      <span i18n="@@org.members.table.sortDescending">Descending</span>
+    }
+  </span>
+</div>
 <app-collection-surface
   caption="Organization members"
   i18n-caption="@@org.members.table.caption"
@@ -27,7 +65,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="organization-member-table-sort-member"
           (click)="sortChanged.emit('displayName')"
         >
@@ -44,7 +82,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="organization-member-table-sort-joined"
           (click)="sortChanged.emit('joinedAt')"
         >
@@ -116,50 +154,60 @@
   </ng-container>
 
   <ng-container surfaceCards>
-    @for (member of items(); track member.id) {
-      <div
-        class="flex flex-col gap-1.5 rounded-md border border-border p-3"
-        data-testid="organization-member-table-row-card"
-      >
-        <div class="flex items-start gap-2">
-          @if (canRemove() && selectionMode()) {
-            <div class="flex size-11 shrink-0 items-center justify-center">
-              <hlm-checkbox
-                data-testid="organization-member-table-row-select"
-                [checked]="isSelected(member.id)"
-                [aria-label]="selectRowLabel(nameOf(member))"
-                (checkedChange)="toggleRow(member.id, $event)"
+    <div hlmItemGroup class="gap-0">
+      @for (member of items(); track member.id) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm" data-testid="organization-member-table-row-card">
+          <div hlmItemContent class="min-w-0 gap-2">
+            <div class="flex items-start gap-2">
+              @if (canRemove() && selectionMode()) {
+                <label class="flex size-11 shrink-0 items-center justify-center">
+                  <hlm-checkbox
+                    data-testid="organization-member-table-row-select"
+                    [checked]="isSelected(member.id)"
+                    [aria-label]="selectRowLabel(nameOf(member))"
+                    (checkedChange)="toggleRow(member.id, $event)"
+                  />
+                </label>
+              }
+
+              <a
+                class="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                [routerLink]="[...detailRouteBase(), member.id]"
+              >
+                <ng-container
+                  [ngTemplateOutlet]="memberAvatar"
+                  [ngTemplateOutletContext]="{ member }"
+                />
+                <span hlmItemTitle class="line-clamp-none wrap-anywhere">{{ nameOf(member) }}</span>
+              </a>
+
+              <ng-container
+                [ngTemplateOutlet]="rowActions"
+                [ngTemplateOutletContext]="{ item: member }"
               />
             </div>
-          }
 
-          <a
-            class="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            [routerLink]="[...detailRouteBase(), member.id]"
-          >
-            <ng-container
-              [ngTemplateOutlet]="memberAvatar"
-              [ngTemplateOutletContext]="{ member }"
-            />
-            <span class="truncate font-medium text-foreground">{{ nameOf(member) }}</span>
-          </a>
+            <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
+              <ng-container
+                [ngTemplateOutlet]="memberStatus"
+                [ngTemplateOutletContext]="{ member }"
+              />
+              <ng-container
+                [ngTemplateOutlet]="memberRoles"
+                [ngTemplateOutletContext]="{ member }"
+              />
+            </div>
 
-          <ng-container
-            [ngTemplateOutlet]="rowActions"
-            [ngTemplateOutletContext]="{ item: member }"
-          />
+            @if (member.email; as email) {
+              <span class="text-xs wrap-anywhere text-muted-foreground">{{ email }}</span>
+            }
+          </div>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
-          <ng-container [ngTemplateOutlet]="memberStatus" [ngTemplateOutletContext]="{ member }" />
-          <ng-container [ngTemplateOutlet]="memberRoles" [ngTemplateOutletContext]="{ member }" />
-        </div>
-
-        @if (member.email; as email) {
-          <span class="truncate ps-1 text-xs text-muted-foreground">{{ email }}</span>
-        }
-      </div>
-    }
+      }
+    </div>
   </ng-container>
 
   <p
@@ -214,7 +262,7 @@
       variant="ghost"
       size="icon-sm"
       align="end"
-      class="max-sm:size-11"
+      class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
       data-testid="organization-member-table-row-menu"
       [hlmDropdownMenuTrigger]="rowMenu"
     >
@@ -226,6 +274,7 @@
       <hlm-dropdown-menu class="w-52">
         @if (canAssignRoles()) {
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="organization-member-table-row-roles"
             (click)="manageRolesRequested.emit(member)"
@@ -240,6 +289,7 @@
             <hlm-dropdown-menu-separator />
           }
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="organization-member-table-row-reactivate"
             [disabled]="pending()"
@@ -255,6 +305,7 @@
             <hlm-dropdown-menu-separator />
           }
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             variant="destructive"
             data-testid="organization-member-table-row-remove"

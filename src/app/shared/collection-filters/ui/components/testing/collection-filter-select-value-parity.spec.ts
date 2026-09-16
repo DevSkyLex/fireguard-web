@@ -5,6 +5,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CollectionFilterOption } from '../../../models';
 import { CollectionFilterDate } from '../collection-filter-date';
 import { CollectionFilterDateRange } from '../collection-filter-date-range';
@@ -125,7 +126,15 @@ describe('CollectionFilterSelect / CollectionFilterMultiSelect value parity', ()
   let fixture: ComponentFixture<CollectionFilterValueParityHost>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(CollectionFilterValueParityHost);
     await fixture.whenStable();
@@ -194,7 +203,15 @@ describe('CollectionFilterSelect / CollectionFilterMultiSelect / CollectionFilte
   let fixture: ComponentFixture<CollectionFilterValueParityHost>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(CollectionFilterValueParityHost);
     await fixture.whenStable();

@@ -1,27 +1,30 @@
-<hlm-dialog
+<hlm-sheet
+  [side]="side()"
   [state]="dialogState()"
   [disableClose]="pending()"
   (stateChanged)="onStateChanged($event)"
 >
-  <hlm-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg"
+  <hlm-sheet-content
+    class="w-full! overflow-y-auto overscroll-contain mobile-ui:max-h-[85svh] mobile-ui:pb-[env(safe-area-inset-bottom)] desktop-ui:w-[540px]! desktop-ui:max-w-[100vw]!"
+    [showCloseButton]="!pending()"
     data-testid="maintenance-campaign-dialog"
-    *hlmDialogPortal
+    *hlmSheetPortal
   >
-    <hlm-dialog-header>
-      <h3 hlmDialogTitle i18n="@@maintenance.campaignDialog.title">Generate inspection campaign</h3>
-      <p hlmDialogDescription i18n="@@maintenance.campaignDialog.description">
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@maintenance.campaignDialog.title">Generate inspection campaign</h3>
+      <p hlmSheetDescription i18n="@@maintenance.campaignDialog.description">
         Creates an intervention covering every schedule currently due, optionally narrowed to one
         facility or equipment type.
       </p>
-    </hlm-dialog-header>
+    </hlm-sheet-header>
 
     <app-maintenance-campaign-form
+      class="px-4 pb-4"
       [pending]="pending()"
       [serverError]="serverError()"
       [facilityOptions]="facilityOptions()"
       (submitted)="submitted.emit($event)"
       (cancelled)="visibleChange.emit(false)"
     />
-  </hlm-dialog-content>
-</hlm-dialog>
+  </hlm-sheet-content>
+</hlm-sheet>

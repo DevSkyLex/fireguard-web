@@ -1,25 +1,28 @@
 <section class="flex min-w-0 flex-col gap-4" aria-labelledby="intervention-readiness-title">
-  <div class="min-w-0">
+  <div class="flex flex-col gap-1">
     <h2
       id="intervention-readiness-title"
-      class="text-xl font-semibold tracking-tight"
+      class="text-lg font-semibold tracking-tight"
       i18n="@@intervention.checklist.readyToPlan"
     >
       Ready to plan
     </h2>
-    <p class="mt-1 text-sm text-muted-foreground" i18n="@@intervention.checklist.description">
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.checklist.description">
       Review the preparation for this intervention before planning it.
     </p>
   </div>
 
-  <div hlmItemGroup class="grid gap-2 sm:grid-cols-2">
+  <div
+    hlmItemGroup
+    class="grid gap-2 mobile-ui:grid-cols-1 mobile-ui:gap-0 mobile-ui:border-y mobile-ui:border-border desktop-ui:sm:grid-cols-2"
+  >
     @for (item of items(); track item.id) {
       <button
         hlmItem
         type="button"
         variant="outline"
         size="sm"
-        class="min-h-12 text-start hover:bg-muted/50 disabled:cursor-default"
+        class="min-h-12 text-start hover:bg-muted/50 disabled:cursor-default mobile-ui:min-h-11 mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:px-0"
         data-testid="intervention-getting-started-item"
         [disabled]="item.done"
         [attr.aria-current]="item.id === nextItemId() ? 'step' : null"
@@ -43,6 +46,9 @@
           </hlm-item-actions>
         }
       </button>
+      @if (!$last) {
+        <hlm-item-separator class="desktop-ui:hidden" />
+      }
     }
   </div>
 </section>

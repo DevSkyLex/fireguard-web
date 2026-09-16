@@ -1,0 +1,43 @@
+<nav
+  id="organization-mobile-navigation"
+  aria-label="Main navigation"
+  i18n-aria-label="@@org.mobileNav.label"
+>
+  @if (navigation().organizationId === null) {
+    <p class="sr-only" i18n="@@org.mobileNav.noOrganization">
+      Choose an organization to open your workspace.
+    </p>
+  }
+  <ul class="mx-auto flex max-w-2xl items-stretch px-1">
+    @for (link of navigation().primary; track link.id) {
+      <li class="flex min-w-11 flex-auto">
+        <a
+          hlmBtn
+          variant="ghost"
+          [routerLink]="link.route"
+          [queryParams]="link.queryParams"
+          [attr.aria-current]="activeDestination() === link.id ? 'page' : null"
+          [attr.data-destination]="link.id"
+          class="group relative h-auto min-h-16 w-full min-w-0 flex-col gap-0.5 px-0.5 whitespace-normal"
+        >
+          @if (activeDestination() === link.id) {
+            <span
+              aria-hidden="true"
+              class="pointer-events-none absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary"
+              data-testid="mobile-nav-active-indicator"
+            ></span>
+          }
+          <span
+            class="flex h-7 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground group-aria-[current=page]:text-primary"
+          >
+            <ng-icon [name]="link.icon" size="20" aria-hidden="true" />
+          </span>
+          <span
+            class="block min-h-8 w-full text-center text-xs leading-4 wrap-anywhere whitespace-normal text-muted-foreground group-aria-[current=page]:font-semibold group-aria-[current=page]:text-foreground"
+            >{{ link.label }}</span
+          >
+        </a>
+      </li>
+    }
+  </ul>
+</nav>

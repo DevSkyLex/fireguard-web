@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../../tsconfig.spec.json",
+  "include": [
+    "../../../../**/*.d.ts",
+    "../**/*.spec.ts",
+    "../../../shared/breakpoint/**/*.spec.ts",
+    "../../../shared/sheet-side/**/*.spec.ts"
+  ]
+}

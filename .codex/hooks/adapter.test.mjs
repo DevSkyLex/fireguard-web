@@ -64,11 +64,34 @@ test('checks later files in a patch', () =>
 test('rejects traversal beyond the checkout', () => check('*** Add File: ../outside.md\n+no'));
 test('rejects wildcard application barrels', () =>
   check("*** Add File: src/app/shared/example/index.ts\n+export * from './example';"));
-test('keeps the documented vendored helm barrel exception', () =>
-  check(
-    "*** Add File: src/app/shared/ui/example/src/index.ts\n+export * from './lib/example';",
-    0,
-  ));
+test('protects vendored helm even though its barrels use upstream conventions', () =>
+  check("*** Add File: src/app/shared/ui/example/src/index.ts\n+export * from './lib/example';"));
+
+for (const file of [
+  'src/app/shared/ui/button/src/lib/hlm-button.ts',
+  '.agents/skills/spartan/rules/styling.md',
+  '.agents/skills/impeccable/SKILL.md',
+  '.agents/skills/ui-ux-pro-max/SKILL.md',
+  '.codex/agents/impeccable_documenter.toml',
+]) {
+  test(`rejects changes and deletions of immutable ${file}`, () => {
+    check(`*** Update File: ${file}\n@@\n-old\n+new`);
+    check(`*** Delete File: ${file}`);
+    check(`*** Update File: docs/example.md\n*** Move to: ${file}\n@@\n-old\n+new`);
+    check(`*** Update File: ${file}\n*** Move to: docs/example.md\n@@\n-old\n+new`);
+  });
+  test(`post hook leaves immutable ${file} unchanged`, () => {
+    const before = readFileSync(path.join(root, file));
+    assert.equal(
+      invoke('apply_patch', patch(`*** Update File: ${file}\n@@\n-old\n+new`), 'post').status,
+      0,
+    );
+    assert.deepEqual(readFileSync(path.join(root, file)), before);
+  });
+}
+
+test('allows focused FireGuard skill maintenance', () =>
+  check('*** Update File: .agents/skills/fg-web-spartan/SKILL.md\n@@\n-old\n+new', 0));
 test('rejects component selectors in theme CSS', () =>
   check('*** Update File: src/styles.css\n@@\n+.example { color: red; }'));
 test('rejects runtime services in models', () =>

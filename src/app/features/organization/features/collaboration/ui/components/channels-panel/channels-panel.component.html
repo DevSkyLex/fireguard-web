@@ -7,7 +7,7 @@
     [routerLink]="[channelsRouteBase(), channel.id]"
     [attr.aria-current]="active.isActive ? 'page' : null"
     [attr.title]="channel.name"
-    class="h-7 min-h-7 min-w-0 flex-1 flex-nowrap gap-2 rounded-md border-0 px-2 py-1 text-muted-foreground hover:text-foreground max-lg:h-11 max-lg:min-h-11 [a]:hover:bg-sidebar-accent"
+    class="h-7 min-h-7 min-w-0 flex-1 flex-nowrap gap-2 rounded-md border-0 px-2 py-1 text-muted-foreground hover:text-foreground mobile-ui:h-11 mobile-ui:min-h-11 [a]:hover:bg-sidebar-accent"
     data-testid="channels-row"
   >
     <ng-icon name="lucideHash" class="shrink-0 text-sm text-muted-foreground" aria-hidden="true" />
@@ -31,27 +31,31 @@
 </ng-template>
 
 <div class="flex min-h-0 flex-1 flex-col" data-testid="channels-list">
-  <div class="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-3">
-    <h2 class="text-base font-semibold" i18n="@@channels.page.title">Channels</h2>
+  <div
+    class="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-3 mobile-ui:justify-end"
+    [class.mobile-ui:hidden]="!canCreate()"
+  >
+    <h2 class="text-base font-semibold mobile-ui:hidden" i18n="@@channels.page.title">Channels</h2>
     @if (canCreate()) {
       <button
         hlmBtn
         type="button"
         variant="ghost"
         size="icon-sm"
-        class="max-lg:size-11"
+        class="mobile-ui:min-h-11 mobile-ui:w-auto mobile-ui:gap-2 mobile-ui:px-3"
         data-testid="channels-new"
         i18n-aria-label="@@channels.page.new"
         aria-label="New channel"
         (click)="createDialogVisible.set(true)"
       >
         <ng-icon name="lucidePlus" aria-hidden="true" />
+        <span class="hidden mobile-ui:inline" i18n="@@channels.page.new">New channel</span>
       </button>
     }
   </div>
 
   <div class="shrink-0 border-b px-3 py-3">
-    <hlm-input-group class="h-9 max-lg:h-11">
+    <hlm-input-group class="h-9 mobile-ui:h-11">
       <hlm-input-group-addon
         ><ng-icon name="lucideSearch" aria-hidden="true"
       /></hlm-input-group-addon>
@@ -59,7 +63,7 @@
         #search
         hlmInputGroupInput
         type="search"
-        class="max-lg:h-11"
+        class="mobile-ui:h-11 mobile-ui:min-h-11"
         data-testid="channels-search"
         placeholder="Search channels..."
         i18n-placeholder="@@channels.page.searchPlaceholder"
@@ -76,7 +80,7 @@
     [attr.aria-busy]="channels.isReorganizing()"
     [cdkDropListSortingDisabled]="true"
     (cdkDropListDropped)="dropChannel($event)"
-    class="min-h-0 flex-1 overflow-y-auto px-2 pb-3"
+    class="min-h-0 flex-1 overflow-y-auto px-2 py-3"
     aria-label="Channels"
     i18n-aria-label="@@channels.page.title"
   >
@@ -111,7 +115,7 @@
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                class="shrink-0 text-muted-foreground opacity-0 group-hover/channel:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-lg:size-11 max-lg:opacity-100"
+                class="shrink-0 text-muted-foreground opacity-0 group-hover/channel:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 mobile-ui:size-11 mobile-ui:opacity-100"
                 [attr.aria-label]="moveLabel(channel)"
                 [hlmDropdownMenuTrigger]="moveMenu"
                 align="end"
@@ -123,6 +127,7 @@
               <ng-template #moveMenu>
                 <hlm-dropdown-menu class="max-h-72 w-56 overflow-y-auto">
                   <button
+                    class="mobile-ui:min-h-11"
                     hlmDropdownMenuItem
                     [disabled]="!canMoveTo(channel.id, null)"
                     (click)="moveChannel(channel.id, null)"
@@ -132,7 +137,11 @@
                   </button>
                   @for (destination of channels.channelEntities(); track destination.id) {
                     @if (canMoveTo(channel.id, destination.id)) {
-                      <button hlmDropdownMenuItem (click)="moveChannel(channel.id, destination.id)">
+                      <button
+                        class="mobile-ui:min-h-11"
+                        hlmDropdownMenuItem
+                        (click)="moveChannel(channel.id, destination.id)"
+                      >
                         <ng-icon name="lucideHash" class="text-sm" aria-hidden="true" />
                         <span class="truncate">{{ destination.name }}</span>
                       </button>
@@ -147,7 +156,7 @@
                 hlmCollapsibleTrigger
                 variant="ghost"
                 size="icon-sm"
-                class="group shrink-0 text-muted-foreground aria-expanded:bg-transparent max-lg:size-11"
+                class="group shrink-0 text-muted-foreground aria-expanded:bg-transparent mobile-ui:size-11"
                 data-testid="channels-children-toggle"
                 [attr.aria-label]="subchannelsLabel(channel)"
               >
@@ -175,7 +184,7 @@
         i18n-aria-label="@@channels.page.loadingAria"
       >
         @for (item of [0, 1, 2, 3, 4]; track item) {
-          <div class="flex h-7 items-center gap-2 px-2 max-lg:h-11">
+          <div class="flex h-7 items-center gap-2 px-2 mobile-ui:h-11">
             <hlm-skeleton class="size-4" /><hlm-skeleton class="h-3 w-32" />
           </div>
         }
@@ -193,7 +202,7 @@
           <button
             hlmBtn
             type="button"
-            class="max-lg:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="channels-retry"
             (click)="reload()"
           >
@@ -217,7 +226,7 @@
             <button
               hlmBtn
               type="button"
-              class="max-lg:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="channels-empty-create"
               (click)="createDialogVisible.set(true)"
             >
@@ -253,7 +262,7 @@
               hlmCollapsibleTrigger
               variant="ghost"
               size="sm"
-              class="group mb-1 h-8 w-full justify-start gap-1 px-1 text-xs font-medium text-muted-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground max-lg:h-11"
+              class="group mb-1 h-8 w-full justify-start gap-1 px-1 text-xs font-medium text-muted-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground mobile-ui:h-11 mobile-ui:min-h-11"
               data-testid="channels-favorites-toggle"
             >
               <ng-icon
@@ -276,7 +285,7 @@
 
       <section class="block">
         <h3
-          class="mb-1 flex h-8 items-center px-2 text-xs font-medium text-muted-foreground max-lg:h-11"
+          class="mb-1 flex h-8 items-center px-2 text-xs font-medium text-muted-foreground mobile-ui:h-11"
         >
           {{ allChannelsHeading() }}
         </h3>

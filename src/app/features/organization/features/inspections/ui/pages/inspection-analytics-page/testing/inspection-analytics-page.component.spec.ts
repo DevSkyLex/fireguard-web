@@ -1,7 +1,11 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { NonConformityStatisticsOutput } from '@features/organization/features/inspections/models';
 import { NonConformityStatisticsStore } from '@features/organization/features/inspections/state';
@@ -56,6 +60,14 @@ describe('InspectionAnalyticsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal<'desktop'>('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          } satisfies InteractionCapabilitiesPort,
+        },
         provideRouter([]),
         NonConformityStatisticsStore,
         { provide: InspectionService, useValue: service },

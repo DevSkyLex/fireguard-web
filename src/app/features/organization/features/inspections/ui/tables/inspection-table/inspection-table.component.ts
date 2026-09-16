@@ -16,6 +16,7 @@ import type {
 } from '@features/organization/features/inspections/models';
 import { CollectionSurface } from '@shared/collection-surface';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 
@@ -57,6 +58,7 @@ import { InspectionStatusTag } from '../../components/inspection-status-tag';
     HlmButton,
     InspectionStatusTag,
     ...HlmTableImports,
+    ...HlmItemImports,
   ],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
   templateUrl: './inspection-table.component.html',

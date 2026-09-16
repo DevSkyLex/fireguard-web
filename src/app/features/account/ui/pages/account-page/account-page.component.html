@@ -4,37 +4,42 @@
       <hlm-paginated-tabs-list
         variant="line"
         class="w-full"
-        tabListClass="justify-start"
+        tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+        paginationButtonClass="mobile-ui:size-11 mobile-ui:shrink-0"
         data-testid="account-tabs-list"
         aria-label="Account settings sections"
         i18n-aria-label="@@account.page.navigationAria"
       >
-        <button hlmTabsTrigger="profile" class="max-sm:min-h-11" data-testid="account-tab-profile">
-          <ng-icon name="lucideUserRound" aria-hidden="true" />
+        <button
+          hlmTabsTrigger="profile"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
+          data-testid="account-tab-profile"
+        >
+          <ng-icon name="lucideUserRound" class="mobile-ui:hidden" aria-hidden="true" />
           <span i18n="@@account.page.profileNav">Profile</span>
         </button>
         <button
           hlmTabsTrigger="security"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
           data-testid="account-tab-security"
         >
-          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+          <ng-icon name="lucideShieldCheck" class="mobile-ui:hidden" aria-hidden="true" />
           <span i18n="@@account.page.securityNav">Security</span>
         </button>
         <button
           hlmTabsTrigger="organizations"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
           data-testid="account-tab-organizations"
         >
-          <ng-icon name="lucideBuilding2" aria-hidden="true" />
+          <ng-icon name="lucideBuilding2" class="mobile-ui:hidden" aria-hidden="true" />
           <span i18n="@@account.page.organizationsNav">Organizations</span>
         </button>
         <button
           hlmTabsTrigger="notifications"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
           data-testid="account-tab-notifications"
         >
-          <ng-icon name="lucideBell" aria-hidden="true" />
+          <ng-icon name="lucideBell" class="mobile-ui:hidden" aria-hidden="true" />
           <span i18n="@@account.page.notificationsNav">Notifications</span>
         </button>
       </hlm-paginated-tabs-list>

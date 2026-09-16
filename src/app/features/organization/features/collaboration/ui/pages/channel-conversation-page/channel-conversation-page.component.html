@@ -1,145 +1,272 @@
 <header
-  class="flex h-12 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-4"
+  class="flex h-12 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-4 mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:justify-end"
   data-testid="channel-conversation-header"
 >
-  <a
-    hlmBtn
-    variant="ghost"
-    size="icon"
-    class="size-11 shrink-0 lg:hidden"
-    data-testid="channel-conversation-back"
-    i18n-aria-label="@@channels.room.back"
-    aria-label="Back to channels"
-    [routerLink]="['..']"
-  >
-    <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
-  </a>
+  @if (!isMobileInteractionMode()) {
+    <a
+      hlmBtn
+      variant="ghost"
+      size="icon"
+      class="shrink-0 mobile-ui:size-11 desktop-ui:lg:hidden"
+      data-testid="channel-conversation-back"
+      i18n-aria-label="@@channels.room.back"
+      aria-label="Back to channels"
+      [routerLink]="['..']"
+    >
+      <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
+    </a>
 
-  <span
-    class="min-w-0 flex-1 truncate text-sm font-semibold text-foreground"
-    data-testid="channel-conversation-name"
-    [attr.title]="channelName()"
-    >{{ channelName() }}</span
-  >
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="sm"
-    class="h-9 shrink-0 gap-1.5 px-2 text-muted-foreground max-lg:h-11"
-    data-testid="channel-conversation-participants-count"
-    [attr.aria-label]="participantsButtonLabel()"
-    (click)="participantsSheetVisible.set(true)"
-  >
-    <span hlmAvatarGroup aria-hidden="true">
-      @for (participant of participantAvatars(); track participant.memberId) {
-        <hlm-avatar
-          size="sm"
-          [attr.title]="participant.displayName"
-          data-testid="channel-header-avatar"
-        >
-          @if (participant.avatarUrl; as url) {
-            <img hlmAvatarImage [src]="url" alt="" />
-          }
-          <span hlmAvatarFallback class="text-[10px]">{{ participant.initials }}</span>
-        </hlm-avatar>
-      } @empty {
-        <ng-icon name="lucideUsers" class="text-base" />
+    <span
+      class="min-w-0 flex-1 truncate text-sm font-semibold text-foreground mobile-ui:py-2 mobile-ui:text-base"
+      data-testid="channel-conversation-name"
+      [attr.title]="channelName()"
+      >{{ channelName() }}</span
+    >
+  }
+  @if (isMobileInteractionMode()) {
+    <hlm-drawer (closed)="onMobileActionsClosed($event)">
+      <button
+        hlmBtn
+        hlmDrawerTrigger
+        type="button"
+        variant="ghost"
+        class="min-h-11 shrink-0"
+        id="channel-conversation-actions-trigger"
+        data-testid="channel-conversation-actions"
+        i18n-aria-label="@@channels.room.actionsAria"
+        aria-label="Channel actions"
+      >
+        <span i18n="@@common.actions">Actions</span>
+        <ng-icon name="lucideEllipsisVertical" aria-hidden="true" />
+      </button>
+      <hlm-drawer-content *hlmDrawerPortal="let drawer" class="pb-[env(safe-area-inset-bottom)]">
+        <hlm-drawer-header>
+          <div class="text-start">
+            <h2 hlmDrawerTitle i18n="@@channels.room.actionsAria">Channel actions</h2>
+            <p hlmDrawerDescription class="break-words">{{ channelName() }}</p>
+          </div>
+        </hlm-drawer-header>
+        <div class="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
+          <hlm-item-group>
+            <button
+              hlmItem
+              type="button"
+              class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-accent focus-visible:bg-accent"
+              data-testid="channel-conversation-info-action"
+              (click)="drawer.close('info')"
+            >
+              <span hlmItemMedia variant="icon">
+                <ng-icon name="lucideInfo" aria-hidden="true" />
+              </span>
+              <span hlmItemContent
+                ><span hlmItemTitle i18n="@@channels.room.info">Channel info</span></span
+              >
+            </button>
+            <button
+              hlmItem
+              type="button"
+              class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-accent focus-visible:bg-accent"
+              data-testid="channel-conversation-participants-action"
+              (click)="drawer.close('participants')"
+            >
+              <span hlmItemMedia variant="icon">
+                <ng-icon name="lucideUsers" aria-hidden="true" />
+              </span>
+              <span hlmItemContent
+                ><span hlmItemTitle i18n="@@channels.room.manageParticipants"
+                  >Participants</span
+                ></span
+              >
+              <span hlmItemActions class="text-sm text-muted-foreground tabular-nums">{{
+                participantCount()
+              }}</span>
+            </button>
+            <button
+              hlmItem
+              type="button"
+              class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-accent focus-visible:bg-accent disabled:pointer-events-none disabled:opacity-50"
+              data-testid="channel-conversation-favorite"
+              [attr.aria-pressed]="isFavorite()"
+              [attr.aria-busy]="favoritePending() ? 'true' : null"
+              [disabled]="favoritePending()"
+              (click)="toggleFavorite() && drawer.close()"
+            >
+              <span hlmItemMedia variant="icon">
+                @if (favoritePending()) {
+                  <hlm-spinner aria-hidden="true" />
+                } @else {
+                  <ng-icon name="lucideStar" aria-hidden="true" />
+                }
+              </span>
+              <span hlmItemContent
+                ><span hlmItemTitle>{{
+                  isFavorite() ? favoriteOnLabel : favoriteOffLabel
+                }}</span></span
+              >
+            </button>
+            @if (canManage()) {
+              <button
+                hlmItem
+                type="button"
+                class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-accent focus-visible:bg-accent"
+                data-testid="channel-conversation-edit-action"
+                (click)="drawer.close('edit')"
+              >
+                <span hlmItemMedia variant="icon">
+                  <ng-icon name="lucidePencilLine" aria-hidden="true" />
+                </span>
+                <span hlmItemContent
+                  ><span hlmItemTitle i18n="@@channels.room.rename">Rename or move</span></span
+                >
+              </button>
+              <hlm-item-separator />
+              <button
+                hlmItem
+                type="button"
+                class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-accent focus-visible:bg-accent"
+                data-testid="channel-conversation-delete-action"
+                (click)="drawer.close('delete')"
+              >
+                <span hlmItemMedia variant="icon">
+                  <ng-icon name="lucideTrash2" class="text-destructive" aria-hidden="true" />
+                </span>
+                <span hlmItemContent
+                  ><span hlmItemTitle class="text-destructive" i18n="@@channels.room.delete"
+                    >Delete channel</span
+                  ></span
+                >
+              </button>
+            }
+          </hlm-item-group>
+        </div>
+      </hlm-drawer-content>
+    </hlm-drawer>
+  } @else {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="sm"
+      class="h-9 shrink-0 gap-1.5 px-2 text-muted-foreground mobile-ui:h-11"
+      data-testid="channel-conversation-participants-count"
+      [attr.aria-label]="participantsButtonLabel()"
+      (click)="participantsSheetVisible.set(true)"
+    >
+      <span hlmAvatarGroup aria-hidden="true">
+        @for (participant of participantAvatars(); track participant.memberId) {
+          <hlm-avatar
+            size="sm"
+            [attr.title]="participant.displayName"
+            data-testid="channel-header-avatar"
+          >
+            @if (participant.avatarUrl; as url) {
+              <img hlmAvatarImage [src]="url" alt="" />
+            }
+            <span hlmAvatarFallback class="text-[10px]">{{ participant.initials }}</span>
+          </hlm-avatar>
+        } @empty {
+          <ng-icon name="lucideUsers" class="text-base" />
+        }
+      </span>
+      @if (participantCount() > 3) {
+        <span class="text-xs tabular-nums" aria-hidden="true">+{{ participantCount() - 3 }}</span>
       }
-    </span>
-    @if (participantCount() > 3) {
-      <span class="text-xs tabular-nums" aria-hidden="true">+{{ participantCount() - 3 }}</span>
-    }
-  </button>
+    </button>
 
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="icon-sm"
-    class="shrink-0 max-lg:size-11"
-    data-testid="channel-conversation-favorite"
-    [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
-    [attr.aria-pressed]="isFavorite()"
-    [disabled]="favoritePending()"
-    (click)="toggleFavorite()"
-  >
-    <ng-icon
-      name="lucideStar"
-      class="text-base"
-      [class.text-primary]="isFavorite()"
-      aria-hidden="true"
-    />
-  </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      class="shrink-0 mobile-ui:size-11"
+      data-testid="channel-conversation-favorite"
+      [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
+      [attr.aria-pressed]="isFavorite()"
+      [attr.aria-busy]="favoritePending() ? 'true' : null"
+      [disabled]="favoritePending()"
+      (click)="toggleFavorite()"
+    >
+      @if (favoritePending()) {
+        <hlm-spinner aria-hidden="true" />
+      } @else {
+        <ng-icon
+          name="lucideStar"
+          class="text-base"
+          [class.text-primary]="isFavorite()"
+          aria-hidden="true"
+        />
+      }
+    </button>
 
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="icon-sm"
-    class="shrink-0 max-lg:size-11"
-    id="channel-conversation-actions-trigger"
-    data-testid="channel-conversation-actions"
-    [hlmDropdownMenuTrigger]="actionsMenu"
-    align="end"
-    i18n-aria-label="@@channels.room.actionsAria"
-    aria-label="Channel actions"
-  >
-    <ng-icon name="lucideEllipsisVertical" class="text-base" aria-hidden="true" />
-  </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      class="shrink-0 mobile-ui:size-11"
+      id="channel-conversation-actions-trigger"
+      data-testid="channel-conversation-actions"
+      [hlmDropdownMenuTrigger]="actionsMenu"
+      align="end"
+      i18n-aria-label="@@channels.room.actionsAria"
+      aria-label="Channel actions"
+    >
+      <ng-icon name="lucideEllipsisVertical" class="text-base" aria-hidden="true" />
+    </button>
 
-  <ng-template #actionsMenu>
-    <hlm-dropdown-menu class="min-w-52">
-      <hlm-dropdown-menu-group>
-        <button
-          hlmDropdownMenuItem
-          class="gap-2"
-          data-testid="channel-conversation-info-action"
-          (click)="infoSheetVisible.set(true)"
-        >
-          <ng-icon name="lucideInfo" class="text-sm" aria-hidden="true" />
-          <span i18n="@@channels.room.info">Channel info</span>
-        </button>
-
-        <button
-          hlmDropdownMenuItem
-          class="gap-2"
-          data-testid="channel-conversation-participants-action"
-          (click)="participantsSheetVisible.set(true)"
-        >
-          <ng-icon name="lucideUsers" class="text-sm" aria-hidden="true" />
-          <span i18n="@@channels.room.manageParticipants">Participants</span>
-        </button>
-
-        @if (canManage()) {
+    <ng-template #actionsMenu>
+      <hlm-dropdown-menu class="min-w-52">
+        <hlm-dropdown-menu-group>
           <button
             hlmDropdownMenuItem
             class="gap-2"
-            data-testid="channel-conversation-edit-action"
-            (click)="editDialogVisible.set(true)"
+            data-testid="channel-conversation-info-action"
+            (click)="infoSheetVisible.set(true)"
           >
-            <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
-            <span i18n="@@channels.room.rename">Rename or move</span>
+            <ng-icon name="lucideInfo" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.room.info">Channel info</span>
+          </button>
+
+          <button
+            hlmDropdownMenuItem
+            class="gap-2"
+            data-testid="channel-conversation-participants-action"
+            (click)="participantsSheetVisible.set(true)"
+          >
+            <ng-icon name="lucideUsers" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.room.manageParticipants">Participants</span>
+          </button>
+
+          @if (canManage()) {
+            <button
+              hlmDropdownMenuItem
+              class="gap-2"
+              data-testid="channel-conversation-edit-action"
+              (click)="editDialogVisible.set(true)"
+            >
+              <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
+              <span i18n="@@channels.room.rename">Rename or move</span>
+            </button>
+          }
+        </hlm-dropdown-menu-group>
+
+        @if (canManage()) {
+          <hlm-dropdown-menu-separator />
+
+          <button
+            hlmDropdownMenuItem
+            variant="destructive"
+            class="gap-2"
+            data-testid="channel-conversation-delete-action"
+            (click)="requestDelete()"
+          >
+            <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
+            <span i18n="@@channels.room.delete">Delete channel</span>
           </button>
         }
-      </hlm-dropdown-menu-group>
-
-      @if (canManage()) {
-        <hlm-dropdown-menu-separator />
-
-        <button
-          hlmDropdownMenuItem
-          variant="destructive"
-          class="gap-2"
-          data-testid="channel-conversation-delete-action"
-          (click)="requestDelete()"
-        >
-          <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
-          <span i18n="@@channels.room.delete">Delete channel</span>
-        </button>
-      }
-    </hlm-dropdown-menu>
-  </ng-template>
+      </hlm-dropdown-menu>
+    </ng-template>
+  }
 </header>
 
 <app-message-thread

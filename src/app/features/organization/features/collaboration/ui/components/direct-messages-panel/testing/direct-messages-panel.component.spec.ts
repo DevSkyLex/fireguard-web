@@ -2,6 +2,10 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import {
   DirectConversationsStore,
@@ -78,6 +82,14 @@ describe('DirectMessagesPanel', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal<'desktop'>('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          } satisfies InteractionCapabilitiesPort,
+        },
         provideRouter([
           {
             path: 'organizations/:organizationId/messages',

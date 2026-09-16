@@ -3,6 +3,7 @@ import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
 import type {
   InterventionAttachmentOutput,
+  InterventionCollectionsChange,
   InterventionStatus,
 } from '@features/organization/features/interventions/models';
 
@@ -31,6 +32,8 @@ import type {
 export const interventionWorkspaceStoreEvents = eventGroup({
   source: 'Intervention Workspace Store',
   events: {
+    mutationSucceeded: type<InterventionCollectionsChange>(),
+    reloadSucceeded: type<{ readonly interventionId: string }>(),
     commentAddFailed: type<StoreFailureEventPayload>(),
     rejectChangeFailed: type<StoreFailureEventPayload>(),
     deleteSucceeded: type<FeedbackEventPayload>(),

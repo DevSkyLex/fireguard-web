@@ -14,8 +14,6 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePencil } from '@ng-icons/lucide';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -86,10 +84,9 @@ let instanceCount: number = 0;
  */
 @Component({
   selector: 'app-inplace-field',
-  imports: [NgIcon, ...HlmButtonImports, ...HlmSpinnerImports],
+  imports: [...HlmButtonImports, ...HlmSpinnerImports],
   templateUrl: './inplace-field.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideIcons({ lucidePencil })],
 })
 export class InplaceField {
   //#region Inputs
@@ -228,6 +225,24 @@ export class InplaceField {
   public readonly orientation: InputSignal<'horizontal' | 'vertical'> = input<
     'horizontal' | 'vertical'
   >('horizontal');
+
+  /**
+   * Property flush
+   * @readonly
+   *
+   * @description
+   * Removes the resting trigger inset when the host already provides the
+   * property's visual grouping. The editor keeps its own padding so controls
+   * retain a clear focus surface while they are open.
+   *
+   * @access public
+   * @since 1.2.0
+   *
+   * @type {InputSignalWithTransform<boolean, unknown>}
+   */
+  public readonly flush: InputSignalWithTransform<boolean, unknown> = input(false, {
+    transform: booleanAttribute,
+  });
   //#endregion
 
   //#region Outputs
@@ -300,6 +315,18 @@ export class InplaceField {
    */
   protected readonly labelLayout: Signal<string> = computed<string>(() =>
     this.orientation() === 'vertical' ? 'truncate' : 'w-24 shrink-0',
+  );
+
+  /**
+   * Property triggerPadding
+   * @readonly
+   * @description The resting trigger's inset, delegated to the host when it owns the framing.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<string>}
+   */
+  protected readonly triggerPadding: Signal<string> = computed<string>(() =>
+    this.flush() ? 'px-0 py-0' : 'px-1.5 py-0.5',
   );
 
   /**

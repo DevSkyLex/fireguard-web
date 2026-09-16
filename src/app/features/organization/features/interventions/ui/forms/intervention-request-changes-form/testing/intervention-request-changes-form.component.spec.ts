@@ -119,6 +119,12 @@ describe('InterventionRequestChangesForm', () => {
     expect(buttons[1]).toBe(submitButton());
   });
 
+  it('should reserve a readable multiline area for the review note', () => {
+    expect(note().rows).toBe(5);
+    expect(note().classList.contains('min-h-28')).toBe(true);
+    expect(note().classList.contains('resize-y')).toBe(true);
+  });
+
   it('should mark the note field aria-invalid once submission touches it empty', async () => {
     await submit();
 

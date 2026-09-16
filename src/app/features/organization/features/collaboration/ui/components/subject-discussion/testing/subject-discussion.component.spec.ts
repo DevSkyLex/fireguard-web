@@ -3,6 +3,10 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
@@ -62,6 +66,14 @@ describe('SubjectDiscussion', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal<'desktop'>('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          } satisfies InteractionCapabilitiesPort,
+        },
         { provide: ConversationService, useValue: { openSubjectThread } },
         { provide: ConnectivityService, useValue: { isOffline } },
         {

@@ -1,24 +1,63 @@
-<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-  @if (loading()) {
-    <span
-      class="sr-only"
-      role="status"
-      data-testid="equipment-kpi-strip-loading"
-      i18n="@@equipment.kpi.loadingAria"
-      >Loading key figures</span
+<hlm-collapsible
+  class="block"
+  [expanded]="!isMobileInteractionMode() || statisticsExpanded()"
+  (expandedChange)="statisticsExpanded.set($event)"
+>
+  <button
+    hlmBtn
+    hlmCollapsibleTrigger
+    type="button"
+    variant="ghost"
+    class="hidden w-full justify-between mobile-ui:flex mobile-ui:min-h-11"
+    data-testid="equipment-kpi-statistics-toggle"
+  >
+    <span i18n="@@equipment.kpi.statistics">Statistics</span>
+    <ng-icon
+      name="lucideChevronDown"
+      aria-hidden="true"
+      [class.rotate-180]="statisticsExpanded()"
+    />
+  </button>
+  <div hlmCollapsibleContent data-testid="equipment-kpi-statistics-content">
+    <div
+      class="grid grid-cols-2 gap-4 lg:grid-cols-4 mobile-ui:grid-cols-1 mobile-ui:gap-0 mobile-ui:divide-y mobile-ui:divide-border"
     >
-  }
-  @for (tile of tiles(); track tile.id) {
-    <div class="h-full" [attr.data-testid]="'equipment-kpi-strip-' + tile.id">
-      <app-stat-tile
-        class="block h-full"
-        [label]="tile.label"
-        [value]="tile.value"
-        [icon]="tile.icon"
-        [tone]="tile.tone"
-        [caption]="tile.caption"
-        [loading]="loading()"
-      />
+      @if (loading()) {
+        <span
+          class="sr-only"
+          role="status"
+          data-testid="equipment-kpi-strip-loading"
+          i18n="@@equipment.kpi.loadingAria"
+          >Loading key figures</span
+        >
+      }
+      @for (tile of tiles(); track tile.id) {
+        <div class="h-full mobile-ui:py-3" [attr.data-testid]="'equipment-kpi-strip-' + tile.id">
+          @if (isMobileInteractionMode()) {
+            <dl class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1">
+              <dt class="text-sm font-medium break-words">{{ tile.label }}</dt>
+              <dd class="text-base font-semibold tabular-nums">
+                @if (loading()) {
+                  <hlm-skeleton class="h-6 w-12" />
+                } @else {
+                  {{ tile.value }}
+                }
+              </dd>
+              <dd class="col-span-2 text-sm text-muted-foreground">{{ tile.caption }}</dd>
+            </dl>
+          } @else {
+            <app-stat-tile
+              class="block h-full"
+              [label]="tile.label"
+              [value]="tile.value"
+              [icon]="tile.icon"
+              [tone]="tile.tone"
+              [caption]="tile.caption"
+              [loading]="loading()"
+            />
+          }
+        </div>
+      }
     </div>
-  }
-</div>
+  </div>
+</hlm-collapsible>

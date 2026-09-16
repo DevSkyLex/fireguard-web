@@ -4,5 +4,5 @@
     "useDefineForClassFields": false,
     "types": ["node"]
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "../playwright.ssr.config.ts"]
 }

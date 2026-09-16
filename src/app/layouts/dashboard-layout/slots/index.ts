@@ -3,5 +3,6 @@ export { DASHBOARD_SIDEBAR_NAV_SLOT } from './sidebar-nav.slot';
 export { DASHBOARD_SIDEBAR_FOOTER_SLOT } from './sidebar-footer.slot';
 export { DASHBOARD_HEADER_SLOT } from './header.slot';
 export { DASHBOARD_HEADER_ACTIONS_SLOT } from './header-actions.slot';
+export { DASHBOARD_MOBILE_NAVIGATION_SLOT } from './mobile-navigation.slot';
 export { DASHBOARD_PANEL_SLOT } from './panel.slot';
 export { DASHBOARD_SIDEBAR_EXTENSION_SLOT } from './sidebar-extension.slot';

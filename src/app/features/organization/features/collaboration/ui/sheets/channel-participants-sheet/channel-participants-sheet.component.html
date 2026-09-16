@@ -6,7 +6,7 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="flex w-full! flex-col overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    class="flex w-full! flex-col overflow-y-auto mobile-ui:max-h-[85dvh] mobile-ui:pb-[env(safe-area-inset-bottom)] desktop-ui:sm:w-[480px]! desktop-ui:sm:max-w-none!"
     data-testid="channel-participants-sheet"
   >
     <hlm-sheet-header>
@@ -63,17 +63,23 @@
                 @if (pendingRemoval() === participant.memberId) {
                   <div class="flex shrink-0 items-center gap-1">
                     <button
+                      class="mobile-ui:min-h-11"
                       hlmBtn
                       type="button"
                       size="sm"
                       variant="destructive"
                       data-testid="channel-participant-confirm-remove"
                       [disabled]="pending()"
+                      [attr.aria-busy]="pending() ? 'true' : null"
                       (click)="confirmRemoval(participant.memberId)"
                     >
+                      @if (pending()) {
+                        <hlm-spinner aria-hidden="true" />
+                      }
                       <span i18n="@@channels.participants.confirmRemove">Confirm</span>
                     </button>
                     <button
+                      class="mobile-ui:min-h-11"
                       hlmBtn
                       type="button"
                       size="sm"
@@ -89,7 +95,7 @@
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    class="shrink-0"
+                    class="shrink-0 mobile-ui:min-h-11 mobile-ui:min-w-11"
                     data-testid="channel-participant-remove"
                     [attr.aria-label]="removeLabelFor(participant.displayName)"
                     [disabled]="pending()"
@@ -112,15 +118,17 @@
           </span>
 
           <input
+            class="mobile-ui:min-h-11"
             hlmInput
             type="search"
+            #memberSearchInput
             data-testid="channel-participants-search"
             placeholder="Search members"
             i18n-placeholder="@@messages.picker.searchPlaceholder"
             i18n-aria-label="@@messages.picker.searchLabel"
             aria-label="Search members"
             [value]="query()"
-            (input)="onQueryInput($event)"
+            (input)="onQueryInput(memberSearchInput.value)"
           />
 
           @if (matches().length === 0) {
@@ -135,8 +143,10 @@
               @for (member of matches(); track member.memberId) {
                 <li>
                   <button
+                    hlmItem
+                    size="sm"
                     type="button"
-                    class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-start transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+                    class="cursor-pointer flex-nowrap gap-2.5 text-start hover:bg-accent mobile-ui:min-h-11"
                     data-testid="channel-participant-candidate"
                     [disabled]="pending()"
                     (click)="add(member.memberId)"

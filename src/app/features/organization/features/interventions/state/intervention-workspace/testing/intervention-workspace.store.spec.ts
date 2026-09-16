@@ -74,11 +74,12 @@ describe('InterventionWorkspaceStore offline field work', () => {
   };
   let mockOffline: {
     getWorkspace: ReturnType<typeof vi.fn>;
+    listOutbox: ReturnType<typeof vi.fn>;
     saveWorkspace: ReturnType<typeof vi.fn>;
     queue: ReturnType<typeof vi.fn>;
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     mockService = {
       get: vi.fn().mockReturnValue(of(intervention)),
@@ -100,6 +101,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
     };
     mockOffline = {
       getWorkspace: vi.fn(),
+      listOutbox: vi.fn().mockResolvedValue([]),
       saveWorkspace: vi.fn().mockResolvedValue(undefined),
       queue: vi.fn().mockResolvedValue(undefined),
     };
@@ -114,6 +116,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
 
     store = TestBed.inject(InterventionWorkspaceStore);
     store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
   });
 
   afterEach(() => {
@@ -410,9 +413,11 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     listIssues: ReturnType<typeof vi.fn>;
     listActivities: ReturnType<typeof vi.fn>;
     addComment: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
   };
   let mockOffline: {
     getWorkspace: ReturnType<typeof vi.fn>;
+    listOutbox: ReturnType<typeof vi.fn>;
     saveWorkspace: ReturnType<typeof vi.fn>;
     queue: ReturnType<typeof vi.fn>;
   };
@@ -439,7 +444,7 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     createdAt: '2026-07-09T00:00:00.000Z',
   } as InterventionActivityOutput;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     mockService = {
       get: vi.fn().mockReturnValue(of(intervention)),
@@ -462,9 +467,11 @@ describe('InterventionWorkspaceStore activity timeline', () => {
         }),
       ),
       addComment: vi.fn().mockReturnValue(of(comment)),
+      update: vi.fn(),
     };
     mockOffline = {
       getWorkspace: vi.fn(),
+      listOutbox: vi.fn().mockResolvedValue([]),
       saveWorkspace: vi.fn().mockResolvedValue(undefined),
       queue: vi.fn().mockResolvedValue(undefined),
     };
@@ -578,6 +585,103 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     expect(store.activityCallState().status).toBe('error');
   });
 
+  it('invalidates activity through a typed event after a successful status transition', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const statusChanged = {
+      ...comment,
+      '@id': '/api/intervention-activities/activity-2',
+      id: 'activity-2',
+      kind: 'system',
+      event: 'status_changed',
+      actor: null,
+      body: null,
+      payload: { from: 'planned', to: 'in_progress' },
+      createdAt: '2026-07-02T00:00:00.000Z',
+    } as InterventionActivityOutput;
+
+    store.loadActivities('intervention-1');
+    mockService.update.mockReturnValue(of({ ...intervention, status: 'in_progress' }));
+    mockService.listActivities.mockReturnValue(
+      of({
+        '@id': '/api/interventions/intervention-1/activities',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [statusChanged],
+      }),
+    );
+
+    store.transition({ interventionId: 'intervention-1', status: 'in_progress' });
+
+    expect(mockService.listActivities).toHaveBeenLastCalledWith('intervention-1');
+    expect(store.activities()).toEqual([comment]);
+    expect(mockService.listActivities).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: { interventionId: 'intervention-1', source: 'remote', collections: ['activity'] },
+      }),
+    );
+  });
+
+  it('invalidates activity through a typed event after a successful planning update', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const rescheduled = {
+      ...comment,
+      '@id': '/api/intervention-activities/activity-3',
+      id: 'activity-3',
+      kind: 'system',
+      event: 'rescheduled',
+      actor: null,
+      body: null,
+      payload: {
+        from: {
+          plannedStartAt: '2026-07-03T00:00:00.000Z',
+          dueAt: '2026-07-04T00:00:00.000Z',
+        },
+        to: {
+          plannedStartAt: '2026-07-05T00:00:00.000Z',
+          dueAt: '2026-07-06T00:00:00.000Z',
+        },
+      },
+      createdAt: '2026-07-03T00:00:00.000Z',
+    } as InterventionActivityOutput;
+
+    store.loadActivities('intervention-1');
+    mockService.update.mockReturnValue(
+      of({
+        ...intervention,
+        plannedStartAt: '2026-07-05T00:00:00.000Z',
+        dueAt: '2026-07-06T00:00:00.000Z',
+      }),
+    );
+    mockService.listActivities.mockReturnValue(
+      of({
+        '@id': '/api/interventions/intervention-1/activities',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [rescheduled],
+      }),
+    );
+
+    store.updateDetails({
+      interventionId: 'intervention-1',
+      input: {
+        plannedStartAt: new Date('2026-07-05T00:00:00.000Z'),
+        dueAt: new Date('2026-07-06T00:00:00.000Z'),
+      },
+    });
+
+    expect(mockService.listActivities).toHaveBeenLastCalledWith('intervention-1');
+    expect(store.activities()).toEqual([comment]);
+    expect(mockService.listActivities).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: { interventionId: 'intervention-1', source: 'remote', collections: ['activity'] },
+      }),
+    );
+  });
+
   it('appends the returned comment to the timeline on success', () => {
     store.addComment({ interventionId: 'intervention-1', body: 'Looks good' });
 
@@ -682,7 +786,7 @@ describe('InterventionWorkspaceStore call state', () => {
     ],
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     mockService = {
       get: vi.fn().mockReturnValue(of(intervention)),
@@ -694,6 +798,14 @@ describe('InterventionWorkspaceStore call state', () => {
           '@type': 'Collection',
           totalItems: 0,
           member: [] as readonly InterventionIssueOutput[],
+        }),
+      ),
+      listActivities: vi.fn().mockReturnValue(
+        of({
+          '@id': '/api/interventions/intervention-1/activities',
+          '@type': 'Collection',
+          totalItems: 0,
+          member: [] as readonly InterventionActivityOutput[],
         }),
       ),
       update: vi.fn(),
@@ -713,6 +825,7 @@ describe('InterventionWorkspaceStore call state', () => {
           provide: InterventionOfflineService,
           useValue: {
             getWorkspace: vi.fn(),
+            listOutbox: vi.fn().mockResolvedValue([]),
             saveWorkspace: vi.fn().mockResolvedValue(undefined),
             queue: vi.fn().mockResolvedValue(undefined),
           },
@@ -725,6 +838,45 @@ describe('InterventionWorkspaceStore call state', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('cancels an A reload when B starts loading and never applies its late result', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const pending = new Subject<InterventionOutput>();
+    mockService['get'].mockReturnValueOnce(pending);
+    store.reload('intervention-1');
+    mockService['get'].mockReturnValueOnce(of({ ...intervention, id: 'B' }));
+    store.load('B');
+    pending.next(intervention);
+    pending.complete();
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    expect(store.intervention()?.id).toBe('B');
+    expect(pending.observed).toBe(false);
+  });
+
+  it('preserves conflicted local intent when a fresh remote workspace arrives', async () => {
+    const offline = TestBed.inject(InterventionOfflineService);
+    vi.mocked(offline.getWorkspace).mockResolvedValue(null);
+    vi.mocked(offline.listOutbox).mockResolvedValue([
+      {
+        id: 'op',
+        interventionId: 'intervention-1',
+        type: 'work-item.update',
+        status: 'conflict',
+        payload: { workItemId: workItem.id, status: 'completed' },
+        createdAt: '2026-09-15',
+      },
+    ]);
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    expect(store.workItems()[0]?.status).toBe('completed');
+    expect(offline.saveWorkspace).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([expect.objectContaining({ status: 'completed' })]),
+      expect.anything(),
+      expect.anything(),
+    );
   });
 
   it('starts idle and reports neither loading nor saving', () => {
@@ -1040,7 +1192,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
   let store: InstanceType<typeof InterventionWorkspaceStore>;
   let mockService: Record<string, ReturnType<typeof vi.fn>>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
     mockService = {
       get: vi.fn().mockReturnValue(of(intervention)),
@@ -1077,6 +1229,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
 
     store = TestBed.inject(InterventionWorkspaceStore);
     store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
   });
 
   afterEach(() => {
@@ -1221,7 +1374,7 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
     error: null,
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     mockService = {
       get: vi.fn().mockReturnValue(of(intervention)),
@@ -1264,6 +1417,7 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
 
     store = TestBed.inject(InterventionWorkspaceStore);
     store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
   });
 
   afterEach(() => {

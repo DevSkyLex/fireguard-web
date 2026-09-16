@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
@@ -73,6 +74,7 @@ const item = (
 describe('InterventionBoardCard', () => {
   let fixture: ComponentFixture<InterventionBoardCard>;
   let element: HTMLElement;
+  const mobile = signal(false);
 
   const openMenu = async (): Promise<void> => {
     element
@@ -82,8 +84,13 @@ describe('InterventionBoardCard', () => {
   };
 
   beforeEach(async () => {
+    mobile.set(false);
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
+      ],
     });
 
     fixture = TestBed.createComponent(InterventionBoardCard);
@@ -94,6 +101,40 @@ describe('InterventionBoardCard', () => {
     await fixture.whenStable();
 
     element = fixture.nativeElement as HTMLElement;
+  });
+
+  it('should offer the same allowed move in a mobile drawer without a drag gesture', async () => {
+    fixture.componentRef.setInput(
+      'item',
+      item({
+        intervention: intervention({
+          allowedActions: allowedActions({ canSubmit: true }),
+        }),
+      }),
+    );
+    mobile.set(true);
+    await fixture.whenStable();
+    const moved: InterventionStatus[] = [];
+    fixture.componentInstance.moveRequested.subscribe((status) => {
+      expect(document.querySelector('hlm-drawer-content')?.getAttribute('data-state')).toBe('open');
+      moved.push(status);
+    });
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-board-card-mobile-actions"]')
+      ?.click();
+    await fixture.whenStable();
+    const move = document.querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-board-card-mobile-move"][data-status="submitted"]',
+    );
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+    expect(move?.disabled).toBe(false);
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+    move?.click();
+    await fixture.whenStable();
+    expect(moved).toEqual(['submitted']);
+    expect(element.querySelector('[data-testid="intervention-board-card-menu"]')).not.toBeNull();
   });
 
   it('should link the title to the intervention detail page, with a real href', () => {
@@ -255,5 +296,24 @@ describe('InterventionBoardCard', () => {
 
     expect(element.textContent).toContain('Alex Dupont');
     expect(element.textContent).toContain('AD');
+  });
+  it('keeps a disabled mobile move open without dispatching a command', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-board-card-mobile-actions"]')
+      ?.click();
+    await fixture.whenStable();
+    fixture.componentRef.setInput('locked', true);
+    await fixture.whenStable();
+
+    const moved = vi.fn();
+    fixture.componentInstance.moveRequested.subscribe(moved);
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-board-card-mobile-move"]')
+      ?.click();
+    expect(fixture.componentInstance['requestMove']('submitted')).toBe(false);
+    expect(moved).not.toHaveBeenCalled();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
   });
 });

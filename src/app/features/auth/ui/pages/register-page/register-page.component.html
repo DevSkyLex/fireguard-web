@@ -1,4 +1,4 @@
-<div id="register-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
+<div id="register-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8 mobile-ui:gap-6">
   <app-page-heading
     heading="Create your account"
     i18n-heading="@@auth.register.title"
@@ -25,6 +25,7 @@
     <div class="flex flex-col items-center gap-3 text-center" role="alert">
       <p class="text-sm text-destructive">{{ federatedErrorMessage(error.message) }}</p>
       <button
+        class="mobile-ui:min-h-11"
         hlmBtn
         type="button"
         variant="outline"

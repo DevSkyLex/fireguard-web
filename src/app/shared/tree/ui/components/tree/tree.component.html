@@ -37,7 +37,7 @@
         @if (draggable()) {
           <ng-icon
             name="lucideGripVertical"
-            class="shrink-0 text-muted-foreground"
+            class="shrink-0 text-muted-foreground mobile-ui:hidden"
             aria-hidden="true"
           />
         }
@@ -48,7 +48,7 @@
             hlmBtn
             variant="ghost"
             size="icon-sm"
-            class="size-6 shrink-0 max-sm:size-8"
+            class="size-6 shrink-0 mobile-ui:size-11"
             tabindex="-1"
             data-testid="tree-toggle"
             [attr.aria-label]="isExpanded ? collapseLabel : expandLabel"
@@ -60,10 +60,10 @@
             />
           </button>
         } @else {
-          <span class="size-6 shrink-0" aria-hidden="true"></span>
+          <span class="size-6 shrink-0 mobile-ui:size-11" aria-hidden="true"></span>
         }
 
-        <span class="min-w-0 flex-1 truncate">
+        <span class="min-w-0 flex-1 truncate mobile-ui:wrap-break-word mobile-ui:whitespace-normal">
           @if (nodeTemplate(); as template) {
             <ng-container *ngTemplateOutlet="template; context: { $implicit: node, node: node }" />
           } @else {
@@ -95,7 +95,7 @@
             hlmBtn
             variant="outline"
             size="sm"
-            class="shrink-0"
+            class="shrink-0 mobile-ui:min-h-11"
             data-testid="tree-retry"
             (click)="onRetryClick($event, node)"
           >

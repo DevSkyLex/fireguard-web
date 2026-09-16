@@ -1,18 +1,32 @@
-<div class="flex flex-col gap-2" data-testid="intervention-calendar-entry-list">
+<div
+  hlmItemGroup
+  class="flex flex-col gap-2 mobile-ui:gap-0 mobile-ui:border-y mobile-ui:border-border"
+  data-testid="intervention-calendar-entry-list"
+>
   @for (item of items(); track item.id) {
     <a
       hlmItem
       size="sm"
-      class="rounded-md"
+      class="rounded-md mobile-ui:min-h-11 mobile-ui:rounded-none mobile-ui:px-0"
       data-testid="intervention-calendar-entry"
       [routerLink]="detailLinkOf(item)"
       queryParamsHandling="preserve"
     >
       <div hlmItemContent>
-        <span hlmItemTitle class="line-clamp-1">{{ numberLabelOf(item) }} {{ item.name }}</span>
-        <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
+        <span
+          hlmItemTitle
+          class="line-clamp-1 mobile-ui:line-clamp-none mobile-ui:text-base mobile-ui:wrap-anywhere"
+          ><span class="mobile-ui:hidden">{{ numberLabelOf(item) }} </span>{{ item.name }}</span
+        >
+        <span hlmItemDescription
+          ><span class="desktop-ui:hidden">{{ numberLabelOf(item) }} · </span
+          >{{ timeLabelOf(item) }}</span
+        >
       </div>
       <app-intervention-tag kind="status" [value]="item.status" />
     </a>
+    @if (!$last) {
+      <hlm-item-separator class="desktop-ui:hidden" />
+    }
   }
 </div>

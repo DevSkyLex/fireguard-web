@@ -456,7 +456,7 @@ describe('InspectionDetailPage', () => {
       fixture.componentInstance['openAddNonConformityDialog']();
 
       expect(resetAddNonConformityOperation).toHaveBeenCalled();
-      expect(fixture.componentInstance['addNonConformityDialogOpen']()).toBe(true);
+      expect(fixture.componentInstance['addNonConformityDialogVisible']()).toBe(true);
     });
 
     it('should close the add dialog once the add succeeds', async () => {
@@ -468,7 +468,7 @@ describe('InspectionDetailPage', () => {
       );
       await fixture.whenStable();
 
-      expect(fixture.componentInstance['addNonConformityDialogOpen']()).toBe(false);
+      expect(fixture.componentInstance['addNonConformityDialogVisible']()).toBe(false);
     });
 
     it('should send the add payload with the route ids folded in', async () => {

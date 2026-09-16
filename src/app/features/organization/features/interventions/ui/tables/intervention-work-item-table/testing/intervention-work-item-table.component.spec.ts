@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
@@ -59,7 +60,15 @@ describe('InterventionWorkItemTable', () => {
   });
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(InterventionWorkItemTable);
     fixture.componentRef.setInput('items', [
@@ -83,6 +92,14 @@ describe('InterventionWorkItemTable', () => {
 
     expect(root().textContent).toContain('1/4');
     expect(root().textContent).toContain('1 completed · 1 skipped · 2 remaining');
+  });
+
+  it('should expose the work item collection as a flat section', () => {
+    const section = root().querySelector('[data-testid="intervention-work-items"]');
+
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute('data-slot')).toBeNull();
+    expect(section?.querySelector('[data-slot="card"]')).toBeNull();
   });
 
   it('should name each row by its action and target', () => {
@@ -341,9 +358,14 @@ describe('InterventionWorkItemTable', () => {
     fixture.componentRef.setInput('canAdd', true);
     await fixture.whenStable();
 
-    expect(byTestId('intervention-work-items-empty')?.textContent).toContain(
+    const emptyState = byTestId('intervention-work-items-empty');
+
+    expect(emptyState?.textContent).toContain(
       'List the tasks to complete during this intervention.',
     );
+    expect(emptyState?.classList.contains('border-dashed')).toBe(true);
+    expect(emptyState?.classList.contains('border-border')).toBe(true);
+    expect(emptyState?.querySelector('ng-icon[name="lucideListChecks"]')).not.toBeNull();
     expect(byTestId('intervention-work-items-empty-add')).not.toBeNull();
   });
 
@@ -368,14 +390,54 @@ describe('InterventionWorkItemTable', () => {
     expect(requests).toBe(1);
   });
 
-  it('should expose the active status through one compact filter', () => {
-    expect(byTestId('intervention-work-items-filter')?.textContent).toContain('Status');
-    expect(byTestId('intervention-work-items-filter')?.textContent).toContain('All');
-    expect(root().querySelector('hlm-toggle-group')).toBeNull();
+  it('should expose status through the shared collection filter bar', async () => {
+    expect(byTestId('intervention-work-items-search')).not.toBeNull();
+    (byTestId('intervention-work-items-filters-toggle') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(root().querySelector('#intervention-work-items-filter-bar')).not.toBeNull();
+    expect(byTestId('intervention-work-items-filters-add')?.textContent).toContain('Filter');
+    expect(root().querySelector('hlm-select')).toBeNull();
   });
 
-  it('should narrow the rows to the selected status', async () => {
-    fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 'done');
+  it('should delegate search to the API and render only the returned rows', async () => {
+    const searches: string[] = [];
+    fixture.componentInstance.queryChanged.subscribe(({ search }) => searches.push(search));
+    const search: HTMLInputElement = byTestId('intervention-work-items-search') as HTMLInputElement;
+
+    search.value = 'pallets';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(searches).toContain('pallets');
+    expect(rows()).toHaveLength(4);
+
+    fixture.componentRef.setInput('queryItems', [
+      item({ id: 'wi-3', status: 'skipped', skipReason: 'Access blocked by pallets.' }),
+    ]);
+    await fixture.whenStable();
+
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]?.textContent).toContain('Access blocked by pallets.');
+  });
+
+  it('should delegate status filtering to the API and render its result', async () => {
+    const statuses: (readonly string[] | null)[] = [];
+    fixture.componentInstance.queryChanged.subscribe(({ statuses: value }) => statuses.push(value));
+    fixture.componentRef.setInput('preferredFilter', 'done');
+    await fixture.whenStable();
+
+    (byTestId('intervention-work-items-filters-toggle') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    fixture.debugElement
+      .query(By.css('app-collection-filter-select'))
+      .triggerEventHandler('valueChanged', 'done');
+    await fixture.whenStable();
+
+    expect(statuses).toContainEqual(['completed']);
+    expect(rows()).toHaveLength(4);
+
+    fixture.componentRef.setInput('queryItems', [item({ id: 'wi-1', status: 'completed' })]);
     await fixture.whenStable();
 
     expect(rows()).toHaveLength(1);
@@ -384,16 +446,15 @@ describe('InterventionWorkItemTable', () => {
 
   it('should show a filtered-empty state distinct from a truly empty scope', async () => {
     fixture.componentRef.setInput('items', [item({ id: 'wi-1', status: 'planned' })]);
-    await fixture.whenStable();
-
-    fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 'done');
+    fixture.componentRef.setInput('preferredFilter', 'done');
+    fixture.componentRef.setInput('queryItems', []);
     await fixture.whenStable();
 
     expect(byTestId('intervention-work-items-filtered-empty')).not.toBeNull();
     expect(byTestId('intervention-work-items-empty')).toBeNull();
   });
 
-  it('should keep the desktop table to seven stable columns', () => {
+  it('should reserve evidence actions independently of the current results', () => {
     const headings: string[] = Array.from(
       root().querySelectorAll('thead th'),
       (heading) => heading.textContent?.trim() ?? '',
@@ -408,6 +469,19 @@ describe('InterventionWorkItemTable', () => {
       'State',
       'Actions',
     ]);
+    expect(rows()[0]?.querySelectorAll('td')).toHaveLength(7);
+  });
+
+  it('should add the actions column when a row action is available', async () => {
+    fixture.componentRef.setInput('canAttachEvidence', true);
+    await fixture.whenStable();
+
+    const headings: string[] = Array.from(
+      root().querySelectorAll('thead th'),
+      (heading) => heading.textContent?.trim() ?? '',
+    );
+
+    expect(headings.at(-1)).toBe('Actions');
     expect(rows()[0]?.querySelectorAll('td')).toHaveLength(7);
   });
 
@@ -532,14 +606,31 @@ describe('InterventionWorkItemTable', () => {
     expect(byTestId('intervention-work-item-evidence-pending')).not.toBeNull();
   });
   it('restores a chosen filter when remounted in the execution phase', async () => {
+    const statuses: (readonly string[] | null)[] = [];
+    fixture.componentInstance.queryChanged.subscribe(({ statuses: value }) => statuses.push(value));
     fixture.componentRef.setInput('showProgress', true);
     fixture.componentRef.setInput('preferredFilter', 'skipped');
     await fixture.whenStable();
+
+    expect(statuses).toEqual([]);
+    expect(rows()).toHaveLength(4);
+
+    fixture.componentRef.setInput('queryItems', [
+      item({ id: 'wi-3', status: 'skipped', skipReason: 'Access blocked by pallets.' }),
+    ]);
+    await fixture.whenStable();
+
     expect(rows()).toHaveLength(1);
     expect(rows()[0]?.textContent).toContain('Skipped');
     const emitted: string[] = [];
     fixture.componentInstance.filterChanged.subscribe((filter) => emitted.push(filter));
     fixture.componentInstance.revealItem('wi-1');
+    fixture.componentRef.setInput('queryItems', [
+      item({ id: 'wi-1', status: 'completed' }),
+      item({ id: 'wi-2', status: 'planned' }),
+      item({ id: 'wi-3', status: 'skipped', skipReason: 'Access blocked by pallets.' }),
+      item({ id: 'wi-4', status: 'in_progress' }),
+    ]);
     await fixture.whenStable();
     expect(emitted).toEqual(['all']);
     expect(rows()).toHaveLength(4);

@@ -27,6 +27,7 @@ import {
   type NonConformityStatisticsStoreType,
 } from '@features/organization/features/inspections/state';
 import { StatTile } from '@features/organization/ui/components';
+import { CollectionSkeletonRows } from '@shared/collection-surface';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -119,6 +120,7 @@ const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'm
     HlmSkeleton,
     HlmTableImports,
     HlmToggleGroupImports,
+    CollectionSkeletonRows,
     StatTile,
   ],
   providers: [

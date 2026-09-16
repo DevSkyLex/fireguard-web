@@ -1,7 +1,7 @@
 <div id="facility-map" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <div class="flex flex-wrap items-center justify-end gap-2">
     <div class="flex flex-wrap items-center gap-4">
-      <hlm-field orientation="horizontal" class="gap-2">
+      <hlm-field orientation="horizontal" class="gap-2 mobile-ui:min-h-11">
         <label
           hlmFieldLabel
           for="facility-map-compliance-toggle"
@@ -31,6 +31,7 @@
           [routerLink]="listRouteBase()"
           i18n-aria-label="@@facility.list.layoutList"
           aria-label="List view"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
         >
           <span i18n="@@facility.map.layoutListLabel">List</span>
         </button>
@@ -40,6 +41,7 @@
           data-testid="facility-map-layout-map"
           i18n-aria-label="@@facility.map.layoutMap"
           aria-label="Map view"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
         >
           <ng-icon name="lucideMap" aria-hidden="true" />
           <span i18n="@@facility.map.layoutMapLabel">Map</span>
@@ -70,7 +72,10 @@
         <span i18n="@@facility.map.unplacedBanner"
           >{{ store.unplacedCount() }} facilities have no coordinates yet.</span
         >
-        <a class="font-medium underline" [routerLink]="listRouteBase()">
+        <a
+          class="inline-flex items-center font-medium underline mobile-ui:min-h-11"
+          [routerLink]="listRouteBase()"
+        >
           <span i18n="@@facility.map.unplacedLink">View the list</span>
         </a>
       </p>
@@ -116,7 +121,7 @@
     type="button"
     variant="outline"
     size="sm"
-    class="min-w-0 shrink"
+    class="min-w-0 shrink mobile-ui:min-h-11"
     data-testid="facility-map-back"
     [routerLink]="listRouteBase()"
   >

@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { InterventionFacilitiesTable } from '../intervention-facilities-table.component';
 
@@ -30,10 +31,20 @@ describe('InterventionFacilitiesTable', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(InterventionFacilitiesTable);
+    fixture.componentInstance.queryChanged.subscribe((query) =>
+      fixture.componentRef.setInput('query', query),
+    );
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
@@ -50,6 +61,28 @@ describe('InterventionFacilitiesTable', () => {
     expect(row.textContent).toContain('Main warehouse');
     expect(row.textContent).toContain('Building');
     expect(row.textContent).toContain('Active');
+  });
+
+  it('should expose shared search and filters for the linked facilities', async () => {
+    fixture.componentRef.setInput('items', [
+      facility({ id: 'facility-1', name: 'Main warehouse' }),
+      facility({ id: 'facility-2', name: 'North annex', code: 'ANN-2' }),
+    ]);
+    await fixture.whenStable();
+
+    const search: HTMLInputElement = byTestId('intervention-facilities-search') as HTMLInputElement;
+    expect(search).not.toBeNull();
+    expect(byTestId('intervention-facilities-filters-toggle')).not.toBeNull();
+
+    search.value = 'annex';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-facilities-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().textContent).toContain('North annex');
+    expect(root().textContent).not.toContain('Main warehouse');
   });
 
   it('should link a published facility to its detail route', async () => {

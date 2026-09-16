@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  computed,
   input,
   PLATFORM_ID,
   provideZonelessChangeDetection,
@@ -15,6 +16,10 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { defer, EMPTY, Subject, of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import {
+  provideInteractionCapabilities,
+  INTERACTION_CAPABILITIES_PORT,
+} from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
 import {
@@ -167,6 +172,7 @@ const renderPageTabs = (): HTMLElement => {
 };
 
 describe('InterventionsPage', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<InterventionsPage>;
   let mutationCallStates: WritableSignal<Record<string, CallState>>;
   let load: ReturnType<typeof vi.fn>;
@@ -206,6 +212,7 @@ describe('InterventionsPage', () => {
   });
 
   beforeEach(() => {
+    mobile.set(false);
     mutationCallStates = signal<Record<string, CallState>>({});
     load = vi.fn();
     create = vi.fn();
@@ -232,6 +239,14 @@ describe('InterventionsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
@@ -1479,6 +1494,66 @@ describe('InterventionsPage', () => {
   });
 
   describe('board', () => {
+    it('keeps selection, display and export reachable from the mobile tools drawer', async () => {
+      mobile.set(true);
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="interventions-display"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-export"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-mine-toggle"]')).not.toBeNull();
+      root.querySelector<HTMLButtonElement>('[data-testid="interventions-tools"]')?.click();
+      await fixture.whenStable();
+      const drawer = document.querySelector('hlm-drawer-content');
+      expect(drawer?.querySelector('[data-testid="interventions-display"]')).not.toBeNull();
+      expect(drawer?.querySelector('[data-testid="interventions-export"]')).not.toBeNull();
+      expect(drawer?.querySelector('hlm-popover')).toBeNull();
+      drawer
+        ?.querySelector<HTMLButtonElement>('[data-testid="interventions-selection-mode"]')
+        ?.click();
+      await fixture.whenStable();
+      expect(fixture.componentInstance['selectionMode']()).toBe(true);
+      expect(load).toHaveBeenCalledTimes(1);
+      mobile.set(false);
+      await fixture.whenStable();
+      expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+      drawer
+        ?.querySelector<HTMLButtonElement>('[data-testid="interventions-tools-close"]')
+        ?.click();
+      await fixture.whenStable();
+      expect(root.querySelector('[data-testid="interventions-tools"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-display"]')).not.toBeNull();
+    });
+
+    it('keeps desktop tools inline when the mobile interaction mode is not selected', async () => {
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="interventions-tools"]')).toBeNull();
+      expect(root.querySelector('[data-testid="interventions-display"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="interventions-export"]')).not.toBeNull();
+    });
+
+    it('keeps an explicitly selected board and does not reload it when interaction mode changes', async () => {
+      fixture = await createPage({ view: 'board' });
+      const calls = vi.mocked(TestBed.inject(InterventionService).list);
+      const loadCount = calls.mock.calls.length;
+      mobile.set(true);
+      await fixture.whenStable();
+      expect(fixture.componentInstance['activeView']()).toBe('board');
+      expect(calls).toHaveBeenCalledTimes(loadCount);
+      expect(navigate).not.toHaveBeenCalled();
+      mobile.set(false);
+      await fixture.whenStable();
+      expect(fixture.componentInstance['activeView']()).toBe('board');
+      expect(calls).toHaveBeenCalledTimes(loadCount);
+    });
+
+    it('defaults to the list on mobile when no view is selected', async () => {
+      mobile.set(true);
+      fixture = await createPage();
+      expect(fixture.componentInstance['activeView']()).toBe('list');
+      expect(load).toHaveBeenCalledTimes(1);
+    });
+
     it('blocks execution outside the team and allows it for a participant before emitting a store write', async () => {
       fixture = await createPage({ view: 'board' });
       const blocked = {
@@ -1696,5 +1771,28 @@ describe('InterventionsPage', () => {
       expect(options.status).toBeUndefined();
       expect(options.dueAtBefore).toBeUndefined();
     });
+  });
+  it('opens bulk deletion only after the tools drawer closes and does not delete yet', async () => {
+    mobile.set(true);
+    interventionList.set([
+      intervention({ id: 'i-draft', status: 'draft', allowedActions: serverActions('draft') }),
+    ]);
+    fixture = await createPage();
+    fixture.componentInstance['onSelectionChanged'](new Set(['i-draft']));
+    await fixture.whenStable();
+    fixture.nativeElement.querySelector('[data-testid="interventions-tools"]').click();
+    await fixture.whenStable();
+
+    const action = document.querySelector<HTMLButtonElement>(
+      'hlm-drawer-content [data-testid="interventions-bulk-delete"]',
+    );
+    expect(action?.disabled).toBe(false);
+    action?.click();
+    expect(fixture.componentInstance['pendingBulkDeleteIds']()).toBeNull();
+    await fixture.whenStable();
+
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
+    expect(fixture.componentInstance['pendingBulkDeleteIds']()).toEqual(['i-draft']);
+    expect(deleteIntervention).not.toHaveBeenCalled();
   });
 });

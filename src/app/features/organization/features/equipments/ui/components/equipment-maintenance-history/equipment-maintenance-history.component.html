@@ -51,7 +51,7 @@
             }
             @if (log.interventionId; as interventionId) {
               <a
-                class="w-fit text-sm text-muted-foreground hover:text-foreground hover:underline"
+                class="inline-flex w-fit items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11 mobile-ui:min-w-11"
                 data-testid="equipment-maintenance-log-intervention-link"
                 [attr.aria-label]="interventionLinkAriaLabelOf(log)"
                 [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"

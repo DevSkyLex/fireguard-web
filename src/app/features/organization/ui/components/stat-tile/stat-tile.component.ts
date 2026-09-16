@@ -1,9 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import type { InputSignal, Signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMinus, lucideTrendingDown, lucideTrendingUp } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmProgressImports } from '@shared/ui/progress';
@@ -15,59 +16,11 @@ import type { StatTileBadge, StatTileDelta, StatTileLink, StatTileTone } from '.
  * @class StatTile
  *
  * @description
- * A compact KPI card: a label, a headline value, and an optional trend —
- * built on the `hlmCard` primitives rather than bespoke markup so it stays on
- * theme for free. Reused across the organization's data-dense surfaces
- * (statistics, Today, billing overview), which keeps it feature-owned
- * (`ARCHITECTURE.md` §2.8) rather than promoted to `shared/` on speculation.
- *
- * {@link delta}, when set, renders as an outline pill in the tile's corner
- * action slot: the arrow always shows the literal direction, and
- * {@link deltaTone} — `success` when that direction is desirable for the
- * metric, `destructive` when it is not, `neutral` when flat — colours the
- * arrow alone, per the Glyph Rule (`DESIGN.md`). The pill's surface and text
- * stay on neutral tokens either way, and the signed magnitude plus a
- * screen-reader-only "Increase"/"Decrease"/"No change" word carry the same
- * meaning the colour does, so it is never colour alone (`PRODUCT.md`).
- *
- * Rendered as an anchor when {@link link} is set and a plain card otherwise,
- * sharing one content template so the two branches cannot drift.
- *
- * {@link tone} carries the same Glyph Rule discipline for a metric that is
- * simply in a bad state rather than trending one way or another (an overdue
- * count, say): it colours the icon alone.
- *
- * {@link icon}, {@link badge} and {@link delta} sit beside the label in a
- * wrapping flex row, deliberately **not** in `hlmCardAction`. That slot makes
- * `hlmCardHeader` a `grid-cols-[1fr_auto]`, and at a KPI strip's narrow
- * column the `auto` track claims what the pill needs while the label keeps
- * the remainder: at 164px a tile gave the label 37px for a word needing 54,
- * clipping it and pushing the pill 13px past the card's own border. Sharing
- * one flex row lets the pill drop under the label instead of squeezing it.
- * Only one renders per tile, in that priority:
- * {@link badge} first — an outline pill for a qualifier {@link icon} alone
- * cannot carry (a share of a total, a status word already crossed a
- * threshold) — then {@link delta}, then {@link icon} as the plain decorative
- * fallback for a tile with neither. A caller that sets both {@link badge}
- * and {@link delta} is choosing to let the qualifier win; that is
- * deliberate, since a qualifier's threshold is usually the more actionable
- * of the two and the corner has room for exactly one pill.
- *
- * {@link caption}, when set, moves the tile into an `hlmCardFooter` zone (a
- * differentiated surface with a top border, matching the KPI-strip visual
- * language) holding a semibold headline plus {@link description} as its
- * muted second line, instead of {@link description}'s plain `hlmCardContent`
- * placement. It no longer changes the value's size: the figure is
- * `text-2xl font-semibold` in every tile, since `DESIGN.md`'s 24px ceiling
- * and its 400-600 weight range leave no room for the `text-3xl font-bold`
- * this used to switch to — a captioned tile on one page and an uncaptioned
- * one on another were rendering the same metric at two sizes.
- *
- * The card fills its host's height (`h-full`) and the footer is pushed to
- * the bottom (`mt-auto`) so a grid of tiles with uneven caption/description
- * lengths still lines up its footers on one edge — a no-op for a caller
- * outside a height-stretched container, since a percentage height with no
- * definite parent height collapses to content height regardless.
+ * Organization-owned KPI using native Card anatomy, a wrapping label/qualifier row and
+ * a consistent 24px figure; a badge takes precedence over a delta, then the decorative icon.
+ * The interaction-capabilities port selects small mobile Cards or default desktop density without replacing
+ * their content, while optional links, captions and progress retain the same semantic structure.
+ * The figure is a styled child so the small Card's native heading scale does not shrink metrics.
  *
  * @version 2.0.0
  *
@@ -120,10 +73,8 @@ export class StatTile {
    * @readonly
    *
    * @description
-   * What the value counts, already localized by the caller. Wraps onto up to
-   * two lines (`line-clamp-2`) rather than truncating to one — a KPI row
-   * dense enough to narrow the tile still keeps a longer label legible
-   * instead of ending it in an ellipsis.
+   * What the value counts, already localized by the caller. Wraps in full within
+   * the available width, including long translations in small mobile cards.
    *
    * @access public
    * @since 1.0.0
@@ -154,8 +105,8 @@ export class StatTile {
    * @description
    * Optional footer headline — moves the tile into the differentiated
    * `hlmCardFooter` zone, {@link description} riding along beneath it as
-   * the muted context line, and promotes the value to the tile's largest
-   * size. `null` keeps the tile in its plain, compact rendering.
+   * the muted context line. The value retains the same size with or without a
+   * caption; `null` keeps the tile in its plain, compact rendering.
    *
    * @access public
    * @since 1.4.0
@@ -299,6 +250,18 @@ export class StatTile {
   //#endregion
 
   //#region Properties
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects native small Card spacing from the central interaction mode.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   /**
    * Property deltaIcon
    * @readonly

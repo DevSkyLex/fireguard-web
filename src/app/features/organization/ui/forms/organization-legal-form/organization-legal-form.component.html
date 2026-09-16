@@ -6,6 +6,7 @@
           >Country</label
         >
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-legal-country"
           type="text"
@@ -25,14 +26,22 @@
           >Legal entity type</label
         >
         <hlm-select [itemToString]="legalTypeLabel" [formField]="legalForm.legalType">
-          <hlm-select-trigger buttonId="org-legal-type" class="w-full" data-testid="org-legal-type">
+          <hlm-select-trigger
+            buttonId="org-legal-type"
+            class="w-full mobile-ui:min-h-11"
+            data-testid="org-legal-type"
+          >
             <hlm-select-value />
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
-              <hlm-select-item [value]="unsetLegalType">{{ unsetLegalTypeLabel }}</hlm-select-item>
+              <hlm-select-item class="mobile-ui:min-h-11" [value]="unsetLegalType">{{
+                unsetLegalTypeLabel
+              }}</hlm-select-item>
               @for (option of legalTypeOptions(); track option.value) {
-                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
+                  option.label
+                }}</hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
@@ -45,6 +54,7 @@
         >Registered legal name</label
       >
       <input
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmInput
         id="org-legal-name"
         type="text"
@@ -66,6 +76,7 @@
           >Registration number</label
         >
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-legal-registration-number"
           type="text"
@@ -87,6 +98,7 @@
           >VAT number</label
         >
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-legal-vat-number"
           type="text"
@@ -104,7 +116,7 @@
       <button
         hlmBtn
         type="submit"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="org-legal-submit"
         [disabled]="!canSubmit()"
         [attr.aria-busy]="pending() ? 'true' : null"

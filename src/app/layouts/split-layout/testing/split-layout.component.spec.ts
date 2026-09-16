@@ -1,4 +1,10 @@
-import { Component, signal, type Type } from '@angular/core';
+import {
+  Component,
+  type EnvironmentProviders,
+  type Provider,
+  signal,
+  type Type,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { ExclusiveSlotContribution, SlotContribution } from '@shared/layout-slot';
@@ -23,10 +29,12 @@ function showcase(active: boolean): ExclusiveSlotContribution {
   };
 }
 
-async function render(providers: unknown[] = []): Promise<ComponentFixture<SplitLayout>> {
+async function render(
+  providers: readonly (Provider | EnvironmentProviders)[] = [],
+): Promise<ComponentFixture<SplitLayout>> {
   await TestBed.configureTestingModule({
     imports: [SplitLayout],
-    providers: [provideRouter([]), ...(providers as never[])],
+    providers: [provideRouter([]), ...providers],
   }).compileComponents();
 
   const fixture: ComponentFixture<SplitLayout> = TestBed.createComponent(SplitLayout);
@@ -80,6 +88,9 @@ describe('SplitLayout', () => {
 
     expect(element.querySelector('header #header-stub')).not.toBeNull();
     expect(element.querySelector('footer #footer-stub')).not.toBeNull();
+    expect(element.querySelector('footer')?.classList).toContain(
+      'mobile-ui:pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+    );
   });
 
   it('defaults the content and column width to md', async () => {

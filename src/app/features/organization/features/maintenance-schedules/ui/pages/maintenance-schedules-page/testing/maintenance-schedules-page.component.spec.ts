@@ -13,6 +13,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -103,6 +104,13 @@ describe('MaintenanceSchedulesPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal('desktop'),
+            isMobileInteractionMode: signal(false),
+          },
         },
         provideRouter([]),
         {

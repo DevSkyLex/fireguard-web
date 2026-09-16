@@ -1,14 +1,24 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { StatTile } from '../stat-tile.component';
 
 describe('StatTile', () => {
   let fixture: ComponentFixture<StatTile>;
+  const mobileInteractionMode = signal(false);
 
   async function render(): Promise<void> {
+    mobileInteractionMode.set(false);
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(StatTile);
@@ -23,6 +33,30 @@ describe('StatTile', () => {
     expect(fixture.nativeElement.textContent).toContain('Open non-conformities');
     expect(fixture.nativeElement.textContent).toContain('12');
   });
+
+  it.each([false, true])(
+    'changes native Card size without replacing its content when linked is %s',
+    async (linked: boolean) => {
+      await render();
+      if (linked) fixture.componentRef.setInput('link', ['/organizations', 'org-1', 'inspections']);
+      await fixture.whenStable();
+      const root: HTMLElement = fixture.nativeElement;
+      const card: HTMLElement | null = root.querySelector('[hlmCard]');
+      const value: HTMLElement | null = card?.querySelector('[hlmCardTitle]') ?? null;
+
+      expect(card?.getAttribute('data-size')).toBe('default');
+      const assertExperience = async (mobile: boolean): Promise<void> => {
+        mobileInteractionMode.set(mobile);
+        await fixture.whenStable();
+        expect(root.querySelector('[hlmCard]')).toBe(card);
+        expect(card?.querySelector('[hlmCardTitle]')).toBe(value);
+        expect(card?.getAttribute('data-size')).toBe(mobile ? 'sm' : 'default');
+        expect(value?.textContent?.trim()).toBe('12');
+      };
+      await assertExperience(true);
+      await assertExperience(false);
+    },
+  );
 
   it('renders as a plain card when no link is given', async () => {
     await render();
@@ -298,7 +332,7 @@ describe('StatTile', () => {
     await render();
 
     const read = (): string =>
-      (fixture.nativeElement.querySelector('p[hlmCardTitle]') as HTMLElement).className;
+      (fixture.nativeElement.querySelector('p[hlmCardTitle] > span') as HTMLElement).className;
 
     const withoutCaption: string = read();
 

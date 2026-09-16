@@ -7,6 +7,7 @@ import {
   input,
   linkedSignal,
   output,
+  signal,
   untracked,
   type InputSignal,
   type InputSignalWithTransform,
@@ -15,6 +16,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronDown, lucideChevronUp } from '@ng-icons/lucide';
 import type {
   PlanningCatalogueKind,
   PlanningCatalogueState,
@@ -42,16 +45,18 @@ import {
 } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmTextareaImports } from '@shared/ui/textarea';
 import { InterventionTag } from '../intervention-tag';
 
 import { HlmItemImports } from '@shared/ui/item';
 /**
  * Constant LABEL_PREVIEW_COUNT
  * @const LABEL_PREVIEW_COUNT
- * @description How many labels a card shows before folding the rest into a count.
+ * @description How many labels the properties view shows before folding the rest into a count.
  * @since 1.0.0
  * @type {number}
  */
@@ -66,18 +71,24 @@ const LABEL_PREVIEW_COUNT: number = 3;
  */
 const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high', 'urgent'];
 
+/** The backend ceiling for an intervention description. */
+const DESCRIPTION_MAX_LENGTH: number = 2000;
+
 /**
  * Component InterventionPropertiesGrid
  * @class InterventionPropertiesGrid
  *
  * @description
  * The intervention's properties, each edited where it is displayed
- * (`ARCHITECTURE.md` §10.5) — separated by rhythm, not rules: `PRODUCT.md`'s
- * "hierarchy from rhythm, not boxes" over a divider list, so the sidebar's
- * only boxed surface stays the action box below it. Every property remains
- * visible; the secondary grid uses this component's container width instead
- * of viewport breakpoints, keeping participants, labels and revision legible
- * in the narrow desktop rail and distributing them when the rail stacks.
+ * (`ARCHITECTURE.md` §10.5). Lifecycle and planning values stay visible for
+ * quick scanning; participants, labels, audit metadata and the description
+ * sit behind a local Spartan collapsible so the narrow rail keeps its focus.
+ * The reading order is identity (reference, type), lifecycle and action
+ * context (status, priority), planning context (site, responsible, planned
+ * window), then secondary context (participants, labels, description) and
+ * finally audit metadata (revision, updated).
+ * The secondary grid uses this component's container width instead of
+ * viewport breakpoints, keeping its values legible when the rail stacks.
  *
  * Two commit modes, chosen by the control rather than by taste: a value
  * picked in one gesture commits on that gesture, because a Save button after
@@ -88,7 +99,7 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  * Nothing is dispatched for a value equal to the one already stored — every
  * accepted patch increments `revision`, which publication is pinned to.
  *
- * `plannedStartAt` and `dueAt` are one card: they are picked together and
+ * `plannedStartAt` and `dueAt` are one scheduling field: they are picked together and
  * sent in one patch, which §10.5 admits as "a small coherent group".
  *
  * When the site is editable, its name opens the in-place picker. Once the
@@ -103,18 +114,22 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
+    NgIcon,
     InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
     OrgDatePipe,
     RouterLink,
     HlmButton,
+    ...HlmCollapsibleImports,
     InplaceField,
     InterventionTag,
     ...HlmComboboxImports,
     ...HlmDatePickerImports,
     ...HlmSelectImports,
+    ...HlmTextareaImports,
   ],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronUp })],
   templateUrl: './intervention-properties-grid.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -159,6 +174,18 @@ export class InterventionPropertiesGrid {
    */
   public readonly intervention: InputSignal<InterventionOutput> =
     input.required<InterventionOutput>();
+
+  /**
+   * Whether the secondary properties are visible.
+   *
+   * The disclosure is local UI state and resets when the page moves to a
+   * different intervention, while a refresh of the same intervention keeps
+   * the operator's choice.
+   */
+  protected readonly detailsExpanded: WritableSignal<boolean> = linkedSignal<string, boolean>({
+    source: () => this.intervention().id,
+    computation: () => false,
+  });
 
   /**
    * Property organizationId
@@ -214,7 +241,7 @@ export class InterventionPropertiesGrid {
    * Whether the schedule group — priority, planned window, participants —
    * accepts a write. The backend keeps these editable through `planned`,
    * `in_progress` and `changes_requested`, so a delayed intervention is
-   * rescheduled in place; past that the cards render as plain text.
+   * rescheduled in place; past that the fields render as plain text.
    *
    * @access public
    * @since 4.3.0
@@ -316,6 +343,7 @@ export class InterventionPropertiesGrid {
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
     input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
   //#endregion
 
   //#region Outputs
@@ -362,6 +390,42 @@ export class InterventionPropertiesGrid {
    * @type {readonly InterventionPriority[]}
    */
   protected readonly priorityValues: readonly InterventionPriority[] = PRIORITY_VALUES;
+
+  /**
+   * Property descriptionMaxLength
+   * @readonly
+   * @description Exposed so the textarea enforces the backend ceiling natively.
+   * @access protected
+   * @since 1.0.0
+   * @type {number}
+   */
+  protected readonly descriptionMaxLength: number = DESCRIPTION_MAX_LENGTH;
+
+  /**
+   * Property descriptionDraft
+   * @readonly
+   * @description The in-flight description, seeded when the field opens.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
+  protected readonly descriptionDraft: WritableSignal<string> = signal<string>('');
+
+  /**
+   * Property canSaveDescription
+   * @readonly
+   * @description Whether the description draft is valid and differs from the stored value.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSaveDescription: Signal<boolean> = computed<boolean>(() => {
+    const draft: string = this.descriptionDraft().trim();
+
+    return (
+      draft.length <= DESCRIPTION_MAX_LENGTH && draft !== (this.intervention().description ?? '')
+    );
+  });
 
   /**
    * Property participantsDraft
@@ -439,7 +503,7 @@ export class InterventionPropertiesGrid {
   /**
    * Property responsibleOption
    * @readonly
-   * @description The responsible member, resolved so the card can show a face.
+   * @description The responsible member, resolved so the properties view can show a face.
    * @access protected
    * @since 1.0.0
    * @type {Signal<MemberSelectOption | null>}
@@ -487,7 +551,7 @@ export class InterventionPropertiesGrid {
   /**
    * Property visibleLabels
    * @readonly
-   * @description The labels a card shows before folding the rest into a count.
+   * @description The labels the properties view shows before folding the rest into a count.
    * @access protected
    * @since 1.0.0
    * @type {Signal<readonly InterventionLabelSummary[]>}
@@ -627,6 +691,48 @@ export class InterventionPropertiesGrid {
    */
   protected onEditing(target: InterventionEditTarget, open: boolean): void {
     this.editTargetChanged.emit(open ? target : null);
+  }
+
+  /**
+   * Method onDescriptionEditing
+   * @description Seeds the description draft on open and forwards the page-owned edit state change.
+   * @access protected
+   * @since 1.0.0
+   * @param {boolean} open - Whether the description field is being opened.
+   * @returns {void}
+   */
+  protected onDescriptionEditing(open: boolean): void {
+    if (open) this.descriptionDraft.set(this.intervention().description ?? '');
+
+    this.editTargetChanged.emit(open ? 'description' : null);
+  }
+
+  /**
+   * Method onDescriptionInput
+   * @description Keeps the description draft typed at the DOM boundary.
+   * @access protected
+   * @since 1.0.0
+   * @param {Event} event - The textarea input event.
+   * @returns {void}
+   */
+  protected onDescriptionInput(event: Event): void {
+    const target: EventTarget | null = event.target;
+    if (!(target instanceof HTMLTextAreaElement)) return;
+
+    this.descriptionDraft.set(target.value);
+  }
+
+  /**
+   * Method saveDescription
+   * @description Emits a trimmed description, using null for an intentionally empty value.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected saveDescription(): void {
+    const draft: string = this.descriptionDraft().trim();
+
+    this.detailsChanged.emit({ description: draft === '' ? null : draft });
   }
 
   /**

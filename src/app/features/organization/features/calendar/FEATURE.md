@@ -47,10 +47,12 @@ form reuses the exact row renderer the rest of the page already trusts;
 **day** is the anchored day's list full-page with prev/next stepping one
 day. Week honours the same `firstDayOfWeek` preference as the grid. The
 feed window follows the granularity: month ± one week (the grid's filler
-days must keep their chips), the exact week, the exact day. Below `md`, the
-month view's shrunken grid does not render at all — an agenda
+days must keep their chips), the exact week, the exact day. In the central mobile
+interaction mode, the month grid does not render — an agenda
 (`#calendar-agenda`) shows the same loaded window's entries grouped by day
-instead. The grid's day panel, the agenda's day groups, and the week/day
+instead. Width only fits the desktop grid and panels. Changing interaction mode preserves
+the explicit Month/Week/Day choice, selected date and loaded window, without a refetch.
+The grid's day panel, the agenda's day groups, and the week/day
 views all render through `CalendarEntryList`
 (`ui/components/calendar-entry-list/`), the single row renderer for a feed
 entry, so a row is never hand-rolled twice.
@@ -186,4 +188,6 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
 
 - Detail links for inspection and maintenance entries once their pages have
   stable per-record routes.
-- Standalone events are created and edited in the centered `calendar-event-dialog`; the delete confirmation stays an alert-dialog.
+- Standalone events use one contextual sheet in `calendar-event-dialog`: bottom on mobile,
+  right on desktop. Changing interaction mode keeps the same mounted Signal Form and dirty draft;
+  the existing unsaved-changes gate and destructive alert-dialog remain authoritative.

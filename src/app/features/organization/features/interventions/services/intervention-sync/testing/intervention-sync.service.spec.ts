@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
@@ -118,6 +119,45 @@ describe('InterventionSyncService', () => {
     });
     expect(mockOffline.removeOutbox).toHaveBeenNthCalledWith(1, 'op-1');
     expect(mockOffline.removeOutbox).toHaveBeenNthCalledWith(2, 'op-2');
+  });
+
+  it('invalidates only effectively replayed collections after a partial replay', async () => {
+    const dispatch = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('work', 'work-item.update', { workItemId: 'work-1', status: 'completed' }),
+      operation('change', 'change.update', { changeId: 'change-1', status: 'rejected' }),
+    ]);
+    mockInterventionService.updateChange.mockReturnValue(throwError(() => ({ status: 422 })));
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: {
+          interventionId: 'intervention-1',
+          source: 'replayed',
+          collections: ['workItems', 'changes'],
+        },
+      }),
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledTimes(1);
+    expect(mockOffline.markOutboxFailed).toHaveBeenCalledWith('change', expect.any(String));
+  });
+
+  it('announces a successful status replay even when a later operation loses connectivity', async () => {
+    const dispatch = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('status', 'intervention.update', { status: 'in_progress' }),
+      operation('change', 'change.update', { changeId: 'change-1', status: 'rejected' }),
+    ]);
+    mockInterventionService.updateChange.mockReturnValue(throwError(() => ({ status: 0 })));
+    await expect(service.replayOutbox('org-1', 'intervention-1')).rejects.toBeDefined();
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          collections: expect.arrayContaining(['activity']),
+          source: 'replayed',
+        }),
+      }),
+    );
   });
 
   it('should replay media operations with their binary payload', async () => {

@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -13,6 +14,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { BrnCommandInput } from '@spartan-ng/brain/command';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   CreateInspectionInput,
@@ -24,9 +27,12 @@ import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmCommandImports } from '@shared/ui/command';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
@@ -78,6 +84,10 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
 @Component({
   selector: 'app-inspection-create-form',
   imports: [
+    BrnCommandInput,
+    HlmInputGroupImports,
+    ...HlmCommandImports,
+    ...HlmDrawerImports,
     RequiredMarker,
     FormField,
     InspectionStatusTag,
@@ -94,6 +104,27 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionCreateForm {
+  /**
+   * Property equipmentPickerVisible
+   * @readonly
+   * @description Keeps an open mobile picker mounted until it dismisses when interaction mode changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly equipmentPickerVisible: WritableSignal<boolean> = signal(false);
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Inputs
   /**
    * Property pending
@@ -264,6 +295,23 @@ export class InspectionCreateForm {
   //#endregion
 
   //#region Methods
+  /**
+   * Method selectEquipment
+   * @method selectEquipment
+   * @description Writes the touch selection to the existing Signal Forms field and marks the draft dirty.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - Selected equipment identifier.
+   * @returns {boolean} Whether the equipment field was updated.
+   */
+  protected selectEquipment(value: string): boolean {
+    if (this.pending()) return false;
+    this.createForm.equipmentId().value.set(value);
+    this.createForm.equipmentId().markAsDirty();
+    this.createForm.equipmentId().markAsTouched();
+    return true;
+  }
+
   /**
    * Method submit
    *

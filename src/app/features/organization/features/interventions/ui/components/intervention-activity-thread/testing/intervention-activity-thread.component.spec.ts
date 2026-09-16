@@ -67,7 +67,17 @@ describe('InterventionActivityThread', () => {
     expect(root().textContent).toContain('No activity recorded yet.');
   });
 
-  it('should render a comment as a card with the author name and body', async () => {
+  it('should expose the activity thread as a flat section', async () => {
+    await create();
+
+    const section = root().querySelector('section[aria-labelledby="intervention-activity-title"]');
+
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute('data-slot')).toBeNull();
+    expect(section?.querySelector('[data-slot="card"]')).toBeNull();
+  });
+
+  it('should render a comment with the author name and body', async () => {
     await create();
     fixture.componentRef.setInput('activities', [activity()]);
     fixture.componentRef.setInput('members', [MEMBER]);
@@ -104,6 +114,42 @@ describe('InterventionActivityThread', () => {
     expect(mention?.querySelector('.sr-only')?.textContent).toContain('Technician');
   });
 
+  it('should render an HTML-escaped stored mention as the mentioned member name', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [
+      activity({ body: `&#64;{${MENTIONED_MEMBER.value.split('/').pop()}} please check this` }),
+    ]);
+    fixture.componentRef.setInput('members', [MEMBER, MENTIONED_MEMBER]);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Marc Dubois');
+    expect(root().textContent).not.toContain('&#64;');
+  });
+
+  it('should wrap compact system icons in a bordered circle', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [
+      activity({ kind: 'system', event: 'created', actor: null, body: null }),
+    ]);
+    await fixture.whenStable();
+
+    const icon = root().querySelector('[data-testid="intervention-activity-system-icon"]');
+    const markerIcon = icon?.querySelector('[data-slot="marker-icon"]');
+    const markerContent = root().querySelector('[data-slot="marker-content"]');
+    const glyph = icon?.querySelector('ng-icon');
+
+    expect(icon?.classList.contains('size-6')).toBe(true);
+    expect(icon?.classList.contains('p-0.5')).toBe(true);
+    expect(icon?.classList.contains('rounded-full')).toBe(true);
+    expect(icon?.classList.contains('border')).toBe(true);
+    expect(markerIcon?.classList.contains('flex')).toBe(true);
+    expect(markerIcon?.classList.contains('items-center')).toBe(true);
+    expect(markerIcon?.classList.contains('justify-center')).toBe(true);
+    expect(markerContent?.classList.contains('pt-1')).toBe(true);
+    expect(glyph?.classList.contains('size-3')).toBe(true);
+    expect(glyph?.classList.contains('text-[length:--spacing(3)]')).toBe(true);
+  });
+
   it('should fall back to a neutral label for an unresolved comment mention', async () => {
     await create();
     fixture.componentRef.setInput('activities', [
@@ -130,6 +176,55 @@ describe('InterventionActivityThread', () => {
     expect(root().textContent).toContain('changed status');
     expect(root().textContent).toContain('Draft');
     expect(root().textContent).toContain('Planned');
+
+    const arrow = root().querySelector('ng-icon[name="lucideArrowRight"]');
+
+    expect(arrow?.classList.contains('size-2.5')).toBe(true);
+    expect(arrow?.classList.contains('shrink-0')).toBe(true);
+  });
+
+  it('should connect adjacent activity rows without a bottom gap', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [
+      activity({ kind: 'system', event: 'created', actor: null, body: null }),
+      activity({ id: 'activity-2' }),
+    ]);
+    await fixture.whenStable();
+
+    const connector = root().querySelector('[data-testid="intervention-activity-connector"]');
+
+    expect(connector?.classList.contains('bottom-0')).toBe(true);
+    expect(connector?.classList.contains('top-6')).toBe(true);
+    expect(connector?.classList.contains('left-3')).toBe(true);
+    expect(connector?.classList.contains('bg-border')).toBe(true);
+    expect(connector?.classList.contains('w-0.5')).toBe(true);
+  });
+
+  it('should align compact comment avatars with the system icon rail', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [activity()]);
+    fixture.componentRef.setInput('members', [MEMBER]);
+    await fixture.whenStable();
+
+    const rail = root().querySelector('.size-6.shrink-0');
+    const avatar = root().querySelector('hlm-avatar');
+    const avatarFrame = root().querySelector('[data-slot="message-avatar"]');
+
+    expect(rail).not.toBeNull();
+    expect(avatarFrame?.classList.contains('size-6')).toBe(true);
+    expect(avatarFrame?.classList.contains('min-w-0')).toBe(true);
+    expect(avatar?.getAttribute('data-size')).toBe('sm');
+  });
+
+  it('should use the page header surface for comment bubbles', async () => {
+    await create();
+    fixture.componentRef.setInput('activities', [activity()]);
+    fixture.componentRef.setInput('members', [MEMBER]);
+    await fixture.whenStable();
+
+    const bubble = root().querySelector('[data-slot="bubble"]');
+
+    expect(bubble?.classList.contains('*:data-[slot=bubble-content]:bg-muted/25')).toBe(true);
   });
 
   it('should render a system creation entry without an actor generically', async () => {

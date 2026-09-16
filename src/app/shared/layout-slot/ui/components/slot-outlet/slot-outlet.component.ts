@@ -3,12 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
-  type Injector,
   type InputSignal,
   type Signal,
 } from '@angular/core';
-import type { SlotContribution } from '../../../models';
+import type { SlotContribution, SlotPresentation } from '../../../models';
+import { SLOT_PRESENTATION } from '../../../slot-presentation.token';
 import { sortSlotContributions } from '../../../utils';
 
 /**
@@ -20,6 +21,8 @@ import { sortSlotContributions } from '../../../utils';
  * It knows nothing about what it renders: the host layout injects the slot
  * token and hands the array over, so the same outlet serves a sidebar section
  * list, a header tool cluster and a footer alike.
+ * Presentation is provided locally to its view, leaving Angular's native
+ * parent injector intact for contributions rendered inside a portal.
  *
  * The host is `display: contents`, so the outlet never becomes a flex or grid
  * item of its own — the contributions sit directly in the layout's own box.
@@ -36,6 +39,12 @@ import { sortSlotContributions } from '../../../utils';
 @Component({
   selector: 'app-slot-outlet',
   imports: [NgComponentOutlet],
+  viewProviders: [
+    {
+      provide: SLOT_PRESENTATION,
+      useFactory: (): SlotPresentation => inject(SlotOutlet).presentation(),
+    },
+  ],
   templateUrl: './slot-outlet.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,20 +67,20 @@ export class SlotOutlet {
     input.required<readonly SlotContribution[]>();
 
   /**
-   * Property componentInjector
+   * Property presentation
    * @readonly
    *
    * @description
-   * Optional child injector inherited by every dynamically rendered
-   * contribution. Layouts use it to provide presentation context without
-   * coupling the contribution to the owning shell.
+   * Presentation resolved when contributions are instantiated. Hosts set this
+   * before rendering; the provider changes only this token, not the inherited
+   * injector or native overlay context.
    *
    * @access public
    * @since 1.1.0
    *
-   * @type {InputSignal<Injector | undefined>}
+   * @type {InputSignal<SlotPresentation>}
    */
-  public readonly componentInjector: InputSignal<Injector | undefined> = input<Injector>();
+  public readonly presentation: InputSignal<SlotPresentation> = input<SlotPresentation>('default');
   //#endregion
 
   //#region Properties

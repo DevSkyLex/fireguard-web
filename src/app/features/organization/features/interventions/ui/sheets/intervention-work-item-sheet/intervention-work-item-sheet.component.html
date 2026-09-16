@@ -6,15 +6,14 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! max-sm:max-h-[85svh] max-sm:overflow-y-auto sm:w-[480px]! sm:max-w-none!"
+    class="w-full! mobile-ui:max-h-[85svh] mobile-ui:overflow-y-auto desktop-ui:w-[480px]! desktop-ui:max-w-[100vw]!"
     data-testid="intervention-work-item-sheet"
     [attr.data-dirty]="dirty()"
   >
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@intervention.workItemDrawer.header">Add work item</h3>
       <p hlmSheetDescription i18n="@@intervention.wif.hint">
-        Add a task to the prepared scope. Only an action is required — target and assignee can be
-        set now or later during execution.
+        Only the action is required; target and assignee can be set now or during execution.
       </p>
     </hlm-sheet-header>
 

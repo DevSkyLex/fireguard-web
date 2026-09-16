@@ -25,6 +25,9 @@ test.describe('Interventions tabs — header survives a tab switch', () => {
     await api.mockInterventionTemplates(E2E_ORGANIZATION_ID, []);
     await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
+    await api.mockInterventionWorkItems(FIXTURES[0].id, []);
+    await api.mockInterventionChanges(FIXTURES[0].id, []);
+    await api.mockInterventionIssues(FIXTURES[0].id, []);
 
     const interventions = new InterventionsPage(page);
     await interventions.goto(E2E_ORGANIZATION_ID);

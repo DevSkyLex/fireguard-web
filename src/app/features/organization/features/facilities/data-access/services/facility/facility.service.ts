@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
-import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
+import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityOutput,
@@ -234,17 +234,24 @@ export class FacilityService extends HydraApiService {
    * @since 4.5.0
    *
    * @param {string} interventionId - The intervention to scope the query to.
-   * @param {PaginationOptions} [options] - Optional pagination.
+   * @param {FacilityListOptions} [options] - Optional pagination, search and filters.
    *
-   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
+   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
    */
   public listByIntervention(
     interventionId: string,
-    options?: PaginationOptions,
+    options?: FacilityListOptions,
   ): Observable<HydraCollection<FacilityOutput>> {
     return this.getCollection<FacilityOutput>('/api/facilities', {
-      ...options,
-      params: { intervention: `/api/interventions/${interventionId}` },
+      page: options?.page,
+      itemsPerPage: options?.itemsPerPage,
+      sort: options?.sort,
+      search: options?.search,
+      params: {
+        ...options?.params,
+        intervention: `/api/interventions/${interventionId}`,
+        ...(options?.status ? { status: options.status } : {}),
+      },
     });
   }
 

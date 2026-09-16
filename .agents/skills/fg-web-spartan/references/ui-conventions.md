@@ -1,6 +1,6 @@
 # spartan/ui
 
-The app has **one** component library: [spartan/ui](https://spartan.ng). `@spartan-ng/brain` provides headless primitives (behaviour, a11y, CDK); the **helm** components are styled Angular components **copied into this repo** by the CLI — they are ours to edit, not a node_modules dependency.
+The app has **one** component library: [spartan/ui](https://spartan.ng). `@spartan-ng/brain` provides headless primitives (behaviour, a11y, CDK); the **helm** components are styled Angular components **copied into this repo** by the CLI. FireGuard treats `src/app/shared/ui/**` as read-only: compose at application call sites; never hand-edit these primitives.
 
 ## The rule that matters most
 
@@ -20,7 +20,7 @@ Ask the **spartan MCP** (`.codex/config.toml`) for a component's API, props, and
 ```text
 src/app/shared/ui/<name>/
   src/index.ts            # the public entry — exported as @shared/ui/<name>
-  src/lib/hlm-<name>.ts   # the component (yours to edit)
+  src/lib/hlm-<name>.ts   # installed component (read-only)
 ```
 
 Import through the alias the CLI registers in `tsconfig.json`:
@@ -58,13 +58,9 @@ npx ng g @spartan-ng/cli:ui <name>
 
 `src/styles.css` owns the Tailwind layer order, the brain preset import, and the light/dark custom properties. It is **no longer off-limits**, but it takes theme tokens only — a component rule there is blocked by the guard hook, and rightly so: component styling belongs at the call site.
 
-**The palette is spartan's `neutral` default, unmodified.** Do not tune a colour token
-because a surface looks off — the whole point of an untouched default is that the next
-`ng g @spartan-ng/cli:ui-theme` run is a no-op and every component reads the same ramp.
-Branding the palette is a deliberate, separate decision that has not been taken.
-
-One selector does differ from what the generator writes: the dark block is
-`html[data-theme='dark']`, not `:root.dark`. Values are untouched — see above.
+**DESIGN.md owns the palette: Nova, Geist, neutral surfaces and vermilion branding.**
+Preserve its semantic tokens and `html[data-theme='dark']` selector. Do not regenerate
+the theme to an upstream default or change the palette to repair a layout problem.
 
 ## Wiring
 
@@ -77,4 +73,4 @@ Helm components are **vendored code**, generated rather than authored, so two ho
 - their barrels use `export *`, which §13.3 bans everywhere else;
 - they do not follow §9's naming (`Hlm*` classes, `src/lib/` nesting, no `.component.ts` suffix).
 
-Both are recorded in `ARCHITECTURE.md` §8.5. Re-generating a component must not be treated as a violation to "fix" — edit the component body freely, leave its shape alone.
+Both are recorded in `ARCHITECTURE.md` §8.5. Leave installed components unchanged and compose the required behavior in the owning application feature. A future library update is a separate, explicit task.

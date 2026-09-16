@@ -28,6 +28,7 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component AccountSessionsPanel
@@ -75,6 +76,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     HlmBadge,
     HlmButton,
     HlmSkeleton,
+    HlmSpinner,
     ...HlmAlertDialogImports,
   ],
   providers: [

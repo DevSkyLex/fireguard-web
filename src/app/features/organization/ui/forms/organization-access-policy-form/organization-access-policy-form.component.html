@@ -3,9 +3,9 @@
     <legend hlmFieldLegend i18n="@@org.access.policyLegend">How people join</legend>
     <hlm-radio-group [formField]="policyForm.mode">
       @for (option of options; track option.value) {
-        <label hlmFieldLabel [for]="'access-mode-' + option.value">
+        <label class="mobile-ui:min-h-11" hlmFieldLabel [for]="'access-mode-' + option.value">
           <div hlmField orientation="horizontal">
-            <hlm-radio [id]="'access-mode-' + option.value" [value]="option.value" />
+            <hlm-radio [inputId]="'access-mode-' + option.value" [value]="option.value" />
             <div hlmFieldContent>
               <span hlmFieldTitle>{{ option.label }}</span>
               <p hlmFieldDescription>{{ option.description }}</p>
@@ -19,12 +19,14 @@
     <div hlmField>
       <label hlmFieldLabel for="access-role" i18n="@@org.access.role">Role for new members</label>
       <hlm-select [formField]="policyForm.roleId" [itemToString]="roleLabelOf"
-        ><hlm-select-trigger buttonId="access-role" class="w-full"
+        ><hlm-select-trigger buttonId="access-role" class="w-full mobile-ui:min-h-11"
           ><hlm-select-value
         /></hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
           @for (role of policy().eligibleRoles; track role.id) {
-            <hlm-select-item [value]="role.id">{{ role.label }}</hlm-select-item>
+            <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+              role.label
+            }}</hlm-select-item>
           }
         </hlm-select-content></hlm-select
       >
@@ -39,7 +41,7 @@
   <button
     hlmBtn
     type="submit"
-    class="w-fit max-sm:min-h-11 max-sm:w-full"
+    class="w-fit max-sm:w-full mobile-ui:min-h-11"
     [disabled]="pending()"
     i18n="@@org.access.save"
   >
@@ -52,7 +54,7 @@
 >
   <hlm-dialog-content
     *hlmDialogPortal
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
   >
     <hlm-dialog-header
       ><h2 hlmDialogTitle i18n="@@org.access.automaticTitle">Allow immediate membership?</h2>
@@ -75,14 +77,14 @@
         hlmBtn
         variant="outline"
         hlmDialogClose
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         i18n="@@org.access.cancel"
       >
         Cancel
       </button>
       <button
         hlmBtn
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         (click)="confirm()"
         i18n="@@org.access.enableAutomatic"
       >

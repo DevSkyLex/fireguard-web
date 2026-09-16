@@ -16,7 +16,7 @@
 | directive           | host behaviour or the projected context                       | a **host component**, not `TestBed.createComponent(Directive)`   |
 | util                | return value incl. `null`, empty, boundary, fallback          | plain import, no `TestBed`                                       |
 
-- **Never change production code to make a spec pass.** An untestable boundary is a finding, not something to paper over.
+- **Never add production-only test hooks or change behavior to satisfy an incorrect spec.** A regression test may reveal a real production defect: fix it at its owning boundary, then prove the intended contract. Report an untestable boundary rather than disguising it.
 - Never weaken an assertion to `toBeTruthy()` where the exact `UrlTree`, enum literal, or emitted payload **is** the contract.
 - No `test.only`, `it.only`, or `fdescribe` in a committed spec — it silently skips the suite.
 - Strict TS in specs too: type mocks as `{ method: ReturnType<typeof vi.fn> }`, never `any`.

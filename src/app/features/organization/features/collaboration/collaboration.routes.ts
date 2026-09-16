@@ -1,4 +1,5 @@
 import type { Routes } from '@angular/router';
+import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY, type DashboardRouteData } from '@core/routing';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 
@@ -39,7 +40,10 @@ export const COLLABORATION_ROUTES: Routes = [
         (m) => m.DirectMessagesPage,
       ),
     title: $localize`:@@route.messages:Messages`,
-    data: { breadcrumb: $localize`:@@route.messages:Messages` },
+    data: {
+      breadcrumb: $localize`:@@route.messages:Messages`,
+      [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
+    } satisfies DashboardRouteData,
     children: [
       {
         path: 'saved',

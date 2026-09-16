@@ -31,7 +31,6 @@ import {
 import { HlmAttachmentImports } from '@shared/ui/attachment';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -122,7 +121,6 @@ interface AttachmentFileMeta {
     ...HlmEmptyImports,
     HlmButton,
     ...HlmBadgeImports,
-    ...HlmCardImports,
     ...HlmAttachmentImports,
     ...HlmSpinnerImports,
   ],

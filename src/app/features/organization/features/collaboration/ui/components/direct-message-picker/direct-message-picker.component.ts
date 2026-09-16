@@ -1,7 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -14,12 +16,14 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePenLine, lucideSearch, lucideUsers } from '@ng-icons/lucide';
 import { BrnCommandInput, type CommandFilter } from '@spartan-ng/brain/command';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCommand, HlmCommandList, HlmCommandItem } from '@shared/ui/command';
+import { HlmCommand, HlmCommandItem, HlmCommandList } from '@shared/ui/command';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmInput } from '@shared/ui/input';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmPopoverImports } from '@shared/ui/popover';
 
 /**
@@ -27,8 +31,9 @@ import { HlmPopoverImports } from '@shared/ui/popover';
  * @class DirectMessagePicker
  *
  * @description
- * Picks a recipient in a searchable Spartan popover anchored to its compose button.
- * Native command items provide keyboard navigation without obscuring the conversation.
+ * Picks a recipient in a searchable Spartan command surface: a desktop popover
+ * or a mobile drawer. Native command items provide keyboard navigation without
+ * obscuring the conversation.
  *
  * Presentational: it filters and emits a member id, and the page decides what
  * that means (`ARCHITECTURE.md` §10.5). The candidate list is supplied already
@@ -47,6 +52,10 @@ import { HlmPopoverImports } from '@shared/ui/popover';
 @Component({
   selector: 'app-direct-message-picker',
   imports: [
+    BrnCommandInput,
+    HlmInputGroupImports,
+    NgTemplateOutlet,
+    HlmDrawerImports,
     NgIcon,
     ...HlmEmptyImports,
     HlmAvatar,
@@ -54,17 +63,27 @@ import { HlmPopoverImports } from '@shared/ui/popover';
     HlmAvatarImage,
     HlmPopoverImports,
     HlmButton,
-    BrnCommandInput,
     HlmCommand,
     HlmCommandList,
     HlmCommandItem,
-    HlmInput,
   ],
   providers: [provideIcons({ lucidePenLine, lucideSearch, lucideUsers })],
   templateUrl: './direct-message-picker.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectMessagePicker {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Inputs
   /**
    * Property visible
@@ -237,24 +256,6 @@ export class DirectMessagePicker {
     this.query.set('');
 
     this.visibleChange.emit(isOpen);
-  }
-
-  /**
-   * Method onQueryInput
-   * @method onQueryInput
-   *
-   * @description
-   * Keeps the search text in sync with the field.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @param {Event} event - The input event.
-   *
-   * @returns {void}
-   */
-  protected onQueryInput(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
   }
 
   /**

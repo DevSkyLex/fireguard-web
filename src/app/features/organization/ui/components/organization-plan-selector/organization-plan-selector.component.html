@@ -40,8 +40,22 @@
       i18n-aria-label="@@org.settings.plan.billingCadenceAria"
       (valueChange)="selectBillingInterval($event)"
     >
-      <button hlmToggleGroupItem value="month" i18n="@@org.settings.plan.monthly">Monthly</button>
-      <button hlmToggleGroupItem value="year" i18n="@@org.settings.plan.yearly">Annual</button>
+      <button
+        class="mobile-ui:min-h-11"
+        hlmToggleGroupItem
+        value="month"
+        i18n="@@org.settings.plan.monthly"
+      >
+        Monthly
+      </button>
+      <button
+        class="mobile-ui:min-h-11"
+        hlmToggleGroupItem
+        value="year"
+        i18n="@@org.settings.plan.yearly"
+      >
+        Annual
+      </button>
     </hlm-toggle-group>
   </div>
 
@@ -102,7 +116,7 @@
             hlmBtn
             type="button"
             size="lg"
-            class="min-h-11 w-full"
+            class="min-h-11 w-full mobile-ui:min-h-11"
             [variant]="row.isPopular && !row.isCurrent ? 'default' : 'outline'"
             [disabled]="row.isCurrent || isChanging()"
             (click)="requestChange(row)"

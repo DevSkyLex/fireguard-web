@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-md"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-md mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
     data-testid="organization-member-roles-dialog"
     *hlmDialogPortal
   >
@@ -36,7 +36,7 @@
             />
             <label
               [for]="'organization-member-role-' + role.id"
-              class="flex flex-col gap-0.5 text-sm leading-none"
+              class="flex flex-col gap-0.5 text-sm leading-none mobile-ui:min-h-11"
             >
               <span class="font-medium text-foreground">{{ role.name }}</span>
               @if (role.description; as description) {

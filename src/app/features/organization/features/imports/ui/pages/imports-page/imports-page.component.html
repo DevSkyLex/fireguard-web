@@ -1,13 +1,20 @@
-<div id="imports" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+<div
+  id="imports"
+  class="flex min-h-0 w-full flex-1 flex-col gap-4 mobile-ui:min-h-fit mobile-ui:flex-none"
+>
   @if (canUpload()) {
-    <section hlmCard class="max-w-xl" data-testid="imports-upload-card">
-      <div hlmCardHeader>
+    <section
+      hlmCard
+      class="max-w-xl mobile-ui:shrink-0 mobile-ui:gap-4 mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:bg-transparent mobile-ui:shadow-none mobile-ui:ring-0"
+      data-testid="imports-upload-card"
+    >
+      <div hlmCardHeader class="mobile-ui:px-0">
         <h2 hlmCardTitle i18n="@@imports.upload.title">Import from CSV</h2>
         <p hlmCardDescription i18n="@@imports.upload.description">
           Bulk-create equipment, facilities or member invitations from a spreadsheet export.
         </p>
       </div>
-      <div hlmCardContent>
+      <div hlmCardContent class="mobile-ui:px-0">
         <app-import-upload-form
           [kindOptions]="availableKindOptions()"
           [pending]="store.isCreating()"
@@ -19,6 +26,9 @@
     </section>
   }
 
+  <h2 class="hidden text-base font-semibold mobile-ui:block" i18n="@@imports.table.title">
+    Import jobs
+  </h2>
   <app-collection-toolbar>
     <app-collection-filter-toggle
       toolbarEnd
@@ -88,7 +98,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" data-testid="imports-retry" (click)="reload()">
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="imports-retry"
+          (click)="reload()"
+          class="mobile-ui:min-h-11"
+        >
           <span i18n="@@imports.list.retry">Retry</span>
         </button>
       </div>
@@ -108,7 +124,7 @@
       </div>
       <div hlmEmptyContent>
         @if (hasFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
+          <button hlmBtn variant="outline" (click)="clearFilters()" class="mobile-ui:min-h-11">
             <span i18n="@@common.clearFilters">Clear filters</span>
           </button>
         }
@@ -116,6 +132,7 @@
     </div>
   } @else {
     <app-import-job-table
+      class="mobile-ui:min-h-fit mobile-ui:flex-none"
       [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoading() && items().length === 0"
@@ -123,6 +140,7 @@
     />
 
     <app-collection-pagination
+      class="mobile-ui:flex-none"
       [page]="page()"
       [pageCount]="pageCount()"
       [pageSize]="pageSize()"

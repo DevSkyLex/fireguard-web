@@ -21,6 +21,7 @@
           </div>
           <div hlmEmptyContent>
             <button
+              class="mobile-ui:min-h-11"
               hlmBtn
               variant="outline"
               size="sm"
@@ -58,6 +59,7 @@
         @if (hasMore()) {
           <div class="flex justify-center pb-2">
             <button
+              class="mobile-ui:min-h-11"
               hlmBtn
               variant="ghost"
               size="sm"
@@ -101,7 +103,9 @@
       </div>
     }
 
-    <div class="sticky bottom-0 z-10 bg-background pt-2 pb-3">
+    <div
+      class="sticky bottom-0 z-10 bg-background pt-2 pb-3 mobile-ui:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+    >
       <ng-content />
     </div>
   </div>

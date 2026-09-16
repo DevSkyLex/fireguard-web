@@ -11,7 +11,13 @@
         The provider response is no longer valid. Start the connection again.
       </p>
     </div>
-    <a hlmBtn variant="outline" routerLink="/account/security" i18n="@@account.signInMethods.back">
+    <a
+      class="mobile-ui:min-h-11"
+      hlmBtn
+      variant="outline"
+      routerLink="/account/security"
+      i18n="@@account.signInMethods.back"
+    >
       Back to Security
     </a>
   } @else if (federatedStore.completeLinkError(); as error) {
@@ -26,7 +32,13 @@
         {{ federatedErrorMessage(error.message) }}
       </p>
     </div>
-    <a hlmBtn variant="outline" routerLink="/account/security" i18n="@@account.signInMethods.back">
+    <a
+      class="mobile-ui:min-h-11"
+      hlmBtn
+      variant="outline"
+      routerLink="/account/security"
+      i18n="@@account.signInMethods.back"
+    >
       Back to Security
     </a>
   } @else {

@@ -9,6 +9,10 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
 import { FeedbackService, type FeedbackMessage } from '@core/feedback';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import { HlmToaster } from '@shared/ui/sonner';
 
 /**
@@ -16,13 +20,8 @@ import { HlmToaster } from '@shared/ui/sonner';
  * @class App
  *
  * @description
- * Root application component: the routed outlet and the app-wide toast deck.
- *
- * The deck is spartan's own `hlm-toaster`, rendered directly — wrapping it in a
- * component of ours would rename it and nothing more (`ARCHITECTURE.md` §8.5).
- * What is left here is the part spartan cannot know: draining the feedback
- * queue into it. That belongs to the shell rather than to `shared`, because it
- * knows a `core` concern and is not a generic primitive (§6.4).
+ * Hosts the routed application and drains app-wide feedback into Spartan's
+ * native toaster.
  *
  * @version 3.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -36,11 +35,23 @@ import { HlmToaster } from '@shared/ui/sonner';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, HlmToaster],
-  template: `<router-outlet /> <hlm-toaster />`,
+  templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   //#region Properties
+  /**
+   * Property interactionCapabilities
+   * @readonly
+   * @description Keeps notifications clear of mobile navigation and workflow footers.
+   * @access protected
+   * @since 3.1.0
+   * @type {InteractionCapabilitiesPort}
+   */
+  protected readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  );
+
   /**
    * Property feedback
    * @readonly
@@ -62,10 +73,8 @@ export class App {
    * @readonly
    *
    * @description
-   * Hands every queued message to the deck and drops it, so the queue stays a
-   * handover buffer rather than a growing log. Dismissing inside `untracked`
-   * keeps the write out of the effect's own dependencies, which would otherwise
-   * re-run it forever.
+   * Renders and dismisses pending feedback. Queue writes stay untracked so they
+   * do not become effect dependencies.
    *
    * @access private
    * @since 3.0.0
@@ -89,9 +98,7 @@ export class App {
    * @method render
    *
    * @description
-   * Shows one message with the severity's own sonner variant, so an error is
-   * not merely a differently worded success. The queue holds no timer — the
-   * message carries `lifeMs` and honouring it is a presentation decision.
+   * Maps one feedback message to its matching Sonner severity and lifetime.
    *
    * @access private
    * @since 3.0.0

@@ -19,7 +19,7 @@
     <span class="min-w-0 flex-1 text-sm">
       @if (facility().parentFacilityId; as parentId) {
         <a
-          class="rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          class="inline-flex items-center rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
           [routerLink]="['/organizations', organizationId(), 'facilities', parentId]"
         >
           <span i18n="@@facility.info.viewParent">View parent facility</span>
@@ -50,7 +50,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="nameField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -84,7 +84,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="codeField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -118,7 +118,7 @@
         fieldEditor
         hlmInput
         type="text"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="addressField.labelId"
         [value]="textDraft()"
         (input)="textDraft.set($any($event.target).value)"
@@ -162,7 +162,7 @@
             step="1"
             min="-100"
             max="200"
-            class="w-full"
+            class="w-full mobile-ui:min-h-11"
             [id]="levelIndexField.editorId + '-value'"
             [attr.aria-invalid]="levelIndexError() !== null"
             [attr.aria-describedby]="
@@ -228,6 +228,7 @@
             size="sm"
             data-testid="facility-pick-on-map"
             (click)="mapPickerVisible.set(true)"
+            class="mobile-ui:min-h-11"
           >
             <ng-icon name="lucideMapPin" aria-hidden="true" />
             <span i18n="@@facility.map.pickOnMap">Pick on map</span>
@@ -242,6 +243,7 @@
               [attr.aria-disabled]="geocodePending() ? 'true' : null"
               [attr.aria-busy]="geocodePending() ? 'true' : null"
               (click)="locateAddress()"
+              class="mobile-ui:min-h-11"
             >
               <ng-icon name="lucideLocateFixed" aria-hidden="true" />
               <span i18n="@@facility.form.locateAddress">Locate address</span>
@@ -279,7 +281,7 @@
               step="any"
               min="-90"
               max="90"
-              class="w-full"
+              class="w-full mobile-ui:min-h-11"
               placeholder="Latitude"
               i18n-placeholder="@@facility.info.latitude"
               [id]="coordinatesField.editorId + '-lat'"
@@ -301,7 +303,7 @@
               step="any"
               min="-180"
               max="180"
-              class="w-full"
+              class="w-full mobile-ui:min-h-11"
               placeholder="Longitude"
               i18n-placeholder="@@facility.info.longitude"
               [id]="coordinatesField.editorId + '-lng'"

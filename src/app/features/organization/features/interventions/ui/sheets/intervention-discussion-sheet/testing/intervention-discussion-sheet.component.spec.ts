@@ -12,6 +12,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
@@ -47,7 +48,11 @@ describe('InterventionDiscussionSheet', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideIcons({ lucideX })],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        provideIcons({ lucideX }),
+      ],
     });
     TestBed.overrideComponent(InterventionDiscussionSheet, {
       set: {

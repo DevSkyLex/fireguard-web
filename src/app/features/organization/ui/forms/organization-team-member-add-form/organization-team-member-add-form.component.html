@@ -17,49 +17,113 @@
     i18n="@@org.teams.membersSheet.addMemberLabel"
     >Member</label
   >
-  <hlm-combobox
-    [value]="selectedMemberId()"
-    [itemToString]="memberLabelOf"
-    [disabled]="pending() || !hasCandidates()"
-    (valueChange)="selectedMemberId.set($any($event))"
-  >
-    <hlm-combobox-input
-      inputId="organization-team-member-add-picker"
-      placeholder="Search a member"
-      i18n-placeholder="@@org.teams.membersSheet.addMemberPlaceholder"
-      data-testid="organization-team-member-add-picker-input"
-    />
-    <hlm-combobox-content *hlmComboboxPortal>
-      <hlm-combobox-empty i18n="@@org.teams.membersSheet.addMemberNoMatch"
-        >No member matches.</hlm-combobox-empty
-      >
-      <div hlmComboboxList>
+  @if (isMobileInteractionMode()) {
+    <hlm-command
+      class="h-auto border border-border"
+      [disabled]="pending() || !hasCandidates()"
+      data-testid="organization-team-member-add-mobile-picker"
+    >
+      <div class="p-1 pb-0">
+        <hlm-input-group class="min-h-11">
+          <input
+            hlmInputGroupInput
+            brnCommandInput
+            id="organization-team-member-add-picker"
+            class="text-base"
+            placeholder="Search a member"
+            i18n-placeholder="@@org.teams.membersSheet.addMemberPlaceholder"
+          />
+          <hlm-input-group-addon>
+            <ng-icon name="lucideSearch" aria-hidden="true" />
+          </hlm-input-group-addon>
+        </hlm-input-group>
+      </div>
+      <div hlmCommandList class="max-h-60 overflow-y-auto overscroll-contain">
+        <div *hlmCommandEmptyState hlmCommandEmpty i18n="@@org.teams.membersSheet.addMemberNoMatch">
+          No member matches.
+        </div>
         @for (option of candidates(); track option.value) {
-          <hlm-combobox-item
-            [value]="option.value"
-            [attr.data-testid]="'organization-team-member-add-option-' + option.value"
+          <button
+            hlmCommandItem
+            type="button"
+            class="min-h-11"
+            [value]="option.displayName + ' ' + option.roleLabel"
+            [disabled]="pending()"
+            [attr.data-testid]="'organization-team-member-add-mobile-' + option.value"
+            (selected)="onMemberPicked(option.value)"
           >
-            <div hlmItem size="xs" class="min-w-0 border-0 p-0">
-              <div hlmItemMedia>
-                <hlm-avatar class="size-8 shrink-0">
-                  @if (option.avatarUrl; as pictureUrl) {
-                    <img hlmAvatarImage [src]="pictureUrl" alt="" />
-                  }
-                  <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
-                </hlm-avatar>
-              </div>
-              <div hlmItemContent class="min-w-0">
-                <div hlmItemTitle class="truncate">{{ option.displayName }}</div>
-                @if (option.roleLabel; as line) {
-                  <div hlmItemDescription class="truncate text-xs">{{ line }}</div>
-                }
-              </div>
-            </div>
-          </hlm-combobox-item>
+            <hlm-avatar class="size-8 shrink-0">
+              @if (option.avatarUrl; as pictureUrl) {
+                <img hlmAvatarImage [src]="pictureUrl" alt="" />
+              }
+              <span hlmAvatarFallback>{{ option.initials }}</span>
+            </hlm-avatar>
+            <span class="flex min-w-0 flex-1 flex-col text-left">
+              <span class="wrap-anywhere whitespace-normal">{{ option.displayName }}</span>
+              @if (option.roleLabel; as line) {
+                <span class="text-xs whitespace-normal text-muted-foreground">{{ line }}</span>
+              }
+            </span>
+            @if (selectedMemberId() === option.value) {
+              <ng-icon name="lucideCheck" aria-hidden="true" />
+              <span class="sr-only" i18n="@@org.teams.membersSheet.selectedMember">Selected</span>
+            }
+          </button>
         }
       </div>
-    </hlm-combobox-content>
-  </hlm-combobox>
+    </hlm-command>
+    @if (selectedMemberId()) {
+      <p hlmFieldDescription role="status" class="wrap-anywhere">
+        <span i18n="@@org.teams.membersSheet.selectedMember">Selected</span>:
+        {{ memberLabelOf(selectedMemberId()) }}
+      </p>
+    }
+  } @else {
+    <hlm-combobox
+      [value]="selectedMemberId()"
+      [itemToString]="memberLabelOf"
+      [disabled]="pending() || !hasCandidates()"
+      (valueChange)="onMemberPicked($event)"
+    >
+      <hlm-combobox-input
+        inputId="organization-team-member-add-picker"
+        placeholder="Search a member"
+        i18n-placeholder="@@org.teams.membersSheet.addMemberPlaceholder"
+        data-testid="organization-team-member-add-picker-input"
+      />
+      <hlm-combobox-content *hlmComboboxPortal>
+        <hlm-combobox-empty i18n="@@org.teams.membersSheet.addMemberNoMatch"
+          >No member matches.</hlm-combobox-empty
+        >
+        <div hlmComboboxList>
+          @for (option of candidates(); track option.value) {
+            <hlm-combobox-item
+              class="mobile-ui:min-h-11"
+              [value]="option.value"
+              [attr.data-testid]="'organization-team-member-add-option-' + option.value"
+            >
+              <div hlmItem size="xs" class="min-w-0 border-0 p-0">
+                <div hlmItemMedia>
+                  <hlm-avatar class="size-8 shrink-0">
+                    @if (option.avatarUrl; as pictureUrl) {
+                      <img hlmAvatarImage [src]="pictureUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback class="text-[10px]">{{ option.initials }}</span>
+                  </hlm-avatar>
+                </div>
+                <div hlmItemContent class="min-w-0">
+                  <div hlmItemTitle class="truncate">{{ option.displayName }}</div>
+                  @if (option.roleLabel; as line) {
+                    <div hlmItemDescription class="truncate text-xs">{{ line }}</div>
+                  }
+                </div>
+              </div>
+            </hlm-combobox-item>
+          }
+        </div>
+      </hlm-combobox-content>
+    </hlm-combobox>
+  }
 </hlm-field>
 
 <hlm-field class="mt-3">
@@ -70,6 +134,8 @@
     >Membership label (optional)</label
   >
   <input
+    #roleInput
+    class="mobile-ui:min-h-11 mobile-ui:text-base"
     hlmInput
     id="organization-team-member-add-role"
     type="text"
@@ -78,7 +144,7 @@
     i18n-placeholder="@@org.teams.membersSheet.addMemberRolePlaceholder"
     [disabled]="pending()"
     [value]="roleLabel()"
-    (input)="roleLabel.set($any($event.target).value)"
+    (input)="roleLabel.set(roleInput.value)"
   />
   <hlm-field-description i18n="@@org.teams.membersSheet.addMemberRoleHint">
     A free-form label, not an RBAC role.
@@ -88,7 +154,7 @@
 <button
   hlmBtn
   type="button"
-  class="mt-3 max-sm:min-h-11"
+  class="mt-3 mobile-ui:min-h-11"
   data-testid="organization-team-member-add-submit"
   [disabled]="!canSubmit()"
   [attr.aria-busy]="pending() ? 'true' : null"

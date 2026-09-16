@@ -5,7 +5,7 @@
         hlmToggle
         variant="outline"
         size="sm"
-        class="h-6 min-w-0 gap-1 rounded-full px-1.5 text-xs"
+        class="h-6 min-w-0 gap-1 rounded-full px-1.5 text-xs mobile-ui:min-h-11 mobile-ui:min-w-11"
         data-testid="message-reaction-chip"
         [state]="reaction.reactedByMe ? 'on' : 'off'"
         [aria-label]="labelFor(reaction)"
@@ -25,7 +25,7 @@
           variant="ghost"
           size="icon"
           type="button"
-          class="size-6 rounded-full text-muted-foreground"
+          class="size-6 rounded-full text-muted-foreground mobile-ui:size-11"
           data-testid="message-reactions-open"
           i18n-aria-label="@@messages.reactions.pick"
           aria-label="Add a reaction"
@@ -35,7 +35,7 @@
 
         <hlm-popover-content
           *hlmPopoverPortal
-          class="w-auto flex-row items-center gap-0.5 rounded-full p-1"
+          class="w-auto max-w-[calc(100vw-2rem)] flex-row flex-wrap items-center gap-0.5 rounded-full p-1"
           role="group"
           data-testid="message-reactions-picker"
           i18n-aria-label="@@messages.reactions.pickerLabel"
@@ -43,8 +43,11 @@
         >
           @for (emoji of quickReactions; track emoji) {
             <button
+              hlmBtn
               type="button"
-              class="inline-flex size-7 items-center justify-center rounded-full text-sm transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              variant="ghost"
+              size="icon-sm"
+              class="size-7 rounded-full text-sm mobile-ui:size-11"
               data-testid="message-reactions-option"
               [attr.aria-label]="emoji"
               (click)="toggle(emoji); picker.close()"

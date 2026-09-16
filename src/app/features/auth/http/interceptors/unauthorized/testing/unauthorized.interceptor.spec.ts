@@ -2,29 +2,29 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
+import { AuthSessionNavigationService } from '@features/auth/services';
 import { unauthorizedInterceptor } from '../unauthorized.interceptor';
 
 describe('unauthorizedInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
-  let mockRouter: { navigate: ReturnType<typeof vi.fn> };
+  let mockSessionNavigation: { navigateToLogin: ReturnType<typeof vi.fn> };
   let mockSession: {
     clearSession: ReturnType<typeof vi.fn>;
     renewSession: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
-    mockRouter = { navigate: vi.fn() };
+    mockSessionNavigation = { navigateToLogin: vi.fn() };
     mockSession = { clearSession: vi.fn(), renewSession: vi.fn(() => of(null)) };
 
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([unauthorizedInterceptor])),
         provideHttpClientTesting(),
-        { provide: Router, useValue: mockRouter },
+        { provide: AuthSessionNavigationService, useValue: mockSessionNavigation },
         {
           provide: AUTH_SESSION_PORT,
           useValue: {
@@ -51,7 +51,7 @@ describe('unauthorizedInterceptor', () => {
 
     httpMock.expectOne('/api/protected').flush(null, { status: 403, statusText: 'Forbidden' });
 
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
     expect(mockSession.clearSession).not.toHaveBeenCalled();
   });
 
@@ -61,7 +61,7 @@ describe('unauthorizedInterceptor', () => {
     httpMock.expectOne('/api/protected').flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(mockSession.clearSession).toHaveBeenCalledTimes(1);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(mockSessionNavigation.navigateToLogin).toHaveBeenCalledTimes(1);
   });
 
   it('should NOT handle a 401 on an excluded auth endpoint', () => {
@@ -70,7 +70,7 @@ describe('unauthorizedInterceptor', () => {
     httpMock.expectOne('/api/auth/login').flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(mockSession.clearSession).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -95,7 +95,7 @@ describe('unauthorizedInterceptor', () => {
     // "your session is gone". On /api/me/password/* the caller is authenticated,
     // so treating it as a dead session logged them out over a typo.
     expect(mockSession.clearSession).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).not.toHaveBeenCalled();
+    expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
   });
 
   it('should still sign the user out on a 401 from a look-alike path', () => {
@@ -106,7 +106,7 @@ describe('unauthorizedInterceptor', () => {
       .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(mockSession.clearSession).toHaveBeenCalledTimes(1);
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(mockSessionNavigation.navigateToLogin).toHaveBeenCalledTimes(1);
   });
 
   describe('silent renewal', () => {
@@ -125,7 +125,7 @@ describe('unauthorizedInterceptor', () => {
 
       expect(body).toEqual({ ok: true });
       expect(mockSession.clearSession).not.toHaveBeenCalled();
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
     });
 
     it('should sign the user out when the renewal itself fails', () => {
@@ -135,7 +135,7 @@ describe('unauthorizedInterceptor', () => {
       httpMock.expectOne('/api/protected').flush(null, { status: 401, statusText: 'Unauthorized' });
 
       expect(mockSession.clearSession).toHaveBeenCalledTimes(1);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+      expect(mockSessionNavigation.navigateToLogin).toHaveBeenCalledTimes(1);
     });
 
     it('should not loop when the replayed request is refused again', () => {
@@ -149,6 +149,7 @@ describe('unauthorizedInterceptor', () => {
       // request would spin through renewal indefinitely.
       expect(mockSession.renewSession).toHaveBeenCalledTimes(1);
       expect(mockSession.clearSession).toHaveBeenCalledTimes(1);
+      expect(mockSessionNavigation.navigateToLogin).toHaveBeenCalledTimes(1);
       httpMock.verify();
     });
 

@@ -1,8 +1,9 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { App } from '../app.component';
 
 describe('App', () => {
@@ -16,7 +17,14 @@ describe('App', () => {
     vi.spyOn(toast, 'info').mockReturnValue('id');
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
     });
 
     feedback = TestBed.inject(FeedbackService);
@@ -30,7 +38,6 @@ describe('App', () => {
   });
 
   it('should render the routed outlet and spartan own toast deck', () => {
-    // Spartan's component, not a wrapper of ours (ARCHITECTURE.md §8.5).
     expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('hlm-toaster')).not.toBeNull();
   });
@@ -53,7 +60,6 @@ describe('App', () => {
   });
 
   it('should use the variant matching each severity', async () => {
-    // An error must not merely be a differently worded success.
     feedback.success('Saved');
     feedback.warn('Careful');
     feedback.info('Heads up');

@@ -17,7 +17,7 @@
     >
       <button
         hlmToggleGroupItem
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         value="7d"
         i18n="@@inspection.analytics.period.7d"
       >
@@ -25,7 +25,7 @@
       </button>
       <button
         hlmToggleGroupItem
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         value="30d"
         i18n="@@inspection.analytics.period.30d"
       >
@@ -33,7 +33,7 @@
       </button>
       <button
         hlmToggleGroupItem
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         value="90d"
         i18n="@@inspection.analytics.period.90d"
       >
@@ -41,7 +41,7 @@
       </button>
       <button
         hlmToggleGroupItem
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         value="12m"
         i18n="@@inspection.analytics.period.12m"
       >
@@ -49,7 +49,7 @@
       </button>
       <button
         hlmToggleGroupItem
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         value="all"
         i18n="@@inspection.analytics.period.all"
       >
@@ -227,10 +227,37 @@
         </div>
         <div hlmCardContent>
           @if (store.isQueryLoading()) {
-            <div class="flex flex-col gap-2" aria-hidden="true">
-              @for (row of severitySkeletonRows; track row) {
-                <hlm-skeleton class="h-8 w-full" />
-              }
+            <div class="w-full overflow-x-auto rounded-md border border-border" aria-hidden="true">
+              <table hlmTable data-testid="inspection-analytics-facilities-loading-table">
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead i18n="@@inspection.analytics.facilities.columnName">
+                      Facility
+                    </th>
+                    <th
+                      hlmTableHead
+                      class="text-right"
+                      i18n="@@inspection.analytics.facilities.columnOpen"
+                    >
+                      Open
+                    </th>
+                    <th
+                      hlmTableHead
+                      class="text-right"
+                      i18n="@@inspection.analytics.facilities.columnCritical"
+                    >
+                      Critical
+                    </th>
+                  </tr>
+                </thead>
+                <tbody hlmTableBody>
+                  <app-collection-skeleton-rows
+                    [rows]="4"
+                    [columns]="['w-40', 'w-12', 'w-12']"
+                    [columnCount]="3"
+                  />
+                </tbody>
+              </table>
             </div>
           } @else if ((store.queryData()?.byFacility ?? []).length === 0) {
             <div hlmEmpty>
@@ -298,10 +325,30 @@
         </div>
         <div hlmCardContent>
           @if (store.isQueryLoading()) {
-            <div class="flex flex-col gap-2" aria-hidden="true">
-              @for (row of severitySkeletonRows; track row) {
-                <hlm-skeleton class="h-8 w-full" />
-              }
+            <div class="w-full overflow-x-auto rounded-md border border-border" aria-hidden="true">
+              <table hlmTable data-testid="inspection-analytics-equipment-types-loading-table">
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead i18n="@@inspection.analytics.equipmentTypes.columnType">
+                      Type
+                    </th>
+                    <th
+                      hlmTableHead
+                      class="text-right"
+                      i18n="@@inspection.analytics.equipmentTypes.columnOpen"
+                    >
+                      Open
+                    </th>
+                  </tr>
+                </thead>
+                <tbody hlmTableBody>
+                  <app-collection-skeleton-rows
+                    [rows]="4"
+                    [columns]="['w-40', 'w-12']"
+                    [columnCount]="2"
+                  />
+                </tbody>
+              </table>
             </div>
           } @else if ((store.queryData()?.byEquipmentType ?? []).length === 0) {
             <div hlmEmpty>

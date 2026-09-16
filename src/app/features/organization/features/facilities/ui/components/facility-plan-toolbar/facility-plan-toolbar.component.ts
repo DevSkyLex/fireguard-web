@@ -1,10 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   computed,
   input,
   output,
   signal,
+  viewChild,
+  type ElementRef,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
@@ -13,10 +16,10 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBox, lucideBoxes, lucideList, lucideMapPin } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type { FacilityPlanEditMode } from '@features/organization/features/facilities/state';
-import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmInput } from '@shared/ui/input';
@@ -34,11 +37,11 @@ import { equipmentPlanLabel } from '../../../utils';
  * three stacked blocks — an isolated "3D view" link, the zone/equipment
  * layer switches, and the editor picker/status bar — into one bar, laid out
  * like `FacilityBuilding3dPage`'s own toolbar: one `flex-wrap` group on the
- * left (layer switches, the compact panel opener), one on the right (the 3D
+ * left (layer switches, the mobile panel opener), one on the right (the 3D
  * link, the `draw-zone`/`place-pin` pickers and their in-mode controls).
  * Candidate catalogs may contain hundreds of records, so those two pickers
  * remain Spartan selects on desktop and become searchable Spartan bottom
- * drawers on compact viewports.
+ * drawers in the mobile interaction mode.
  *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3). The page owns every store write a control here
@@ -88,7 +91,14 @@ export class FacilityPlanToolbar {
   /** Whether the loaded overlay carries at least one zone or pin — gates the layer switches. */
   public readonly overlayHasContent: InputSignal<boolean> = input<boolean>(false);
 
-  /** Whether the compact-viewport panel opener renders — mirrors `FacilityBuilding3dPage`'s own toolbar button. */
+  /**
+   * Property panelOpenerVisible
+   * @readonly
+   * @description Whether the mobile-mode panel opener renders — mirrors `FacilityBuilding3dPage`'s own toolbar button.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly panelOpenerVisible: InputSignal<boolean> = input<boolean>(false);
 
   /** Whether the member may draw/clear a zone outline. */
@@ -110,16 +120,44 @@ export class FacilityPlanToolbar {
     ReadonlyArray<EquipmentOutput>
   >([]);
 
-  /** Whether the zone candidate request is in flight. */
+  /**
+   * Property zoneCandidatesLoading
+   * @readonly
+   * @description Whether the zone candidate request is in flight.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly zoneCandidatesLoading: InputSignal<boolean> = input<boolean>(false);
 
-  /** Whether the last zone candidate request failed. */
+  /**
+   * Property zoneCandidatesFailed
+   * @readonly
+   * @description Whether the last zone candidate request failed.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly zoneCandidatesFailed: InputSignal<boolean> = input<boolean>(false);
 
-  /** Whether the equipment candidate request is in flight. */
+  /**
+   * Property equipmentCandidatesLoading
+   * @readonly
+   * @description Whether the equipment candidate request is in flight.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly equipmentCandidatesLoading: InputSignal<boolean> = input<boolean>(false);
 
-  /** Whether the last equipment candidate request failed. */
+  /**
+   * Property equipmentCandidatesFailed
+   * @readonly
+   * @description Whether the last equipment candidate request failed.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly equipmentCandidatesFailed: InputSignal<boolean> = input<boolean>(false);
 
   /** The in-progress `draw-zone` outline's vertex count — disables "Undo"/"Close polygon" below the minimum. */
@@ -148,7 +186,14 @@ export class FacilityPlanToolbar {
   /** The `draw-zone` picker was opened — the page loads its candidates, guarded against a duplicate fetch. */
   public readonly zonePickerOpened: OutputEmitterRef<void> = output<void>();
 
-  /** The `place-pin` picker was opened — the page loads its candidates, guarded against a duplicate fetch. */
+  /**
+   * Property equipmentPickerOpened
+   * @readonly
+   * @description The `place-pin` picker was opened — the page loads its candidates, guarded against a duplicate fetch.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly equipmentPickerOpened: OutputEmitterRef<void> = output<void>();
 
   /** "Undo last vertex" was activated. */
@@ -166,30 +211,96 @@ export class FacilityPlanToolbar {
   /** "Cancel" was activated, leaving whichever mode is active. */
   public readonly editingCancelled: OutputEmitterRef<void> = output<void>();
 
-  /** The compact-viewport panel opener was activated. */
+  /**
+   * Property panelOpenRequested
+   * @readonly
+   * @description The mobile-mode panel opener was activated.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly panelOpenRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property editorFocusTarget
+   * @readonly
+   * @description The active keyboard editing control that replaces the disabled picker trigger.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ElementRef<HTMLButtonElement> | undefined>}
+   */
+  protected readonly editorFocusTarget: Signal<ElementRef<HTMLButtonElement> | undefined> =
+    viewChild<ElementRef<HTMLButtonElement>>('editorFocusTarget');
+
+  /**
+   * Property toolbar
+   * @readonly
+   * @description Stable fallback focus target while editor controls are updating.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  protected readonly toolbar: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('toolbar');
+
   /** "Draw a zone…" picker's placeholder. */
   protected readonly drawZonePlaceholder: string = $localize`:@@facility.plans.editor.drawZonePlaceholder:Draw a zone…`;
 
   /** "Place equipment…" picker's placeholder. */
   protected readonly placePinPlaceholder: string = $localize`:@@facility.plans.editor.placePinPlaceholder:Place equipment…`;
 
-  /** The compact-viewport panel opener's label. */
+  /**
+   * Property panelOpenerLabel
+   * @readonly
+   * @description The mobile-mode panel opener's label.
+   * @access protected
+   * @since 1.0.0
+   * @type {string}
+   */
   protected readonly panelOpenerLabel: string = $localize`:@@facility.plans.toolbar.openPanel:Zones and equipment`;
 
-  /** Whether dense editor candidate lists should use touch-first bottom drawers. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
-  /** Ephemeral query for the compact zone picker. */
+  /**
+   * Property zoneSearch
+   * @readonly
+   * @description Ephemeral query for the mobile zone picker.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
   protected readonly zoneSearch: WritableSignal<string> = signal<string>('');
 
-  /** Ephemeral query for the compact equipment picker. */
+  /**
+   * Property equipmentSearch
+   * @readonly
+   * @description Ephemeral query for the mobile equipment picker.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
   protected readonly equipmentSearch: WritableSignal<string> = signal<string>('');
 
-  /** Zone candidates matching the compact drawer query. */
+  /**
+   * Property filteredZoneCandidates
+   * @readonly
+   * @description Zone candidates matching the mobile drawer query.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ReadonlyArray<FacilityOutput>>}
+   */
   protected readonly filteredZoneCandidates: Signal<ReadonlyArray<FacilityOutput>> = computed(
     () => {
       const query: string = this.zoneSearch().trim().toLocaleLowerCase();
@@ -200,7 +311,14 @@ export class FacilityPlanToolbar {
     },
   );
 
-  /** Equipment candidates matching the compact drawer query. */
+  /**
+   * Property filteredEquipmentCandidates
+   * @readonly
+   * @description Equipment candidates matching the mobile drawer query.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ReadonlyArray<EquipmentOutput>>}
+   */
   protected readonly filteredEquipmentCandidates: Signal<ReadonlyArray<EquipmentOutput>> = computed(
     () => {
       const query: string = this.equipmentSearch().trim().toLocaleLowerCase();
@@ -215,7 +333,22 @@ export class FacilityPlanToolbar {
 
   //#region Methods
   /**
+   * Method restoreEditorFocus
+   * @method restoreEditorFocus
+   * @description Focuses the active keyboard editing control after a picker closes because editing disables its original trigger.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected restoreEditorFocus(): void {
+    if (this.editMode() === 'none') return;
+
+    (this.editorFocusTarget()?.nativeElement ?? this.toolbar()?.nativeElement)?.focus();
+  }
+
+  /**
    * Method equipmentCandidateLabel
+   * @method equipmentCandidateLabel
    * @description A `place-pin` candidate's display label, from the shared plan-label composer.
    * @access protected
    * @since 1.0.0
@@ -232,48 +365,84 @@ export class FacilityPlanToolbar {
 
   /**
    * Method onZoneDrawTargetPicked
+   * @method onZoneDrawTargetPicked
    * @description The `draw-zone` picker's `valueChange` — forwards a genuinely picked id, dropping a nullish clear.
    * @access protected
    * @since 1.0.0
    * @param {string | null | undefined} facilityId - The picked facility, or nullish when the selection cleared.
-   * @returns {void}
+   * @returns {boolean} Whether a selection command was emitted.
    */
-  protected onZoneDrawTargetPicked(facilityId: string | null | undefined): void {
-    if (!facilityId) return;
+  protected onZoneDrawTargetPicked(facilityId: string | null | undefined): boolean {
+    if (!facilityId || !this.canWrite() || this.editMode() !== 'none') return false;
 
     this.zoneDrawTargetPicked.emit(facilityId);
+    return true;
   }
 
   /**
    * Method onEquipmentPlacePicked
+   * @method onEquipmentPlacePicked
    * @description The `place-pin` picker's `valueChange` — forwards a genuinely picked id, dropping a nullish clear.
    * @access protected
    * @since 1.0.0
    * @param {string | null | undefined} equipmentId - The picked equipment, or nullish when the selection cleared.
-   * @returns {void}
+   * @returns {boolean} Whether a selection command was emitted.
    */
-  protected onEquipmentPlacePicked(equipmentId: string | null | undefined): void {
-    if (!equipmentId) return;
+  protected onEquipmentPlacePicked(equipmentId: string | null | undefined): boolean {
+    if (!equipmentId || !this.canEditEquipment() || this.editMode() !== 'none') return false;
 
     this.equipmentPlacePicked.emit(equipmentId);
+    return true;
   }
 
-  /** Mirrors a mobile zone search input into its ephemeral query. */
-  protected onZoneSearchChanged(event: Event): void {
-    this.zoneSearch.set((event.target as HTMLInputElement).value);
+  /**
+   * Method onZoneSearchChanged
+   * @method onZoneSearchChanged
+   * @description Updates the mobile zone picker query from its template input value.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - The search input value.
+   * @returns {void}
+   */
+  protected onZoneSearchChanged(value: string): void {
+    this.zoneSearch.set(value);
   }
 
-  /** Mirrors a mobile equipment search input into its ephemeral query. */
-  protected onEquipmentSearchChanged(event: Event): void {
-    this.equipmentSearch.set((event.target as HTMLInputElement).value);
+  /**
+   * Method onEquipmentSearchChanged
+   * @method onEquipmentSearchChanged
+   * @description Updates the mobile equipment picker query from its template input value.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - The search input value.
+   * @returns {void}
+   */
+  protected onEquipmentSearchChanged(value: string): void {
+    this.equipmentSearch.set(value);
   }
 
-  /** Clears the compact zone query when its drawer closes. */
+  /**
+   * Method onZoneDrawerStateChanged
+   * @method onZoneDrawerStateChanged
+   * @description Clears the mobile zone query when its drawer closes.
+   * @access protected
+   * @since 1.0.0
+   * @param {'closed' | 'open'} state - The native drawer state.
+   * @returns {void}
+   */
   protected onZoneDrawerStateChanged(state: 'closed' | 'open'): void {
     if (state === 'closed') this.zoneSearch.set('');
   }
 
-  /** Clears the compact equipment query when its drawer closes. */
+  /**
+   * Method onEquipmentDrawerStateChanged
+   * @method onEquipmentDrawerStateChanged
+   * @description Clears the mobile equipment query when its drawer closes.
+   * @access protected
+   * @since 1.0.0
+   * @param {'closed' | 'open'} state - The native drawer state.
+   * @returns {void}
+   */
   protected onEquipmentDrawerStateChanged(state: 'closed' | 'open'): void {
     if (state === 'closed') this.equipmentSearch.set('');
   }

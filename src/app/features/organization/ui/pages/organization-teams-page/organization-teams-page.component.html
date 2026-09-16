@@ -18,7 +18,7 @@
         <button
           hlmBtn
           variant="outline"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="organization-teams-retry"
           (click)="reload()"
         >
@@ -39,7 +39,7 @@
       </div>
       <div hlmEmptyContent>
         @if (canWrite()) {
-          <button hlmBtn class="max-sm:min-h-11" (click)="openCreateDialog()">
+          <button hlmBtn class="mobile-ui:min-h-11" (click)="openCreateDialog()">
             <ng-icon name="lucidePlus" aria-hidden="true" />
             <span i18n="@@org.teams.createButton">New team</span>
           </button>
@@ -109,12 +109,12 @@
     <button
       hlmBtn
       type="button"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="organization-teams-create"
       (click)="openCreateDialog()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@org.teams.createButton">New team</span>
+      <span class="truncate" i18n="@@org.teams.createButton">New team</span>
     </button>
   }
 </ng-template>

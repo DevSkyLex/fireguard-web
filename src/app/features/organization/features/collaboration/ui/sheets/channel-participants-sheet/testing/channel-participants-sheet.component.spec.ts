@@ -38,7 +38,9 @@ describe('ChannelParticipantsSheet', () => {
   let visibility: boolean[];
 
   async function open(): Promise<void> {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
 
     fixture = TestBed.createComponent(ChannelParticipantsSheet);
     fixture.componentRef.setInput('visible', true);
@@ -55,7 +57,9 @@ describe('ChannelParticipantsSheet', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('should render nothing until the page opens it', async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
     fixture = TestBed.createComponent(ChannelParticipantsSheet);
     await fixture.whenStable();
 
@@ -241,3 +245,4 @@ describe('ChannelParticipantsSheet', () => {
     expect(visibility).toEqual([false]);
   });
 });
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';

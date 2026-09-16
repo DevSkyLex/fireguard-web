@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -18,6 +19,7 @@ import {
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowUp } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MentionQuery } from '@features/organization/features/collaboration/models';
 import {
   applyMentionMarkers,
@@ -121,6 +123,20 @@ import type { MessageComposerValues } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageComposer {
+  //#region Properties
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Mobile keyboards insert newlines; the explicit send control commits the draft.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+  //#endregion
+
   //#region Inputs
   /**
    * Property pending
@@ -521,7 +537,7 @@ export class MessageComposer {
       if (this.handleMentionKey(event)) return;
     }
 
-    if (event.key !== 'Enter' || event.shiftKey) return;
+    if (event.key !== 'Enter' || event.shiftKey || this.isMobileInteractionMode()) return;
 
     this.submit(event);
   }

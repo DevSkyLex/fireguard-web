@@ -1,4 +1,5 @@
 <app-collection-surface
+  class="mobile-ui:h-auto mobile-ui:min-h-fit mobile-ui:flex-none"
   caption="Import jobs"
   i18n-caption="@@imports.table.title"
   testId="import-job-table"
@@ -66,11 +67,11 @@
   <ng-container surfaceCards>
     @for (item of items(); track item.id) {
       <div
-        class="flex flex-col gap-2 rounded-md border border-border p-3"
+        class="flex flex-col gap-2 rounded-md border border-border p-3 mobile-ui:gap-4 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
         data-testid="import-job-table-card"
       >
         <div class="flex min-w-0 flex-col">
-          <span class="line-clamp-2 font-medium text-foreground">
+          <span class="text-base font-medium break-words text-foreground">
             {{ item.originalFilename }}
             @if (item.dryRun) {
               <span hlmBadge variant="outline" class="ml-1.5 align-middle text-xs">
@@ -80,13 +81,21 @@
           </span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
           <app-import-status-tag [value]="item.status" />
+
+          <span>{{ kindLabelOf(item) }}</span>
+          @if (progressLabelOf(item); as progress) {
+            <span role="status">{{ progress }}</span>
+          }
 
           <ng-container [ngTemplateOutlet]="rowResults" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-sm text-muted-foreground">{{
+            item.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+          }}</span>
           <ng-container
             [ngTemplateOutlet]="rowActions"
             [ngTemplateOutletContext]="{ item, labelled: true }"
@@ -127,7 +136,7 @@
     type="button"
     variant="ghost"
     size="sm"
-    class="max-sm:min-h-11"
+    class="mobile-ui:min-h-11"
     data-testid="import-job-table-view"
     [attr.aria-label]="viewReportAriaLabelOf(item)"
     (click)="selected.emit(item)"

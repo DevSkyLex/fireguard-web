@@ -19,6 +19,7 @@
         [itemToString]="memberLabelOf"
       >
         <hlm-combobox-input
+          class="mobile-ui:min-h-11"
           inputId="intervention-assign-member"
           placeholder="Search a member"
           i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
@@ -31,6 +32,7 @@
           <div hlmComboboxList>
             @for (option of members(); track option.value) {
               <hlm-combobox-item
+                class="mobile-ui:min-h-11"
                 [value]="option.value"
                 [attr.data-testid]="'intervention-assign-option-' + option.value"
               >
@@ -74,6 +76,7 @@
       <div hlmAlert variant="destructive" role="alert">
         <p hlmAlertDescription>{{ error.message }}</p>
         <button
+          class="mobile-ui:min-h-11"
           hlmBtn
           variant="outline"
           size="sm"
@@ -104,10 +107,18 @@
     }
 
     <hlm-dialog-footer>
-      <button hlmDialogClose hlmBtn type="button" variant="outline" [disabled]="busy()">
+      <button
+        class="mobile-ui:min-h-11"
+        hlmDialogClose
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="busy()"
+      >
         <span i18n="@@common.cancel">Cancel</span>
       </button>
       <button
+        class="mobile-ui:min-h-11"
         hlmBtn
         type="button"
         data-testid="intervention-assign-submit"

@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  computed,
   input as inputSignal,
   provideZonelessChangeDetection,
   signal,
@@ -11,11 +12,15 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { NavigationEnd, provideRouter, Router, type Event as RouterEvent } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
+import {
+  provideInteractionCapabilities,
+  INTERACTION_CAPABILITIES_PORT,
+} from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
 import {
@@ -46,6 +51,7 @@ import type {
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import { interventionSyncEvents } from '@features/organization/features/interventions/services';
 import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
@@ -54,6 +60,7 @@ import {
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
 import { InterventionStore } from '@features/organization/features/interventions/state';
+import { InterventionTableQueryStore } from '@features/organization/features/interventions/state/intervention-table-query';
 import { allowedTransitions } from '@features/organization/features/interventions/utils';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -248,6 +255,7 @@ const createPage = async (): Promise<ComponentFixture<InterventionDetailPage>> =
 };
 
 describe('InterventionDetailPage', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<InterventionDetailPage>;
 
   let current: WritableSignal<InterventionOutput | null>;
@@ -305,6 +313,64 @@ describe('InterventionDetailPage', () => {
     await fixture.whenStable();
   };
 
+  it('coordinates real activity invalidation without inventing work-item events', async () => {
+    fixture = await createPage();
+    const dispatcher = TestBed.inject(Dispatcher);
+    loadActivities.mockClear();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'remote',
+        collections: ['workItems'],
+      }),
+    );
+    expect(loadActivities).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'remote',
+        collections: ['activity'],
+      }),
+    );
+    expect(loadActivities).toHaveBeenCalledTimes(1);
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'other',
+        source: 'remote',
+        collections: ['activity'],
+      }),
+    );
+    expect(loadActivities).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads the workspace before replay-invalidated queries and ignores a different intervention', async () => {
+    fixture = await createPage();
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const invalidated = vi.spyOn(queries, 'invalidate');
+    const dispatcher = TestBed.inject(Dispatcher);
+    dispatcher.dispatch(
+      interventionSyncEvents.replaySucceeded({
+        interventionId: 'other',
+        source: 'replayed',
+        collections: ['changes'],
+      }),
+    );
+    expect(reload).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionSyncEvents.replaySucceeded({
+        interventionId: 'intervention-1',
+        source: 'replayed',
+        collections: ['changes'],
+      }),
+    );
+    expect(reload).toHaveBeenCalledWith('intervention-1');
+    expect(invalidated).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
+    );
+    expect(invalidated).toHaveBeenCalledWith('intervention-1', ['changes']);
+  });
+
   beforeAll(() => {
     globalThis.ResizeObserver ??= class {
       public observe(): void {}
@@ -314,6 +380,7 @@ describe('InterventionDetailPage', () => {
   });
 
   beforeEach(() => {
+    mobile.set(false);
     current = signal<InterventionOutput | null>(intervention());
     workItems = signal<readonly InterventionWorkItemOutput[]>([]);
     issues = signal<readonly InterventionIssueOutput[]>([]);
@@ -356,7 +423,11 @@ describe('InterventionDetailPage', () => {
     workspaceDelete = vi.fn();
     listDelete = vi.fn();
     setPendingDuplicatePrefill = vi.fn();
-    publish = vi.fn().mockResolvedValue({ status: 'completed', error: null });
+    publish = vi.fn().mockResolvedValue({
+      intervention: '/api/interventions/intervention-1',
+      status: 'completed',
+      error: null,
+    });
     openSubjectThread = vi.fn().mockReturnValue(of({ id: 'conversation-1' } as ConversationOutput));
     downloadAttachment = vi
       .fn()
@@ -371,6 +442,14 @@ describe('InterventionDetailPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
@@ -432,11 +511,34 @@ describe('InterventionDetailPage', () => {
             exportReport,
             get: vi.fn().mockImplementation(() => of(current())),
             listIssues: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            listAllWorkItems: vi
+              .fn()
+              .mockImplementation(
+                (_interventionId: string, options?: { readonly status?: readonly string[] }) =>
+                  of(
+                    options?.status
+                      ? workItems().filter((item) => options.status?.includes(item.status))
+                      : workItems(),
+                  ),
+              ),
+            listAllChanges: vi
+              .fn()
+              .mockImplementation(
+                (_interventionId: string, options?: { readonly status?: string }) =>
+                  of(
+                    options?.status
+                      ? changes().filter((item) => item.status === options.status)
+                      : changes(),
+                  ),
+              ),
           },
         },
         {
           provide: TeamService,
-          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            listMembers: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+          },
         },
         {
           provide: InterventionLabelService,
@@ -590,6 +692,19 @@ describe('InterventionDetailPage', () => {
           {
             provide: InterventionLinkedResourcesStore,
             useValue: {
+              setContext: vi.fn(),
+              setOnline: vi.fn(),
+              facilitiesSource: signal('api'),
+              equipmentSource: signal('api'),
+              inspectionsSource: signal('api'),
+              retryFacilities: vi.fn(),
+              retryEquipment: vi.fn(),
+              retryInspections: vi.fn(),
+              invalidate: vi.fn(),
+              deactivate: vi.fn(),
+              facilitiesQuery: signal({ search: '', type: null, status: null }),
+              equipmentQuery: signal({ search: '', type: null, status: null }),
+              inspectionsQuery: signal({ search: '', status: null, result: null }),
               facilities: signal([]),
               facilitiesLoading: signal(false),
               facilitiesError: signal(null),
@@ -630,6 +745,27 @@ describe('InterventionDetailPage', () => {
     ).toContain('Properties');
   });
 
+  it('should keep the properties group free of the desktop divider', async () => {
+    fixture = await createPage();
+
+    const properties = byTestId('intervention-detail-properties');
+    const aside = properties?.parentElement;
+
+    expect(aside?.classList.contains('@4xl/detail:border-s')).toBe(false);
+    expect(aside?.classList.contains('@4xl/detail:ps-6')).toBe(false);
+  });
+
+  it('should keep the desktop properties rail below the sticky page chrome', async () => {
+    fixture = await createPage();
+
+    const properties = byTestId('intervention-detail-properties');
+    const aside = properties?.parentElement;
+
+    expect(aside?.classList.contains('@4xl/detail:sticky')).toBe(true);
+    expect(aside?.classList.contains('@4xl/detail:top-40')).toBe(true);
+    expect(aside?.classList.contains('@4xl/detail:top-4')).toBe(false);
+  });
+
   it('should render every section at once, with nothing hidden behind a tab', async () => {
     fixture = await createPage();
 
@@ -637,13 +773,56 @@ describe('InterventionDetailPage', () => {
     expect(byTestId('intervention-detail-properties')).not.toBeNull();
   });
 
-  it('should show a meta line naming when the intervention was last touched', async () => {
+  it('should preserve the shared page-header breathing room', async () => {
     fixture = await createPage();
 
-    expect(byTestId('intervention-detail-meta').textContent).toContain('v3');
+    const detail = root().querySelector('#intervention-detail');
+
+    expect(detail?.classList.contains('-mt-4')).toBe(false);
+    expect(detail?.classList.contains('md:-mt-6')).toBe(false);
+  });
+
+  it('should use the compact rhythm between overview sections', async () => {
+    fixture = await createPage();
+
+    const overview = root().querySelector('#brn-tabs-content-overview > div');
+
+    expect(overview?.classList.contains('gap-4')).toBe(true);
+    expect(overview?.classList.contains('gap-6')).toBe(false);
+  });
+
+  it('should keep activity metadata out of the properties surface', async () => {
+    fixture = await createPage();
+
+    expect(byTestId('intervention-detail-meta')).toBeNull();
+    expect(byTestId('intervention-detail-about')).toBeNull();
   });
 
   describe('the phase action', () => {
+    it('moves the single workflow action to the mobile footer without replacing the comment form', async () => {
+      fixture = await createPage();
+      const commentForm = root().querySelector('app-intervention-comment-form');
+      mobile.set(true);
+      await fixture.whenStable();
+      const footer = root().querySelector('[data-testid="intervention-mobile-workflow-footer"]');
+      expect(
+        footer?.querySelector('[data-testid="intervention-detail-command"]')?.textContent,
+      ).toContain('Plan intervention');
+      expect(root().querySelectorAll('[data-testid="intervention-detail-command"]')).toHaveLength(
+        1,
+      );
+      expect(root().querySelector('app-intervention-comment-form')).toBe(commentForm);
+      mobile.set(false);
+      await fixture.whenStable();
+      expect(
+        root().querySelector('[data-testid="intervention-mobile-workflow-footer"]'),
+      ).toBeNull();
+      expect(root().querySelectorAll('[data-testid="intervention-detail-command"]')).toHaveLength(
+        1,
+      );
+      expect(root().querySelector('app-intervention-comment-form')).toBe(commentForm);
+    });
+
     it('should offer planning once every prerequisite is met', async () => {
       fixture = await createPage();
 
@@ -651,13 +830,17 @@ describe('InterventionDetailPage', () => {
       expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('should disable planning while a prerequisite is missing, and let the checklist say which', async () => {
+    it('should disable planning while a prerequisite is missing, and keep the checklist as the guide', async () => {
       current.set(intervention({ dueAt: null }));
       fixture = await createPage();
 
       expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(true);
       expect(byTestId('intervention-getting-started-item')).not.toBeNull();
       expect(root().textContent).toContain('Set a due date');
+      expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
+        'Set a due date',
+      );
+      expect(root().querySelector('#intervention-command-reason')).toBeNull();
     });
 
     it('should send the operator to the work rather than to a submit they cannot use', async () => {
@@ -701,7 +884,9 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(true);
-      expect(root().textContent).toContain('Submission is not currently available.');
+      expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
+        'Submission is not currently available.',
+      );
     });
 
     it('should refuse publication while offline', async () => {
@@ -710,7 +895,9 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(true);
-      expect(root().textContent).toContain('Connect to the network to publish.');
+      expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
+        'Connect to the network to publish.',
+      );
     });
 
     it('should refuse publication while a compliance point is unresolved', async () => {
@@ -718,7 +905,25 @@ describe('InterventionDetailPage', () => {
       blockerCount.set(2);
       fixture = await createPage();
 
-      expect(root().textContent).toContain('2 blocking issues to clear.');
+      expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
+        '2 blocking issues to clear.',
+      );
+    });
+
+    it('should keep the review action in the overflow menu beside publication', async () => {
+      current.set(intervention({ status: 'submitted' }));
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-command').textContent).toContain('Publish intervention');
+      expect(root().querySelector('[data-testid="intervention-command-secondary"]')).toBeNull();
+
+      await openPageMenu();
+
+      expect(
+        Array.from(
+          document.querySelectorAll('[data-testid="intervention-detail-transition"]'),
+        ).some((entry) => entry.textContent?.includes('Changes requested')),
+      ).toBe(true);
     });
 
     it('should offer nothing without the permission for the phase', async () => {
@@ -1315,7 +1520,7 @@ describe('InterventionDetailPage', () => {
       expect(updateDetails).not.toHaveBeenCalled();
     });
 
-    it('should open the editor a getting-started item points at, on the always-visible properties card', async () => {
+    it('should open the editor a getting-started item points at, on the always-visible properties rail', async () => {
       current.set(intervention({ site: null }));
       fixture = await createPage();
 
@@ -1355,6 +1560,34 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('the rail tab in the URL', () => {
+    it('should scroll the main region after mounting a tab without stealing focus', async () => {
+      fixture = await createPage();
+      const main = document.createElement('main');
+      main.id = 'dashboard-main';
+      main.append(root());
+      main.scrollTo = vi.fn();
+      const focused = document.activeElement;
+      fixture.componentInstance['onLinkedTabActivated']('changes');
+      await fixture.whenStable();
+      expect(main.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+      expect(document.activeElement).toBe(focused);
+    });
+
+    it('should restore the loaded name after internal navigation and ignore another intervention', async () => {
+      fixture = await createPage();
+      const title = TestBed.inject(TitleService);
+      const events = TestBed.inject(Router).events as Subject<RouterEvent>;
+      vi.mocked(title.setTitle).mockClear();
+      events.next(new NavigationEnd(1, '?tab=changes', '?tab=changes'));
+      await Promise.resolve();
+      expect(title.setTitle).toHaveBeenLastCalledWith(current()?.name);
+      vi.mocked(title.setTitle).mockClear();
+      events.next(new NavigationEnd(2, '?tab=equipment', '?tab=equipment'));
+      fixture.componentRef.setInput('interventionId', 'another-intervention');
+      await Promise.resolve();
+      expect(title.setTitle).not.toHaveBeenCalled();
+    });
+
     it('should default to overview when the URL asks for nothing', async () => {
       fixture = await createPage();
 
@@ -1606,13 +1839,13 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect(byTestId('intervention-tab-changes').textContent).toContain('0');
-      expect(root().querySelector('[data-testid="intervention-change-list"]')).toBeNull();
+      expect(root().querySelector('[data-testid="intervention-change-table"]')).toBeNull();
 
       byTestId('intervention-tab-changes').click();
       await fixture.whenStable();
 
       const list: HTMLElement | null = root().querySelector(
-        '[data-testid="intervention-change-list"]',
+        '[data-testid="intervention-change-table"]',
       );
 
       expect(list).not.toBeNull();
@@ -1633,7 +1866,7 @@ describe('InterventionDetailPage', () => {
       await fixture.whenStable();
 
       const list: HTMLElement | null = root().querySelector(
-        '[data-testid="intervention-change-list"]',
+        '[data-testid="intervention-change-table"]',
       );
 
       expect(list?.querySelectorAll('[data-testid="intervention-change-row"]')).toHaveLength(2);
@@ -1641,6 +1874,25 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('linked tabs', () => {
+    it('should render linked resource totals as secondary badges on their triggers', async () => {
+      fixture = await createPage();
+
+      const expectedCounts: Readonly<Record<string, number>> = {
+        'intervention-tab-changes': 0,
+        'intervention-tab-attachments': 0,
+        'intervention-tab-facilities': 0,
+        'intervention-tab-equipment': 0,
+        'intervention-tab-inspections': 4,
+      };
+
+      for (const [testId, expectedCount] of Object.entries(expectedCounts)) {
+        const badge: HTMLElement | null = byTestId(testId).querySelector('[data-slot="badge"]');
+
+        expect(badge?.getAttribute('data-variant')).toBe('secondary');
+        expect(badge?.textContent?.trim()).toBe(String(expectedCount));
+      }
+    });
+
     it('should mount attachments only once its tab activates, and show the total count on the trigger', async () => {
       attachments.set([attachment(), attachment({ id: 'attachment-2' })]);
       fixture = await createPage();
@@ -1665,7 +1917,7 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-tab-changes').getAttribute('data-state')).not.toBe('active');
       expect((byTestId('intervention-detail-field-work') as HTMLElement).hidden).toBe(false);
       expect(root().querySelector('app-intervention-attachments')).toBeNull();
-      expect(root().querySelector('[data-testid="intervention-change-list"]')).toBeNull();
+      expect(root().querySelector('[data-testid="intervention-change-table"]')).toBeNull();
     });
   });
 
@@ -1688,6 +1940,27 @@ describe('InterventionDetailPage', () => {
       fixture = await createPage();
 
       expect(root().textContent).toContain('Checked the panel.');
+    });
+
+    it('should not add a second padding block above the comment composer', async () => {
+      fixture = await createPage();
+
+      const composer = root().querySelector('app-intervention-comment-form');
+
+      expect(composer?.parentElement?.classList.contains('pt-4')).toBe(false);
+      expect(
+        root().querySelector('#intervention-activity-content')?.classList.contains('pt-3'),
+      ).toBe(false);
+    });
+
+    it('should keep the comment composer inside the activity section', async () => {
+      fixture = await createPage();
+
+      const activity = byTestId('intervention-activity-thread');
+
+      expect(activity?.getAttribute('data-slot')).toBeNull();
+      expect(activity?.querySelector(':scope > [data-slot="card"]')).toBeNull();
+      expect(activity?.querySelector('app-intervention-comment-form')).not.toBeNull();
     });
 
     it('should post a comment from the composer', async () => {
@@ -1886,5 +2159,24 @@ describe('InterventionDetailPage', () => {
         expect.objectContaining({ interventionId: 'intervention-1', workItemId: 'wi-1' }),
       );
     });
+  });
+  it('opens saved operations only after the mobile actions drawer closes', async () => {
+    mobile.set(true);
+    fixture = await createPage();
+    root()
+      .querySelector<HTMLButtonElement>('[data-testid="intervention-detail-mobile-actions"]')
+      ?.click();
+    await fixture.whenStable();
+
+    const action = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('hlm-drawer-content button'),
+    ).find((button) => button.textContent?.includes('View saved operations'));
+    expect(action).toBeDefined();
+    action?.click();
+    expect(fixture.componentInstance['operationsVisible']()).toBe(false);
+    await fixture.whenStable();
+
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
+    expect(fixture.componentInstance['operationsVisible']()).toBe(true);
   });
 });

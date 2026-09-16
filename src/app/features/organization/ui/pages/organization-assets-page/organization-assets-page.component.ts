@@ -2,11 +2,14 @@ import { NgTemplateOutlet } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
+  ElementRef,
   effect,
   inject,
+  Injector,
   input,
   signal,
   untracked,
@@ -41,6 +44,7 @@ import {
 } from '@ng-icons/lucide';
 import { take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
@@ -84,13 +88,16 @@ import {
 } from '@features/organization/state/organization-assets-pane';
 import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionSkeletonCards, CollectionSkeletonRows } from '@shared/collection-surface';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
@@ -141,6 +148,8 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
   selector: 'app-organization-assets-page',
   imports: [
     CollectionPagination,
+    CollectionSkeletonCards,
+    CollectionSkeletonRows,
     NgIcon,
     ...HlmEmptyImports,
     OrgDatePipe,
@@ -152,6 +161,8 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     InspectionStatusTag,
     HlmBadge,
     HlmButton,
+    ...HlmCardImports,
+    ...HlmItemImports,
     HlmSkeleton,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
@@ -185,6 +196,58 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationAssetsPage {
+  /**
+   * Property element
+   * @readonly
+   * @description Limits browse/detail focus restoration to this explorer.
+   * @access private
+   * @since 1.0.0
+   * @type {ElementRef<HTMLElement>}
+   */
+  private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
+
+  /**
+   * Property injector
+   * @readonly
+   * @description Schedules focus after Angular updates mobile pane visibility.
+   * @access private
+   * @since 1.0.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Chooses sequential estate browsing and cards independently of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property facilityBrowserVisible
+   * @readonly
+   * @description Keeps the hierarchy visible while the URL-backed selection is cleared.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly facilityBrowserVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property complianceBrowserVisible
+   * @readonly
+   * @description Keeps the compliance hierarchy visible while its selection is cleared.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly complianceBrowserVisible: WritableSignal<boolean> = signal(false);
+
   //#region Inputs
   /**
    * Property organizationId
@@ -330,6 +393,19 @@ export class OrganizationAssetsPage {
     { alias: 'facility' },
   );
 
+  /**
+   * Property complianceParam
+   * @readonly
+   * @description The `?compliance=` selection restored when the compliance axis opens.
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly complianceParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'compliance' },
+  );
+
   /** Which first-level axis is active. */
   protected readonly axis: WritableSignal<OrganizationAssetsAxis> =
     signal<OrganizationAssetsAxis>('site');
@@ -338,6 +414,22 @@ export class OrganizationAssetsPage {
   protected readonly selectedFacilityId: WritableSignal<string | null> = signal<string | null>(
     null,
   );
+
+  /**
+   * Property selectedFacilityContext
+   * @readonly
+   * @description The loaded site's name and ancestor path keep mobile browsing context visible without another request.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<FacilityOption | null>}
+   */
+  protected readonly selectedFacilityContext: Signal<FacilityOption | null> = computed(() => {
+    const selected = [
+      ...this.tree.roots(),
+      ...Object.values(this.tree.childrenByParent()).flat(),
+    ].find((facility) => facility.id === this.selectedFacilityId());
+    return selected ? toFacilityOption(selected) : null;
+  });
 
   /** The facility currently scoping the compliance summary, on the "Compliance" axis. */
   protected readonly selectedComplianceFacilityId: WritableSignal<string | null> = signal<
@@ -483,7 +575,7 @@ export class OrganizationAssetsPage {
    */
   public constructor() {
     /*
-     * Restores the axis and the selected site from the URL on arrival, so a
+     * Restores the axis and selected hierarchy node from the URL on arrival, so a
      * reload or a shared link lands where it was sent rather than on the
      * default "By site" axis with nothing selected. It runs on every change of
      * the bound params, which also makes the back button clear a selection
@@ -492,6 +584,7 @@ export class OrganizationAssetsPage {
     effect((): void => {
       const axis: string | undefined = this.axisParam();
       const facilityId: string | undefined = this.facilityParam();
+      const complianceFacilityId: string | undefined = this.complianceParam();
 
       untracked((): void => {
         const restored: OrganizationAssetsAxis =
@@ -510,6 +603,22 @@ export class OrganizationAssetsPage {
         const selected: string | null = facilityId ?? null;
         if (restored === 'site' && this.selectedFacilityId() !== selected) {
           this.selectedFacilityId.set(selected);
+          if (selected !== null) this.facilityBrowserVisible.set(false);
+        }
+
+        const selectedCompliance: string | null = complianceFacilityId ?? null;
+        if (
+          restored === 'compliance' &&
+          this.selectedComplianceFacilityId() !== selectedCompliance
+        ) {
+          this.selectedComplianceFacilityId.set(selectedCompliance);
+          if (selectedCompliance !== null) {
+            this.complianceBrowserVisible.set(false);
+            this.compliance.loadSummary({
+              organizationId: this.organizationId(),
+              facilityId: selectedCompliance,
+            });
+          }
         }
       });
     });
@@ -688,6 +797,8 @@ export class OrganizationAssetsPage {
    * @returns {void}
    */
   protected onComplianceNodeSelected(node: TreeNode<ComplianceFacilityTreeNodeOutput>): void {
+    this.complianceBrowserVisible.set(false);
+    this.focusExplorerTarget('[data-testid="assets-back-to-compliance-tree"]');
     this.selectedComplianceFacilityId.set(node.id);
     this.writeUrlState();
     this.compliance.loadSummary({ organizationId: this.organizationId(), facilityId: node.id });
@@ -860,6 +971,8 @@ export class OrganizationAssetsPage {
    * @returns {void}
    */
   protected onNodeSelected(node: TreeNode<FacilityOutput>): void {
+    this.facilityBrowserVisible.set(false);
+    this.focusExplorerTarget('[data-testid="assets-back-to-tree"]');
     this.selectedFacilityId.set(node.id);
     this.writeUrlState();
   }
@@ -868,10 +981,8 @@ export class OrganizationAssetsPage {
    * Method clearFacilitySelection
    *
    * @description
-   * Drops the selection, which below `lg` is what returns the operator from
-   * the panes to the hierarchy: the two share one column at that width, and
-   * the selection decides which of them is shown. From `lg` up they sit side
-   * by side and the control that calls this is hidden.
+   * Returns mobile operators to the mounted hierarchy and clears the URL-backed selection.
+   * Expanded branches stay mounted, while a new selection starts with its first page.
    *
    * @access protected
    * @since 2.1.0
@@ -879,8 +990,44 @@ export class OrganizationAssetsPage {
    * @returns {void}
    */
   protected clearFacilitySelection(): void {
+    this.facilityBrowserVisible.set(true);
     this.selectedFacilityId.set(null);
     this.writeUrlState();
+    this.focusExplorerTarget('[data-testid="assets-tree-panel"] [data-testid="tree-item"]');
+  }
+
+  /**
+   * Method clearComplianceSelection
+   * @method clearComplianceSelection
+   * @description Returns to compliance browsing and clears the URL-backed summary selection.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected clearComplianceSelection(): void {
+    this.complianceBrowserVisible.set(true);
+    this.selectedComplianceFacilityId.set(null);
+    this.writeUrlState();
+    this.focusExplorerTarget(
+      '[data-testid="assets-compliance-tree-panel"] [data-testid="tree-item"]',
+    );
+  }
+
+  /**
+   * Method focusExplorerTarget
+   * @method focusExplorerTarget
+   * @description Moves focus into the newly visible pane after rendering, browser-only.
+   * @access private
+   * @since 1.0.0
+   * @param {string} selector - The local return button or selected hierarchy row.
+   * @returns {void}
+   */
+  private focusExplorerTarget(selector: string): void {
+    if (!this.isMobileInteractionMode()) return;
+    afterNextRender(
+      () => this.element.nativeElement.querySelector<HTMLElement>(selector)?.focus(),
+      { injector: this.injector },
+    );
   }
 
   /**

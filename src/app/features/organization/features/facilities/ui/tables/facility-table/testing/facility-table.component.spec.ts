@@ -96,6 +96,14 @@ describe('FacilityTable', () => {
     expect(cards[0].querySelector('[data-testid="facility-table-row-menu"]')).not.toBeNull();
   });
 
+  it('should show a dash when a facility has no code', async () => {
+    await render([facility({ code: null })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="facility-table-row"]');
+
+    expect(row?.querySelectorAll('td')[2]?.textContent?.trim()).toBe('—');
+  });
+
   it('should draw placeholder rows on a first load, and no data rows', async () => {
     await render([], true);
 

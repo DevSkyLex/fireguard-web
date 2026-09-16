@@ -15,7 +15,9 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
+import { TitleService } from '@core/title';
 import type {
   MessageOutput,
   MessageReactionToggle,
@@ -54,13 +56,11 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
  * @class DirectConversationPage
  *
  * @description
- * One direct conversation: its counterpart in an in-column header, the thread,
- * and the composer.
+ * One direct conversation: its counterpart, the thread, and the composer.
  *
- * The header names the counterpart rather than the breadcrumb doing it: a
- * direct conversation has no subject, so resolving the name needs the whole
- * conversation list *plus* the member directory, which is more than a title
- * resolver can ask for.
+ * The desktop column header and mobile shell title use the counterpart resolved
+ * from the already-loaded conversation list and member directory. No title-only
+ * query is needed.
  *
  * **The name is never a raw member id.** Only the list endpoint reports a
  * counterpart, and reading the directory needs a permission messaging does not
@@ -114,6 +114,28 @@ export class DirectConversationPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects the shell-owned conversation heading on mobile.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property titleService
+   * @readonly
+   * @description Publishes the already-resolved counterpart through the existing shell title.
+   * @access private
+   * @since 1.0.0
+   * @type {TitleService}
+   */
+  private readonly titleService: TitleService = inject(TitleService);
+
   /**
    * Property thread
    * @readonly
@@ -549,6 +571,13 @@ export class DirectConversationPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect((): void => {
+      const title: string = this.isMobileInteractionMode()
+        ? this.counterpartName()
+        : $localize`:@@route.messages:Messages`;
+      untracked((): void => this.titleService.setTitle(title));
+    });
+
     effect((): void => {
       const conversationId: string = this.conversationId();
 

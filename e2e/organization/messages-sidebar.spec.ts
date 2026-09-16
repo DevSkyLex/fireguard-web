@@ -24,6 +24,16 @@ test('messages extension stays beside the collapsible navigation and supports se
   await expect(rows.first().getByLabel('3 unread')).toBeVisible();
   const expanded = await extension.boundingBox();
   if (!expanded) throw new Error('The extension must have a desktop box.');
+  const resizeHandle = page.getByTestId('dashboard-sidebar-extension-resize-handle');
+  await expect(resizeHandle).toBeVisible();
+  await expect(resizeHandle).toHaveAttribute('role', 'separator');
+  await resizeHandle.focus();
+  await page.keyboard.press('Shift+ArrowRight');
+  await expect
+    .poll(async () => (await extension.boundingBox())?.width)
+    .toBeGreaterThan(expanded.width);
+  await page.keyboard.press('Home');
+  await expect(extension).toHaveAttribute('data-panel-size', '16');
   await main.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
   await expect.poll(async () => (await extension.boundingBox())?.x).toBeLessThan(expanded.x);
   await expect(extension).toBeVisible();
@@ -57,7 +67,7 @@ test('messages extension stays beside the collapsible navigation and supports se
   });
   await page.getByTestId('direct-messages-panel-new').click();
   await expect(page.getByTestId('direct-message-picker')).toBeVisible();
-  await page.getByTestId('new-direct-message-search').fill('Ines');
+  await page.locator('#new-direct-message-search').fill('Ines');
   const candidate = page.getByTestId('new-direct-message-candidate');
   await expect(candidate).toHaveCount(1);
   await expect(candidate).toContainText('Ines Pector');
@@ -98,6 +108,7 @@ test('tablet alternates list and thread while preserving primary navigation', as
   await mockMessagesWorkspace(page);
   await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/messages`);
   await expect(page.locator('#dashboard-main')).toBeHidden();
+  await expect(page.getByTestId('dashboard-sidebar-extension-resize-handle')).toBeHidden();
   await expect(page.getByTestId('direct-messages-nav-link')).toBeVisible();
   await page.getByTestId('direct-messages-panel-row').first().click();
   await expect(page.locator('#dashboard-sidebar-extension')).toBeHidden();

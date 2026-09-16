@@ -24,6 +24,7 @@ import {
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICONS } from './constants/organization-invitation-status-tag-icons.constants';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from './constants/organization-invitation-status-tag-severity.constants';
@@ -73,6 +74,7 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
     HlmBadge,
     HlmButton,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmTableImports,
   ],
   providers: [

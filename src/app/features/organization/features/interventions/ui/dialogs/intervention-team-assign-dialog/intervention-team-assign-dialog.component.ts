@@ -13,7 +13,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { TeamOutput } from '@features/organization/models';
+import type { MemberSelectOption, TeamOutput } from '@features/organization/models';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -43,7 +44,13 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
  */
 @Component({
   selector: 'app-intervention-team-assign-dialog',
-  imports: [...HlmEmptyImports, HlmButton, ...HlmDialogImports, ...HlmRadioGroupImports],
+  imports: [
+    ...HlmAvatarImports,
+    ...HlmEmptyImports,
+    HlmButton,
+    ...HlmDialogImports,
+    ...HlmRadioGroupImports,
+  ],
   templateUrl: './intervention-team-assign-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,6 +61,18 @@ export class InterventionTeamAssignDialog {
 
   /** The organization's teams, offered as candidates. */
   public readonly teams: InputSignal<readonly TeamOutput[]> = input<readonly TeamOutput[]>([]);
+
+  /**
+   * Property teamMemberOptions
+   * @readonly
+   * @description Resolved member previews keyed by team id; the page owns their loading and resolution.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>>}
+   */
+  public readonly teamMemberOptions: InputSignal<
+    Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>
+  > = input<Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>>({});
 
   /** Whether the team list is still loading. */
   public readonly teamsLoading: InputSignal<boolean> = input<boolean>(false);

@@ -39,7 +39,7 @@
         <p hlmEmptyDescription>{{ store.queryError()?.message ?? null }}</p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn type="button" (click)="retryLoad()">
+        <button hlmBtn type="button" (click)="retryLoad()" class="mobile-ui:min-h-11">
           <span i18n="@@facility.building3d.errorRetry">Retry</span>
         </button>
       </div>
@@ -61,7 +61,13 @@
       </div>
       <div hlmEmptyContent>
         @if (canWrite()) {
-          <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+          <a
+            hlmBtn
+            type="button"
+            [routerLink]="plansTabRoute()"
+            [queryParams]="{ tab: 'plans' }"
+            class="mobile-ui:min-h-11"
+          >
             <span i18n="@@facility.building3d.emptyCta">Go to Plans</span>
           </a>
         }
@@ -87,7 +93,13 @@
       </div>
       <div hlmEmptyContent>
         @if (canWrite()) {
-          <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+          <a
+            hlmBtn
+            type="button"
+            [routerLink]="plansTabRoute()"
+            [queryParams]="{ tab: 'plans' }"
+            class="mobile-ui:min-h-11"
+          >
             <span i18n="@@facility.building3d.noGeometryCta">Go to Plans</span>
           </a>
         }
@@ -111,7 +123,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <a hlmBtn type="button" [routerLink]="plansTabRoute()" [queryParams]="{ tab: 'plans' }">
+        <a
+          hlmBtn
+          type="button"
+          [routerLink]="plansTabRoute()"
+          [queryParams]="{ tab: 'plans' }"
+          class="mobile-ui:min-h-11"
+        >
           <span i18n="@@facility.building3d.unsupportedPlanLink">View 2D plan</span>
         </a>
       </div>
@@ -126,6 +144,7 @@
           size="sm"
           data-testid="facility-3d-reset-camera"
           (click)="store.resetCamera()"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideRotateCcw" aria-hidden="true" />
           <span i18n="@@facility.building3d.resetCamera">Reset camera</span>
@@ -139,12 +158,13 @@
           [attr.aria-pressed]="store.exploded()"
           data-testid="facility-3d-explode-toggle"
           (click)="store.toggleExploded()"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideLayers" aria-hidden="true" />
           <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
         </button>
 
-        @if (isCompact() && !roomPanelOpen()) {
+        @if (isMobileInteractionMode() && !roomPanelVisible()) {
           <button
             hlmBtn
             type="button"
@@ -152,7 +172,8 @@
             size="sm"
             aria-expanded="false"
             data-testid="facility-3d-open-room-panel"
-            (click)="roomPanelOpen.set(true)"
+            (click)="roomPanelVisible.set(true)"
+            class="mobile-ui:min-h-11"
           >
             <ng-icon name="lucideList" aria-hidden="true" />
             <span i18n="@@facility.building3d.openRoomPanel">Floors and rooms</span>
@@ -169,6 +190,7 @@
           data-testid="facility-3d-plan-2d-link"
           [routerLink]="plansTabRoute()"
           [queryParams]="{ tab: 'plans' }"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideMap" aria-hidden="true" />
           <span i18n="@@facility.building3d.planLink">View 2D plan</span>
@@ -182,6 +204,7 @@
           data-testid="facility-3d-back-link"
           [routerLink]="plansTabRoute()"
           [queryParams]="{ tab: 'plans' }"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideArrowLeft" aria-hidden="true" />
           <span i18n="@@facility.building3d.backToDetail">Back to facility</span>
@@ -222,8 +245,8 @@
           [floors]="store.floors()"
           [selectedFloorId]="selectedFloorId"
           [room]="store.selectedRoom()"
-          [compactVisible]="roomPanelOpen()"
-          (compactDismissed)="roomPanelOpen.set(false)"
+          [compactVisible]="roomPanelVisible()"
+          (compactDismissed)="roomPanelVisible.set(false)"
           (floorActivated)="store.selectFloor($event)"
           (roomActivated)="store.selectRoom($event)"
           (roomClosed)="store.selectRoom(null)"

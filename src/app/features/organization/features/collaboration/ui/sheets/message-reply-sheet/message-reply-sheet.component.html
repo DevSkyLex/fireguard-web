@@ -1,7 +1,7 @@
 <hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
   <hlm-sheet-content
     *hlmSheetPortal
-    class="flex w-full! flex-col max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    class="flex w-full! flex-col mobile-ui:max-h-[85dvh] mobile-ui:pb-[env(safe-area-inset-bottom)] desktop-ui:sm:w-[480px]! desktop-ui:sm:max-w-none!"
     data-testid="message-reply-sheet"
   >
     <hlm-sheet-header>

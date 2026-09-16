@@ -13,7 +13,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="w-fit gap-2 max-sm:min-h-11"
+        class="w-fit gap-2 mobile-ui:min-h-11"
         [disabled]="pending() || removing()"
         (click)="fileInput.click()"
       >
@@ -31,7 +31,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="w-fit gap-2 text-muted-foreground max-sm:min-h-11"
+          class="w-fit gap-2 text-muted-foreground mobile-ui:min-h-11"
           data-testid="organization-logo-remove"
           [disabled]="pending() || removing()"
           (click)="removed.emit()"

@@ -27,6 +27,7 @@ import {
   lucideRotateCcw,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityBuildingModelFloor,
@@ -37,7 +38,6 @@ import {
   type FacilityBuilding3dStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { isCompact } from '@shared/breakpoint';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -216,7 +216,7 @@ export class FacilityBuilding3dPage {
    * @type {WritableSignal<string | null>}
    */
   /**
-   * Property roomPanelOpen
+   * Property roomPanelVisible
    * @readonly
    *
    * @description
@@ -234,10 +234,19 @@ export class FacilityBuilding3dPage {
    * @since 1.0.0
    * @type {WritableSignal<boolean>}
    */
-  protected readonly roomPanelOpen: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly roomPanelVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the viewport is narrow enough that the panel renders as a dismissible sheet. */
-  protected readonly isCompact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
   protected readonly hoveredRoomId: WritableSignal<string | null> = signal<string | null>(null);
 

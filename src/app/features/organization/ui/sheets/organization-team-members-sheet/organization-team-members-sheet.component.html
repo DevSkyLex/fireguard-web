@@ -1,7 +1,8 @@
 <hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    class="w-full! overflow-hidden overscroll-contain mobile-ui:max-h-[85dvh] desktop-ui:w-[min(480px,100vw)]! desktop-ui:max-w-none!"
+    [showCloseButton]="side() !== 'bottom'"
     data-testid="organization-team-members-sheet"
   >
     @if (team(); as team) {
@@ -12,7 +13,7 @@
         </p>
       </hlm-sheet-header>
 
-      <div class="flex flex-col gap-4 px-4 pb-4">
+      <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         @if (membersError(); as message) {
           <div hlmEmpty role="alert">
             <div hlmEmptyHeader>
@@ -28,7 +29,7 @@
               <button
                 hlmBtn
                 variant="outline"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 data-testid="organization-team-members-retry"
                 (click)="retryLoad.emit()"
               >
@@ -98,7 +99,7 @@
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      class="max-sm:size-11"
+                      class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
                       data-testid="organization-team-members-row-remove"
                       [disabled]="isRemovingMember()"
                       [attr.aria-label]="removeLabel(row.name)"
@@ -130,6 +131,13 @@
           </div>
         }
       </div>
+    }
+    @if (side() === 'bottom') {
+      <hlm-sheet-footer class="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button hlmSheetClose hlmBtn type="button" variant="outline" class="min-h-11 w-full">
+          <span i18n="@@common.close">Close</span>
+        </button>
+      </hlm-sheet-footer>
     }
   </hlm-sheet-content>
 </hlm-sheet>

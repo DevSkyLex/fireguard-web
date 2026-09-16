@@ -11,7 +11,7 @@
     <button
       hlmBtn
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       [disabled]="loading() || pending()"
       (click)="retried.emit()"
       i18n="@@org.access.requests.refresh"
@@ -65,7 +65,7 @@
             <button
               hlmBtn
               variant="outline"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               [disabled]="pending()"
               (click)="selectedId.set(request.id)"
               i18n="@@org.access.requests.review"

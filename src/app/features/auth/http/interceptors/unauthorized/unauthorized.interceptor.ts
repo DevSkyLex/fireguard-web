@@ -6,9 +6,9 @@ import {
   HttpErrorResponse,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { Observable, catchError, switchMap, throwError } from 'rxjs';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
+import { AuthSessionNavigationService } from '@features/auth/services';
 
 /**
  * Endpoints excluded from 401 handling.
@@ -65,7 +65,7 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
-  const router: Router = inject<Router>(Router);
+  const sessionNavigation: AuthSessionNavigationService = inject(AuthSessionNavigationService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -82,7 +82,7 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 
       const endSession = (): Observable<never> => {
         authSession.clearSession();
-        router.navigate(['/auth/login']);
+        sessionNavigation.navigateToLogin();
 
         return throwError(() => error);
       };

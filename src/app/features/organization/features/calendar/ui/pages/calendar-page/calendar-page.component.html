@@ -12,14 +12,14 @@
       <hlm-paginated-tabs-list
         variant="line"
         class="w-full"
-        tabListClass="justify-start"
+        tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
         data-testid="calendar-granularity-toggle"
         aria-label="Change period view"
         i18n-aria-label="@@calendar.granularityToggleLabel"
       >
         <button
           hlmTabsTrigger="month"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="calendar-granularity-month"
         >
           <ng-icon name="lucideCalendarDays" aria-hidden="true" />
@@ -27,13 +27,17 @@
         </button>
         <button
           hlmTabsTrigger="week"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="calendar-granularity-week"
         >
           <ng-icon name="lucideCalendarRange" aria-hidden="true" />
           <span i18n="@@calendar.granularity.week">Week</span>
         </button>
-        <button hlmTabsTrigger="day" class="max-sm:min-h-11" data-testid="calendar-granularity-day">
+        <button
+          hlmTabsTrigger="day"
+          class="mobile-ui:min-h-11"
+          data-testid="calendar-granularity-day"
+        >
           <ng-icon name="lucideCalendar1" aria-hidden="true" />
           <span i18n="@@calendar.granularity.day">Day</span>
         </button>
@@ -41,7 +45,7 @@
     </ng-template>
 
     <div
-      class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_auto_minmax(0,1fr)]"
+      class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mobile-ui:grid-cols-[minmax(0,1fr)_auto] mobile-ui:gap-4 desktop-ui:sm:grid-cols-[auto_auto_minmax(0,1fr)]"
       data-testid="calendar-toolbar"
     >
       <button
@@ -49,20 +53,20 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11 max-sm:min-w-11"
+        class="mobile-ui:min-h-11 mobile-ui:min-w-11 mobile-ui:justify-self-start"
         data-testid="calendar-toolbar-today"
         (click)="goToday()"
       >
         <span i18n="@@calendar.today">Today</span>
       </button>
 
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 mobile-ui:justify-self-end">
         <button
           hlmBtn
           type="button"
           variant="outline"
           size="icon-sm"
-          class="max-sm:size-11"
+          class="mobile-ui:size-11"
           data-testid="calendar-toolbar-prev"
           [attr.aria-label]="previousAriaLabel()"
           (click)="stepPeriod(-1)"
@@ -74,7 +78,7 @@
           type="button"
           variant="outline"
           size="icon-sm"
-          class="max-sm:size-11"
+          class="mobile-ui:size-11"
           data-testid="calendar-toolbar-next"
           [attr.aria-label]="nextAriaLabel()"
           (click)="stepPeriod(1)"
@@ -84,7 +88,7 @@
       </div>
 
       <span
-        class="col-span-2 min-w-0 truncate text-base font-semibold text-foreground capitalize sm:col-span-1"
+        class="col-span-2 min-w-0 truncate text-base font-semibold text-foreground capitalize mobile-ui:order-first mobile-ui:col-span-2 mobile-ui:text-lg mobile-ui:whitespace-normal desktop-ui:sm:col-span-1"
         data-testid="calendar-toolbar-period"
         aria-live="polite"
       >
@@ -116,7 +120,13 @@
           </p>
         </div>
         <div hlmEmptyContent>
-          <button hlmBtn variant="outline" data-testid="calendar-retry" (click)="reload()">
+          <button
+            hlmBtn
+            variant="outline"
+            data-testid="calendar-retry"
+            (click)="reload()"
+            class="mobile-ui:min-h-11"
+          >
             <span i18n="@@common.tryAgain">Try again</span>
           </button>
         </div>
@@ -125,89 +135,92 @@
       @switch (granularity()) {
         @case ('month') {
           <div hlmTabsContent="month" class="flex min-h-0 flex-1 flex-col">
-            <div
-              class="hidden min-h-0 flex-1 flex-col gap-4 md:flex lg:grid lg:grid-cols-[2fr_1fr] lg:grid-rows-[minmax(0,1fr)]"
-            >
-              @if (store.isQueryLoading() && events().length === 0) {
-                <hlm-skeleton class="h-96 w-full" />
-              } @else {
-                <app-calendar
-                  class="min-h-0"
-                  [showToolbar]="false"
-                  [firstDayOfWeek]="firstDayOfWeek()"
-                  [canCreate]="canWriteEvents()"
-                  [(month)]="month"
-                  [(selectedDay)]="selectedDay"
-                  [events]="events()"
-                  (createRequested)="onCreateRequested($event)"
-                  (eventDropped)="onEventDropped($event)"
-                />
-              }
-
+            @if (!isMobileInteractionMode()) {
               <div
-                hlmCard
-                size="sm"
-                class="gap-0 bg-transparent py-0 shadow-none lg:h-full lg:min-h-0 dark:bg-transparent"
-                data-testid="calendar-selected-day-panel"
+                class="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-auto lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]"
               >
-                <div hlmCardHeader class="shrink-0 border-b border-border pt-3">
-                  <h2 hlmCardTitle data-testid="calendar-day-heading">{{ selectedDayLabel() }}</h2>
-                </div>
+                @if (store.isQueryLoading() && events().length === 0) {
+                  <hlm-skeleton class="h-96 w-full" />
+                } @else {
+                  <app-calendar
+                    class="min-h-0 min-w-0"
+                    [showToolbar]="false"
+                    [firstDayOfWeek]="firstDayOfWeek()"
+                    [canCreate]="canWriteEvents()"
+                    [(month)]="month"
+                    [(selectedDay)]="selectedDay"
+                    [events]="events()"
+                    (createRequested)="onCreateRequested($event)"
+                    (eventDropped)="onEventDropped($event)"
+                  />
+                }
+
                 <div
-                  hlmCardContent
-                  class="flex flex-col p-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+                  hlmCard
+                  size="sm"
+                  class="min-w-0 gap-0 bg-transparent py-0 shadow-none lg:h-full lg:min-h-0"
+                  data-testid="calendar-selected-day-panel"
                 >
-                  @if (dayItems().length === 0) {
-                    <div hlmEmpty>
-                      <div hlmEmptyHeader>
-                        <div hlmEmptyMedia variant="icon">
-                          <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+                  <div hlmCardHeader class="shrink-0 border-b border-border pt-3">
+                    <h2 hlmCardTitle data-testid="calendar-day-heading">
+                      {{ selectedDayLabel() }}
+                    </h2>
+                  </div>
+                  <div
+                    hlmCardContent
+                    class="flex flex-col p-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+                  >
+                    @if (dayItems().length === 0) {
+                      <div hlmEmpty>
+                        <div hlmEmptyHeader>
+                          <div hlmEmptyMedia variant="icon">
+                            <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+                          </div>
+                          <p hlmEmptyTitle i18n="@@calendar.dayEmpty">
+                            Nothing scheduled this day.
+                          </p>
                         </div>
-                        <p hlmEmptyTitle i18n="@@calendar.dayEmpty">Nothing scheduled this day.</p>
                       </div>
-                    </div>
-                  } @else {
-                    <app-calendar-entry-list
-                      [items]="dayItems()"
-                      [organizationId]="organizationId()"
-                      [canWrite]="canWriteEvents()"
-                      (editRequested)="openEditDialog($event)"
-                      (deleteRequested)="requestDelete($event)"
-                    />
-                  }
+                    } @else {
+                      <app-calendar-entry-list
+                        [items]="dayItems()"
+                        [organizationId]="organizationId()"
+                        [canWrite]="canWriteEvents()"
+                        (editRequested)="openEditDialog($event)"
+                        (deleteRequested)="requestDelete($event)"
+                      />
+                    }
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div
-              id="calendar-agenda"
-              data-testid="calendar-agenda"
-              class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto md:hidden"
-            >
-              @if (store.isQueryLoading() && events().length === 0) {
-                <hlm-skeleton class="h-48 w-full" />
-              } @else if (agendaGroups().length === 0) {
-                <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
-                  Nothing scheduled in this period.
-                </p>
-              } @else {
-                @for (group of agendaGroups(); track group.day) {
-                  <div
-                    class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
-                    data-testid="calendar-agenda-group"
-                  >
-                    <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
-                    <app-calendar-entry-list
-                      [items]="group.items"
-                      [organizationId]="organizationId()"
-                      [canWrite]="canWriteEvents()"
-                      (editRequested)="openEditDialog($event)"
-                      (deleteRequested)="requestDelete($event)"
-                    />
-                  </div>
+            } @else {
+              <div
+                id="calendar-agenda"
+                data-testid="calendar-agenda"
+                class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto"
+              >
+                @if (store.isQueryLoading() && events().length === 0) {
+                  <hlm-skeleton class="h-48 w-full" />
+                } @else if (agendaGroups().length === 0) {
+                  <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
+                    Nothing scheduled in this period.
+                  </p>
+                } @else {
+                  @for (group of agendaGroups(); track group.day) {
+                    <div class="flex flex-col gap-2" data-testid="calendar-agenda-group">
+                      <h2 class="text-base font-semibold text-foreground">{{ group.label }}</h2>
+                      <app-calendar-entry-list
+                        [items]="group.items"
+                        [organizationId]="organizationId()"
+                        [canWrite]="canWriteEvents()"
+                        (editRequested)="openEditDialog($event)"
+                        (deleteRequested)="requestDelete($event)"
+                      />
+                    </div>
+                  }
                 }
-              }
-            </div>
+              </div>
+            }
           </div>
         }
         @case ('week') {
@@ -224,15 +237,19 @@
                   class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
                   data-testid="calendar-week-day"
                 >
-                  <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
+                  <div class="flex items-center gap-2 mobile-ui:justify-between">
+                    <h2
+                      class="text-sm font-medium text-muted-foreground mobile-ui:text-base mobile-ui:font-semibold mobile-ui:text-foreground"
+                    >
+                      {{ group.label }}
+                    </h2>
                     @if (canWriteEvents()) {
                       <button
                         hlmBtn
                         type="button"
                         variant="ghost"
                         size="icon-sm"
-                        class="max-sm:size-11"
+                        class="mobile-ui:size-11"
                         data-testid="calendar-week-day-create"
                         [attr.aria-label]="createOnDayAriaLabelOf(group.label)"
                         (click)="onCreateRequested(group.day)"
@@ -272,7 +289,7 @@
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  class="max-sm:size-11"
+                  class="mobile-ui:size-11"
                   data-testid="calendar-day-view-create"
                   [attr.aria-label]="createOnDayAriaLabelOf(periodLabel())"
                   (click)="onCreateRequested(dayViewIso())"
@@ -341,21 +358,21 @@
       <button
         hlmBtn
         type="button"
-        class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+        class="min-w-0 shrink mobile-ui:min-h-11 mobile-ui:min-w-11"
         data-testid="calendar-new-event"
         i18n-aria-label="@@calendar.newEvent"
         aria-label="New event"
         (click)="openCreateDialog()"
       >
         <ng-icon name="lucidePlus" aria-hidden="true" />
-        <span class="truncate max-sm:hidden" i18n="@@calendar.newEvent">New event</span>
+        <span class="truncate desktop-ui:max-sm:hidden" i18n="@@calendar.newEvent">New event</span>
       </button>
       <button
         hlmBtn
         type="button"
         size="icon"
         align="end"
-        class="max-sm:min-h-11 max-sm:min-w-11"
+        class="mobile-ui:min-h-11 mobile-ui:min-w-11"
         data-testid="calendar-actions-menu"
         i18n-aria-label="@@calendar.subscribeButton"
         aria-label="Subscribe (iCal)"
@@ -370,6 +387,7 @@
           hlmDropdownMenuItem
           data-testid="calendar-subscribe"
           (click)="feedSubscribeDialogVisible.set(true)"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideRss" aria-hidden="true" />
           <span i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
@@ -381,14 +399,16 @@
       hlmBtn
       type="button"
       variant="outline"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="calendar-subscribe"
       i18n-aria-label="@@calendar.subscribeButton"
       aria-label="Subscribe (iCal)"
       (click)="feedSubscribeDialogVisible.set(true)"
     >
       <ng-icon name="lucideRss" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@calendar.subscribeButton">Subscribe (iCal)</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@calendar.subscribeButton"
+        >Subscribe (iCal)</span
+      >
     </button>
   }
 </ng-template>

@@ -26,7 +26,6 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { InterventionLabelOutput } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
-import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -92,7 +91,6 @@ const DEFAULT_LABEL_COLOR = '#3b82f6';
   imports: [
     NgIcon,
     HlmButton,
-    ...HlmButtonGroupImports,
     ...HlmDialogImports,
     ...HlmEmptyImports,
     ...HlmFieldImports,

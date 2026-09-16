@@ -12,10 +12,9 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { captureInteractionMode } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
 import { InspectionsPage } from '../support/pages/inspections.page';
-
-const SCREENSHOT_DIR = 'e2e/artifacts/inspections';
 
 test.describe('Inspection list', () => {
   test('renders the status/result filter chip bar, pagination and New inspection', async ({
@@ -48,125 +47,27 @@ test.describe('Inspection list', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('renders at 375px in dark mode with no console errors and no horizontal overflow', async ({
+  test('keeps desktop controls in a narrow 375px dark window', async ({
     page,
     context,
     baseURL,
-  }) => {
-    const consoleErrors = collectConsoleErrors(page);
-    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+  }, info) => {
     await page.setViewportSize({ width: 375, height: 800 });
-
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockInspectionList(E2E_ORGANIZATION_ID, [inspectionOutput()]);
-    const inspections = new InspectionsPage(page);
-
-    await inspections.gotoList(E2E_ORGANIZATION_ID);
-
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expect(inspections.listRoot).toBeVisible();
-
-    await Promise.all(
-      [
-        page.getByTestId('dashboard-toolbar-container'),
-        page.getByTestId('dashboard-page-header-container'),
-        page.getByTestId('dashboard-content-container'),
-      ].map(async (container) => {
-        await expect
-          .poll(() =>
-            container.evaluate((element) => {
-              const styles = getComputedStyle(element);
-              return [styles.paddingLeft, styles.paddingRight];
-            }),
-          )
-          .toEqual(['16px', '16px']);
-      }),
-    );
-
-    const sidebarTrigger = page.getByRole('button', { name: 'Toggle sidebar' }).first();
-    await expect(sidebarTrigger.locator('ng-icon[name="lucideMenu"]')).toBeVisible();
-    await expect(sidebarTrigger.locator('ng-icon[name="lucidePanelLeft"]')).toHaveCount(0);
-
-    const mobileActionsTrigger = page.getByRole('button', { name: 'Open quick actions' });
-    await expect(mobileActionsTrigger).toBeVisible();
-    await expect(page.getByTestId('dashboard-desktop-actions')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Search this organization' })).toHaveCount(0);
-
-    const toolbarBox = await page.getByTestId('collection-toolbar').boundingBox();
-    const searchBox = await page.getByTestId('inspections-search-group').boundingBox();
-    const filtersBox = await inspections.filtersToggle.boundingBox();
-
-    expect(toolbarBox).not.toBeNull();
-    expect(searchBox).not.toBeNull();
-    expect(filtersBox).not.toBeNull();
-    expect(searchBox?.width).toBeCloseTo(toolbarBox?.width ?? 0, 0);
-    expect(filtersBox?.y ?? 0).toBeGreaterThanOrEqual(
-      (searchBox?.y ?? 0) + (searchBox?.height ?? 0),
-    );
-
+    await new InspectionsPage(page).gotoList(E2E_ORGANIZATION_ID);
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'desktop');
+    await expect(page.getByTestId('dashboard-desktop-actions')).toBeVisible();
+    await expect(page.getByTestId('dashboard-sidebar-trigger')).toBeVisible();
+    await expect(page.getByTestId('dashboard-mobile-actions-trigger')).toHaveCount(0);
+    await expect(page.locator('#organization-mobile-navigation')).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-dark-mobile.png` });
-
-    await mobileActionsTrigger.click();
-    const mobileActionsDrawer = page.getByTestId('dashboard-mobile-actions-drawer');
-    const mobileActions = page.getByTestId('dashboard-mobile-actions');
-    const globalSearch = mobileActions.getByRole('button', { name: 'Search this organization' });
-    const actionButtons = mobileActions.locator('button:has(> [data-slot="item-media"])');
-
-    await expect(mobileActionsDrawer).toBeVisible();
-    await expect(mobileActionsDrawer.getByRole('heading', { name: 'Quick actions' })).toBeVisible();
-    await expect(mobileActions).toHaveAttribute('data-slot', 'item-group');
-    await expect(mobileActions.locator('[data-slot="item-title"]')).toHaveCount(5);
-    expect(
-      await mobileActionsDrawer
-        .locator('[data-slot="drawer-header"]')
-        .evaluate((element) => getComputedStyle(element).textAlign),
-    ).toBe('start');
-    await expect(globalSearch).toBeVisible();
-    await expect(globalSearch.getByText('Search this organization', { exact: true })).toBeVisible();
-    await expect(mobileActions.getByTestId('notification-bell-trigger')).toBeVisible();
-    await expect(mobileActions.getByText('Notifications', { exact: true })).toBeVisible();
-    const syncStatus = mobileActions.getByTestId('intervention-sync-status');
-    await expect(syncStatus).toBeVisible();
-    await expect(syncStatus.getByText('Up to date', { exact: true })).toBeVisible();
-    await expect(mobileActions.getByText('Assistant', { exact: true })).toBeVisible();
-    await expect(mobileActions.getByText(/^Appearance:/)).toBeVisible();
-    await expect(mobileActions.locator('#theme-switcher-trigger')).toBeVisible();
-    await expect(actionButtons).toHaveCount(5);
-    const actionButtonBoxes = await actionButtons.evaluateAll((buttons) =>
-      buttons.map((button) => {
-        const box = button.getBoundingClientRect();
-
-        return { height: box.height, width: box.width, y: box.y };
-      }),
-    );
-    expect(actionButtonBoxes).toHaveLength(5);
-    let previousY = Number.NEGATIVE_INFINITY;
-    for (const box of actionButtonBoxes) {
-      expect(box.height).toBe(48);
-      expect(box.width).toBeGreaterThan(300);
-      expect(box.y).toBeGreaterThan(previousY);
-      previousY = box.y;
-    }
-    await page.screenshot({
-      path: `${SCREENSHOT_DIR}/inspections-quick-actions-drawer-dark-mobile.png`,
-      animations: 'disabled',
-    });
-
-    await globalSearch.click();
-    await expect(page.getByTestId('global-search-palette')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('global-search-palette')).toHaveCount(0);
-    await expect(mobileActionsDrawer).toBeVisible();
-
-    await mobileActionsDrawer.getByRole('button', { name: 'Close' }).click();
-    await expect(mobileActionsDrawer).toHaveCount(0);
-    await expect(mobileActionsTrigger).toBeFocused();
-    expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+    await captureInteractionMode(page, info, 'inspections-list-dark-narrow-desktop');
   });
 
-  test('renders on desktop in light mode', async ({ page }) => {
+  test('renders on desktop in light mode', async ({ page }, info) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockInspectionList(E2E_ORGANIZATION_ID, [
@@ -190,7 +91,7 @@ test.describe('Inspection list', () => {
       '224px',
     );
     await expect(page.getByTestId('inspections-search-group')).toHaveCSS('width', '224px');
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/inspections-list-light-desktop.png` });
+    await captureInteractionMode(page, info, 'inspections-list-light-desktop');
   });
 });
 
@@ -202,6 +103,7 @@ test.describe('Inspection create', () => {
     await api.mockAuthenticatedSession();
     await api.mockEquipmentList(E2E_ORGANIZATION_ID, [equipmentOutput()]);
     await api.mockInspectionList(E2E_ORGANIZATION_ID, []);
+    await api.mockChecklistList(E2E_ORGANIZATION_ID, []);
     const inspections = new InspectionsPage(page);
 
     await inspections.gotoCreate(E2E_ORGANIZATION_ID);
@@ -220,7 +122,7 @@ test.describe('Inspection create', () => {
 test.describe('Inspection detail', () => {
   test('shows status/result tags with the non-conformity count, and a Submit/Cancel band on a draft', async ({
     page,
-  }) => {
+  }, info) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockInspectionDetail(E2E_ORGANIZATION_ID, draftInspectionOutput());
@@ -252,7 +154,7 @@ test.describe('Inspection detail', () => {
     const resultField = page.getByTestId('inspection-field-result');
     await expect(resultField.locator('button')).toBeEnabled();
 
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/inspection-detail-light-desktop.png` });
+    await captureInteractionMode(page, info, 'inspection-detail-light-desktop');
   });
 
   test('shows a Close action on a submitted inspection and locks the in-place panel on a closed one', async ({
@@ -283,6 +185,7 @@ test.describe('Inspection detail', () => {
     await api.mockInspectionDetail(E2E_ORGANIZATION_ID, inspectionOutput());
     await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput());
     await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
     await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
     const inspections = new InspectionsPage(page);
 
@@ -300,11 +203,11 @@ test.describe('Inspection detail', () => {
     );
   });
 
-  test('renders in dark mode at 375px with no console errors', async ({
+  test('renders inspection detail in a narrow desktop dark window with no console errors', async ({
     page,
     context,
     baseURL,
-  }) => {
+  }, info) => {
     const consoleErrors = collectConsoleErrors(page);
     await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
     await page.setViewportSize({ width: 375, height: 800 });
@@ -317,8 +220,9 @@ test.describe('Inspection detail', () => {
     await inspections.gotoDetail(E2E_ORGANIZATION_ID, E2E_INSPECTION_ID);
 
     await expect(inspections.detailRoot).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'desktop');
     await expectNoHorizontalOverflow(page);
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/inspection-detail-dark-mobile.png` });
+    await captureInteractionMode(page, info, 'inspection-detail-dark-narrow-desktop');
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 

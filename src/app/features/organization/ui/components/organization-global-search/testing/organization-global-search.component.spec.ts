@@ -2,9 +2,18 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { ENV_CONFIG } from '@core/config/environment/env.token';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationSearchOutput } from '@features/organization/models';
+import { provideOrganizationFeature } from '@features/organization/organization.feature';
+import { withGlobalSearch } from '@features/organization/providers/global-search';
+import { OrganizationGlobalSearchService } from '@features/organization/services/organization-global-search';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { DashboardLayout } from '@layouts/dashboard-layout';
+import { DASHBOARD_HEADER_ACTIONS_SLOT } from '@layouts/dashboard-layout/slots';
+import { HlmDialogService } from '@shared/ui/dialog';
 import { OrganizationGlobalSearch } from '../organization-global-search.component';
 
 const RESULTS = {
@@ -58,6 +67,15 @@ describe('OrganizationGlobalSearch', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated: signal(true) } },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal('desktop'),
+            isMobileInteractionMode: signal(false),
+            shortcutModifier: signal<'Ctrl'>('Ctrl'),
+          },
+        },
         { provide: OrganizationService, useValue: service },
         { provide: ActiveOrganizationStore, useValue: { selectedOrganizationId } },
       ],
@@ -84,8 +102,8 @@ describe('OrganizationGlobalSearch', () => {
   it('should render the trigger and advertise the shortcut', () => {
     expect(trigger()).not.toBeNull();
     expect(trigger()?.getAttribute('aria-keyshortcuts')).toBe('Control+K Meta+K');
-    expect(trigger()?.classList.contains('max-sm:size-7')).toBe(true);
-    expect(trigger()?.classList.contains('max-sm:size-11')).toBe(false);
+    expect(trigger()?.classList.contains('mobile-ui:size-11')).toBe(true);
+    expect(trigger()?.classList.contains('max-sm:size-7')).toBe(false);
   });
 
   it('should open the palette on Ctrl+K', async () => {
@@ -104,10 +122,29 @@ describe('OrganizationGlobalSearch', () => {
     const commandInput: HTMLElement | null = document.querySelector('hlm-command-input');
     const inputSection: HTMLElement | null = commandInput?.parentElement ?? null;
 
-    expect(commandInput?.getAttribute('class') ?? '').not.toContain('[&_');
+    expect(commandInput?.querySelector('input[data-slot="command-input"]')).not.toBeNull();
     expect(commandInput?.classList.contains('p-0')).toBe(true);
     expect(inputSection?.className).toContain('py-2');
     expect(inputSection?.className).not.toContain('py-0.5');
+  });
+
+  it('keeps the command dialog and query mounted when the central CSS interaction mode changes', async () => {
+    const previous = document.documentElement.getAttribute('data-interaction-mode');
+    try {
+      await openAndType('ext');
+      const input = document.querySelector<HTMLInputElement>('[data-slot="command-input"]');
+      const dialog = palette()?.closest('hlm-dialog-content');
+      document.documentElement.setAttribute('data-interaction-mode', 'mobile');
+      await fixture.whenStable();
+      expect(document.querySelector('[data-slot="command-input"]')).toBe(input);
+      expect(input?.value).toBe('ext');
+      expect(document.querySelectorAll('app-organization-global-search-dialog')).toHaveLength(1);
+      expect(dialog?.className).toContain('mobile-ui:w-screen');
+      expect(dialog?.className).toContain('100dvh');
+    } finally {
+      if (previous === null) document.documentElement.removeAttribute('data-interaction-mode');
+      else document.documentElement.setAttribute('data-interaction-mode', previous);
+    }
   });
 
   it('should not react to Ctrl+K without an active organization', async () => {
@@ -207,4 +244,91 @@ describe('OrganizationGlobalSearch', () => {
 
     expect(document.activeElement).toBe(trigger());
   });
+});
+
+describe('OrganizationGlobalSearch', () => {
+  it.each(['Control+k', 'Meta+k', 'click'] as const)(
+    'inherits the native parent and closes it before opening search through %s',
+    async (action) => {
+      HTMLElement.prototype.scrollIntoView ??= vi.fn();
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter([]),
+          provideOrganizationFeature(),
+          { provide: ENV_CONFIG, useValue: { appName: 'Fireguard' } },
+          {
+            provide: INTERACTION_CAPABILITIES_PORT,
+            useValue: {
+              isMobileInteractionMode: signal(true),
+              shortcutModifier: signal<'Ctrl'>('Ctrl'),
+            },
+          },
+          { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated: signal(true) } },
+          {
+            provide: ActiveOrganizationStore,
+            useValue: { selectedOrganizationId: signal('org-1') },
+          },
+          {
+            provide: OrganizationService,
+            useValue: { search: vi.fn().mockReturnValue(of(RESULTS)) },
+          },
+          { provide: DASHBOARD_HEADER_ACTIONS_SLOT, useValue: [withGlobalSearch().useFactory()] },
+        ],
+      });
+      const owner = TestBed.inject(OrganizationGlobalSearchService);
+      const register = vi.spyOn(owner, 'registerTrigger');
+      const fixture = TestBed.createComponent(DashboardLayout);
+      await fixture.whenStable();
+      const root: HTMLElement = fixture.nativeElement;
+      const opener = root.querySelector<HTMLButtonElement>(
+        '[data-testid="dashboard-mobile-actions-trigger"]',
+      );
+      if (!opener) throw new Error('Expected the mobile quick-actions opener.');
+      opener.focus();
+      opener.click();
+      await fixture.whenStable();
+
+      const parent = register.mock.calls.at(-1)?.[1];
+      expect(parent?.id).toBe('dashboard-mobile-actions');
+      if (!parent) throw new Error('The native portal parent must reach the search trigger.');
+      expect(parent.phase()).toBe('open');
+      const dialogs = TestBed.inject(HlmDialogService);
+      const nativeOpen = dialogs.open.bind(dialogs);
+      const open = vi.spyOn(dialogs, 'open').mockImplementation((component, options) => {
+        expect(parent.phase()).toBe('closed');
+        expect(
+          document.querySelector('[data-testid="dashboard-mobile-actions-drawer"]'),
+        ).toBeNull();
+        return nativeOpen(component, options);
+      });
+      if (action === 'click') {
+        document.querySelector<HTMLButtonElement>('[data-testid="global-search-trigger"]')?.click();
+      } else {
+        (document.activeElement ?? document.body).dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'k',
+            ctrlKey: action === 'Control+k',
+            metaKey: action === 'Meta+k',
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      }
+      await fixture.whenStable();
+      expect(open).toHaveBeenCalledOnce();
+      expect(palette()).not.toBeNull();
+      expect(document.querySelector('[data-testid="dashboard-mobile-actions-drawer"]')).toBeNull();
+      expect(document.activeElement).toBe(
+        document.querySelector('#organization-global-search-query'),
+      );
+
+      document.activeElement?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await fixture.whenStable();
+      expect(palette()).toBeNull();
+      expect(document.activeElement).toBe(opener);
+      expect(document.querySelector('[data-testid="dashboard-mobile-actions-drawer"]')).toBeNull();
+    },
+  );
 });

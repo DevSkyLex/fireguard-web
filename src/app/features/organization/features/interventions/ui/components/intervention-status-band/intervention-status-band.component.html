@@ -7,7 +7,7 @@
           hlmBtn
           type="button"
           variant="ghost"
-          class="text-muted-foreground max-sm:min-h-11"
+          class="text-muted-foreground mobile-ui:min-h-11"
           data-testid="intervention-detail-blockers"
           (click)="blockersRequested.emit()"
         >
@@ -16,8 +16,8 @@
         </button>
       }
     </div>
-    <h2 class="text-2xl font-semibold tracking-tight max-sm:hidden">{{ phaseLabel() }}</h2>
-    <div class="max-w-xl text-sm text-muted-foreground max-sm:hidden">
+    <h2 class="text-2xl font-semibold tracking-tight mobile-ui:hidden">{{ phaseLabel() }}</h2>
+    <div class="max-w-xl text-sm text-muted-foreground mobile-ui:hidden">
       @switch (status()) {
         @case ('draft') {
           <p i18n="@@intervention.workspace.prepare">
@@ -83,7 +83,7 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="intervention-command-secondary"
         [disabled]="secondary.disabled || secondary.loading || busy()"
         [attr.aria-describedby]="secondary.disabledReason ? 'intervention-secondary-reason' : null"

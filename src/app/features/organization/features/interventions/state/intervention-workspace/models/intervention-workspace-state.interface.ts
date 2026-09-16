@@ -10,9 +10,14 @@ import type {
 } from '@features/organization/features/interventions/models';
 
 /**
- * State of one intervention workspace.
+ * Interface InterventionWorkspaceState
+ * @interface InterventionWorkspaceState
+ * @description State of one intervention workspace and its independent mutation lifecycles.
+ * @since 1.0.0
  */
 export interface InterventionWorkspaceState {
+  readonly contextId: string | null;
+  readonly loadGeneration: number;
   readonly intervention: InterventionOutput | null;
   readonly workItems: readonly InterventionWorkItemOutput[];
   readonly changes: readonly InterventionChangeOutput[];

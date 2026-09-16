@@ -35,8 +35,11 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
  * injects no store and calls no service; the host page owns pagination state
  * and reacts to `pageChanged`/`pageSizeChanged`. Native `hlmPaginationLink`
  * buttons mark the current page without supplying a router link. Five page
- * numbers surround the current page on desktop; three remain on small screens,
- * where first/last shortcuts are hidden to retain comfortable touch targets.
+ * numbers surround the current page in the desktop interaction mode; three remain in
+ * the mobile interaction mode, where first/last shortcuts are hidden to retain
+ * comfortable touch targets. Mobile hides the indicator and navigation when there
+ * is at most one page, keeping the live row count and page-size selector available.
+ * The band itself wraps by available width.
  * Both ranges render identically during SSR and hydration; CSS selects their
  * visibility. Moved from `features/organization` to `shared` as a
  * deliberate uniformity bet, recorded in `organization/FEATURE.md` § UI
@@ -174,7 +177,7 @@ export class CollectionPagination {
   /**
    * Property compactPageNumbers
    * @readonly
-   * @description The three-page subset retained on narrow screens.
+   * @description The three-page subset retained in the mobile interaction mode.
    * @access protected
    * @since 2.1.0
    * @type {Signal<readonly number[]>}

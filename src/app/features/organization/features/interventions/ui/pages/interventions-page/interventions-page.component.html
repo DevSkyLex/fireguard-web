@@ -48,6 +48,7 @@
           }
         </ul>
         <button
+          class="mobile-ui:min-h-11"
           hlmBtn
           variant="outline"
           size="sm"
@@ -67,14 +68,14 @@
         <button
           hlmBtn
           type="button"
-          class="min-w-0 shrink max-sm:min-h-11 max-sm:min-w-11"
+          class="min-w-0 shrink mobile-ui:min-h-11 mobile-ui:min-w-11"
           data-testid="interventions-new"
           i18n-aria-label="@@intervention.list.newButton"
           aria-label="New intervention"
           (click)="openCreate()"
         >
           <ng-icon name="lucidePlus" aria-hidden="true" />
-          <span class="truncate max-sm:hidden" i18n="@@intervention.list.newButton"
+          <span class="truncate desktop-ui:max-sm:hidden" i18n="@@intervention.list.newButton"
             >New intervention</span
           >
         </button>
@@ -83,7 +84,7 @@
           type="button"
           size="icon"
           align="end"
-          class="max-sm:min-h-11 max-sm:min-w-11"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           data-testid="interventions-create-menu"
           [disabled]="store.isInstantiatingFromTemplate()"
           [hlmDropdownMenuTrigger]="createMenu"
@@ -104,6 +105,7 @@
               >
               @for (template of planningOptions.templates(); track template.id) {
                 <button
+                  class="mobile-ui:min-h-11"
                   hlmDropdownMenuItem
                   [attr.data-testid]="'interventions-new-from-template-' + template.id"
                   (click)="openTemplateCreate(template.id)"
@@ -116,6 +118,7 @@
             <hlm-dropdown-menu-separator />
           }
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="intervention-recurrences-new"
             (click)="openRecurrenceCreate()"
@@ -132,42 +135,43 @@
     <hlm-paginated-tabs-list
       variant="line"
       class="w-full"
-      tabListClass="justify-start max-sm:group-data-horizontal/tabs:h-11"
+      tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+      paginationButtonClass="mobile-ui:size-11 mobile-ui:shrink-0"
       data-testid="intervention-view-toggle"
       aria-label="Change view"
       i18n-aria-label="@@intervention.list.viewToggleLabel"
     >
       <button
         hlmTabsTrigger="list"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11 mobile-ui:px-3"
         data-testid="intervention-view-toggle-list"
       >
-        <ng-icon name="lucideList" aria-hidden="true" />
+        <ng-icon name="lucideList" class="mobile-ui:hidden" aria-hidden="true" />
         <span i18n="@@intervention.board.viewList">List</span>
       </button>
       <button
         hlmTabsTrigger="board"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11 mobile-ui:px-3"
         data-testid="intervention-view-toggle-board"
       >
-        <ng-icon name="lucideColumns3" aria-hidden="true" />
+        <ng-icon name="lucideColumns3" class="mobile-ui:hidden" aria-hidden="true" />
         <span i18n="@@intervention.board.viewBoard">Board</span>
       </button>
       <button
         hlmTabsTrigger="calendar"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11 mobile-ui:px-3"
         data-testid="intervention-view-toggle-calendar"
       >
-        <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+        <ng-icon name="lucideCalendarDays" class="mobile-ui:hidden" aria-hidden="true" />
         <span i18n="@@intervention.board.viewCalendar">Calendar</span>
       </button>
       @if (canReadRecurrences()) {
         <button
           hlmTabsTrigger="recurrences"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
           data-testid="intervention-recurrences-link"
         >
-          <ng-icon name="lucideCalendarClock" aria-hidden="true" />
+          <ng-icon name="lucideCalendarClock" class="mobile-ui:hidden" aria-hidden="true" />
           <span i18n="@@intervention.recurrences.tab">Recurrences</span>
         </button>
       }
@@ -176,13 +180,13 @@
   <div
     [class]="
       activeView() === 'list'
-        ? 'flex min-h-96 flex-1 flex-col gap-4 max-sm:min-h-0 max-sm:flex-none'
-        : 'flex min-h-96 flex-1 flex-col gap-4 max-sm:flex-none'
+        ? 'flex min-h-96 flex-1 flex-col gap-4 mobile-ui:min-h-0 mobile-ui:flex-none'
+        : 'flex min-h-96 flex-1 flex-col gap-4 mobile-ui:flex-none'
     "
   >
     @if (activeView() !== 'recurrences') {
       <app-collection-toolbar>
-        <div toolbarStart class="flex flex-wrap items-center gap-2">
+        <div toolbarStart class="flex flex-wrap items-center gap-2 mobile-ui:w-full">
           @if (activeView() === 'list' || activeView() === 'board') {
             <app-collection-search-box
               testIdPrefix="interventions"
@@ -195,12 +199,18 @@
             />
           }
 
+          @if (!isMobileInteractionMode()) {
+            <ng-container [ngTemplateOutlet]="mineToggle" />
+          }
+        </div>
+
+        <ng-template #mineToggle>
           <button
             hlmToggle
             type="button"
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="interventions-mine-toggle"
             [state]="filters().mine ? 'on' : 'off'"
             (stateChange)="toggleMine()"
@@ -210,16 +220,284 @@
             }
             <span i18n="@@intervention.list.mine">My interventions</span>
           </button>
+        </ng-template>
+
+        <div toolbarEnd class="flex flex-wrap items-center gap-2 mobile-ui:w-full">
+          @if (isMobileInteractionMode() || mobileToolsVisible()) {
+            <ng-container [ngTemplateOutlet]="mineToggle" />
+            @if (activeView() === 'list') {
+              <hlm-drawer
+                direction="bottom"
+                class="ms-auto"
+                (stateChanged)="mobileToolsVisible.set($event === 'open')"
+                (closed)="onMobileToolsClosed($event)"
+              >
+                <button
+                  hlmDrawerTrigger
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  class="min-h-11"
+                  data-testid="interventions-tools"
+                >
+                  <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
+                  <span i18n="@@intervention.list.tools">Tools</span>
+                  @if (selectedIds().size > 0) {
+                    <hlm-badge variant="secondary">{{ selectedIds().size }}</hlm-badge>
+                  }
+                </button>
+                <hlm-drawer-content
+                  *hlmDrawerPortal="let drawer"
+                  class="pb-[env(safe-area-inset-bottom)]"
+                >
+                  <hlm-drawer-header>
+                    <div class="text-start">
+                      <h3 hlmDrawerTitle i18n="@@intervention.list.toolsTitle">
+                        Intervention tools
+                      </h3>
+                      <p hlmDrawerDescription i18n="@@intervention.list.toolsDescription">
+                        Select interventions, adjust the display or export this list.
+                      </p>
+                    </div>
+                  </hlm-drawer-header>
+                  <div
+                    class="flex min-h-0 flex-col items-stretch gap-4 overflow-y-auto overscroll-contain px-4 pb-4"
+                  >
+                    <ng-container
+                      [ngTemplateOutlet]="mobileListTools"
+                      [ngTemplateOutletContext]="{ $implicit: drawer }"
+                    />
+                  </div>
+                  <hlm-drawer-footer>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      class="min-h-11"
+                      data-testid="interventions-tools-close"
+                      (click)="drawer.close()"
+                      i18n="@@intervention.list.returnToList"
+                    >
+                      Return to list
+                    </button>
+                  </hlm-drawer-footer>
+                </hlm-drawer-content>
+              </hlm-drawer>
+            }
+          } @else {
+            <ng-container [ngTemplateOutlet]="listTools" />
+          }
+
+          <app-collection-filter-toggle
+            [visible]="filtersVisible()"
+            [activeCount]="honouredActiveFilterKeys().length"
+            label="Filters"
+            i18n-label="@@intervention.list.filtersButton"
+            testIdPrefix="interventions"
+            (visibleChange)="toggleFiltersVisible($event)"
+          />
         </div>
 
-        <div toolbarEnd class="flex flex-wrap items-center gap-2">
+        <ng-template #mobileListTools let-drawer>
+          @if (canTransition() || canAssign() || canDelete()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="min-h-11 w-full justify-start"
+              data-testid="interventions-selection-mode"
+              [attr.aria-pressed]="selectionMode()"
+              (click)="toggleSelectionMode()"
+            >
+              <span i18n="@@intervention.list.selectRows">Select</span>
+              @if (selectedIds().size > 0) {
+                <hlm-badge variant="secondary" class="ms-auto">{{ selectedIds().size }}</hlm-badge>
+              }
+            </button>
+          }
+
+          @if (selectedIds().size > 0) {
+            <section
+              class="flex flex-col gap-2 border-t border-border pt-4"
+              aria-labelledby="interventions-mobile-bulk-actions-label"
+            >
+              <h4
+                id="interventions-mobile-bulk-actions-label"
+                class="text-sm font-medium text-foreground"
+                i18n="@@intervention.list.bulkActionsButton"
+              >
+                Actions
+              </h4>
+              <div hlmItemGroup class="gap-0">
+                @if (canTransition() && bulkTransitionTargets().length > 0) {
+                  @for (target of bulkTransitionTargets(); track target) {
+                    @if (transitionableSelectedIds(target).length > 0) {
+                      <button
+                        hlmItem
+                        type="button"
+                        class="min-h-11"
+                        data-testid="interventions-bulk-transition"
+                        [disabled]="batchPending()"
+                        (click)="confirmBulkTransition(target) && drawer.close()"
+                      >
+                        <span hlmItemContent>
+                          <span hlmItemTitle>
+                            <span i18n="@@intervention.list.bulkMoveToLabel">Move to</span>
+                            {{ statusLabelOf(target) }}
+                          </span>
+                        </span>
+                        <span hlmItemActions class="tabular-nums">
+                          {{ transitionableSelectedIds(target).length }}
+                        </span>
+                      </button>
+                    }
+                  }
+                }
+                @if (canAssign() && assignableSelectedIds().length > 0) {
+                  <button
+                    hlmItem
+                    type="button"
+                    class="min-h-11"
+                    data-testid="interventions-bulk-assign"
+                    [disabled]="batchPending()"
+                    (click)="drawer.close('assign')"
+                  >
+                    <span hlmItemMedia variant="icon">
+                      <ng-icon name="lucideUserCog" aria-hidden="true" />
+                    </span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ bulkAssignLabel() }}</span>
+                    </span>
+                  </button>
+                }
+                @if (canDelete()) {
+                  <button
+                    hlmItem
+                    type="button"
+                    class="min-h-11 text-destructive"
+                    data-testid="interventions-bulk-delete"
+                    [disabled]="deletableSelectedIds().length === 0"
+                    (click)="drawer.close('delete')"
+                  >
+                    <span hlmItemMedia variant="icon">
+                      <ng-icon name="lucideTrash2" aria-hidden="true" />
+                    </span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ bulkDeleteLabel() }}</span>
+                    </span>
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          <section
+            class="flex flex-col gap-3 border-t border-border pt-4"
+            aria-labelledby="interventions-mobile-display-label"
+            data-testid="interventions-display"
+          >
+            <h4
+              id="interventions-mobile-display-label"
+              class="text-sm font-medium text-foreground"
+              i18n="@@intervention.list.displayButton"
+            >
+              Display
+            </h4>
+            <div class="flex flex-col gap-2">
+              <p
+                class="text-xs font-medium text-muted-foreground"
+                i18n="@@intervention.list.displaySortLabel"
+              >
+                Sort by
+              </p>
+              <div hlmItemGroup class="gap-0">
+                @for (option of sortOptions; track option.value) {
+                  <button
+                    hlmItem
+                    type="button"
+                    class="min-h-11"
+                    data-testid="interventions-sort-field-option"
+                    [attr.aria-pressed]="sortOrder().field === option.value"
+                    (click)="onSortFieldPicked(option.value)"
+                  >
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ option.label }}</span>
+                    </span>
+                    @if (sortOrder().field === option.value) {
+                      <span hlmItemActions>
+                        <ng-icon name="lucideCheck" aria-hidden="true" />
+                        <span class="sr-only" i18n="@@common.selected">Selected</span>
+                      </span>
+                    }
+                  </button>
+                }
+              </div>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="min-h-11 w-full justify-start"
+                data-testid="interventions-sort-direction"
+                (click)="toggleSortDirection()"
+              >
+                <ng-icon
+                  [name]="sortOrder().direction === 'asc' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                  aria-hidden="true"
+                />
+                <span>{{ sortDirectionLabel() }}</span>
+              </button>
+            </div>
+          </section>
+
+          <div class="flex flex-col gap-1 border-t border-border pt-4">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="min-h-11 w-full justify-start"
+              data-testid="interventions-export"
+              #mobileExportGate="appGateReason"
+              [disabled]="exportDisabled()"
+              [appGateReason]="exportGateReason()"
+              [attr.aria-busy]="exportBusy() ? 'true' : null"
+              (click)="exportCsv()"
+            >
+              @if (exportBusy()) {
+                <hlm-spinner class="size-4" aria-hidden="true" />
+              } @else {
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+              }
+              <span i18n="@@intervention.list.exportButton">Export</span>
+            </button>
+            @if (exportGateReason(); as reason) {
+              <span
+                class="text-xs text-muted-foreground"
+                data-testid="interventions-export-reason"
+                [id]="mobileExportGate.reasonId()"
+                >{{ reason }}</span
+              >
+            }
+            @if (exportBusy()) {
+              <span
+                class="sr-only"
+                aria-live="polite"
+                data-testid="interventions-export-status"
+                i18n="@@intervention.list.exportingStatus"
+              >
+                Preparing the export…
+              </span>
+            }
+          </div>
+        </ng-template>
+
+        <ng-template #listTools>
           @if (activeView() === 'list' && (canTransition() || canAssign() || canDelete())) {
             <button
               hlmBtn
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11 max-sm:grow sm:hidden"
+              class="mobile-ui:min-h-11 mobile-ui:grow desktop-ui:hidden"
               data-testid="interventions-selection-mode"
               [attr.aria-pressed]="selectionMode()"
               (click)="toggleSelectionMode()"
@@ -235,7 +513,7 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                class="max-sm:grow"
+                class="max-sm:grow mobile-ui:min-h-11"
                 data-testid="interventions-bulk-actions"
                 [hlmDropdownMenuTrigger]="bulkMenu"
                 align="start"
@@ -254,6 +532,7 @@
                   @for (target of bulkTransitionTargets(); track target) {
                     @if (transitionableSelectedIds(target).length > 0) {
                       <button
+                        class="mobile-ui:min-h-11"
                         hlmDropdownMenuItem
                         data-testid="interventions-bulk-transition"
                         (click)="confirmBulkTransition(target)"
@@ -267,6 +546,7 @@
 
                 @if (canAssign() && assignableSelectedIds().length > 0) {
                   <button
+                    class="mobile-ui:min-h-11"
                     hlmDropdownMenuItem
                     data-testid="interventions-bulk-assign"
                     (click)="requestBulkAssign()"
@@ -279,6 +559,7 @@
 
                 @if (canDelete()) {
                   <button
+                    class="mobile-ui:min-h-11"
                     hlmDropdownMenuItem
                     variant="destructive"
                     data-testid="interventions-bulk-delete"
@@ -299,7 +580,7 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                class="max-sm:min-h-11 max-sm:grow"
+                class="max-sm:grow mobile-ui:min-h-11"
                 data-testid="interventions-display"
               >
                 <ng-icon name="lucideSlidersHorizontal" aria-hidden="true" />
@@ -321,13 +602,16 @@
                       [itemToString]="sortFieldLabelOf"
                       (valueChange)="onSortFieldPicked($event)"
                     >
-                      <hlm-select-trigger data-testid="interventions-sort-field" class="w-full">
+                      <hlm-select-trigger
+                        data-testid="interventions-sort-field"
+                        class="w-full mobile-ui:min-h-11"
+                      >
                         <hlm-select-value />
                       </hlm-select-trigger>
                       <hlm-select-content *hlmSelectPortal>
                         <hlm-select-group>
                           @for (option of sortOptions; track option.value) {
-                            <hlm-select-item [value]="option.value">{{
+                            <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
                               option.label
                             }}</hlm-select-item>
                           }
@@ -336,6 +620,7 @@
                     </hlm-select>
 
                     <button
+                      class="mobile-ui:min-h-11"
                       hlmBtn
                       type="button"
                       variant="outline"
@@ -386,7 +671,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11 max-sm:grow"
+              class="max-sm:grow mobile-ui:min-h-11"
               data-testid="interventions-export"
               #exportGate="appGateReason"
               [disabled]="exportDisabled()"
@@ -420,16 +705,7 @@
               </span>
             }
           }
-
-          <app-collection-filter-toggle
-            [visible]="filtersVisible()"
-            [activeCount]="honouredActiveFilterKeys().length"
-            label="Filters"
-            i18n-label="@@intervention.list.filtersButton"
-            testIdPrefix="interventions"
-            (visibleChange)="toggleFiltersVisible($event)"
-          />
-        </div>
+        </ng-template>
       </app-collection-toolbar>
 
       @if (filtersVisible()) {
@@ -669,6 +945,17 @@
     </ng-template>
 
     <ng-template #labelChip>
+      <ng-template #labelOptionRow let-option>
+        <span class="inline-flex min-w-0 items-center gap-2">
+          <span
+            class="size-2 shrink-0 rounded-full ring-1 ring-foreground/20"
+            [style.background-color]="option.color"
+            aria-hidden="true"
+          ></span>
+          <span class="truncate whitespace-nowrap">{{ option.label }}</span>
+        </span>
+      </ng-template>
+
       @if (enumFieldOperator('label') === 'isAnyOf') {
         <app-collection-filter-multi-select
           [options]="labelOptions()"
@@ -683,6 +970,8 @@
           triggerId="interventions-filter-label"
           testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
+          [optionTemplate]="labelOptionRow"
+          [valueTemplate]="labelOptionRow"
           (valuesChanged)="applyLabelFilter($any($event))"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -700,6 +989,8 @@
           triggerId="interventions-filter-label"
           testId="interventions-filter-label"
           [state]="fieldPopoverState('label')"
+          [optionTemplate]="labelOptionRow"
+          [valueTemplate]="labelOptionRow"
           (valueChanged)="applyFilter({ label: $any($event) })"
           (stateChanged)="onFieldPopoverStateChanged('label', $event)"
         />
@@ -813,7 +1104,7 @@
       />
     </ng-template>
 
-    <section hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4 max-sm:flex-none">
+    <section hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4 mobile-ui:flex-none">
       @if (listForbidden()) {
         <div hlmEmpty class="border border-border">
           <div hlmEmptyHeader>
@@ -842,7 +1133,13 @@
             </p>
           </div>
           <div hlmEmptyContent>
-            <button hlmBtn variant="outline" data-testid="interventions-retry" (click)="reload()">
+            <button
+              class="mobile-ui:min-h-11"
+              hlmBtn
+              variant="outline"
+              data-testid="interventions-retry"
+              (click)="reload()"
+            >
               <span i18n="@@intervention.list.retry">Try again</span>
             </button>
           </div>
@@ -862,7 +1159,7 @@
               </p>
             </div>
             <div hlmEmptyContent>
-              <button hlmBtn variant="outline" (click)="clearSearch()">
+              <button class="mobile-ui:min-h-11" hlmBtn variant="outline" (click)="clearSearch()">
                 <span i18n="@@intervention.list.clearSearch">Clear search</span>
               </button>
             </div>
@@ -879,7 +1176,7 @@
               </p>
             </div>
             <div hlmEmptyContent>
-              <button hlmBtn (click)="openCreate()">
+              <button class="mobile-ui:min-h-11" hlmBtn (click)="openCreate()">
                 <ng-icon name="lucidePlus" aria-hidden="true" />
                 <span i18n="@@intervention.list.newButtonShort">New</span>
               </button>
@@ -925,39 +1222,106 @@
 
     <section
       hlmTabsContent="board"
-      class="flex min-h-96 flex-1 flex-col max-sm:h-[min(36rem,75dvh)] max-sm:flex-none"
+      class="flex min-h-96 flex-1 flex-col mobile-ui:min-h-0 mobile-ui:flex-none"
     >
       @defer (when activeView() === 'board') {
-        <app-board
-          boardId="interventions-board"
-          label="Interventions by status"
-          i18n-label="@@intervention.board.label"
-          emptyLabel="No interventions."
-          i18n-emptyLabel="@@intervention.board.columnEmpty"
-          [columns]="boardColumns()"
-          (loadMoreRequested)="boardStore.loadMore($event)"
-          [canMove]="canMoveBoardItem"
-          [moveBlockedReason]="boardMoveBlockedReason"
-          (moveRequested)="onBoardMoveRequested($event)"
-        >
-          <ng-template [appBoardColumnHeader]="boardColumns()" let-column>
-            <app-intervention-tag kind="status" [value]="column.id" asOption />
-          </ng-template>
-          <ng-template [appBoardCard]="boardColumns()" let-card let-move="move">
-            <app-intervention-board-card
-              [regionalFormatting]="regionalFormatting()"
-              [item]="card.data"
-              [canTransition]="canTransition()"
-              [currentMemberIri]="memberIri()"
-              [locked]="!!card.disabled"
-              [detailRouteBase]="detailRouteBase()"
-              (moveRequested)="move($event)"
-            />
-            @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
-              <p role="alert" class="px-3 pb-3 text-sm text-destructive">{{ error.message }}</p>
+        @if (isMobileInteractionMode()) {
+          <div
+            class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+            data-testid="interventions-mobile-board"
+          >
+            @for (column of boardColumns(); track column.id) {
+              <section class="flex min-w-0 flex-col gap-3" [attr.aria-label]="column.label">
+                <h2 class="flex items-center justify-between gap-2 text-sm font-medium">
+                  <app-intervention-tag kind="status" [value]="column.id" asOption />
+                  <span>{{ column.total ?? column.items.length }}</span>
+                </h2>
+                @for (card of column.items; track card.id) {
+                  <app-intervention-board-card
+                    [regionalFormatting]="regionalFormatting()"
+                    [item]="card.data"
+                    [canTransition]="canTransition()"
+                    [currentMemberIri]="memberIri()"
+                    [locked]="!!card.disabled"
+                    [detailRouteBase]="detailRouteBase()"
+                    (moveRequested)="onBoardMoveRequested({ item: card.data, columnId: $event })"
+                  />
+                  @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
+                    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+                  }
+                } @empty {
+                  @if (!column.loading && !column.error) {
+                    <p
+                      class="text-sm text-muted-foreground"
+                      i18n="@@intervention.board.columnEmpty"
+                    >
+                      No interventions.
+                    </p>
+                  }
+                }
+                @if (column.loading) {
+                  <p role="status" class="text-sm text-muted-foreground" i18n="@@common.loading">
+                    Loading…
+                  </p>
+                }
+                @if (column.error) {
+                  <p role="alert" class="text-sm text-destructive">{{ column.error }}</p>
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    class="min-h-11 mobile-ui:min-h-11"
+                    (click)="boardStore.loadMore(column.id)"
+                    i18n="@@common.retry"
+                  >
+                    Retry
+                  </button>
+                } @else if (column.hasMore) {
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    class="min-h-11 mobile-ui:min-h-11"
+                    [disabled]="column.loading"
+                    (click)="boardStore.loadMore(column.id)"
+                    i18n="@@common.loadMore"
+                  >
+                    Load more
+                  </button>
+                }
+              </section>
             }
-          </ng-template>
-        </app-board>
+          </div>
+        } @else {
+          <app-board
+            boardId="interventions-board"
+            label="Interventions by status"
+            i18n-label="@@intervention.board.label"
+            emptyLabel="No interventions."
+            i18n-emptyLabel="@@intervention.board.columnEmpty"
+            [columns]="boardColumns()"
+            (loadMoreRequested)="boardStore.loadMore($event)"
+            [canMove]="canMoveBoardItem"
+            [moveBlockedReason]="boardMoveBlockedReason"
+            (moveRequested)="onBoardMoveRequested($event)"
+          >
+            <ng-template [appBoardColumnHeader]="boardColumns()" let-column>
+              <app-intervention-tag kind="status" [value]="column.id" asOption />
+            </ng-template>
+            <ng-template [appBoardCard]="boardColumns()" let-card let-move="move">
+              <app-intervention-board-card
+                [regionalFormatting]="regionalFormatting()"
+                [item]="card.data"
+                [canTransition]="canTransition()"
+                [currentMemberIri]="memberIri()"
+                [locked]="!!card.disabled"
+                [detailRouteBase]="detailRouteBase()"
+                (moveRequested)="move($event)"
+              />
+              @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
+                <p role="alert" class="px-3 pb-3 text-sm text-destructive">{{ error.message }}</p>
+              }
+            </ng-template>
+          </app-board>
+        }
       }
     </section>
 

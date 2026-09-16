@@ -51,6 +51,75 @@ describe('InterventionLinkedResourcesStore', () => {
   });
 
   describe('ensureFacilitiesLoaded', () => {
+    it('keeps memory provenance until a reconnect refresh succeeds', () => {
+      store.ensureFacilitiesLoaded('A');
+      store.setOnline(false);
+      store.queryFacilities({ interventionId: 'A', search: 'different', type: null, status: null });
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+      expect(store.facilities()).toEqual([facility]);
+      expect(store.facilitiesSource()).toBe('memory');
+
+      const refreshed = new Subject<{ member: FacilityOutput[]; totalItems: number }>();
+      facilityService.listByIntervention.mockReturnValueOnce(refreshed);
+      store.setOnline(true);
+      store.refreshFacilities('A');
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(2);
+      expect(store.facilitiesSource()).toBe('memory');
+
+      refreshed.next({ member: [facility], totalItems: 1 });
+      refreshed.complete();
+      expect(store.facilitiesSource()).toBe('api');
+    });
+
+    it('retries an append failure without losing pages or duplicating identities', () => {
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [facility], totalItems: 3 }),
+      );
+      store.ensureFacilitiesLoaded('A');
+      facilityService.listByIntervention.mockReturnValueOnce(
+        throwError(() => new Error('page failed')),
+      );
+      store.loadMoreFacilities('A');
+      expect(store.facilities()).toEqual([facility]);
+      expect(store.facilitiesFailedPage()).toBe(2);
+      facilityService.listByIntervention.mockReturnValueOnce(
+        of({ member: [facility, { id: 'f2' }], totalItems: 3 }),
+      );
+      store.retryFacilities('A');
+      expect(store.facilities().map((row) => row.id)).toEqual(['f1', 'f2']);
+      expect(facilityService.listByIntervention).toHaveBeenLastCalledWith(
+        'A',
+        expect.objectContaining({ page: 2 }),
+      );
+    });
+    it('cancels an in-flight equipment response when navigation changes intervention', () => {
+      const stale = new Subject<{ member: EquipmentOutput[]; totalItems: number }>();
+      equipmentService.listByIntervention.mockReturnValueOnce(stale);
+      store.ensureEquipmentLoaded('A');
+      store.ensureFacilitiesLoaded('B');
+      stale.next({ member: [equipment], totalItems: 1 });
+      expect(store.equipment()).toEqual([]);
+      expect(stale.observed).toBe(false);
+    });
+
+    it('preserves rows while refreshing criteria and cancels before the text debounce', async () => {
+      vi.useFakeTimers();
+      try {
+        store.ensureFacilitiesLoaded('A');
+        const pending = new Subject<{ member: FacilityOutput[]; totalItems: number }>();
+        facilityService.listByIntervention.mockReturnValueOnce(pending);
+        store.queryFacilities({ interventionId: 'A', search: 'one', type: null, status: null });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(store.facilities()).toEqual([facility]);
+        store.queryFacilities({ interventionId: 'A', search: 'two', type: null, status: null });
+        expect(pending.observed).toBe(false);
+        pending.next({ member: [], totalItems: 0 });
+        expect(store.facilities()).toEqual([facility]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it('should fetch and land in success with the members on first activation', async () => {
       store.ensureFacilitiesLoaded('int-1');
       await flush();
@@ -116,6 +185,14 @@ describe('InterventionLinkedResourcesStore', () => {
   });
 
   describe('loadMoreFacilities', () => {
+    it('deduplicates overlap between pages by identifier', () => {
+      facilityService.listByIntervention.mockReturnValue(
+        of({ member: [facility], totalItems: 45 }),
+      );
+      store.ensureFacilitiesLoaded('A');
+      store.loadMoreFacilities('A');
+      expect(store.facilities()).toEqual([facility]);
+    });
     it('should append the next page onto the already-loaded rows', async () => {
       facilityService.listByIntervention.mockReturnValueOnce(
         of({ member: [facility], totalItems: 45 }),
@@ -354,6 +431,55 @@ describe('InterventionLinkedResourcesStore', () => {
 
       expect(store.inspections()).toEqual([inspection]);
       expect(store.inspectionsError()).not.toBeNull();
+    });
+  });
+
+  describe('server queries', () => {
+    it('debounces facilities search and filters, then resets pagination', async () => {
+      vi.useFakeTimers();
+
+      store.queryFacilities({
+        interventionId: 'int-1',
+        search: ' depot ',
+        type: 'site',
+        status: 'active',
+      });
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(facilityService.listByIntervention).toHaveBeenCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        search: 'depot',
+        status: 'active',
+        params: { type: 'site' },
+      });
+      vi.useRealTimers();
+    });
+
+    it('reuses equipment filters when loading the next server page', async () => {
+      vi.useFakeTimers();
+      equipmentService.listByIntervention.mockReturnValue(
+        of({ member: [equipment], totalItems: 45 }),
+      );
+
+      store.queryEquipment({
+        interventionId: 'int-1',
+        search: 'pump',
+        type: 'hydrant',
+        status: 'operational',
+      });
+      await vi.advanceTimersByTimeAsync(300);
+      store.loadMoreEquipment('int-1');
+
+      expect(equipmentService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 2,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        search: 'pump',
+        params: { type: 'hydrant', status: 'operational' },
+      });
+      vi.useRealTimers();
     });
   });
 });

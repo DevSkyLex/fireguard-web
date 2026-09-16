@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -214,7 +215,10 @@ const createPage = async (): Promise<ComponentFixture<FacilityBuilding3dPage>> =
   return created;
 };
 
+const mobile = signal(false);
+
 function stubMatchMedia(matches: boolean): void {
+  mobile.set(matches);
   vi.stubGlobal(
     'matchMedia',
     vi.fn().mockImplementation((query: string) => ({
@@ -241,11 +245,13 @@ describe('FacilityBuilding3dPage', () => {
   });
 
   beforeEach(() => {
+    mobile.set(false);
     store = createStoreStub();
     hasPermission = vi.fn().mockReturnValue(true);
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: FacilityBuilding3dStore, useValue: store },
@@ -608,6 +614,10 @@ describe('FacilityBuilding3dPage (server platform)', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: 'server' },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
         { provide: FacilityBuilding3dStore, useValue: store },
         { provide: OrganizationPermissionService, useValue: { hasPermission: vi.fn() } },
       ],

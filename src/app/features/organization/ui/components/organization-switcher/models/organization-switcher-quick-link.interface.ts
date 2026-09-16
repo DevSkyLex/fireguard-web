@@ -17,6 +17,8 @@ export interface OrganizationSwitcherQuickLink {
   readonly label: string;
   /** Registered lucide icon name. */
   readonly icon: string;
+  /** Key used to render the desktop dropdown keyboard shortcut hint. */
+  readonly shortcutKey: string;
   /** Destination, already prefixed with `/organizations/:organizationId`. */
   readonly route: string;
   /** Extra query parameters the destination needs, or `null`. */

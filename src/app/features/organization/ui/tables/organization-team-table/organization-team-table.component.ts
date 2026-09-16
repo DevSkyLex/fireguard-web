@@ -18,6 +18,7 @@ import {
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 
 /** How many cells a row carries, so the shared surface can size its first-load skeleton. */
@@ -60,6 +61,7 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
     NgIcon,
     HlmButton,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucideEllipsis, lucidePencil, lucideTrash2, lucideUsersRound })],

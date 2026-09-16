@@ -1,9 +1,14 @@
-<div class="flex flex-wrap items-center justify-between gap-2" data-testid="facility-plan-toolbar">
+<div
+  #toolbar
+  tabindex="-1"
+  class="flex flex-wrap items-center justify-between gap-2"
+  data-testid="facility-plan-toolbar"
+>
   <div class="flex flex-wrap items-center gap-3">
     <ng-content select="[planPicker]" />
 
     @if (overlayHasContent()) {
-      <label class="flex items-center gap-2 text-sm">
+      <label class="flex items-center gap-2 text-sm mobile-ui:min-h-11">
         <hlm-switch
           [checked]="showZones()"
           (checkedChange)="showZonesChanged.emit($event)"
@@ -11,7 +16,7 @@
         />
         <span i18n="@@facility.plans.overlay.toggleZonesLabel">Zones</span>
       </label>
-      <label class="flex items-center gap-2 text-sm">
+      <label class="flex items-center gap-2 text-sm mobile-ui:min-h-11">
         <hlm-switch
           [checked]="showEquipment()"
           (checkedChange)="showEquipmentChanged.emit($event)"
@@ -30,6 +35,7 @@
         aria-expanded="false"
         data-testid="facility-plan-open-panel"
         (click)="panelOpenRequested.emit()"
+        class="mobile-ui:min-h-11"
       >
         <ng-icon name="lucideList" aria-hidden="true" />
         <span>{{ panelOpenerLabel }}</span>
@@ -46,6 +52,7 @@
         size="sm"
         data-testid="facility-plan-3d-link"
         [routerLink]="plan3dRoute()"
+        class="mobile-ui:min-h-11"
       >
         <ng-icon name="lucideBoxes" aria-hidden="true" />
         <span i18n="@@facility.detail.view3d">3D view</span>
@@ -53,8 +60,12 @@
     }
 
     @if (canWrite()) {
-      @if (compact()) {
-        <hlm-drawer direction="bottom" (stateChanged)="onZoneDrawerStateChanged($event)">
+      @if (isMobileInteractionMode()) {
+        <hlm-drawer
+          direction="bottom"
+          (stateChanged)="onZoneDrawerStateChanged($event)"
+          (closed)="restoreEditorFocus()"
+        >
           <button
             hlmDrawerTrigger
             hlmBtn
@@ -71,18 +82,20 @@
           </button>
 
           <hlm-drawer-content
-            *hlmDrawerPortal
+            *hlmDrawerPortal="let drawer"
             class="max-h-[85dvh] overflow-hidden"
             data-testid="facility-plan-editor-draw-zone-drawer"
           >
-            <hlm-drawer-header class="px-5 text-start!">
-              <h2 hlmDrawerTitle i18n="@@facility.plans.editor.drawZoneTitle">Choose a zone</h2>
-              <p hlmDrawerDescription i18n="@@facility.plans.editor.drawZoneDescription">
-                Pick the zone whose outline you want to draw.
-              </p>
+            <hlm-drawer-header>
+              <div class="text-start">
+                <h2 hlmDrawerTitle i18n="@@facility.plans.editor.drawZoneTitle">Choose a zone</h2>
+                <p hlmDrawerDescription i18n="@@facility.plans.editor.drawZoneDescription">
+                  Pick the zone whose outline you want to draw.
+                </p>
+              </div>
             </hlm-drawer-header>
 
-            <div class="border-y border-border px-5 py-3">
+            <div class="border-y border-border px-4 py-3">
               <label
                 for="facility-plan-zone-search"
                 class="sr-only"
@@ -91,13 +104,14 @@
               >
               <input
                 hlmInput
+                #zoneSearchInput
                 id="facility-plan-zone-search"
                 type="search"
                 class="min-h-11"
                 placeholder="Search zones…"
                 i18n-placeholder="@@facility.plans.editor.searchZonesPlaceholder"
                 [value]="zoneSearch()"
-                (input)="onZoneSearchChanged($event)"
+                (input)="onZoneSearchChanged(zoneSearchInput.value)"
               />
             </div>
 
@@ -134,10 +148,10 @@
                 @for (candidate of filteredZoneCandidates(); track candidate.id) {
                   <button
                     hlmItem
-                    hlmDrawerClose
                     type="button"
-                    class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
-                    (click)="onZoneDrawTargetPicked(candidate.id)"
+                    class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-muted focus-visible:bg-muted"
+                    [disabled]="editMode() !== 'none'"
+                    (click)="onZoneDrawTargetPicked(candidate.id) && drawer.close()"
                   >
                     <span hlmItemMedia variant="icon">
                       <ng-icon name="lucideMapPin" aria-hidden="true" />
@@ -157,9 +171,7 @@
               }
             </div>
 
-            <hlm-drawer-footer
-              class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
-            >
+            <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 hlmDrawerClose
                 hlmBtn
@@ -180,7 +192,7 @@
           (valueChange)="onZoneDrawTargetPicked($event)"
         >
           <hlm-select-trigger
-            class="w-56"
+            class="w-56 mobile-ui:min-h-11"
             data-testid="facility-plan-editor-draw-zone-picker"
             (click)="zonePickerOpened.emit()"
           >
@@ -189,7 +201,9 @@
           <hlm-select-content *hlmSelectPortal class="w-56">
             <hlm-select-group>
               @for (candidate of zoneCandidates(); track candidate.id) {
-                <hlm-select-item [value]="candidate.id">{{ candidate.name }}</hlm-select-item>
+                <hlm-select-item [value]="candidate.id" class="mobile-ui:min-h-11">{{
+                  candidate.name
+                }}</hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
@@ -198,8 +212,12 @@
     }
 
     @if (canEditEquipment()) {
-      @if (compact()) {
-        <hlm-drawer direction="bottom" (stateChanged)="onEquipmentDrawerStateChanged($event)">
+      @if (isMobileInteractionMode()) {
+        <hlm-drawer
+          direction="bottom"
+          (stateChanged)="onEquipmentDrawerStateChanged($event)"
+          (closed)="restoreEditorFocus()"
+        >
           <button
             hlmDrawerTrigger
             hlmBtn
@@ -216,20 +234,22 @@
           </button>
 
           <hlm-drawer-content
-            *hlmDrawerPortal
+            *hlmDrawerPortal="let drawer"
             class="max-h-[85dvh] overflow-hidden"
             data-testid="facility-plan-editor-place-pin-drawer"
           >
-            <hlm-drawer-header class="px-5 text-start!">
-              <h2 hlmDrawerTitle i18n="@@facility.plans.editor.placeEquipmentTitle">
-                Choose equipment
-              </h2>
-              <p hlmDrawerDescription i18n="@@facility.plans.editor.placeEquipmentDescription">
-                Pick the equipment you want to place on this plan.
-              </p>
+            <hlm-drawer-header>
+              <div class="text-start">
+                <h2 hlmDrawerTitle i18n="@@facility.plans.editor.placeEquipmentTitle">
+                  Choose equipment
+                </h2>
+                <p hlmDrawerDescription i18n="@@facility.plans.editor.placeEquipmentDescription">
+                  Pick the equipment you want to place on this plan.
+                </p>
+              </div>
             </hlm-drawer-header>
 
-            <div class="border-y border-border px-5 py-3">
+            <div class="border-y border-border px-4 py-3">
               <label
                 for="facility-plan-equipment-search"
                 class="sr-only"
@@ -238,13 +258,14 @@
               >
               <input
                 hlmInput
+                #equipmentSearchInput
                 id="facility-plan-equipment-search"
                 type="search"
                 class="min-h-11"
                 placeholder="Search equipment…"
                 i18n-placeholder="@@facility.plans.editor.searchEquipmentPlaceholder"
                 [value]="equipmentSearch()"
-                (input)="onEquipmentSearchChanged($event)"
+                (input)="onEquipmentSearchChanged(equipmentSearchInput.value)"
               />
             </div>
 
@@ -281,10 +302,10 @@
                 @for (candidate of filteredEquipmentCandidates(); track candidate.id) {
                   <button
                     hlmItem
-                    hlmDrawerClose
                     type="button"
-                    class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
-                    (click)="onEquipmentPlacePicked(candidate.id)"
+                    class="min-h-12 cursor-pointer flex-nowrap text-start hover:bg-muted focus-visible:bg-muted"
+                    [disabled]="editMode() !== 'none'"
+                    (click)="onEquipmentPlacePicked(candidate.id) && drawer.close()"
                   >
                     <span hlmItemMedia variant="icon">
                       <ng-icon name="lucideBox" aria-hidden="true" />
@@ -304,9 +325,7 @@
               }
             </div>
 
-            <hlm-drawer-footer
-              class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
-            >
+            <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button
                 hlmDrawerClose
                 hlmBtn
@@ -327,7 +346,7 @@
           (valueChange)="onEquipmentPlacePicked($event)"
         >
           <hlm-select-trigger
-            class="w-56"
+            class="w-56 mobile-ui:min-h-11"
             data-testid="facility-plan-editor-place-pin-picker"
             (click)="equipmentPickerOpened.emit()"
           >
@@ -336,7 +355,7 @@
           <hlm-select-content *hlmSelectPortal class="w-56">
             <hlm-select-group>
               @for (candidate of equipmentCandidates(); track candidate.id) {
-                <hlm-select-item [value]="candidate.id">{{
+                <hlm-select-item [value]="candidate.id" class="mobile-ui:min-h-11">{{
                   equipmentCandidateLabel(candidate)
                 }}</hlm-select-item>
               }
@@ -363,6 +382,7 @@
             [disabled]="draftPointCount() === 0"
             (click)="undoVertexRequested.emit()"
             i18n="@@facility.plans.editor.undo"
+            class="mobile-ui:min-h-11"
           >
             Undo last vertex
           </button>
@@ -374,6 +394,7 @@
             [disabled]="draftPointCount() < 3 || isSavingZoneGeometry()"
             (click)="closePolygonRequested.emit()"
             i18n="@@facility.plans.editor.closePolygon"
+            class="mobile-ui:min-h-11"
           >
             Close polygon
           </button>
@@ -382,9 +403,11 @@
             type="button"
             variant="outline"
             size="sm"
+            #editorFocusTarget
             data-testid="facility-plan-editor-enter-coordinates"
             (click)="enterCoordinatesRequested.emit()"
             i18n="@@facility.plans.editor.enterCoordinates"
+            class="mobile-ui:min-h-11"
           >
             Enter coordinates
           </button>
@@ -395,9 +418,11 @@
             type="button"
             variant="outline"
             size="sm"
+            #editorFocusTarget
             data-testid="facility-plan-editor-enter-position"
             (click)="enterPositionRequested.emit()"
             i18n="@@facility.plans.editor.enterPosition"
+            class="mobile-ui:min-h-11"
           >
             Enter position
           </button>
@@ -410,6 +435,7 @@
           data-testid="facility-plan-editor-cancel"
           (click)="editingCancelled.emit()"
           i18n="@@common.cancel"
+          class="mobile-ui:min-h-11"
         >
           Cancel
         </button>

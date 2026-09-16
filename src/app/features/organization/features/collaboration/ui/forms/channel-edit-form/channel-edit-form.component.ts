@@ -22,6 +22,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { ChannelEditDraft, EditChannelFormDraft } from './models';
 
 /** Matches `UpdateChannelInput`'s underlying `ChannelResource.name` bounds. */
@@ -70,6 +71,7 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
     FormField,
     HlmButton,
     HlmInput,
+    HlmSpinner,
     ...HlmFieldImports,
     ...HlmSelectImports,
   ],

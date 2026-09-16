@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import type {
   InterventionRecurrenceFormTarget,
   InterventionRecurrenceFormValues,
@@ -73,7 +74,9 @@ describe('InterventionRecurrenceSheet', () => {
   let closed: number;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
     TestBed.overrideComponent(InterventionRecurrenceSheet, {
       set: { imports: [InterventionRecurrenceFormStub, UnsavedChangesDialog, ...HlmSheetImports] },
     });

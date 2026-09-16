@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CreateOrganizationRoleInput } from '@features/organization/models';
 import { OrganizationRoleCreateSheet } from '../organization-role-create-sheet.component';
 
@@ -9,12 +10,25 @@ const nameInput = (): HTMLInputElement | null =>
   dialog()?.querySelector('[data-testid="organization-role-create-name"]') ?? null;
 
 describe('OrganizationRoleCreateSheet', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   let fixture: ComponentFixture<OrganizationRoleCreateSheet>;
   let submissions: CreateOrganizationRoleInput[];
   let visibilities: boolean[];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
+        provideZonelessChangeDetection(),
+      ],
+    });
     fixture = TestBed.createComponent(OrganizationRoleCreateSheet);
 
     submissions = [];

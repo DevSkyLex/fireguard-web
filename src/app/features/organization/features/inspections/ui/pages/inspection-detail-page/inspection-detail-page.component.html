@@ -5,7 +5,7 @@
       <app-inspection-status-tag kind="result" [value]="inspection.result" />
       <button
         type="button"
-        class="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline max-sm:min-h-11"
+        class="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline mobile-ui:min-h-11"
         data-testid="inspection-non-conformities-count"
         [attr.aria-expanded]="nonConformitiesExpanded()"
         aria-controls="inspection-non-conformities"
@@ -29,7 +29,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="ms-auto max-sm:min-h-11"
+        class="ms-auto mobile-ui:min-h-11"
         data-testid="inspection-detail-export-report"
         [disabled]="reportExporting()"
         [attr.aria-busy]="reportExporting() ? 'true' : null"
@@ -110,17 +110,19 @@
         aria-labelledby="inspection-non-conformities-title"
         data-testid="inspection-non-conformities"
       >
-        <div class="flex items-center justify-between gap-2 px-2">
+        <div
+          class="flex items-center justify-between gap-2 px-2 mobile-ui:flex-col mobile-ui:items-stretch mobile-ui:px-0"
+        >
           <h2 hlmCardTitle id="inspection-non-conformities-title" i18n="@@inspection.nc.title">
             Non-conformities
           </h2>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 mobile-ui:flex-wrap">
             <button
               hlmBtn
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="inspection-non-conformities-export"
               [disabled]="exportDisabled()"
               [attr.aria-busy]="exportBusy() ? 'true' : null"
@@ -138,7 +140,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="inspection-non-conformities-export-report"
               [disabled]="ncReportDisabled()"
               [attr.aria-busy]="ncReportExporting() ? 'true' : null"
@@ -167,7 +169,7 @@
                 type="button"
                 variant="outline"
                 size="sm"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 data-testid="inspection-non-conformities-add"
                 (click)="openAddNonConformityDialog()"
               >
@@ -225,7 +227,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="inspection-detail-retry"
           (click)="retryLoad()"
           i18n="@@common.tryAgain"
@@ -245,7 +247,7 @@
 />
 
 <app-non-conformity-add-dialog
-  [visible]="addNonConformityDialogOpen()"
+  [visible]="addNonConformityDialogVisible()"
   [pending]="store.isAddingNonConformity()"
   [serverError]="store.addNonConformityCallState().error"
   (visibleChange)="$event ? openAddNonConformityDialog() : closeAddNonConformityDialog()"
@@ -260,7 +262,7 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="min-w-0 shrink max-sm:min-h-11"
+          class="min-w-0 shrink mobile-ui:min-h-11"
           data-testid="inspection-cancel"
           i18n-aria-label="@@inspection.cancel"
           aria-label="Cancel"
@@ -268,13 +270,13 @@
           (click)="requestCancel()"
         >
           <ng-icon name="lucideBan" aria-hidden="true" />
-          <span class="truncate max-sm:hidden" i18n="@@inspection.cancel">Cancel</span>
+          <span class="truncate desktop-ui:max-sm:hidden" i18n="@@inspection.cancel">Cancel</span>
         </button>
 
         <button
           hlmBtn
           type="button"
-          class="min-w-0 shrink max-sm:min-h-11"
+          class="min-w-0 shrink mobile-ui:min-h-11"
           data-testid="inspection-submit"
           [disabled]="store.isChangingLifecycle()"
           (click)="onSubmit()"
@@ -292,7 +294,7 @@
         <button
           hlmBtn
           type="button"
-          class="min-w-0 shrink max-sm:min-h-11"
+          class="min-w-0 shrink mobile-ui:min-h-11"
           data-testid="inspection-close"
           [disabled]="store.isChangingLifecycle()"
           (click)="onClose()"

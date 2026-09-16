@@ -1,19 +1,28 @@
-@if (isCompact()) {
+@if (isMobileInteractionMode()) {
   <hlm-sheet side="bottom" [state]="sheetState()" (stateChanged)="onSheetStateChanged($event)">
     <hlm-sheet-content
       *hlmSheetPortal
       role="region"
       [attr.aria-label]="panelLabel"
-      class="flex max-h-[85svh] w-full! flex-col gap-4 overflow-y-auto"
+      class="flex max-h-[85svh] w-full! flex-col gap-4 overflow-hidden"
+      [showCloseButton]="false"
       data-testid="facility-plan-panel"
     >
       <hlm-sheet-header>
         <h3 hlmSheetTitle>{{ panelLabel }}</h3>
+        <p hlmSheetDescription i18n="@@facility.plans.panel.description">
+          Browse zones and equipment on the selected plan.
+        </p>
       </hlm-sheet-header>
 
-      <div class="flex flex-col gap-4 px-4 pb-4">
+      <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <ng-container *ngTemplateOutlet="body" />
       </div>
+      <hlm-sheet-footer class="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button hlmSheetClose hlmBtn type="button" variant="outline" class="min-h-11 w-full">
+          <span i18n="@@common.close">Close</span>
+        </button>
+      </hlm-sheet-footer>
     </hlm-sheet-content>
   </hlm-sheet>
 } @else {
@@ -65,6 +74,7 @@
             [attr.aria-label]="closeLabel"
             data-testid="facility-plan-detail-close"
             (click)="zoneClosed.emit()"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           >
             <ng-icon name="lucideX" aria-hidden="true" />
           </button>
@@ -80,6 +90,7 @@
             size="sm"
             data-testid="facility-plan-detail-view-record"
             (click)="zoneRecordRequested.emit()"
+            class="mobile-ui:min-h-11"
           >
             {{ zoneRecordLabel }}
           </button>
@@ -92,6 +103,7 @@
               data-testid="facility-plan-detail-edit"
               [disabled]="editModeActive()"
               (click)="zoneEditRequested.emit()"
+              class="mobile-ui:min-h-11"
             >
               {{ zoneEditLabel }}
             </button>
@@ -119,6 +131,7 @@
             [attr.aria-label]="closeLabel"
             data-testid="facility-plan-detail-close"
             (click)="equipmentClosed.emit()"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           >
             <ng-icon name="lucideX" aria-hidden="true" />
           </button>
@@ -137,6 +150,7 @@
             size="sm"
             data-testid="facility-plan-detail-view-record"
             (click)="equipmentRecordRequested.emit()"
+            class="mobile-ui:min-h-11"
           >
             {{ equipmentRecordLabel }}
           </button>
@@ -149,6 +163,7 @@
               data-testid="facility-plan-detail-edit"
               [disabled]="editModeActive()"
               (click)="equipmentEditRequested.emit()"
+              class="mobile-ui:min-h-11"
             >
               {{ equipmentEditLabel }}
             </button>
@@ -160,6 +175,7 @@
               data-testid="facility-plan-detail-remove"
               [disabled]="editModeActive()"
               (click)="equipmentRemoveRequested.emit()"
+              class="mobile-ui:min-h-11"
             >
               {{ equipmentRemoveLabel }}
             </button>

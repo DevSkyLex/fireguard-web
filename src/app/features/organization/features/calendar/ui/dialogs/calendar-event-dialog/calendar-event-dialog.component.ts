@@ -16,7 +16,8 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
-import { HlmDialog, HlmDialogImports } from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/calendar-event-form';
 
@@ -25,7 +26,7 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  * @class CalendarEventDialog
  *
  * @description
- * The Spartan dialog hosting {@link CalendarEventForm}, which creates or
+ * One adaptive Spartan sheet hosts {@link CalendarEventForm}, which creates or
  * edits a standalone calendar event. Mode follows {@link editing}: `null`
  * creates a new event, a value seeds the form with that record's fields and
  * switches the panel's own title/description to editing.
@@ -58,11 +59,21 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  */
 @Component({
   selector: 'app-calendar-event-dialog',
-  imports: [CalendarEventForm, UnsavedChangesDialog, ...HlmDialogImports],
+  imports: [CalendarEventForm, UnsavedChangesDialog, ...HlmSheetImports],
   templateUrl: './calendar-event-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarEventDialog {
+  /**
+   * Property side
+   * @readonly
+   * @description Mobile tasks open from the bottom; one mounted form survives interaction mode changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
+
   //#region Inputs
   /**
    * Property visible
@@ -210,9 +221,9 @@ export class CalendarEventDialog {
    * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
    * @access protected
    * @since 1.1.0
-   * @type {Signal<HlmDialog | undefined>}
+   * @type {Signal<HlmSheet | undefined>}
    */
-  protected readonly dialogRef: Signal<HlmDialog | undefined> = viewChild(HlmDialog);
+  protected readonly dialogRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
   //#endregion
 
   //#region Methods

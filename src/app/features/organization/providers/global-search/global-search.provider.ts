@@ -1,17 +1,14 @@
+import { OrganizationGlobalSearch } from '@features/organization/ui/components/organization-global-search';
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { OrganizationGlobalSearch } from '../../ui/components/organization-global-search';
 
 /**
  * Function withGlobalSearch
  * @function withGlobalSearch
  *
  * @description
- * Contributes {@link OrganizationGlobalSearch} — the magnifier trigger and
- * its Ctrl+K command palette — to a shell's header-actions slot, ahead of
- * the assistant toggle (`order: 5` vs its `10`): search is the first tool
- * reached for, and the fixed order keeps the header cluster stable. The
- * component renders nothing without an active organization, so the
- * contribution is safe on every dashboard page.
+ * Contributes the organization search trigger ahead of the assistant toggle.
+ * The feature initializer owns the shortcut even when the mobile drawer has not
+ * mounted its triggers; only opening a palette creates query state.
  *
  * @access public
  * @since 1.0.0

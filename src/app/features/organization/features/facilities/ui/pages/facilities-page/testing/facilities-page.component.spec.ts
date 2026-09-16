@@ -13,6 +13,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -112,6 +113,13 @@ describe('FacilitiesPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            interactionMode: signal('desktop'),
+            isMobileInteractionMode: signal(false),
+          },
+        },
         provideRouter([]),
         {
           provide: FacilityStore,

@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InterventionInspectionsTable } from '../intervention-inspections-table.component';
 
@@ -32,10 +33,20 @@ describe('InterventionInspectionsTable', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(InterventionInspectionsTable);
+    fixture.componentInstance.queryChanged.subscribe((query) =>
+      fixture.componentRef.setInput('query', query),
+    );
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
@@ -49,6 +60,30 @@ describe('InterventionInspectionsTable', () => {
 
     expect(row.textContent).toContain('Fail');
     expect(row.textContent).toContain('Closed');
+  });
+
+  it('should expose shared search and filters for the linked inspections', async () => {
+    fixture.componentRef.setInput('items', [
+      inspection({ id: 'inspection-1', result: 'pass' }),
+      inspection({ id: 'inspection-2', result: 'fail' }),
+    ]);
+    await fixture.whenStable();
+
+    const search: HTMLInputElement = byTestId(
+      'intervention-inspections-search',
+    ) as HTMLInputElement;
+    expect(search).not.toBeNull();
+    expect(byTestId('intervention-inspections-filters-toggle')).not.toBeNull();
+
+    search.value = 'fail';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().textContent).toContain('Fail');
+    expect(root().textContent).not.toContain('Pass');
   });
 
   it('should link a published inspection row to its detail route', async () => {

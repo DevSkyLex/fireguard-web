@@ -4,36 +4,48 @@
       <a
         hlmItem
         size="sm"
-        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0"
+        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0 mobile-ui:grid mobile-ui:min-h-11 mobile-ui:grid-cols-[minmax(0,1fr)_auto] mobile-ui:gap-4"
         data-testid="calendar-day-item"
         [routerLink]="link"
       >
-        <div hlmItemContent>
-          <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
+        <div hlmItemContent class="min-w-0 mobile-ui:col-span-2">
+          <span hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:max-w-full"
+            ><span class="mobile-ui:min-w-0 mobile-ui:text-base mobile-ui:break-words">{{
+              item.title
+            }}</span></span
+          >
           <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
         </div>
-        <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
+        <span hlmBadge class="mobile-ui:w-fit" [variant]="toneOf(item)">{{
+          sourceLabelOf(item)
+        }}</span>
       </a>
     } @else {
       <div
         hlmItem
         size="sm"
-        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0"
+        class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0 mobile-ui:grid mobile-ui:grid-cols-[minmax(0,1fr)_auto] mobile-ui:gap-x-4 mobile-ui:gap-y-2"
         data-testid="calendar-day-item"
       >
-        <div hlmItemContent>
-          <span hlmItemTitle class="line-clamp-1">{{ item.title }}</span>
+        <div hlmItemContent class="min-w-0 mobile-ui:col-span-2">
+          <span hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:max-w-full"
+            ><span class="mobile-ui:min-w-0 mobile-ui:text-base mobile-ui:break-words">{{
+              item.title
+            }}</span></span
+          >
           <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
         </div>
-        <span hlmBadge [variant]="toneOf(item)">{{ sourceLabelOf(item) }}</span>
+        <span hlmBadge class="mobile-ui:w-fit" [variant]="toneOf(item)">{{
+          sourceLabelOf(item)
+        }}</span>
         @if (isEditableOf(item)) {
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 mobile-ui:justify-self-end">
             <button
               hlmBtn
               type="button"
               variant="ghost"
               size="icon-sm"
-              class="max-sm:size-11"
+              class="mobile-ui:size-11"
               data-testid="calendar-day-item-edit"
               [attr.aria-label]="editAriaLabelOf(item)"
               (click)="editRequested.emit(item)"
@@ -45,7 +57,7 @@
               type="button"
               variant="ghost"
               size="icon-sm"
-              class="max-sm:size-11"
+              class="mobile-ui:size-11"
               data-testid="calendar-day-item-delete"
               [attr.aria-label]="deleteAriaLabelOf(item)"
               (click)="deleteRequested.emit(item)"

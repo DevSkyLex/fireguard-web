@@ -13,6 +13,7 @@
         ><span i18n="@@org.inviteForm.email">Email</span><app-required-marker
       /></label>
       <input
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmInput
         id="organization-invite-email"
         type="email"
@@ -33,7 +34,7 @@
       <hlm-select [itemToString]="roleLabelOf" [formField]="inviteForm.roleId">
         <hlm-select-trigger
           buttonId="organization-invite-role"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="organization-invite-role"
         >
           <hlm-select-value
@@ -44,7 +45,9 @@
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (role of roleOptions(); track role.id) {
-              <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
+              <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+                role.name
+              }}</hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>
@@ -59,7 +62,7 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="organization-invite-cancel"
         (click)="cancelled.emit()"
       >
@@ -68,7 +71,7 @@
       <button
         hlmBtn
         type="submit"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="organization-invite-submit"
         [disabled]="pending()"
         [attr.aria-busy]="pending() ? 'true' : null"

@@ -35,8 +35,10 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
+import { BrnCommandInput } from '@spartan-ng/brain/command';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
@@ -83,7 +85,10 @@ import type { RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
+import { HlmCommandImports } from '@shared/ui/command';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -234,6 +239,10 @@ type OrganizationMembersKpiTile = {
     ...HlmEmptyImports,
     HlmCardTitle,
     HlmButton,
+    ...HlmCommandImports,
+    BrnCommandInput,
+    HlmInputGroupImports,
+    ...HlmDrawerImports,
     CollectionPagination,
     CollectionSearchBox,
     ...HlmSelectImports,
@@ -274,6 +283,28 @@ type OrganizationMembersKpiTile = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMembersPage {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central phone and tablet interaction mode, independent of roster geometry.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property roleFilterDrawerVisible
+   * @readonly
+   * @description Keeps an open role picker mounted until native dismissal, even if interaction mode changes.
+   * @access protected
+   * @since 2.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly roleFilterDrawerVisible: WritableSignal<boolean> = signal(false);
+
   /**
    * Property accessStore
    * @readonly
@@ -440,7 +471,7 @@ export class OrganizationMembersPage {
   /**
    * Property selectionMode
    * @readonly
-   * @description Whether the compact card layout offers its selection checkboxes — a mode below `sm`, never a permanent column.
+   * @description Whether mobile cards expose selection checkboxes; desktop selection remains a table column.
    * @access protected
    * @since 2.0.0
    * @type {WritableSignal<boolean>}
@@ -994,7 +1025,7 @@ export class OrganizationMembersPage {
    */
   /**
    * Method toggleSelectionMode
-   * @description Enters or leaves the compact selection mode, clearing the selection on the way out.
+   * @description Enters or leaves mobile card selection, clearing the selection on the way out.
    * @access protected
    * @since 2.0.0
    * @returns {void}

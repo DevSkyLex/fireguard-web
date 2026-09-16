@@ -27,7 +27,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="maintenance-export"
         [disabled]="exportDisabled()"
         [attr.aria-busy]="exportBusy() ? 'true' : null"
@@ -245,14 +245,14 @@
     <button
       hlmBtn
       type="button"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="maintenance-generate-campaign"
       i18n-aria-label="@@maintenance.generateCampaignButton"
       aria-label="Generate inspection campaign"
       (click)="openCampaignDialog()"
     >
       <ng-icon name="lucideSparkles" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@maintenance.generateCampaignButton"
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@maintenance.generateCampaignButton"
         >Generate inspection campaign</span
       >
     </button>

@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   ImportJobOutput,
   ImportRowErrorOutput,
@@ -39,7 +40,15 @@ describe('ImportJobDetailSheet', () => {
   let fixture: ComponentFixture<ImportJobDetailSheet>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { interactionMode: signal('mobile'), isMobileInteractionMode: signal(true) },
+        },
+      ],
+    });
     fixture = TestBed.createComponent(ImportJobDetailSheet);
     fixture.componentRef.setInput('visible', true);
   });

@@ -5,7 +5,7 @@
 >
   <hlm-dialog-content
     *hlmDialogPortal
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-lg mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
   >
     <hlm-dialog-header
       ><h2 hlmDialogTitle i18n="@@org.access.requests.reviewTitle">Review membership request</h2>
@@ -24,12 +24,14 @@
             >Roles to assign</label
           >
           <hlm-select-multiple [formField]="reviewForm.roleIds" [itemToString]="roleLabelOf">
-            <hlm-select-trigger buttonId="join-request-roles" class="w-full"
+            <hlm-select-trigger buttonId="join-request-roles" class="w-full mobile-ui:min-h-11"
               ><hlm-select-value
             /></hlm-select-trigger>
             <hlm-select-content *hlmSelectPortal>
               @for (role of roles(); track role.id) {
-                <hlm-select-item [value]="role.id">{{ role.label }}</hlm-select-item>
+                <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+                  role.label
+                }}</hlm-select-item>
               }
             </hlm-select-content>
           </hlm-select-multiple>
@@ -51,7 +53,7 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           [disabled]="pending()"
           (click)="closed.emit()"
           i18n="@@org.access.cancel"
@@ -63,7 +65,7 @@
             hlmBtn
             type="button"
             variant="destructive"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             [disabled]="pending()"
             (click)="reject()"
             i18n="@@org.access.requests.reject"
@@ -75,7 +77,7 @@
           <button
             hlmBtn
             type="submit"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             [disabled]="pending() || roles().length === 0"
             i18n="@@org.access.requests.approve"
           >

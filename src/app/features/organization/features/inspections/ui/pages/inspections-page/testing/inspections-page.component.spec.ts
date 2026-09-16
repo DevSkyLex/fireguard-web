@@ -14,6 +14,7 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CookieService } from '@core/cookie';
 import { FeedbackService } from '@core/feedback';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
@@ -89,6 +90,7 @@ describe('InspectionsPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
         provideRouter([]),
         {
           provide: InspectionStore,

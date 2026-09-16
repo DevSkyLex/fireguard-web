@@ -7,7 +7,7 @@
       <button
         hlmBtn
         variant="outline"
-        class="mt-3 max-sm:min-h-11"
+        class="mt-3 mobile-ui:min-h-11"
         [disabled]="loading() || pending()"
         (click)="retried.emit()"
         i18n="@@org.access.retry"
@@ -104,7 +104,7 @@
                         hlmBtn
                         variant="ghost"
                         size="icon"
-                        class="shrink-0 max-sm:size-11"
+                        class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
                         [cdkCopyToClipboard]="domain.dnsName"
                         (cdkCopyToClipboardCopied)="copied($event)"
                         aria-label="Copy TXT record name"
@@ -124,7 +124,7 @@
                         hlmBtn
                         variant="ghost"
                         size="icon"
-                        class="shrink-0 max-sm:size-11"
+                        class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
                         [cdkCopyToClipboard]="domain.dnsValue"
                         (cdkCopyToClipboardCopied)="copied($event)"
                         aria-label="Copy TXT record value"
@@ -139,7 +139,7 @@
                   <button
                     hlmBtn
                     variant="outline"
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     [disabled]="pending()"
                     (click)="domainVerified.emit(domain.id)"
                     i18n="@@org.access.verifyDomain"
@@ -148,7 +148,7 @@
                   ><button
                     hlmBtn
                     variant="ghost"
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     [disabled]="pending()"
                     (click)="removing.set(domain)"
                     i18n="@@org.access.removeDomain"
@@ -169,7 +169,9 @@
   [state]="removing() ? 'open' : 'closed'"
   (stateChanged)="$event === 'closed' && removing.set(null)"
 >
-  <hlm-dialog-content *hlmDialogPortal
+  <hlm-dialog-content
+    class="mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
+    *hlmDialogPortal
     ><hlm-dialog-header
       ><h2 hlmDialogTitle i18n="@@org.access.removeTitle">Remove this domain?</h2>
       <p hlmDialogDescription i18n="@@org.access.removeDescription">
@@ -183,14 +185,14 @@
         hlmBtn
         hlmDialogClose
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         i18n="@@org.access.cancel"
       >
         Cancel</button
       ><button
         hlmBtn
         variant="destructive"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         (click)="remove()"
         i18n="@@org.access.removeDomain"
       >

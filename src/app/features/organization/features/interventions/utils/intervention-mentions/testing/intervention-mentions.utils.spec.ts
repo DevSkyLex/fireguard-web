@@ -34,6 +34,15 @@ describe('parseInterventionMentions', () => {
     ]);
   });
 
+  it('should resolve HTML-escaped at-signs from legacy stored comments', () => {
+    expect(parseInterventionMentions(`ping &#64;{${UUID}} and &#x40;{${OTHER_UUID}}`)).toEqual([
+      { kind: 'text', value: 'ping ' },
+      { kind: 'mention', value: UUID },
+      { kind: 'text', value: ' and ' },
+      { kind: 'mention', value: OTHER_UUID },
+    ]);
+  });
+
   it('should resolve adjacent mention tokens with no text between them', () => {
     expect(parseInterventionMentions(`@{${UUID}}@{${OTHER_UUID}}`)).toEqual([
       { kind: 'mention', value: UUID },

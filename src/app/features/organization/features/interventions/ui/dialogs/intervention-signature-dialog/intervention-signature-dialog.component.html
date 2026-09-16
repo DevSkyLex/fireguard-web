@@ -37,7 +37,7 @@
         type="button"
         variant="ghost"
         size="sm"
-        class="self-end max-sm:min-h-11"
+        class="self-end mobile-ui:min-h-11"
         data-testid="intervention-signature-clear"
         [disabled]="!hasStrokes()"
         (click)="clear()"
@@ -65,7 +65,7 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="intervention-signature-skip"
         [disabled]="busy()"
         (click)="skipped.emit()"
@@ -75,7 +75,7 @@
       <button
         hlmBtn
         type="button"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="intervention-signature-confirm"
         [disabled]="!canConfirm()"
         [attr.aria-busy]="busy() ? 'true' : null"

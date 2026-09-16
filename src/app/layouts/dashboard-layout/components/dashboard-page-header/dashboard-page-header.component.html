@@ -1,18 +1,28 @@
-<div id="dashboard-page-header" class="border-b border-border bg-muted/25">
-  <div class="container mx-auto max-sm:px-4" data-testid="dashboard-page-header-container">
-    <div class="flex min-h-12 flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-      @if (title(); as pageTitle) {
-        <h1
-          class="min-w-0 text-lg font-semibold text-foreground max-sm:wrap-break-word sm:truncate"
-        >
-          {{ pageTitle }}
-        </h1>
-      }
+<div
+  id="dashboard-page-header"
+  class="relative isolate border-b border-border bg-background before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:bg-muted/25"
+>
+  <div
+    class="container mx-auto max-sm:px-4 mobile-ui:px-4 mobile-ui:md:px-6"
+    data-testid="dashboard-page-header-container"
+  >
+    @if (showTitle() || pageActions.actions()) {
+      <div
+        class="flex min-h-12 flex-wrap items-center justify-between gap-3 py-4 mobile-ui:pt-0 mobile-ui:pb-3"
+      >
+        @if (showTitle() && title(); as pageTitle) {
+          <h1
+            class="min-w-0 text-2xl font-semibold text-foreground max-sm:wrap-break-word sm:truncate"
+          >
+            {{ pageTitle }}
+          </h1>
+        }
 
-      <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ms-auto">
-        <app-dashboard-page-actions />
+        <div class="flex min-w-0 flex-wrap items-center gap-2 sm:ms-auto">
+          <app-dashboard-page-actions />
+        </div>
       </div>
-    </div>
+    }
 
     <app-dashboard-page-tabs />
   </div>

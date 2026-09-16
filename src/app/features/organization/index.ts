@@ -12,6 +12,7 @@ export {
   provideChannelsWorkspace,
   withGlobalSearch,
   withOrganizationNav,
+  withOrganizationMobileNavigation,
   withOrganizationSwitcher,
   withSyncIndicator,
 } from './providers';

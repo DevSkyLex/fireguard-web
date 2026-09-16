@@ -11,7 +11,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          (click)="retried.emit()"
+        >
           <span i18n="@@account.sessions.retry">Retry</span>
         </button>
       </div>
@@ -79,7 +85,7 @@
               type="button"
               size="sm"
               variant="outline"
-              class="shrink-0 max-sm:min-h-11"
+              class="shrink-0 mobile-ui:min-h-11"
               data-testid="account-sessions-revoke"
               [disabled]="revoking()"
               (click)="revokeSession(session.id)"
@@ -102,7 +108,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="gap-2 max-sm:min-h-11"
+          class="gap-2 mobile-ui:min-h-11"
           data-testid="account-sessions-revoke-others"
           (click)="openConfirmOthers()"
         >
@@ -136,7 +142,7 @@
       <hlm-alert-dialog-footer>
         <button
           hlmAlertDialogCancel
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           [disabled]="revokingOthers()"
           i18n="@@account.sessions.revokeOthersConfirmCancel"
         >
@@ -145,14 +151,16 @@
         <button
           hlmAlertDialogAction
           variant="destructive"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="account-sessions-revoke-others-confirm"
           [disabled]="revokingOthers()"
           [attr.aria-busy]="revokingOthers() ? 'true' : null"
           (click)="confirmOthers()"
-          i18n="@@account.sessions.revokeOthersConfirmAction"
         >
-          Sign out
+          @if (revokingOthers()) {
+            <hlm-spinner aria-hidden="true" />
+          }
+          <span i18n="@@account.sessions.revokeOthersConfirmAction">Sign out</span>
         </button>
       </hlm-alert-dialog-footer>
     </hlm-alert-dialog-content>

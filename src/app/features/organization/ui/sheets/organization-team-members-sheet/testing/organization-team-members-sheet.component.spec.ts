@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   AddTeamMemberInput,
   OrganizationMemberOutput,
@@ -54,6 +55,8 @@ const sheet = (): HTMLElement | null =>
   document.querySelector('[data-testid="organization-team-members-sheet"]');
 
 describe('OrganizationTeamMembersSheet', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   let fixture: ComponentFixture<OrganizationTeamMembersSheet>;
 
   async function create(
@@ -67,7 +70,18 @@ describe('OrganizationTeamMembersSheet', () => {
       isRemovingMember: boolean;
     }> = {},
   ): Promise<void> {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
+        provideZonelessChangeDetection(),
+      ],
+    });
     fixture = TestBed.createComponent(OrganizationTeamMembersSheet);
     fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('team', TEAM);

@@ -19,8 +19,10 @@ import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar'
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItem } from '@shared/ui/item';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { ChannelParticipantView } from './models';
 
 /**
@@ -72,7 +74,9 @@ import type { ChannelParticipantView } from './models';
     HlmAvatarImage,
     HlmButton,
     HlmInput,
+    HlmItem,
     HlmSkeleton,
+    HlmSpinner,
     ...HlmSheetImports,
   ],
   providers: [provideIcons({ lucideUserMinus, lucideUserPlus, lucideUsers })],
@@ -281,12 +285,12 @@ export class ChannelParticipantsSheet {
    * @access protected
    * @since 1.0.0
    *
-   * @param {Event} event - The input event.
+   * @param {string} value - The current search input value.
    *
    * @returns {void}
    */
-  protected onQueryInput(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+  protected onQueryInput(value: string): void {
+    this.query.set(value);
   }
 
   /**

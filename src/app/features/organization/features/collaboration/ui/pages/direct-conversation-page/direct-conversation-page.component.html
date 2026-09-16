@@ -1,38 +1,40 @@
-<header
-  class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4"
-  data-testid="direct-conversation-header"
->
-  <a
-    hlmBtn
-    variant="ghost"
-    size="icon"
-    class="size-11 shrink-0 lg:hidden"
-    data-testid="direct-conversation-back"
-    i18n-aria-label="@@messages.conversation.back"
-    aria-label="Back to conversations"
-    [routerLink]="messagesRouteBase()"
+@if (!isMobileInteractionMode()) {
+  <header
+    class="flex h-12 shrink-0 items-center gap-2.5 border-b px-3 md:px-4 mobile-ui:h-auto mobile-ui:min-h-14"
+    data-testid="direct-conversation-header"
   >
-    <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
-  </a>
+    <a
+      hlmBtn
+      variant="ghost"
+      size="icon"
+      class="shrink-0 mobile-ui:size-11 desktop-ui:lg:hidden"
+      data-testid="direct-conversation-back"
+      i18n-aria-label="@@messages.conversation.back"
+      aria-label="Back to conversations"
+      [routerLink]="messagesRouteBase()"
+    >
+      <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
+    </a>
 
-  <hlm-avatar class="size-8 shrink-0">
-    @if (counterpartAvatarUrl(); as avatarUrl) {
-      <img hlmAvatarImage [src]="avatarUrl" alt="" />
-    }
-    <span hlmAvatarFallback class="text-[10px]">
-      {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
+    <hlm-avatar class="size-8 shrink-0">
+      @if (counterpartAvatarUrl(); as avatarUrl) {
+        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+      }
+      <span hlmAvatarFallback class="text-[10px]">
+        {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
+      </span>
+    </hlm-avatar>
+
+    <span
+      class="min-w-0 truncate text-sm font-semibold mobile-ui:py-2 mobile-ui:text-base"
+      data-testid="direct-conversation-name"
+      [class.text-foreground]="isCounterpartResolved()"
+      [class.text-muted-foreground]="!isCounterpartResolved()"
+    >
+      {{ counterpartName() }}
     </span>
-  </hlm-avatar>
-
-  <span
-    class="min-w-0 truncate text-sm font-semibold"
-    data-testid="direct-conversation-name"
-    [class.text-foreground]="isCounterpartResolved()"
-    [class.text-muted-foreground]="!isCounterpartResolved()"
-  >
-    {{ counterpartName() }}
-  </span>
-</header>
+  </header>
+}
 
 <app-message-thread
   [messages]="messages()"

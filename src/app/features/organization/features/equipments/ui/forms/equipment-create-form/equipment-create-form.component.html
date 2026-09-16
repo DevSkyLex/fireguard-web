@@ -15,7 +15,7 @@
       <hlm-select [itemToString]="typeLabelOf" [formField]="createForm.type">
         <hlm-select-trigger
           buttonId="equipment-create-type"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="equipment-create-type"
         >
           <hlm-select-value
@@ -26,7 +26,9 @@
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (option of typeOptions; track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+                option.label
+              }}</hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>
@@ -43,7 +45,7 @@
       <hlm-select [itemToString]="facilityLabelOf" [formField]="createForm.facility">
         <hlm-select-trigger
           buttonId="equipment-create-facility"
-          class="w-full"
+          class="w-full mobile-ui:min-h-11"
           data-testid="equipment-create-facility"
         >
           <hlm-select-value
@@ -54,7 +56,7 @@
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">
+              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">
                 <div class="flex min-w-0 flex-col">
                   <span class="truncate">{{ option.label }}</span>
                   <span class="truncate text-xs text-muted-foreground"
@@ -84,6 +86,7 @@
         i18n-placeholder="@@equipment.form.subtypePlaceholder"
         [formField]="createForm.subType"
         [attr.aria-invalid]="createForm.subType().touched() && createForm.subType().invalid()"
+        class="mobile-ui:min-h-11"
       />
     </hlm-field>
 
@@ -98,6 +101,7 @@
         i18n-placeholder="@@equipment.form.brandPlaceholder"
         [formField]="createForm.brand"
         [attr.aria-invalid]="createForm.brand().touched() && createForm.brand().invalid()"
+        class="mobile-ui:min-h-11"
       />
     </hlm-field>
 
@@ -112,6 +116,7 @@
         i18n-placeholder="@@equipment.form.modelPlaceholder"
         [formField]="createForm.model"
         [attr.aria-invalid]="createForm.model().touched() && createForm.model().invalid()"
+        class="mobile-ui:min-h-11"
       />
     </hlm-field>
 
@@ -130,6 +135,7 @@
         [attr.aria-invalid]="
           createForm.serialNumber().touched() && createForm.serialNumber().invalid()
         "
+        class="mobile-ui:min-h-11"
       />
     </hlm-field>
 
@@ -148,6 +154,7 @@
         [attr.aria-invalid]="
           createForm.locationLabel().touched() && createForm.locationLabel().invalid()
         "
+        class="mobile-ui:min-h-11"
       />
     </hlm-field>
   </hlm-field-group>
@@ -157,7 +164,7 @@
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11 mobile-ui:w-full"
       data-testid="equipment-create-cancel"
       (click)="cancelled.emit()"
     >
@@ -166,7 +173,7 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="equipment-create-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"

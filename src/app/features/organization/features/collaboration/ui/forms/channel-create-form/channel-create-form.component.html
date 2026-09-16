@@ -5,6 +5,7 @@
         ><span i18n="@@channels.newDialog.name">Name</span><app-required-marker
       /></label>
       <input
+        class="mobile-ui:min-h-11"
         hlmInput
         id="channel-create-name"
         type="text"
@@ -28,7 +29,7 @@
         <hlm-select [itemToString]="parentLabelOf" [formField]="createForm.parentChannelId">
           <hlm-select-trigger
             buttonId="new-channel-parent"
-            class="w-full"
+            class="w-full mobile-ui:min-h-11"
             data-testid="new-channel-parent"
           >
             <hlm-select-value
@@ -38,11 +39,16 @@
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
-              <hlm-select-item value="" i18n="@@channels.newDialog.parentNone"
+              <hlm-select-item
+                class="mobile-ui:min-h-11"
+                value=""
+                i18n="@@channels.newDialog.parentNone"
                 >No parent — top level</hlm-select-item
               >
               @for (option of parentOptions(); track option.value) {
-                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
+                  option.label
+                }}</hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
@@ -59,7 +65,7 @@
       hlmBtn
       type="button"
       variant="outline"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="new-channel-cancel"
       (click)="cancelled.emit()"
     >
@@ -68,11 +74,14 @@
     <button
       hlmBtn
       type="submit"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="channel-create-submit"
       [disabled]="pending()"
       [attr.aria-busy]="pending() ? 'true' : null"
     >
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+      }
       <span i18n="@@channels.newDialog.submit">Create channel</span>
     </button>
   </hlm-dialog-footer>

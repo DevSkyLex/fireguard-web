@@ -11,6 +11,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component MessageDeleteDialog
@@ -44,7 +45,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
  */
 @Component({
   selector: 'app-message-delete-dialog',
-  imports: [...HlmAlertDialogImports],
+  imports: [...HlmAlertDialogImports, HlmSpinner],
   templateUrl: './message-delete-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

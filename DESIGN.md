@@ -69,13 +69,34 @@ Plans use stacked radio rows with prices and Billing quota summaries.
 Desktop onboarding anchors the active form near the top so adding prepared rows
 does not move its title or first fields. Comparable offers occupy equal widths.
 
-The dashboard shell uses Spartan's standard sidebar variant. Its background
+The desktop dashboard shell uses Spartan's standard sidebar variant, including
+its compact hamburger/sheet behavior in a narrow PC window. Its background
 references `--background`, white in light mode and near-black in dark mode.
 The logo and name sit above the organization switcher; the collapsed sidebar keeps only
-the logo, while the mobile drawer keeps the full lockup. Its main content
+the logo, while the compact desktop drawer keeps the full lockup. Its main content
 has no outer gutter, corner radius or card shadow. Desktop contextual panels
 also meet the shell edges, separated by a border; mobile panels remain overlays.
 Page-owned spacing keeps headings, controls and data readable.
+
+Mobile interaction mode is selected centrally by `InteractionCapabilitiesService`, not by viewport
+width. Phones and tablets use a labeled bottom navigation with at most five primary
+destinations: Home, Interventions, Assets, Messages and More, filtered by existing
+permissions. More is a route-backed, grouped destination hub; no authorized access
+may disappear into a disabled placeholder. Mobile removes the sidebar and hamburger.
+Tablet columns are allowed without reverting to desktop interactions.
+
+Use `mobile-ui:` for tactile target density, mobile-only controls and surfaces;
+reserve width/container queries for fitting content. Desktop select/menu semantics
+and control sizes remain unchanged in narrow windows. Keep controls at least 44px
+on mobile, visible labels and keyboard alternatives; do not require hover or drag.
+Short contextual choices may use a native Spartan drawer with radio, checkbox or
+command composition. Multi-filter drafts commit with Apply or discard with Cancel;
+long workflows use routes or sheets, destructive confirmations use alert dialogs.
+Drawer headings are left-aligned; action rows have an icon and readable label.
+Safe-area and navigation clearance must protect content, errors and workflow actions.
+Automatic classification must not replace route state, lose form drafts, or duplicate
+requests. No manual mobile/desktop override is exposed. Never modify
+`src/app/shared/ui/**` to implement these adaptations.
 Sidebar destinations stay at one level, without sub-navigation or disclosure controls.
 Messages and Collaboration (the channel workspace, with a group icon) live in the
 footer above Support and the account menu. The organization body keeps operational

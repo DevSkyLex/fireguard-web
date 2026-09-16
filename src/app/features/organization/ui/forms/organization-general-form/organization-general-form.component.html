@@ -7,6 +7,7 @@
           ><app-required-marker
         /></label>
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-settings-name"
           type="text"
@@ -26,6 +27,7 @@
           ><span i18n="@@org.settings.general.slugLabel">URL slug</span><app-required-marker
         /></label>
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-settings-slug"
           type="text"
@@ -48,6 +50,7 @@
         >Description</label
       >
       <textarea
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
         hlmTextarea
         id="org-settings-description"
         rows="3"
@@ -63,7 +66,7 @@
       <button
         hlmBtn
         type="submit"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="org-settings-general-submit"
         [disabled]="!canSubmit()"
         [attr.aria-busy]="pending() ? 'true' : null"

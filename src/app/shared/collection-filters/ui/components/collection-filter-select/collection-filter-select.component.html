@@ -1,5 +1,10 @@
-@if (compact()) {
-  <hlm-drawer direction="bottom" [state]="state()" (stateChanged)="onMobileStateChanged($event)">
+@if (isMobileInteractionMode()) {
+  <hlm-drawer
+    #mobileDrawer="hlmDrawer"
+    direction="bottom"
+    [state]="state()"
+    (stateChanged)="onMobileStateChanged($event)"
+  >
     <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
 
     @if (disabled()) {
@@ -8,11 +13,12 @@
         type="button"
         variant="ghost"
         [id]="triggerId()"
-        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal opacity-60 shadow-none max-sm:min-h-11 dark:bg-transparent"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal opacity-60 shadow-none dark:bg-transparent mobile-ui:min-h-11"
         [attr.data-testid]="testId()"
         aria-disabled="true"
+        [attr.aria-describedby]="mobileDescribedBy()"
       >
-        <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+        <span [id]="mobileValueId()" class="flex min-w-0 items-center gap-1 overflow-hidden">
           @if (value(); as entry) {
             <span data-testid="collection-filter-value" [class]="valueClass">
               @if (valueTemplate(); as template) {
@@ -35,11 +41,11 @@
         type="button"
         variant="ghost"
         [id]="triggerId()"
-        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 dark:bg-transparent"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground dark:bg-transparent mobile-ui:min-h-11"
         [attr.data-testid]="testId()"
-        [attr.aria-describedby]="describedBy() ?? null"
+        [attr.aria-describedby]="mobileDescribedBy()"
       >
-        <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+        <span [id]="mobileValueId()" class="flex min-w-0 items-center gap-1 overflow-hidden">
           @if (value(); as entry) {
             <span data-testid="collection-filter-value" [class]="valueClass">
               @if (valueTemplate(); as template) {
@@ -62,64 +68,80 @@
       class="overflow-hidden"
       [attr.data-testid]="testId() + '-drawer'"
     >
-      <hlm-drawer-header class="px-5 text-start!">
-        <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
-        <p hlmDrawerDescription i18n="@@collectionFilters.mobile.singleDescription">
-          Choose one option.
-        </p>
+      <hlm-drawer-header class="px-5">
+        <div class="flex flex-col gap-1 text-start">
+          <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
+          <p hlmDrawerDescription i18n="@@collectionFilters.mobile.singleDescription">
+            Choose one option.
+          </p>
+        </div>
       </hlm-drawer-header>
 
-      @if (searchPlaceholder(); as searchLabel) {
+      <div
+        hlmCommand
+        class="min-h-0"
+        [search]="mobileSearch()"
+        (searchChange)="mobileSearch.set($event)"
+      >
+        @let searchLabel = searchPlaceholder() ?? accessibleName();
         <div class="border-y border-border px-5 py-3">
           <label [attr.for]="triggerId() + '-mobile-search'" class="sr-only">{{
             searchLabel
           }}</label>
-          <input
-            hlmInput
-            [id]="triggerId() + '-mobile-search'"
-            type="search"
-            class="min-h-11"
-            [placeholder]="searchLabel"
-            [value]="mobileSearch()"
-            (input)="onMobileSearchChanged($event)"
-          />
+          <hlm-input-group class="min-h-11">
+            <input
+              hlmInputGroupInput
+              brnCommandInput
+              [id]="triggerId() + '-mobile-search'"
+              class="text-base"
+              [placeholder]="searchLabel"
+            />
+            <hlm-input-group-addon>
+              <ng-icon name="lucideSearch" aria-hidden="true" />
+            </hlm-input-group-addon>
+          </hlm-input-group>
         </div>
-      }
-
-      <div class="min-h-0 overflow-y-auto px-3 py-2" role="listbox">
-        @for (group of optionGroups(); track group.key) {
-          @if (group.label; as groupLabel) {
-            <p class="px-3 pt-3 pb-1 text-xs font-medium text-muted-foreground">{{ groupLabel }}</p>
-          }
-          @for (option of group.options; track option.value) {
-            <button
-              hlmItem
-              hlmDrawerClose
-              type="button"
-              class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
-              role="option"
-              [attr.aria-selected]="value() === option.value"
-              (click)="onValuePicked(option.value)"
-            >
-              <span hlmItemContent>
-                <span hlmItemTitle>
-                  @if (optionTemplate(); as template) {
-                    <ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
-                  } @else {
-                    {{ option.label }}
-                  }
-                </span>
-              </span>
-              @if (value() === option.value) {
-                <span hlmItemActions>
-                  <ng-icon name="lucideCheck" aria-hidden="true" />
-                </span>
+        <div
+          hlmCommandList
+          class="min-h-0 overflow-y-auto px-3 py-2"
+          [attr.aria-label]="accessibleName()"
+        >
+          <div *hlmCommandEmptyState hlmCommandEmpty class="text-muted-foreground">
+            {{ emptyLabel() }}
+          </div>
+          @for (group of optionGroups(); track group.key) {
+            <div hlmCommandGroup>
+              @if (group.label; as groupLabel) {
+                <p hlmCommandGroupLabel>
+                  {{ groupLabel }}
+                </p>
               }
-            </button>
+              @for (option of group.options; track option.value) {
+                <button
+                  hlmCommandItem
+                  type="button"
+                  class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+                  [value]="option.label"
+                  (selected)="onValuePicked(option.value); mobileDrawer.close()"
+                >
+                  <span class="min-w-0 flex-1 whitespace-normal">
+                    @if (optionTemplate(); as template) {
+                      <ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
+                    } @else {
+                      {{ option.label }}
+                    }
+                  </span>
+                  @if (value() === option.value) {
+                    <span class="sr-only" i18n="@@common.selected">Selected</span>
+                    <span class="shrink-0">
+                      <ng-icon name="lucideCheck" aria-hidden="true" />
+                    </span>
+                  }
+                </button>
+              }
+            </div>
           }
-        } @empty {
-          <p class="px-3 py-8 text-center text-sm text-muted-foreground">{{ emptyLabel() }}</p>
-        }
+        </div>
       </div>
 
       <hlm-drawer-footer
@@ -137,7 +159,7 @@
     [itemToString]="labelOf"
     [state]="state()"
     [class.opacity-60]="disabled()"
-    (valueChange)="onValuePicked($any($event))"
+    (valueChange)="onValuePicked($event)"
     (stateChanged)="stateChanged.emit($event)"
   >
     <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
@@ -146,7 +168,7 @@
       <hlm-combobox-trigger
         variant="ghost"
         [buttonId]="triggerId()"
-        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground max-sm:min-h-11 sm:max-w-52 dark:bg-transparent [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
+        class="flex h-full max-w-24 justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground sm:max-w-52 dark:bg-transparent mobile-ui:min-h-11 [&:not(button)]:p-0 [&>ng-icon]:shrink-0"
         [attr.data-testid]="testId()"
         [attr.aria-disabled]="disabled()"
         [ariaDisabled]="disabled()"

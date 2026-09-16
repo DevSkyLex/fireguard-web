@@ -20,6 +20,7 @@
               <a
                 hlmBreadcrumbLink
                 [routerLink]="['/organizations', organizationId(), 'facilities', segment.id]"
+                class="mobile-ui:min-h-11"
                 >{{ segment.name }}</a
               >
             </li>
@@ -48,25 +49,30 @@
         <hlm-paginated-tabs-list
           variant="line"
           class="w-full"
-          tabListClass="justify-start"
+          tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+          paginationButtonClass="mobile-ui:size-11"
           aria-label="Facility sections"
           i18n-aria-label="@@facility.detail.tabsAriaLabel"
         >
           <button
             hlmTabsTrigger="overview"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="facility-tab-overview"
           >
             <span i18n="@@facility.detail.tabs.overview">Overview</span>
           </button>
           <button
             hlmTabsTrigger="information"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="facility-tab-information"
           >
             <span i18n="@@facility.detail.tabs.information">Information</span>
           </button>
-          <button hlmTabsTrigger="plans" class="max-sm:min-h-11" data-testid="facility-tab-plans">
+          <button
+            hlmTabsTrigger="plans"
+            class="mobile-ui:min-h-11"
+            data-testid="facility-tab-plans"
+          >
             <span i18n="@@facility.detail.tabs.plans">Plans</span>
           </button>
         </hlm-paginated-tabs-list>
@@ -104,7 +110,7 @@
               hlmBtn
               variant="outline"
               size="sm"
-              class="mx-2 mt-1 self-start max-sm:min-h-11"
+              class="mx-2 mt-1 self-start mobile-ui:min-h-11"
               data-testid="facility-detail-add-sub-facility"
               [routerLink]="['/organizations', organizationId(), 'facilities']"
               [queryParams]="{ create: 1, parent: facilityId() }"
@@ -156,7 +162,7 @@
           >
             <h2 hlmCardTitle id="facility-equipment-status-title" class="px-2">
               <a
-                class="hover:underline"
+                class="inline-flex items-center hover:underline mobile-ui:min-h-11"
                 data-testid="facility-detail-equipment-status-link"
                 [routerLink]="['/organizations', organizationId(), 'assets']"
                 i18n="@@facility.equipmentBreakdown.title"
@@ -262,7 +268,7 @@
               Interventions on this site
             </h2>
             <a
-              class="shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline"
+              class="inline-flex shrink-0 items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11 mobile-ui:min-w-11"
               data-testid="facility-detail-interventions-see-all"
               [routerLink]="['/organizations', organizationId(), 'interventions']"
               [queryParams]="{ site: facilityId() }"
@@ -371,7 +377,7 @@
               <p hlmEmptyDescription>{{ plans.listCallState().error?.message ?? null }}</p>
             </div>
             <div hlmEmptyContent>
-              <button hlmBtn type="button" (click)="retryPlansLoad()">
+              <button hlmBtn type="button" (click)="retryPlansLoad()" class="mobile-ui:min-h-11">
                 <span i18n="@@facility.plans.errorRetry">Retry</span>
               </button>
             </div>
@@ -419,7 +425,7 @@
                 [showZones]="plans.showZones()"
                 [showEquipment]="plans.showEquipment()"
                 [overlayHasContent]="plans.overlayHasContent()"
-                [panelOpenerVisible]="isCompactPanel() && !planPanelOpen()"
+                [panelOpenerVisible]="isMobileInteractionMode() && !planPanelVisible()"
                 [canWrite]="canWrite()"
                 [canEditEquipment]="canEditEquipment()"
                 [editMode]="plans.editMode()"
@@ -445,9 +451,9 @@
                 (enterCoordinatesRequested)="onEnterCoordinatesRequested()"
                 (enterPositionRequested)="onEnterPositionRequested()"
                 (editingCancelled)="plans.cancelEditing()"
-                (panelOpenRequested)="planPanelOpen.set(true)"
+                (panelOpenRequested)="planPanelVisible.set(true)"
               >
-                @if (isCompactPanel()) {
+                @if (isMobileInteractionMode()) {
                   <hlm-drawer
                     planPicker
                     direction="bottom"
@@ -475,11 +481,13 @@
                       class="max-h-[85dvh] overflow-hidden"
                       data-testid="facility-plan-picker-drawer"
                     >
-                      <hlm-drawer-header class="px-5 text-start!">
-                        <h2 hlmDrawerTitle>{{ planPickerLabel }}</h2>
-                        <p hlmDrawerDescription i18n="@@facility.plans.pickerDescription">
-                          Choose the floor plan to display and manage.
-                        </p>
+                      <hlm-drawer-header>
+                        <div class="text-start">
+                          <h2 hlmDrawerTitle>{{ planPickerLabel }}</h2>
+                          <p hlmDrawerDescription i18n="@@facility.plans.pickerDescription">
+                            Choose the floor plan to display and manage.
+                          </p>
+                        </div>
                       </hlm-drawer-header>
                       <div class="min-h-0 overflow-y-auto px-3 py-2">
                         <app-facility-plan-list
@@ -607,7 +615,7 @@
               [editModeActive]="plans.editMode() !== 'none'"
               [canWrite]="canWrite()"
               [canEditEquipment]="canEditEquipment()"
-              [compactVisible]="planPanelOpen()"
+              [compactVisible]="planPanelVisible()"
               (zoneActivated)="onZoneSelected($event)"
               (equipmentActivated)="onEquipmentSelected($event)"
               (zoneClosed)="onPlanDetailClosed()"
@@ -617,7 +625,7 @@
               (zoneEditRequested)="onZoneEditRequested()"
               (equipmentEditRequested)="onEquipmentEditRequested()"
               (equipmentRemoveRequested)="onEquipmentRemoveRequested()"
-              (compactDismissed)="planPanelOpen.set(false)"
+              (compactDismissed)="planPanelVisible.set(false)"
             />
           </div>
         }
@@ -651,7 +659,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="facility-detail-retry"
           (click)="retryLoad()"
           i18n="@@common.tryAgain"
@@ -703,19 +711,19 @@
     hlmBtn
     type="button"
     variant="outline"
-    class="min-w-0 shrink max-sm:min-h-11"
+    class="min-w-0 shrink mobile-ui:min-h-11"
     data-testid="facility-detail-qr"
     i18n-aria-label="@@facility.detail.qr"
     aria-label="QR code"
     (click)="openQrDialog()"
   >
     <ng-icon name="lucideQrCode" aria-hidden="true" />
-    <span class="truncate max-sm:hidden" i18n="@@facility.detail.qr">QR code</span>
+    <span class="truncate desktop-ui:max-sm:hidden" i18n="@@facility.detail.qr">QR code</span>
   </button>
   @if (canWrite()) {
     <a
       hlmBtn
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="facility-detail-new-sub-facility"
       i18n-aria-label="@@facility.detail.addSubFacility"
       aria-label="Add sub-facility"
@@ -723,7 +731,7 @@
       [queryParams]="{ create: 1, parent: facilityId() }"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@facility.detail.addSubFacility"
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@facility.detail.addSubFacility"
         >Add sub-facility</span
       >
     </a>
@@ -734,7 +742,7 @@
       variant="ghost"
       size="icon-sm"
       align="end"
-      class="max-sm:size-11"
+      class="mobile-ui:size-11"
       data-testid="facility-detail-menu"
       [hlmDropdownMenuTrigger]="moreMenu"
     >
@@ -749,6 +757,7 @@
           variant="destructive"
           data-testid="facility-detail-delete"
           (click)="requestDelete()"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideTrash2" aria-hidden="true" />
           <span i18n="@@facility.detail.delete">Delete</span>

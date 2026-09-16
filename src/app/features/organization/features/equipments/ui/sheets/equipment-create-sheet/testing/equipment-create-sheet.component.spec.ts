@@ -1,12 +1,21 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { EquipmentCreateSheet } from '../equipment-create-sheet.component';
 
 describe('EquipmentCreateSheet', () => {
   let fixture: ComponentFixture<EquipmentCreateSheet>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { interactionMode: signal('mobile'), isMobileInteractionMode: signal(true) },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(EquipmentCreateSheet);
     await fixture.whenStable();

@@ -8,7 +8,7 @@
   <hlm-sheet-content
     *hlmSheetPortal
     id="intervention-discussion-sheet"
-    class="w-full! bg-background! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
+    class="w-full! bg-background! mobile-ui:h-[85svh]! desktop-ui:w-[560px]! desktop-ui:max-w-[100vw]!"
     data-testid="intervention-discussion-sheet"
     [attr.data-dirty]="dirty()"
     [showCloseButton]="false"
@@ -18,7 +18,7 @@
       variant="ghost"
       size="icon-sm"
       type="button"
-      class="absolute end-3 top-3 max-sm:size-11"
+      class="absolute end-3 top-3 mobile-ui:size-11 mobile-ui:min-h-11"
       data-testid="intervention-discussion-sheet-close"
       (click)="requestClose()"
     >

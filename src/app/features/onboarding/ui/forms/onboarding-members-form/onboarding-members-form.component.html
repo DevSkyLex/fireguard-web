@@ -1,4 +1,8 @@
-<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+<form
+  class="flex min-w-0 flex-col gap-6 mobile-ui:[&_input]:text-base"
+  novalidate
+  (submit)="submit($event)"
+>
   <div class="min-w-0">
     <hlm-field-group>
       @if (staged().length > 0) {
@@ -17,7 +21,9 @@
                   <ng-icon name="lucideMail" aria-hidden="true" />
                 </hlm-item-media>
                 <hlm-item-content class="min-w-0">
-                  <p hlmItemTitle class="min-w-0 break-all">{{ row.email }}</p>
+                  <p hlmItemTitle class="min-w-0 break-all mobile-ui:line-clamp-none">
+                    {{ row.email }}
+                  </p>
                   <p hlmItemDescription>{{ row.roleName ?? defaultRoleLabel }}</p>
                 </hlm-item-content>
                 @if (row.completed) {
@@ -29,12 +35,12 @@
                     >Needs retry</span
                   >
                 }
-                <hlm-item-actions class="max-sm:w-full max-sm:justify-end">
+                <hlm-item-actions class="mobile-ui:w-full mobile-ui:justify-end">
                   <button
                     hlmBtn
                     variant="ghost"
                     size="icon-sm"
-                    class="max-sm:size-11"
+                    class="mobile-ui:size-11"
                     type="button"
                     [disabled]="pending() || row.completed"
                     (click)="editMember(i)"
@@ -47,7 +53,7 @@
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    class="max-sm:size-11"
+                    class="mobile-ui:size-11"
                     [attr.data-testid]="'onboarding-members-remove-' + i"
                     [attr.aria-label]="removeMemberLabel(row.email)"
                     [disabled]="pending() || row.completed"
@@ -81,7 +87,7 @@
                 ><span i18n="@@onboarding.membersForm.email"> Email</span><app-required-marker
               /></label>
               <input
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 hlmInput
                 id="onboarding-member-email"
                 #draftInput
@@ -108,7 +114,7 @@
                 <hlm-select [itemToString]="roleLabelOf" [formField]="draftForm.roleId">
                   <hlm-select-trigger
                     buttonId="onboarding-member-role"
-                    class="w-full max-sm:min-h-11"
+                    class="w-full mobile-ui:min-h-11"
                     data-testid="onboarding-member-role"
                   >
                     <hlm-select-value
@@ -119,7 +125,9 @@
                   <hlm-select-content *hlmSelectPortal>
                     <hlm-select-group>
                       @for (role of roles(); track role.id) {
-                        <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
+                        <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+                          role.name
+                        }}</hlm-select-item>
                       }
                     </hlm-select-group>
                   </hlm-select-content>
@@ -134,7 +142,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="onboarding-member-add"
               [disabled]="draftForm().invalid() || pending() || atCapacity()"
               (click)="addMember()"

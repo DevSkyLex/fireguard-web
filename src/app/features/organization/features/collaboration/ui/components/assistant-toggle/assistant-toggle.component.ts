@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, type Signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePenLine, lucideSparkles } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import {
   AssistantStore,
   type AssistantStoreType,
@@ -16,26 +17,8 @@ import { AssistantPanel } from '../assistant-panel';
  * @class AssistantToggle
  *
  * @description
- * The header control that summons the assistant, and the sheet it opens.
- *
- * It sits in the header rather than the sidebar because the assistant is not a
- * destination: it has no URL, and opens over whatever page is already showing.
- * It is offered on every signed-in page, since the assistant is scoped to the
- * organization rather than to a route.
- *
- * The panel rides in a right-anchored `hlm-sheet` at every width rather than in
- * the shell's contextual column, so it never competes with the routed page for
- * space and gets a backdrop, a focus trap and Escape dismissal from spartan.
- * Control and surface live together because both read the one `panelOpen`
- * signal, which is what keeps the trigger's `aria-expanded` honest.
- *
- * It owns the sheet chrome — the stock `hlm-sheet-header`, its title and
- * description, and the close button spartan renders — so the surface reads like
- * every other sheet in the app; `AssistantPanel` is only its body. The title is
- * what names the dialog, since brain points `aria-labelledby` at it.
- *
- * Absent entirely without `organization.assistant.use` — a control that only
- * leads to a refusal is worse than no control.
+ * Owns the assistant header trigger and its native Spartan sheet. The sheet opens on the right
+ * for desktop interaction and from the bottom for mobile interaction without recreating its state.
  *
  * @version 1.2.0
  *
@@ -66,6 +49,18 @@ import { AssistantPanel } from '../assistant-panel';
 export class AssistantToggle {
   //#region Properties
   /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Selects the sheet edge without changing the assistant lifecycle.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
    * Property slotPresentation
    * @readonly
    *
@@ -87,7 +82,7 @@ export class AssistantToggle {
    * @readonly
    *
    * @description
-   * Owner of the panel's hold on the shell's contextual column.
+   * Assistant transcript and panel state shared by the trigger and sheet content.
    *
    * @access protected
    * @since 1.0.0
@@ -111,7 +106,7 @@ export class AssistantToggle {
    *
    * @param {'open' | 'closed'} state - The sheet's new state.
    *
-   * @return {void}
+   * @returns {void}
    */
   protected onSheetStateChanged(state: 'open' | 'closed'): void {
     if (state === 'open') {

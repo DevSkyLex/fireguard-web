@@ -1,8 +1,10 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ConnectivityService } from '@core/connectivity';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
+import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { InterventionSyncIndicator } from '../intervention-sync-indicator.component';
 
 const trigger = (): HTMLElement | null =>
@@ -16,6 +18,7 @@ const queueItems = (): readonly Element[] =>
 
 describe('InterventionSyncIndicator', () => {
   let fixture: ComponentFixture<InterventionSyncIndicator>;
+  const mobile = signal(false);
   let online: WritableSignal<boolean>;
   let syncing: WritableSignal<boolean>;
   let blockedOperations: WritableSignal<number>;
@@ -34,23 +37,20 @@ describe('InterventionSyncIndicator', () => {
     await fixture.whenStable();
   };
 
-  beforeEach(async () => {
-    online = signal(true);
-    syncing = signal(false);
-    blockedOperations = signal(0);
-    problem = signal<string | null>(null);
-    lastSyncedAt = signal<Date | null>(null);
-    pendingCount = signal(0);
-    syncAll = vi.fn();
-    retryBlocked = vi.fn();
-    discardBlocked = vi.fn();
-    listAllOutbox = vi.fn().mockResolvedValue([]);
-    retryOutbox = vi.fn().mockResolvedValue(undefined);
-    removeOutbox = vi.fn().mockResolvedValue(undefined);
-
+  /**
+   * Function createFixture
+   * @description Creates the sync widget in an explicit layout-slot presentation using this spec's service doubles.
+   * @access private
+   * @since 1.0.0
+   * @param {SlotPresentation} presentation - The hosting slot's native control presentation.
+   * @returns {Promise<void>}
+   */
+  async function createFixture(presentation: SlotPresentation = 'default'): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        { provide: SLOT_PRESENTATION, useValue: presentation },
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
         { provide: ConnectivityService, useValue: { online } },
         {
           provide: InterventionSyncCoordinatorService,
@@ -73,7 +73,93 @@ describe('InterventionSyncIndicator', () => {
 
     fixture = TestBed.createComponent(InterventionSyncIndicator);
     await fixture.whenStable();
+  }
+
+  beforeEach(async () => {
+    mobile.set(false);
+    online = signal(true);
+    syncing = signal(false);
+    blockedOperations = signal(0);
+    problem = signal<string | null>(null);
+    lastSyncedAt = signal<Date | null>(null);
+    pendingCount = signal(0);
+    syncAll = vi.fn();
+    retryBlocked = vi.fn();
+    discardBlocked = vi.fn();
+    listAllOutbox = vi.fn().mockResolvedValue([]);
+    retryOutbox = vi.fn().mockResolvedValue(undefined);
+    removeOutbox = vi.fn().mockResolvedValue(undefined);
+
+    await createFixture();
   });
+
+  it('should expose pending work on the mobile trigger and keep the queue open through an interaction mode change', async () => {
+    mobile.set(true);
+    pendingCount.set(3);
+    await fixture.whenStable();
+    expect(trigger()?.getAttribute('data-slot')).toBe('button');
+    expect(trigger()?.hasAttribute('hlmItem')).toBe(false);
+    expect(trigger()?.textContent).toContain('3');
+    expect(trigger()?.getAttribute('aria-label')).toBe('3 change(s) waiting to sync');
+    await open();
+    expect(document.querySelector('[data-testid="intervention-sync-mobile-panel"]')).not.toBeNull();
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(document.querySelector('[data-testid="intervention-sync-mobile-panel"]')).not.toBeNull();
+    document.querySelector<HTMLButtonElement>('[data-testid="intervention-sync-now"]')?.click();
+    expect(syncAll).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['offline', 'lucideCloudOff', 'Offline', 3],
+    ['blocked', 'lucideTriangleAlert', 'Sync blocked', 2],
+    ['syncing', null, 'Syncing', null],
+    ['pending', 'lucideCloudUpload', 'Pending sync', 3],
+    ['synced', 'lucideCloudCheck', 'Up to date', null],
+  ] as const)(
+    'renders the mobile menu as a full-width native row when %s',
+    async (state, glyph, label, count) => {
+      fixture.destroy();
+      TestBed.resetTestingModule();
+      mobile.set(true);
+      online.set(state !== 'offline');
+      blockedOperations.set(state === 'blocked' ? 2 : 0);
+      syncing.set(state === 'syncing');
+      pendingCount.set(state === 'pending' || state === 'offline' ? 3 : 0);
+      await createFixture('menu');
+
+      const row: HTMLElement | null = trigger();
+      expect(row?.getAttribute('data-slot')).toBe('item');
+      expect(row?.hasAttribute('hlmBtn')).toBe(false);
+      expect(row?.classList.contains('w-full')).toBe(true);
+      expect(row?.classList.contains('justify-start')).toBe(true);
+      expect(row?.classList.contains('flex-nowrap')).toBe(true);
+      expect(row?.closest('hlm-drawer')?.classList.contains('w-full')).toBe(true);
+      expect(row?.closest('hlm-drawer')?.classList.contains('block')).toBe(true);
+      expect(row?.querySelector('[hlmItemContent] > [hlmItemTitle]')?.textContent?.trim()).toBe(
+        label,
+      );
+
+      const media: Element | null | undefined = row?.querySelector('[hlmItemMedia]');
+      expect(
+        media?.querySelector(glyph === null ? 'hlm-spinner' : `ng-icon[name="${glyph}"]`),
+      ).not.toBeNull();
+      expect(row?.getAttribute('aria-busy')).toBe(state === 'syncing' ? 'true' : null);
+      if (count === null) {
+        expect(row?.querySelector('[hlmItemActions]')).toBeNull();
+      } else {
+        expect(row?.querySelector('[hlmItemActions] [hlmBadge]')?.textContent?.trim()).toBe(
+          String(count),
+        );
+      }
+
+      await open();
+      expect(
+        document.querySelector('[data-testid="intervention-sync-mobile-panel"]'),
+      ).not.toBeNull();
+      expect(listAllOutbox).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('should read as offline first, ahead of a blocked or pending outbox', async () => {
     online.set(false);

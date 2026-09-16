@@ -20,6 +20,7 @@ import { InplaceField } from '../inplace-field.component';
       [error]="error()"
       [canSave]="canSave()"
       [orientation]="orientation()"
+      [flush]="flush()"
       (editingChange)="editingChanges.push($event)"
       (saved)="savedCount = savedCount + 1"
       (cancelled)="cancelledCount = cancelledCount + 1"
@@ -42,6 +43,7 @@ class InplaceFieldHost {
   public readonly orientation: WritableSignal<'horizontal' | 'vertical'> = signal<
     'horizontal' | 'vertical'
   >('horizontal');
+  public readonly flush: WritableSignal<boolean> = signal(false);
 
   public readonly editingChanges: boolean[] = [];
   public savedCount: number = 0;
@@ -107,6 +109,14 @@ describe('InplaceField', () => {
   it('should expose the disclosure relationship on the trigger', () => {
     expect(trigger().getAttribute('aria-expanded')).toBe('false');
     expect(trigger().getAttribute('aria-controls')).toBeTruthy();
+  });
+
+  it('should provide a restrained padded interactive surface without an edit icon', () => {
+    expect(trigger().classList.contains('border')).toBe(true);
+    expect(trigger().classList.contains('transition-colors')).toBe(true);
+    expect(trigger().classList.contains('px-1.5')).toBe(true);
+    expect(trigger().classList.contains('py-0.5')).toBe(true);
+    expect(root().querySelector('ng-icon')).toBeNull();
   });
 
   it('should disable the trigger and drop its disclosure semantics when not editable', async () => {
@@ -249,6 +259,14 @@ describe('InplaceField', () => {
 
     expect(label.className).not.toContain('w-24');
     expect(trigger().className).toContain('flex-col');
+  });
+
+  it('should remove the resting trigger inset when the host owns the framing', async () => {
+    host.flush.set(true);
+    await fixture.whenStable();
+
+    expect(trigger().className).toContain('px-0');
+    expect(trigger().className).toContain('py-0');
   });
 
   it('should return focus to the trigger when the field closes', async () => {

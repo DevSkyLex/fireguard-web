@@ -50,6 +50,16 @@ role still determines whether it is appropriate.
 
 ## Detect an adaptive mobile overlay
 
+Select the experience through `UI_EXPERIENCE_PORT` from
+`@core/ui-experience`. Width, pointer modality, touch support or a user-agent token
+alone are not a mobile gate. Phones and tablets retain mobile interactions when
+wide; narrow desktop windows retain native desktop components and density. Honor
+the centralized automatic result; do not expose or persist a manual mobile/desktop override.
+Use the app's `mobile-ui:` variant for touch-only styling, including portal content.
+Width/container queries may still arrange columns or fit content within that mode.
+Read `src/app/core/README.md` for classification, SSR and ambiguity limits; do not
+invent a second detector or import Signality internals.
+
 Keep the native select, menu or popover on mobile when its options are short, its rows fit, its
 touch targets are at least 44px and it neither clips nor hides important context. Do not convert
 every overlay merely because the viewport is narrow.

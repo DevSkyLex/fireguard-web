@@ -16,6 +16,7 @@ import { CollectionSurface } from '../collection-surface.component';
       caption="The organization's widgets."
       testId="widget-table"
       [loading]="loading()"
+      [hasLoaded]="hasLoaded()"
       [hasError]="hasError()"
       [rowCount]="rowCount()"
       [columnCount]="2"
@@ -36,6 +37,7 @@ import { CollectionSurface } from '../collection-surface.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Host {
+  public readonly hasLoaded = signal(false);
   public readonly loading: WritableSignal<boolean> = signal<boolean>(false);
   public readonly hasError: WritableSignal<boolean> = signal<boolean>(false);
   public readonly rowCount: WritableSignal<number> = signal<number>(1);
@@ -71,6 +73,16 @@ describe('CollectionSurface', () => {
     expect(body?.className).not.toContain('even:bg-muted/40');
   });
 
+  it('keeps a previously loaded empty result visible while refreshing', async () => {
+    fixture.componentInstance.hasLoaded.set(true);
+    fixture.componentInstance.loading.set(true);
+    fixture.componentInstance.rowCount.set(0);
+    await fixture.whenStable();
+    expect(byTestId('widget-empty')).not.toBeNull();
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
+    expect(root().querySelector('[role="status"]')?.textContent).toContain('Refreshing');
+  });
+
   it('draws the skeleton instead of the projected rows on the first load', async () => {
     fixture.componentInstance.loading.set(true);
     fixture.componentInstance.rowCount.set(0);
@@ -87,6 +99,15 @@ describe('CollectionSurface', () => {
 
     expect(byTestId('widget-row')).not.toBeNull();
     expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+  });
+
+  it('announces refresh without replacing the rows or changing table structure', async () => {
+    fixture.componentInstance.loading.set(true);
+    await fixture.whenStable();
+    expect(byTestId('widget-row')).not.toBeNull();
+    expect(root().querySelector('app-collection-surface')?.getAttribute('aria-busy')).toBe('true');
+    expect(root().querySelector('[role="status"]')?.textContent).toContain('Refreshing');
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('announces the first load with a non-hidden role=status region', async () => {
@@ -138,15 +159,19 @@ describe('CollectionSurface', () => {
     expect(byTestId('widget-empty')).toBeNull();
   });
 
-  it('renders the card slot below the container breakpoint, hidden at and above it', () => {
+  it('gates card presentation by mobile interaction mode before its container breakpoint', () => {
     expect(byTestId('widget-card')).not.toBeNull();
 
     const cardsWrapper: HTMLElement | null = byTestId('widget-card')?.parentElement ?? null;
-    expect(cardsWrapper?.className).toContain('@2xl/surface:hidden');
+    expect(cardsWrapper?.className.split(' ')).toContain('hidden');
+    expect(cardsWrapper?.className.split(' ')).toContain('mobile-ui:flex');
+    expect(cardsWrapper?.className.split(' ')).toContain('mobile-ui:@2xl/surface:hidden');
 
     const table: HTMLElement | null = root().querySelector('table');
     const tableWrapper: HTMLElement | null = table?.parentElement?.parentElement ?? null;
-    expect(tableWrapper?.className).toContain('hidden');
-    expect(tableWrapper?.className).toContain('@2xl/surface:block');
+    expect(tableWrapper?.className.split(' ')).toContain('block');
+    expect(tableWrapper?.className.split(' ')).not.toContain('hidden');
+    expect(tableWrapper?.className.split(' ')).toContain('mobile-ui:hidden');
+    expect(tableWrapper?.className.split(' ')).toContain('mobile-ui:@2xl/surface:block');
   });
 });

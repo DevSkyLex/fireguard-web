@@ -10,11 +10,12 @@ import {
 import { RouterLink } from '@angular/router';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components';
 import type { OrganizationDashboardRecentIntervention } from '@features/organization/models';
+import { CollectionSkeletonCards, CollectionSkeletonRows } from '@shared/collection-surface';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 /**
  * Component OrganizationDashboardRecent
@@ -29,11 +30,13 @@ import { HlmTableImports } from '@shared/ui/table';
     DatePipe,
     RouterLink,
     InterventionTag,
+    CollectionSkeletonCards,
+    CollectionSkeletonRows,
     HlmButton,
-    HlmSkeleton,
     ...HlmTableImports,
     ...HlmCardImports,
     ...HlmEmptyImports,
+    ...HlmItemImports,
     ...HlmAvatarImports,
   ],
   templateUrl: './organization-dashboard-recent.component.html',

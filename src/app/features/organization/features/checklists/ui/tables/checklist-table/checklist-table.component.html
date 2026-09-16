@@ -27,7 +27,7 @@
         <td hlmTableCell class="font-medium text-foreground">
           <button
             type="button"
-            class="rounded-sm text-start underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            class="rounded-sm text-start underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring mobile-ui:min-h-11"
             (click)="viewRequested.emit(item)"
           >
             {{ item.name }}
@@ -54,13 +54,13 @@
   <ng-container surfaceCards>
     @for (item of items(); track item.id) {
       <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        class="flex flex-col gap-1 rounded-md border border-border p-3 mobile-ui:gap-2 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
         data-testid="checklist-table-card"
       >
         <div class="flex items-start gap-2">
           <button
             type="button"
-            class="min-w-0 flex-1 rounded-sm text-start font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            class="min-w-0 flex-1 rounded-sm text-start text-base font-medium break-words text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring mobile-ui:min-h-11"
             (click)="viewRequested.emit(item)"
           >
             {{ item.name }}
@@ -69,7 +69,7 @@
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <app-checklist-status-tag [value]="item.status" />
 
           <span class="truncate tabular-nums">
@@ -77,6 +77,10 @@
             <span i18n="@@checklists.list.cardItems">items</span>
           </span>
         </div>
+        <p class="text-sm text-muted-foreground">
+          <span i18n="@@checklists.list.columnUpdated">Updated</span>
+          {{ item.updatedAt | appOrgDate: 'date' : regionalFormatting() }}
+        </p>
       </div>
     }
   </ng-container>
@@ -98,7 +102,7 @@
       variant="ghost"
       size="icon-sm"
       align="end"
-      class="max-sm:size-11"
+      class="mobile-ui:size-11"
       data-testid="checklist-table-row-menu"
       [hlmDropdownMenuTrigger]="rowMenu"
     >
@@ -112,6 +116,7 @@
           hlmDropdownMenuItem
           data-testid="checklist-table-row-edit"
           (click)="editRequested.emit(item)"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucidePencil" aria-hidden="true" />
           <span i18n="@@checklists.list.rowEdit">Edit</span>
@@ -123,6 +128,7 @@
             hlmDropdownMenuItem
             data-testid="checklist-table-row-archive"
             (click)="archiveRequested.emit(item)"
+            class="mobile-ui:min-h-11"
           >
             <ng-icon name="lucideArchive" aria-hidden="true" />
             <span i18n="@@checklists.list.rowArchive">Archive</span>

@@ -1,5 +1,25 @@
 # Interventions Feature
 
+## Adaptive operations interface
+
+The central interaction-capabilities contract selects touch controls and overlays for phones and tablets,
+independently of width. The collection defaults to List and retains explicit Board,
+Calendar and Recurrences query parameters. Mobile Board stacks status sections with
+the same bounded per-status data, pending/error states and permission-checked move
+requests; its card drawer is the touch alternative to desktop dragging and menus.
+The intervention calendar presents the same month as an agenda on mobile.
+
+The detail has one live workflow action template: in the desktop page header or a
+mobile footer above `--mobile-navigation-height`. Reserved content space and a bounded
+scrolling footer protect work, errors and the navigation. The mobile action drawer
+uses the same gates and handlers, including the existing destructive confirmations.
+Interaction-mode changes do not replace any form or workflow store.
+
+The public synchronization widget shows a labeled mobile offline/pending/blocked
+trigger and exposes its existing queue and retry actions in a drawer. Shell consumers
+must keep this widget visible outside hidden mobile tools when work needs attention;
+the outbox remains device-global. Discard still requires its existing alert dialog.
+
 ## Purpose
 
 Owns organization-scoped field intervention workflows.
@@ -36,10 +56,11 @@ the active view applies. Unused filter values survive view changes in the URL.
 The collection starts directly with its toolbar because its view selector lives in the header, and has no metric cards,
 statistics request, Analysis disclosure or separate queue-count shortcuts. Long intervention
 and site labels stay within their columns so the due date and row menu remain
-visible. Detail properties adapt to the content container; the secondary About
-disclosure starts open when its desktop rail is present and closed on mobile.
-Its initial state is chosen once; resizing preserves the user's disclosure choice
-and any active description editor.
+visible. Detail properties adapt to the content container; the secondary details
+disclosure starts collapsed at every width so the actionable rail stays compact.
+Opening it reveals participants, labels, description and audit metadata in that
+order; resizing preserves the user's disclosure choice and any active description
+editor, while another intervention resets it.
 
 The detail registers exceptional recording states and one native Spartan split button
 in the page header at every viewport. Its menu contains activity, saved operations,
@@ -721,7 +742,7 @@ Stores:
   `inspectionsCallState`), each fetched through the owning sibling feature's
   `listByIntervention` on that tab's first activation — never eagerly with
   the rest of the workspace — and cached per intervention: a second
-  activation of an already-loaded tab is a no-op, and switching to a
+  activation of an already-loaded, non-invalidated tab is a no-op, and switching to a
   different intervention (prev/next) resets all three to idle so the next
   activation refetches. See `### The rail is not the retired workspace tabs`
   below.
@@ -964,10 +985,10 @@ Internal code imports deep paths directly.
 The detail uses a stable horizontal Spartan line tab list at every width:
 Work (`overview` in the URL), Changes, Attachments, Facilities, Equipment and
 Inspections. The native paginated tab list contains overflow within the bar.
-Operational editors (site, responsible, schedule and priority) occupy the right
-rail and remain outside every tab; participants, labels and revision sit in
-a native secondary disclosure. Description, type and technical dates follow
-in the secondary information column. Status is stated once in Properties.
+Operational properties occupy the right rail and remain outside every tab. Their
+order is reference, type, status, priority, site, responsible and planned
+window; participants, labels, description, revision and updated continue in
+the native secondary disclosure. Status is stated once in Properties.
 
 The Work panel starts with a compact readiness item group and the work items.
 A writable empty scope has one add action and no zero progress/count. Activity
@@ -1043,7 +1064,7 @@ activity-thread`, and the comment-form block.
    future redesign narrows the rail's counts away (an icon-only rail, say),
    revisit whether Overview needs its own summary back.
 
-6. **Changes / Attachments tabs** — `app-intervention-change-list` and
+6. **Changes / Attachments tabs** — `app-intervention-change-table` and
    `app-intervention-attachments`, each the sole content of its own lazily
    mounted (`hlmTabsContentLazy`) panel, carrying `pendingChangesCount()` /
    `store.attachments().length` as their trigger's count badge. Both moved
@@ -1053,7 +1074,15 @@ activity-thread`, and the comment-form block.
    for the intervention's own linked records, no pagination, no row actions
    (see the tables' own component docs for the column sets).
 8. **Operational properties** start the right rail and remain mounted.
-   Readiness actions open their matching editor directly.
+   Readiness actions open their matching editor directly. Lifecycle and
+   planning values remain visible; secondary metadata and the description are
+   compacted behind the local Spartan `hlmCollapsible` disclosure. A collapsed
+   rail exposes a top "More details" trigger; an expanded rail replaces it
+   with a bottom "Show less" trigger after the audit metadata. The disclosure
+   resets for a different intervention and preserves its state across a
+   refresh of the same one. On the desktop container breakpoint, the complete
+   rail stays sticky below the dashboard chrome so its first properties are
+   never covered by the page header.
 9. **Secondary information and desktop issues** occupy the second track;
    mobile issues stay in Work and the visible instance receives focus.
 10. **Prev/next footer** — unchanged.
@@ -1208,7 +1237,7 @@ automatically **at publication**, and the list's caption says so.
 `InterventionWorkspaceStore.rejectChange` performs the rejection (offline it
 queues the existing `change.update` outbox operation and applies it
 optimistically; a genuine server rejection dispatches the `rejectChangeFailed`
-toast and leaves the change untouched). `app-intervention-change-list` offers a
+toast and leaves the change untouched). `app-intervention-change-table` offers a
 per-row Reject button when the page grants `canReject` — `submitted` requires
 `.review` (a pure reviewer CAN reject during review), `in_progress` /
 `changes_requested` require `.execute`, mirroring the backend's permission
@@ -1537,7 +1566,7 @@ scopes to it. The row locks and spins on its own through the page-local
 `evidenceUploadingWorkItemIds`, cleared once the shared
 `attachmentWriteCallState` settles. An attachment scoped to a work item
 carries that id back (`workItemId` on `InterventionAttachmentOutput`) and the
-attachments card shows it as a subtle chip naming the work item (resolved
+attachment list shows it as a subtle chip naming the work item (resolved
 from the workspace's loaded work items; an id that no longer resolves — the
 item was deleted after upload — shows no chip). **Deletion invariant:**
 deleting a work item does not delete the evidence that documents it; the
@@ -1588,7 +1617,7 @@ both the input and its inline error. Passive closure never dispatches a transiti
 Display: `app-intervention-publication-summary` gains a signed/unsigned line
 (icon + label, never colour alone) from `hasSignature`, rendered in both its
 call sites (the rail's publication group and the publish confirmation) from
-the one definition, same as its other stats. The attachments card shows a
+the one definition, same as its other stats. The attachment list shows a
 small "Signature" chip on `kind: 'signature'` rows, reusing the existing chip
 pattern next to the work-item chip.
 
@@ -1737,11 +1766,63 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   swapped for a plain one (`[showCloseButton]="false"` on
   `hlm-sheet-content`) because it calls the dialog ref's `close()` directly
   rather than through this same guarded path.
-- **Work items filter client-side by design** (all/remaining/done/skipped,
-  mine-first): the workspace drains every page via `listAllWorkItems` because
-  the offline scene needs the complete checklist in IndexedDB regardless of
-  filter. This is a sanctioned bounded drain under DESIGN.md § Collections'
-  Server Rule; the API's server-side work-item filters stay unused on purpose.
+- **Work-item search and status filters are server-side.** The detail table's
+  query store reloads `listAllWorkItems` with the current search and status
+  selection. A status group such as Remaining is fanned out into scalar API
+  requests and merged after every matching page has been drained, because the
+  endpoint's `status` input is scalar. The workspace store still owns the
+  unfiltered complete checklist required by the offline scene; mine-first is
+  presentation ordering only.
+
+## Detail table query and rendering contracts
+
+- The page owns Work, Changes, Facilities, Equipment and Inspections criteria through its
+  component-scoped stores. Initialize business defaults on first activation, retain each
+  tab's criteria until the intervention changes, and reset all five on a new context.
+  Criteria are not persisted in the URL or browser storage. Table components receive
+  controlled model contracts and emit `queryChanged` / `retryRequested`; they neither
+  inject stores nor call APIs, and initialization does not emit a second query.
+- In online detail tables the API alone decides search/filter membership. Debounce only
+  nonempty text edits by 300 ms; cancel the obsolete request before that delay. Filters,
+  clears, activation, forced refresh and retry are immediate. Check intervention identity
+  and request generation before success or error writes. Refresh/retry bypass identical
+  criteria deduplication. Linked-resource append retains earlier pages on failure, retries
+  the failed page and deduplicates rows by identifier.
+- Reconcile only mutation-affected rows, then invalidate the concerned collections:
+  immediately reload the active query and defer visited inactive queries to activation.
+  Never replace recent filtered API rows wholesale with the canonical workspace snapshot.
+  Typed remote-success, durable-enqueue and effective-replay events carry the intervention
+  and affected collections. The page coordinates these events; a store must not listen
+  to the event group it emits.
+- Offline Work and Changes use only the complete saved workspace plus outstanding local
+  operations, applying available row labels and business status mappings. Search uses
+  the same resource and patch formatting as the table, so humanized
+  fields and localized boolean values remain searchable. The formatting utility and its
+  line model belong to the feature's utils/models public surfaces, not a table-private API.
+  Explicitly label these results as saved/local, not live API results. A missing snapshot is unavailable,
+  not empty. Linked resources retain only in-memory results and cannot apply new queries
+  offline; this feature adds no persistence for them. Reconnection and successful replay
+  refresh the workspace before invalidating queries, preserving pending/conflicting work.
+- Activity invalidation is coordinated for remote status, planning, publication and
+  effective replay. Do not invent task/rejection activity kinds absent from the API.
+  Comments keep their existing timeline handling. Partial replay announces only collections
+  actually changed remotely, even when later operations fail or remain conflicted.
+- Changes stays in `ui/tables/intervention-change-table`: one semantic row per field/value,
+  with Resource, Status and Actions spanning that change's rows. Reserve 8/8/7/5 rem for
+  Resource/Field/Status/Actions and at least 15 rem for the flexible proposed-value column.
+  Action columns depend on permissions/filter context, never transient result presence.
+  Horizontal overflow belongs to the table, not the document; tactile mobile uses cards.
+- Skeletons share final columns, alignment and density. Initial loading without a result
+  uses placeholders; refresh preserves the last result, including an empty result, with
+  a discreet progress indicator and `aria-busy`. Only initial errors replace the surface;
+  refresh/append errors are non-blocking and offer retry without clearing criteria or pages.
+  Changes distinguishes no data, filtered emptiness and search emptiness with relevant clears.
+- Ordinary tab activation scrolls the main container to its beginning after panel mount,
+  instantly and without moving keyboard focus. Explicit task/blocker navigation takes
+  priority. After internal navigation completes, reapply the loaded name only for the
+  current intervention to keep h1, breadcrumb and document title stable; do not refetch
+  the resolver per tab or change the global title strategy. Preserve the header underline,
+  18 px section titles, count badges, dashed empties, neutral publication cards and bottom space.
 
 ## Invariants
 
@@ -1909,8 +1990,8 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   still-working variant so a long publication reads as long, not frozen. A
   genuine `failed` result still reports inline as before.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header line tabs →
-  meta → status band → error alert → active panel → properties card → desktop
-  issues checklist → prev/next never changes with phase — properties card and
+  meta → status band → error alert → active panel → properties rail → desktop
+  issues checklist → prev/next never changes with phase — the properties rail and
   the issues checklist are the second column's own top-to-bottom order,
   unaffected by which of the six tabs is active. The band's position is fixed
   at every width; only its content follows the phase.
@@ -1918,7 +1999,7 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   `UpdateInterventionChangeInput.status` only accepts `'proposed' | 'rejected'`,
   never `'applied'` — acceptance happens automatically at publication, not
   through a client action. `InterventionWorkspaceStore.rejectChange` is the one
-  write, and `app-intervention-change-list` offers it per row only when the
+  write, and `app-intervention-change-table` offers it per row only when the
   page grants `canReject` (see `### Proposed changes: reject is the only
 client action`).
 - **Every property is edited where it is displayed, and each affordance opens a
@@ -2036,12 +2117,14 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   long scroll a field operator had to get past to reach the work-item table.
   Tabs are back, but not the 2.0 shape that was retired above — this time the
   action box, its blocker list and its pending-changes count sit outside every
-  tab, and the properties card is a column rather than a tab, so the specific
+  tab, and the properties rail is a column rather than a tab, so the specific
   failure the 2.0 design was retired for (a count invisible unless the right
-  tab happened to be open) cannot recur. `detailsExpanded`, the
+  tab happened to be open) cannot recur. The earlier `detailsExpanded` /
   `hlmCollapsible` "Details" section and its collapsed chip-row summary
-  (`intervention-detail-chips`) are gone with it — the properties card is
-  never collapsed, so there is nothing left to summarize.
+  (`intervention-detail-chips`) were removed with that design; the current
+  properties grid uses a separate local `hlmCollapsible` only to compact
+  secondary metadata, without hiding the action context or publication
+  blockers.
 - _"The tab rail (Overview / Work items / Changes) sits in its own column,
   and `InterventionDetailPage.tabOrientation` flips it horizontal below
   `lg`."_ Retired within the same 4.0 pass, on direct product feedback: with
@@ -2110,13 +2193,13 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   recommended work items are distinct from required server prerequisites.
 - Selection catalogues load independently with server search and pagination. Keep cached
   selected labels across searches within the same organization; reset across organizations.
-- Work items use a compact native status filter. Desktop rows give target, action,
+- Work items use the shared search and collection filter bar. Desktop rows give target, action,
   requirement, assignee, state and source their own columns; mobile keeps one tactile row.
   Completed, skipped and remaining counts stay distinct.
   A scan reveals and focuses the exact item even when the previous filter excluded it.
 - Changes expose proposed, rejected and applied states. Display proposed values only; the
-  API does not supply historical before-values. The three states use the same compact Spartan
-  status select as work items. Evidence remains readable from a work item.
+  API does not supply historical before-values. The three states use the same shared
+  collection filter system as work items. Evidence remains readable from a work item.
 - Publication preflight awaits this intervention's local replay, checks remaining queued
   work, and re-reads the intervention and issues before POST. Late responses for a departed
   account, organization or intervention cannot initiate publication.

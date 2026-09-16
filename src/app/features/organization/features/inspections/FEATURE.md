@@ -1,5 +1,14 @@
 # Inspections Feature
 
+## Adaptive inspection interface
+
+The central interaction-capabilities contract controls mobile cards, touch targets and bottom-sheet
+presentation; width only determines layout. Equipment selection uses a searchable
+mobile drawer with equipment, type and location labels. It writes to the same Signal
+Forms field as the desktop combobox and marks the existing draft dirty. An open picker
+stays mounted until dismissal if the interaction mode changes. The create form and all other
+draft fields stay mounted; lifecycle actions, permissions and request state are unchanged.
+
 ## Purpose
 
 Owns organization-scoped inspection workflows.

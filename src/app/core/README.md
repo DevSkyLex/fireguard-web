@@ -13,6 +13,7 @@ It is the home for:
 - app-wide routing primitives (`routing/strategies`, `routing/guards`),
 - shared async store infrastructure (`request-state`),
 - appearance mode (`theme` — dark/light/system),
+- interaction capabilities (`interaction-capabilities` — automatic mobile/desktop classification),
 - shell-level concerns (`splash-screen`, `breadcrumb`, `page-actions`, `page-tabs`,
   `connectivity`, `cookie`, `mercure`, `title`, `locale`),
 - neutral contracts (ports) backing shared UI.
@@ -72,3 +73,29 @@ Each concern is imported through its alias barrel — `@core/api`,
 etc. Import the concern barrel, never a deep implementation file.
 
 See `ARCHITECTURE.md` §2.2, §8.1, and §11 for the normative rules.
+
+## Interaction capabilities
+
+`provideInteractionCapabilities()` initializes the one app-wide classification. Shell and shared
+consumers inject `INTERACTION_CAPABILITIES_PORT`; the concrete adapter is private to this concern.
+The public contract exposes `interactionMode`, `isMobileInteractionMode` and `shortcutModifier` signals, not
+loading state or a user preference. Templates use `isMobileInteractionMode` for interaction decisions
+and the shared modifier for platform-correct keyboard hints.
+`html[data-interaction-mode]` also reaches portaled overlays through the `mobile-ui:` and
+`desktop-ui:` Tailwind variants.
+
+Automatic mode combines platform/device hints with touch capabilities. Desktop
+platforms remain desktop even with touch or a narrow window. Phones and tablets keep
+mobile mode when rotated, resized, or connected to a keyboard. Unknown/conflicting
+signals default to desktop. The MacIntel/multiple-touch iPad heuristic is not proof
+of hardware; browser spoofing and future hybrid devices remain ambiguous.
+
+SSR classifies reliable request headers and transfers only the resulting mode so hydration
+starts on the same branch. Request-less, unknown or contradictory environments stay desktop.
+The browser reconciles capabilities once after rendering; spoofed or strongly privacy-reduced
+clients may therefore fall back to desktop or make one correction. Raw user-agent evidence,
+device fingerprints, auth data and business state are never transferred or persisted.
+
+Viewport and container queries remain valid for geometry, never for selecting
+mobile controls, drawers, target density, or navigation. Input modality is for
+interaction affordances, not for switching interaction modes during a gesture.

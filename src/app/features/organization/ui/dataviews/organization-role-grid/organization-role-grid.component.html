@@ -69,7 +69,7 @@
         type="button"
         variant="ghost"
         size="icon-sm"
-        class="absolute end-2 top-2 max-sm:size-11"
+        class="absolute end-2 top-2 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
         data-testid="organization-role-grid-card-menu"
         [hlmDropdownMenuTrigger]="roleMenu"
       >
@@ -80,6 +80,7 @@
       <ng-template #roleMenu>
         <hlm-dropdown-menu class="w-48">
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="organization-role-grid-card-edit-permissions"
             (click)="editPermissionsRequested.emit(item)"
@@ -88,6 +89,7 @@
             <span i18n="@@org.team.editPermissions">Edit permissions</span>
           </button>
           <button
+            class="mobile-ui:min-h-11"
             hlmDropdownMenuItem
             data-testid="organization-role-grid-card-delete"
             (click)="deleteRequested.emit(item)"
@@ -100,8 +102,10 @@
     }
 
     <div hlmCardHeader>
-      <p hlmCardTitle class="flex items-center gap-1.5 pe-8">
-        <span class="truncate">{{ item.name }}</span>
+      <p hlmCardTitle class="flex items-center gap-1.5 pe-8 mobile-ui:flex-wrap mobile-ui:pe-12">
+        <span class="truncate mobile-ui:wrap-anywhere mobile-ui:whitespace-normal">{{
+          item.name
+        }}</span>
         @if (item.isSystem) {
           <span hlmBadge variant="secondary" class="shrink-0">
             <ng-icon name="lucideShieldCheck" aria-hidden="true" />
@@ -110,7 +114,12 @@
         }
       </p>
       @if (item.description; as description) {
-        <p hlmCardDescription class="truncate">{{ description }}</p>
+        <p
+          hlmCardDescription
+          class="truncate mobile-ui:pe-12 mobile-ui:wrap-anywhere mobile-ui:whitespace-normal"
+        >
+          {{ description }}
+        </p>
       }
     </div>
     <div hlmCardContent class="flex flex-col gap-2">
@@ -141,7 +150,7 @@
           <span aria-hidden="true" class="text-sm text-muted-foreground">·</span>
           @if (membersRouteBase().length > 0) {
             <a
-              class="rounded-sm text-sm text-muted-foreground tabular-nums underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
+              class="rounded-sm text-sm text-muted-foreground tabular-nums underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid mobile-ui:inline-flex mobile-ui:min-h-11 mobile-ui:items-center mobile-ui:underline"
               data-testid="organization-role-grid-card-member-count"
               [routerLink]="membersRouteBase()"
               [queryParams]="{ roleId: item.id }"

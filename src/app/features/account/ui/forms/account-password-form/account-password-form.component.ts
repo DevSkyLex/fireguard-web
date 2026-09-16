@@ -23,6 +23,7 @@ import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { AccountPasswordConfirmFormValues, AccountPasswordRequestFormValues } from './models';
 
 /**
@@ -79,7 +80,15 @@ const CODE_LENGTH = 6;
  */
 @Component({
   selector: 'app-account-password-form',
-  imports: [RequiredMarker, FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    PasswordInput,
+    HlmButton,
+    HlmInput,
+    HlmSpinner,
+    ...HlmFieldImports,
+  ],
   templateUrl: './account-password-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

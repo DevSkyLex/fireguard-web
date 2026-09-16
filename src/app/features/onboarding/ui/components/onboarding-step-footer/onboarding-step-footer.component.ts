@@ -40,7 +40,10 @@ import { HlmSpinner } from '@shared/ui/spinner';
   selector: 'app-onboarding-step-footer',
   imports: [HlmButton, HlmSeparator, HlmSpinner, GateReasonDirective],
   templateUrl: './onboarding-step-footer.component.html',
-  host: { class: 'block bg-background max-sm:sticky max-sm:bottom-0 max-sm:z-10' },
+  host: {
+    class:
+      'block bg-background mobile-ui:sticky mobile-ui:bottom-[var(--mobile-navigation-height,0px)] mobile-ui:z-10 mobile-ui:pb-[env(safe-area-inset-bottom)]',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingStepFooter {

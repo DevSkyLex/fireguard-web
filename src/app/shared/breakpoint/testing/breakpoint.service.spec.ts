@@ -1,91 +1,55 @@
-import { Component, type Signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BELOW_SM, isCompact, mediaQuery } from '../breakpoint.service';
+import { TestBed } from '@angular/core/testing';
+import { BELOW_SM, mediaQuery } from '../breakpoint.service';
 
-/** Minimal host calling the primitive from an injection context, as a component would. */
-@Component({ selector: 'app-breakpoint-host', template: '' })
-class BreakpointHost {
-  public readonly compact: Signal<boolean> = isCompact();
-}
-
-/** A second host, kept separate so each spec observes exactly one query. */
-@Component({ selector: 'app-breakpoint-wide-host', template: '' })
-class BreakpointWideHost {
-  public readonly wide: Signal<boolean> = mediaQuery('(min-width: 1280px)');
-}
-
-function stubMatchMedia(matches: boolean): void {
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
-  );
-}
-
-describe('breakpoint', () => {
+describe('mediaQuery', () => {
   afterEach(() => {
+    TestBed.resetTestingModule();
     vi.unstubAllGlobals();
   });
 
-  it('should report a matching query', async () => {
-    stubMatchMedia(true);
-    const fixture: ComponentFixture<BreakpointHost> = TestBed.createComponent(BreakpointHost);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.compact()).toBe(true);
-  });
-
-  it('should report a non-matching query', async () => {
-    stubMatchMedia(false);
-    const fixture: ComponentFixture<BreakpointHost> = TestBed.createComponent(BreakpointHost);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.compact()).toBe(false);
-  });
-
-  it('should observe the sm query for isCompact', async () => {
-    stubMatchMedia(false);
-    const fixture: ComponentFixture<BreakpointHost> = TestBed.createComponent(BreakpointHost);
-    await fixture.whenStable();
-
-    expect(matchMedia).toHaveBeenCalledWith(BELOW_SM);
-  });
-
-  it('should observe an arbitrary query verbatim', async () => {
-    stubMatchMedia(true);
-    const fixture: ComponentFixture<BreakpointWideHost> =
-      TestBed.createComponent(BreakpointWideHost);
-    await fixture.whenStable();
-
-    expect(matchMedia).toHaveBeenCalledWith('(min-width: 1280px)');
-    expect(fixture.componentInstance.wide()).toBe(true);
-  });
-
-  it('should track a live change', async () => {
-    let changeHandler: ((event: MediaQueryListEvent) => void) | undefined;
+  it('starts false until after rendering, then measures geometry', () => {
     vi.stubGlobal(
       'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        addEventListener: (_: string, handler: (event: MediaQueryListEvent) => void): void => {
-          changeHandler = handler;
-        },
+      vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
-      })),
+      }),
     );
-    const fixture: ComponentFixture<BreakpointHost> = TestBed.createComponent(BreakpointHost);
-    await fixture.whenStable();
+    const narrow = TestBed.runInInjectionContext(() => mediaQuery(BELOW_SM));
+    expect(narrow()).toBe(false);
+    TestBed.tick();
+    expect(narrow()).toBe(true);
+    expect(matchMedia).toHaveBeenCalledWith('(max-width: 639px)');
+  });
 
-    expect(fixture.componentInstance.compact()).toBe(false);
+  it('observes an arbitrary query, tracks changes and removes its listener on destruction', () => {
+    let change: ((event: MediaQueryListEvent) => void) | undefined;
+    const remove = vi.fn();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: (_: string, handler: (event: MediaQueryListEvent) => void): void => {
+          change = handler;
+        },
+        removeEventListener: remove,
+      }),
+    );
+    const wide = TestBed.runInInjectionContext(() => mediaQuery('(min-width: 1280px)'));
+    TestBed.tick();
+    expect(wide()).toBe(false);
+    expect(matchMedia).toHaveBeenCalledWith('(min-width: 1280px)');
+    change?.({ matches: true } as MediaQueryListEvent);
+    expect(wide()).toBe(true);
+    TestBed.resetTestingModule();
+    expect(remove).toHaveBeenCalledWith('change', change);
+  });
 
-    changeHandler?.({ matches: true } as MediaQueryListEvent);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.compact()).toBe(true);
+  it('retains the safe geometry fallback without matchMedia', () => {
+    vi.stubGlobal('matchMedia', undefined);
+    const narrow = TestBed.runInInjectionContext(() => mediaQuery(BELOW_SM));
+    TestBed.tick();
+    expect(narrow()).toBe(false);
   });
 });

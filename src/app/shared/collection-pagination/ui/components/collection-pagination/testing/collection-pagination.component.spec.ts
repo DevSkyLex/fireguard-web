@@ -30,6 +30,16 @@ describe('CollectionPagination', () => {
     expect(byTestId('widgets-page-indicator')?.textContent).toContain('Page 2 of 5');
   });
 
+  it('should wrap the band by width while keeping compact controls interaction-mode-driven', () => {
+    const band: HTMLElement | null = fixture.nativeElement.firstElementChild;
+    const firstItem: HTMLElement | null = byTestId('widgets-page-first')?.closest('li') ?? null;
+
+    expect(band?.classList.contains('sm:flex-row')).toBe(true);
+    expect(band?.classList.contains('sm:flex-wrap')).toBe(true);
+    expect(firstItem?.classList.contains('mobile-ui:hidden')).toBe(true);
+    expect(byTestId('widgets-page-prev')?.classList.contains('mobile-ui:size-11')).toBe(true);
+  });
+
   it.each([
     [1, 20, [1, 2, 3, 4, 5]],
     [10, 20, [8, 9, 10, 11, 12]],
@@ -64,6 +74,39 @@ describe('CollectionPagination', () => {
   it('should render the row count', () => {
     expect(byTestId('widgets-row-count')?.textContent).toContain('30 of 120 row(s) shown');
   });
+
+  it.each([0, 1])(
+    'marks redundant paging for mobile-only hiding at %i pages and preserves collection controls',
+    async (pageCount: number) => {
+      const root: HTMLElement = fixture.nativeElement;
+      const pageSize = byTestId('widgets-page-size');
+      const emitted: number[] = [];
+      fixture.componentInstance.pageSizeChanged.subscribe((value) => emitted.push(value));
+      fixture.componentRef.setInput('page', 1);
+      fixture.componentRef.setInput('pageCount', pageCount);
+      fixture.componentRef.setInput('total', pageCount === 0 ? 0 : 12);
+      fixture.componentRef.setInput('shown', pageCount === 0 ? 0 : 12);
+      await fixture.whenStable();
+
+      expect(byTestId('widgets-page-indicator')?.classList.contains('mobile-ui:hidden')).toBe(true);
+      expect(root.querySelector('nav')?.classList.contains('mobile-ui:hidden')).toBe(true);
+      expect(root.querySelector('nav')?.classList.contains('hidden')).toBe(false);
+      expect(byTestId('widgets-row-count')?.textContent?.trim()).toBe(
+        pageCount === 0 ? '0 of 0 row(s) shown' : '12 of 12 row(s) shown',
+      );
+      expect(byTestId('widgets-page-size')).toBe(pageSize);
+      fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 60);
+      expect(emitted).toEqual([60]);
+
+      fixture.componentRef.setInput('pageCount', 2);
+      await fixture.whenStable();
+      expect(byTestId('widgets-page-indicator')?.classList.contains('mobile-ui:hidden')).toBe(
+        false,
+      );
+      expect(root.querySelector('nav')?.classList.contains('mobile-ui:hidden')).toBe(false);
+      expect(byTestId('widgets-page-size')).toBe(pageSize);
+    },
+  );
 
   it('should localize the pagination nav accessible name', () => {
     const nav = fixture.nativeElement.querySelector('nav');

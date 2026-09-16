@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import type { TeamOutput } from '@features/organization/models';
+import type { MemberSelectOption, TeamOutput } from '@features/organization/models';
 import { InterventionTeamAssignDialog } from '../intervention-team-assign-dialog.component';
 
 const teams: readonly TeamOutput[] = [
@@ -14,6 +14,41 @@ const teams: readonly TeamOutput[] = [
     memberCount: 4,
     createdAt: '',
     updatedAt: '',
+  },
+];
+
+const memberOptions: readonly MemberSelectOption[] = [
+  {
+    value: 'member-1',
+    label: 'Ada Lovelace',
+    displayName: 'Ada Lovelace',
+    roleLabel: 'Inspector',
+    avatarUrl: null,
+    initials: 'AL',
+  },
+  {
+    value: 'member-2',
+    label: 'Grace Hopper',
+    displayName: 'Grace Hopper',
+    roleLabel: 'Inspector',
+    avatarUrl: null,
+    initials: 'GH',
+  },
+  {
+    value: 'member-3',
+    label: 'Katherine Johnson',
+    displayName: 'Katherine Johnson',
+    roleLabel: 'Inspector',
+    avatarUrl: null,
+    initials: 'KJ',
+  },
+  {
+    value: 'member-4',
+    label: 'Dorothy Vaughan',
+    displayName: 'Dorothy Vaughan',
+    roleLabel: 'Inspector',
+    avatarUrl: null,
+    initials: 'DV',
   },
 ];
 
@@ -51,6 +86,23 @@ describe('InterventionTeamAssignDialog', () => {
 
     expect(content().textContent).toContain('Fire safety squad');
     expect(content().textContent).toContain('4');
+  });
+
+  it('should keep team borders visible and show three avatars with an overflow count', async () => {
+    fixture.componentRef.setInput('teamMemberOptions', { 'team-1': memberOptions });
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    const group: HTMLElement = inDialog('[data-testid="intervention-team-assign-group"]');
+    const option: HTMLElement = inDialog('[data-testid="intervention-team-assign-option-team-1"]');
+
+    expect(group.classList.contains('p-1')).toBe(true);
+    expect(option.classList.contains('border')).toBe(true);
+    expect(option.classList.contains('ring-1')).toBe(false);
+    expect(option.querySelectorAll('hlm-avatar')).toHaveLength(3);
+    expect(
+      option.querySelector('[data-testid="intervention-team-assign-overflow-team-1"]')?.textContent,
+    ).toContain('+1');
   });
 
   it('should disable submitting until a team is picked', async () => {

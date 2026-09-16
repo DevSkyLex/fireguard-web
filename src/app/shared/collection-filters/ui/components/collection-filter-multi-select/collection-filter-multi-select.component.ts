@@ -8,6 +8,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
   type EffectRef,
   type InputSignal,
   type OutputEmitterRef,
@@ -16,11 +17,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { BrnFieldA11yService } from '@spartan-ng/brain/field';
-import { isCompact } from '@shared/breakpoint';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmComboboxImports } from '@shared/ui/combobox';
-import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmDrawer, HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmInput } from '@shared/ui/input';
 import { HlmItem, HlmItemContent, HlmItemTitle } from '@shared/ui/item';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
@@ -30,84 +31,11 @@ import type { CollectionFilterOption, CollectionFilterPopoverState } from '../..
  * Component CollectionFilterMultiSelect
  * @class CollectionFilterMultiSelect
  *
- * @description
- * The value segment every `is any of` / `is none of` filter chip projects into
- * `app-filter-chip`: a searchable multi-select built on spartan's combobox,
- * rendering the current selection as up to {@link maxVisible} identical filled
- * chips followed by a `+N` overflow marker — {@link hiddenValuesLabel} names
- * what it folds away for a screen reader, since "+N" alone reads as nothing.
- * Presentational (`ARCHITECTURE.md` §10.3) — it owns no filter state, it
- * reports the next selection through {@link valuesChanged} and lets the page
- * decide.
- *
- * It exists so the six chips of a list page stop each carrying their own copy
- * of the same forty lines of combobox markup: the trigger's width caps, the
- * chip row's truncation, the popover's search box and empty state are decided
- * once, here, which is also what keeps every field's selection looking
- * identical whatever its domain.
- *
- * Domain-agnostic by construction: it takes `{ value, label }` options and
- * plain strings for every user-visible word, so `shared/` never imports a
- * feature's models and the `$localize` ids stay in the owning feature. A field
- * whose options deserve a richer row than their label — an icon, a colour dot
- * — passes {@link optionTemplate} for the popover and {@link valueTemplate}
- * for the chips. Both are bodies only: the chip's box, its truncation and the
- * `+N` marker stay here, which is what keeps every field's selection reading
- * as one row rather than as a mix of presentations.
- *
- * `hlm-combobox-trigger`'s class lands on both the host element and the inner
- * button, so the padding that draws the hover surface sits on the button and
- * is cancelled on the host alone through `[&:not(button)]:p-0` — without it
- * the segment pads twice and its hover stops short of the chip's dividers.
- * That string is not lifted to a shared constant even though
- * `app-collection-filter-select` repeats it mot pour mot: binding it through
- * `[class]` instead of the current literal attribute drops the class from
- * `hlm-combobox-trigger`'s own host entirely — Angular routes a *bound*
- * `class` fully into a component's `@Input('class')` alias, unlike a static
- * literal, which the compiler also keeps on the host attribute — and the
- * host's own `flex h-full self-stretch` is exactly what stretches this
- * trigger to `app-filter-chip`'s row height in the first place.
- *
- * {@link disabled} no longer disables the underlying `hlm-combobox-multiple`:
- * the brain-level trigger couples its native `disabled` attribute to
- * `aria-disabled` with no seam to set one without the other, and native
- * `disabled` would drop the trigger out of the tab order and stop it from
- * receiving pointer events — exactly the defect this shape now avoids. The
- * trigger stays focusable and clickable; {@link onValuesPicked} refuses to
- * emit while {@link disabled} is set, so it reads as inert without being
- * unreachable. {@link disabled} is bound through `HlmComboboxTrigger`'s own
- * `[ariaDisabled]` input, alongside the plain `[attr.aria-disabled]` this
- * trigger already carried: the plain form only ever lands on
- * `hlm-combobox-trigger` itself, never the `<button>` it wraps, since Angular
- * applies an `[attr.x]` binding to the literal element it is written on
- * (`@shared/ui/combobox`'s own doc has the full account); `[ariaDisabled]` is
- * the channel that actually reaches the focusable, clickable node a screen
- * reader lands on.
- *
- * {@link tooltip} renders nothing here any more, visually or through
- * `aria-describedby`: a 192px-capped trigger that already has to fit one or
- * more value pastilles has no room left to also spell out a full sentence —
- * measured at 117px actually left for the reason once a single pastille is
- * drawn, against a 337px-wide sentence, and no `max-w-*` reconciles the two
- * at a 375px viewport. The reason now renders as `app-filter-chip`'s own
- * trailing row, at the chip's own width. {@link tooltip} stays on this
- * component's public API, inert, only because
- * `interventions-page.component.html` still binds it at every call site; a
- * caller may keep passing it, it is simply never read.
- *
- * {@link describedBy} is the live channel that actually connects the trigger
- * to that reason row — see `app-collection-filter-select`'s own class doc
- * for the full account of why Angular DI cannot discover
- * `app-filter-chip`'s `brnField` from here (this component is itself
- * projected in through `NgTemplateOutlet`, from a `ng-template` the owning
- * page declares) and why this component provides its own
- * {@link fieldA11y} instead, letting `hlm-combobox-trigger`'s own
- * `brnFieldControlDescribedBy` (`@shared/ui/combobox`, unmodified) pick the
- * registration up automatically since it genuinely is this component's own
- * descendant.
- *
+ * @description Domain-agnostic multi-select value control for collection filter chips. Desktop
+ * uses the native Spartan combobox; mobile edits a local draft in a drawer and emits only after
+ * Apply, before closing. Cancel, Escape and source refreshes during editing preserve the last
+ * confirmed value. Disabled states remain declarative and `describedBy` carries the reason text.
  * @version 2.1.0
- *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -225,31 +153,12 @@ export class CollectionFilterMultiSelect {
   /**
    * Property disabled
    * @readonly
-   * @description Whether this surface can apply the field at all. Dims the trigger and reads {@link tooltip}'s reason, but the trigger stays focusable — see the class doc.
+   * @description Whether this surface can apply the field. The trigger stays focusable and its handler remains inert.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
-
-  /**
-   * Property tooltip
-   *
-   * @description
-   * Inert. `app-filter-chip` (`@shared/collection-filters`) now renders and
-   * describes `CollectionFilterField.unavailableReason` itself, at the
-   * chip's own width — see the class doc for why the trigger this component
-   * owns could never fit that sentence at a 375px viewport. This input stays
-   * on the public API, unread by this component, only because
-   * `interventions-page.component.html` still binds it at every call site;
-   * do not read it back from here, and do not remove it while that binding
-   * stands.
-   *
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string>}
-   */
-  public readonly tooltip: InputSignal<string> = input<string>('');
 
   /**
    * Property describedBy
@@ -328,18 +237,72 @@ export class CollectionFilterMultiSelect {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
-  /** Whether this multi-choice should use the touch-first bottom drawer. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the mobile interaction mode for touch controls regardless of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
-  /** Selection staged inside the mobile drawer until Apply is activated. */
+  /**
+   * Property mobileValueId
+   * @readonly
+   * @description Stable id of the mobile trigger's displayed value, including any hidden selections.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileValueId: Signal<string> = computed<string>(
+    () => `${this.triggerId()}-mobile-value`,
+  );
+
+  /**
+   * Property mobileDescribedBy
+   * @readonly
+   * @description Describes mobile triggers by their displayed value while preserving caller description ids.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileDescribedBy: Signal<string> = computed<string>(() =>
+    `${this.mobileValueId()} ${this.describedBy() ?? ''}`.trim(),
+  );
+
+  /**
+   * Property stagedSelection
+   * @readonly
+   * @description Selection staged inside the mobile drawer until Apply is activated.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<readonly string[]>}
+   */
   protected readonly stagedSelection: WritableSignal<readonly string[]> = signal<readonly string[]>(
     [],
   );
 
-  /** Ephemeral search text owned by the mobile drawer. */
+  /**
+   * Property mobileSearch
+   * @readonly
+   * @description Ephemeral search text owned by the mobile drawer.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
   protected readonly mobileSearch: WritableSignal<string> = signal<string>('');
 
-  /** Options matching the mobile drawer's local search text. */
+  /**
+   * Property mobileOptions
+   * @readonly
+   * @description Options matching the mobile drawer's local search text.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionFilterOption[]>}
+   */
   protected readonly mobileOptions: Signal<readonly CollectionFilterOption[]> = computed<
     readonly CollectionFilterOption[]
   >(() => {
@@ -375,7 +338,7 @@ export class CollectionFilterMultiSelect {
   /**
    * Property labelOf
    * @readonly
-   * @description Resolves one value to its catalog label — the chip's text, and what the popover's search box matches against. An unknown value reads as itself rather than blank.
+   * @description Resolves one value to its catalog label for display and search. Values absent from the catalog use the localized Unknown value label rather than exposing a raw identifier.
    * @access protected
    * @since 1.0.0
    * @type {(value: string) => string}
@@ -410,48 +373,106 @@ export class CollectionFilterMultiSelect {
     onCleanup((): void => this.fieldA11y.unregisterDescription(id));
   });
 
-  /** Seeds the mobile draft whenever its controlled drawer opens or source values change. */
-  private readonly syncMobileSelection: EffectRef = effect((): void => {
-    if (this.state() === 'open') this.stagedSelection.set(this.selection());
-  });
+  /**
+   * Property drawer
+   * @readonly
+   * @description Owns explicit closure after the committed value has been emitted.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<HlmDrawer | undefined>}
+   */
+  private readonly drawer: Signal<HlmDrawer | undefined> = viewChild<HlmDrawer>(HlmDrawer);
+
+  /**
+   * Property mobileDrawerVisible
+   * @description Tracks actual drawer transitions so one opening owns one draft and one commitment.
+   * @access private
+   * @since 1.0.0
+   * @type {boolean}
+   */
+  private mobileDrawerVisible: boolean = false;
   //#endregion
 
   //#region Methods
   /**
    * Method onValuesPicked
-   * @description Normalizes the combobox's `null`-when-empty selection to an array before re-emitting it. A no-op while {@link disabled} is set — the trigger stays clickable, so this is what keeps a pick inert rather than merely invisible.
+   * @method onValuesPicked
+   * @description Accepts only string arrays from the combobox and normalizes an empty selection. Invalid payloads never partially change the filter.
    * @access protected
    * @since 1.0.0
-   * @param {readonly string[] | null | undefined} values - The combobox's next selection.
+   * @param {unknown} values - The combobox's untyped next selection.
    * @returns {void}
    */
-  protected onValuesPicked(values: readonly string[] | null | undefined): void {
+  protected onValuesPicked(values: unknown): void {
     if (this.disabled()) return;
-    this.valuesChanged.emit(values ?? []);
+    if (values === null || values === undefined) {
+      this.valuesChanged.emit([]);
+      return;
+    }
+    if (!Array.isArray(values)) return;
+    const selection: readonly unknown[] = values;
+    if (!selection.every((value: unknown): value is string => typeof value === 'string')) return;
+    this.valuesChanged.emit(selection);
   }
 
-  /** Mirrors drawer state to the existing popover contract and clears transient state on close. */
+  /**
+   * Method onMobileStateChanged
+   * @method onMobileStateChanged
+   * @description Seeds the draft once on each actual opening, including controlled openings, and clears search on dismissal.
+   * @access protected
+   * @since 1.0.0
+   * @param {CollectionFilterPopoverState} state - The drawer's next state.
+   * @returns {void}
+   */
   protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
-    if (state === 'open') {
-      this.stagedSelection.set(this.selection());
-    } else {
+    if (state === 'open' && !this.mobileDrawerVisible) {
+      this.stagedSelection.set([...this.values()]);
+    }
+    if (state === 'closed') {
       this.mobileSearch.set('');
     }
+    this.mobileDrawerVisible = state === 'open';
     this.stateChanged.emit(state);
   }
 
-  /** Updates the drawer's local search query without introducing form state. */
-  protected onMobileSearchChanged(event: Event): void {
-    this.mobileSearch.set((event.target as HTMLInputElement).value);
+  /**
+   * Method onMobileSearchChanged
+   * @method onMobileSearchChanged
+   * @description Updates the drawer's local search query without introducing form state.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - The native search input's current value.
+   * @returns {void}
+   */
+  protected onMobileSearchChanged(value: string): void {
+    this.mobileSearch.set(value);
   }
 
-  /** Returns whether one option belongs to the staged mobile selection. */
+  /**
+   * Method isStaged
+   * @method isStaged
+   * @description Returns whether one option belongs to the staged mobile selection.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - The option value to inspect.
+   * @returns {boolean} Whether the option is staged.
+   */
   protected isStaged(value: string): boolean {
     return this.stagedSelection().includes(value);
   }
 
-  /** Adds or removes one option in the staged mobile selection. */
+  /**
+   * Method onStagedChanged
+   * @method onStagedChanged
+   * @description Adds or removes one option in the staged mobile selection.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} value - The option value to update.
+   * @param {boolean} checked - Whether the option should be selected.
+   * @returns {void}
+   */
   protected onStagedChanged(value: string, checked: boolean): void {
+    if (this.disabled() || !this.mobileDrawerVisible) return;
     this.stagedSelection.update((selection: readonly string[]): readonly string[] =>
       checked
         ? selection.includes(value)
@@ -461,18 +482,37 @@ export class CollectionFilterMultiSelect {
     );
   }
 
-  /** Commits the staged mobile selection through the component's existing output. */
+  /**
+   * Method applyMobileSelection
+   * @method applyMobileSelection
+   * @description Commits once before explicitly closing the drawer; synchronous repeat activations are ignored.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected applyMobileSelection(): void {
-    this.onValuesPicked(this.stagedSelection());
+    if (this.disabled() || !this.mobileDrawerVisible) return;
+    this.mobileDrawerVisible = false;
+    this.valuesChanged.emit(this.stagedSelection());
+    this.drawer()?.close();
   }
 
-  /** Builds a stable, hydration-safe checkbox id from the trigger and option index. */
+  /**
+   * Method mobileOptionId
+   * @method mobileOptionId
+   * @description Builds a stable, hydration-safe checkbox id from the trigger and option index.
+   * @access protected
+   * @since 1.0.0
+   * @param {number} index - The option's current rendered index.
+   * @returns {string} The checkbox id.
+   */
   protected mobileOptionId(index: number): string {
     return `${this.triggerId()}-mobile-option-${index}`;
   }
 
   /**
    * Method optionOf
+   * @method optionOf
    * @description The catalog entry behind one value, for {@link valueTemplate}. An unknown value yields a synthetic entry labelled by itself, so a stale narrowing still renders.
    * @access protected
    * @since 1.1.0
@@ -490,6 +530,7 @@ export class CollectionFilterMultiSelect {
 
   /**
    * Method hiddenValuesLabel
+   * @method hiddenValuesLabel
    * @description The `sr-only` announcement for the `+N` overflow marker: the labels {@link visibleCount} folds out of view, comma-joined, resolved through {@link labelOf}.
    * @access protected
    * @since 1.2.0

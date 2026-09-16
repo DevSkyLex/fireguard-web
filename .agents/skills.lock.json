@@ -1,5 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "hashing": {
+    "algorithm": "sha256",
+    "text_normalization": "utf8-lf",
+    "text_extensions": [".csv", ".js", ".json", ".md", ".mjs", ".py", ".toml", ".txt", ".yaml"]
+  },
   "installed_at": "2026-09-04",
   "packages": [
     {
@@ -44,7 +49,7 @@
         "reference/document.md": "3673248740bcdd1122ccc610093ba2fe52f3943a61ce0b7170b74dc49e5b6098",
         "reference/extract.md": "31b90048c0b540daec46762a10c2b6b6434737a89af005054d8b848d829d003b",
         "reference/harden.md": "b31ff29c7a1ea979c6d039f7e8d17007410697ab49536690dca109f0af3f20f8",
-        "reference/hooks.md": "7e2364b034bc2754d8ddfe8200ff7f8db9c00c195639717fbbe263c6d3b7b759",
+        "reference/hooks.md": "b8dc7fc33fa81e6af35f98b0ad0cb0ed52cad60660f5a740ecec89fc96d89ebe",
         "reference/init.md": "09edecac88d50cd6046c8a43e741685c0f845cf59254116bc85f543a6aa81384",
         "reference/ios.md": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
         "reference/layout.md": "2d5eba1b9493f85c149a197fe6c4e9d015f5e68c49f24f5210a237cee4e44348",
@@ -66,8 +71,8 @@
         "scripts/comp-diff.mjs": "943560b54fbc37e48e0e6b503cb48f6904ecce8c413ae84773a050b2850b2c08",
         "scripts/comp-spec.mjs": "95a492b2a3ab53f5971c5af5d9ca474c6f7a01fb96a6c0b010c5f7a9baefd8ff",
         "scripts/concept-seed.mjs": "b9088d654fc652a9a23e94fe7ed6c2ffeaf2e846a90972f49eecac26a8133072",
-        "scripts/context-signals.mjs": "b56b6361abb2a960c3e352142d926f7e1aaa5bc5427ad3d76cd4fcb9278dbbc2",
-        "scripts/context.mjs": "ba6027d8255808f85bce20b2c450c6483d2f37fe011ac14996c4e85f7ed4f18a",
+        "scripts/context-signals.mjs": "f3bd1983c442366e8953c6dfc23fad7bf31f6bab1c3c3f3bae2193a71cbb7f56",
+        "scripts/context.mjs": "3c1dce4803207b68b44107b57ecb1a27f151209906d279a931519d6835c6fa16",
         "scripts/critique-storage.mjs": "12f9fece61dc54c56f106c2c999a3b7f3583a378f3aa32619db3356f34a3fe75",
         "scripts/data/font-index-failures.json": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
         "scripts/data/font-index.json": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
@@ -84,7 +89,7 @@
         "scripts/detector/engines/static-html/detect-html.mjs": "3348c8e0201f499d1665409bb74af7dbba394e971a47da99b64aac11baf5e885",
         "scripts/detector/engines/visual/screenshot-contrast.mjs": "b4520b3f001079bd175bf20d46c5197b1b8ec5fb98fdf72c50a24c0b6598ee99",
         "scripts/detector/findings.mjs": "39a804c0af6128a46f1b495d16f671f3982400d192b2191201984c638fc23c41",
-        "scripts/detector/node/file-system.mjs": "054dd34183f6318f50c50dd342e274ed4f3156c19a3026078fbfccc4906f6cfe",
+        "scripts/detector/node/file-system.mjs": "bf3a19c5f4b55b3bd8356d74a2e198af58b836bbe849bd194b444e85484c87f3",
         "scripts/detector/profile/profiler.mjs": "5e201f3557360bd368a3977fecf925f376fd95f8a4dd6c4cc63fbd62848cda43",
         "scripts/detector/registry/antipatterns.mjs": "80de31d972e11a3e29441c44623e409726db06942884ca82eb7aa458c648a181",
         "scripts/detector/rules/checks.mjs": "20512c7b1fc78c0b76a900cf1da004e4ef5428c1b4c32d1e5b9ebe932474aa3f",
@@ -97,9 +102,9 @@
         "scripts/embed-prompt.mjs": "4227f850b60a32cc6b8a167d9b49e4e00817823a1b93a9fdb9a3823345140daf",
         "scripts/font-match.mjs": "8f8303918a92af6ddd2cdeac3344223e43d66059e5098741bf059e89b409d9c6",
         "scripts/generate-image.mjs": "121d366da52fc16df6c44efd2676652ae4706196d5db1fc4c1d025335c586b7f",
-        "scripts/hook-admin.mjs": "8271e4f8989c92f88f8ffcbbf0bd7f068c241fbabde4f7f15ce3412ea5c2f5be",
+        "scripts/hook-admin.mjs": "b21df745a00bc59ffe61949ff75bfe66d54c59d3b907cde7a8767c8fb24adc24",
         "scripts/hook-before-edit.mjs": "49224a98a9addbeaca554b648c3973cb0250ba4cf9dfb56a1b4469c56d98dccc",
-        "scripts/hook-lib.mjs": "e13b3bf58e30c492b6e1c17d3520b2b9d66d378f1625fa03ed9a250963934c33",
+        "scripts/hook-lib.mjs": "a44baaf0579bb1037313a1945d6f623010b60c46fce0e7aeb480c676b59a597f",
         "scripts/hook.mjs": "c10d8b31213c5179cde45277eae517d4ef6fcd621b14261b7de54c64faac22a3",
         "scripts/lib/artifact-schema.mjs": "ad0a72e96c74be09490b1aea095478e307f45d707b15021c922cbd4466619359",
         "scripts/lib/composition-catalog.mjs": "a733122589e5bf6dbfcfbc2f9d016d6f54db0e4cebf278ac7f6a9cea374c9916",
@@ -118,7 +123,7 @@
         "scripts/lib/provider.mjs": "998c57324fdab98a0bfbd01a6099eadac7276038da961697d6069bbdeb0e5856",
         "scripts/lib/raster.mjs": "97038c3790f9a76e0dc09a8aa967e0679778a6015723873715a577d21ac7172a",
         "scripts/lib/roll-selection.mjs": "769cf0d4f8ea8aaee78ae29c7ee9ec27a18070b2137e0ee18adff862c84634e5",
-        "scripts/lib/staleness-deep.mjs": "022e974e5cf0cdf2385d57f1cb173e3efc7094f934f03c5ed95e55d0cfd3d6a6",
+        "scripts/lib/staleness-deep.mjs": "eb39d7b10cb7add8affacf85c6274de38d7800aa66572ed1c8d5d79971c611db",
         "scripts/lib/staleness-notice.mjs": "2770f3360119836822a5823d08248976e327d49adbb06caee1492493e257c8c4",
         "scripts/lib/staleness.mjs": "f900a3ce0cd836194859c575dd32f8802d6a078bb8af27e1b8b6bb49485ad7d6",
         "scripts/lib/surface-briefs.mjs": "33b35099b95d40e034b6a65657a1fd90fd011cdcb752f1c7a51e8470df37e668",
@@ -181,7 +186,7 @@
         "scripts/live.mjs": "9188f42a93e02ec341335c3441af5de16391196efdf78710e87dd7ef0fb6cb7e",
         "scripts/modern-screenshot.umd.js": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
         "scripts/palette.mjs": "6e09e15188033bfb8fe1f8de66f667c2b8b13d48cb55b1f50808330856e5fe16",
-        "scripts/pin.mjs": "065ee767ca20ce8b6dbd02c314adee84491fafdbddff339639c4a44aa2faee25",
+        "scripts/pin.mjs": "8745a668aec4aa789e3dcecb00be49c6f0b7b0dc71a961b7b300f8067c137e66",
         "scripts/serve-question.mjs": "48999dd4d8e68797da20ece68618008e395f73ace6f3b8e029303153ca097785",
         "scripts/surface-brief.mjs": "acd03bf38f6aef2b5d5287cefccacac018063b5b5356c99d191b3bd012f28ed3",
         "SKILL.md": "c2c0d8e5ea5dc3f36b879f099e72d83f506a6e626dcc075c1a7e14763f200d4d"
@@ -317,16 +322,16 @@
       "installation": "npx skills add spartan-ng/spartan --yes; official project-local Codex payload",
       "license": ".agents/licenses/spartan.txt",
       "files": {
-        "cli.md": "f7a20154833a78c3bc367b761e2d649779cda30f648b527274e7769712b3c9ac",
-        "customization.md": "3d5b7b793d3e1fbee4247b24609764689d71c92478876ffb610665ce0cfa9b48",
-        "mcp.md": "a71403abd580741a9c1af705caa83fdf35c441f2ca7b50513881877e6fa449af",
-        "registry.md": "930de311bccaaf8ab59ae7c1d591a3262db09b1d1de6398de7b040c51efd10c6",
-        "rules/brain-vs-helm.md": "2dc0b2efcffa9a500b5919d4caf0a8a926435558c855c6350f17d32109e9e1ce",
-        "rules/composition.md": "9167021dd4935d2fe2285f4dc0e929b86bc76639f22a84ab1896b86382ed4108",
-        "rules/forms.md": "0f6bc2d268f53b28b385918c9f7161680e67e00012a9419e8727e81ff941fd5c",
-        "rules/icons.md": "8297302e9184869e1e6f6712c32c4b752443f5ceee03865fcd56356170a43878",
-        "rules/styling.md": "0983c8656a116aef91097c30fb70b43cd51091bf5cc7cebdf316e3d60732d706",
-        "SKILL.md": "ffcc9035d694abb5960b9474e3350dcdfdf604f2b3a95e9faa2c38fb5ebcee61"
+        "cli.md": "3afe40aa4b398f8cee5c41ecf6b6c64217f837a509530f2d388f133f524438b3",
+        "customization.md": "eb423d10f6c4f958bc05007f63fd0fbce2f4cb27bc09ead545a4b717e7c8eb5f",
+        "mcp.md": "ba0373e997b4630e2f8a15f9fbe2273aa52679ecba0ea75cc04dcae245f78dde",
+        "registry.md": "044654a08779d263bf94e682e5e6f35134a727a0ebf6015c0f30ecfb210de86c",
+        "rules/brain-vs-helm.md": "f3e4e336994bd0b1dfe0a0ce231dfe41295c615fb4a8938079eed3dc2af6a7a2",
+        "rules/composition.md": "26b478cd3c482be4e054686832262f3d4ead5ab6f4b93d58ff10540717ec7ef9",
+        "rules/forms.md": "06479cb5ff32c0237b4fcf233fe10dd6b495b72fd0d97cb6f0194cb7db62c8c4",
+        "rules/icons.md": "a2ce9554a5401f3bcd17d105b2e3b4014e6552ca256d2f4353585f5fde225a38",
+        "rules/styling.md": "5c2e6fecf1a2a505acbc336e2dcfa3ae22c149a553ef02b044c041af5d889356",
+        "SKILL.md": "ec4bc40ac62823868ca054b15521234d49abb6c2ef009345c14d8607e6697f26"
       },
       "license_sha256": "73811fad2f096badcedac9aa2b6130d78d83e7b350839067dd3aef49224b85af"
     }

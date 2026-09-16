@@ -23,7 +23,9 @@ describe('ChannelInfoSheet', () => {
   let unpins: string[];
 
   async function open(pinned: readonly PinnedMessageItem[]): Promise<void> {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
 
     fixture = TestBed.createComponent(ChannelInfoSheet);
     unpins = [];
@@ -80,3 +82,4 @@ describe('ChannelInfoSheet', () => {
     expect(sheet()?.textContent).toContain('This message was deleted');
   });
 });
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';

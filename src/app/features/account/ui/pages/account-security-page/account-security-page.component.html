@@ -16,7 +16,7 @@
             hlmBtn
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             (click)="retryProfile()"
           >
             <span i18n="@@account.security.retry">Retry</span>
@@ -121,7 +121,7 @@
                     type="button"
                     variant="outline"
                     size="sm"
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     data-testid="account-email-resend"
                     [disabled]="emailChangeStore.isCancelling()"
                     (click)="openEmailChangeDialog()"
@@ -133,7 +133,7 @@
                     type="button"
                     variant="ghost"
                     size="sm"
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     data-testid="account-email-cancel-request"
                     aria-live="polite"
                     [disabled]="emailChangeStore.isCancelling()"
@@ -141,6 +141,7 @@
                     (click)="cancelEmailChange()"
                   >
                     @if (emailChangeStore.isCancelling()) {
+                      <hlm-spinner aria-hidden="true" />
                       <span i18n="@@account.email.cancelling">Cancelling…</span>
                     } @else {
                       <span i18n="@@account.email.cancelRequest">Cancel request</span>
@@ -158,7 +159,7 @@
                   type="button"
                   variant="outline"
                   size="sm"
-                  class="max-sm:min-h-11"
+                  class="mobile-ui:min-h-11"
                   data-testid="account-email-change-open"
                   (click)="openEmailChangeDialog()"
                 >
@@ -283,7 +284,7 @@
                 hlmBtn
                 type="button"
                 variant="outline"
-                class="w-fit gap-2 text-destructive max-sm:min-h-11"
+                class="w-fit gap-2 text-destructive mobile-ui:min-h-11"
                 data-testid="account-danger-deactivate-open"
                 (click)="openDeactivateDialog()"
               >

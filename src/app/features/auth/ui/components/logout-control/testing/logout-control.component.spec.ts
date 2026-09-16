@@ -1,9 +1,5 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
-import { Events } from '@ngrx/signals/events';
-import { Subject } from 'rxjs';
-import type { MockInstance } from 'vitest';
 import { AUTH_LOGOUT_PORT } from '@features/auth/ports';
 import { LogoutControl } from '../logout-control.component';
 
@@ -11,24 +7,16 @@ describe('LogoutControl', () => {
   let fixture: ComponentFixture<LogoutControl>;
   let isLoggingOut: WritableSignal<boolean>;
   let logout: ReturnType<typeof vi.fn>;
-  let sessionEnded: Subject<void>;
-  let navigate: MockInstance;
 
   beforeEach(async () => {
     isLoggingOut = signal(false);
     logout = vi.fn();
-    sessionEnded = new Subject<void>();
-
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideRouter([]),
         { provide: AUTH_LOGOUT_PORT, useValue: { isLoggingOut, logout } },
-        { provide: Events, useValue: { on: vi.fn().mockReturnValue(sessionEnded) } },
       ],
     });
-
-    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(LogoutControl);
     await fixture.whenStable();
@@ -55,15 +43,5 @@ describe('LogoutControl', () => {
 
     expect(button.disabled).toBe(true);
     expect(button.getAttribute('aria-busy')).toBe('true');
-  });
-
-  it('should leave for the sign-in screen once the session has ended', () => {
-    sessionEnded.next();
-
-    expect(navigate).toHaveBeenCalledWith(['/auth/login']);
-  });
-
-  it('should not navigate while the session is still alive', () => {
-    expect(navigate).not.toHaveBeenCalled();
   });
 });

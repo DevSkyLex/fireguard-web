@@ -20,6 +20,10 @@ describe('CollectionSkeletonRows', () => {
     expect(rows.length).toBe(5);
   });
 
+  it("keeps its rows in the parent table's formatting context", () => {
+    expect(root().classList.contains('contents')).toBe(true);
+  });
+
   it('draws as many rows as the rows input asks for', async () => {
     fixture.componentRef.setInput('rows', 3);
     await fixture.whenStable();

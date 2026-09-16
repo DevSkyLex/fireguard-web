@@ -15,7 +15,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="inspection-table-sort-performed-at"
           (click)="sortChanged.emit('performedAt')"
         >
@@ -30,7 +30,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="inspection-table-sort-result"
           (click)="sortChanged.emit('result')"
         >
@@ -44,7 +44,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="inspection-table-sort-status"
           (click)="sortChanged.emit('status')"
         >
@@ -90,30 +90,41 @@
     }
   </ng-container>
 
-  <ng-container surfaceCards>
+  <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
     @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
+      <a
+        hlmItem
+        class="min-h-11 flex-col items-stretch gap-2 rounded-none px-0"
         data-testid="inspection-table-card"
+        [routerLink]="[...detailRouteBase(), item.id]"
       >
-        <a
-          class="line-clamp-2 rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          [routerLink]="[...detailRouteBase(), item.id]"
-          >{{ item.performedAt.slice(0, 10) }}</a
-        >
+        <span class="text-base leading-snug font-semibold wrap-anywhere">
+          @if (item.inspector; as inspector) {
+            {{ inspector.displayName }}
+          } @else {
+            <span i18n="@@inspection.table.unnamedInspection">Inspection</span>
+          }
+        </span>
+        <span class="text-sm text-muted-foreground tabular-nums">
+          <span i18n="@@inspection.table.colPerformedAt">Performed on</span> ·
+          {{ item.performedAt.slice(0, 10) }}
+        </span>
 
-        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
-          <app-inspection-status-tag kind="result" [value]="item.result" />
-          <app-inspection-status-tag kind="status" [value]="item.status" />
+        <span class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <app-inspection-status-tag kind="result" [value]="item.result" asOption />
+          <app-inspection-status-tag kind="status" [value]="item.status" asOption />
 
-          <span class="truncate tabular-nums">
+          <span class="tabular-nums">
             <span i18n="@@inspection.table.colNonConformities">Non-conformities</span>:
             {{ item.nonConformitiesCount }}
           </span>
-        </div>
-      </div>
+        </span>
+      </a>
+      @if (!$last) {
+        <hlm-item-separator />
+      }
     }
-  </ng-container>
+  </div>
 
   <p
     surfaceEmpty

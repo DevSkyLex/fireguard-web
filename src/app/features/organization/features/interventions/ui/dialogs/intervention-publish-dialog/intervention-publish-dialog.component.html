@@ -69,7 +69,7 @@
             type="button"
             variant="outline"
             size="sm"
-            class="self-start max-sm:min-h-11"
+            class="self-start mobile-ui:min-h-11"
             data-testid="intervention-detail-publish-recheck"
             [disabled]="publishing()"
             (click)="recheckRequested.emit()"
@@ -81,7 +81,11 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel class="max-sm:min-h-11" [disabled]="publishing() && !accepted()">
+      <button
+        hlmAlertDialogCancel
+        class="mobile-ui:min-h-11"
+        [disabled]="publishing() && !accepted()"
+      >
         @if (accepted() || publicationTimedOut()) {
           <span i18n="@@common.close">Close</span>
         } @else {
@@ -91,7 +95,7 @@
       @if (!publicationTimedOut() && !accepted() && !unknownResult()) {
         <button
           hlmAlertDialogAction
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-detail-publish-confirm"
           [disabled]="publishing()"
           (click)="confirmed.emit()"

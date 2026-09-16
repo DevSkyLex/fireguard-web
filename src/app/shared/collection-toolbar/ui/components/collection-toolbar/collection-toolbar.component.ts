@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
  * can never absorb the toolbar's width itself — only the slot's own
  * `flex-wrap` can move a whole button to the next line, which is why
  * callers must never add `min-w-0 flex-1` to a button or a popover wrapper
- * inside either slot. On phones, the start slot and each direct projected
+ * inside either slot. On narrow rows, the start slot and each direct projected
  * start group span the available width so search fields do not leave an
  * arbitrary empty column; end actions retain their intrinsic widths and wrap
  * beneath it. Moved from `features/organization` to `shared` as a
@@ -29,6 +29,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 @Component({
   selector: 'app-collection-toolbar',
   imports: [],
+  host: { class: 'block w-full' },
   templateUrl: './collection-toolbar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

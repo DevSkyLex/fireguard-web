@@ -15,7 +15,7 @@
       <hlm-select class="inline-block" [value]="pageSize()" (valueChange)="changePageSize($event)">
         <hlm-select-trigger
           [buttonId]="testId('page-size')"
-          class="me-1 inline-flex h-8 w-20 max-sm:h-11 max-sm:data-[size=default]:h-11"
+          class="me-1 inline-flex h-8 w-20 mobile-ui:h-11 mobile-ui:data-[size=default]:h-11"
           [attr.data-testid]="testId('page-size')"
         >
           <hlm-select-value />
@@ -23,24 +23,36 @@
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (size of pageSizes(); track size) {
-              <hlm-select-item [value]="size">{{ size }}</hlm-select-item>
+              <hlm-select-item [value]="size" class="mobile-ui:min-h-11">{{
+                size
+              }}</hlm-select-item>
             }
           </hlm-select-group>
         </hlm-select-content>
       </hlm-select>
     </div>
 
-    <span hlmLabel [attr.data-testid]="testId('page-indicator')">{{ pageIndicatorLabel() }}</span>
+    <span
+      hlmLabel
+      [class.mobile-ui:hidden]="pageCount() <= 1"
+      [attr.data-testid]="testId('page-indicator')"
+      >{{ pageIndicatorLabel() }}</span
+    >
 
-    <nav hlmPagination [aria-label]="ariaNav" class="mx-0 w-auto">
+    <nav
+      hlmPagination
+      [aria-label]="ariaNav"
+      class="mx-0 w-auto"
+      [class.mobile-ui:hidden]="pageCount() <= 1"
+    >
       <ul hlmPaginationContent>
-        <li hlmPaginationItem class="max-sm:hidden">
+        <li hlmPaginationItem class="mobile-ui:hidden">
           <button
             hlmBtn
             type="button"
             variant="outline"
             size="icon-sm"
-            class="max-sm:size-11"
+            class="mobile-ui:size-11"
             [attr.data-testid]="testId('page-first')"
             [attr.aria-label]="ariaFirst"
             [disabled]="!canGoBack()"
@@ -55,7 +67,7 @@
             type="button"
             variant="outline"
             size="icon-sm"
-            class="max-sm:size-11"
+            class="mobile-ui:size-11"
             [attr.data-testid]="testId('page-prev')"
             [attr.aria-label]="ariaPrevious"
             [disabled]="!canGoBack()"
@@ -65,12 +77,15 @@
           </button>
         </li>
         @for (pageNumber of pageNumbers(); track pageNumber) {
-          <li hlmPaginationItem [class.max-sm:hidden]="!compactPageNumbers().includes(pageNumber)">
+          <li
+            hlmPaginationItem
+            [class.mobile-ui:hidden]="!compactPageNumbers().includes(pageNumber)"
+          >
             <button
               hlmPaginationLink
               type="button"
               size="icon-sm"
-              class="w-auto min-w-8 px-2 max-sm:h-11 max-sm:min-w-11"
+              class="w-auto min-w-8 px-2 mobile-ui:h-11 mobile-ui:min-w-11"
               [isActive]="pageNumber === page()"
               [attr.data-testid]="testId('page-number-' + pageNumber)"
               (click)="goToPage(pageNumber)"
@@ -85,7 +100,7 @@
             type="button"
             variant="outline"
             size="icon-sm"
-            class="max-sm:size-11"
+            class="mobile-ui:size-11"
             [attr.data-testid]="testId('page-next')"
             [attr.aria-label]="ariaNext"
             [disabled]="!canGoForward()"
@@ -94,13 +109,13 @@
             <ng-icon name="lucideChevronRight" aria-hidden="true" />
           </button>
         </li>
-        <li hlmPaginationItem class="max-sm:hidden">
+        <li hlmPaginationItem class="mobile-ui:hidden">
           <button
             hlmBtn
             type="button"
             variant="outline"
             size="icon-sm"
-            class="max-sm:size-11"
+            class="mobile-ui:size-11"
             [attr.data-testid]="testId('page-last')"
             [attr.aria-label]="ariaLast"
             [disabled]="!canGoForward()"

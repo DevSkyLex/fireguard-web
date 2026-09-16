@@ -17,6 +17,7 @@ import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { provideFeedback } from '@core/feedback';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { provideSplashScreen } from '@core/splash-screen';
 import { provideTheme } from '@core/theme';
@@ -91,6 +92,7 @@ export const appConfig: ApplicationConfig = {
     provideAuthFeature(),
     provideAccountFeature(),
     provideTheme(),
+    provideInteractionCapabilities(),
     provideSpartanHlm(),
     provideSplashScreen(),
     provideFeedback(),

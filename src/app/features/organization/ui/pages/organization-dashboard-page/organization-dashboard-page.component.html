@@ -26,7 +26,7 @@
           hlmBtn
           variant="outline"
           size="sm"
-          class="gap-2 max-sm:min-h-11"
+          class="gap-2 mobile-ui:min-h-11"
           (click)="retryDashboard()"
         >
           <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
@@ -44,13 +44,13 @@
       </div>
     }
     <section
-      class="grid grid-cols-1 gap-4 @[360px]/dashboard:grid-cols-2 @[960px]/dashboard:auto-cols-fr @[960px]/dashboard:grid-flow-col @[960px]/dashboard:grid-cols-none"
+      class="grid min-w-0 grid-cols-1 gap-4 @[960px]/dashboard:auto-cols-fr @[960px]/dashboard:grid-flow-col @[960px]/dashboard:grid-cols-none @[20rem]/dashboard:grid-cols-2"
       data-testid="org-dashboard-kpis"
     >
       @for (tile of kpiTiles(); track tile.id) {
         <div class="min-w-0" [attr.data-testid]="'org-dashboard-kpi-' + tile.id">
           <app-stat-tile
-            class="block h-full"
+            class="block h-full min-w-0"
             [label]="tile.label"
             [value]="tile.value"
             [icon]="tile.icon"
@@ -90,7 +90,7 @@
         >
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11 max-sm:min-w-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
             value="7d"
             i18n="@@org.statistics.period.7d"
           >
@@ -98,7 +98,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11 max-sm:min-w-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
             value="30d"
             i18n="@@org.statistics.period.30d"
           >
@@ -106,7 +106,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11 max-sm:min-w-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
             value="90d"
             i18n="@@org.statistics.period.90d"
           >
@@ -114,7 +114,7 @@
           </button>
           <button
             hlmToggleGroupItem
-            class="max-sm:min-h-11 max-sm:min-w-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
             value="12m"
             i18n="@@org.statistics.period.12m"
           >
@@ -125,7 +125,7 @@
         <hlm-field orientation="horizontal" class="w-auto gap-2">
           <label
             hlmFieldLabel
-            class="max-sm:min-h-11 max-sm:min-w-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-11"
             for="org-statistics-compare"
             i18n="@@org.dashboard.comparison.toggle"
             >Compare</label
@@ -189,7 +189,7 @@
                 hlmBtn
                 variant="outline"
                 size="sm"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 (click)="retryOverviewTrend()"
                 i18n="@@org.statistics.retry"
               >
@@ -259,7 +259,7 @@
                 hlmBtn
                 variant="outline"
                 size="sm"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 (click)="retryOverviewTrend()"
                 i18n="@@org.statistics.retry"
               >
@@ -298,7 +298,7 @@
       hlmCollapsibleTrigger
       hlmBtn
       variant="ghost"
-      class="group w-full justify-between max-sm:min-h-11"
+      class="group w-full justify-between mobile-ui:min-h-11"
       data-testid="org-dashboard-additional"
     >
       <span i18n="@@org.dashboard.additional.title">Additional analysis</span
@@ -404,7 +404,7 @@
                   hlmBtn
                   variant="outline"
                   size="sm"
-                  class="gap-2 max-sm:min-h-11"
+                  class="gap-2 mobile-ui:min-h-11"
                   (click)="retryAssetGrowthTrend()"
                 >
                   <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />
@@ -450,7 +450,7 @@
                   hlmBtn
                   variant="outline"
                   size="sm"
-                  class="gap-2 max-sm:min-h-11"
+                  class="gap-2 mobile-ui:min-h-11"
                   (click)="retryAssetGrowthTrend()"
                 >
                   <ng-icon name="lucideRefreshCw" class="text-sm" aria-hidden="true" />

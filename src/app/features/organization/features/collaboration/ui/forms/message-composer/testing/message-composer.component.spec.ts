@@ -1,5 +1,7 @@
+import { computed, signal } from '@angular/core';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { MESSAGE_BODY_MAX_LENGTH } from '../constants';
 import { MessageComposer } from '../message-composer.component';
@@ -10,6 +12,7 @@ const MEMBERS: readonly MemberDirectoryEntry[] = [
 ];
 
 describe('MessageComposer', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<MessageComposer>;
   let sent: string[];
 
@@ -54,6 +57,13 @@ describe('MessageComposer', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
+    mobile.set(false);
+    TestBed.overrideProvider(INTERACTION_CAPABILITIES_PORT, {
+      useValue: {
+        isMobileInteractionMode: mobile,
+        mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+      },
+    });
     fixture = TestBed.createComponent(MessageComposer);
     sent = [];
     fixture.componentInstance.sent.subscribe((body: string) => sent.push(body));
@@ -254,7 +264,7 @@ describe('MessageComposer', () => {
 
     it('should insert the name and close the list when one is picked', async () => {
       await type('@bru');
-      mentions()[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      mentions()[0].click();
       await fixture.whenStable();
 
       expect(textarea()?.value).toBe('@Bruno Lefèvre ');
@@ -310,5 +320,30 @@ describe('MessageComposer', () => {
 
       expect(mentions()).toHaveLength(0);
     });
+  });
+  it('keeps the mobile draft on Enter and sends only through the send action', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    await type('Field note');
+    await press('Enter');
+    expect(sent).toEqual([]);
+    expect(textarea()?.value).toBe('Field note');
+    sendButton()?.click();
+    await fixture.whenStable();
+    expect(sent).toEqual(['Field note']);
+  });
+
+  it('preserves its field tree and draft when the interaction mode changes', async () => {
+    await type('Still editing');
+    const form = fixture.componentInstance['composerForm'];
+    const field = textarea();
+    mobile.set(true);
+    await fixture.whenStable();
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['composerForm']).toBe(form);
+    expect(textarea()).toBe(field);
+    expect(textarea()?.value).toBe('Still editing');
+    expect(sent).toEqual([]);
   });
 });

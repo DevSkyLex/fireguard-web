@@ -1,0 +1,16 @@
+<div hlmItemGroup class="gap-0" aria-hidden="true">
+  @for (index of rowIndexes(); track index) {
+    @if (!$first) {
+      <hlm-item-separator class="my-0" />
+    }
+    <div hlmItem variant="outline" size="sm" class="min-h-16 items-stretch">
+      <div hlmItemContent class="min-w-0 gap-2">
+        <hlm-skeleton class="h-4 w-40 max-w-full" />
+        <div class="flex items-center gap-2">
+          <hlm-skeleton class="h-3 w-24" />
+          <hlm-skeleton class="h-3 w-16" />
+        </div>
+      </div>
+    </div>
+  }
+</div>

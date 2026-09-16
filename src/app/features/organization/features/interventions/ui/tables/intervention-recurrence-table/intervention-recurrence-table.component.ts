@@ -30,6 +30,7 @@ import {
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTableImports } from '@shared/ui/table';
 
@@ -59,6 +60,7 @@ import { HlmTableImports } from '@shared/ui/table';
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ...HlmItemImports,
     NgTemplateOutlet,
     CollectionSurface,
     OrgDatePipe,
@@ -204,15 +206,21 @@ export class InterventionRecurrenceTable {
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
-  /** One literal Tailwind width per column, handed to the shared surface's skeleton rows. */
+  /**
+   * Property skeletonColumnWidths
+   * @readonly
+   * @description One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   * @access protected
+   * @since 2.0.0
+   * @type {readonly string[]}
+   */
   protected readonly skeletonColumnWidths: readonly string[] = [
-    'h-4 w-32 max-w-full',
-    'h-4 w-28 max-w-full',
-    'h-4 w-24',
-    'h-4 w-24',
+    'w-32 max-w-full',
+    'w-28 max-w-full',
+    'w-24',
+    'w-24',
     'mx-auto h-5 w-9',
-    'ms-auto h-4 w-20',
+    'ms-auto w-20',
   ];
   //#endregion
 

@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-1">
   <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 mobile-ui:px-0 mobile-ui:py-2 desktop-ui:sm:min-h-9"
     data-testid="inspection-field-equipment"
   >
     <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.equipment"
@@ -17,7 +17,7 @@
   </div>
 
   <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 mobile-ui:px-0 mobile-ui:py-2 desktop-ui:sm:min-h-9"
     data-testid="inspection-field-facility"
   >
     <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.facility"
@@ -38,7 +38,7 @@
   </div>
 
   <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 mobile-ui:px-0 mobile-ui:py-2 desktop-ui:sm:min-h-9"
     data-testid="inspection-field-checklist"
   >
     <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.checklist"
@@ -60,7 +60,7 @@
   </div>
 
   <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
+    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 mobile-ui:px-0 mobile-ui:py-2 desktop-ui:sm:min-h-9"
     data-testid="inspection-field-inspector"
   >
     <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@inspection.info.inspector"
@@ -100,13 +100,13 @@
         <label for="inspection-prop-result" class="sr-only" i18n="@@inspection.info.result"
           >Result</label
         >
-        <hlm-select-trigger buttonId="inspection-prop-result" class="w-full">
+        <hlm-select-trigger buttonId="inspection-prop-result" class="w-full mobile-ui:min-h-11">
           <hlm-select-value />
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
             @for (result of resultValues; track result) {
-              <hlm-select-item [value]="result">
+              <hlm-select-item class="mobile-ui:min-h-11" [value]="result">
                 <app-inspection-status-tag kind="result" [value]="result" asOption />
               </hlm-select-item>
             }
@@ -138,7 +138,7 @@
         fieldEditor
         hlmInput
         type="date"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         [attr.aria-labelledby]="performedAtField.labelId"
         [value]="dateDraft()"
         (input)="dateDraft.set($any($event.target).value)"
@@ -172,7 +172,7 @@
       <textarea
         fieldEditor
         hlmTextarea
-        class="w-full"
+        class="w-full mobile-ui:min-h-11"
         rows="3"
         [attr.aria-labelledby]="notesField.labelId"
         [value]="textDraft()"

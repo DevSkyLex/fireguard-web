@@ -27,6 +27,7 @@ import {
 import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { Observable } from 'rxjs';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type {
@@ -69,6 +70,7 @@ import {
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarGroup, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuGroup,
@@ -76,6 +78,8 @@ import {
   HlmDropdownMenuSeparator,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { MessageThread } from '../../components/message-thread';
 import { ChannelDeleteDialog } from '../../dialogs/channel-delete-dialog';
 import { ChannelEditDialog, type ChannelEditDraft } from '../../dialogs/channel-edit-dialog';
@@ -134,6 +138,9 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
     ChannelParticipantsSheet,
     ChannelEditDialog,
     HlmButton,
+    HlmDrawerImports,
+    HlmItemImports,
+    HlmSpinner,
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarGroup,
@@ -186,6 +193,22 @@ export class ChannelConversationPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   *
+   * @description
+   * Selects the channel action drawer without replacing the conversation or its draft.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   /**
    * Property thread
    * @readonly
@@ -1288,12 +1311,12 @@ export class ChannelConversationPage {
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {boolean} Whether a favorite command was started.
    */
-  protected toggleFavorite(): void {
+  protected toggleFavorite(): boolean {
     const channel: ChannelOutput | null = this.channel();
 
-    if (channel === null || this.favoritePending()) return;
+    if (channel === null || this.favoritePending()) return false;
 
     const channelId: string = this.channelId();
 
@@ -1310,6 +1333,7 @@ export class ChannelConversationPage {
       },
       error: (): void => this.favoritePending.set(false),
     });
+    return true;
   }
 
   /**
@@ -1483,4 +1507,23 @@ export class ChannelConversationPage {
       );
   }
   //#endregion
+
+  /**
+   * Method onMobileActionsClosed
+   * @method onMobileActionsClosed
+   * @description Opens the requested channel surface after the action drawer has finished closing.
+   * @access protected
+   * @since 1.0.0
+   * @param {unknown} action - The explicit native drawer close result.
+   * @returns {void}
+   */
+  protected onMobileActionsClosed(action: unknown): void {
+    if (this.channel() === null) return;
+
+    if (action === 'info') this.infoSheetVisible.set(true);
+    if (action === 'participants') this.participantsSheetVisible.set(true);
+    if (!this.canManage()) return;
+    if (action === 'edit') this.editDialogVisible.set(true);
+    if (action === 'delete') this.requestDelete();
+  }
 }

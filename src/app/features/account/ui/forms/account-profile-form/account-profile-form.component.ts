@@ -18,6 +18,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { AccountProfileFormValues } from './models';
 
 /**
@@ -57,7 +58,15 @@ const NAME_MAX_LENGTH: number = 100;
  */
 @Component({
   selector: 'app-account-profile-form',
-  imports: [FormField, HlmButton, HlmInput, NgIcon, ...HlmFieldImports, ...HlmSelectImports],
+  imports: [
+    FormField,
+    HlmButton,
+    HlmInput,
+    HlmSpinner,
+    NgIcon,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
   providers: [provideIcons({ flagEs, flagFr, flagUn, flagUs })],
   templateUrl: './account-profile-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

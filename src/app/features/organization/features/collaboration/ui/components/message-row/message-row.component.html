@@ -31,7 +31,7 @@
     }
 
     <div
-      class="flex items-start gap-1"
+      class="flex min-w-0 items-start gap-1"
       [class.flex-row-reverse]="entry.isOwn"
       [class.self-end]="entry.isOwn"
     >
@@ -45,12 +45,12 @@
         "
         [class.opacity-60]="entry.status === 'pending'"
       >
-        <div hlmBubbleContent [class.border-dashed]="entry.isDeleted">
+        <div hlmBubbleContent class="mobile-ui:text-base" [class.border-dashed]="entry.isDeleted">
           @if (entry.isDeleted) {
             <span class="italic">{{ deletedLabel }}</span>
           } @else {
             <div
-              class="break-words whitespace-pre-wrap [&_a]:underline"
+              class="[overflow-wrap:anywhere] break-words whitespace-pre-wrap [&_a]:underline"
               [innerHTML]="entry.bodyHtml"
             ></div>
           }
@@ -67,113 +67,261 @@
       </div>
 
       @if (hasActions()) {
-        <button
-          hlmBtn
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          class="shrink-0 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100 max-sm:opacity-100"
-          data-testid="message-row-actions"
-          [hlmDropdownMenuTrigger]="messageActionsMenu"
-          [align]="entry.isOwn ? 'end' : 'start'"
-          i18n-aria-label="@@messages.row.actionsAria"
-          aria-label="Message actions"
-        >
-          <ng-icon name="lucideEllipsis" class="text-sm" aria-hidden="true" />
-        </button>
-
-        <ng-template #messageActionsMenu>
-          <hlm-dropdown-menu class="min-w-48">
-            <hlm-dropdown-menu-group>
-              @if (showThreadItem()) {
-                <button
-                  hlmDropdownMenuItem
-                  class="gap-2"
-                  data-testid="message-action-thread"
-                  (click)="threadRequested.emit(entry.id)"
-                >
-                  <ng-icon name="lucideMessageSquareReply" class="text-sm" aria-hidden="true" />
-                  @if (entry.replyCount > 0) {
-                    <span i18n="@@messages.row.viewThread">View thread</span>
-                  } @else {
-                    <span i18n="@@messages.row.replyInThread">Reply in thread</span>
+        @if (isMobileInteractionMode()) {
+          <hlm-drawer (closed)="onMobileActionsClosed($event)">
+            <button
+              hlmBtn
+              hlmDrawerTrigger
+              type="button"
+              variant="ghost"
+              size="icon"
+              class="size-11 shrink-0"
+              data-testid="message-row-actions"
+              i18n-aria-label="@@messages.row.actionsAria"
+              aria-label="Message actions"
+            >
+              <ng-icon name="lucideEllipsis" aria-hidden="true" />
+            </button>
+            <hlm-drawer-content
+              *hlmDrawerPortal="let drawer"
+              class="pb-[env(safe-area-inset-bottom)]"
+            >
+              <hlm-drawer-header>
+                <div class="text-start">
+                  <h2 hlmDrawerTitle i18n="@@messages.row.actionsAria">Message actions</h2>
+                  <p hlmDrawerDescription i18n="@@messages.row.actionsDescription">
+                    Choose what to do with this message.
+                  </p>
+                </div>
+              </hlm-drawer-header>
+              <div class="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
+                <hlm-item-group>
+                  @if (showThreadItem()) {
+                    <button
+                      hlmItem
+                      type="button"
+                      class="min-h-11 w-full cursor-pointer flex-nowrap gap-3 text-start hover:bg-accent focus-visible:bg-accent"
+                      data-testid="message-action-thread"
+                      (click)="drawer.close('thread')"
+                    >
+                      <span hlmItemMedia variant="icon"
+                        ><ng-icon
+                          name="lucideMessageSquareReply"
+                          class="text-sm"
+                          aria-hidden="true"
+                      /></span>
+                      <span hlmItemContent>
+                        @if (entry.replyCount > 0) {
+                          <span hlmItemTitle i18n="@@messages.row.viewThread">View thread</span>
+                        } @else {
+                          <span hlmItemTitle i18n="@@messages.row.replyInThread"
+                            >Reply in thread</span
+                          >
+                        }
+                      </span>
+                    </button>
                   }
-                </button>
-              }
 
-              @if (showPinItem()) {
-                <button
-                  hlmDropdownMenuItem
-                  class="gap-2"
-                  data-testid="message-action-pin"
-                  [disabled]="actionsBusy()"
-                  (click)="pinToggleRequested.emit(entry.id)"
-                >
-                  <ng-icon
-                    [name]="entry.isPinned ? 'lucidePinOff' : 'lucidePin'"
-                    class="text-sm"
-                    aria-hidden="true"
-                  />
-                  @if (entry.isPinned) {
-                    <span i18n="@@messages.row.unpin">Unpin</span>
-                  } @else {
-                    <span i18n="@@messages.row.pin">Pin</span>
+                  @if (showPinItem()) {
+                    <button
+                      hlmItem
+                      type="button"
+                      class="min-h-11 w-full cursor-pointer flex-nowrap gap-3 text-start hover:bg-accent focus-visible:bg-accent"
+                      data-testid="message-action-pin"
+                      [disabled]="actionsBusy()"
+                      (click)="pinToggleRequested.emit(entry.id); drawer.close()"
+                    >
+                      <span hlmItemMedia variant="icon"
+                        ><ng-icon
+                          [name]="entry.isPinned ? 'lucidePinOff' : 'lucidePin'"
+                          class="text-sm"
+                          aria-hidden="true"
+                      /></span>
+                      <span hlmItemContent>
+                        @if (entry.isPinned) {
+                          <span hlmItemTitle i18n="@@messages.row.unpin">Unpin</span>
+                        } @else {
+                          <span hlmItemTitle i18n="@@messages.row.pin">Pin</span>
+                        }
+                      </span>
+                    </button>
                   }
-                </button>
-              }
 
-              @if (showSaveItem()) {
-                <button
-                  hlmDropdownMenuItem
-                  class="gap-2"
-                  data-testid="message-action-save"
-                  [disabled]="actionsBusy()"
-                  (click)="saveToggleRequested.emit(entry.id)"
-                >
-                  <ng-icon
-                    [name]="entry.isSaved ? 'lucideBookmarkX' : 'lucideBookmark'"
-                    class="text-sm"
-                    aria-hidden="true"
-                  />
-                  @if (entry.isSaved) {
-                    <span i18n="@@messages.row.unsave">Remove from saved</span>
-                  } @else {
-                    <span i18n="@@messages.row.save">Save for later</span>
+                  @if (showSaveItem()) {
+                    <button
+                      hlmItem
+                      type="button"
+                      class="min-h-11 w-full cursor-pointer flex-nowrap gap-3 text-start hover:bg-accent focus-visible:bg-accent"
+                      data-testid="message-action-save"
+                      [disabled]="actionsBusy()"
+                      (click)="saveToggleRequested.emit(entry.id); drawer.close()"
+                    >
+                      <span hlmItemMedia variant="icon"
+                        ><ng-icon
+                          [name]="entry.isSaved ? 'lucideBookmarkX' : 'lucideBookmark'"
+                          class="text-sm"
+                          aria-hidden="true"
+                      /></span>
+                      <span hlmItemContent>
+                        @if (entry.isSaved) {
+                          <span hlmItemTitle i18n="@@messages.row.unsave">Remove from saved</span>
+                        } @else {
+                          <span hlmItemTitle i18n="@@messages.row.save">Save for later</span>
+                        }
+                      </span>
+                    </button>
                   }
-                </button>
-              }
 
-              @if (entry.canEdit) {
+                  @if (entry.canEdit) {
+                    <button
+                      hlmItem
+                      type="button"
+                      class="min-h-11 w-full cursor-pointer flex-nowrap gap-3 text-start hover:bg-accent focus-visible:bg-accent"
+                      data-testid="message-action-edit"
+                      [disabled]="actionsBusy()"
+                      (click)="drawer.close('edit')"
+                    >
+                      <span hlmItemMedia variant="icon"
+                        ><ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true"
+                      /></span>
+                      <span hlmItemContent>
+                        <span hlmItemTitle i18n="@@messages.row.edit">Edit</span>
+                      </span>
+                    </button>
+                  }
+                </hlm-item-group>
+
+                @if (entry.canDelete) {
+                  <hlm-item-separator />
+
+                  <button
+                    hlmItem
+                    type="button"
+                    class="min-h-11 w-full cursor-pointer flex-nowrap gap-3 text-start text-destructive hover:bg-accent focus-visible:bg-accent"
+                    data-testid="message-action-delete"
+                    [disabled]="actionsBusy()"
+                    (click)="drawer.close('delete')"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle i18n="@@messages.row.delete">Delete</span>
+                    </span>
+                  </button>
+                }
+              </div>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        } @else {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            class="shrink-0 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100 mobile-ui:opacity-100"
+            data-testid="message-row-actions"
+            [hlmDropdownMenuTrigger]="messageActionsMenu"
+            [align]="entry.isOwn ? 'end' : 'start'"
+            i18n-aria-label="@@messages.row.actionsAria"
+            aria-label="Message actions"
+          >
+            <ng-icon name="lucideEllipsis" class="text-sm" aria-hidden="true" />
+          </button>
+
+          <ng-template #messageActionsMenu>
+            <hlm-dropdown-menu class="min-w-48">
+              <hlm-dropdown-menu-group>
+                @if (showThreadItem()) {
+                  <button
+                    hlmDropdownMenuItem
+                    class="gap-2"
+                    data-testid="message-action-thread"
+                    (click)="threadRequested.emit(entry.id)"
+                  >
+                    <ng-icon name="lucideMessageSquareReply" class="text-sm" aria-hidden="true" />
+                    @if (entry.replyCount > 0) {
+                      <span i18n="@@messages.row.viewThread">View thread</span>
+                    } @else {
+                      <span i18n="@@messages.row.replyInThread">Reply in thread</span>
+                    }
+                  </button>
+                }
+
+                @if (showPinItem()) {
+                  <button
+                    hlmDropdownMenuItem
+                    class="gap-2"
+                    data-testid="message-action-pin"
+                    [disabled]="actionsBusy()"
+                    (click)="pinToggleRequested.emit(entry.id)"
+                  >
+                    <ng-icon
+                      [name]="entry.isPinned ? 'lucidePinOff' : 'lucidePin'"
+                      class="text-sm"
+                      aria-hidden="true"
+                    />
+                    @if (entry.isPinned) {
+                      <span i18n="@@messages.row.unpin">Unpin</span>
+                    } @else {
+                      <span i18n="@@messages.row.pin">Pin</span>
+                    }
+                  </button>
+                }
+
+                @if (showSaveItem()) {
+                  <button
+                    hlmDropdownMenuItem
+                    class="gap-2"
+                    data-testid="message-action-save"
+                    [disabled]="actionsBusy()"
+                    (click)="saveToggleRequested.emit(entry.id)"
+                  >
+                    <ng-icon
+                      [name]="entry.isSaved ? 'lucideBookmarkX' : 'lucideBookmark'"
+                      class="text-sm"
+                      aria-hidden="true"
+                    />
+                    @if (entry.isSaved) {
+                      <span i18n="@@messages.row.unsave">Remove from saved</span>
+                    } @else {
+                      <span i18n="@@messages.row.save">Save for later</span>
+                    }
+                  </button>
+                }
+
+                @if (entry.canEdit) {
+                  <button
+                    hlmDropdownMenuItem
+                    class="gap-2"
+                    data-testid="message-action-edit"
+                    [disabled]="actionsBusy()"
+                    (click)="editRequested.emit(entry.id)"
+                  >
+                    <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
+                    <span i18n="@@messages.row.edit">Edit</span>
+                  </button>
+                }
+              </hlm-dropdown-menu-group>
+
+              @if (entry.canDelete) {
+                <hlm-dropdown-menu-separator />
+
                 <button
                   hlmDropdownMenuItem
+                  variant="destructive"
                   class="gap-2"
-                  data-testid="message-action-edit"
+                  data-testid="message-action-delete"
                   [disabled]="actionsBusy()"
-                  (click)="editRequested.emit(entry.id)"
+                  (click)="deleteRequested.emit(entry.id)"
                 >
-                  <ng-icon name="lucidePencilLine" class="text-sm" aria-hidden="true" />
-                  <span i18n="@@messages.row.edit">Edit</span>
+                  <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
+                  <span i18n="@@messages.row.delete">Delete</span>
                 </button>
               }
-            </hlm-dropdown-menu-group>
-
-            @if (entry.canDelete) {
-              <hlm-dropdown-menu-separator />
-
-              <button
-                hlmDropdownMenuItem
-                variant="destructive"
-                class="gap-2"
-                data-testid="message-action-delete"
-                [disabled]="actionsBusy()"
-                (click)="deleteRequested.emit(entry.id)"
-              >
-                <ng-icon name="lucideTrash2" class="text-sm" aria-hidden="true" />
-                <span i18n="@@messages.row.delete">Delete</span>
-              </button>
-            }
-          </hlm-dropdown-menu>
-        </ng-template>
+            </hlm-dropdown-menu>
+          </ng-template>
+        }
       }
     </div>
 
@@ -183,7 +331,7 @@
         type="button"
         variant="ghost"
         size="sm"
-        class="h-6 w-fit gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+        class="h-6 w-fit gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground mobile-ui:min-h-11"
         [class.self-end]="entry.isOwn"
         data-testid="message-row-replies"
         (click)="threadRequested.emit(entry.id)"
@@ -212,7 +360,7 @@
           variant="ghost"
           size="sm"
           type="button"
-          class="h-6 gap-1 px-1.5 text-xs"
+          class="h-6 gap-1 px-1.5 text-xs mobile-ui:min-h-11"
           data-testid="message-row-retry"
           (click)="retried.emit(entry.id)"
         >

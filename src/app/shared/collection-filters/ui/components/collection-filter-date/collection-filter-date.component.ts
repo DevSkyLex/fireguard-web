@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -14,7 +15,7 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import { isCompact } from '@shared/breakpoint';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCalendar } from '@shared/ui/calendar';
 import { HlmDatePicker } from '@shared/ui/date-picker';
@@ -72,22 +73,15 @@ import type { CollectionFilterPopoverState } from '../../../models';
  * {@link disabled} is set instead, so the popover still opens (a disabled
  * field still explains itself) while a pick becomes a no-op.
  *
- * {@link tooltip} renders nothing here, visually or through
- * `aria-describedby` — homogeneous with `app-collection-filter-select` and
- * `app-collection-filter-multi-select`: a 192px-capped trigger has no room
- * for a full sentence next to its value pastille at a 375px viewport. The
- * reason renders as `app-filter-chip`'s own trailing row instead, at the
- * chip's own width — see its class doc. {@link describedBy} is the separate,
- * still-live channel that actually connects this trigger to that row: see
- * its own doc for why an explicit id, handed down by the owning page, is
- * what a DI-only fix cannot reach here.
+ * {@link describedBy} connects the trigger to the reason rendered by its
+ * owning filter chip without duplicating that text inside the compact control.
  *
  * `HlmDatePicker`'s own host is `block` and its internal `<hlm-popover>`
  * carries no height class — unlike `hlm-combobox`, which has neither
  * wrapper, so the `h-full`/`self-stretch` chain
  * `app-collection-filter-select` relies on has no auto-height ancestor to
  * cross. The trigger still carries `flex h-full self-stretch` for whichever
- * context does stretch it, backed by `min-h-7`/`max-sm:min-h-11` so it
+ * context does stretch it, backed by `min-h-7`/`mobile-ui:min-h-11` so it
  * matches `app-filter-chip`'s own row height even where that chain does not
  * reach all the way through — unproven in a browser, see the handoff report.
  * `app-collection-filter-date-range` repeats this trigger chrome mot pour
@@ -184,16 +178,6 @@ export class CollectionFilterDate {
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
 
   /**
-   * Property tooltip
-   * @readonly
-   * @description Inert — see the class doc. `app-filter-chip` (`@shared/collection-filters`) now renders and describes `CollectionFilterField.unavailableReason` itself; this input exists only for homogeneity with `app-collection-filter-select`'s own public API.
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string>}
-   */
-  public readonly tooltip: InputSignal<string> = input<string>('');
-
-  /**
    * Property describedBy
    * @readonly
    *
@@ -251,8 +235,41 @@ export class CollectionFilterDate {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
-  /** Whether this calendar should use the touch-first bottom drawer. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the mobile interaction mode for touch controls regardless of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property mobileValueId
+   * @readonly
+   * @description Stable id of the mobile trigger's displayed value, including any hidden selections.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileValueId: Signal<string> = computed<string>(
+    () => `${this.triggerId()}-mobile-value`,
+  );
+
+  /**
+   * Property mobileDescribedBy
+   * @readonly
+   * @description Describes mobile triggers by their displayed value while preserving caller description ids.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileDescribedBy: Signal<string> = computed<string>(() =>
+    `${this.mobileValueId()} ${this.describedBy() ?? ''}`.trim(),
+  );
 
   /**
    * Property picker
@@ -265,7 +282,14 @@ export class CollectionFilterDate {
   protected readonly picker: Signal<HlmDatePicker<Date> | undefined> =
     viewChild<HlmDatePicker<Date>>(HlmDatePicker);
 
-  /** The compact drawer, used to close immediately after a single date pick. */
+  /**
+   * Property drawer
+   * @readonly
+   * @description The mobile drawer, used to close immediately after a single date pick.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<HlmDrawer | undefined>}
+   */
   private readonly drawer: Signal<HlmDrawer | undefined> = viewChild<HlmDrawer>(HlmDrawer);
 
   /**
@@ -290,7 +314,7 @@ export class CollectionFilterDate {
     const popover = this.picker()?.popover();
     if (!popover) return;
 
-    if (this.compact()) {
+    if (this.isMobileInteractionMode()) {
       popover.close();
       return;
     }
@@ -317,12 +341,12 @@ export class CollectionFilterDate {
    * @type {EffectRef}
    */
   private readonly forwardPopoverState: EffectRef = effect((onCleanup): void => {
-    if (this.compact()) return;
+    if (this.isMobileInteractionMode()) return;
     const popover = this.picker()?.popover();
     if (!popover) return;
 
     const subscription = popover.stateChanged.subscribe((state: BrnOverlayState): void => {
-      if (!this.compact()) this.stateChanged.emit(state);
+      if (!this.isMobileInteractionMode()) this.stateChanged.emit(state);
     });
     onCleanup((): void => subscription.unsubscribe());
   });
@@ -331,6 +355,7 @@ export class CollectionFilterDate {
   //#region Methods
   /**
    * Method onDatePicked
+   * @method onDatePicked
    * @description Reacts to `hlm-date-picker`'s `dateChange`. A no-op while {@link disabled} is set — the trigger stays clickable, so this is what keeps a pick inert rather than merely invisible.
    * @access protected
    * @since 1.0.0
@@ -342,14 +367,30 @@ export class CollectionFilterDate {
     this.valueChanged.emit(date);
   }
 
-  /** Commits one mobile calendar pick through the existing picker and closes its drawer. */
+  /**
+   * Method onMobileDatePicked
+   * @method onMobileDatePicked
+   * @description Commits one mobile calendar pick through the existing picker and closes its drawer.
+   * @access protected
+   * @since 1.0.0
+   * @param {Date | undefined} date - The selected date, or undefined when cleared.
+   * @returns {void}
+   */
   protected onMobileDatePicked(date: Date | undefined): void {
     if (this.disabled()) return;
     this.picker()?.updateDate(date ?? null);
     this.drawer()?.close();
   }
 
-  /** Mirrors the compact drawer's state through the component's existing overlay contract. */
+  /**
+   * Method onMobileStateChanged
+   * @method onMobileStateChanged
+   * @description Mirrors the mobile drawer's state through the component's existing overlay contract.
+   * @access protected
+   * @since 1.0.0
+   * @param {CollectionFilterPopoverState} state - The drawer's next state.
+   * @returns {void}
+   */
   protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
     this.stateChanged.emit(state);
   }

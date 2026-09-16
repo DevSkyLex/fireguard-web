@@ -1,7 +1,9 @@
 <div id="split-layout" [class]="layoutClass()">
   <div id="split-layout-column" [class]="columnClass()">
     @if (header.length > 0) {
-      <header class="flex shrink-0 items-center justify-between gap-4 px-6 py-3 sm:px-8 sm:py-4">
+      <header
+        class="flex shrink-0 items-center justify-between gap-4 px-6 py-3 sm:px-8 sm:py-4 mobile-ui:gap-2 mobile-ui:px-4 mobile-ui:pt-[max(0.75rem,env(safe-area-inset-top))]"
+      >
         <div
           id="split-layout-brand"
           class="flex items-center gap-2.5"
@@ -19,7 +21,7 @@
     <main
       #content
       id="split-layout-content"
-      class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 max-sm:scroll-pb-28 sm:px-8 sm:py-10"
+      class="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 sm:px-8 sm:py-10 mobile-ui:scroll-pb-28 mobile-ui:px-4 mobile-ui:pt-5 mobile-ui:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
     >
       <div id="split-layout-content-box" [class]="contentClass()">
         <router-outlet (activate)="resetContentScroll()" />
@@ -27,7 +29,9 @@
     </main>
 
     @if (footer.length > 0) {
-      <footer class="flex shrink-0 items-center justify-between gap-4 px-6 py-5 sm:px-8">
+      <footer
+        class="flex shrink-0 items-center justify-between gap-4 px-6 py-5 sm:px-8 mobile-ui:gap-2 mobile-ui:px-4 mobile-ui:pt-3 mobile-ui:pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      >
         <app-slot-outlet [contributions]="footer" />
       </footer>
     }

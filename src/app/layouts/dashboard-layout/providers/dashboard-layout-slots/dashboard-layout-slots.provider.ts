@@ -8,6 +8,7 @@ import {
 import type { SidebarExtensionContribution } from '../../models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
+  DASHBOARD_MOBILE_NAVIGATION_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
   DASHBOARD_SIDEBAR_EXTENSION_SLOT,
@@ -29,6 +30,15 @@ import {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface DashboardLayoutSlotsConfig {
+  /**
+   * Property mobileNavigation
+   * @readonly
+   * @description Feature contributions to mobile navigation, such as withOrganizationMobileNavigation.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly AdditiveSlotFeature[] | undefined}
+   */
+  readonly mobileNavigation?: readonly AdditiveSlotFeature[];
   /**
    * Property sidebarExtension
    * @readonly
@@ -92,6 +102,7 @@ export function provideDashboardLayoutSlots(
     ...provideSlotContributions(DASHBOARD_SIDEBAR_FOOTER_SLOT, config.sidebarFooter),
     ...provideSlotContributions(DASHBOARD_HEADER_SLOT, config.header),
     ...provideSlotContributions(DASHBOARD_HEADER_ACTIONS_SLOT, config.headerActions),
+    ...provideSlotContributions(DASHBOARD_MOBILE_NAVIGATION_SLOT, config.mobileNavigation),
     ...provideSlotContributions(DASHBOARD_PANEL_SLOT, config.panel),
     ...provideSlotContributions(DASHBOARD_SIDEBAR_EXTENSION_SLOT, config.sidebarExtension),
   ]);

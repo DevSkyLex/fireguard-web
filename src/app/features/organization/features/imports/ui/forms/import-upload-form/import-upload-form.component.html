@@ -1,6 +1,6 @@
 <form novalidate (submit)="submit($event)">
   <fieldset class="min-w-0" [disabled]="pending()">
-    <hlm-field-group>
+    <hlm-field-group class="mobile-ui:gap-4">
       @if (error(); as message) {
         <div role="alert" data-testid="import-upload-error" class="text-sm text-destructive">
           <p>{{ message }}</p>
@@ -14,7 +14,7 @@
         <hlm-select [formField]="uploadForm.kind">
           <hlm-select-trigger
             buttonId="import-upload-kind"
-            class="w-full max-sm:min-h-11"
+            class="w-full mobile-ui:min-h-11"
             data-testid="import-upload-kind"
           >
             <hlm-select-value
@@ -25,7 +25,9 @@
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
               @for (option of kindOptions(); track option.value) {
-                <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+                  option.label
+                }}</hlm-select-item>
               }
             </hlm-select-group>
           </hlm-select-content>
@@ -39,13 +41,15 @@
         <label hlmFieldLabel for="import-upload-file"
           ><span i18n="@@imports.upload.file">CSV file</span><app-required-marker
         /></label>
-        <div class="flex flex-wrap items-center gap-2">
+        <div
+          class="flex flex-wrap items-center gap-2 mobile-ui:flex-col mobile-ui:items-stretch mobile-ui:gap-4"
+        >
           <button
             hlmBtn
             type="button"
             variant="outline"
             size="sm"
-            class="w-fit gap-2 max-sm:min-h-11"
+            class="w-fit gap-2 mobile-ui:min-h-11 mobile-ui:w-full"
             data-testid="import-upload-pick"
             [disabled]="pending()"
             (click)="fileInput.click()"
@@ -54,9 +58,9 @@
             <span i18n="@@imports.upload.choose">Choose file</span>
           </button>
           @if (selectedFile(); as file) {
-            <span class="inline-flex items-center gap-1.5 text-sm text-foreground">
+            <span class="inline-flex min-w-0 items-center gap-1.5 text-sm text-foreground">
               <ng-icon name="lucideFileText" class="shrink-0" aria-hidden="true" />
-              <span class="truncate">{{ file.name }}</span>
+              <span class="break-all">{{ file.name }}</span>
             </span>
           }
         </div>
@@ -81,7 +85,10 @@
         }
       </hlm-field>
 
-      <hlm-field orientation="horizontal">
+      <hlm-field
+        orientation="horizontal"
+        class="mobile-ui:border-y mobile-ui:border-border mobile-ui:py-4"
+      >
         <hlm-field-content>
           <label hlmFieldLabel for="import-upload-dry-run" i18n="@@imports.upload.dryRun"
             >Dry run</label
@@ -104,7 +111,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="gap-1.5"
+          class="gap-1.5 mobile-ui:min-h-11 mobile-ui:w-full mobile-ui:justify-start"
           data-testid="import-upload-help-trigger"
           [attr.aria-expanded]="helpExpanded()"
         >
@@ -146,7 +153,7 @@
         <button
           hlmBtn
           type="submit"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:w-full"
           data-testid="import-upload-submit"
           [disabled]="pending()"
           [attr.aria-busy]="pending() ? 'true' : null"

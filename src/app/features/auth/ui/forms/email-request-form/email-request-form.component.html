@@ -1,4 +1,4 @@
-<form novalidate (submit)="submit($event)">
+<form class="mobile-ui:[&_input]:text-base" novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (!pending() && serverError()) {
       <div
@@ -17,7 +17,7 @@
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker
       /></label>
       <input
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         hlmInput
         id="email-request-address"
         type="email"

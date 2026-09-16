@@ -1,7 +1,7 @@
 <hlm-date-range-picker #picker (dateChange)="onRangePicked($event)">
   <label [attr.for]="triggerId()" class="sr-only">{{ accessibleName() }}</label>
 
-  @if (compact()) {
+  @if (isMobileInteractionMode()) {
     <hlm-drawer direction="bottom" [state]="state()" (stateChanged)="onMobileStateChanged($event)">
       @if (disabled()) {
         <button
@@ -12,8 +12,9 @@
           class="flex h-full min-h-11 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal opacity-60 shadow-none"
           [attr.data-testid]="testId()"
           aria-disabled="true"
+          [attr.aria-describedby]="mobileDescribedBy()"
         >
-          <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+          <span [id]="mobileValueId()" class="flex min-w-0 items-center gap-1 overflow-hidden">
             @if (value()) {
               <span data-testid="collection-filter-value" [class]="valueClass">
                 <span class="truncate">{{ picker.formattedDate() }}</span>
@@ -32,9 +33,9 @@
           [id]="triggerId()"
           class="flex h-full min-h-11 max-w-24 items-center justify-start gap-1 self-stretch rounded-none border-0 bg-transparent px-2 py-1 font-normal shadow-none hover:bg-foreground/10 hover:text-foreground"
           [attr.data-testid]="testId()"
-          [attr.aria-describedby]="describedBy() ?? null"
+          [attr.aria-describedby]="mobileDescribedBy()"
         >
-          <span class="flex min-w-0 items-center gap-1 overflow-hidden">
+          <span [id]="mobileValueId()" class="flex min-w-0 items-center gap-1 overflow-hidden">
             @if (value()) {
               <span data-testid="collection-filter-value" [class]="valueClass">
                 <span class="truncate">{{ picker.formattedDate() }}</span>
@@ -51,16 +52,19 @@
         class="overflow-hidden"
         [attr.data-testid]="testId() + '-drawer'"
       >
-        <hlm-drawer-header class="px-5 text-start!">
-          <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
-          <p hlmDrawerDescription i18n="@@collectionFilters.mobile.dateRangeDescription">
-            Choose a start date and an end date, then apply.
-          </p>
+        <hlm-drawer-header class="px-5">
+          <div class="flex flex-col gap-1 text-start">
+            <h2 hlmDrawerTitle>{{ placeholder() }}</h2>
+            <p hlmDrawerDescription i18n="@@collectionFilters.mobile.dateRangeDescription">
+              Choose a start date and an end date, then apply.
+            </p>
+          </div>
         </hlm-drawer-header>
 
         <div class="min-h-0 overflow-y-auto px-5 pb-3">
           <hlm-calendar-range
             class="mx-auto w-full max-w-sm border-0 p-0 [--cell-size:--spacing(11)]"
+            [disabled]="disabled()"
             [startDate]="mobileStart() ?? undefined"
             [endDate]="mobileEnd() ?? undefined"
             (startDateChange)="onMobileStartChanged($event)"
@@ -75,11 +79,10 @@
             <span i18n="@@common.cancel">Cancel</span>
           </button>
           <button
-            hlmDrawerClose
             hlmBtn
             type="button"
             class="min-h-11"
-            [disabled]="!mobileRangeComplete()"
+            [disabled]="disabled() || !mobileRangeComplete()"
             (click)="applyMobileRange()"
           >
             <span i18n="@@common.apply">Apply</span>

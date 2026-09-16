@@ -12,7 +12,7 @@
       hlmBtn
       variant="outline"
       size="sm"
-      class="max-sm:min-h-11"
+      class="mobile-ui:hidden"
       [routerLink]="['/organizations', organizationId(), 'interventions']"
       i18n="@@org.dashboard.recent.all"
       >View all interventions</a
@@ -20,13 +20,51 @@
   </div>
   <div hlmCardContent class="p-0">
     @if (loading()) {
-      <div class="flex flex-col gap-4">
-        <hlm-skeleton class="h-10 w-full" /><hlm-skeleton class="h-10 w-full" /><hlm-skeleton
-          class="h-10 w-full"
-        />
+      <div class="space-y-3" aria-busy="true">
+        <span class="sr-only" role="status" i18n="@@shared.collectionSurface.loading"
+          >Loading…</span
+        >
+        <div class="hidden desktop-ui:@[700px]/recent:block" aria-hidden="true">
+          <div hlmTableContainer>
+            <table hlmTable data-testid="org-dashboard-recent-loading-table">
+              <thead hlmTHead>
+                <tr hlmTr>
+                  <th hlmTh i18n="@@org.dashboard.recent.intervention">Intervention</th>
+                  <th hlmTh i18n="@@org.dashboard.recent.status">Status</th>
+                  <th hlmTh i18n="@@org.dashboard.recent.site">Site</th>
+                  <th hlmTh i18n="@@org.dashboard.recent.responsible">Responsible</th>
+                  <th hlmTh i18n="@@org.dashboard.recent.due">Due</th>
+                </tr>
+              </thead>
+              <tbody hlmTBody>
+                <app-collection-skeleton-rows
+                  [rows]="5"
+                  [columns]="['w-40', 'w-24', 'w-24', 'w-32', 'w-20']"
+                  [columnCount]="5"
+                />
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="desktop-ui:@[700px]/recent:hidden">
+          <app-collection-skeleton-cards [rows]="5" />
+        </div>
       </div>
     } @else if (rows() === null) {
-      <div hlmEmpty>
+      <div hlmItemGroup class="hidden mobile-ui:flex">
+        <div hlmItem size="sm">
+          <div hlmItemContent class="min-w-0">
+            <p
+              hlmItemDescription
+              class="line-clamp-none wrap-anywhere"
+              i18n="@@org.dashboard.recent.unavailable"
+            >
+              Recent interventions unavailable
+            </p>
+          </div>
+        </div>
+      </div>
+      <div hlmEmpty class="mobile-ui:hidden">
         <div hlmEmptyHeader>
           <p hlmEmptyTitle i18n="@@org.dashboard.recent.unavailable">
             Recent interventions unavailable
@@ -34,7 +72,21 @@
         </div>
       </div>
     } @else if (visibleRows().length === 0) {
-      <div hlmEmpty>
+      <div hlmItemGroup class="hidden mobile-ui:flex">
+        <div hlmItem size="sm">
+          <div hlmItemContent class="min-w-0">
+            <p hlmItemTitle i18n="@@org.dashboard.recent.empty">No recent interventions</p>
+            <p
+              hlmItemDescription
+              class="line-clamp-none wrap-anywhere"
+              i18n="@@org.dashboard.recent.emptyDescription"
+            >
+              Interventions will appear here when your team creates or updates them.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div hlmEmpty class="mobile-ui:hidden">
         <div hlmEmptyHeader>
           <p hlmEmptyTitle i18n="@@org.dashboard.recent.empty">No recent interventions</p>
           <p hlmEmptyDescription i18n="@@org.dashboard.recent.emptyDescription">
@@ -43,8 +95,12 @@
         </div>
       </div>
     } @else {
-      <div hlmTableContainer class="hidden @[700px]/recent:block">
-        <table hlmTable class="w-full table-fixed" aria-labelledby="org-dashboard-recent-title">
+      <div hlmTableContainer class="hidden desktop-ui:@[700px]/recent:block">
+        <table
+          hlmTable
+          class="w-full min-w-[700px] table-fixed"
+          aria-labelledby="org-dashboard-recent-title"
+        >
           <thead hlmTHead>
             <tr hlmTr>
               <th hlmTh class="w-[34%]" i18n="@@org.dashboard.recent.intervention">Intervention</th>
@@ -99,29 +155,50 @@
           </tbody>
         </table>
       </div>
-      <ul class="flex flex-col divide-y divide-border px-4 @[700px]/recent:hidden">
+      <ul hlmItemGroup class="gap-0 desktop-ui:@[700px]/recent:hidden">
         @for (row of visibleRows(); track row.id) {
           <li>
+            @if (!$first) {
+              <hlm-item-separator class="my-0" />
+            }
             <a
-              class="flex min-h-11 flex-col gap-2 rounded-sm py-4 focus-visible:outline-2 focus-visible:outline-ring"
+              hlmItem
+              size="sm"
+              class="min-h-11"
               [routerLink]="['/organizations', organizationId(), 'interventions', row.id]"
             >
-              <span class="flex items-center justify-between gap-2"
-                ><span class="font-mono text-xs text-muted-foreground">FG-{{ row.number }}</span
-                ><app-intervention-tag kind="status" [value]="row.status"
-              /></span>
-              <span class="font-medium">{{ row.name }}</span
-              ><span class="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"
-                ><span>{{ row.siteName ?? '—' }}</span
-                ><span>{{ row.dueAt ? (row.dueAt | date: 'mediumDate') : '—' }}</span></span
-              >
-              @if (row.responsibleName; as name) {
-                <span class="text-xs text-muted-foreground">{{ name }}</span>
-              }
+              <span hlmItemContent class="min-w-0 gap-2">
+                <span hlmItemTitle class="line-clamp-none wrap-anywhere">{{ row.name }}</span>
+                <span class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <app-intervention-tag kind="status" [value]="row.status" />
+                  <span class="font-mono text-xs text-muted-foreground">FG-{{ row.number }}</span>
+                </span>
+                <span
+                  hlmItemDescription
+                  class="line-clamp-none flex flex-wrap justify-between gap-x-3 gap-y-1 wrap-anywhere"
+                >
+                  <span>{{ row.siteName ?? '—' }}</span>
+                  <span>{{ row.dueAt ? (row.dueAt | date: 'mediumDate') : '—' }}</span>
+                </span>
+                @if (row.responsibleName; as name) {
+                  <span class="text-xs wrap-anywhere text-muted-foreground">{{ name }}</span>
+                }
+              </span>
             </a>
           </li>
         }
       </ul>
     }
+  </div>
+  <div class="hidden mobile-ui:flex mobile-ui:justify-end">
+    <a
+      hlmBtn
+      variant="ghost"
+      size="sm"
+      class="min-h-11"
+      [routerLink]="['/organizations', organizationId(), 'interventions']"
+      i18n="@@org.dashboard.recent.all"
+      >View all interventions</a
+    >
   </div>
 </section>

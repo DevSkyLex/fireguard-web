@@ -26,6 +26,7 @@ import {
   HlmInputOtpSeparator,
   HlmInputOtpSlot,
 } from '@shared/ui/input-otp';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { AccountOtpCodeFormValues } from './models';
 
 /**
@@ -83,6 +84,7 @@ const OTP_LENGTH = 6;
     HlmInputOtpGroup,
     HlmInputOtpSeparator,
     HlmInputOtpSlot,
+    HlmSpinner,
     ...HlmFieldImports,
   ],
   templateUrl: './account-otp-code-form.component.html',

@@ -1,102 +1,240 @@
-<app-collection-surface
-  caption="The inspections linked to this intervention."
-  i18n-caption="@@intervention.linked.inspections.caption"
-  testId="intervention-inspections-table"
-  density="compact"
-  [loading]="loading()"
-  [hasError]="error() !== null"
-  [rowCount]="items().length"
-  [columnCount]="4"
-  [skeletonColumns]="skeletonColumnWidths"
+<section
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="intervention-inspections"
+  aria-labelledby="intervention-inspections-title"
 >
-  <ng-container surfaceHead>
-    <tr hlmTableRow>
-      <th hlmTableHead i18n="@@intervention.linked.inspections.columnPerformedAt">Performed</th>
-      <th hlmTableHead i18n="@@intervention.linked.inspections.columnResult">Result</th>
-      <th hlmTableHead i18n="@@intervention.linked.inspections.columnStatus">Status</th>
-      <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
-    </tr>
-  </ng-container>
-
-  <ng-container surfaceRows>
-    @for (item of items(); track item.id) {
-      <tr hlmTableRow data-testid="intervention-inspections-table-row">
-        <td hlmTableCell>
-          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
-        </td>
-        <td hlmTableCell>
-          <app-intervention-tag kind="inspectionResult" [value]="item.result" />
-        </td>
-        <td hlmTableCell>
-          <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
-        </td>
-        <td hlmTableCell>
-          <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
-        </td>
-      </tr>
-    }
-  </ng-container>
-
-  <ng-container surfaceCards>
-    @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
-        data-testid="intervention-inspections-table-card"
-      >
-        <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
-
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <app-intervention-tag kind="inspectionResult" [value]="item.result" />
-          <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
-        </div>
-      </div>
-    }
-  </ng-container>
-
-  <div hlmEmpty role="alert" surfaceError data-testid="intervention-inspections-error">
-    <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon" class="text-destructive">
-        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-      </div>
-      <p hlmEmptyTitle i18n="@@intervention.linked.inspections.errorTitle">
-        Linked inspections could not be loaded
-      </p>
-      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
-    </div>
-  </div>
-
-  <div hlmEmpty surfaceEmpty data-testid="intervention-inspections-empty">
-    <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon">
-        <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
-      </div>
-      <p hlmEmptyTitle i18n="@@intervention.linked.inspections.emptyTitle">No linked inspections</p>
-      <p hlmEmptyDescription i18n="@@intervention.linked.inspections.emptyDesc">
-        No inspection is linked to this intervention yet.
-      </p>
-    </div>
-  </div>
-</app-collection-surface>
-
-@if (totalItems() > items().length) {
-  <div class="flex justify-center pt-4">
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      class="max-sm:min-h-11"
-      data-testid="intervention-inspections-load-more"
-      [disabled]="loadingMore()"
-      (click)="loadMoreRequested.emit()"
+  <div class="flex flex-col gap-1">
+    <h2
+      id="intervention-inspections-title"
+      class="text-lg font-semibold"
+      i18n="@@intervention.sidebar.inspections"
     >
-      @if (loadingMore()) {
-        <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
-      } @else {
-        <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
-      }
-    </button>
+      Inspections
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.linked.inspections.caption">
+      The inspections linked to this intervention.
+    </p>
   </div>
-}
+
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="intervention-inspections"
+      placeholder="Search inspections..."
+      i18n-placeholder="@@intervention.linked.inspections.searchPlaceholder"
+      ariaLabel="Search inspections..."
+      i18n-ariaLabel="@@intervention.linked.inspections.searchPlaceholder"
+      [value]="searchTerm()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
+    <div toolbarEnd class="flex flex-wrap items-center gap-2">
+      <app-collection-filter-toggle
+        [visible]="filtersVisible()"
+        [activeCount]="activeFilterKeys().length"
+        label="Filters"
+        i18n-label="@@intervention.linked.inspections.filtersButton"
+        testIdPrefix="intervention-inspections"
+        (visibleChange)="toggleFiltersVisible($event)"
+      />
+    </div>
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="filterTemplates()"
+      testIdPrefix="intervention-inspections"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #statusFilterControl>
+    <app-collection-filter-select
+      [options]="statusOptions"
+      [value]="statusFilter()"
+      placeholder="Status"
+      i18n-placeholder="@@intervention.linked.inspections.filterStatus"
+      searchPlaceholder="Search a status"
+      i18n-searchPlaceholder="@@intervention.linked.inspections.filterStatusPlaceholder"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@intervention.linked.inspections.filterNoStatus"
+      accessibleName="Filter inspections by status"
+      i18n-accessibleName="@@intervention.linked.inspections.filterStatusAccessibleName"
+      triggerId="intervention-inspections-filter-status"
+      testId="intervention-inspections-filter-status"
+      [state]="fieldPopoverState('status')"
+      (valueChanged)="onStatusFilterChanged($event)"
+      (stateChanged)="onFilterPopoverStateChanged('status', $event)"
+    />
+  </ng-template>
+
+  <ng-template #resultFilterControl>
+    <app-collection-filter-select
+      [options]="resultOptions"
+      [value]="resultFilter()"
+      placeholder="Result"
+      i18n-placeholder="@@intervention.linked.inspections.filterResult"
+      searchPlaceholder="Search a result"
+      i18n-searchPlaceholder="@@intervention.linked.inspections.filterResultPlaceholder"
+      emptyLabel="No result matches."
+      i18n-emptyLabel="@@intervention.linked.inspections.filterNoResult"
+      accessibleName="Filter inspections by result"
+      i18n-accessibleName="@@intervention.linked.inspections.filterResultAccessibleName"
+      triggerId="intervention-inspections-filter-result"
+      testId="intervention-inspections-filter-result"
+      [state]="fieldPopoverState('result')"
+      (valueChanged)="onResultFilterChanged($event)"
+      (stateChanged)="onFilterPopoverStateChanged('result', $event)"
+    />
+  </ng-template>
+
+  <app-intervention-table-feedback
+    [source]="source()"
+    [error]="error()"
+    [hasResult]="hasLoaded() || filteredItems().length > 0"
+    [loading]="loading()"
+    (retryRequested)="retryRequested.emit()"
+  />
+  <app-collection-surface
+    class="[&_[data-slot=table]]:min-w-[38rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-12"
+    caption="The inspections linked to this intervention."
+    i18n-caption="@@intervention.linked.inspections.caption"
+    testId="intervention-inspections-table"
+    density="compact"
+    [loading]="loading()"
+    [hasLoaded]="hasLoaded()"
+    [hasError]="error() !== null && !hasLoaded() && filteredItems().length === 0"
+    [rowCount]="filteredItems().length"
+    [columnCount]="4"
+    [skeletonColumns]="skeletonColumnWidths"
+  >
+    <ng-container surfaceHead>
+      <tr hlmTableRow>
+        <th hlmTableHead class="w-40" i18n="@@intervention.linked.inspections.columnPerformedAt">
+          Performed
+        </th>
+        <th hlmTableHead class="w-32" i18n="@@intervention.linked.inspections.columnResult">
+          Result
+        </th>
+        <th hlmTableHead class="w-32" i18n="@@intervention.linked.inspections.columnStatus">
+          Status
+        </th>
+        <th hlmTableHead i18n="@@intervention.linked.inspections.columnInspector">Inspector</th>
+      </tr>
+    </ng-container>
+
+    <ng-container surfaceRows>
+      @for (item of filteredItems(); track item.id) {
+        <tr hlmTableRow data-testid="intervention-inspections-table-row">
+          <td hlmTableCell>
+            <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+          </td>
+          <td hlmTableCell>
+            <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+          </td>
+          <td hlmTableCell>
+            <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
+          </td>
+          <td hlmTableCell>
+            <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
+          </td>
+        </tr>
+      }
+    </ng-container>
+
+    <ng-container surfaceCards>
+      @for (item of filteredItems(); track item.id) {
+        <div
+          class="flex flex-col gap-1 rounded-md border border-border p-3"
+          data-testid="intervention-inspections-table-card"
+        >
+          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+
+          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+            <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
+          </div>
+        </div>
+      }
+    </ng-container>
+
+    <div hlmEmpty role="alert" surfaceError data-testid="intervention-inspections-error">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.linked.inspections.errorTitle">
+          Linked inspections could not be loaded
+        </p>
+        <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+      </div>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="loading()"
+        (click)="retryRequested.emit()"
+        i18n="@@intervention.tables.retry"
+      >
+        Retry
+      </button>
+    </div>
+
+    <div hlmEmpty surfaceEmpty data-testid="intervention-inspections-empty">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          @if (hasActiveQuery()) {
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
+          }
+        </div>
+        @if (hasActiveQuery()) {
+          <p hlmEmptyTitle i18n="@@intervention.linked.inspections.filteredEmptyTitle">
+            No inspections match the current search or filters
+          </p>
+          <p hlmEmptyDescription i18n="@@intervention.linked.inspections.filteredEmptyDesc">
+            Change the search or remove a filter to see more inspections.
+          </p>
+        } @else {
+          <p hlmEmptyTitle i18n="@@intervention.linked.inspections.emptyTitle">
+            No linked inspections
+          </p>
+          <p hlmEmptyDescription i18n="@@intervention.linked.inspections.emptyDesc">
+            No inspection is linked to this intervention yet.
+          </p>
+        }
+      </div>
+    </div>
+  </app-collection-surface>
+
+  @if (totalItems() > items().length) {
+    <div class="flex justify-center pt-4">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        data-testid="intervention-inspections-load-more"
+        [disabled]="loadingMore()"
+        (click)="loadMoreRequested.emit()"
+      >
+        @if (loadingMore()) {
+          <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
+        } @else {
+          <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
+        }
+      </button>
+    </div>
+  }
+</section>
 
 <ng-template #identity let-item="item">
   @if (isDraftRecord(item)) {
@@ -134,5 +272,7 @@
       </hlm-avatar>
       <span class="truncate text-foreground">{{ inspector.displayName }}</span>
     </div>
+  } @else {
+    <span class="text-muted-foreground" aria-hidden="true">—</span>
   }
 </ng-template>

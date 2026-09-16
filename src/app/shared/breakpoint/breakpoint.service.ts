@@ -1,30 +1,38 @@
 import { DestroyRef, DOCUMENT, afterNextRender, inject, signal, type Signal } from '@angular/core';
 
 /**
- * The three viewport widths this application actually branches on, as media
- * queries. They mirror Tailwind's own `sm`/`md`/`lg` so a TypeScript decision
- * and a utility class never disagree about where a layout changes.
- *
- * `sm` is the load-bearing one: it is the mobile/desktop split, the
- * sheet-to-drawer switch and the touch-target switch all at once.
+ * Constant BELOW_SM
+ * @description Below Tailwind's sm boundary, for geometry only; never a device classifier.
+ * @access public
+ * @since 1.0.0
+ * @type {string}
  */
 export const BELOW_SM = '(max-width: 639px)';
 
-/** Below Tailwind's `md` — the breakpoint page padding steps at. */
+/**
+ * Constant BELOW_MD
+ * @description Below Tailwind's md boundary for page geometry.
+ * @access public
+ * @since 1.0.0
+ * @type {string}
+ */
 export const BELOW_MD = '(max-width: 767px)';
 
-/** Below Tailwind's `lg` — where the detail workspace loses its action column. */
+/**
+ * Constant BELOW_LG
+ * @description Below Tailwind's lg boundary for workspace geometry.
+ * @access public
+ * @since 1.0.0
+ * @type {string}
+ */
 export const BELOW_LG = '(max-width: 1023px)';
 
 /**
- * At or above Tailwind's `lg`, the same boundary read from the other side.
- *
- * Both directions exist because the signal is `false` until the browser
- * answers, and a call site has to be able to choose *which* branch that
- * pre-hydration `false` lands on. A surface that must render its narrow form
- * on the server picks the `AT_LEAST_*` query; one that must render its wide
- * form picks the `BELOW_*` one. Reading the boundary from the wrong side is
- * how a phone gets a flash of desktop layout.
+ * Constant AT_LEAST_LG
+ * @description At or above Tailwind's lg boundary. The initial false value favors narrow geometry.
+ * @access public
+ * @since 1.0.0
+ * @type {string}
  */
 export const AT_LEAST_LG = '(min-width: 1024px)';
 
@@ -36,11 +44,8 @@ export const AT_LEAST_LG = '(min-width: 1024px)';
  * A signal reporting whether a media query currently matches, kept live by the
  * browser's own `change` event.
  *
- * SSR-safe by construction: the signal starts `false` and only ever changes
- * inside `afterNextRender`, which never runs on the server. That default is a
- * deliberate bias — a server render assumes the *desktop* branch, matching how
- * `sheetSide()` has always behaved, so hydration on a phone corrects downward
- * rather than flashing a desktop layout onto a narrow screen.
+ * SSR-safe: starts false and observes the browser only afterNextRender.
+ * This helper measures geometry; it must not select an interaction mode.
  *
  * Must be called from an injection context — a field initializer or a
  * constructor — since it reads {@link DOCUMENT} and registers cleanup on
@@ -51,7 +56,7 @@ export const AT_LEAST_LG = '(min-width: 1024px)';
  *
  * @example
  * ```typescript
- * protected readonly isCompact: Signal<boolean> = mediaQuery(BELOW_SM);
+ * protected readonly hasNarrowSpace: Signal<boolean> = mediaQuery(BELOW_SM);
  * ```
  *
  * @param {string} query - The media query to observe.
@@ -74,22 +79,4 @@ export function mediaQuery(query: string): Signal<boolean> {
   });
 
   return matches.asReadonly();
-}
-
-/**
- * Function isCompact
- * @function isCompact
- *
- * @description
- * Whether the viewport is below `sm` — the one width the application treats as
- * "this is a phone". Prefer this over re-writing the query at a call site: the
- * value of naming it is that every surface switches at the same place.
- *
- * @access public
- * @since 1.0.0
- *
- * @returns {Signal<boolean>} Whether the viewport is narrower than `sm`.
- */
-export function isCompact(): Signal<boolean> {
-  return mediaQuery(BELOW_SM);
 }

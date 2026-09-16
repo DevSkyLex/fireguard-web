@@ -1,0 +1,111 @@
+@if (isMobileInteractionMode()) {
+  <hlm-drawer direction="bottom" (closed)="completeMobilePick()">
+    <button
+      #trigger
+      hlmDrawerTrigger
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="min-h-11 border-dashed text-muted-foreground"
+      [attr.data-testid]="testId('filters-add')"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span>{{ triggerLabel() }}</span>
+    </button>
+
+    <hlm-drawer-content
+      *hlmDrawerPortal
+      class="overflow-hidden"
+      [attr.data-testid]="testId('filters-add-drawer')"
+    >
+      <hlm-drawer-header class="px-5">
+        <div class="flex flex-col gap-1 text-start">
+          <h2 hlmDrawerTitle>{{ menuLabel() }}</h2>
+          <p hlmDrawerDescription i18n="@@collectionFilters.mobile.addDescription">
+            Choose a field to narrow the results.
+          </p>
+        </div>
+      </hlm-drawer-header>
+
+      <div hlmItemGroup class="min-h-0 overflow-y-auto px-3 py-2">
+        @for (field of fields(); track field.key) {
+          <button
+            hlmItem
+            type="button"
+            class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="field.unavailableReason !== undefined"
+            [attr.aria-describedby]="
+              field.unavailableReason !== undefined ? reasonIdFor(field.key) : null
+            "
+            [attr.data-testid]="testId('filters-add-option')"
+            (click)="queueMobileField(field.key)"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon [name]="field.icon" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle>{{ field.fieldLabel }}</span>
+              @if (field.unavailableReason; as reason) {
+                <span hlmItemDescription [id]="reasonIdFor(field.key)">{{ reason }}</span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+
+      <hlm-drawer-footer
+        class="border-t border-border px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
+        <button hlmDrawerClose hlmBtn type="button" variant="outline" class="min-h-11 w-full">
+          <span i18n="@@common.close">Close</span>
+        </button>
+      </hlm-drawer-footer>
+    </hlm-drawer-content>
+  </hlm-drawer>
+} @else {
+  <button
+    #trigger
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    class="border-dashed text-muted-foreground"
+    [attr.data-testid]="testId('filters-add')"
+    [hlmDropdownMenuTrigger]="addFilterMenu"
+    align="start"
+  >
+    <ng-icon name="lucidePlus" aria-hidden="true" />
+    <span>{{ triggerLabel() }}</span>
+  </button>
+
+  <ng-template #addFilterMenu>
+    <hlm-dropdown-menu class="w-56">
+      <hlm-dropdown-menu-label>{{ menuLabel() }}</hlm-dropdown-menu-label>
+      <hlm-dropdown-menu-separator />
+      @for (field of fields(); track field.key) {
+        <button
+          hlmDropdownMenuItem
+          [disabled]="field.unavailableReason !== undefined"
+          [attr.aria-describedby]="
+            field.unavailableReason !== undefined ? reasonIdFor(field.key) : null
+          "
+          [attr.data-testid]="testId('filters-add-option')"
+          (click)="pickField(field.key)"
+        >
+          <ng-icon [name]="field.icon" aria-hidden="true" />
+          <span class="flex min-w-0 flex-col items-start">
+            <span class="truncate">{{ field.fieldLabel }}</span>
+            @if (field.unavailableReason; as reason) {
+              <span
+                [id]="reasonIdFor(field.key)"
+                class="text-xs whitespace-normal text-muted-foreground"
+                >{{ reason }}</span
+              >
+            }
+          </span>
+        </button>
+      }
+    </hlm-dropdown-menu>
+  </ng-template>
+}

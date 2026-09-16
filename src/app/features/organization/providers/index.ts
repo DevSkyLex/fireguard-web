@@ -1,5 +1,6 @@
 export { withGlobalSearch } from './global-search';
 export { withOrganizationNav } from './organization-nav';
+export { withOrganizationMobileNavigation } from './organization-mobile-navigation';
 export { withOrganizationSwitcher } from './organization-switcher';
 export { withCollaborationNav } from '../features/collaboration/providers/collaboration-nav';
 export { withDirectMessagesSidebarExtension } from '../features/collaboration/providers/direct-messages-sidebar-extension';

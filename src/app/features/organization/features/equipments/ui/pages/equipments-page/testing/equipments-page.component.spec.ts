@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
+  computed,
   input,
   provideZonelessChangeDetection,
   signal,
@@ -13,6 +14,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import {
   idleCallState,
@@ -79,6 +81,7 @@ describe('EquipmentsPage', () => {
   let feedbackError: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    const mobile: WritableSignal<boolean> = signal(false);
     load = vi.fn();
     equipmentList = signal<readonly EquipmentOutput[]>([]);
     listCallState = signal<CallState>(idleCallState());
@@ -93,6 +96,13 @@ describe('EquipmentsPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
         {
           provide: EquipmentStore,
           useValue: {

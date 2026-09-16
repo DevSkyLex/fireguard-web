@@ -1,5 +1,13 @@
 @if (isInitialLoading()) {
   <span class="sr-only" role="status" i18n="@@shared.collectionSurface.loading">Loading…</span>
+} @else if (loading()) {
+  <span
+    class="pointer-events-none absolute end-2 top-2 z-20 flex items-center rounded bg-background p-1 text-muted-foreground"
+    role="status"
+  >
+    <hlm-spinner size="xs" aria-hidden="true" />
+    <span class="sr-only" i18n="@@shared.collectionSurface.refreshing">Refreshing…</span>
+  </span>
 }
 
 @switch (visibleSlot()) {
@@ -29,7 +37,7 @@
             }}
           </caption>
 
-          <thead hlmTableHeader [class]="theadClass()">
+          <thead hlmTableHeader class="sticky top-0 z-10 bg-background">
             <ng-content select="[surfaceHead]" />
           </thead>
 
@@ -50,12 +58,7 @@
 
     <div [class]="cardsWrapperClass()" [attr.data-testid]="testId() + '-cards'">
       @if (isInitialLoading()) {
-        @for (index of skeletonRowIndexes(); track index) {
-          <div class="flex flex-col gap-2 rounded-md border border-border p-3" aria-hidden="true">
-            <hlm-skeleton class="h-4 w-40 max-w-full" />
-            <hlm-skeleton class="h-3 w-24" />
-          </div>
-        }
+        <app-collection-skeleton-cards [rows]="skeletonRowCount()" />
       } @else {
         <ng-content select="[surfaceCards]" />
       }

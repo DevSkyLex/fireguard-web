@@ -7,14 +7,29 @@
         <span i18n="@@checklists.list.new">New checklist</span>
       }
     </h1>
-    <button hlmBtn type="button" variant="outline" (click)="back()" i18n="@@checklists.detail.back">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      (click)="back()"
+      i18n="@@checklists.detail.back"
+      class="mobile-ui:min-h-11"
+    >
       Back to checklists
     </button>
   </div>
   @if (active.getCallState().status === 'error') {
     <div role="alert" class="flex flex-col gap-3">
       <p class="text-destructive">{{ active.getCallState().error?.message }}</p>
-      <button hlmBtn variant="outline" (click)="reload()" i18n="@@common.retry">Retry</button>
+      <button
+        hlmBtn
+        variant="outline"
+        (click)="reload()"
+        i18n="@@common.retry"
+        class="mobile-ui:min-h-11"
+      >
+        Retry
+      </button>
     </div>
   } @else if (checklistId() && !active.selectedChecklist()) {
     <div hlmSkeleton class="h-32 w-full"></div>

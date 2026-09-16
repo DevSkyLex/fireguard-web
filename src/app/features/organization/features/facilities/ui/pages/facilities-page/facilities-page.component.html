@@ -27,7 +27,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="facilities-export"
         [disabled]="exportDisabled()"
         [attr.aria-busy]="exportBusy() ? 'true' : null"
@@ -68,6 +68,7 @@
         data-testid="facilities-layout-list"
         i18n-aria-label="@@facility.list.layoutList"
         aria-label="List view"
+        class="mobile-ui:min-h-11 mobile-ui:min-w-11"
       >
         <ng-icon name="lucideList" aria-hidden="true" />
       </button>
@@ -77,6 +78,7 @@
         data-testid="facilities-layout-grid"
         i18n-aria-label="@@facility.list.layoutGrid"
         aria-label="Grid view"
+        class="mobile-ui:min-h-11 mobile-ui:min-w-11"
       >
         <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
       </button>
@@ -87,7 +89,7 @@
       hlmBtn
       variant="outline"
       size="sm"
-      class="max-sm:min-h-11"
+      class="mobile-ui:min-h-11"
       data-testid="facilities-layout-map"
       i18n-aria-label="@@facility.map.layoutMap"
       aria-label="Map view"
@@ -151,7 +153,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" data-testid="facilities-retry" (click)="reload()">
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="facilities-retry"
+          (click)="reload()"
+          class="mobile-ui:min-h-11"
+        >
           <span i18n="@@facility.list.retry">Retry</span>
         </button>
       </div>
@@ -171,11 +179,11 @@
       </div>
       <div hlmEmptyContent>
         @if (hasSearchOrFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
+          <button hlmBtn variant="outline" (click)="clearFilters()" class="mobile-ui:min-h-11">
             <span i18n="@@common.clearFilters">Clear filters</span>
           </button>
         } @else if (canCreate()) {
-          <button hlmBtn type="button" (click)="openCreate()">
+          <button hlmBtn type="button" (click)="openCreate()" class="mobile-ui:min-h-11">
             <ng-icon name="lucidePlus" aria-hidden="true" />
             <span i18n="@@facility.newButton">New facility</span>
           </button>
@@ -231,14 +239,16 @@
     <button
       hlmBtn
       type="button"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="facilities-new"
       i18n-aria-label="@@facility.newButton"
       aria-label="New facility"
       (click)="openCreate()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@facility.newButton">New facility</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@facility.newButton"
+        >New facility</span
+      >
     </button>
   }
 </ng-template>

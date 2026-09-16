@@ -16,88 +16,188 @@
     </li>
   </ul>
 } @else if (displayName()) {
-  <ul hlmSidebarMenu>
-    <li hlmSidebarMenuItem>
+  @if (isMobileInteractionMode()) {
+    <hlm-drawer>
       <button
-        hlmSidebarMenuButton
-        size="lg"
+        hlmBtn
+        hlmDrawerTrigger
+        variant="ghost"
+        type="button"
         id="account-menu-trigger"
-        class="group-data-[collapsible=icon]:rounded-full hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent"
-        [hlmDropdownMenuTrigger]="menu"
-        [side]="menuSide()"
-        align="end"
+        class="min-h-11 w-full justify-start gap-3"
       >
-        <hlm-avatar
-          class="size-8 shrink-0 ring-4 ring-transparent transition-[opacity,box-shadow] group-hover/menu-button:opacity-80 group-hover/menu-button:ring-sidebar-accent group-active/menu-button:ring-sidebar-accent"
-        >
-          @if (avatarUrl(); as pictureUrl) {
-            <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
-          }
-          <span hlmAvatarFallback class="text-xs font-semibold">{{ initials() }}</span>
-        </hlm-avatar>
-
-        <div class="grid flex-1 text-left text-sm leading-tight">
-          <span class="truncate font-medium">{{ displayName() }}</span>
-          @if (email(); as address) {
-            <span class="truncate text-xs text-muted-foreground">{{ address }}</span>
-          }
-        </div>
-
-        <ng-icon name="lucideEllipsisVertical" class="ml-auto text-base" aria-hidden="true" />
+        <ng-icon name="lucideUserRound" aria-hidden="true" />
+        <span class="min-w-0 flex-1 truncate text-start">{{ displayName() }}</span>
+        <ng-icon name="lucideEllipsisVertical" aria-hidden="true" />
       </button>
-    </li>
-  </ul>
-
-  <ng-template #menu>
-    <hlm-dropdown-menu class="min-w-56 rounded-lg">
-      <hlm-dropdown-menu-label>
-        <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-          <hlm-avatar class="size-8 shrink-0">
+      <hlm-drawer-content *hlmDrawerPortal="let drawer" class="pb-[env(safe-area-inset-bottom)]">
+        <hlm-drawer-header>
+          <div class="text-start">
+            <h2 hlmDrawerTitle class="break-words">{{ displayName() }}</h2>
+            <p hlmDrawerDescription class="break-words">{{ email() }}</p>
+          </div>
+        </hlm-drawer-header>
+        <hlm-item-group class="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
+          <a
+            hlmItem
+            class="min-h-12 flex-nowrap text-start"
+            [routerLink]="['/account', 'profile']"
+            (click)="drawer.close()"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon name="lucideUserRound" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle i18n="@@account.menu.profile">Account</span>
+            </span>
+          </a>
+          <a
+            hlmItem
+            class="min-h-12 flex-nowrap text-start"
+            [routerLink]="['/account', 'security']"
+            (click)="drawer.close()"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle i18n="@@account.menu.security">Security</span>
+            </span>
+          </a>
+          <a
+            hlmItem
+            class="min-h-12 flex-nowrap text-start"
+            [routerLink]="['/account', 'organizations']"
+            (click)="drawer.close()"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon name="lucideBuilding2" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle i18n="@@account.menu.organizations">Your organizations</span>
+            </span>
+          </a>
+          <a
+            hlmItem
+            class="min-h-12 flex-nowrap text-start"
+            [routerLink]="['/account', 'notifications']"
+            (click)="drawer.close()"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon name="lucideBell" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle i18n="@@account.menu.notifications">Notifications</span>
+            </span>
+          </a>
+          <hlm-item-separator />
+          <button
+            hlmItem
+            type="button"
+            class="min-h-12 cursor-pointer flex-nowrap text-start text-destructive hover:bg-destructive/10 focus-visible:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+            [disabled]="isLoggingOut()"
+            (click)="logout() && drawer.close()"
+          >
+            <span hlmItemMedia variant="icon">
+              <ng-icon name="lucideLogOut" aria-hidden="true" />
+            </span>
+            <span hlmItemContent>
+              <span hlmItemTitle i18n="@@account.menu.logout">Log out</span>
+            </span>
+          </button>
+        </hlm-item-group>
+      </hlm-drawer-content>
+    </hlm-drawer>
+  } @else {
+    <ul hlmSidebarMenu>
+      <li hlmSidebarMenuItem>
+        <button
+          hlmSidebarMenuButton
+          size="lg"
+          id="account-menu-trigger"
+          class="group-data-[collapsible=icon]:rounded-full hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent mobile-ui:min-h-11"
+          [hlmDropdownMenuTrigger]="menu"
+          [side]="menuSide()"
+          align="end"
+        >
+          <hlm-avatar
+            class="size-8 shrink-0 ring-4 ring-transparent transition-[opacity,box-shadow] group-hover/menu-button:opacity-80 group-hover/menu-button:ring-sidebar-accent group-active/menu-button:ring-sidebar-accent"
+          >
             @if (avatarUrl(); as pictureUrl) {
               <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
             }
             <span hlmAvatarFallback class="text-xs font-semibold">{{ initials() }}</span>
           </hlm-avatar>
-          <div class="grid flex-1 leading-tight">
-            <span class="truncate font-medium text-foreground">{{ displayName() }}</span>
+
+          <div class="grid flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium">{{ displayName() }}</span>
             @if (email(); as address) {
               <span class="truncate text-xs text-muted-foreground">{{ address }}</span>
             }
           </div>
-        </div>
-      </hlm-dropdown-menu-label>
 
-      <hlm-dropdown-menu-separator />
+          <ng-icon name="lucideEllipsisVertical" class="ml-auto text-base" aria-hidden="true" />
+        </button>
+      </li>
+    </ul>
 
-      <hlm-dropdown-menu-group>
-        <button hlmDropdownMenuItem class="gap-2" (click)="goToProfile()">
-          <ng-icon name="lucideUserRound" class="text-sm" aria-hidden="true" />
-          <span i18n="@@account.menu.profile">Account</span>
-        </button>
-        <button hlmDropdownMenuItem class="gap-2" (click)="goToSecurity()">
-          <ng-icon name="lucideShieldCheck" class="text-sm" aria-hidden="true" />
-          <span i18n="@@account.menu.security">Security</span>
-        </button>
-        <button hlmDropdownMenuItem class="gap-2" (click)="goToOrganizations()">
-          <ng-icon name="lucideBuilding2" class="text-sm" aria-hidden="true" />
-          <span i18n="@@account.menu.organizations">Your organizations</span>
-        </button>
-        <button hlmDropdownMenuItem class="gap-2" (click)="goToNotifications()">
-          <ng-icon name="lucideBell" class="text-sm" aria-hidden="true" />
-          <span i18n="@@account.menu.notifications">Notifications</span>
-        </button>
-        <button hlmDropdownMenuItem class="gap-2" (click)="goToNotificationPreferences()">
-          <ng-icon name="lucideSettings2" class="text-sm" aria-hidden="true" />
-          <span i18n="@@account.menu.notificationPreferences">Notification preferences</span>
-        </button>
-      </hlm-dropdown-menu-group>
+    <ng-template #menu>
+      <hlm-dropdown-menu class="min-w-56 rounded-lg">
+        <hlm-dropdown-menu-label>
+          <div class="flex items-center gap-2 text-left text-sm">
+            <hlm-avatar class="size-8 shrink-0">
+              @if (avatarUrl(); as pictureUrl) {
+                <img hlmAvatarImage [src]="pictureUrl" [alt]="displayName()" />
+              }
+              <span hlmAvatarFallback class="text-xs font-semibold">{{ initials() }}</span>
+            </hlm-avatar>
+            <div class="grid flex-1 leading-tight">
+              <span class="truncate font-medium text-foreground">{{ displayName() }}</span>
+              @if (email(); as address) {
+                <span class="truncate text-xs text-muted-foreground">{{ address }}</span>
+              }
+            </div>
+          </div>
+        </hlm-dropdown-menu-label>
 
-      <hlm-dropdown-menu-separator />
+        <hlm-dropdown-menu-separator />
 
-      <button hlmDropdownMenuItem class="gap-2" (click)="logout()">
-        <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
-        <span i18n="@@account.menu.logout">Log out</span>
-      </button>
-    </hlm-dropdown-menu>
-  </ng-template>
+        <hlm-dropdown-menu-group>
+          <a hlmDropdownMenuItem class="gap-2" [routerLink]="['/account', 'profile']">
+            <ng-icon name="lucideUserRound" aria-hidden="true" />
+            <span i18n="@@account.menu.profile">Account</span>
+            <span hlmDropdownMenuShortcut aria-hidden="true">{{ formatShortcut('P') }}</span>
+          </a>
+          <a hlmDropdownMenuItem class="gap-2" [routerLink]="['/account', 'security']">
+            <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+            <span i18n="@@account.menu.security">Security</span>
+            <span hlmDropdownMenuShortcut aria-hidden="true">{{ formatShortcut('S') }}</span>
+          </a>
+          <a hlmDropdownMenuItem class="gap-2" [routerLink]="['/account', 'organizations']">
+            <ng-icon name="lucideBuilding2" aria-hidden="true" />
+            <span i18n="@@account.menu.organizations">Your organizations</span>
+            <span hlmDropdownMenuShortcut aria-hidden="true">{{ formatShortcut('O') }}</span>
+          </a>
+          <a hlmDropdownMenuItem class="gap-2" [routerLink]="['/account', 'notifications']">
+            <ng-icon name="lucideBell" aria-hidden="true" />
+            <span i18n="@@account.menu.notifications">Notifications</span>
+            <span hlmDropdownMenuShortcut aria-hidden="true">{{ formatShortcut('N') }}</span>
+          </a>
+        </hlm-dropdown-menu-group>
+
+        <hlm-dropdown-menu-separator />
+
+        <button
+          hlmDropdownMenuItem
+          variant="destructive"
+          class="gap-2 mobile-ui:min-h-11"
+          [disabled]="isLoggingOut()"
+          (click)="logout()"
+        >
+          <ng-icon name="lucideLogOut" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.menu.logout">Log out</span>
+        </button>
+      </hlm-dropdown-menu>
+    </ng-template>
+  }
 }

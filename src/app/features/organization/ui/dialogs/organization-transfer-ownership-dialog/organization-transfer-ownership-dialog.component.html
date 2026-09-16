@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-alert-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
     *hlmAlertDialogPortal
     data-testid="organization-transfer-ownership-dialog"
   >
@@ -43,6 +43,7 @@
           <div hlmComboboxList>
             @for (candidate of candidates(); track candidate.value) {
               <hlm-combobox-item
+                class="mobile-ui:min-h-11"
                 [value]="candidate.value"
                 [attr.data-testid]="'organization-transfer-candidate-' + candidate.value"
               >
@@ -76,7 +77,7 @@
         id="organization-transfer-confirm-name"
         type="text"
         autocomplete="off"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11 mobile-ui:text-base"
         data-testid="organization-transfer-confirm-input"
         [value]="typedName()"
         (input)="onTypedNameInput($event)"
@@ -89,11 +90,11 @@
     </div>
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel class="max-sm:min-h-11" i18n="@@common.cancel">Cancel</button>
+      <button hlmAlertDialogCancel class="mobile-ui:min-h-11" i18n="@@common.cancel">Cancel</button>
       <button
         hlmAlertDialogAction
         variant="destructive"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="organization-transfer-confirm"
         aria-live="polite"
         [attr.aria-busy]="pending() ? 'true' : null"

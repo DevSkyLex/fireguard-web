@@ -6,8 +6,47 @@ import re
 import tomllib
 
 
-def file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def file_hash(path: Path, policy: dict | None = None) -> str:
+    """Hash declared UTF-8 text with LF endings; preserve every other byte."""
+    content = path.read_bytes()
+    if policy and path.suffix.lower() in policy['text_extensions']:
+        content = content.decode('utf-8').replace('\r\n', '\n').encode('utf-8')
+    return hashlib.sha256(content).hexdigest()
+
+
+def validate_hash_policy(lock: dict) -> dict:
+    """Reject unknown lock conventions instead of silently changing integrity semantics."""
+    policy = lock.get('hashing', {})
+    if (lock.get('schema_version') != 2 or policy.get('algorithm') != 'sha256'
+            or policy.get('text_normalization') != 'utf8-lf'):
+        raise ValueError('Unsupported skill lock schema or hash policy')
+    extensions = policy.get('text_extensions')
+    if not isinstance(extensions, list) or not extensions or any(
+            not isinstance(extension, str) or not re.fullmatch(r'\.[a-z]+', extension)
+            for extension in extensions):
+        raise ValueError('Skill lock must declare its normalized text extensions')
+    return policy
+
+
+def validate_package(root: Path, package: dict, policy: dict) -> None:
+    """Check the full installed file set, license and registered agent copies."""
+    folder = root / '.agents/skills' / package['name']
+    actual = {
+        path.relative_to(folder).as_posix(): file_hash(path, policy)
+        for path in folder.rglob('*')
+        if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'
+    }
+    if actual != package['files']:
+        changed = sorted(set(actual) ^ set(package['files']) | {
+            file for file in actual.keys() & package['files'].keys()
+            if actual[file] != package['files'][file]
+        })
+        raise ValueError(f'Upstream payload changed: {package["name"]}: {", ".join(changed)}')
+    if file_hash(root / package['license'], policy) != package['license_sha256']:
+        raise ValueError(f'Upstream license changed: {package["name"]}')
+    for relative, expected in package.get('registered_agents', {}).items():
+        if file_hash(root / relative, policy) != expected:
+            raise ValueError(f'Upstream agent changed: {relative}')
 
 
 def find_legacy_references(root: Path) -> list[str]:
@@ -60,13 +99,9 @@ def validate(root: Path) -> dict:
     legacy_references = find_legacy_references(root)
     assert not legacy_references, f'Legacy client paths: {legacy_references}'
     lock = json.loads((root / '.agents/skills.lock.json').read_text(encoding='utf-8'))
+    policy = validate_hash_policy(lock)
     for package in lock['packages']:
-        folder = skills_root / package['name']
-        actual = {path.relative_to(folder).as_posix(): file_hash(path) for path in folder.rglob('*') if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'}
-        assert actual == package['files'], f'Upstream payload changed: {package["name"]}'
-        assert file_hash(root / package['license']) == package['license_sha256']
-        for relative, expected in package.get('registered_agents', {}).items():
-            assert file_hash(root / relative) == expected, f'Upstream agent changed: {relative}'
+        validate_package(root, package, policy)
     return {'skills':len(skill_names), 'agents':len(agents), 'vendor_packages':len(lock['packages']), 'status':'PASS'}
 
 

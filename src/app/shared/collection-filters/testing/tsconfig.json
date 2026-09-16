@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../../tsconfig.spec.json",
+  "include": [
+    "../../../../**/*.d.ts",
+    "../**/*.spec.ts",
+    "../../../core/interaction-capabilities/**/*.spec.ts",
+    "../../../features/organization/ui/forms/organization-team-member-add-form/**/*.spec.ts"
+  ]
+}

@@ -33,7 +33,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="equipments-print-labels"
         [disabled]="labelsDisabled()"
         [attr.aria-busy]="labelsBusy() ? 'true' : null"
@@ -61,7 +61,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="equipments-export"
         [disabled]="exportDisabled()"
         [attr.aria-busy]="exportBusy() ? 'true' : null"
@@ -169,7 +169,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" data-testid="equipments-retry" (click)="reload()">
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="equipments-retry"
+          (click)="reload()"
+          class="mobile-ui:min-h-11"
+        >
           <span i18n="@@equipment.list.retry">Retry</span>
         </button>
       </div>
@@ -189,11 +195,11 @@
       </div>
       <div hlmEmptyContent>
         @if (hasSearchOrFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
+          <button hlmBtn variant="outline" (click)="clearFilters()" class="mobile-ui:min-h-11">
             <span i18n="@@common.clearFilters">Clear filters</span>
           </button>
         } @else if (canCreate()) {
-          <button hlmBtn type="button" (click)="openCreate()">
+          <button hlmBtn type="button" (click)="openCreate()" class="mobile-ui:min-h-11">
             <ng-icon name="lucidePlus" aria-hidden="true" />
             <span i18n="@@equipment.newButton">New equipment</span>
           </button>
@@ -227,14 +233,16 @@
     <button
       hlmBtn
       type="button"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="equipments-new"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
       (click)="openCreate()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@equipment.newButton"
+        >New equipment</span
+      >
     </button>
   }
 </ng-template>

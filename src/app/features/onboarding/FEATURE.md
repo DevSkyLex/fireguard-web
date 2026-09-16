@@ -70,6 +70,10 @@ local until their owning feature publishes an approved shared contract.
 
 ## UI
 
+- Central mobile mode selects searchable drawers for equipment type and multi-site choices;
+  desktop keeps its select and combobox. Both write the same Signal Forms fields. Changing
+  orientation or interaction mode preserves the wizard form and staged draft. The sticky mobile footer
+  clears the published navigation height, with a zero fallback outside the dashboard shell.
 - Forms use an open, width-capped canvas without nested cards; fields, radio choices, staged items,
   separators and actions use the installed Spartan anatomy. Long values wrap within their rows.
 - Progress stays above the form at all widths. It shows the current
@@ -153,3 +157,10 @@ between a successful guard load and page initialization.
   manual refresh reread actions; no client grants access from a notification payload.
 - Desktop uses equal columns from 1024 px and a top-aligned content column capped at 576 px.
   Smaller screens keep brand, theme and logout while hiding the decorative showcase.
+
+## Adaptive interaction
+
+Equipment type and multi-site choices use searchable mobile drawers and native desktop controls,
+selected by the central interaction mode signal. Both write the same Signal Forms fields. Interaction-mode
+and orientation changes preserve the field tree and staged draft. The sticky mobile footer clears
+the published navigation height with a zero fallback outside the dashboard shell.

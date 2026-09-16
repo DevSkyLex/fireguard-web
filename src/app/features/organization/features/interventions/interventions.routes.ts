@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import type { RedirectFunction, Routes } from '@angular/router';
 import { Router } from '@angular/router';
+import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY, type DashboardRouteData } from '@core/routing';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { interventionTitleResolver } from './http/resolvers';
@@ -121,7 +122,10 @@ export const INTERVENTION_ROUTES: Routes = [
             (m) => m.InterventionsPage,
           ),
         title: $localize`:@@route.interventions:Interventions`,
-        data: { breadcrumb: false },
+        data: {
+          breadcrumb: false,
+          [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
+        } satisfies DashboardRouteData,
       },
       {
         path: 'board',

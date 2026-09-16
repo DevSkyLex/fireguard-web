@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
@@ -51,7 +52,15 @@ describe('FacilityPlanPanel', () => {
 
   beforeEach(async () => {
     stubMatchMedia(false);
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+      ],
+    });
     fixture = TestBed.createComponent(FacilityPlanPanel);
     fixture.componentRef.setInput('zones', ZONES);
     fixture.componentRef.setInput('equipment', EQUIPMENT_LIST);

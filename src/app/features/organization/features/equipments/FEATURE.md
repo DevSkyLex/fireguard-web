@@ -259,6 +259,10 @@ distinct "delete" outcome is ever needed here, revisit this decision.
 
 ## Invariants
 
+- Mobile cards and touch targets follow the central interaction-capabilities contract, independent of width.
+  Desktop keeps table density and native menus in narrow windows. Creation uses one sheet
+  and one Signal Form across interaction mode changes; mobile sheets fill the available width.
+
 - Equipment workflows remain organization-scoped.
 - Equipment state and events stay owned by this subfeature.
 - Equipment lifecycle actions must respect the current equipment status.

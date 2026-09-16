@@ -27,6 +27,8 @@
 }
 
 @custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
+@custom-variant mobile-ui (&:where(html[data-interaction-mode="mobile"], html[data-interaction-mode="mobile"] *));
+@custom-variant desktop-ui (&:where(html[data-interaction-mode="desktop"], html[data-interaction-mode="desktop"] *));
 
 @utility scroll-fade-y {
   --scroll-fade-size: 0.625rem;

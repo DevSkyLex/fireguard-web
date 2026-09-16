@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CallState, StoreError } from '@core/request-state';
 import {
   errorCallState,
@@ -34,6 +35,8 @@ const TEAM: TeamOutput = {
  * the store's named `CallState`s, and the delete confirm flow.
  */
 describe('OrganizationTeamsPage', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   let fixture: ComponentFixture<OrganizationTeamsPage>;
   let teams: WritableSignal<readonly TeamOutput[]>;
   let isLoading: WritableSignal<boolean>;
@@ -54,6 +57,13 @@ describe('OrganizationTeamsPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
         provideZonelessChangeDetection(),
         {
           provide: OrganizationPermissionService,

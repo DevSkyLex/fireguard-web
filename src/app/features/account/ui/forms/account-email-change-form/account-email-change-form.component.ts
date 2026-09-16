@@ -22,6 +22,7 @@ import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { AccountEmailChangeFormValues } from './models';
 
 /**
@@ -68,7 +69,15 @@ const EMAIL_MAX_LENGTH = 320;
  */
 @Component({
   selector: 'app-account-email-change-form',
-  imports: [RequiredMarker, FormField, PasswordInput, HlmButton, HlmInput, ...HlmFieldImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    PasswordInput,
+    HlmButton,
+    HlmInput,
+    HlmSpinner,
+    ...HlmFieldImports,
+  ],
   templateUrl: './account-email-change-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

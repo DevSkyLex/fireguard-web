@@ -9,17 +9,18 @@
       <hlm-paginated-tabs-list
         variant="line"
         class="w-full"
-        tabListClass="justify-start"
+        tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+        paginationButtonClass="mobile-ui:size-11"
         aria-label="Estate axis"
         i18n-aria-label="@@org.assets.tabsAriaLabel"
       >
-        <button hlmTabsTrigger="site" class="max-sm:min-h-11" data-testid="assets-tab-site">
+        <button hlmTabsTrigger="site" class="mobile-ui:min-h-11" data-testid="assets-tab-site">
           <ng-icon name="lucideNetwork" aria-hidden="true" />
           <span i18n="@@org.assets.tab.site">By site</span>
         </button>
         <button
           hlmTabsTrigger="everything"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="assets-tab-everything"
         >
           <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
@@ -27,7 +28,7 @@
         </button>
         <button
           hlmTabsTrigger="compliance"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="assets-tab-compliance"
         >
           <ng-icon name="lucideShieldCheck" aria-hidden="true" />
@@ -37,12 +38,33 @@
     </ng-template>
 
     <div hlmTabsContent="site" class="min-h-0 flex-1">
-      <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
+      <div
+        class="grid min-h-0 flex-1 grid-cols-1 gap-4 desktop-ui:lg:grid-cols-[minmax(12rem,20rem)_minmax(0,1fr)]"
+      >
         <div
-          class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)]"
+          class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)] mobile-ui:max-h-none mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:p-0"
           data-testid="assets-tree-panel"
-          [class]="selectedFacilityId() === null ? '' : 'max-lg:hidden'"
+          [class.hidden]="
+            isMobileInteractionMode() && selectedFacilityId() !== null && !facilityBrowserVisible()
+          "
         >
+          @if (isMobileInteractionMode() && selectedFacilityId() === null) {
+            <div
+              hlmItem
+              class="mb-3 min-h-0 items-start rounded-lg border border-dashed bg-muted/30 px-3 py-3"
+              data-testid="assets-mobile-select-prompt"
+            >
+              <span hlmItemMedia variant="icon">
+                <ng-icon name="lucideNetwork" aria-hidden="true" />
+              </span>
+              <span hlmItemContent>
+                <span hlmItemTitle i18n="@@org.assets.selectPrompt.title">Select a site</span>
+                <span hlmItemDescription i18n="@@org.assets.selectPrompt.desc">
+                  Pick a facility from the hierarchy to see its equipment and inspections.
+                </span>
+              </span>
+            </div>
+          }
           <app-tree
             ariaLabel="Facility hierarchy"
             i18n-ariaLabel="@@org.assets.treeLabel"
@@ -52,7 +74,7 @@
             [failedIds]="failedIds()"
             [selectedId]="selectedFacilityId()"
             [nodeTemplate]="assetTreeNode"
-            [draggable]="canMoveFacilities()"
+            [draggable]="canMoveFacilities() && !isMobileInteractionMode()"
             (expandRequested)="onExpandRequested($event)"
             (selected)="onNodeSelected($event)"
             (retryRequested)="onExpandRequested($event)"
@@ -63,7 +85,9 @@
         <div
           class="flex min-h-0 flex-1 flex-col gap-3"
           data-testid="assets-detail-panel"
-          [class]="selectedFacilityId() === null ? 'max-lg:hidden' : ''"
+          [class.hidden]="
+            isMobileInteractionMode() && (selectedFacilityId() === null || facilityBrowserVisible())
+          "
         >
           @if (selectedFacilityId() === null) {
             <div hlmEmpty>
@@ -78,18 +102,28 @@
               </div>
             </div>
           } @else {
-            <button
-              hlmBtn
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="w-fit gap-1.5 max-sm:min-h-11 lg:hidden"
-              data-testid="assets-back-to-tree"
-              (click)="clearFacilitySelection()"
-            >
-              <ng-icon name="lucideArrowLeft" aria-hidden="true" />
-              <span i18n="@@org.assets.backToTree">Back to the hierarchy</span>
-            </button>
+            @if (isMobileInteractionMode()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="w-fit gap-1.5 mobile-ui:min-h-11"
+                data-testid="assets-back-to-tree"
+                (click)="clearFacilitySelection()"
+              >
+                <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+                <span i18n="@@org.assets.backToTree">Back to the hierarchy</span>
+              </button>
+              @if (selectedFacilityContext(); as context) {
+                <div class="flex flex-col gap-1" data-testid="assets-selected-site-context">
+                  <h2 class="text-lg font-semibold break-words">{{ context.label }}</h2>
+                  <p class="text-sm break-words text-muted-foreground">
+                    {{ context.pathLabel ?? context.typeLabel }}
+                  </p>
+                </div>
+              }
+            }
 
             <ng-container *ngTemplateOutlet="assetPanes" />
           }
@@ -105,10 +139,17 @@
 
     <div hlmTabsContent="compliance" class="min-h-0 flex-1">
       <ng-template hlmTabsContentLazy>
-        <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
+        <div
+          class="grid min-h-0 flex-1 grid-cols-1 gap-4 desktop-ui:lg:grid-cols-[minmax(12rem,20rem)_minmax(0,1fr)]"
+        >
           <div
-            class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)]"
+            class="min-h-0 overflow-y-auto rounded-md border border-border p-2 lg:max-h-[calc(100vh-14rem)] mobile-ui:max-h-none mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:p-0"
             data-testid="assets-compliance-tree-panel"
+            [class.hidden]="
+              isMobileInteractionMode() &&
+              selectedComplianceFacilityId() !== null &&
+              !complianceBrowserVisible()
+            "
           >
             @if (compliance.hasTreeError()) {
               <div hlmEmpty role="alert" data-testid="assets-compliance-tree-error">
@@ -124,7 +165,7 @@
                   <button
                     hlmBtn
                     variant="outline"
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     (click)="retryComplianceTree()"
                   >
                     <span i18n="@@common.tryAgain">Try again</span>
@@ -147,7 +188,25 @@
 
           <div
             class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-14rem)]"
+            data-testid="assets-compliance-detail-panel"
+            [class.hidden]="
+              isMobileInteractionMode() &&
+              (selectedComplianceFacilityId() === null || complianceBrowserVisible())
+            "
           >
+            @if (isMobileInteractionMode() && selectedComplianceFacilityId() !== null) {
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                class="min-h-11 w-fit gap-2"
+                data-testid="assets-back-to-compliance-tree"
+                (click)="clearComplianceSelection()"
+              >
+                <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+                <span i18n="@@org.assets.backToTree">Back to the hierarchy</span>
+              </button>
+            }
             @if (selectedComplianceFacilityId() === null) {
               <div hlmEmpty>
                 <div hlmEmptyHeader>
@@ -178,13 +237,23 @@
 
 <ng-template #assetTreeNode let-node="node">
   <div class="flex min-w-0 flex-1 items-center gap-1">
-    <span class="min-w-0 flex-1 truncate">{{ node.label }}</span>
+    <div class="min-w-0 flex-1">
+      <span
+        class="block truncate mobile-ui:text-base mobile-ui:font-medium mobile-ui:break-words mobile-ui:whitespace-normal"
+        >{{ node.label }}</span
+      >
+      @if (node.data.code) {
+        <span class="hidden text-sm text-muted-foreground mobile-ui:block">{{
+          node.data.code
+        }}</span>
+      }
+    </div>
     <button
       type="button"
       hlmBtn
       variant="ghost"
       size="icon-sm"
-      class="size-6 shrink-0 max-sm:size-11"
+      class="size-6 shrink-0 mobile-ui:size-11"
       data-testid="assets-tree-node-menu"
       [hlmDropdownMenuTrigger]="nodeMenu"
       (click)="$event.stopPropagation()"
@@ -199,6 +268,7 @@
           hlmDropdownMenuItem
           data-testid="assets-tree-node-open"
           [routerLink]="['/organizations', organizationId(), 'facilities', node.id]"
+          class="mobile-ui:min-h-11"
         >
           <ng-icon name="lucideSquareArrowOutUpRight" aria-hidden="true" />
           <span i18n="@@org.assets.tree.openRecord">Open record</span>
@@ -209,6 +279,7 @@
             type="button"
             data-testid="assets-tree-node-move"
             (click)="onMoveRequested(node)"
+            class="mobile-ui:min-h-11"
           >
             <ng-icon name="lucideMove" aria-hidden="true" />
             <span i18n="@@org.assets.tree.move">Move to…</span>
@@ -218,6 +289,7 @@
             type="button"
             data-testid="assets-tree-node-duplicate"
             (click)="onDuplicateRequested(node)"
+            class="mobile-ui:min-h-11"
           >
             <ng-icon name="lucideCopy" aria-hidden="true" />
             <span i18n="@@org.assets.tree.duplicate">Duplicate</span>
@@ -237,11 +309,18 @@
 />
 
 <ng-template #assetPanes>
-  <div class="flex min-h-0 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100vh-14rem)]">
+  <div
+    class="flex min-h-0 flex-col gap-6 overflow-y-auto lg:max-h-[calc(100vh-14rem)] mobile-ui:max-h-none"
+  >
     @if (canReadEquipment()) {
       <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
-        <div class="mb-2 flex items-center justify-between gap-2">
-          <h2 id="assets-equipment-title" class="text-sm font-medium text-muted-foreground">
+        <div
+          class="mb-2 flex items-center justify-between gap-2 mobile-ui:flex-wrap mobile-ui:gap-4"
+        >
+          <h2
+            id="assets-equipment-title"
+            class="text-sm font-medium text-muted-foreground mobile-ui:text-base mobile-ui:font-semibold mobile-ui:text-foreground"
+          >
             <ng-icon name="lucideWrench" class="me-1 align-text-bottom" aria-hidden="true" />
             <span i18n="@@org.assets.equipment.title">Equipment</span>
             <span class="text-muted-foreground tabular-nums">({{ pane.equipmentTotal() }})</span>
@@ -252,7 +331,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="assets-print-labels"
               [attr.aria-disabled]="labelsBusy() ? 'true' : null"
               [attr.aria-busy]="labelsBusy() ? 'true' : null"
@@ -275,13 +354,34 @@
         </div>
 
         @if (pane.isLoadingEquipment()) {
-          <p
-            role="status"
-            class="py-6 text-sm text-muted-foreground"
-            i18n="@@org.assets.loadingResources"
-          >
-            Loading resources…
-          </p>
+          <div role="status" class="space-y-3" data-testid="assets-equipment-loading">
+            <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
+            @if (isMobileInteractionMode()) {
+              <app-collection-skeleton-cards [rows]="5" />
+            } @else {
+              <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+                <table hlmTable data-testid="assets-equipment-loading-table">
+                  <caption class="sr-only" i18n="@@org.assets.loadingResources">
+                    Loading resources…
+                  </caption>
+                  <thead hlmTableHeader>
+                    <tr hlmTableRow>
+                      <th hlmTableHead i18n="@@org.assets.equipment.columnName">Equipment</th>
+                      <th hlmTableHead i18n="@@org.assets.equipment.columnFacility">Facility</th>
+                      <th hlmTableHead i18n="@@org.assets.equipment.columnStatus">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody hlmTableBody>
+                    <app-collection-skeleton-rows
+                      [rows]="5"
+                      [columns]="['w-40', 'w-36', 'w-20']"
+                      [columnCount]="3"
+                    />
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
         } @else if (pane.hasEquipmentError()) {
           <div hlmEmpty role="alert" data-testid="assets-equipment-error">
             <div hlmEmptyHeader>
@@ -294,7 +394,7 @@
               <button
                 hlmBtn
                 variant="outline"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 (click)="changePanePage('equipment', pane.equipmentPage())"
               >
                 <span i18n="@@common.tryAgain">Try again</span>
@@ -311,35 +411,68 @@
             </div>
           </div>
         } @else {
-          <div hlmTableContainer class="rounded-md border border-border">
-            <table hlmTable data-testid="assets-equipment-table">
-              <thead hlmTableHeader>
-                <tr hlmTableRow>
-                  <th hlmTableHead i18n="@@org.assets.equipment.columnName">Equipment</th>
-                  <th hlmTableHead i18n="@@org.assets.equipment.columnFacility">Facility</th>
-                  <th hlmTableHead i18n="@@org.assets.equipment.columnStatus">Status</th>
-                </tr>
-              </thead>
-              <tbody hlmTableBody>
-                @for (item of pane.equipment(); track item.id) {
-                  <tr hlmTableRow data-testid="assets-equipment-row">
-                    <td hlmTableCell>
-                      <a
-                        class="font-medium text-foreground hover:underline"
-                        [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
-                      >
-                        {{ item.serialNumber ?? item.brand ?? item.type }}
-                      </a>
-                    </td>
-                    <td hlmTableCell class="text-muted-foreground">{{ item.facilityName }}</td>
-                    <td hlmTableCell>
-                      <app-equipment-status-tag kind="status" [value]="item.status" />
-                    </td>
+          @if (isMobileInteractionMode()) {
+            <div hlmItemGroup class="divide-y divide-border" data-testid="assets-equipment-cards">
+              @for (item of pane.equipment(); track item.id) {
+                <div hlmItem>
+                  <div hlmItemContent class="min-w-0">
+                    <a
+                      class="flex min-h-11 items-center text-base font-medium break-words hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                      [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
+                    >
+                      {{ item.serialNumber ?? item.brand ?? item.type }}
+                    </a>
+                    <p class="text-sm break-words text-muted-foreground">
+                      @if (item.facilityName; as facilityName) {
+                        {{ facilityName }}
+                      } @else {
+                        <span aria-hidden="true">—</span>
+                      }
+                    </p>
+                  </div>
+                  <div hlmItemFooter>
+                    <app-equipment-status-tag kind="status" [value]="item.status" />
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div hlmTableContainer class="rounded-md border border-border">
+              <table hlmTable data-testid="assets-equipment-table">
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead i18n="@@org.assets.equipment.columnName">Equipment</th>
+                    <th hlmTableHead i18n="@@org.assets.equipment.columnFacility">Facility</th>
+                    <th hlmTableHead i18n="@@org.assets.equipment.columnStatus">Status</th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody hlmTableBody>
+                  @for (item of pane.equipment(); track item.id) {
+                    <tr hlmTableRow data-testid="assets-equipment-row">
+                      <td hlmTableCell>
+                        <a
+                          class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
+                          [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
+                        >
+                          {{ item.serialNumber ?? item.brand ?? item.type }}
+                        </a>
+                      </td>
+                      <td hlmTableCell class="text-muted-foreground">
+                        @if (item.facilityName; as facilityName) {
+                          {{ facilityName }}
+                        } @else {
+                          <span aria-hidden="true">—</span>
+                        }
+                      </td>
+                      <td hlmTableCell>
+                        <app-equipment-status-tag kind="status" [value]="item.status" />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         }
         @if (pane.equipmentTotal() > 50) {
           <app-collection-pagination
@@ -358,20 +491,44 @@
 
     @if (canReadInspections()) {
       <section aria-labelledby="assets-inspections-title" data-testid="assets-inspections-pane">
-        <h2 id="assets-inspections-title" class="mb-2 text-sm font-medium text-muted-foreground">
+        <h2
+          id="assets-inspections-title"
+          class="mb-2 text-sm font-medium text-muted-foreground mobile-ui:text-base mobile-ui:font-semibold mobile-ui:text-foreground"
+        >
           <ng-icon name="lucideClipboardList" class="me-1 align-text-bottom" aria-hidden="true" />
           <span i18n="@@org.assets.inspections.title">Inspections</span>
           <span class="text-muted-foreground tabular-nums">({{ pane.inspectionTotal() }})</span>
         </h2>
 
         @if (pane.isLoadingInspections()) {
-          <p
-            role="status"
-            class="py-6 text-sm text-muted-foreground"
-            i18n="@@org.assets.loadingResources"
-          >
-            Loading resources…
-          </p>
+          <div role="status" class="space-y-3" data-testid="assets-inspections-loading">
+            <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
+            @if (isMobileInteractionMode()) {
+              <app-collection-skeleton-cards [rows]="5" />
+            } @else {
+              <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+                <table hlmTable data-testid="assets-inspections-loading-table">
+                  <caption class="sr-only" i18n="@@org.assets.loadingResources">
+                    Loading resources…
+                  </caption>
+                  <thead hlmTableHeader>
+                    <tr hlmTableRow>
+                      <th hlmTableHead i18n="@@org.assets.inspections.columnDate">Performed</th>
+                      <th hlmTableHead i18n="@@org.assets.inspections.columnResult">Result</th>
+                      <th hlmTableHead i18n="@@org.assets.inspections.columnStatus">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody hlmTableBody>
+                    <app-collection-skeleton-rows
+                      [rows]="5"
+                      [columns]="['w-40', 'w-24', 'w-24']"
+                      [columnCount]="3"
+                    />
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
         } @else if (pane.hasInspectionsError()) {
           <div hlmEmpty role="alert" data-testid="assets-inspections-error">
             <div hlmEmptyHeader>
@@ -384,7 +541,7 @@
               <button
                 hlmBtn
                 variant="outline"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 (click)="changePanePage('inspections', pane.inspectionPage())"
               >
                 <span i18n="@@common.tryAgain">Try again</span>
@@ -401,37 +558,63 @@
             </div>
           </div>
         } @else {
-          <div hlmTableContainer class="rounded-md border border-border">
-            <table hlmTable data-testid="assets-inspections-table">
-              <thead hlmTableHeader>
-                <tr hlmTableRow>
-                  <th hlmTableHead i18n="@@org.assets.inspections.columnDate">Performed</th>
-                  <th hlmTableHead i18n="@@org.assets.inspections.columnResult">Result</th>
-                  <th hlmTableHead i18n="@@org.assets.inspections.columnStatus">Status</th>
-                </tr>
-              </thead>
-              <tbody hlmTableBody>
-                @for (item of pane.inspections(); track item.id) {
-                  <tr hlmTableRow data-testid="assets-inspections-row">
-                    <td hlmTableCell>
-                      <a
-                        class="font-medium text-foreground hover:underline"
-                        [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
-                      >
-                        {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
-                      </a>
-                    </td>
-                    <td hlmTableCell>
-                      <app-inspection-status-tag kind="result" [value]="item.result" />
-                    </td>
-                    <td hlmTableCell>
-                      <app-inspection-status-tag kind="status" [value]="item.status" />
-                    </td>
+          @if (isMobileInteractionMode()) {
+            <div hlmItemGroup class="divide-y divide-border" data-testid="assets-inspection-cards">
+              @for (item of pane.inspections(); track item.id) {
+                <div hlmItem>
+                  <div hlmItemContent class="min-w-0">
+                    <a
+                      class="flex min-h-11 items-center text-base font-medium break-words hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                      [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
+                    >
+                      {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                    </a>
+                  </div>
+                  <div hlmItemFooter class="justify-start gap-2">
+                    <app-inspection-status-tag kind="result" [value]="item.result" />
+                    <app-inspection-status-tag kind="status" [value]="item.status" />
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div hlmTableContainer class="rounded-md border border-border">
+              <table hlmTable data-testid="assets-inspections-table">
+                <thead hlmTableHeader>
+                  <tr hlmTableRow>
+                    <th hlmTableHead i18n="@@org.assets.inspections.columnDate">Performed</th>
+                    <th hlmTableHead i18n="@@org.assets.inspections.columnResult">Result</th>
+                    <th hlmTableHead i18n="@@org.assets.inspections.columnStatus">Status</th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody hlmTableBody>
+                  @for (item of pane.inspections(); track item.id) {
+                    <tr hlmTableRow data-testid="assets-inspections-row">
+                      <td hlmTableCell>
+                        <a
+                          class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
+                          [routerLink]="[
+                            '/organizations',
+                            organizationId(),
+                            'inspections',
+                            item.id,
+                          ]"
+                        >
+                          {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                        </a>
+                      </td>
+                      <td hlmTableCell>
+                        <app-inspection-status-tag kind="result" [value]="item.result" />
+                      </td>
+                      <td hlmTableCell>
+                        <app-inspection-status-tag kind="status" [value]="item.status" />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         }
         @if (pane.inspectionTotal() > 50) {
           <app-collection-pagination
@@ -451,8 +634,11 @@
 </ng-template>
 
 <ng-template #complianceTreeNode let-node="node">
-  <div class="flex min-w-0 flex-1 items-center gap-2">
-    <span class="min-w-0 flex-1 truncate">{{ node.label }}</span>
+  <div class="flex min-w-0 flex-1 items-center gap-2 mobile-ui:flex-col mobile-ui:items-start">
+    <span
+      class="min-w-0 flex-1 truncate mobile-ui:text-base mobile-ui:font-medium mobile-ui:break-words mobile-ui:whitespace-normal"
+      >{{ node.label }}</span
+    >
     <span
       hlmBadge
       variant="outline"
@@ -485,7 +671,10 @@
     class="flex flex-col gap-4"
     data-testid="assets-compliance-summary-pane"
   >
-    <h2 id="assets-compliance-summary-title" class="text-sm font-medium text-muted-foreground">
+    <h2
+      id="assets-compliance-summary-title"
+      class="text-sm font-medium text-muted-foreground mobile-ui:text-base mobile-ui:font-semibold mobile-ui:text-foreground"
+    >
       <ng-icon name="lucideShieldCheck" class="me-1 align-text-bottom" aria-hidden="true" />
       <span i18n="@@org.assets.compliance.summaryTitle">Compliance summary</span>
     </h2>
@@ -504,7 +693,7 @@
           <button
             hlmBtn
             variant="outline"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             (click)="retryComplianceSummary()"
           >
             <span i18n="@@common.tryAgain">Try again</span>
@@ -513,15 +702,23 @@
       </div>
     } @else if (compliance.isLoadingSummary() && compliance.summary() === null) {
       <div
-        class="flex flex-col gap-2"
+        class="space-y-3"
         role="status"
         aria-label="Loading compliance summary"
         i18n-aria-label="@@org.assets.compliance.summaryLoading"
       >
         <hlm-skeleton class="h-6 w-32" />
-        @for (row of [0, 1, 2, 3, 4]; track row) {
-          <hlm-skeleton class="h-10 w-full" />
-        }
+        <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+          <table hlmTable data-testid="assets-compliance-totals-loading-table">
+            <tbody hlmTableBody>
+              <app-collection-skeleton-rows
+                [rows]="5"
+                [columns]="['w-32', 'ms-auto w-20']"
+                [columnCount]="2"
+              />
+            </tbody>
+          </table>
+        </div>
       </div>
     } @else if (compliance.summary(); as summary) {
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -562,7 +759,7 @@
             hlmBtn
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11 max-sm:px-3"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="assets-compliance-export"
             [attr.aria-disabled]="compliance.isExporting()"
             [attr.aria-busy]="compliance.isExporting()"
@@ -582,7 +779,7 @@
             hlmBtn
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11 max-sm:px-3"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="assets-compliance-archive"
             [attr.aria-disabled]="compliance.isArchiving()"
             [attr.aria-busy]="compliance.isArchiving()"
@@ -711,20 +908,55 @@
           </p>
         </div>
         <div hlmEmptyContent>
-          <button hlmBtn variant="outline" class="max-sm:min-h-11" (click)="retrySnapshots()">
+          <button hlmBtn variant="outline" class="mobile-ui:min-h-11" (click)="retrySnapshots()">
             <span i18n="@@common.tryAgain">Try again</span>
           </button>
         </div>
       </div>
     } @else if (compliance.isLoadingSnapshots() && compliance.snapshots().length === 0) {
       <div
-        class="flex flex-col gap-2"
+        class="space-y-3"
         role="status"
         aria-label="Loading archived registers"
         i18n-aria-label="@@org.assets.compliance.snapshotsLoading"
       >
-        @for (row of [0, 1, 2]; track row) {
-          <hlm-skeleton class="h-10 w-full" />
+        @if (isMobileInteractionMode()) {
+          <app-collection-skeleton-cards [rows]="3" />
+        } @else {
+          <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+            <table hlmTable data-testid="assets-compliance-snapshots-loading-table">
+              <thead hlmTableHeader>
+                <tr hlmTableRow>
+                  <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnGeneratedAt">
+                    Generated
+                  </th>
+                  <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnScope">Scope</th>
+                  <th
+                    hlmTableHead
+                    class="text-end"
+                    i18n="@@org.assets.compliance.snapshotColumnSize"
+                  >
+                    Size
+                  </th>
+                  <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnHash">
+                    Fingerprint
+                  </th>
+                  <th hlmTableHead>
+                    <span class="sr-only" i18n="@@org.assets.compliance.snapshotColumnActions">
+                      Actions
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody hlmTableBody>
+                <app-collection-skeleton-rows
+                  [rows]="3"
+                  [columns]="['w-32', 'w-20', 'w-16', 'w-32', 'ms-auto w-16']"
+                  [columnCount]="5"
+                />
+              </tbody>
+            </table>
+          </div>
         }
       </div>
     } @else if (compliance.snapshots().length === 0) {
@@ -736,81 +968,130 @@
         No archived register yet. "Archive register" stores a dated copy of the safety register.
       </p>
     } @else {
-      <div hlmTableContainer class="rounded-md border border-border">
-        <table hlmTable data-testid="assets-compliance-snapshots-table">
-          <thead hlmTableHeader>
-            <tr hlmTableRow>
-              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnGeneratedAt">
-                Generated
-              </th>
-              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnScope">Scope</th>
-              <th hlmTableHead class="text-end" i18n="@@org.assets.compliance.snapshotColumnSize">
-                Size
-              </th>
-              <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnHash">Fingerprint</th>
-              <th hlmTableHead>
-                <span class="sr-only" i18n="@@org.assets.compliance.snapshotColumnActions">
-                  Actions
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody hlmTableBody>
-            @for (snapshot of compliance.snapshots(); track snapshot.id) {
-              <tr hlmTableRow data-testid="assets-compliance-snapshots-row">
-                <td hlmTableCell>
+      @if (isMobileInteractionMode()) {
+        <div class="grid gap-3 sm:grid-cols-2" data-testid="assets-compliance-snapshots-cards">
+          @for (snapshot of compliance.snapshots(); track snapshot.id) {
+            <section hlmCard size="sm">
+              <div hlmCardHeader>
+                <h3 hlmCardTitle>
                   {{ snapshot.generatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
-                </td>
-                <td hlmTableCell>
+                </h3>
+                <p hlmCardDescription>
                   @if (snapshot.scope === 'facility') {
                     <span i18n="@@org.assets.compliance.snapshotScopeFacility">Site</span>
                   } @else {
-                    <span i18n="@@org.assets.compliance.snapshotScopeOrganization">
-                      Organization
-                    </span>
+                    <span i18n="@@org.assets.compliance.snapshotScopeOrganization"
+                      >Organization</span
+                    >
                   }
-                </td>
-                <td hlmTableCell class="text-end tabular-nums">
-                  {{ formatSnapshotSize(snapshot.sizeBytes) }}
-                </td>
-                <td hlmTableCell>
-                  <code class="font-mono text-xs text-muted-foreground">
-                    {{ truncateHash(snapshot.contentHash) }}
-                  </code>
-                </td>
-                <td hlmTableCell class="text-end">
-                  <button
-                    hlmBtn
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    class="max-sm:min-h-11"
-                    data-testid="assets-compliance-snapshots-download"
-                    i18n-aria-label="@@org.assets.compliance.snapshotDownloadAria"
-                    aria-label="Download this archived register"
-                    [attr.aria-disabled]="compliance.downloadingSnapshotId() !== null"
-                    [attr.aria-busy]="compliance.downloadingSnapshotId() === snapshot.id"
-                    (click)="onDownloadSnapshot(snapshot.id, snapshot.generatedAt)"
-                  >
-                    <ng-icon name="lucideDownload" aria-hidden="true" />
-                    <span i18n="@@org.assets.compliance.snapshotDownload">Download</span>
-                  </button>
-                </td>
+                  · {{ formatSnapshotSize(snapshot.sizeBytes) }}
+                </p>
+              </div>
+              <div hlmCardContent>
+                <span
+                  class="text-sm text-muted-foreground"
+                  i18n="@@org.assets.compliance.snapshotColumnHash"
+                  >Fingerprint</span
+                >
+                <code class="ms-2 font-mono text-xs">{{ truncateHash(snapshot.contentHash) }}</code>
+              </div>
+              <div hlmCardFooter>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="min-h-11 w-full"
+                  data-testid="assets-compliance-snapshots-download"
+                  i18n-aria-label="@@org.assets.compliance.snapshotDownloadAria"
+                  aria-label="Download this archived register"
+                  [attr.aria-disabled]="compliance.downloadingSnapshotId() !== null"
+                  [attr.aria-busy]="compliance.downloadingSnapshotId() === snapshot.id"
+                  (click)="onDownloadSnapshot(snapshot.id, snapshot.generatedAt)"
+                >
+                  <ng-icon name="lucideDownload" aria-hidden="true" />
+                  <span i18n="@@org.assets.compliance.snapshotDownload">Download</span>
+                </button>
+              </div>
+            </section>
+          }
+        </div>
+      } @else {
+        <div hlmTableContainer class="rounded-md border border-border">
+          <table hlmTable data-testid="assets-compliance-snapshots-table">
+            <thead hlmTableHeader>
+              <tr hlmTableRow>
+                <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnGeneratedAt">
+                  Generated
+                </th>
+                <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnScope">Scope</th>
+                <th hlmTableHead class="text-end" i18n="@@org.assets.compliance.snapshotColumnSize">
+                  Size
+                </th>
+                <th hlmTableHead i18n="@@org.assets.compliance.snapshotColumnHash">Fingerprint</th>
+                <th hlmTableHead>
+                  <span class="sr-only" i18n="@@org.assets.compliance.snapshotColumnActions">
+                    Actions
+                  </span>
+                </th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody hlmTableBody>
+              @for (snapshot of compliance.snapshots(); track snapshot.id) {
+                <tr hlmTableRow data-testid="assets-compliance-snapshots-row">
+                  <td hlmTableCell>
+                    {{ snapshot.generatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                  </td>
+                  <td hlmTableCell>
+                    @if (snapshot.scope === 'facility') {
+                      <span i18n="@@org.assets.compliance.snapshotScopeFacility">Site</span>
+                    } @else {
+                      <span i18n="@@org.assets.compliance.snapshotScopeOrganization">
+                        Organization
+                      </span>
+                    }
+                  </td>
+                  <td hlmTableCell class="text-end tabular-nums">
+                    {{ formatSnapshotSize(snapshot.sizeBytes) }}
+                  </td>
+                  <td hlmTableCell>
+                    <code class="font-mono text-xs text-muted-foreground">
+                      {{ truncateHash(snapshot.contentHash) }}
+                    </code>
+                  </td>
+                  <td hlmTableCell class="text-end">
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="mobile-ui:min-h-11"
+                      data-testid="assets-compliance-snapshots-download"
+                      i18n-aria-label="@@org.assets.compliance.snapshotDownloadAria"
+                      aria-label="Download this archived register"
+                      [attr.aria-disabled]="compliance.downloadingSnapshotId() !== null"
+                      [attr.aria-busy]="compliance.downloadingSnapshotId() === snapshot.id"
+                      (click)="onDownloadSnapshot(snapshot.id, snapshot.generatedAt)"
+                    >
+                      <ng-icon name="lucideDownload" aria-hidden="true" />
+                      <span i18n="@@org.assets.compliance.snapshotDownload">Download</span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     }
   </section>
 </ng-template>
 
 <ng-template #pageActions>
-  @if (canCreateFacilities()) {
+  @if (canCreateFacilities() && (!isMobileInteractionMode() || !canCreateEquipment())) {
     <a
       hlmBtn
       variant="outline"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="assets-new-facility"
       i18n-aria-label="@@facility.newButton"
       aria-label="New facility"
@@ -818,14 +1099,16 @@
       [queryParams]="createScopeParams('parent')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@facility.newButton">New facility</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@facility.newButton"
+        >New facility</span
+      >
     </a>
   }
 
   @if (canCreateEquipment()) {
     <a
       hlmBtn
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="assets-new-equipment"
       i18n-aria-label="@@equipment.newButton"
       aria-label="New equipment"
@@ -833,7 +1116,38 @@
       [queryParams]="createScopeParams('facility')"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@equipment.newButton">New equipment</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@equipment.newButton"
+        >New equipment</span
+      >
     </a>
+  }
+  @if (isMobileInteractionMode() && canCreateFacilities() && canCreateEquipment()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="icon"
+      class="size-11 shrink-0"
+      data-testid="assets-create-menu"
+      [hlmDropdownMenuTrigger]="createMenu"
+      aria-label="New facility"
+      i18n-aria-label="@@facility.newButton"
+    >
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+    </button>
+    <ng-template #createMenu>
+      <hlm-dropdown-menu>
+        <a
+          hlmDropdownMenuItem
+          class="min-h-11"
+          data-testid="assets-new-facility"
+          [routerLink]="['/organizations', organizationId(), 'facilities']"
+          [queryParams]="createScopeParams('parent')"
+        >
+          <ng-icon name="lucidePlus" aria-hidden="true" />
+          <span i18n="@@facility.newButton">New facility</span>
+        </a>
+      </hlm-dropdown-menu>
+    </ng-template>
   }
 </ng-template>

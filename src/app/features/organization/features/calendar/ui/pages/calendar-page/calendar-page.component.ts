@@ -31,6 +31,7 @@ import {
   lucidePlus,
   lucideRss,
 } from '@ng-icons/lucide';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
@@ -193,6 +194,18 @@ type CalendarPageAgendaGroup = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarPage {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Chooses the month agenda without changing the selected period or view.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   //#region Inputs
   /**
    * Property organizationId

@@ -1,15 +1,45 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CalendarEventFormValues } from '../../../forms/calendar-event-form';
 import { CalendarEventDialog } from '../calendar-event-dialog.component';
 
 describe('CalendarEventDialog', () => {
+  const isMobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CalendarEventDialog>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    isMobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode } },
+      ],
+    });
 
     fixture = TestBed.createComponent(CalendarEventDialog);
+  });
+
+  it('keeps the mounted form and dirty draft when the central interaction mode changes', async () => {
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    const form = document.querySelector('app-calendar-event-form');
+    const title = document.querySelector<HTMLInputElement>('#calendar-event-title');
+    if (!title) throw new Error('Missing event title field');
+    title.value = 'Draft fire drill';
+    title.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    isMobileInteractionMode.set(true);
+    await fixture.whenStable();
+    expect(document.querySelector('app-calendar-event-form')).toBe(form);
+    expect(title.value).toBe('Draft fire drill');
+    expect(document.querySelector('hlm-sheet-content')?.getAttribute('data-side')).toBe('bottom');
+    expect(fixture.componentInstance['dirty']()).toBe(true);
+    isMobileInteractionMode.set(false);
+    await fixture.whenStable();
+    expect(document.querySelector('app-calendar-event-form')).toBe(form);
+    expect(title.value).toBe('Draft fire drill');
+    expect(document.querySelector('hlm-sheet-content')?.getAttribute('data-side')).toBe('right');
   });
 
   it('should render nothing to the portal while closed', async () => {

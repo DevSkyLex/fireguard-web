@@ -17,13 +17,13 @@ const DEFAULT_COLUMN_WIDTH: string = 'w-24';
  * @class CollectionSkeletonRows
  *
  * @description
- * Placeholder `<tr>` rows for a table's first load, extracted from the
- * pattern seventeen hand-rolled tables each re-implemented
- * (`ARCHITECTURE.md` §8.5, `DESIGN.md`'s loading state vocabulary). Renders
- * `<tr hlmTableRow aria-hidden="true">` with an `hlm-skeleton` bar per
- * column — nothing else. It deliberately does **not** render the
- * `role="status"` announcement itself: wrapping `<tr>` elements in a status
- * container is invalid table markup, so that announcement is
+ * Placeholder `<tr>` rows for a table's first load, using the project's
+ * loading-state vocabulary. Renders `<tr hlmTableRow aria-hidden="true">`
+ * with an `hlm-skeleton` bar per column — nothing else. Its host uses
+ * `display: contents` so those rows remain in the parent table's formatting
+ * context and share the header's column geometry. It deliberately does **not**
+ * render the `role="status"` announcement itself: wrapping `<tr>` elements in
+ * a status container is invalid table markup, so that announcement is
  * {@link CollectionSurface}'s business, rendered as its sibling.
  *
  * A column's width is either taken literally from {@link columns} (one
@@ -32,13 +32,11 @@ const DEFAULT_COLUMN_WIDTH: string = 'w-24';
  * times — the caller does not have to enumerate widths just to get the
  * right number of cells.
  *
- * This component is not used directly inside a caller's own `<tbody>` in
- * this codebase yet — `CollectionSurface` is the only current consumer,
- * rendering it in place of the projected `[surfaceRows]` content during the
- * first load. Table components pass their own `skeletonColumns` through the
- * surface rather than rendering this tag themselves (`ARCHITECTURE.md`
- * §10.3: a table stays presentational and does not own its own loading
- * shell once the surface exists).
+ * `CollectionSurface` renders it in place of the projected `[surfaceRows]`
+ * content during a first load. A page-owned table may also place it directly
+ * in its own `<tbody>` when the table cannot be expressed through a
+ * `CollectionSurface`; the caller remains responsible for the table head and
+ * request state announcement.
  *
  * @version 1.0.0
  *
@@ -52,6 +50,7 @@ const DEFAULT_COLUMN_WIDTH: string = 'w-24';
 @Component({
   selector: 'app-collection-skeleton-rows',
   imports: [HlmSkeleton, HlmTr, HlmTd],
+  host: { class: 'contents' },
   templateUrl: './collection-skeleton-rows.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -62,8 +61,7 @@ export class CollectionSkeletonRows {
    * @readonly
    *
    * @description
-   * How many placeholder rows to draw. Defaults to `5`, the count every
-   * hand-rolled table before this primitive already agreed on.
+   * How many placeholder rows to draw. Defaults to `5`.
    *
    * @access public
    * @since 1.0.0

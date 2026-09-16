@@ -4,6 +4,7 @@
       >Company email domain</label
     >
     <input
+      class="mobile-ui:min-h-11 mobile-ui:text-base"
       hlmInput
       id="organization-domain"
       [formField]="domainForm.domain"
@@ -23,7 +24,7 @@
   <button
     hlmBtn
     variant="outline"
-    class="w-fit max-sm:min-h-11 max-sm:w-full"
+    class="w-fit max-sm:w-full mobile-ui:min-h-11"
     type="submit"
     [disabled]="pending()"
     i18n="@@org.access.addDomain"

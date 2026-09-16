@@ -42,6 +42,30 @@ This feature does not own generic shell composition or account-level user identi
 
 ## Routes
 
+- `/organizations/:organizationId/more` is the full secondary navigation page under
+  the existing organization access guard and context resolver. It remains addressable
+  in either interaction mode and owns no additional store or loading path.
+
+### Adaptive mobile navigation
+
+`withOrganizationMobileNavigation()` publishes an additive shell slot contribution.
+The shell owns interaction-mode visibility, placement and safe-area clearance; organization owns
+the destinations and RBAC. Width never selects this widget's presentation. The pure
+`buildOrganizationMobileNavigation` model is shared by the bottom bar and More and reads
+only existing context and effective grants. Dashboard, Interventions, Assets, Messages and
+More keep stable ids and ordering; denied entries disappear without substitutes. Empty
+collections never change navigation. Without an organization, Account and Your organizations
+remain reachable. URL matching includes primary detail routes, with secondary routes under More.
+
+More preserves the canonical operations catalog and imports, Channels under the existing
+messaging-read wildcard check, and administration from the published
+`ORGANIZATION_SWITCHER_QUICK_LINKS` catalog plus the members page's Teams/Roles tabs.
+Billing stays `settings?tab=subscription`; account links preserve notification preferences
+and self-service organization membership access. The existing OrganizationSwitcher mounts
+browser-only through defer. More composes Auth's public `LogoutControl` for owner-managed
+sign-out, and the generic public `ThemeSwitcher` with
+`SLOT_PRESENTATION='menu'` for display preferences. It implements neither auth nor preferences.
+
 > **Currently mounted:** `/organizations`, `/organizations/:organizationId` (the landing
 > Dashboard page), `messages`, `channels`, `interventions`, `assets`, `equipments`, `facilities`,
 > `inspections`, `maintenance`, `approvals`, `checklists`, `imports`, `audit`, `calendar`,
@@ -207,8 +231,8 @@ not offered from this menu, nor from the settings danger zone — it lives at
 regardless of organization permission (see below).
 **The companion move of `OrganizationTeamPage`/`OrganizationTeamsPage`'s content into
 `roles`/`teams` tabs of `OrganizationMembersPage` is done** — see the `members` route entry
-above. The switcher-side menu rebuild itself (identity header, Settings/Billing/Members/Audit
-`routerLink`s) remains follow-up work — see **Not Built Yet**.
+above. The switcher includes its identity header and permission-gated
+Settings/Billing/Members/Audit links. Desktop uses its native dropdown; mobile uses a drawer.
 
 The settings page's danger-zone tab is gated on `organization.delete` as a whole — a member
 holding none of it falls back to the General tab. Leave no longer lives on this tab (see below).
@@ -375,6 +399,8 @@ the data is.
 - `SubmissionGateService`
 - `withOrganizationSwitcher()`
 - `withOrganizationNav()`
+- `withOrganizationMobileNavigation()`
+- `navigation` publishes the shared quick-link definitions and pure mobile navigation model.
 
 These contracts are the stable boundaries for approved consumers:
 
@@ -408,22 +434,27 @@ These contracts are the stable boundaries for approved consumers:
   `provideChannelsWorkspace()`, which shares channel state at the dashboard route.
   Contributions implement the public extension contract; access, URLs and loading
   remain collaboration-owned.
-- a shell contributes the global search — the header magnifier and its Ctrl+K / Cmd+K command
-  palette (`OrganizationGlobalSearch`, `ui/components/organization-global-search/`) — to its
-  header-actions slot through `withGlobalSearch()`, ahead of the assistant toggle. The palette
+- a shell contributes the global search trigger to its header-actions slot through
+  `withGlobalSearch()`, ahead of the assistant toggle. The organization feature initializes its
+  single palette owner independently of that trigger's render lifetime: Ctrl+K / Cmd+K still
+  works when mobile quick actions are closed. Browser keyboard registration happens only after
+  hydration; initialization does not load search data. Opening from quick actions waits for the
+  native parent to finish closing before creating the palette and preserves native focus return.
+  Editable fields retain their own shortcuts. The palette
   answers `GET /organizations/{organizationId}/search` through
-  `OrganizationService.search()` behind a component-scoped `OrganizationSearchStore`
+  `OrganizationService.search()` behind a dialog-scoped `OrganizationSearchStore`
   (`state/organization-search/`): one debounced (300 ms) `withQueryState` query per settled
   keystroke — a typeahead, so no multi-call slice — that never dials under 2 trimmed characters
   (the backend's own 400 bound) and resets to idle instead. Hits are grouped by type in the
   backend's stable order and navigate by `type` + `id`: equipment, facility, intervention and
-  inspection to their detail routes; a non-conformity to the inspections index, because it has
-  no detail page and its hit carries no owning-inspection id. The component renders nothing
-  without an active organization, and spartan's command primitive supplies the combobox/listbox
+  inspection to their detail routes; a non-conformity to its owning inspection when `parentId`
+  is available, otherwise to the inspections index. The opening organization remains fixed until
+  dismissal; changing context closes the palette, and stale results cannot navigate across
+  organizations. No palette opens without an active organization. Spartan's command primitive supplies the combobox/listbox
   ARIA contract. Its large viewport-bounded dialog keeps a visible scope explanation, rich idle,
   loading, error and no-result states, grouped result counts, and persistent keyboard guidance;
-  a polite live region announces the settled result count, and closing hands focus back to the
-  trigger.
+  a polite live region announces the settled result count. Closing disposes the query store;
+  the next opening starts with an empty draft and no previous results.
 
 `navigation/` owns the organization body destinations and permission-filtered sections.
 Collaboration owns its footer destinations through its public contribution factory.
@@ -620,19 +651,14 @@ stay in their owning feature. A field's value control need not be a select eithe
 lone `archived` field projects a plain `hlm-checkbox`, since "opening a selector" has no meaning
 for a boolean.
 
-**Not every chip's value control converts to a generic component, and the ones that stay
-hand-rolled still restore focus on pick.** Audit's `action` field keeps a hand-rolled
-`hlm-combobox` (`AuditPage`): its options are grouped by module through `hlmComboboxGroup`, a
-shape `CollectionFilterSelect` cannot render, and it is the sole consumer of that shape — below
-`CLAUDE.md` rule 8's third-consumer threshold. Checklists' `status` field keeps a hand-rolled
-`hlm-toggle-group` (`ChecklistsPage`) for the same reason, the same shape `ApprovalsPage`'s own
-`status` chip already uses — two consumers, not three. Both still open on a "+ Filter" pick and
-close themselves back out through the bar's `state`/`stateChanged` contract, since `HlmCombobox`
-hosts the very same `BrnPopover` `app-collection-filter-select` wraps — converted or not, every
-popover-backed chip in this bar behaves alike. Facilities' checkbox and checklists' toggle group
-open no popover at all, so `onFieldPicked` instead moves real DOM focus onto the freshly rendered
-control directly, deferred through `afterNextRender` the same way
-`CollectionFilterBar.focusAfterRemoval` defers its own post-removal focus move.
+**Filter presentation stays generic; filter meaning stays feature-owned.** Audit's action
+catalog supplies module grouping metadata to `CollectionFilterSelect`; shared controls never
+import the audit registry. The same confirmed value and `state`/`stateChanged` contract serve
+desktop popovers and mobile drawers, selected through `INTERACTION_CAPABILITIES_PORT`, not viewport width.
+Mobile multi-selection and date controls snapshot a draft on opening, preserve it during source
+refreshes, and emit on Apply before closing. Dismissal leaves the confirmed value unchanged.
+The feature owns the resulting query and URL update. Inline controls which open no overlay
+receive focus after rendering; closing an overlay uses native focus restoration.
 
 **The chip's operator segment (8.0) is generic, never a hardcoded "is".** `CollectionFilterOperator`
 (`@shared/collection-filters/models`) is the full comparison vocabulary — `equals`, `notEquals`,
@@ -713,6 +739,10 @@ dead weight.
 
 ## Cross-Feature Dependencies
 
+- More consumes Auth's public `LogoutControl`, retaining its logout port and
+  session-ended navigation behavior. This approved composition introduces no
+  organization-owned authentication state.
+
 - Consumes the nested `features/interventions` public API for the landing page's work
   queues (ARCHITECTURE.md §4): `InterventionService` from the feature root barrel, plus
   its `models`, `utils` and `data-access` concern barrels. Read-only — the parent lists
@@ -786,14 +816,6 @@ dead weight.
   activation, so a plain "register once" page action would otherwise go stale on tab switch).
 
 ## Not Built Yet
-
-- **`OrganizationSwitcher` as the organization's administration menu** — the dropdown must gain
-  an identity header, Settings / Billing / Members / Audit journal `routerLink`s (permission-gated
-  through `navigation/organization-navigation.config.ts`'s existing helpers, not a second
-  permission check), a height-bounded (3 rows, internal scroll) organization panel, and the
-  existing organization-switching panel and "Create organization" action, in the order above — see
-  Routes above for the exact target shape. The five nav items were already pulled out of the
-  sidebar; only the switcher-side UI remains (`fg-spartan-ui` / `fg-component-builder`).
 
 Backend endpoints exist for these; no frontend model, service method or store does:
 

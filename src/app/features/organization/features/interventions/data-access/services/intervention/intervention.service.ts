@@ -13,7 +13,7 @@ import {
   type Observable,
 } from 'rxjs';
 import { HydraApiService } from '@core/api';
-import type { HydraCollection, HydraItem, PaginationOptions } from '@core/api/models';
+import type { HydraCollection, HydraItem, RequestOptions } from '@core/api/models';
 import type {
   AssignInterventionTeamInput,
   CreateInterventionChangeInput,
@@ -29,6 +29,8 @@ import type {
   InterventionOutput,
   InterventionStatisticsOutput,
   InterventionWorkItemOutput,
+  InterventionWorkItemStatus,
+  InterventionChangeStatus,
   PublicationOutput,
   UpdateInterventionChangeInput,
   UpdateInterventionInput,
@@ -562,21 +564,24 @@ export class InterventionService extends HydraApiService {
    * assignee?: string;
    * source?: string;
    * action?: string;
-   * status?: string;
+   * status?: InterventionWorkItemStatus;
    * }} [options] - options value.
    *
-   * @return {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work items operation.
+   * @returns {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work items operation.
    */
   public listWorkItems(
     interventionId: string,
-    options?: PaginationOptions & {
+    options?: RequestOptions & {
       assignee?: string;
       source?: string;
       action?: string;
-      status?: string;
+      status?: InterventionWorkItemStatus;
     },
   ): Observable<HydraCollection<InterventionWorkItemOutput>> {
-    const params: Record<string, string> = { intervention: `/api/interventions/${interventionId}` };
+    const params: NonNullable<RequestOptions['params']> = {
+      ...options?.params,
+      intervention: `/api/interventions/${interventionId}`,
+    };
     if (options?.assignee) params['assignee'] = options.assignee;
     if (options?.source) params['source'] = options.source;
     if (options?.action) params['action'] = options.action;
@@ -585,6 +590,7 @@ export class InterventionService extends HydraApiService {
     return this.getCollection<InterventionWorkItemOutput>('/api/intervention-work-items', {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
+      search: options?.search,
       params,
     });
   }
@@ -594,8 +600,8 @@ export class InterventionService extends HydraApiService {
    * @method listAllWorkItems
    *
    * @description
-   * Drains every page of {@link listWorkItems} into one flat array, keeping
-   * the caller's filters.
+   * Drains every page of {@link listWorkItems} into one flat array. Multiple
+   * statuses are queried separately because the endpoint accepts scalar values.
    *
    * @access public
    * @since 1.0.0
@@ -605,23 +611,40 @@ export class InterventionService extends HydraApiService {
    * assignee?: string;
    * source?: string;
    * action?: string;
-   * status?: string;
+   * status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
    * }} [options] - options value.
    *
-   * @return {Observable<readonly InterventionWorkItemOutput[]>} Result of the list all work items operation.
+   * @returns {Observable<readonly InterventionWorkItemOutput[]>} Result of the list all work items operation.
    */
   public listAllWorkItems(
     interventionId: string,
-    options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
+    options?: Omit<RequestOptions, 'page' | 'itemsPerPage'> & {
       assignee?: string;
       source?: string;
       action?: string;
-      status?: string;
+      status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
     },
   ): Observable<readonly InterventionWorkItemOutput[]> {
-    return this.collectPages((page) =>
-      this.listWorkItems(interventionId, { ...options, page, itemsPerPage: WORKSPACE_PAGE_SIZE }),
-    );
+    const requestedStatus = options?.status;
+    const statuses: readonly (InterventionWorkItemStatus | undefined)[] =
+      typeof requestedStatus === 'string'
+        ? [requestedStatus]
+        : requestedStatus?.length
+          ? [...new Set(requestedStatus)]
+          : [undefined];
+
+    return forkJoin(
+      statuses.map((status) =>
+        this.collectPages((page) =>
+          this.listWorkItems(interventionId, {
+            ...options,
+            page,
+            itemsPerPage: WORKSPACE_PAGE_SIZE,
+            status,
+          }),
+        ),
+      ),
+    ).pipe(map((groups) => groups.flat()));
   }
 
   /**
@@ -724,20 +747,24 @@ export class InterventionService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {PaginationOptions & { resource?: string; status?: string }} [options] - options value.
    *
-   * @return {Observable<HydraCollection<InterventionChangeOutput>>} Result of the list changes operation.
+   * @returns {Observable<HydraCollection<InterventionChangeOutput>>} Result of the list changes operation.
    */
   public listChanges(
     interventionId: string,
 
-    options?: PaginationOptions & { resource?: string; status?: string },
+    options?: RequestOptions & { resource?: string; status?: InterventionChangeStatus },
   ): Observable<HydraCollection<InterventionChangeOutput>> {
-    const params: Record<string, string> = { intervention: `/api/interventions/${interventionId}` };
+    const params: NonNullable<RequestOptions['params']> = {
+      ...options?.params,
+      intervention: `/api/interventions/${interventionId}`,
+    };
     if (options?.resource) params['resource'] = options.resource;
     if (options?.status) params['status'] = options.status;
 
     return this.getCollection<InterventionChangeOutput>('/api/intervention-changes', {
       page: options?.page,
       itemsPerPage: options?.itemsPerPage,
+      search: options?.search,
       params,
     });
   }
@@ -759,13 +786,13 @@ export class InterventionService extends HydraApiService {
    * status?: string;
    * }} [options] - options value.
    *
-   * @return {Observable<readonly InterventionChangeOutput[]>} Result of the list all changes operation.
+   * @returns {Observable<readonly InterventionChangeOutput[]>} Result of the list all changes operation.
    */
   public listAllChanges(
     interventionId: string,
-    options?: Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
+    options?: Omit<RequestOptions, 'page' | 'itemsPerPage'> & {
       resource?: string;
-      status?: string;
+      status?: InterventionChangeStatus;
     },
   ): Observable<readonly InterventionChangeOutput[]> {
     return this.collectPages((page) =>

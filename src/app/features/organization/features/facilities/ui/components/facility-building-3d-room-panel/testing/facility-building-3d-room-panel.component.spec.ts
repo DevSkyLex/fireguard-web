@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   FacilityBuildingModelFloor,
   FacilityPlanOverlayZone,
@@ -45,7 +46,10 @@ const FLOOR_2: FacilityBuildingModelFloor = {
 
 const FLOORS: ReadonlyArray<FacilityBuildingModelFloor> = [FLOOR_1, FLOOR_2];
 
+const mobile = signal(false);
+
 function stubMatchMedia(matches: boolean): void {
+  mobile.set(matches);
   vi.stubGlobal(
     'matchMedia',
     vi.fn().mockImplementation((query: string) => ({
@@ -68,7 +72,12 @@ describe('FacilityBuilding3dRoomPanel', () => {
     room: FacilityPlanOverlayZone | null = null,
     compactVisible = true,
   ): Promise<void> {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
+      ],
+    });
     fixture = TestBed.createComponent(FacilityBuilding3dRoomPanel);
     fixture.componentRef.setInput('floors', FLOORS);
     fixture.componentRef.setInput('selectedFloorId', 'floor-1');
@@ -124,11 +133,16 @@ describe('FacilityBuilding3dRoomPanel', () => {
     expect(element.querySelector('[data-testid="facility-3d-room-panel-close"]')).not.toBeNull();
   });
 
-  it('switches to the sheet branch below the sm breakpoint', async () => {
+  it('uses the sheet branch for the mobile interaction mode', async () => {
     stubMatchMedia(true);
     await render(null);
 
-    expect(document.querySelector('hlm-sheet-content')).not.toBeNull();
+    const sheetContent = document.querySelector('hlm-sheet-content');
+    expect(sheetContent).not.toBeNull();
+    expect(
+      sheetContent?.querySelector('[data-testid="facility-3d-room-panel-dismiss"]'),
+    ).not.toBeNull();
+    expect(sheetContent?.querySelector(':scope > button')).toBeNull();
     expect(document.querySelector('[data-testid="facility-3d-room-panel"]')).not.toBeNull();
   });
 

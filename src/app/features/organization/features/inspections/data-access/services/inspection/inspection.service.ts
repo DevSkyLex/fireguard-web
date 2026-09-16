@@ -1,7 +1,7 @@
 import type { HttpResponse } from '@angular/common/http';
 import { Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
-import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
+import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   InspectionOutput,
@@ -161,15 +161,23 @@ export class InspectionService extends HydraApiService {
    * @param {string} interventionId - The intervention to scope the query to.
    * @param {PaginationOptions} [options] - Optional pagination.
    *
-   * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the linked inspections.
+   * @returns {Observable<HydraCollection<InspectionOutput>>} An observable emitting the linked inspections.
    */
   public listByIntervention(
     interventionId: string,
-    options?: PaginationOptions,
+    options?: InspectionListOptions,
   ): Observable<HydraCollection<InspectionOutput>> {
     return this.getCollection<InspectionOutput>('/api/inspections', {
-      ...options,
-      params: { intervention: `/api/interventions/${interventionId}` },
+      page: options?.page,
+      itemsPerPage: options?.itemsPerPage,
+      sort: options?.sort,
+      search: options?.search,
+      params: {
+        ...options?.params,
+        intervention: `/api/interventions/${interventionId}`,
+        ...(options?.status ? { status: options.status } : {}),
+        ...(options?.result ? { result: options.result } : {}),
+      },
     });
   }
 

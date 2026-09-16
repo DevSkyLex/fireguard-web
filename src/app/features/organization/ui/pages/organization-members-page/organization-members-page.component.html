@@ -4,27 +4,28 @@
       <hlm-paginated-tabs-list
         variant="line"
         class="w-full"
-        tabListClass="justify-start"
+        tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+        paginationButtonClass="mobile-ui:size-11 mobile-ui:shrink-0"
         aria-label="Members sections"
         i18n-aria-label="@@org.members.tabsAriaLabel"
         data-testid="organization-members-tabs-list"
       >
         <button
           hlmTabsTrigger="members"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:px-3"
           data-testid="organization-members-tab-members"
           i18n="@@org.members.tab.members"
         >
-          <ng-icon name="lucideUsersRound" class="size-4" aria-hidden="true" />
+          <ng-icon name="lucideUsersRound" class="size-4 mobile-ui:hidden" aria-hidden="true" />
           Members
         </button>
         @if (canManageMembers()) {
           <button
             hlmTabsTrigger="requests"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="organization-members-tab-requests"
           >
-            <ng-icon name="lucideUserCheck" aria-hidden="true" /><span
+            <ng-icon name="lucideUserCheck" class="mobile-ui:hidden" aria-hidden="true" /><span
               i18n="@@org.access.requests.tab"
               >Requests</span
             >
@@ -33,22 +34,22 @@
         @if (canViewRolesTab()) {
           <button
             hlmTabsTrigger="roles"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="organization-members-tab-roles"
             i18n="@@org.members.tab.roles"
           >
-            <ng-icon name="lucideShieldCheck" class="size-4" aria-hidden="true" />
+            <ng-icon name="lucideShieldCheck" class="size-4 mobile-ui:hidden" aria-hidden="true" />
             Roles & permissions
           </button>
         }
         @if (canViewTeamsTab()) {
           <button
             hlmTabsTrigger="teams"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
             data-testid="organization-members-tab-teams"
             i18n="@@org.members.tab.teams"
           >
-            <ng-icon name="lucideNetwork" class="size-4" aria-hidden="true" />
+            <ng-icon name="lucideNetwork" class="size-4 mobile-ui:hidden" aria-hidden="true" />
             Teams
           </button>
         }
@@ -114,7 +115,7 @@
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  class="max-sm:size-11"
+                  class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
                   data-testid="organization-members-action-error-dismiss"
                   (click)="dismissActionError()"
                 >
@@ -132,7 +133,7 @@
                     type="button"
                     variant="destructive"
                     size="sm"
-                    class="min-w-0 shrink"
+                    class="min-w-0 shrink mobile-ui:min-h-11"
                     data-testid="organization-members-bulk-remove"
                     (click)="requestBulkRemove()"
                   >
@@ -168,7 +169,7 @@
                 >
                   <button
                     hlmToggleGroupItem
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     value="all"
                     data-testid="organization-members-status-all"
                     i18n="@@org.members.statusAll"
@@ -177,7 +178,7 @@
                   </button>
                   <button
                     hlmToggleGroupItem
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     value="active"
                     data-testid="organization-members-status-active"
                     i18n="@@org.members.statusActive"
@@ -186,7 +187,7 @@
                   </button>
                   <button
                     hlmToggleGroupItem
-                    class="max-sm:min-h-11"
+                    class="mobile-ui:min-h-11"
                     value="inactive"
                     data-testid="organization-members-status-inactive"
                     i18n="@@org.members.statusInactive"
@@ -201,7 +202,7 @@
                     type="button"
                     variant="outline"
                     size="sm"
-                    class="max-sm:min-h-11 sm:hidden"
+                    class="mobile-ui:min-h-11 desktop-ui:hidden"
                     data-testid="organization-members-selection-mode"
                     [attr.aria-pressed]="selectionMode()"
                     (click)="toggleSelectionMode()"
@@ -210,34 +211,176 @@
                   </button>
                 }
 
-                @if (store.roles().length > 0) {
-                  <hlm-select
-                    toolbarEnd
-                    class="inline-block"
-                    [itemToString]="roleFilterLabelOf"
-                    [value]="roleFilter() ?? 'all'"
-                    (valueChange)="onRoleFilterChanged($event)"
-                  >
-                    <hlm-select-trigger
-                      class="inline-flex h-8 w-44 max-sm:h-11"
-                      data-testid="organization-members-role-filter"
-                      aria-label="Filter by role"
-                      i18n-aria-label="@@org.members.roleFilterAriaLabel"
-                    >
-                      <hlm-select-value />
-                    </hlm-select-trigger>
-                    <hlm-select-content *hlmSelectPortal>
-                      <hlm-select-group>
-                        <hlm-select-item value="all" i18n="@@org.members.roleFilterAll"
-                          >All roles</hlm-select-item
+                <ng-container toolbarEnd>
+                  @if (store.roles().length > 0) {
+                    @if (isMobileInteractionMode() || roleFilterDrawerVisible()) {
+                      <hlm-drawer
+                        [state]="roleFilterDrawerVisible() ? 'open' : 'closed'"
+                        (stateChanged)="roleFilterDrawerVisible.set($event === 'open')"
+                      >
+                        <button
+                          hlmBtn
+                          hlmDrawerTrigger
+                          variant="outline"
+                          type="button"
+                          class="min-h-11 max-w-full"
+                          data-testid="organization-members-role-filter-mobile"
+                          aria-label="Filter by role"
+                          i18n-aria-label="@@org.members.roleFilterAriaLabel"
                         >
-                        @for (role of store.roles(); track role.id) {
-                          <hlm-select-item [value]="role.id">{{ role.name }}</hlm-select-item>
-                        }
-                      </hlm-select-group>
-                    </hlm-select-content>
-                  </hlm-select>
-                }
+                          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                          <span class="truncate">{{
+                            roleFilterLabelOf(roleFilter() ?? 'all')
+                          }}</span>
+                        </button>
+                        <hlm-drawer-content
+                          *hlmDrawerPortal
+                          class="pb-[env(safe-area-inset-bottom)]"
+                          data-testid="organization-members-role-drawer"
+                        >
+                          <hlm-drawer-header>
+                            <div class="flex flex-col gap-1 text-start">
+                              <h3 hlmDrawerTitle i18n="@@org.members.roleFilterAriaLabel">
+                                Filter by role
+                              </h3>
+                              <p
+                                hlmDrawerDescription
+                                i18n="@@org.members.roleFilter.mobileDescription"
+                              >
+                                Choose a role to filter the member directory.
+                              </p>
+                            </div>
+                          </hlm-drawer-header>
+                          <hlm-command class="h-auto min-h-0 rounded-none">
+                            <div class="px-4 pb-2">
+                              <label
+                                for="organization-members-role-search"
+                                class="sr-only"
+                                i18n="@@org.members.roleFilter.search"
+                                >Search roles</label
+                              >
+                              <hlm-input-group class="min-h-11">
+                                <input
+                                  hlmInputGroupInput
+                                  brnCommandInput
+                                  id="organization-members-role-search"
+                                  class="text-base"
+                                  placeholder="Search roles"
+                                  i18n-placeholder="@@org.members.roleFilter.search"
+                                />
+                                <hlm-input-group-addon
+                                  ><ng-icon name="lucideSearch" aria-hidden="true"
+                                /></hlm-input-group-addon>
+                              </hlm-input-group>
+                            </div>
+                            <label
+                              class="sr-only"
+                              for="organization-members-role-search"
+                              i18n="@@org.members.roleFilter.search"
+                              >Search roles</label
+                            >
+                            <div hlmCommandList class="min-h-0 overflow-y-auto overscroll-contain">
+                              <div
+                                *hlmCommandEmptyState
+                                hlmCommandEmpty
+                                i18n="@@org.members.roleFilter.empty"
+                              >
+                                No matching roles.
+                              </div>
+                              <button
+                                hlmCommandItem
+                                type="button"
+                                class="min-h-11"
+                                value="all roles"
+                                data-testid="organization-members-role-all-mobile"
+                                (selected)="
+                                  onRoleFilterChanged('all'); roleFilterDrawerVisible.set(false)
+                                "
+                              >
+                                <ng-icon name="lucideUsersRound" aria-hidden="true" />
+                                <span i18n="@@org.members.roleFilterAll">All roles</span>
+                                @if (roleFilter() === null) {
+                                  <span
+                                    class="ms-auto text-xs"
+                                    i18n="@@org.members.roleFilter.selected"
+                                    >Selected</span
+                                  >
+                                }
+                              </button>
+                              @for (role of store.roles(); track role.id) {
+                                <button
+                                  hlmCommandItem
+                                  type="button"
+                                  class="min-h-11"
+                                  [value]="role.name"
+                                  [attr.data-testid]="'organization-members-role-mobile-' + role.id"
+                                  (selected)="
+                                    onRoleFilterChanged(role.id); roleFilterDrawerVisible.set(false)
+                                  "
+                                >
+                                  <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                                  <span class="min-w-0 wrap-anywhere whitespace-normal">{{
+                                    role.name
+                                  }}</span>
+                                  @if (roleFilter() === role.id) {
+                                    <span
+                                      class="ms-auto text-xs"
+                                      i18n="@@org.members.roleFilter.selected"
+                                      >Selected</span
+                                    >
+                                  }
+                                </button>
+                              }
+                            </div>
+                          </hlm-command>
+                          <hlm-drawer-footer>
+                            <button
+                              hlmBtn
+                              hlmDrawerClose
+                              type="button"
+                              variant="outline"
+                              class="min-h-11"
+                              i18n="@@common.close"
+                            >
+                              Close
+                            </button>
+                          </hlm-drawer-footer>
+                        </hlm-drawer-content>
+                      </hlm-drawer>
+                    } @else {
+                      <hlm-select
+                        class="inline-block"
+                        [itemToString]="roleFilterLabelOf"
+                        [value]="roleFilter() ?? 'all'"
+                        (valueChange)="onRoleFilterChanged($event)"
+                      >
+                        <hlm-select-trigger
+                          class="inline-flex h-8 w-44 mobile-ui:h-11 mobile-ui:min-h-11"
+                          data-testid="organization-members-role-filter"
+                          aria-label="Filter by role"
+                          i18n-aria-label="@@org.members.roleFilterAriaLabel"
+                        >
+                          <hlm-select-value />
+                        </hlm-select-trigger>
+                        <hlm-select-content *hlmSelectPortal>
+                          <hlm-select-group>
+                            <hlm-select-item
+                              class="mobile-ui:min-h-11"
+                              value="all"
+                              i18n="@@org.members.roleFilterAll"
+                              >All roles</hlm-select-item
+                            >
+                            @for (role of store.roles(); track role.id) {
+                              <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+                                role.name
+                              }}</hlm-select-item>
+                            }
+                          </hlm-select-group>
+                        </hlm-select-content>
+                      </hlm-select>
+                    }
+                  }
+                </ng-container>
               </app-collection-toolbar>
 
               @if (listForbidden()) {
@@ -269,7 +412,7 @@
                     <button
                       hlmBtn
                       variant="outline"
-                      class="max-sm:min-h-11"
+                      class="mobile-ui:min-h-11"
                       data-testid="organization-members-retry"
                       (click)="reload()"
                     >
@@ -293,7 +436,7 @@
                       <button
                         hlmBtn
                         variant="outline"
-                        class="max-sm:min-h-11"
+                        class="mobile-ui:min-h-11"
                         data-testid="organization-members-clear-filters"
                         (click)="clearRosterFilters()"
                       >
@@ -314,7 +457,7 @@
                     </div>
                     <div hlmEmptyContent>
                       @if (canManageMembers()) {
-                        <button hlmBtn class="max-sm:min-h-11" (click)="openInviteDialog()">
+                        <button hlmBtn class="mobile-ui:min-h-11" (click)="openInviteDialog()">
                           <ng-icon name="lucideMailPlus" aria-hidden="true" />
                           <span i18n="@@org.members.inviteButton">Invite member</span>
                         </button>
@@ -355,7 +498,7 @@
             </section>
 
             @if (canManageMembers()) {
-              <section class="flex flex-col gap-3">
+              <section class="flex flex-col gap-3 mobile-ui:gap-4">
                 <h2 hlmCardTitle>{{ pendingInvitationsHeading() }}</h2>
 
                 @if (store.loadCallState().status === 'error') {
@@ -375,7 +518,7 @@
                       <button
                         hlmBtn
                         variant="outline"
-                        class="max-sm:min-h-11"
+                        class="mobile-ui:min-h-11"
                         data-testid="organization-invitations-retry"
                         (click)="reload()"
                       >
@@ -497,14 +640,14 @@
   @if (canManageMembers()) {
     <button
       hlmBtn
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="organization-members-invite"
       i18n-aria-label="@@org.members.inviteButton"
       aria-label="Invite member"
       (click)="openInviteDialog()"
     >
       <ng-icon name="lucideMailPlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@org.members.inviteButton">Invite member</span>
+      <span class="truncate" i18n="@@org.members.inviteButton">Invite member</span>
     </button>
   }
 </ng-template>

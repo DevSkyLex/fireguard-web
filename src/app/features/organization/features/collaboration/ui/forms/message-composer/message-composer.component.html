@@ -8,7 +8,7 @@
   <form class="relative flex flex-col gap-1.5" novalidate (submit)="submit($event)">
     @if (mentionCandidates().length > 0) {
       <ul
-        class="absolute bottom-full left-0 z-20 mb-1 w-full max-w-sm overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+        class="absolute bottom-full left-0 z-20 mb-1 w-full max-w-sm overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 mobile-ui:max-h-[35dvh] mobile-ui:max-w-full mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
         id="message-composer-mentions"
         role="listbox"
         data-testid="message-composer-mentions"
@@ -25,10 +25,11 @@
               hlmItem
               size="xs"
               type="button"
-              class="w-full text-start"
+              class="w-full text-start mobile-ui:min-h-11"
               data-testid="message-composer-mention"
               [class.bg-accent]="index === activeMention()"
-              (mousedown)="$event.preventDefault(); acceptMention(member)"
+              (pointerdown)="$event.preventDefault()"
+              (click)="acceptMention(member)"
             >
               <div hlmItemMedia variant="image">
                 <hlm-avatar>
@@ -58,7 +59,7 @@
         #field
         rows="1"
         data-testid="message-composer-input"
-        class="max-h-40 min-h-14 px-4 pt-3 pb-1 text-[0.9375rem] leading-6"
+        class="max-h-40 min-h-14 px-4 pt-3 pb-1 text-[0.9375rem] leading-6 mobile-ui:text-base"
         i18n-aria-label="@@messages.composer.label"
         aria-label="Message"
         role="combobox"
@@ -89,7 +90,9 @@
             {{ remaining() }}
           </span>
         } @else {
-          <span class="hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
+          <span
+            class="hidden items-center gap-1 text-xs text-muted-foreground desktop-ui:inline-flex"
+          >
             <kbd hlmKbd>Enter</kbd>
             <span i18n="@@messages.composer.enterHint">to send</span>
           </span>
@@ -97,10 +100,10 @@
 
         <button
           hlmInputGroupButton
-          size="icon-sm"
+          [size]="isMobileInteractionMode() ? 'sm' : 'icon-sm'"
           variant="default"
           type="submit"
-          class="ml-auto size-9 shrink-0 rounded-full max-sm:size-11"
+          class="ml-auto size-9 shrink-0 rounded-full mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:w-auto mobile-ui:gap-2 mobile-ui:rounded-md mobile-ui:px-3 mobile-ui:whitespace-normal"
           data-testid="message-composer-send"
           i18n-aria-label="@@messages.composer.send"
           aria-label="Send message"
@@ -112,6 +115,7 @@
           } @else {
             <ng-icon name="lucideArrowUp" class="text-base" aria-hidden="true" />
           }
+          <span class="hidden mobile-ui:inline" i18n="@@messages.composer.send">Send message</span>
         </button>
       </div>
     </div>

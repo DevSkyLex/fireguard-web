@@ -23,6 +23,7 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 
@@ -72,6 +73,7 @@ import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status
     MaintenanceDueStatusTag,
     HlmButton,
     ...HlmTableImports,
+    ...HlmItemImports,
   ],
   providers: [provideIcons({ lucidePencil })],
   templateUrl: './maintenance-schedule-table.component.html',

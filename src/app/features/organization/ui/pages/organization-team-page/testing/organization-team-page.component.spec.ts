@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import {
   errorCallState,
@@ -73,6 +74,8 @@ function permission(name: string): OrganizationPermissionOutput {
 }
 
 describe('OrganizationTeamPage', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   let fixture: ComponentFixture<OrganizationTeamPage>;
   let roles: WritableSignal<readonly OrganizationRoleOutput[]>;
   let catalog: WritableSignal<readonly OrganizationPermissionOutput[]>;
@@ -91,6 +94,13 @@ describe('OrganizationTeamPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {

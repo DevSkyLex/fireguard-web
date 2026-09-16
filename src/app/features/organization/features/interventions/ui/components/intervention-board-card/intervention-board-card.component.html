@@ -10,38 +10,111 @@
   <div hlmCardHeader class="min-w-0 gap-x-2">
     <a
       hlmCardTitle
-      class="min-w-0 rounded-sm wrap-anywhere text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      class="min-w-0 rounded-sm wrap-anywhere text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:flex mobile-ui:min-h-11 mobile-ui:flex-col mobile-ui:justify-center mobile-ui:gap-1 mobile-ui:text-base"
       data-testid="intervention-board-card-title"
       queryParamsHandling="preserve"
       [routerLink]="[...detailRouteBase(), item().intervention.id]"
     >
-      <span class="mb-1 block text-xs font-normal text-muted-foreground"
+      <span
+        class="mb-1 block text-xs font-normal text-muted-foreground mobile-ui:order-last mobile-ui:mb-0"
         >FG-{{ item().intervention.number }}</span
       >
       {{ item().intervention.name }}
     </a>
 
-    <button
-      hlmBtn
-      hlmCardAction
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      align="end"
-      class="shrink-0 max-sm:min-h-11 max-sm:min-w-11"
-      data-testid="intervention-board-card-menu"
-      [disabled]="locked()"
-      [attr.aria-label]="locked() ? updatingReason : openMenuLabel"
-      [attr.aria-busy]="locked() ? 'true' : null"
-      [hlmDropdownMenuTrigger]="cardMenu"
-    >
-      @if (locked()) {
-        <hlm-spinner size="xs" aria-hidden="true" />
-      } @else {
-        <ng-icon name="lucideEllipsis" aria-hidden="true" />
-      }
-    </button>
-
+    @if (isMobileInteractionMode() || mobileActionsVisible()) {
+      <hlm-drawer
+        hlmCardAction
+        direction="bottom"
+        (stateChanged)="mobileActionsVisible.set($event === 'open')"
+      >
+        <button
+          hlmDrawerTrigger
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon"
+          class="size-11"
+          data-testid="intervention-board-card-mobile-actions"
+          [disabled]="locked()"
+          [attr.aria-label]="locked() ? updatingReason : openMenuLabel"
+          [attr.aria-busy]="locked() ? 'true' : null"
+        >
+          @if (locked()) {
+            <hlm-spinner size="xs" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideEllipsis" aria-hidden="true" />
+          }
+        </button>
+        <hlm-drawer-content *hlmDrawerPortal="let drawer" class="pb-[env(safe-area-inset-bottom)]">
+          <hlm-drawer-header>
+            <div class="text-start">
+              <h3 hlmDrawerTitle>{{ item().intervention.name }}</h3>
+              <p hlmDrawerDescription i18n="@@intervention.board.mobileActionsDescription">
+                Open this intervention or choose an available status.
+              </p>
+            </div>
+          </hlm-drawer-header>
+          <hlm-item-group
+            class="flex min-h-0 flex-col gap-2 overflow-y-auto overscroll-contain px-4 pb-4"
+          >
+            <a
+              hlmItem
+              class="min-h-11 flex-nowrap text-start"
+              queryParamsHandling="preserve"
+              [routerLink]="[...detailRouteBase(), item().intervention.id]"
+              (click)="drawer.close()"
+              ><span hlmItemMedia variant="icon"
+                ><ng-icon name="lucideArrowRight" aria-hidden="true" /></span
+              ><span hlmItemContent>
+                <span hlmItemTitle i18n="@@intervention.board.cardOpen">Open</span>
+              </span></a
+            >
+            @for (target of moveTargets(); track target) {
+              <button
+                hlmItem
+                type="button"
+                class="min-h-11 flex-nowrap text-start whitespace-normal mobile-ui:min-h-11"
+                data-testid="intervention-board-card-mobile-move"
+                [attr.data-status]="target"
+                [disabled]="locked() || moveBlockedReason(target) !== null"
+                [appGateReason]="moveBlockedReason(target)"
+                (click)="requestMove(target) && drawer.close()"
+              >
+                <span hlmItemContent
+                  ><span hlmItemTitle>
+                    <app-intervention-tag kind="status" [value]="target" asOption /> </span
+                ></span>
+              </button>
+              @if (moveBlockedReason(target); as reason) {
+                <p class="text-xs text-muted-foreground">{{ reason }}</p>
+              }
+            }
+          </hlm-item-group>
+        </hlm-drawer-content>
+      </hlm-drawer>
+    } @else {
+      <button
+        hlmBtn
+        hlmCardAction
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        align="end"
+        class="shrink-0 mobile-ui:min-h-11 mobile-ui:min-w-11"
+        data-testid="intervention-board-card-menu"
+        [disabled]="locked()"
+        [attr.aria-label]="locked() ? updatingReason : openMenuLabel"
+        [attr.aria-busy]="locked() ? 'true' : null"
+        [hlmDropdownMenuTrigger]="cardMenu"
+      >
+        @if (locked()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
+        } @else {
+          <ng-icon name="lucideEllipsis" aria-hidden="true" />
+        }
+      </button>
+    }
     <ng-template #cardMenu>
       <hlm-dropdown-menu class="w-56">
         <a
@@ -61,7 +134,7 @@
             <button
               hlmDropdownMenuItem
               data-testid="intervention-board-card-move"
-              class="text-left data-disabled:text-muted-foreground data-disabled:opacity-100"
+              class="text-left data-disabled:text-muted-foreground data-disabled:opacity-100 mobile-ui:min-h-11"
               [attr.data-status]="target"
               [disabled]="moveBlockedReason(target) !== null"
               [appGateReason]="moveBlockedReason(target)"

@@ -15,7 +15,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="equipment-table-sort-type"
           (click)="sortChanged.emit('type')"
         >
@@ -29,7 +29,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="equipment-table-sort-brand"
           (click)="sortChanged.emit('brand')"
         >
@@ -43,7 +43,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="-ms-2 h-8 px-2 max-sm:min-h-11"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
           data-testid="equipment-table-sort-status"
           (click)="sortChanged.emit('status')"
         >
@@ -61,7 +61,7 @@
       <tr hlmTableRow data-testid="equipment-table-row">
         <td hlmTableCell class="whitespace-normal">
           <a
-            class="rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="inline-flex items-center rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
             >{{ typeLabelOf(item.type) }}</a
           >
@@ -71,7 +71,11 @@
         </td>
 
         <td hlmTableCell class="whitespace-normal text-muted-foreground">
-          {{ brandModelOf(item) }}
+          @if (brandModelOf(item); as brandModel) {
+            {{ brandModel }}
+          } @else {
+            <span aria-hidden="true">—</span>
+          }
         </td>
 
         <td hlmTableCell>
@@ -104,34 +108,45 @@
   <ng-container surfaceCards>
     @for (item of items(); track item.id) {
       <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
+        class="flex flex-col gap-1 rounded-md border border-border p-3 mobile-ui:gap-2 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
         data-testid="equipment-table-card"
       >
         <div class="flex min-w-0 flex-col">
           <a
-            class="line-clamp-2 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="flex items-center rounded-sm text-base font-medium break-words text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
             >{{ typeLabelOf(item.type) }}</a
           >
           @if (item.serialNumber) {
-            <span class="text-xs text-muted-foreground">{{ item.serialNumber }}</span>
+            <span class="text-sm break-words text-muted-foreground">{{ item.serialNumber }}</span>
           }
         </div>
 
-        <div class="flex items-center gap-2 ps-1 text-xs text-muted-foreground">
+        <p class="text-sm text-muted-foreground">
+          @if (brandModelOf(item); as brandModel) {
+            {{ brandModel }}
+          } @else {
+            <span aria-hidden="true">—</span>
+          }
+        </p>
+        <p class="text-sm break-words">
+          @if (item.facilityName; as facility) {
+            <span class="font-medium">{{ facility }}</span>
+            @if (item.locationLabel) {
+              <span class="block text-muted-foreground">{{ item.locationLabel }}</span>
+            }
+          } @else if (item.locationLabel) {
+            {{ item.locationLabel }}
+          } @else {
+            <span class="text-muted-foreground" i18n="@@equipment.unassigned">Unassigned</span>
+          }
+        </p>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <app-equipment-status-tag kind="status" [value]="item.status" />
           <app-equipment-status-tag
             kind="maintenanceDueStatus"
             [value]="item.maintenanceDueStatus"
           />
-
-          <span class="truncate">
-            @if (item.facilityName ?? item.locationLabel; as location) {
-              {{ location }}
-            } @else {
-              <span i18n="@@equipment.unassigned">Unassigned</span>
-            }
-          </span>
         </div>
       </div>
     }

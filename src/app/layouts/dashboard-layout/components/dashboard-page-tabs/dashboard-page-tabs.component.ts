@@ -18,6 +18,9 @@ import { PageTabsService } from '@core/page-tabs';
  * Its wrapper republishes Spartan's horizontal `group/tabs` styling context
  * because a projected `TemplateRef` no longer has the declaring `hlm-tabs` as
  * a DOM ancestor, even though it retains that component's injection context.
+ * The shell only corrects the native line indicator's visual offset so it overlays the page-header
+ * border without changing trigger height during activation. Route tabs receive a wider desktop hit
+ * area; pages retain list and paginator geometry inputs.
  *
  * @version 1.1.0
  *

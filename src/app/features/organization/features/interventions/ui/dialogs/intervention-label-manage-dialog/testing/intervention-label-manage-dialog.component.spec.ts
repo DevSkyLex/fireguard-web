@@ -59,6 +59,32 @@ describe('InterventionLabelManageDialog', () => {
     expect(content().textContent).toContain('Compliance');
   });
 
+  it('should put the color control first with one visible label', async () => {
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    const form = inDialog('[data-testid="intervention-label-create-form"]');
+    const inputs = Array.from(form.querySelectorAll('input'));
+    const nameLabel = form.querySelector('label[for="intervention-label-create-name"]');
+    const colorLabel = form.querySelector('label[for="intervention-label-create-color"]');
+
+    expect(inputs[0]?.getAttribute('data-testid')).toBe('intervention-label-create-color');
+    expect(nameLabel?.textContent?.trim()).toBe('Label');
+    expect(colorLabel?.classList.contains('sr-only')).toBe(true);
+  });
+
+  it('should render row actions as separate buttons', async () => {
+    fixture.componentRef.setInput('open', true);
+    await fixture.whenStable();
+
+    const actions = inDialog(
+      '[data-testid="intervention-label-row-label-1"] [data-slot="item-actions"]',
+    );
+
+    expect(actions.querySelector('[data-slot="button-group"]')).toBeNull();
+    expect(actions.querySelectorAll('button')).toHaveLength(2);
+  });
+
   it('should emit created for the drafted name and color', async () => {
     fixture.componentRef.setInput('open', true);
     await fixture.whenStable();

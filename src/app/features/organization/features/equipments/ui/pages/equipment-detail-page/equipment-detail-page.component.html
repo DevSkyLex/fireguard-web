@@ -10,7 +10,7 @@
         @if (equipment.facilityName; as facility) {
           @if (equipment.facilityId; as facilityId) {
             <a
-              class="hover:underline"
+              class="inline-flex items-center hover:underline mobile-ui:min-h-11"
               data-testid="equipment-detail-facility-link"
               [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
             >
@@ -28,7 +28,7 @@
             type="button"
             variant="ghost"
             size="icon-sm"
-            class="size-6 max-sm:size-11"
+            class="size-6 mobile-ui:size-11"
             data-testid="equipment-detail-facility-edit"
             i18n-aria-label="@@equipment.facility.editAria"
             aria-label="Change the assigned facility"
@@ -42,7 +42,7 @@
         @if (equipment.facilityId; as pinnedFacilityId) {
           <a
             [routerLink]="['/organizations', organizationId(), 'facilities', pinnedFacilityId]"
-            class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground mobile-ui:min-h-11"
             data-testid="equipment-detail-pinned"
           >
             <ng-icon name="lucideMapPin" class="text-sm" aria-hidden="true" />
@@ -52,7 +52,7 @@
       }
       @if (equipment.facilityId; as siteFacilityId) {
         <a
-          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground mobile-ui:min-h-11"
           data-testid="equipment-detail-site-interventions"
           [routerLink]="['/organizations', organizationId(), 'interventions']"
           [queryParams]="{ site: siteFacilityId }"
@@ -68,7 +68,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="ms-auto max-sm:min-h-11"
+        class="ms-auto mobile-ui:min-h-11"
         data-testid="equipment-detail-export-report"
         [disabled]="reportExporting()"
         [attr.aria-busy]="reportExporting() ? 'true' : null"
@@ -91,32 +91,32 @@
         <hlm-paginated-tabs-list
           variant="line"
           class="w-full"
-          tabListClass="justify-start"
+          tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
           aria-label="Equipment sections"
           i18n-aria-label="@@equipment.detail.tabsAriaLabel"
         >
           <button
             hlmTabsTrigger="overview"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="equipment-tab-overview"
           >
             <span i18n="@@equipment.detail.tabs.overview">Overview</span>
           </button>
           <button
             hlmTabsTrigger="attachments"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="equipment-tab-attachments"
           >
             <span i18n="@@equipment.detail.tabs.attachments">Attachments</span>
           </button>
           <button
             hlmTabsTrigger="maintenance"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="equipment-tab-maintenance"
           >
             <span i18n="@@equipment.detail.tabs.maintenance">Maintenance</span>
           </button>
-          <button hlmTabsTrigger="tags" class="max-sm:min-h-11" data-testid="equipment-tab-tags">
+          <button hlmTabsTrigger="tags" class="mobile-ui:min-h-11" data-testid="equipment-tab-tags">
             <span i18n="@@equipment.detail.tabs.tags">Tags</span>
           </button>
         </hlm-paginated-tabs-list>
@@ -207,7 +207,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="equipment-detail-retry"
           (click)="retryLoad()"
           i18n="@@common.tryAgain"
@@ -245,7 +245,7 @@
         <button
           hlmBtn
           type="button"
-          class="min-w-0 shrink max-sm:min-h-11"
+          class="min-w-0 shrink mobile-ui:min-h-11"
           data-testid="equipment-primary-action"
           [disabled]="store.isChangingLifecycle()"
           (click)="action.run()"
@@ -264,7 +264,7 @@
           variant="ghost"
           size="icon-sm"
           align="end"
-          class="max-sm:size-11"
+          class="mobile-ui:size-11"
           data-testid="equipment-detail-menu"
           [disabled]="store.isChangingLifecycle()"
           [hlmDropdownMenuTrigger]="moreMenu"
@@ -280,6 +280,7 @@
               variant="destructive"
               data-testid="equipment-decommission"
               (click)="onDecommission()"
+              class="mobile-ui:min-h-11"
             >
               <ng-icon name="lucideArchive" aria-hidden="true" />
               <span i18n="@@equipment.decommission">Decommission</span>

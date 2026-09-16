@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   linkedSignal,
   output,
@@ -12,14 +13,39 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideAlarmSmoke,
+  lucideBox,
+  lucideCctv,
+  lucideCheck,
+  lucideDoorClosed,
+  lucideDroplet,
+  lucideDroplets,
+  lucideFingerprint,
+  lucideFireExtinguisher,
+  lucideGauge,
+  lucideLightbulb,
+  lucideMapPin,
+  lucidePackage,
+  lucideSearch,
+  lucideSiren,
+  lucideThermometer,
+} from '@ng-icons/lucide';
+import { BrnCommandInput } from '@spartan-ng/brain/command';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmCommandImports } from '@shared/ui/command';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OnboardingEquipmentFormDraft, OnboardingEquipmentTypeOption } from './models';
 
@@ -62,6 +88,12 @@ function trimmed(value: string): string | undefined {
 @Component({
   selector: 'app-onboarding-equipment-form',
   imports: [
+    NgIcon,
+    HlmButton,
+    HlmCommandImports,
+    BrnCommandInput,
+    HlmInputGroupImports,
+    HlmDrawerImports,
     ...HlmComboboxImports,
     RequiredMarker,
     FormField,
@@ -71,10 +103,42 @@ function trimmed(value: string): string | undefined {
     ...HlmSelectImports,
   ],
   templateUrl: './onboarding-equipment-form.component.html',
+  providers: [
+    provideIcons({
+      lucideAlarmSmoke,
+      lucideBox,
+      lucideCctv,
+      lucideCheck,
+      lucideDoorClosed,
+      lucideDroplet,
+      lucideDroplets,
+      lucideFingerprint,
+      lucideFireExtinguisher,
+      lucideGauge,
+      lucideLightbulb,
+      lucideMapPin,
+      lucidePackage,
+      lucideSearch,
+      lucideSiren,
+      lucideThermometer,
+    }),
+  ],
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingEquipmentForm {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
   /**
    * Property restored
    * @readonly
@@ -183,6 +247,17 @@ export class OnboardingEquipmentForm {
   /** Names a type on the closed select trigger. */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
+
+  /**
+   * Property typeIconOf
+   * @readonly
+   * @description Resolves a decorative equipment icon, with a neutral fallback before selection.
+   * @access protected
+   * @since 1.0.0
+   * @type {(value: OnboardingEquipmentTypeOption | '') => string}
+   */
+  protected readonly typeIconOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
+    this.typeOptions.find((option) => option.value === value)?.icon ?? 'lucidePackage';
 
   /**
    * Property facilityRows

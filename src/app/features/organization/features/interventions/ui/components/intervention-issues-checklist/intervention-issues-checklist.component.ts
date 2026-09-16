@@ -4,21 +4,18 @@ import {
   computed,
   input,
   output,
-  signal,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
-  type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown, lucideChevronRight, lucideCircleCheck } from '@ng-icons/lucide';
+import { lucideChevronRight, lucideCircleCheck } from '@ng-icons/lucide';
 import type {
   InterventionIssueOutput,
   InterventionIssueTarget,
   InterventionPhase,
 } from '@features/organization/features/interventions/models';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmItemImports } from '@shared/ui/item';
 import { InterventionTag } from '../intervention-tag';
 import { resolveInterventionIssueTarget } from './utils/intervention-issue-target/intervention-issue-target.utils';
@@ -32,10 +29,10 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
  * decode: each blocker and warning is a button that sends the operator to
  * the tab or editor that resolves it, resolved by
  * `resolveInterventionIssueTarget` from the issue's own `resource`/`field`
- * pair. Blockers render first, unfolded — the only issues that actually stop
- * publication should never be a click away from visible. Warnings and
- * recommendations sit in a collapsed section beneath: informative, not
- * gating, and worth folding away once the blocker list is clear.
+ * pair. Blockers render first — the only issues that actually stop publication
+ * should never be a click away from visible. Warnings and recommendations
+ * render directly beneath them because they remain useful context while an
+ * intervention is being resolved.
  *
  * @version 1.0.0
  *
@@ -52,8 +49,8 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
  */
 @Component({
   selector: 'app-intervention-issues-checklist',
-  imports: [...HlmItemImports, NgIcon, HlmButton, InterventionTag, ...HlmCollapsibleImports],
-  providers: [provideIcons({ lucideChevronDown, lucideChevronRight, lucideCircleCheck })],
+  imports: [...HlmItemImports, NgIcon, HlmButton, InterventionTag],
+  providers: [provideIcons({ lucideChevronRight, lucideCircleCheck })],
   templateUrl: './intervention-issues-checklist.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -138,16 +135,6 @@ export class InterventionIssuesChecklist {
 
   //#region Properties
   /**
-   * Property secondaryExpanded
-   * @readonly
-   * @description Whether the collapsed warnings/recommendations section is open.
-   * @access protected
-   * @since 1.0.0
-   * @type {WritableSignal<boolean>}
-   */
-  protected readonly secondaryExpanded: WritableSignal<boolean> = signal<boolean>(false);
-
-  /**
    * Property blockers
    * @readonly
    * @description The issues that actually stop publication, unfolded above the rest.
@@ -162,7 +149,7 @@ export class InterventionIssuesChecklist {
   /**
    * Property secondaryIssues
    * @readonly
-   * @description Warnings and recommendations — informative, not gating, and kept collapsed.
+   * @description Warnings and recommendations — informative and rendered beneath blockers.
    * @access protected
    * @since 1.0.0
    * @type {Signal<readonly InterventionIssueOutput[]>}
@@ -183,21 +170,6 @@ export class InterventionIssuesChecklist {
     () => this.verified() && this.phase() === 'review' && this.blockers().length === 0,
   );
 
-  /**
-   * Property secondaryToggleLabel
-   * @readonly
-   * @description The collapsed section's trigger label, counting its own issues.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<string>}
-   */
-  protected readonly secondaryToggleLabel: Signal<string> = computed<string>(() => {
-    const count: number = this.secondaryIssues().length;
-
-    return count === 1
-      ? $localize`:@@intervention.issues.secondaryToggleOne:1 point to review`
-      : $localize`:@@intervention.issues.secondaryToggleMany:${count}:count: points to review`;
-  });
   //#endregion
 
   //#region Methods

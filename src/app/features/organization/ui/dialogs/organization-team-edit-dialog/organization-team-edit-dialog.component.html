@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-lg mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
     data-testid="organization-team-edit-dialog"
     *hlmDialogPortal
   >

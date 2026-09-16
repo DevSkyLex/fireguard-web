@@ -1,4 +1,8 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
+export {
+  formatInterventionChangePatch,
+  interventionChangeResourceKind,
+} from './format-intervention-change-patch/format-intervention-change-patch.utils';
 export { toUtcMidnight } from './intervention-date-only/intervention-date-only.utils';
 export { resolveCommandTransitionTarget } from './intervention-command-target/intervention-command-target.utils';
 export {
@@ -35,3 +39,8 @@ export {
   resolveInterventionMentionMember,
 } from './intervention-mentions/intervention-mentions.utils';
 export { interventionRecurrenceFrequencyLabel } from './intervention-recurrence-frequency-label/intervention-recurrence-frequency-label.utils';
+export {
+  projectInterventionWorkspace,
+  searchSavedWorkItems,
+  searchSavedChanges,
+} from './intervention-workspace-projection/intervention-workspace-projection.utils';

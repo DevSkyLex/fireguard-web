@@ -1,7 +1,9 @@
 <ng-template #tileContent>
   <div hlmCardHeader>
     <div class="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
-      <p hlmCardDescription class="min-w-0 flex-1 basis-24 text-pretty">{{ label() }}</p>
+      <p hlmCardDescription class="min-w-0 flex-1 basis-24 text-pretty wrap-anywhere">
+        {{ label() }}
+      </p>
 
       @if (badge(); as b) {
         <span hlmBadge variant="outline" class="shrink-0">
@@ -57,7 +59,9 @@
     @if (loading()) {
       <hlm-skeleton class="h-7 w-16" />
     } @else {
-      <p hlmCardTitle class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</p>
+      <p hlmCardTitle>
+        <span class="text-2xl leading-none font-semibold tabular-nums">{{ value() }}</span>
+      </p>
     }
   </div>
 
@@ -92,6 +96,7 @@
 @if (link(); as destination) {
   <a
     hlmCard
+    [size]="isMobileInteractionMode() ? 'sm' : 'default'"
     [routerLink]="destination"
     [queryParams]="queryParams()"
     class="h-full transition-colors hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
@@ -99,7 +104,7 @@
     <ng-container [ngTemplateOutlet]="tileContent" />
   </a>
 } @else {
-  <div hlmCard class="h-full">
+  <div hlmCard [size]="isMobileInteractionMode() ? 'sm' : 'default'" class="h-full">
     <ng-container [ngTemplateOutlet]="tileContent" />
   </div>
 }

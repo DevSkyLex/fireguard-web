@@ -1,97 +1,134 @@
-<hlm-popover align="end" [state]="popoverState()" (stateChanged)="onStateChanged($event)">
-  <button
-    hlmBtn
-    hlmPopoverTrigger
-    variant="ghost"
-    size="icon"
-    type="button"
-    class="max-lg:size-11"
-    data-testid="direct-messages-panel-new"
-    aria-label="New message"
-    i18n-aria-label="@@messages.nav.new"
-    [disabled]="pending()"
-  >
-    <ng-icon name="lucidePenLine" aria-hidden="true" />
-  </button>
-  <div
-    hlmPopoverContent
-    class="w-80 max-w-[calc(100vw-2rem)]"
-    data-testid="direct-message-picker"
-    aria-label="New message"
-    i18n-aria-label="@@messages.picker.title"
-    *hlmPopoverPortal
-  >
-    <h3 hlmPopoverTitle i18n="@@messages.picker.title">New message</h3>
-
-    <hlm-command class="gap-2 rounded-none p-0" [search]="query()" [filter]="passThroughFilter">
-      <div class="relative">
-        <ng-icon
-          name="lucideSearch"
-          class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
-          aria-hidden="true"
-        />
-        <input
-          hlmInput
-          brnCommandInput
-          type="search"
-          class="w-full ps-9"
-          data-testid="new-direct-message-search"
-          placeholder="Search members"
-          i18n-placeholder="@@messages.picker.searchPlaceholder"
-          i18n-aria-label="@@messages.picker.searchLabel"
-          aria-label="Search members"
-          [value]="query()"
-          (input)="onQueryInput($event)"
-        />
+@if (isMobileInteractionMode()) {
+  <hlm-drawer [state]="popoverState()" (stateChanged)="onStateChanged($event)">
+    <button
+      hlmBtn
+      hlmDrawerTrigger
+      variant="default"
+      type="button"
+      class="h-auto min-h-11 gap-2 whitespace-normal"
+      data-testid="direct-messages-panel-new"
+      [disabled]="pending()"
+      aria-label="New message"
+      i18n-aria-label="@@messages.nav.new"
+    >
+      <ng-icon name="lucidePenLine" aria-hidden="true" />
+      <span i18n="@@messages.nav.new">New message</span>
+    </button>
+    <hlm-drawer-content
+      *hlmDrawerPortal
+      class="pb-[env(safe-area-inset-bottom)]"
+      data-testid="direct-message-picker"
+    >
+      <hlm-drawer-header>
+        <div class="text-start">
+          <h2 hlmDrawerTitle i18n="@@messages.picker.title">New message</h2>
+          <p hlmDrawerDescription i18n="@@messages.picker.mobileDescription">
+            Choose a member to open a conversation.
+          </p>
+        </div>
+      </hlm-drawer-header>
+      <div class="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
+        <ng-container *ngTemplateOutlet="recipientChoices" />
       </div>
+    </hlm-drawer-content>
+  </hlm-drawer>
+} @else {
+  <hlm-popover align="end" [state]="popoverState()" (stateChanged)="onStateChanged($event)">
+    <button
+      hlmBtn
+      hlmPopoverTrigger
+      variant="ghost"
+      size="icon"
+      type="button"
+      class="mobile-ui:size-11"
+      data-testid="direct-messages-panel-new"
+      aria-label="New message"
+      i18n-aria-label="@@messages.nav.new"
+      [disabled]="pending()"
+    >
+      <ng-icon name="lucidePenLine" aria-hidden="true" />
+    </button>
+    <div
+      hlmPopoverContent
+      class="w-80 max-w-[calc(100vw-2rem)]"
+      data-testid="direct-message-picker"
+      aria-label="New message"
+      i18n-aria-label="@@messages.picker.title"
+      *hlmPopoverPortal
+    >
+      <h3 hlmPopoverTitle i18n="@@messages.picker.title">New message</h3>
 
-      @if (matches().length === 0) {
-        <div hlmEmpty>
-          <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideUsers" aria-hidden="true" />
-            </div>
-            <p hlmEmptyTitle i18n="@@messages.picker.emptyTitle">No one to message</p>
-            <p hlmEmptyDescription i18n="@@messages.picker.emptyDescription">
-              No active member of this organization matches.
-            </p>
+      <ng-container *ngTemplateOutlet="recipientChoices" />
+    </div>
+  </hlm-popover>
+}
+<ng-template #recipientChoices>
+  <hlm-command
+    class="gap-2 rounded-none p-0"
+    [search]="query()"
+    [filter]="passThroughFilter"
+    (searchChange)="query.set($event)"
+  >
+    <label class="sr-only" for="new-direct-message-search" i18n="@@messages.picker.searchLabel"
+      >Search members</label
+    >
+    <hlm-input-group class="mobile-ui:min-h-11" data-testid="new-direct-message-search">
+      <input
+        brnCommandInput
+        hlmInputGroupInput
+        class="mobile-ui:text-base"
+        id="new-direct-message-search"
+        placeholder="Search members"
+        i18n-placeholder="@@messages.picker.searchPlaceholder"
+      />
+    </hlm-input-group>
+
+    @if (matches().length === 0) {
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideUsers" aria-hidden="true" />
           </div>
+          <p hlmEmptyTitle i18n="@@messages.picker.emptyTitle">No one to message</p>
+          <p hlmEmptyDescription i18n="@@messages.picker.emptyDescription">
+            No active member of this organization matches.
+          </p>
         </div>
-      } @else {
-        <div hlmCommandList class="max-h-[min(18rem,45svh)] overscroll-contain">
-          @for (member of matches(); track member.memberId) {
-            <button
-              hlmCommandItem
-              type="button"
-              class="gap-2.5 rounded-md py-2 text-start data-selected:bg-sidebar-accent"
-              data-testid="new-direct-message-candidate"
-              [value]="member.displayName"
-              [disabled]="pending()"
-              (selected)="pick(member.memberId)"
-            >
-              <hlm-avatar class="size-8 shrink-0">
-                @if (member.avatarUrl; as avatarUrl) {
-                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                }
-                <span hlmAvatarFallback class="text-[10px]">
-                  {{ initialsOf(member.displayName) }}
-                </span>
-              </hlm-avatar>
-
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm font-medium text-foreground">
-                  {{ member.displayName }}
-                </span>
-                @if (member.roleNames.length > 0) {
-                  <span class="truncate text-xs text-muted-foreground">
-                    {{ member.roleNames.join(', ') }}
-                  </span>
-                }
+      </div>
+    } @else {
+      <div hlmCommandList class="max-h-[min(18rem,45svh)] overscroll-contain">
+        @for (member of matches(); track member.memberId) {
+          <button
+            hlmCommandItem
+            type="button"
+            class="gap-2.5 rounded-md py-2 text-start data-selected:bg-sidebar-accent mobile-ui:min-h-11 mobile-ui:whitespace-normal"
+            data-testid="new-direct-message-candidate"
+            [value]="member.displayName"
+            [disabled]="pending()"
+            (selected)="pick(member.memberId)"
+          >
+            <hlm-avatar class="size-8 shrink-0">
+              @if (member.avatarUrl; as avatarUrl) {
+                <img hlmAvatarImage [src]="avatarUrl" alt="" />
+              }
+              <span hlmAvatarFallback class="text-[10px]">
+                {{ initialsOf(member.displayName) }}
               </span>
-            </button>
-          }
-        </div>
-      }
-    </hlm-command>
-  </div>
-</hlm-popover>
+            </hlm-avatar>
+
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate text-sm font-medium text-foreground">
+                {{ member.displayName }}
+              </span>
+              @if (member.roleNames.length > 0) {
+                <span class="truncate text-xs text-muted-foreground">
+                  {{ member.roleNames.join(', ') }}
+                </span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+    }
+  </hlm-command>
+</ng-template>

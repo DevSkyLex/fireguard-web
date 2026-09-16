@@ -1,98 +1,248 @@
-<app-collection-surface
-  caption="The equipment linked to this intervention."
-  i18n-caption="@@intervention.linked.equipment.caption"
-  testId="intervention-equipment-table"
-  density="compact"
-  [loading]="loading()"
-  [hasError]="error() !== null"
-  [rowCount]="items().length"
-  [columnCount]="4"
-  [skeletonColumns]="skeletonColumnWidths"
+<section
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="intervention-equipment"
+  aria-labelledby="intervention-equipment-title"
 >
-  <ng-container surfaceHead>
-    <tr hlmTableRow>
-      <th hlmTableHead i18n="@@intervention.linked.equipment.columnType">Type</th>
-      <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">Brand / model</th>
-      <th hlmTableHead i18n="@@intervention.linked.equipment.columnStatus">Status</th>
-      <th hlmTableHead i18n="@@intervention.linked.equipment.columnLocation">Location</th>
-    </tr>
-  </ng-container>
-
-  <ng-container surfaceRows>
-    @for (item of items(); track item.id) {
-      <tr hlmTableRow data-testid="intervention-equipment-table-row">
-        <td hlmTableCell class="whitespace-normal">
-          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
-        </td>
-        <td hlmTableCell class="whitespace-normal">{{ brandModelOf(item) }}</td>
-        <td hlmTableCell>
-          <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
-        </td>
-        <td hlmTableCell class="whitespace-normal">{{ item.locationLabel }}</td>
-      </tr>
-    }
-  </ng-container>
-
-  <ng-container surfaceCards>
-    @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3"
-        data-testid="intervention-equipment-table-card"
-      >
-        <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
-
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
-          <span class="truncate">{{ item.locationLabel }}</span>
-        </div>
-      </div>
-    }
-  </ng-container>
-
-  <div hlmEmpty role="alert" surfaceError data-testid="intervention-equipment-error">
-    <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon" class="text-destructive">
-        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-      </div>
-      <p hlmEmptyTitle i18n="@@intervention.linked.equipment.errorTitle">
-        Linked equipment could not be loaded
-      </p>
-      <p hlmEmptyDescription>{{ error() ?? '' }}</p>
-    </div>
-  </div>
-
-  <div hlmEmpty surfaceEmpty data-testid="intervention-equipment-empty">
-    <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon">
-        <ng-icon name="lucideWrench" aria-hidden="true" />
-      </div>
-      <p hlmEmptyTitle i18n="@@intervention.linked.equipment.emptyTitle">No linked equipment</p>
-      <p hlmEmptyDescription i18n="@@intervention.linked.equipment.emptyDesc">
-        No equipment is linked to this intervention yet.
-      </p>
-    </div>
-  </div>
-</app-collection-surface>
-
-@if (totalItems() > items().length) {
-  <div class="flex justify-center pt-4">
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      class="max-sm:min-h-11"
-      data-testid="intervention-equipment-load-more"
-      [disabled]="loadingMore()"
-      (click)="loadMoreRequested.emit()"
+  <div class="flex flex-col gap-1">
+    <h2
+      id="intervention-equipment-title"
+      class="text-lg font-semibold"
+      i18n="@@intervention.sidebar.equipment"
     >
-      @if (loadingMore()) {
-        <span i18n="@@intervention.linked.equipment.loadingMore">Loading…</span>
-      } @else {
-        <span i18n="@@intervention.linked.equipment.loadMore">Show more</span>
-      }
-    </button>
+      Equipment
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@intervention.linked.equipment.caption">
+      The equipment linked to this intervention.
+    </p>
   </div>
-}
+
+  <app-collection-toolbar>
+    <app-collection-search-box
+      toolbarStart
+      testIdPrefix="intervention-equipment"
+      placeholder="Search equipment..."
+      i18n-placeholder="@@intervention.linked.equipment.searchPlaceholder"
+      ariaLabel="Search equipment..."
+      i18n-ariaLabel="@@intervention.linked.equipment.searchPlaceholder"
+      [value]="searchTerm()"
+      (queryChanged)="onSearchQueryChanged($event)"
+    />
+
+    <div toolbarEnd class="flex flex-wrap items-center gap-2">
+      <app-collection-filter-toggle
+        [visible]="filtersVisible()"
+        [activeCount]="activeFilterKeys().length"
+        label="Filters"
+        i18n-label="@@intervention.linked.equipment.filtersButton"
+        testIdPrefix="intervention-equipment"
+        (visibleChange)="toggleFiltersVisible($event)"
+      />
+    </div>
+  </app-collection-toolbar>
+
+  @if (filtersVisible()) {
+    <app-collection-filter-bar
+      [fields]="filterFields"
+      [activeKeys]="activeFilterKeys()"
+      [pendingKey]="openFilterKey()"
+      [templates]="filterTemplates()"
+      testIdPrefix="intervention-equipment"
+      (fieldPicked)="onFieldPicked($event)"
+      (fieldRemoved)="onFieldRemoved($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  }
+
+  <ng-template #typeFilterControl>
+    <app-collection-filter-select
+      [options]="typeOptions"
+      [value]="typeFilter()"
+      placeholder="Type"
+      i18n-placeholder="@@intervention.linked.equipment.filterType"
+      searchPlaceholder="Search a type"
+      i18n-searchPlaceholder="@@intervention.linked.equipment.filterTypePlaceholder"
+      emptyLabel="No type matches."
+      i18n-emptyLabel="@@intervention.linked.equipment.filterNoType"
+      accessibleName="Filter equipment by type"
+      i18n-accessibleName="@@intervention.linked.equipment.filterTypeAccessibleName"
+      triggerId="intervention-equipment-filter-type"
+      testId="intervention-equipment-filter-type"
+      [state]="fieldPopoverState('type')"
+      (valueChanged)="onTypeFilterChanged($event)"
+      (stateChanged)="onFilterPopoverStateChanged('type', $event)"
+    />
+  </ng-template>
+
+  <ng-template #statusFilterControl>
+    <app-collection-filter-select
+      [options]="statusOptions"
+      [value]="statusFilter()"
+      placeholder="Status"
+      i18n-placeholder="@@intervention.linked.equipment.filterStatus"
+      searchPlaceholder="Search a status"
+      i18n-searchPlaceholder="@@intervention.linked.equipment.filterStatusPlaceholder"
+      emptyLabel="No status matches."
+      i18n-emptyLabel="@@intervention.linked.equipment.filterNoStatus"
+      accessibleName="Filter equipment by status"
+      i18n-accessibleName="@@intervention.linked.equipment.filterStatusAccessibleName"
+      triggerId="intervention-equipment-filter-status"
+      testId="intervention-equipment-filter-status"
+      [state]="fieldPopoverState('status')"
+      (valueChanged)="onStatusFilterChanged($event)"
+      (stateChanged)="onFilterPopoverStateChanged('status', $event)"
+    />
+  </ng-template>
+
+  <app-intervention-table-feedback
+    [source]="source()"
+    [error]="error()"
+    [hasResult]="hasLoaded() || filteredItems().length > 0"
+    [loading]="loading()"
+    (retryRequested)="retryRequested.emit()"
+  />
+  <app-collection-surface
+    class="[&_[data-slot=table]]:min-w-[42rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-14"
+    caption="The equipment linked to this intervention."
+    i18n-caption="@@intervention.linked.equipment.caption"
+    testId="intervention-equipment-table"
+    density="compact"
+    [loading]="loading()"
+    [hasLoaded]="hasLoaded()"
+    [hasError]="error() !== null && !hasLoaded() && filteredItems().length === 0"
+    [rowCount]="filteredItems().length"
+    [columnCount]="4"
+    [skeletonColumns]="skeletonColumnWidths"
+  >
+    <ng-container surfaceHead>
+      <tr hlmTableRow>
+        <th hlmTableHead class="w-40" i18n="@@intervention.linked.equipment.columnType">Type</th>
+        <th hlmTableHead i18n="@@intervention.linked.equipment.columnBrandModel">Brand / model</th>
+        <th hlmTableHead class="w-32" i18n="@@intervention.linked.equipment.columnStatus">
+          Status
+        </th>
+        <th hlmTableHead class="w-48" i18n="@@intervention.linked.equipment.columnLocation">
+          Location
+        </th>
+      </tr>
+    </ng-container>
+
+    <ng-container surfaceRows>
+      @for (item of filteredItems(); track item.id) {
+        <tr hlmTableRow data-testid="intervention-equipment-table-row">
+          <td hlmTableCell class="whitespace-normal">
+            <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+          </td>
+          <td hlmTableCell class="whitespace-normal">
+            @if (brandModelOf(item); as brandModel) {
+              {{ brandModel }}
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
+          </td>
+          <td hlmTableCell>
+            <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
+          </td>
+          <td hlmTableCell class="whitespace-normal">
+            @if (item.locationLabel; as locationLabel) {
+              {{ locationLabel }}
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
+          </td>
+        </tr>
+      }
+    </ng-container>
+
+    <ng-container surfaceCards>
+      @for (item of filteredItems(); track item.id) {
+        <div
+          class="flex flex-col gap-1 rounded-md border border-border p-3"
+          data-testid="intervention-equipment-table-card"
+        >
+          <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
+
+          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <app-intervention-tag kind="equipmentStatus" [value]="item.status" />
+            @if (item.locationLabel; as locationLabel) {
+              <span class="truncate">{{ locationLabel }}</span>
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
+          </div>
+        </div>
+      }
+    </ng-container>
+
+    <div hlmEmpty role="alert" surfaceError data-testid="intervention-equipment-error">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@intervention.linked.equipment.errorTitle">
+          Linked equipment could not be loaded
+        </p>
+        <p hlmEmptyDescription>{{ error() ?? '' }}</p>
+      </div>
+
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="loading()"
+        (click)="retryRequested.emit()"
+        i18n="@@intervention.tables.retry"
+      >
+        Retry
+      </button>
+    </div>
+
+    <div hlmEmpty surfaceEmpty data-testid="intervention-equipment-empty">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon">
+          @if (hasActiveQuery()) {
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideWrench" aria-hidden="true" />
+          }
+        </div>
+        @if (hasActiveQuery()) {
+          <p hlmEmptyTitle i18n="@@intervention.linked.equipment.filteredEmptyTitle">
+            No equipment matches the current search or filters
+          </p>
+          <p hlmEmptyDescription i18n="@@intervention.linked.equipment.filteredEmptyDesc">
+            Change the search or remove a filter to see more equipment.
+          </p>
+        } @else {
+          <p hlmEmptyTitle i18n="@@intervention.linked.equipment.emptyTitle">No linked equipment</p>
+          <p hlmEmptyDescription i18n="@@intervention.linked.equipment.emptyDesc">
+            No equipment is linked to this intervention yet.
+          </p>
+        }
+      </div>
+    </div>
+  </app-collection-surface>
+
+  @if (totalItems() > items().length) {
+    <div class="flex justify-center pt-4">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        data-testid="intervention-equipment-load-more"
+        [disabled]="loadingMore()"
+        (click)="loadMoreRequested.emit()"
+      >
+        @if (loadingMore()) {
+          <span i18n="@@intervention.linked.equipment.loadingMore">Loading…</span>
+        } @else {
+          <span i18n="@@intervention.linked.equipment.loadMore">Show more</span>
+        }
+      </button>
+    </div>
+  }
+</section>
 
 <ng-template #identity let-item="item">
   @if (isDraftRecord(item)) {

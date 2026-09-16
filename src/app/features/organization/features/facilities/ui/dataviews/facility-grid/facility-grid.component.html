@@ -19,7 +19,7 @@
           type="button"
           variant="ghost"
           size="icon-sm"
-          class="absolute end-2 top-2 max-sm:size-11"
+          class="absolute end-2 top-2 mobile-ui:size-11"
           data-testid="facility-grid-card-menu"
           [hlmDropdownMenuTrigger]="cardMenu"
         >
@@ -34,6 +34,7 @@
                 hlmDropdownMenuItem
                 data-testid="facility-grid-card-archive"
                 (click)="archiveRequested.emit(item)"
+                class="mobile-ui:min-h-11"
               >
                 <ng-icon name="lucideArchive" aria-hidden="true" />
                 <span i18n="@@facility.list.rowArchive">Archive</span>
@@ -45,6 +46,7 @@
                 hlmDropdownMenuItem
                 data-testid="facility-grid-card-restore"
                 (click)="restoreRequested.emit(item)"
+                class="mobile-ui:min-h-11"
               >
                 <ng-icon name="lucideArchiveRestore" aria-hidden="true" />
                 <span i18n="@@facility.list.rowRestore">Restore</span>
@@ -56,7 +58,7 @@
         <div hlmCardHeader>
           <a
             hlmCardTitle
-            class="flex items-center gap-1.5 rounded-sm pe-8 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="flex items-center gap-1.5 rounded-sm pe-8 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
           >
             <ng-icon

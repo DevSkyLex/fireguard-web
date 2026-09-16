@@ -1,74 +1,50 @@
-import { Component, type Signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { sheetSide } from '../sheet-side.service';
-
-/** Minimal host calling {@link sheetSide} from an injection context, the same way a sheet component would. */
-@Component({ selector: 'app-sheet-side-host', template: '' })
-class SheetSideHost {
-  public readonly side: Signal<'right' | 'bottom'> = sheetSide();
-}
-
-function stubMatchMedia(matches: boolean): void {
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
-  );
-}
 
 describe('sheetSide', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('should resolve to right above the sm breakpoint', async () => {
-    stubMatchMedia(false);
-    const fixture: ComponentFixture<SheetSideHost> = TestBed.createComponent(SheetSideHost);
-    await fixture.whenStable();
+  it.each([
+    ['mobile', 'bottom', 1440],
+    ['mobile', 'bottom', 375],
+    ['desktop', 'right', 375],
+    ['desktop', 'right', 1440],
+  ] as const)(
+    'resolves %s to %s independently of a %dpx viewport',
+    (interactionMode, expected, width) => {
+      vi.stubGlobal('innerWidth', width);
+      const match = vi.fn();
+      vi.stubGlobal('matchMedia', match);
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: INTERACTION_CAPABILITIES_PORT,
+            useValue: { isMobileInteractionMode: signal(interactionMode === 'mobile') },
+          },
+        ],
+      });
+      const side = TestBed.runInInjectionContext(sheetSide);
+      expect(side()).toBe(expected);
+      expect(match).not.toHaveBeenCalled();
+    },
+  );
 
-    expect(fixture.componentInstance.side()).toBe('right');
-  });
-
-  it('should resolve to bottom below the sm breakpoint', async () => {
-    stubMatchMedia(true);
-    const fixture: ComponentFixture<SheetSideHost> = TestBed.createComponent(SheetSideHost);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.side()).toBe('bottom');
-  });
-
-  it('should track a live breakpoint change', async () => {
-    let changeHandler: ((event: MediaQueryListEvent) => void) | undefined;
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        addEventListener: vi.fn((_: string, handler: (event: MediaQueryListEvent) => void) => {
-          changeHandler = handler;
-        }),
-        removeEventListener: vi.fn(),
-      })),
-    );
-    const fixture: ComponentFixture<SheetSideHost> = TestBed.createComponent(SheetSideHost);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.side()).toBe('right');
-
-    changeHandler?.({ matches: true } as MediaQueryListEvent);
-
-    expect(fixture.componentInstance.side()).toBe('bottom');
-  });
-
-  it('should stay right when matchMedia is unavailable (SSR)', async () => {
-    vi.stubGlobal('matchMedia', undefined);
-    const fixture: ComponentFixture<SheetSideHost> = TestBed.createComponent(SheetSideHost);
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance.side()).toBe('right');
+  it('follows central mode changes immediately', () => {
+    const isMobileInteractionMode = signal(false);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode } },
+      ],
+    });
+    const side = TestBed.runInInjectionContext(sheetSide);
+    expect(side()).toBe('right');
+    isMobileInteractionMode.set(true);
+    expect(side()).toBe('bottom');
+    isMobileInteractionMode.set(false);
+    expect(side()).toBe('right');
   });
 });

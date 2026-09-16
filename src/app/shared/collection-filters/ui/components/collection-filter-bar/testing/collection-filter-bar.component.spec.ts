@@ -9,6 +9,9 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { HlmDrawer } from '@shared/ui/drawer';
 import type {
   CollectionFilterField,
   CollectionFilterOperator,
@@ -215,6 +218,7 @@ class ResizeObserverStub {
 }
 
 describe('CollectionFilterBar', () => {
+  const mobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CollectionFilterBarHost>;
 
   beforeAll(() => {
@@ -223,9 +227,16 @@ describe('CollectionFilterBar', () => {
   });
 
   beforeEach(async () => {
+    mobileInteractionMode.set(false);
     TestBed.configureTestingModule({
       imports: [CollectionFilterBarHost],
-      providers: [provideZonelessChangeDetection()],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(CollectionFilterBarHost);
@@ -236,17 +247,16 @@ describe('CollectionFilterBar', () => {
     vi.unstubAllGlobals();
   });
 
-  async function useCompactFixture(): Promise<void> {
+  /**
+   * Function useMobileFixture
+   * @description Creates the host in the mobile interaction mode before its first render.
+   * @access private
+   * @since 1.0.0
+   * @returns {Promise<void>} The stabilized mobile fixture.
+   */
+  async function useMobileFixture(): Promise<void> {
     fixture.destroy();
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((query: string) => ({
-        matches: query === '(max-width: 639px)',
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    );
+    mobileInteractionMode.set(true);
     fixture = TestBed.createComponent(CollectionFilterBarHost);
     await fixture.whenStable();
   }
@@ -268,6 +278,31 @@ describe('CollectionFilterBar', () => {
     expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
   });
 
+  it('should center the add-filter control between the empty-state decorations', async () => {
+    fixture.componentInstance.activeKeys.set([]);
+    await fixture.whenStable();
+
+    const bar: HTMLElement | null = byTestId('widgets-filter-chips');
+    expect(bar?.classList.contains('justify-center')).toBe(true);
+    expect(
+      bar?.querySelector('[data-testid="widgets-filter-empty-decoration-start"]'),
+    ).not.toBeNull();
+    expect(
+      bar?.querySelector('[data-testid="widgets-filter-empty-decoration-end"]'),
+    ).not.toBeNull();
+    expect(
+      bar
+        ?.querySelector('[data-testid="widgets-filter-empty-decoration-start"]')
+        ?.classList.contains('self-stretch'),
+    ).toBe(true);
+    expect(
+      bar
+        ?.querySelector('[data-testid="widgets-filter-empty-decoration-end"]')
+        ?.classList.contains('-my-2'),
+    ).toBe(true);
+    expect(byTestId('widgets-filters-add')).not.toBeNull();
+  });
+
   it('should offer only the unset fields in the "+ Filter" list', async () => {
     await openAddList();
 
@@ -276,8 +311,8 @@ describe('CollectionFilterBar', () => {
     expect(Array.from(options).map((el) => el.textContent?.trim())).toEqual(['Type', 'Priority']);
   });
 
-  it('should present the add-filter catalog in a Spartan drawer on compact viewports', async () => {
-    await useCompactFixture();
+  it('should hand off the mobile catalog only after its drawer releases focus', async () => {
+    await useMobileFixture();
 
     byTestId('widgets-filters-add')?.click();
     await fixture.whenStable();
@@ -290,9 +325,36 @@ describe('CollectionFilterBar', () => {
     )
       .find((option: HTMLButtonElement): boolean => option.textContent?.includes('Type') ?? false)
       ?.click();
+    expect(fixture.componentInstance.picked).toEqual([]);
     await fixture.whenStable();
 
     expect(fixture.componentInstance.picked).toEqual(['type']);
+    expect(document.querySelector('[data-testid="widgets-filters-add-drawer"]')).toBeNull();
+  });
+
+  it('should queue a mobile field before requesting closure and emit only after it completes', async () => {
+    await useMobileFixture();
+    byTestId('widgets-filters-add')?.click();
+    await fixture.whenStable();
+    const drawer: HlmDrawer = fixture.debugElement.query(By.directive(HlmDrawer)).componentInstance;
+    const close = vi.spyOn(drawer, 'close').mockImplementation(() => {});
+    const options = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid="widgets-filters-add-option"]'),
+    );
+    const first = options[0];
+    const second = options[1];
+    if (!first || !second) throw new Error('Missing filter catalog options');
+
+    first.click();
+    second.click();
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance.picked).toEqual([]);
+    drawer.closed.emit(undefined);
+    drawer.closed.emit(undefined);
+    expect(fixture.componentInstance.picked).toEqual(['type']);
+    close.mockRestore();
+    drawer.close();
+    await fixture.whenStable();
   });
 
   it('should emit fieldPicked and render the pending chip once a field is picked from the menu', async () => {
@@ -586,7 +648,7 @@ describe('CollectionFilterBar', () => {
       expect(reason?.textContent).toContain('Not available on this view.');
     });
 
-    it('should mark an unavailable field’s "+ Filter" entry aria-disabled on the actual button, surviving CdkMenuItem’s own competing binding', async () => {
+    it('should expose unavailable fields through Spartan disabled state', async () => {
       const unavailableFixture: ComponentFixture<CollectionFilterBarUnavailableFieldHost> =
         TestBed.createComponent(CollectionFilterBarUnavailableFieldHost);
       await unavailableFixture.whenStable();
@@ -605,8 +667,9 @@ describe('CollectionFilterBar', () => {
         (option: HTMLButtonElement): boolean => option.textContent?.includes('Archived') === false,
       );
 
+      expect(archivedOption?.disabled).toBe(true);
       expect(archivedOption?.getAttribute('aria-disabled')).toBe('true');
-      expect(availableOption?.getAttribute('aria-disabled')).toBe('false');
+      expect(availableOption?.disabled).toBe(false);
     });
 
     it('should refuse to pick a field carrying unavailableReason, leaving it un-rendered as a chip', async () => {

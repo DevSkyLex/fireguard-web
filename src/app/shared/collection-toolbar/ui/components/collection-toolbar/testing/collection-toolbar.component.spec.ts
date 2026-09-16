@@ -53,7 +53,15 @@ describe('CollectionToolbar', () => {
     expect(byTestId('end-content')?.textContent).toContain('end');
   });
 
-  it('should give both mobile rows the available width', () => {
+  it('fills its parent so the two toolbar slots can share one desktop row', () => {
+    const toolbar: HTMLElement | null =
+      fixture.nativeElement.querySelector('app-collection-toolbar');
+
+    expect(toolbar?.classList.contains('block')).toBe(true);
+    expect(toolbar?.classList.contains('w-full')).toBe(true);
+  });
+
+  it('should let narrow rows fill the available width independently of interaction mode', () => {
     const slots: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll(
       'app-collection-toolbar > div > div',
     );

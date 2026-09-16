@@ -1,4 +1,8 @@
-<form class="flex min-w-0 flex-col gap-6" novalidate (submit)="submit($event)">
+<form
+  class="flex min-w-0 flex-col gap-6 mobile-ui:[&_input]:text-base"
+  novalidate
+  (submit)="submit($event)"
+>
   <div class="min-w-0">
     <hlm-field-group>
       @if (staged().length > 0) {
@@ -17,8 +21,12 @@
                   <ng-icon name="lucideMapPin" aria-hidden="true" />
                 </hlm-item-media>
                 <hlm-item-content class="min-w-0">
-                  <p hlmItemTitle class="min-w-0 break-all">{{ row.name }}</p>
-                  <p hlmItemDescription>{{ row.summary }}</p>
+                  <p hlmItemTitle class="min-w-0 break-all mobile-ui:line-clamp-none">
+                    {{ row.name }}
+                  </p>
+                  <p hlmItemDescription class="mobile-ui:line-clamp-none mobile-ui:break-words">
+                    {{ row.summary }}
+                  </p>
                 </hlm-item-content>
                 @if (row.completed) {
                   <span class="text-xs text-muted-foreground" i18n="@@onboarding.batch.saved"
@@ -29,12 +37,12 @@
                     >Needs retry</span
                   >
                 }
-                <hlm-item-actions class="max-sm:w-full max-sm:justify-end">
+                <hlm-item-actions class="mobile-ui:w-full mobile-ui:justify-end">
                   <button
                     hlmBtn
                     variant="ghost"
                     size="icon-sm"
-                    class="max-sm:size-11"
+                    class="mobile-ui:size-11"
                     type="button"
                     [disabled]="pending() || row.completed"
                     (click)="editFacility(i)"
@@ -47,7 +55,7 @@
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    class="max-sm:size-11"
+                    class="mobile-ui:size-11"
                     [attr.data-testid]="'onboarding-facilities-remove-' + i"
                     [attr.aria-label]="removeFacilityLabel(row.name)"
                     [disabled]="pending() || row.completed"
@@ -74,7 +82,7 @@
                 ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
               /></label>
               <input
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 hlmInput
                 id="onboarding-facility-name"
                 #draftInput
@@ -95,7 +103,7 @@
               <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
                 <hlm-select-trigger
                   buttonId="onboarding-facility-type"
-                  class="w-full max-sm:min-h-11"
+                  class="w-full mobile-ui:min-h-11"
                   data-testid="onboarding-facility-type"
                 >
                   @if (selectedTypeIcon(); as icon) {
@@ -109,7 +117,7 @@
                 <hlm-select-content *hlmSelectPortal>
                   <hlm-select-group>
                     @for (option of typeOptions; track option.value) {
-                      <hlm-select-item [value]="option.value">
+                      <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">
                         <span class="flex items-center gap-2">
                           <ng-icon [name]="option.icon" aria-hidden="true" />
                           <span>{{ option.label }}</span>
@@ -138,7 +146,7 @@
                 inputId="onboarding-facility-address"
                 (input)="addressInputChanged($event)"
                 data-testid="onboarding-facility-address"
-                class="max-sm:min-h-11 max-sm:[&_input]:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
                 [showTrigger]="false"
                 placeholder="Start typing a street and city"
                 i18n-placeholder="@@onboarding.facilitiesForm.addressPlaceholder"
@@ -201,7 +209,7 @@
                 id="onboarding-facility-city"
                 type="text"
                 autocomplete="address-level2"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 [formField]="draftForm.city"
                 (input)="addressPartChanged('city', $event)"
               />
@@ -211,7 +219,7 @@
               <label hlmFieldLabel for="onboarding-facility-country"
                 ><span i18n="@@onboarding.facilitiesForm.country">Country</span></label
               >
-              <div hlmInputGroup class="max-sm:min-h-11">
+              <div hlmInputGroup class="mobile-ui:min-h-11">
                 @if (selectedCountryIcon(); as icon) {
                   <span hlmInputGroupAddon>
                     <ng-icon
@@ -226,7 +234,7 @@
                   id="onboarding-facility-country"
                   type="text"
                   autocomplete="country-name"
-                  class="max-sm:min-h-11"
+                  class="mobile-ui:min-h-11"
                   [formField]="draftForm.country"
                   (input)="addressPartChanged('country', $event)"
                 />
@@ -242,7 +250,7 @@
                 id="onboarding-facility-postalCode"
                 type="text"
                 autocomplete="postal-code"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11"
                 [formField]="draftForm.postalCode"
                 (input)="addressPartChanged('postalCode', $event)"
               />
@@ -256,7 +264,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="max-sm:min-h-11"
+              class="mobile-ui:min-h-11"
               data-testid="onboarding-facility-add"
               [disabled]="draftForm().invalid() || pending()"
               (click)="addFacility()"

@@ -80,6 +80,14 @@ describe('EquipmentTable', () => {
     expect(row?.textContent).toContain('Aisle 4');
   });
 
+  it('should show a dash when the brand and model are both missing', async () => {
+    await render([equipment({ brand: null, model: null })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="equipment-table-row"]');
+
+    expect(row?.querySelectorAll('td')[1]?.textContent?.trim()).toBe('—');
+  });
+
   it('should mark an equipment with neither a facility nor a location as unassigned', async () => {
     await render([equipment({ facilityName: null, locationLabel: null })]);
 

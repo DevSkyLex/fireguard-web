@@ -65,42 +65,44 @@
     }
   </ng-container>
 
-  <ng-container surfaceCards>
+  <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
     @for (recurrence of recurrences(); track recurrence.id) {
       <div
-        class="flex flex-col gap-2 rounded-md border border-border p-3"
+        hlmItem
+        class="flex flex-col items-stretch gap-1 rounded-none px-0"
         [attr.data-testid]="'intervention-recurrence-card-' + recurrence.id"
       >
         <div class="flex items-start gap-2">
-          <span class="line-clamp-2 flex-1 font-medium text-foreground">{{ recurrence.name }}</span>
+          <span
+            class="flex min-h-11 min-w-0 flex-1 items-center text-base leading-snug font-semibold wrap-anywhere text-foreground"
+            >{{ recurrence.name }}</span
+          >
           <ng-container
             [ngTemplateOutlet]="activeToggle"
             [ngTemplateOutletContext]="{ recurrence, suffix: '-card' }"
           />
-        </div>
-
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <span class="truncate"
-            >{{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}</span
-          >
-          <span class="truncate">{{
-            recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting()
-          }}</span>
-        </div>
-
-        <span class="truncate text-xs text-muted-foreground">{{
-          templateNameOf(recurrence.template)
-        }}</span>
-
-        <span class="flex justify-end">
           <ng-container
             [ngTemplateOutlet]="rowActions"
             [ngTemplateOutletContext]="{ recurrence, suffix: '-card' }"
           />
-        </span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span>{{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}</span>
+          <span>{{
+            recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting()
+          }}</span>
+        </div>
+
+        <span class="text-sm wrap-anywhere text-muted-foreground">{{
+          templateNameOf(recurrence.template)
+        }}</span>
       </div>
+      @if (!$last) {
+        <hlm-item-separator />
+      }
     }
-  </ng-container>
+  </div>
 
   <div hlmEmpty role="alert" surfaceError data-testid="intervention-recurrences-error">
     <div hlmEmptyHeader>
@@ -149,7 +151,7 @@
       variant="ghost"
       size="icon-sm"
       align="end"
-      class="max-sm:size-11"
+      class="mobile-ui:size-11 mobile-ui:min-h-11"
       [attr.aria-label]="rowAriaLabelOf('menu', recurrence.name)"
       [attr.data-testid]="'intervention-recurrence-menu-' + recurrence.id + suffix"
       [disabled]="removingId() === recurrence.id"
@@ -161,6 +163,7 @@
     <ng-template #rowMenu>
       <hlm-dropdown-menu class="w-48">
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           [attr.data-testid]="'intervention-recurrence-edit-' + recurrence.id + suffix"
           (click)="editRequested.emit(recurrence)"
@@ -170,6 +173,7 @@
         </button>
         <hlm-dropdown-menu-separator />
         <button
+          class="mobile-ui:min-h-11"
           hlmDropdownMenuItem
           variant="destructive"
           [attr.data-testid]="'intervention-recurrence-remove-' + recurrence.id + suffix"

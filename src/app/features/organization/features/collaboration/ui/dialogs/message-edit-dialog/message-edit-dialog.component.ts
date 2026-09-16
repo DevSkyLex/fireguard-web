@@ -23,6 +23,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInputGroup, HlmInputGroupTextarea } from '@shared/ui/input-group';
+import { HlmSpinner } from '@shared/ui/spinner';
 import { MESSAGE_BODY_MAX_LENGTH } from '../../forms/message-composer/constants';
 import type { MessageEditDraft } from './models';
 
@@ -66,6 +67,7 @@ import type { MessageEditDraft } from './models';
     HlmButton,
     HlmInputGroup,
     HlmInputGroupTextarea,
+    HlmSpinner,
     ...HlmDialogImports,
     ...HlmFieldImports,
   ],

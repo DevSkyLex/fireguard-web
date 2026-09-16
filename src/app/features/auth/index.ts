@@ -2,6 +2,7 @@ export { AUTH_SESSION_PORT, AUTH_LOGOUT_PORT } from './ports';
 export type { AuthSessionPort, AuthLogoutPort } from './ports';
 export { provideAuthFeature } from './auth.feature';
 export { withLogoutControl } from './providers';
+export { LogoutControl } from './ui/components/logout-control';
 export { authInterceptor, unauthorizedInterceptor } from './http/interceptors';
 export {
   authGuard,

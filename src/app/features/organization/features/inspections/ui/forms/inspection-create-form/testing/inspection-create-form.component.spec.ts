@@ -1,5 +1,11 @@
-import { provideZonelessChangeDetection, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
 import { InspectionCreateForm } from '../inspection-create-form.component';
 import type { InspectionCreateFormDraft } from '../models';
@@ -7,6 +13,21 @@ import type { InspectionCreateFormDraft } from '../models';
 describe('InspectionCreateForm', () => {
   let fixture: ComponentFixture<InspectionCreateForm>;
   let element: HTMLElement;
+  const mobile = signal(false);
+
+  /**
+   * Function beforeAll
+   * @description Supplies the observer and scrolling APIs used by the native drawer command list in jsdom.
+   * @returns {void}
+   */
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      public observe(): void {}
+      public unobserve(): void {}
+      public disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
 
   const fill = async (testId: string, value: string): Promise<void> => {
     const input: HTMLInputElement = element.querySelector<HTMLInputElement>(
@@ -32,7 +53,19 @@ describe('InspectionCreateForm', () => {
   };
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    mobile.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            mode: computed(() => (mobile() ? 'mobile' : 'desktop')),
+          },
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(InspectionCreateForm);
     await fixture.whenStable();
@@ -40,8 +73,72 @@ describe('InspectionCreateForm', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
+  it('should choose equipment in the mobile drawer without replacing the draft when interaction mode changes', async () => {
+    fixture.componentRef.setInput('equipmentOptions', [
+      {
+        value: 'equipment-2',
+        label: 'Extinguisher 2',
+        typeLabel: 'Extinguisher',
+        secondary: 'North site',
+      },
+    ]);
+    await fill('inspection-create-inspector-name', 'Ada');
+    const fieldTree = fixture.componentInstance['createForm'];
+    mobile.set(true);
+    await fixture.whenStable();
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="inspection-create-equipment-mobile"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+    document
+      .querySelector<HTMLButtonElement>('[data-testid="inspection-equipment-mobile-option"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(fieldTree.equipmentId().value()).toBe('equipment-2');
+    expect(fieldTree.equipmentId().dirty()).toBe(true);
+    expect(fieldTree.inspectorName().value()).toBe('Ada');
+    expect(fixture.componentInstance['createForm']).toBe(fieldTree);
+    expect(element.querySelector('hlm-combobox')).not.toBeNull();
+  });
+
   it('should stay quiet until the form is touched', () => {
     expect(element.textContent).not.toContain('Choose the inspected equipment.');
+  });
+
+  it('shows the equipment empty state only when the mobile search has no matches', async () => {
+    mobile.set(true);
+    fixture.componentRef.setInput('equipmentOptions', [
+      {
+        value: 'equipment-2',
+        label: 'Extinguisher 2',
+        typeLabel: 'Extinguisher',
+        secondary: 'North site',
+      },
+    ]);
+    await fixture.whenStable();
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="inspection-create-equipment-mobile"]')
+      ?.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('hlm-drawer-content');
+    expect(drawer?.querySelector('[hlmCommandEmpty]')).toBeNull();
+    const search = drawer?.querySelector<HTMLInputElement>('#inspection-equipment-search');
+    expect(search).not.toBeNull();
+    if (!search) throw new Error('Equipment search is missing');
+    search.value = 'no-such-equipment';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(drawer?.querySelector('[hlmCommandEmpty]')?.textContent).toContain(
+      'No equipment matches.',
+    );
+    search.value = 'North';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(drawer?.querySelector('[hlmCommandEmpty]')).toBeNull();
   });
 
   it('should refuse to emit while required fields are missing, and show the reasons', async () => {

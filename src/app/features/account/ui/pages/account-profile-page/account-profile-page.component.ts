@@ -30,7 +30,8 @@ import { HlmAvatarImports } from '@shared/ui/avatar';
  * The editable group is edited **in place**, next to the values being changed,
  * rather than in a dialog that would hide them (`ARCHITECTURE.md` §10.5). What
  * cannot be changed here — the address, the roles, the dates — is simply shown,
- * with no affordance implying otherwise.
+ * with no affordance implying otherwise. Account-owned labels resolve global role
+ * metadata before presentation; unknown roles never expose transport identifiers.
  *
  * @version 2.0.0
  *
@@ -114,8 +115,8 @@ export class AccountProfilePage implements OnInit {
    * @readonly
    *
    * @description
-   * The global roles the account holds, shown read-only: they are granted, not
-   * chosen.
+   * Localized labels for the account's granted global roles. Unrecognized metadata
+   * uses a neutral label without inferring permissions or exposing transport codes.
    *
    * @access protected
    * @since 1.0.0
@@ -123,7 +124,13 @@ export class AccountProfilePage implements OnInit {
    * @type {Signal<ReadonlyArray<string>>}
    */
   protected readonly roles: Signal<ReadonlyArray<string>> = computed((): ReadonlyArray<string> =>
-    this.userStore.roles(),
+    this.userStore
+      .roles()
+      .map((role: string): string =>
+        role === 'ROLE_USER'
+          ? $localize`:@@account.profile.role.user:User`
+          : $localize`:@@account.profile.role.assigned:Assigned role`,
+      ),
   );
 
   /**

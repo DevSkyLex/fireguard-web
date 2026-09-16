@@ -16,17 +16,23 @@
       <div class="grid min-w-0 gap-4 sm:grid-cols-2">
         @for (entry of complianceForm.nonConformitySlaDays; track entry[0]) {
           @let severity = severityOption(entry[0]);
-          <hlm-field class="gap-3 rounded-lg border border-border bg-card/40 p-3">
+          <hlm-field
+            class="gap-3 rounded-lg border border-border bg-card/40 p-3 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:bg-transparent mobile-ui:px-0 mobile-ui:pt-0"
+          >
             <div class="flex min-w-0 items-start gap-3">
               <span
-                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted"
+                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted mobile-ui:bg-transparent"
                 aria-hidden="true"
               >
                 <ng-icon [name]="severity.icon" [class]="severity.iconClass" />
               </span>
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                  <label [attr.for]="'org-compliance-sla-' + entry[0]" hlmFieldLabel>
+                  <label
+                    class="mobile-ui:min-h-11"
+                    [attr.for]="'org-compliance-sla-' + entry[0]"
+                    hlmFieldLabel
+                  >
                     {{ severity.label }}
                   </label>
                   @if (isCustomizedSla(entry[0])) {
@@ -42,9 +48,10 @@
                 <p hlmFieldDescription class="mt-0.5">{{ severity.description }}</p>
               </div>
             </div>
-            <hlm-input-group>
+            <hlm-input-group class="mobile-ui:min-h-11">
               <input
                 hlmInputGroupInput
+                class="mobile-ui:text-base"
                 type="number"
                 [id]="'org-compliance-sla-' + entry[0]"
                 [attr.data-testid]="'org-compliance-sla-' + entry[0]"
@@ -81,20 +88,22 @@
         @for (entry of complianceForm.inspectionPeriodicityDefaults; track entry[0]) {
           <hlm-field
             orientation="responsive"
-            class="gap-3 rounded-lg border border-border bg-card/40 p-3"
+            class="gap-3 rounded-lg border border-border bg-card/40 p-3 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:bg-transparent mobile-ui:px-0 mobile-ui:pt-0"
           >
             <label
               [attr.for]="'org-compliance-periodicity-' + entry[0]"
               hlmFieldLabel
-              class="min-w-0 flex-1 gap-3"
+              class="min-w-0 flex-1 gap-3 mobile-ui:min-h-11"
             >
               <span
-                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground mobile-ui:bg-transparent"
               >
                 <ng-icon [name]="equipmentTypeIcon(entry[0])" class="size-4" aria-hidden="true" />
               </span>
               <span class="flex min-w-0 flex-col items-start gap-1">
-                <span class="truncate">{{ equipmentTypeLabel(entry[0]) }}</span>
+                <span class="truncate mobile-ui:wrap-anywhere mobile-ui:whitespace-normal">{{
+                  equipmentTypeLabel(entry[0])
+                }}</span>
                 @if (isCustomizedPeriodicity(entry[0])) {
                   <span
                     hlmBadge
@@ -109,7 +118,7 @@
             <hlm-select class="min-w-0" [itemToString]="periodicityLabel" [formField]="entry[1]">
               <hlm-select-trigger
                 [buttonId]="'org-compliance-periodicity-' + entry[0]"
-                class="w-full @md/field-group:w-40"
+                class="w-full @md/field-group:w-40 mobile-ui:min-h-11"
                 [attr.data-testid]="'org-compliance-periodicity-' + entry[0]"
               >
                 <ng-icon
@@ -122,7 +131,7 @@
               <hlm-select-content *hlmSelectPortal class="min-w-48">
                 <hlm-select-group>
                   @for (option of periodicityOptions; track option.value) {
-                    <hlm-select-item [value]="option.value">
+                    <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">
                       <ng-icon
                         [name]="option.icon"
                         class="size-4 text-muted-foreground"
@@ -164,6 +173,7 @@
           >Reminder window (days)</label
         >
         <input
+          class="mobile-ui:min-h-11 mobile-ui:text-base"
           hlmInput
           id="org-compliance-reminder-window"
           type="number"
@@ -191,7 +201,7 @@
         <button
           hlmBtn
           type="submit"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="org-compliance-submit"
           [disabled]="!canSubmit()"
           [attr.aria-busy]="pending() ? 'true' : null"

@@ -52,6 +52,10 @@ Primary service:
 
 ## Invariants
 
+- Mobile touch targets and card composition follow the central interaction-capabilities contract; width only
+  reflows the editor fields. The routed editor keeps one Signal Form, including unfinished
+  item drafts and keyboard reorder controls, across orientation and interaction mode changes.
+
 - Checklist ownership remains separate from inspections and facilities.
 - Checklist state and mutations stay local to this subfeature.
 - Consumers (e.g. inspections) reach checklists only through the feature's concern barrels

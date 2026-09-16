@@ -357,8 +357,16 @@ export class InspectionDetailPage {
   /** Whether the non-conformities section is expanded — collapsed by default, its list loads on first expansion. */
   protected readonly nonConformitiesExpanded: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the "Add non-conformity" dialog is open. */
-  protected readonly addNonConformityDialogOpen: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property addNonConformityDialogVisible
+   * @readonly
+   * @description Whether the add non-conformity dialog is visible.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly addNonConformityDialogVisible: WritableSignal<boolean> =
+    signal<boolean>(false);
 
   /** The id of the non-conformity whose status write is currently in flight, or `null`. */
   protected readonly pendingNonConformityId: WritableSignal<string | null> = signal<string | null>(
@@ -493,8 +501,8 @@ export class InspectionDetailPage {
       const succeeded: boolean = isCallSuccess(this.store.addNonConformityCallState());
 
       untracked((): void => {
-        if (succeeded && this.addNonConformityDialogOpen()) {
-          this.addNonConformityDialogOpen.set(false);
+        if (succeeded && this.addNonConformityDialogVisible()) {
+          this.addNonConformityDialogVisible.set(false);
           this.store.resetAddNonConformityOperation();
         }
       });
@@ -774,7 +782,7 @@ export class InspectionDetailPage {
    */
   protected openAddNonConformityDialog(): void {
     this.store.resetAddNonConformityOperation();
-    this.addNonConformityDialogOpen.set(true);
+    this.addNonConformityDialogVisible.set(true);
   }
 
   /**
@@ -785,7 +793,7 @@ export class InspectionDetailPage {
    * @returns {void}
    */
   protected closeAddNonConformityDialog(): void {
-    this.addNonConformityDialogOpen.set(false);
+    this.addNonConformityDialogVisible.set(false);
     this.store.resetAddNonConformityOperation();
   }
 

@@ -2,10 +2,12 @@
   class="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
   data-testid="collection-toolbar"
 >
-  <div class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:flex-1 max-sm:[&>*]:w-full">
+  <div
+    class="flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 sm:flex-1 max-sm:[&>*]:w-full"
+  >
     <ng-content select="[toolbarStart]" />
   </div>
-  <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+  <div class="flex w-full max-w-full flex-wrap items-center gap-2 sm:w-auto">
     <ng-content select="[toolbarEnd]" />
   </div>
 </div>

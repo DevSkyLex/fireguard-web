@@ -30,6 +30,7 @@
               hlmInputGroupTextarea
               id="edit-message-body"
               rows="4"
+              class="mobile-ui:text-base"
               data-testid="message-edit-body"
               [formField]="editForm.body"
               [attr.aria-required]="true"
@@ -52,7 +53,7 @@
             hlmBtn
             type="button"
             variant="outline"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="message-edit-cancel"
             [disabled]="pending()"
             (click)="visibleChange.emit(false)"
@@ -63,13 +64,15 @@
           <button
             hlmBtn
             type="submit"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="message-edit-submit"
             [disabled]="pending()"
             [attr.aria-busy]="pending() ? 'true' : null"
-            i18n="@@messages.editDialog.submit"
           >
-            Save changes
+            @if (pending()) {
+              <hlm-spinner aria-hidden="true" />
+            }
+            <span i18n="@@messages.editDialog.submit">Save changes</span>
           </button>
         </div>
       </hlm-field-group>

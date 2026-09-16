@@ -41,10 +41,19 @@
 
     <hlm-dialog-footer class="print:hidden">
       <button
+        hlmDialogClose
+        hlmBtn
+        type="button"
+        variant="ghost"
+        class="hidden mobile-ui:inline-flex mobile-ui:min-h-11"
+      >
+        <span i18n="@@common.close">Close</span>
+      </button>
+      <button
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="facility-qr-print"
         [disabled]="!qrDataUrl()"
         (click)="print()"
@@ -55,7 +64,7 @@
       <button
         hlmBtn
         type="button"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="facility-qr-download"
         [disabled]="!qrDataUrl()"
         (click)="download()"

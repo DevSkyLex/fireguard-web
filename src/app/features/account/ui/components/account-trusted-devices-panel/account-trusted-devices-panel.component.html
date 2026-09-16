@@ -11,7 +11,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" size="sm" class="max-sm:min-h-11" (click)="retried.emit()">
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          (click)="retried.emit()"
+        >
           <span i18n="@@account.devices.retry">Retry</span>
         </button>
       </div>
@@ -64,7 +70,7 @@
             type="button"
             size="sm"
             variant="outline"
-            class="shrink-0 max-sm:min-h-11"
+            class="shrink-0 mobile-ui:min-h-11"
             data-testid="account-devices-revoke"
             [disabled]="revoking()"
             (click)="revokeDeviceOne(device.id)"
@@ -81,7 +87,7 @@
         type="button"
         variant="outline"
         size="sm"
-        class="gap-2 max-sm:min-h-11"
+        class="gap-2 mobile-ui:min-h-11"
         data-testid="account-devices-revoke-all"
         (click)="openConfirmAll()"
       >
@@ -114,7 +120,7 @@
       <hlm-alert-dialog-footer>
         <button
           hlmAlertDialogCancel
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           [disabled]="revokingAll()"
           i18n="@@account.devices.revokeAllConfirmCancel"
         >
@@ -123,14 +129,16 @@
         <button
           hlmAlertDialogAction
           variant="destructive"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="account-devices-revoke-all-confirm"
           [disabled]="revokingAll()"
           [attr.aria-busy]="revokingAll() ? 'true' : null"
           (click)="confirmAll()"
-          i18n="@@account.devices.revokeAllConfirmAction"
         >
-          Revoke all
+          @if (revokingAll()) {
+            <hlm-spinner aria-hidden="true" />
+          }
+          <span i18n="@@account.devices.revokeAllConfirmAction">Revoke all</span>
         </button>
       </hlm-alert-dialog-footer>
     </hlm-alert-dialog-content>

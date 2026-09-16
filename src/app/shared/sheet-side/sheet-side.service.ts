@@ -1,21 +1,14 @@
-import { computed, type Signal } from '@angular/core';
-import { BELOW_SM, mediaQuery } from '@shared/breakpoint';
+import { computed, inject, type Signal } from '@angular/core';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 
 /**
  * Function sheetSide
  * @function sheetSide
  *
  * @description
- * The side a spartan sheet should open from: `'bottom'` below the `sm`
- * breakpoint so the footer lands in the thumb zone, `'right'` at and above it
- * (`DESIGN.md` "Action Surfaces" rule 2).
- *
- * A thin reading of `@shared/breakpoint`'s own `sm` query rather than a second
- * `matchMedia` of its own: the query lives in one place so a sheet, a table's
- * card fallback and a filter bar cannot switch at three slightly different
- * widths. The signature is unchanged — eleven sheets bind it.
- *
- * SSR-safe: `'right'` on the server and until the browser-only check resolves.
+ * Opens Spartan sheets from the bottom in mobile interaction mode and from the right
+ * for desktop, regardless of width. SSR keeps the central port's deterministic
+ * desktop default until browser classification runs after rendering.
  *
  * Must be called from an injection context — a component's field initializer
  * or constructor.
@@ -31,7 +24,9 @@ import { BELOW_SM, mediaQuery } from '@shared/breakpoint';
  * @returns {Signal<'right' | 'bottom'>} The side to bind on the hosting `hlm-sheet`.
  */
 export function sheetSide(): Signal<'right' | 'bottom'> {
-  const compact: Signal<boolean> = mediaQuery(BELOW_SM);
+  const interactionCapabilities = inject(INTERACTION_CAPABILITIES_PORT);
 
-  return computed((): 'right' | 'bottom' => (compact() ? 'bottom' : 'right'));
+  return computed((): 'right' | 'bottom' =>
+    interactionCapabilities.isMobileInteractionMode() ? 'bottom' : 'right',
+  );
 }

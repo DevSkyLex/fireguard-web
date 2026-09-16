@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
 import {
@@ -111,7 +112,10 @@ class ResizeObserverStub {
 }
 
 describe('OrganizationMembersPage', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => mobileInteractionMode.set(false));
   beforeAll(() => {
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
     globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
   });
 
@@ -153,6 +157,13 @@ describe('OrganizationMembersPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
         provideZonelessChangeDetection(),
         {
           provide: REGIONAL_FORMATTING_PORT,
@@ -286,6 +297,78 @@ describe('OrganizationMembersPage', () => {
   });
 
   afterEach(() => TestBed.resetTestingModule());
+
+  it('uses the same role filter and paging handler from the mobile drawer', async () => {
+    mobileInteractionMode.set(true);
+    roles.set([{ id: 'role-7', name: 'Safety manager' } as OrganizationRoleOutput]);
+    await createPage();
+    expect(byTestId('organization-members-role-filter')).toBeNull();
+    const trigger = byTestId('organization-members-role-filter-mobile');
+    if (!trigger) throw new Error('Expected the mobile role filter trigger');
+    trigger.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('[data-testid="organization-members-role-drawer"]');
+    if (!drawer) throw new Error('Expected the open role filter drawer');
+    expect(drawer.querySelector('input')).not.toBeNull();
+    const choice = drawer.querySelector<HTMLButtonElement>(
+      '[data-testid="organization-members-role-mobile-role-7"]',
+    );
+    if (!choice) throw new Error('Expected the Safety manager role choice');
+    expect(choice.getAttribute('data-value')).toBe('Safety manager');
+    choice.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['roleFilter']()).toBe('role-7');
+    expect(fixture.componentInstance['roleFilterDrawerVisible']()).toBe(false);
+    expect(loadMembers).toHaveBeenCalledTimes(1);
+    expect(byTestId('organization-members-role-filter-mobile')?.textContent).toContain(
+      'Safety manager',
+    );
+    expect(navigate).toHaveBeenCalled();
+  });
+
+  it('shows the role search empty state only for an unmatched query without changing the filter', async () => {
+    mobileInteractionMode.set(true);
+    roles.set([{ id: 'role-7', name: 'Safety manager' } as OrganizationRoleOutput]);
+    await createPage();
+    const trigger = byTestId('organization-members-role-filter-mobile');
+    if (!trigger) throw new Error('Expected the mobile role filter trigger');
+    trigger.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('[data-testid="organization-members-role-drawer"]');
+    const search = drawer?.querySelector<HTMLInputElement>('#organization-members-role-search');
+    if (!search) throw new Error('Expected the mobile role search input');
+    expect(drawer?.querySelector('[hlmCommandEmpty]')).toBeNull();
+    search.value = 'No matching role';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(drawer?.querySelector('[hlmCommandEmpty]')?.textContent).toContain('No matching roles.');
+    search.value = 'Safety';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    expect(drawer?.querySelector('[hlmCommandEmpty]')).toBeNull();
+    expect(fixture.componentInstance['roleFilter']()).toBeNull();
+    expect(loadMembers).not.toHaveBeenCalled();
+  });
+
+  it('keeps an open role drawer mounted during an interaction mode change', async () => {
+    mobileInteractionMode.set(true);
+    roles.set([{ id: 'role-7', name: 'Safety manager' } as OrganizationRoleOutput]);
+    await createPage();
+    const trigger = byTestId('organization-members-role-filter-mobile');
+    if (!trigger) throw new Error('Expected the mobile role filter trigger');
+    trigger.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('[data-testid="organization-members-role-drawer"]');
+    expect(drawer).not.toBeNull();
+    mobileInteractionMode.set(false);
+    await fixture.whenStable();
+    expect(document.querySelector('[data-testid="organization-members-role-drawer"]')).toBe(drawer);
+    expect(byTestId('organization-members-role-filter')).toBeNull();
+    fixture.componentInstance['roleFilterDrawerVisible'].set(false);
+    await fixture.whenStable();
+    expect(byTestId('organization-members-role-filter')).not.toBeNull();
+    expect(loadMembers).not.toHaveBeenCalled();
+  });
 
   it('should narrow the first roster page from ?roleId=, without a second round trip', async () => {
     roleIdParam = 'role-7';

@@ -1,4 +1,11 @@
-<div hlmSidebarWrapper id="dashboard-layout" class="relative h-svh overflow-hidden">
+<div
+  id="dashboard-layout"
+  class="relative flex h-dvh flex-col overflow-hidden"
+  [style.height]="viewportHeight()"
+  [style.--mobile-navigation-height]="
+    isMobileInteractionMode() && mobileNavigation.length > 0 ? navigationHeight() : '0px'
+  "
+>
   <a
     class="sr-only rounded-md bg-background text-sm font-semibold text-foreground shadow-lg outline-2 outline-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2"
     href="#dashboard-content"
@@ -9,80 +16,168 @@
     Skip to content
   </a>
 
-  <hlm-sidebar variant="sidebar" collapsible="icon">
-    <hlm-sidebar-header>
-      <div
-        id="dashboard-sidebar-brand"
-        class="flex h-10 shrink-0 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5"
-      >
-        <img
-          src="fireguard-logo-primary.svg"
-          width="28"
-          height="28"
-          alt="Fireguard"
-          class="shrink-0"
-          data-theme-logo
-        />
-        <span
-          class="text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
-          aria-hidden="true"
-          >Fireguard</span
-        >
-      </div>
-      @if (sidebarHeader.length > 0) {
-        <app-slot-outlet [contributions]="sidebarHeader" />
-      }
-    </hlm-sidebar-header>
-
-    <hlm-sidebar-content>
-      <app-slot-outlet [contributions]="sidebarNav" />
-    </hlm-sidebar-content>
-
-    @if (sidebarFooter.length > 0) {
-      <hlm-sidebar-footer>
-        <app-slot-outlet [contributions]="sidebarFooter" />
-      </hlm-sidebar-footer>
-    }
-  </hlm-sidebar>
-
-  @if (sidebarExtension(); as extension) {
-    <aside
-      #extensionContent
-      id="dashboard-sidebar-extension"
-      tabindex="-1"
-      [attr.aria-label]="extension.label"
-      class="h-svh min-w-0 flex-1 flex-col overflow-hidden border-r bg-background outline-none lg:flex lg:w-80 lg:flex-none xl:w-88"
-      [class.flex]="extension.mobileVisible()"
-      [class.hidden]="!extension.mobileVisible()"
-    >
-      <div class="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
-        <button
-          hlmBtn
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          [attr.aria-label]="toggleSidebarLabel"
-          (click)="toggleSidebar()"
-        >
-          <ng-icon name="lucideMenu" aria-hidden="true" />
-        </button>
-        <span class="text-sm font-semibold">Fireguard</span>
-      </div>
-      <ng-container *ngComponentOutlet="extension.component" />
-    </aside>
+  @if (isMobileInteractionMode()) {
+    <ng-container *ngTemplateOutlet="toolbar" />
   }
+  <div hlmSidebarWrapper class="h-full min-h-0! flex-1 overflow-hidden">
+    @if (!isMobileInteractionMode()) {
+      <hlm-sidebar variant="sidebar" collapsible="icon">
+        <hlm-sidebar-header>
+          <div
+            id="dashboard-sidebar-brand"
+            class="flex h-10 shrink-0 items-center gap-2.5 px-2 group-data-[collapsible=icon]:px-0.5"
+          >
+            <img
+              src="fireguard-logo-primary.svg"
+              width="28"
+              height="28"
+              alt="Fireguard"
+              class="shrink-0"
+              data-theme-logo
+            />
+            <span
+              class="text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden"
+              aria-hidden="true"
+              >Fireguard</span
+            >
+          </div>
+          @if (sidebarHeader.length > 0) {
+            <app-slot-outlet [contributions]="sidebarHeader" />
+          }
+        </hlm-sidebar-header>
 
-  <main
-    hlmSidebarInset
-    id="dashboard-main"
-    class="min-w-0 outline-none"
-    [class.max-lg:hidden]="sidebarExtension()?.mobileVisible() === true"
-  >
-    <header class="h-12 shrink-0 border-b border-border">
+        <hlm-sidebar-content>
+          <app-slot-outlet [contributions]="sidebarNav" />
+        </hlm-sidebar-content>
+
+        @if (sidebarFooter.length > 0) {
+          <hlm-sidebar-footer>
+            <app-slot-outlet [contributions]="sidebarFooter" />
+          </hlm-sidebar-footer>
+        }
+      </hlm-sidebar>
+    }
+
+    <div
+      hlmResizableGroup
+      direction="horizontal"
+      class="min-h-0 min-w-0 flex-1 overflow-hidden"
+      data-testid="dashboard-workspace-panels"
+    >
+      @if (sidebarExtension(); as extension) {
+        <aside
+          #extensionContent
+          hlmResizablePanel
+          id="dashboard-sidebar-extension"
+          defaultSize="24"
+          minSize="16"
+          maxSize="40"
+          tabindex="-1"
+          [attr.aria-label]="extension.label"
+          class="h-full min-w-0 flex-col overflow-hidden border-r bg-background outline-none max-lg:w-full! max-lg:flex-none! lg:flex"
+          [class.flex]="extension.mobileVisible()"
+          [class.hidden]="!extension.mobileVisible()"
+        >
+          @if (!isMobileInteractionMode()) {
+            <div class="flex h-12 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                [attr.aria-label]="toggleSidebarLabel"
+                (click)="toggleSidebar()"
+              >
+                <ng-icon name="lucideMenu" aria-hidden="true" />
+              </button>
+              <span class="text-sm font-semibold">Fireguard</span>
+            </div>
+          }
+          <ng-container *ngComponentOutlet="extension.component" />
+        </aside>
+        <hlm-resizable-handle
+          withHandle
+          class="touch-none max-lg:hidden"
+          data-testid="dashboard-sidebar-extension-resize-handle"
+          aria-label="Resize navigation panel"
+          i18n-aria-label="@@dashboard.sidebarExtension.resize"
+        />
+      }
+
       <div
-        class="container mx-auto flex h-full items-center gap-2 max-sm:px-4"
-        data-testid="dashboard-toolbar-container"
+        hlmResizablePanel
+        id="dashboard-main-panel"
+        [defaultSize]="sidebarExtension() ? 76 : 100"
+        [minSize]="sidebarExtension() ? 60 : 100"
+        [maxSize]="sidebarExtension() ? 84 : 100"
+        class="flex h-full min-h-0 min-w-0 flex-col max-lg:w-full! max-lg:flex-none!"
       >
+        <main
+          hlmSidebarInset
+          id="dashboard-main"
+          class="min-h-0 min-w-0 flex-1 overflow-y-auto outline-none"
+          [class.max-lg:hidden]="sidebarExtension()?.mobileVisible() === true"
+        >
+          @if (!isMobileInteractionMode()) {
+            <div
+              class="sticky top-0 z-20 shrink-0 bg-background"
+              data-testid="dashboard-desktop-chrome"
+            >
+              <ng-container *ngTemplateOutlet="toolbar" />
+              <app-dashboard-page-header />
+            </div>
+          } @else {
+            <app-dashboard-page-header
+              class="sticky top-0 z-10 shrink-0 bg-background"
+              [showTitle]="false"
+            />
+          }
+
+          <div
+            #content
+            id="dashboard-content"
+            tabindex="-1"
+            class="flex min-h-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <div [class]="contentClass()" data-testid="dashboard-content-container">
+              <router-outlet />
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    @if (panel(); as contribution) {
+      <aside
+        id="dashboard-panel"
+        class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg mobile-ui:top-[calc(4rem+env(safe-area-inset-top))] mobile-ui:bottom-[var(--mobile-navigation-height)] desktop-ui:lg:static desktop-ui:lg:inset-auto desktop-ui:lg:z-auto desktop-ui:lg:max-w-none desktop-ui:lg:rounded-none desktop-ui:lg:border-l desktop-ui:lg:border-border desktop-ui:lg:shadow-none"
+        i18n-aria-label="@@dashboard.panel.aria"
+        aria-label="Contextual panel"
+      >
+        <ng-container *ngComponentOutlet="contribution.component" />
+      </aside>
+    }
+  </div>
+  @if (isMobileInteractionMode() && mobileNavigation.length > 0) {
+    <div
+      #navigationRegion
+      id="dashboard-mobile-navigation"
+      class="min-h-16 shrink-0 border-t border-border bg-background pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]"
+    >
+      <app-slot-outlet [contributions]="mobileNavigation" />
+    </div>
+  }
+</div>
+
+<ng-template #toolbar>
+  <header
+    class="h-12 shrink-0 border-b border-border bg-background mobile-ui:h-[calc(4rem+env(safe-area-inset-top))] mobile-ui:border-b-0 mobile-ui:pt-[env(safe-area-inset-top)]"
+  >
+    <div
+      class="container mx-auto flex h-full items-center gap-2 max-sm:px-4 mobile-ui:gap-3 mobile-ui:px-4 mobile-ui:md:px-6"
+      data-testid="dashboard-toolbar-container"
+    >
+      @if (!isMobileInteractionMode()) {
         <button
           hlmBtn
           type="button"
@@ -92,7 +187,7 @@
           [attr.aria-label]="toggleSidebarLabel"
           (click)="toggleSidebar()"
         >
-          @if (isMobile()) {
+          @if (compactSidebar()) {
             <ng-icon name="lucideMenu" aria-hidden="true" />
           } @else {
             <ng-icon name="lucidePanelLeft" aria-hidden="true" />
@@ -102,96 +197,110 @@
         <div class="mr-2 flex h-4 items-center">
           <hlm-separator orientation="vertical" />
         </div>
-
-        <div
-          class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden [&>app-slot-outlet>*]:min-w-0"
+      } @else if (backLink(); as destination) {
+        <a
+          hlmBtn
+          variant="ghost"
+          size="icon-lg"
+          class="size-11"
+          [routerLink]="destination"
+          aria-label="Back"
+          i18n-aria-label="@@common.back"
+          data-testid="dashboard-back"
         >
+          <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+        </a>
+      }
+
+      <div
+        class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden [&>app-slot-outlet>*]:min-w-0"
+      >
+        @if (isMobileInteractionMode()) {
+          @if (title(); as pageTitle) {
+            <h1 class="line-clamp-2 text-xl leading-tight font-semibold tracking-tight">
+              {{ pageTitle }}
+            </h1>
+          }
+        } @else {
           <app-slot-outlet [contributions]="header" />
-        </div>
+        }
+      </div>
 
-        @if (headerActions.length > 0) {
-          @if (isMobile()) {
-            <hlm-drawer direction="bottom">
-              <button
-                hlmDrawerTrigger
-                hlmBtn
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                data-testid="dashboard-mobile-actions-trigger"
-                i18n-aria-label="@@dashboard.mobileActions.open"
-                aria-label="Open quick actions"
-              >
-                <ng-icon name="lucideEllipsis" aria-hidden="true" />
-              </button>
+      @if (headerActions.length > 0) {
+        @if (isMobileInteractionMode()) {
+          <hlm-drawer
+            #mobileActionsDrawer="hlmDrawer"
+            id="dashboard-mobile-actions"
+            direction="bottom"
+            autoFocus="first-heading"
+            [closeOnOutsidePointerEvents]="false"
+          >
+            <button
+              hlmDrawerTrigger
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              class="size-11"
+              data-testid="dashboard-mobile-actions-trigger"
+              i18n-aria-label="@@dashboard.mobileActions.open"
+              aria-label="Open quick actions"
+            >
+              <ng-icon name="lucideEllipsis" aria-hidden="true" />
+            </button>
 
-              <hlm-drawer-content
-                *hlmDrawerPortal
-                class="overflow-hidden"
-                data-testid="dashboard-mobile-actions-drawer"
-              >
-                <hlm-drawer-header class="px-5 text-start!">
-                  <h2 hlmDrawerTitle i18n="@@dashboard.mobileActions.title">Quick actions</h2>
+            <hlm-drawer-content
+              *hlmDrawerPortal
+              class="overflow-hidden"
+              data-testid="dashboard-mobile-actions-drawer"
+            >
+              <hlm-drawer-header>
+                <div class="flex flex-col gap-0.5 text-start">
+                  <h2
+                    hlmDrawerTitle
+                    cdkFocusRegionStart
+                    tabindex="-1"
+                    i18n="@@dashboard.mobileActions.title"
+                  >
+                    Quick actions
+                  </h2>
                   <p hlmDrawerDescription i18n="@@dashboard.mobileActions.description">
                     Tools available for this workspace.
                   </p>
-                </hlm-drawer-header>
+                </div>
+              </hlm-drawer-header>
 
-                <hlm-item-group class="gap-1 px-3 pb-2" data-testid="dashboard-mobile-actions">
-                  <app-slot-outlet
-                    [contributions]="headerActions"
-                    [componentInjector]="mobileActionsInjector"
-                  />
-                </hlm-item-group>
+              <hlm-item-group
+                class="min-h-0 gap-1 overflow-y-auto px-3 pb-2"
+                data-testid="dashboard-mobile-actions"
+              >
+                <app-slot-outlet [contributions]="headerActions" presentation="menu" />
+              </hlm-item-group>
 
-                <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
-                  <button
-                    hlmDrawerClose
-                    hlmBtn
-                    type="button"
-                    variant="outline"
-                    class="w-full"
-                    i18n="@@common.close"
-                  >
-                    Close
-                  </button>
-                </hlm-drawer-footer>
-              </hlm-drawer-content>
-            </hlm-drawer>
-          } @else {
-            <div
-              class="flex min-w-0 shrink-0 items-center gap-1"
-              data-testid="dashboard-desktop-actions"
-            >
-              <app-slot-outlet [contributions]="headerActions" />
-            </div>
-          }
+              <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <button
+                  hlmDrawerClose
+                  cdkFocusRegionEnd
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="min-h-11 w-full"
+                  i18n="@@common.close"
+                >
+                  Close
+                </button>
+              </hlm-drawer-footer>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        } @else {
+          <div
+            class="flex min-w-0 shrink-0 items-center gap-1"
+            data-testid="dashboard-desktop-actions"
+          >
+            <app-slot-outlet [contributions]="headerActions" />
+          </div>
         }
-      </div>
-    </header>
-
-    <app-dashboard-page-header />
-
-    <div
-      #content
-      id="dashboard-content"
-      tabindex="-1"
-      class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <div [class]="contentClass()" data-testid="dashboard-content-container">
-        <router-outlet />
-      </div>
+      }
     </div>
-  </main>
-
-  @if (panel(); as contribution) {
-    <aside
-      id="dashboard-panel"
-      class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg lg:static lg:inset-auto lg:z-auto lg:max-w-none lg:rounded-none lg:border-l lg:border-border lg:shadow-none"
-      i18n-aria-label="@@dashboard.panel.aria"
-      aria-label="Contextual panel"
-    >
-      <ng-container *ngComponentOutlet="contribution.component" />
-    </aside>
-  }
-</div>
+  </header>
+</ng-template>

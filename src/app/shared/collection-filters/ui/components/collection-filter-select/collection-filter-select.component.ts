@@ -16,23 +16,19 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck } from '@ng-icons/lucide';
+import { lucideCheck, lucideSearch } from '@ng-icons/lucide';
+import { BrnCommandInput } from '@spartan-ng/brain/command';
 import { BrnFieldA11yService } from '@spartan-ng/brain/field';
-import { isCompact } from '@shared/breakpoint';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
+import { HlmCommandImports } from '@shared/ui/command';
 import { HlmDrawerImports } from '@shared/ui/drawer';
-import { HlmInput } from '@shared/ui/input';
-import { HlmItem, HlmItemActions, HlmItemContent, HlmItemTitle } from '@shared/ui/item';
+import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { COLLECTION_FILTER_VALUE_CLASS } from '../../../constants';
 import type { CollectionFilterOption, CollectionFilterPopoverState } from '../../../models';
 
-/** One visual group in a single-choice catalog. */
-interface CollectionFilterOptionGroup {
-  readonly key: string;
-  readonly label: string | null;
-  readonly options: readonly CollectionFilterOption[];
-}
+import type { CollectionFilterOptionGroup } from './models/collection-filter-option-group.interface';
 
 /**
  * Component CollectionFilterSelect
@@ -85,18 +81,6 @@ interface CollectionFilterOptionGroup {
  * account); `[ariaDisabled]` is the channel that actually reaches the
  * focusable, clickable node a screen reader lands on.
  *
- * {@link tooltip} renders nothing here any more, visually or through
- * `aria-describedby`: a 192px-capped trigger that already has to fit a value
- * pastille has no room left to also spell out a full sentence — measured at
- * 117px actually left for the reason once the value pastille is drawn,
- * against a 337px-wide sentence, and no `max-w-*` reconciles the two at a
- * 375px viewport. The reason now
- * renders as `app-filter-chip`'s own trailing row, at the chip's own width.
- * {@link tooltip} stays on this
- * component's public API, inert, only because `interventions-page.component.html`
- * still binds it at every call site; a caller may keep passing it, it is
- * simply never read.
- *
  * {@link describedBy} is the live channel that actually connects the trigger
  * to that reason row. `hlm-combobox-trigger`'s inner `<button>`
  * (`@shared/ui/combobox`) already carries `brnFieldControlDescribedBy`,
@@ -128,16 +112,14 @@ interface CollectionFilterOptionGroup {
   imports: [
     NgIcon,
     NgTemplateOutlet,
+    BrnCommandInput,
+    HlmInputGroupImports,
     HlmButton,
-    HlmInput,
-    HlmItem,
-    HlmItemActions,
-    HlmItemContent,
-    HlmItemTitle,
+    HlmCommandImports,
     ...HlmComboboxImports,
     ...HlmDrawerImports,
   ],
-  providers: [BrnFieldA11yService, provideIcons({ lucideCheck })],
+  providers: [BrnFieldA11yService, provideIcons({ lucideCheck, lucideSearch })],
   templateUrl: './collection-filter-select.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -178,7 +160,7 @@ export class CollectionFilterSelect {
   /**
    * Property searchPlaceholder
    * @readonly
-   * @description The popover search box's placeholder. Absent renders no search box at all — a field with only a handful of options needs no search.
+   * @description The desktop combobox search placeholder. Mobile Command always keeps its keyboard-navigation input and falls back to {@link accessibleName} when this value is absent.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<string | undefined>}
@@ -239,31 +221,12 @@ export class CollectionFilterSelect {
   /**
    * Property disabled
    * @readonly
-   * @description Whether this surface can apply the field at all. Dims the trigger and reads {@link tooltip}'s reason, but the trigger stays focusable — see the class doc.
+   * @description Whether this surface can apply the field. The trigger stays focusable and its handler remains inert.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
-
-  /**
-   * Property tooltip
-   *
-   * @description
-   * Inert. `app-filter-chip` (`@shared/collection-filters`) now renders and
-   * describes `CollectionFilterField.unavailableReason` itself, at the
-   * chip's own width — see the class doc for why the trigger this component
-   * owns could never fit that sentence at a 375px viewport. This input stays
-   * on the public API, unread by this component, only because
-   * `interventions-page.component.html` still binds it at every call site;
-   * do not read it back from here, and do not remove it while that binding
-   * stands.
-   *
-   * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string>}
-   */
-  public readonly tooltip: InputSignal<string> = input<string>('');
 
   /**
    * Property describedBy
@@ -332,34 +295,79 @@ export class CollectionFilterSelect {
    */
   protected readonly valueClass: string = COLLECTION_FILTER_VALUE_CLASS;
 
-  /** Whether this choice should use the touch-first bottom drawer. */
-  protected readonly compact: Signal<boolean> = isCompact();
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Uses the mobile interaction mode for touch controls regardless of viewport width.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
 
-  /** Ephemeral search text owned by the mobile drawer. */
+  /**
+   * Property mobileValueId
+   * @readonly
+   * @description Stable id of the mobile trigger's displayed value, including any hidden selections.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileValueId: Signal<string> = computed<string>(
+    () => `${this.triggerId()}-mobile-value`,
+  );
+
+  /**
+   * Property mobileDescribedBy
+   * @readonly
+   * @description Describes mobile triggers by their displayed value while preserving caller description ids.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly mobileDescribedBy: Signal<string> = computed<string>(() =>
+    `${this.mobileValueId()} ${this.describedBy() ?? ''}`.trim(),
+  );
+
+  /**
+   * Property mobileSearch
+   * @readonly
+   *
+   * @description
+   * Ephemeral query owned by the mobile Command and cleared on dismissal.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly mobileSearch: WritableSignal<string> = signal<string>('');
 
-  /** Options matching the mobile drawer's local search text. */
-  protected readonly mobileOptions: Signal<readonly CollectionFilterOption[]> = computed<
-    readonly CollectionFilterOption[]
-  >(() => {
-    const term: string = this.mobileSearch().trim().toLocaleLowerCase();
-    if (term.length === 0) return this.options();
-    return this.options().filter((option: CollectionFilterOption): boolean =>
-      option.label.toLocaleLowerCase().includes(term),
-    );
-  });
-
-  /** Search-filtered options grouped in first-seen order for both adaptive surfaces. */
+  /**
+   * Property optionGroups
+   * @readonly
+   *
+   * @description
+   * Catalog entries grouped in first-seen order. Spartan Command owns mobile
+   * filtering so hidden options and its native empty state stay synchronized.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<readonly CollectionFilterOptionGroup[]>}
+   */
   protected readonly optionGroups: Signal<readonly CollectionFilterOptionGroup[]> = computed<
     readonly CollectionFilterOptionGroup[]
   >(() => {
     const groups = new Map<string, CollectionFilterOptionGroup>();
 
-    for (const option of this.mobileOptions()) {
+    for (const option of this.options()) {
       const key: string = option.group ?? '';
       const existing: CollectionFilterOptionGroup | undefined = groups.get(key);
       if (existing) {
-        (existing.options as CollectionFilterOption[]).push(option);
+        groups.set(key, { ...existing, options: [...existing.options, option] });
         continue;
       }
 
@@ -376,7 +384,7 @@ export class CollectionFilterSelect {
   /**
    * Property labelOf
    * @readonly
-   * @description Resolves one value to its catalog label — the chip's text, and what the popover's search box matches against. An unknown value reads as itself rather than blank.
+   * @description Resolves one value to its catalog label for display and search. Values absent from the catalog use the localized Unknown value label rather than exposing a raw identifier.
    * @access protected
    * @since 1.0.0
    * @type {(value: string) => string}
@@ -415,30 +423,40 @@ export class CollectionFilterSelect {
   //#region Methods
   /**
    * Method onValuePicked
-   * @description Normalizes the combobox's `undefined`-when-cleared value before re-emitting it. A no-op while {@link disabled} is set — the trigger stays clickable, so this is what keeps a pick inert rather than merely invisible.
+   * @method onValuePicked
+   * @description Accepts only strings or an empty selection from the combobox, ignoring malformed or disabled picks.
    * @access protected
    * @since 1.0.0
-   * @param {string | null | undefined} value - The combobox's next value.
+   * @param {unknown} value - The combobox's untyped next value.
    * @returns {void}
    */
-  protected onValuePicked(value: string | null | undefined): void {
+  protected onValuePicked(value: unknown): void {
     if (this.disabled()) return;
+    if (typeof value !== 'string' && value !== null && value !== undefined) return;
     this.valueChanged.emit(value ?? null);
   }
 
-  /** Mirrors drawer state to the existing popover state contract and clears transient search. */
+  /**
+   * Method onMobileStateChanged
+   * @method onMobileStateChanged
+   *
+   * @description
+   * Mirrors drawer state to the existing overlay contract and clears its query on dismissal.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {CollectionFilterPopoverState} state - The drawer's next state.
+   * @returns {void}
+   */
   protected onMobileStateChanged(state: CollectionFilterPopoverState): void {
     if (state === 'closed') this.mobileSearch.set('');
     this.stateChanged.emit(state);
   }
 
-  /** Updates the drawer's local search query without introducing form state. */
-  protected onMobileSearchChanged(event: Event): void {
-    this.mobileSearch.set((event.target as HTMLInputElement).value);
-  }
-
   /**
    * Method optionOf
+   * @method optionOf
    * @description The catalog entry behind one value, for {@link valueTemplate}. An unknown value yields a synthetic entry labelled by itself, so a stale narrowing still renders.
    * @access protected
    * @since 1.1.0

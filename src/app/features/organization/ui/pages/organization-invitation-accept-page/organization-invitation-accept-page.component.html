@@ -27,7 +27,13 @@
         <p class="text-sm leading-relaxed text-muted-foreground">{{ description }}</p>
       </div>
       <div class="flex justify-start">
-        <a hlmBtn variant="outline" routerLink="/" i18n="@@org.invitationAccept.goHome">
+        <a
+          class="mobile-ui:min-h-11"
+          hlmBtn
+          variant="outline"
+          routerLink="/"
+          i18n="@@org.invitationAccept.goHome"
+        >
           Go to homepage
         </a>
       </div>
@@ -159,7 +165,7 @@
             hlmBtn
             variant="outline"
             size="lg"
-            class="min-h-11 w-full sm:flex-1"
+            class="min-h-11 w-full sm:flex-1 mobile-ui:min-h-11"
             routerLink="/"
             i18n="@@org.invitationAccept.decline"
             >Not now</a
@@ -168,7 +174,7 @@
             hlmBtn
             type="button"
             size="lg"
-            class="min-h-11 w-full sm:flex-1"
+            class="min-h-11 w-full sm:flex-1 mobile-ui:min-h-11"
             data-testid="organization-invitation-accept-submit"
             [disabled]="store.isAccepting()"
             [attr.aria-busy]="store.isAccepting() ? 'true' : null"

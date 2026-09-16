@@ -7,17 +7,17 @@
   </div>
   <div hlmCardContent class="flex flex-1 flex-col">
     @if (loading()) {
-      <div class="flex min-h-52 flex-col gap-6 py-3">
+      <div class="flex min-h-52 flex-col gap-6 py-3 mobile-ui:min-h-0 mobile-ui:gap-4">
         <hlm-skeleton class="h-6 w-full" /><hlm-skeleton class="h-6 w-4/5" /><hlm-skeleton
           class="h-6 w-full"
         />
       </div>
     } @else if (rows(); as items) {
       @if (items.length) {
-        <div hlmItemGroup class="w-full">
+        <div hlmItemGroup class="w-full mobile-ui:gap-0">
           @for (row of items; track row.id) {
             @if (!$first) {
-              <hlm-item-separator />
+              <hlm-item-separator class="mobile-ui:my-0" />
             }
             <ng-template #content>
               <div hlmItemMedia variant="icon">
@@ -27,8 +27,10 @@
                   aria-hidden="true"
                 />
               </div>
-              <div hlmItemContent>
-                <p hlmItemTitle>{{ row.label }}</p>
+              <div hlmItemContent class="min-w-0">
+                <p hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:wrap-anywhere">
+                  {{ row.label }}
+                </p>
               </div>
               <div hlmItemActions>
                 <span class="font-semibold tabular-nums">{{
@@ -53,7 +55,23 @@
           }
         </div>
       } @else {
-        <div hlmEmpty class="min-h-52">
+        <div hlmItemGroup class="hidden mobile-ui:flex">
+          <div hlmItem size="sm">
+            <div hlmItemMedia variant="icon">
+              <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+            </div>
+            <div hlmItemContent class="min-w-0">
+              <p
+                hlmItemDescription
+                class="line-clamp-none wrap-anywhere"
+                i18n="@@org.dashboard.attention.emptyDescription"
+              >
+                The latest snapshot contains no operational alerts.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div hlmEmpty class="min-h-52 mobile-ui:hidden">
           <div hlmEmptyHeader>
             <div hlmEmptyMedia variant="icon">
               <ng-icon name="lucideCircleCheck" aria-hidden="true" />
@@ -66,7 +84,20 @@
         </div>
       }
     } @else {
-      <div hlmEmpty class="min-h-52">
+      <div hlmItemGroup class="hidden mobile-ui:flex">
+        <div hlmItem size="sm">
+          <div hlmItemContent class="min-w-0">
+            <p
+              hlmItemDescription
+              class="line-clamp-none wrap-anywhere"
+              i18n="@@org.dashboard.attention.unavailable"
+            >
+              Alerts unavailable
+            </p>
+          </div>
+        </div>
+      </div>
+      <div hlmEmpty class="min-h-52 mobile-ui:hidden">
         <div hlmEmptyHeader>
           <p hlmEmptyTitle i18n="@@org.dashboard.attention.unavailable">Alerts unavailable</p>
         </div>

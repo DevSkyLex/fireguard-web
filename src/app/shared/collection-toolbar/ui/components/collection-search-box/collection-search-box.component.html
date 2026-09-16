@@ -1,10 +1,13 @@
-<hlm-input-group class="w-full max-sm:h-11 sm:w-56" [attr.data-testid]="testId() + '-group'">
+<hlm-input-group
+  class="w-full max-w-full sm:w-56 mobile-ui:h-11"
+  [attr.data-testid]="testId() + '-group'"
+>
   <hlm-input-group-addon>
     <ng-icon name="lucideSearch" />
   </hlm-input-group-addon>
   <input
     hlmInputGroupInput
-    class="max-sm:h-11"
+    class="mobile-ui:h-11 mobile-ui:text-base"
     type="search"
     [attr.data-testid]="testId()"
     [placeholder]="placeholder()"

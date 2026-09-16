@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import type {
   InterventionTemplateInstantiateRequest,
   InterventionTemplateOutput,
@@ -29,7 +30,9 @@ describe('InterventionCreateSheet', () => {
   let fixture: ComponentFixture<InterventionCreateSheet>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+    });
 
     fixture = TestBed.createComponent(InterventionCreateSheet);
     await fixture.whenStable();

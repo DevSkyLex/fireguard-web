@@ -1,28 +1,35 @@
 import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBell,
   lucideBuilding2,
   lucideEllipsisVertical,
   lucideLogOut,
-  lucideSettings2,
   lucideShieldCheck,
   lucideUserRound,
 } from '@ng-icons/lucide';
-import { Events } from '@ngrx/signals/events';
+import {
+  formatShortcut as formatPlatformShortcut,
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+  type ShortcutModifier,
+} from '@core/interaction-capabilities';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
-import { authStoreEvents, AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
+import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
+import { HlmButton } from '@shared/ui/button';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
   HlmDropdownMenu,
   HlmDropdownMenuGroup,
   HlmDropdownMenuItem,
   HlmDropdownMenuLabel,
   HlmDropdownMenuSeparator,
+  HlmDropdownMenuShortcut,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import {
   HlmSidebarMenu,
   HlmSidebarMenuButton,
@@ -61,6 +68,10 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-account-menu',
   imports: [
+    RouterLink,
+    HlmButton,
+    HlmItemImports,
+    HlmDrawerImports,
     NgIcon,
     HlmAvatar,
     HlmAvatarFallback,
@@ -70,6 +81,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     HlmDropdownMenuItem,
     HlmDropdownMenuLabel,
     HlmDropdownMenuSeparator,
+    HlmDropdownMenuShortcut,
     HlmDropdownMenuTrigger,
     HlmSidebarMenu,
     HlmSidebarMenuButton,
@@ -82,7 +94,6 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
       lucideBuilding2,
       lucideEllipsisVertical,
       lucideLogOut,
-      lucideSettings2,
       lucideShieldCheck,
       lucideUserRound,
     }),
@@ -92,6 +103,40 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountMenu {
+  /**
+   * Property interactionCapabilities
+   * @readonly
+   * @description Shared interaction mode and platform shortcut convention.
+   * @access private
+   * @since 4.0.0
+   * @type {InteractionCapabilitiesPort}
+   */
+  private readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  );
+
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> =
+    this.interactionCapabilities.isMobileInteractionMode;
+
+  /**
+   * Property shortcutModifier
+   * @readonly
+   * @description Modifier displayed by the account dropdown shortcut hints.
+   * @access protected
+   * @since 4.0.0
+   * @type {Signal<ShortcutModifier>}
+   */
+  protected readonly shortcutModifier: Signal<ShortcutModifier> =
+    this.interactionCapabilities.shortcutModifier;
+
   //#region Properties
   /**
    * Property identity
@@ -123,20 +168,14 @@ export class AccountMenu {
   private readonly logoutPort: AuthLogoutPort = inject<AuthLogoutPort>(AUTH_LOGOUT_PORT);
 
   /**
-   * Property router
+   * Property isLoggingOut
    * @readonly
-   *
-   * @description
-   * Navigates to an account section's own route. The account is a page of the
-   * shell, not a panel beside one (`account/FEATURE.md`), and this menu is its
-   * only entry point — the sidebar lists no account destination.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @type {Router}
+   * @description Prevents duplicate sign-out commands while Auth is ending the session.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
    */
-  private readonly router: Router = inject<Router>(Router);
+  protected readonly isLoggingOut: Signal<boolean> = this.logoutPort.isLoggingOut;
 
   /**
    * Property sidebar
@@ -253,109 +292,19 @@ export class AccountMenu {
   );
   //#endregion
 
-  //#region Constructor
-  /**
-   * Constructor
-   * @constructor
-   *
-   * @description
-   * Subscribes to the auth session-ended event so the persistent dashboard
-   * shell leaves for sign-in after a logout started from this menu.
-   *
-   * @access public
-   * @since 1.0.0
-   */
-  public constructor() {
-    inject<Events>(Events)
-      .on(authStoreEvents.sessionEnded)
-      .pipe(takeUntilDestroyed())
-      .subscribe((): void => {
-        void this.router.navigate(['/auth/login']);
-      });
-  }
-  //#endregion
-
   //#region Methods
-  /**
-   * Method goToProfile
-   * @method goToProfile
-   *
-   * @description
-   * Opens the account workspace on the profile.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected goToProfile(): void {
-    this.goToSection('profile');
-  }
 
   /**
-   * Method goToSecurity
-   * @method goToSecurity
-   *
-   * @description
-   * Opens the account workspace on the security settings.
-   *
+   * Method formatShortcut
+   * @method formatShortcut
+   * @description Formats one menu shortcut with the detected platform modifier.
    * @access protected
-   * @since 2.0.0
-   *
-   * @returns {void}
+   * @since 4.0.0
+   * @param {string} key - Shortcut key to display.
+   * @returns {string} Platform-appropriate shortcut hint.
    */
-  protected goToSecurity(): void {
-    this.goToSection('security');
-  }
-
-  /**
-   * Method goToOrganizations
-   * @method goToOrganizations
-   *
-   * @description
-   * Opens the account workspace on the caller's own organization list.
-   *
-   * @access protected
-   * @since 3.1.0
-   *
-   * @returns {void}
-   */
-  protected goToOrganizations(): void {
-    this.goToSection('organizations');
-  }
-
-  /**
-   * Method goToNotifications
-   * @method goToNotifications
-   *
-   * @description
-   * Opens the account workspace on the notification feed.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @returns {void}
-   */
-  protected goToNotifications(): void {
-    this.goToSection('notifications');
-  }
-
-  /**
-   * Method goToNotificationPreferences
-   * @method goToNotificationPreferences
-   *
-   * @description
-   * Opens the account workspace on the notification preferences matrix.
-   *
-   * @access protected
-   * @since 2.1.0
-   *
-   * @returns {void}
-   */
-  protected goToNotificationPreferences(): void {
-    void this.router.navigate(['/account', 'notifications'], {
-      queryParams: { tab: 'preferences' },
-    });
+  protected formatShortcut(key: string): string {
+    return formatPlatformShortcut(this.shortcutModifier(), key);
   }
 
   /**
@@ -363,35 +312,18 @@ export class AccountMenu {
    * @method logout
    *
    * @description
-   * Ends the session; navigation is triggered by the auth session-ended event
-   * so failed logout requests also leave the authenticated shell.
+   * Ends the session. The auth feature owns navigation for both logout outcomes.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @returns {void}
+   * @returns {boolean} Whether a logout command was started.
    */
-  protected logout(): void {
+  protected logout(): boolean {
+    if (this.isLoggingOut()) return false;
     this.logoutPort.logout();
+    return true;
   }
 
-  /**
-   * Method goToSection
-   * @method goToSection
-   *
-   * @description
-   * Navigates to a section of the account, which is a page of the same shell:
-   * the sidebar does not change, only the content column does.
-   *
-   * @access private
-   * @since 1.1.0
-   *
-   * @param {string} section - The account section to open.
-   *
-   * @returns {void}
-   */
-  private goToSection(section: string): void {
-    void this.router.navigate(['/account', section]);
-  }
   //#endregion
 }

@@ -70,6 +70,10 @@ worker flushes progress every 50 rows and there is no push channel.
 
 ## Invariants
 
+- Mobile touch targets and report-sheet geometry follow the central interaction-capabilities contract.
+  Upload controls, chosen files, file-level errors, polling recovery and paginated row reports
+  remain available at every width. Interaction-mode changes never recreate or reset the upload form.
+
 - The `202` create response never carries report fields (`totalRows`,
   counts, `errorReport`) — every surface reads them from a poll or a
   `get`, never off the create response.

@@ -49,7 +49,7 @@
         <button
           hlmToggleGroupItem
           #statusToggleItem
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           [value]="value"
           [attr.data-testid]="'checklists-filter-status-' + value"
         >
@@ -85,7 +85,13 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" data-testid="checklists-retry" (click)="reload()">
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="checklists-retry"
+          (click)="reload()"
+          class="mobile-ui:min-h-11"
+        >
           <span i18n="@@checklists.list.retry">Retry</span>
         </button>
       </div>
@@ -103,7 +109,12 @@
       </div>
       <div hlmEmptyContent>
         @if (canWrite()) {
-          <button hlmBtn data-testid="checklists-empty-new" (click)="openCreateDialog()">
+          <button
+            hlmBtn
+            data-testid="checklists-empty-new"
+            (click)="openCreateDialog()"
+            class="mobile-ui:min-h-11"
+          >
             <span i18n="@@checklists.list.new">New checklist</span>
           </button>
         }
@@ -146,14 +157,16 @@
     <button
       hlmBtn
       type="button"
-      class="min-w-0 shrink max-sm:min-h-11"
+      class="min-w-0 shrink mobile-ui:min-h-11"
       data-testid="checklists-new"
       i18n-aria-label="@@checklists.list.new"
       aria-label="New checklist"
       (click)="openCreateDialog()"
     >
       <ng-icon name="lucidePlus" aria-hidden="true" />
-      <span class="truncate max-sm:hidden" i18n="@@checklists.list.new">New checklist</span>
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@checklists.list.new"
+        >New checklist</span
+      >
     </button>
   }
 </ng-template>

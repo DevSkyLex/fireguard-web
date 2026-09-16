@@ -3,6 +3,23 @@
 The shell composes feature-owned widgets through public slot factories. It owns
 geometry and responsive presentation, never domain stores, routes or workflows.
 
+`INTERACTION_CAPABILITIES_PORT.isMobileInteractionMode` selects mobile chrome on phones and tablets,
+independent of width. Desktop retains the native sidebar, including its compact
+hamburger at narrow widths. Mobile has a title/back toolbar, a tools drawer and
+`provideDashboardLayoutSlots({ mobileNavigation: [...] })` for additive feature
+contributions such as `withOrganizationMobileNavigation()`.
+`DASHBOARD_MOBILE_NAVIGATION_SLOT` is exported through this layout's public barrel.
+The bottom band reserves its content and safe area in normal layout flow and
+exposes its measured border-box `--mobile-navigation-height` to descendants. Label wrapping
+and safe-area changes update that measurement; the band can grow beyond its initial minimum.
+Workflow footers must fit
+inside the remaining content area; they must not reserve the navigation band twice.
+The root integration places mobile toasts at the top center.
+Only one routed outlet exists and remains mounted when the interaction mode changes.
+Primary mobile destinations mark their own route with the typed
+`dashboardMobileNavigationRoot` data key. The shell suppresses contextual back navigation only
+for that deepest route; details, forms and secondary destinations keep their back affordance.
+
 The header breadcrumb uses Spartan's native breadcrumb and dropdown primitives.
 On narrow screens it keeps home and the current page visible and moves intermediate
 ancestors into an ellipsis menu.
@@ -13,16 +30,31 @@ template uses Spartan's paginated tab list with `variant="line"`, while nested
 panel and form tabs remain beside their content. Long route titles wrap on phones
 and truncate only in the denser desktop header.
 
+Page-owned paginated lists set `tabListClass="py-0 mobile-ui:min-h-11"` and
+`paginationButtonClass="mobile-ui:size-11"`; their triggers set `class="mobile-ui:min-h-11"`.
+The shell restores the horizontal tabs context and reserves space for native line indicators.
+It does not style the list, triggers or pagination through internal selectors.
+
 The routed-content container owns the standard `py-4 md:py-6` page spacing so
 feature pages align without repeating shell geometry. Full-height sidebar
 workspaces set `contentPadding: false` on their extension contribution.
-On phones, the toolbar, page header and routed content share a compact 16px
-horizontal gutter. The sidebar trigger uses the familiar menu glyph there and
-keeps the panel glyph on wider screens. Header tools collapse into one quick-actions
+At narrow widths the toolbar, page header and routed content share a compact 16px
+horizontal gutter. In mobile interaction mode, header tools collapse into one quick-actions
 trigger that opens a native bottom drawer; desktop keeps the direct tool cluster.
+Mobile toolbar actions have explicit 44px targets because Nova's icon-lg is 36px.
+The drawer passes `presentation="menu"` to `SlotOutlet`; its view-local provider
+preserves the native portal's parent-dialog context without a custom injector.
 Inside the drawer, the contributed controls become full-width command-style rows with
 their icon, visible label and a 48px touch target. Their feature-owned dialogs, popovers
-and sheets remain unchanged.
+and sheets remain unchanged. A left-aligned child groups the drawer title and description
+inside the native header, without overriding its direction-specific alignment rules.
+
+Quick actions closes after successful navigation. The installed Brain version cannot distinguish
+nested, globally positioned drawers for outside dismissal. The shell disables that handler and
+subscribes only to its own public CDK backdrop event, closing only when it is the topmost dialog.
+The subscription is released on close or teardown; child overlays keep native dismissal and focus.
+The Close button, Escape and the native swipe remain available;
+child tools keep their own dismissal behavior. Do not patch the vendor's stack internals.
 
 ## Sidebar footer
 
@@ -39,9 +71,14 @@ they may also disable the standard routed-content padding for a full-height work
 The highest-priority active contribution owns the column; no active contribution
 means no reserved space. The primary sidebar remains independent and collapsible.
 
-At 1024px and wider the extension sits between the primary sidebar and main content.
-Below that breakpoint, `mobileVisible` chooses between the extension and the main
-content. The contributed feature owns the navigation that switches those views.
+At 1024px and wider the extension sits beside main content in either interaction mode inside
+Spartan's horizontal resizable group. It starts at 24% of the available workspace, can grow to
+40%, and never shrinks below 16%; the routed main panel keeps the complementary space and a 60%
+minimum. Below 1024px the panels become full-width alternatives, so the resize handle is hidden
+and the active contributor still owns which panel is visible.
+This changes pane geometry only: desktop retains its sidebar, compact controls and right-hand
+sheets, never the mobile navigation or drawer behaviors. The contributed feature owns the
+navigation that switches those views.
 The shell mounts the component only while active and keeps it mounted while changing
 mobile visibility. Contributors must defer secondary data loading until the browser.
 

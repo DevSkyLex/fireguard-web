@@ -69,7 +69,7 @@ const PHASE_LABEL: Readonly<Record<InterventionPhase, string>> = {
   providers: [provideIcons({ lucideCircleCheckBig, lucideLock })],
   host: {
     class:
-      'z-30 flex flex-col gap-3 border-border bg-background/95 backdrop-blur max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:border-t max-sm:px-4 max-sm:pt-2 max-sm:pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:sticky sm:top-0 sm:border-b sm:py-5',
+      'z-30 flex flex-col gap-3 border-border bg-background/95 backdrop-blur mobile-ui:fixed mobile-ui:inset-x-0 mobile-ui:bottom-[var(--mobile-navigation-height,calc(4rem+env(safe-area-inset-bottom)))] mobile-ui:border-t mobile-ui:px-4 mobile-ui:py-2 desktop-ui:sticky desktop-ui:top-0 desktop-ui:border-b desktop-ui:py-5',
     'data-testid': 'intervention-detail-status-band',
   },
   templateUrl: './intervention-status-band.component.html',

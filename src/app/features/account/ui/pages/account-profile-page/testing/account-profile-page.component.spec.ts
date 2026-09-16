@@ -112,6 +112,32 @@ describe('AccountProfilePage', () => {
     expect(fixture.nativeElement.textContent).toContain('ada@example.com');
   });
 
+  it('resolves the standard global role to an account-owned label', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('[data-testid="account-profile-roles"]')?.textContent?.trim()).toBe(
+      'User',
+    );
+    expect(root.textContent).not.toContain('ROLE_USER');
+  });
+
+  it('uses a neutral label for unknown role metadata without remounting the profile form', async () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const form = root.querySelector('app-account-profile-form');
+    userStore.roles.set(['ROLE_USER', 'ROLE_INTERNAL_METADATA']);
+    await fixture.whenStable();
+
+    expect(root.querySelector('[data-testid="account-profile-roles"]')?.textContent?.trim()).toBe(
+      'User, Assigned role',
+    );
+    expect(root.textContent).not.toContain('ROLE_');
+    expect(root.querySelector('app-account-profile-form')).toBe(form);
+
+    userStore.roles.set([]);
+    await fixture.whenStable();
+    expect(root.querySelector('[data-testid="account-profile-roles"]')).toBeNull();
+    expect(root.querySelector('app-account-profile-form')).toBe(form);
+  });
+
   it('should flag an unconfirmed address, and stay quiet about a confirmed one', async () => {
     expect(fixture.nativeElement.textContent).not.toContain('Not confirmed');
 

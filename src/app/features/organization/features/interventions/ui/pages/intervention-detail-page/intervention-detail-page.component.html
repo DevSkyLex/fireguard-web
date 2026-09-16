@@ -1,4 +1,10 @@
-<div id="intervention-detail" class="flex w-full flex-col gap-4">
+<div
+  id="intervention-detail"
+  class="flex w-full flex-col gap-4 pb-6"
+  [class.pb-32]="
+    (isMobileInteractionMode() || mobileActionsVisible()) && store.intervention() !== null
+  "
+>
   @if (store.loading() && !store.intervention()) {
     <div
       class="flex flex-col gap-4"
@@ -89,7 +95,7 @@
             hlmBtn
             type="button"
             variant="ghost"
-            (click)="publishConfirmOpen.set(true)"
+            (click)="publishConfirmVisible.set(true)"
             i18n="@@intervention.publication.showTracking"
           >
             View publication
@@ -128,7 +134,7 @@
             type="button"
             variant="outline"
             size="sm"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11"
             data-testid="intervention-detail-retry"
             (click)="retryLoad()"
             i18n="@@common.tryAgain"
@@ -152,70 +158,85 @@
           <ng-template #pageTabs>
             <hlm-paginated-tabs-list
               variant="line"
-              class="min-h-10 w-full max-sm:min-h-[50px]"
-              tabListClass="justify-start p-0 max-sm:[&>button]:shrink-0"
+              class="w-full"
+              tabListClass="justify-start gap-0 py-0 mobile-ui:min-h-11"
+              paginationButtonClass="mobile-ui:size-11 mobile-ui:shrink-0"
               data-testid="intervention-tabs-list"
               aria-label="Intervention sections"
               i18n-aria-label="@@intervention.linked.tabsAriaLabel"
             >
               <button
                 hlmTabsTrigger="overview"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-overview"
               >
-                <ng-icon name="lucideListChecks" aria-hidden="true" />
+                <ng-icon name="lucideListChecks" class="mobile-ui:hidden" aria-hidden="true" />
                 <span i18n="@@intervention.linked.tabs.work">Work</span>
               </button>
               <button
                 hlmTabsTrigger="changes"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-changes"
               >
-                <ng-icon name="lucideGitCompareArrows" aria-hidden="true" />
+                <ng-icon
+                  name="lucideGitCompareArrows"
+                  class="mobile-ui:hidden"
+                  aria-hidden="true"
+                />
                 <span i18n="@@intervention.linked.tabs.changes">Changes</span>
-                <span class="tabular-nums">{{ pendingChangesCount() }}</span>
+                <span hlmBadge variant="secondary" class="min-w-5 px-1.5 tabular-nums">
+                  {{ pendingChangesCount() }}
+                </span>
               </button>
               <button
                 hlmTabsTrigger="attachments"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-attachments"
               >
-                <ng-icon name="lucidePaperclip" aria-hidden="true" />
+                <ng-icon name="lucidePaperclip" class="mobile-ui:hidden" aria-hidden="true" />
                 <span i18n="@@intervention.attachments.title">Attachments</span>
-                <span class="tabular-nums">{{ store.attachments().length }}</span>
+                <span hlmBadge variant="secondary" class="min-w-5 px-1.5 tabular-nums">
+                  {{ store.attachments().length }}
+                </span>
               </button>
               <button
                 hlmTabsTrigger="facilities"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-facilities"
               >
-                <ng-icon name="lucideBuilding2" aria-hidden="true" />
+                <ng-icon name="lucideBuilding2" class="mobile-ui:hidden" aria-hidden="true" />
                 <span i18n="@@intervention.sidebar.facilities">Facilities</span>
-                <span class="tabular-nums">{{ intervention.facilitiesCount }}</span>
+                <span hlmBadge variant="secondary" class="min-w-5 px-1.5 tabular-nums">
+                  {{ intervention.facilitiesCount }}
+                </span>
               </button>
               <button
                 hlmTabsTrigger="equipment"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-equipment"
               >
-                <ng-icon name="lucideBoxes" aria-hidden="true" />
+                <ng-icon name="lucideBoxes" class="mobile-ui:hidden" aria-hidden="true" />
                 <span i18n="@@intervention.sidebar.equipment">Equipment</span>
-                <span class="tabular-nums">{{ intervention.equipmentCount }}</span>
+                <span hlmBadge variant="secondary" class="min-w-5 px-1.5 tabular-nums">
+                  {{ intervention.equipmentCount }}
+                </span>
               </button>
               <button
                 hlmTabsTrigger="inspections"
-                class="max-sm:min-h-11"
+                class="mobile-ui:min-h-11 mobile-ui:px-3"
                 data-testid="intervention-tab-inspections"
               >
-                <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
+                <ng-icon name="lucideClipboardCheck" class="mobile-ui:hidden" aria-hidden="true" />
                 <span i18n="@@intervention.sidebar.inspections">Inspections</span>
-                <span class="tabular-nums">{{ intervention.inspectionsCount }}</span>
+                <span hlmBadge variant="secondary" class="min-w-5 px-1.5 tabular-nums">
+                  {{ intervention.inspectionsCount }}
+                </span>
               </button>
             </hlm-paginated-tabs-list>
           </ng-template>
 
           <div hlmTabsContent="overview" class="min-w-0">
-            <div class="flex min-w-0 flex-col gap-6">
+            <div class="flex min-w-0 flex-col gap-4">
               @if (readinessItems().length > 0) {
                 <app-intervention-getting-started
                   [items]="readinessItems()"
@@ -265,14 +286,17 @@
                   </div>
                 }
                 <app-intervention-work-item-table
-                  [preferredFilter]="workFilter()"
-                  (filterChanged)="workFilter.set($event)"
+                  [source]="tableQueries.workItemsSource()"
+                  (retryRequested)="tableQueries.retryWorkItems()"
+                  [query]="tableQueries.workItemsQuery()"
                   (proofsRequested)="proofItem.set($event)"
                   [contextId]="interventionId()"
                   [items]="store.workItems()"
+                  [queryItems]="tableQueries.workItems()"
                   [queuedIds]="operationsStore.queuedWorkItemIds()"
                   [errors]="store.workItemErrors()"
-                  [loading]="store.loading()"
+                  [loading]="store.loading() || tableQueries.workItemsLoading()"
+                  [error]="tableQueries.workItemsError()?.message ?? null"
                   [nextItemId]="nextWorkItemId()"
                   [pendingItemIds]="store.pendingWorkItemIds()"
                   [canToggle]="canExecute() && phase() === 'execute'"
@@ -286,6 +310,13 @@
                   [showProgress]="phase() === 'execute'"
                   [canAttachEvidence]="canManageAttachments()"
                   [evidencePendingItemIds]="evidenceUploadingWorkItemIds()"
+                  (queryChanged)="
+                    tableQueries.loadWorkItems({
+                      interventionId: interventionId(),
+                      search: $event.search,
+                      statuses: $event.statuses,
+                    })
+                  "
                   (statusChanged)="onWorkItemStatusChanged($event)"
                   (skipRequested)="requestSkipWorkItem($event)"
                   (deleteRequested)="requestDeleteWorkItem($event)"
@@ -322,11 +353,7 @@
                 </div>
               }
 
-              <div
-                id="intervention-activity-content"
-                #activityContent
-                class="flex flex-col gap-4 pt-3"
-              >
+              <div id="intervention-activity-content" #activityContent class="min-w-0">
                 <app-intervention-activity-thread
                   [activities]="store.activities()"
                   [members]="planningOptions.members()"
@@ -335,30 +362,43 @@
                   [hasOlder]="store.hasOlderActivities()"
                   (olderRequested)="loadOlderActivities()"
                   (retryRequested)="reloadActivities()"
-                />
-
-                <div class="border-t border-border pt-4">
-                  <app-intervention-comment-form
-                    [pending]="commentPending()"
-                    [online]="online()"
-                    [serverError]="commentError()"
-                    [members]="planningOptions.members()"
-                    (submitted)="postComment($event)"
-                  />
-                </div>
+                >
+                  <div>
+                    <app-intervention-comment-form
+                      [pending]="commentPending()"
+                      [online]="online()"
+                      [serverError]="commentError()"
+                      [members]="planningOptions.members()"
+                      (submitted)="postComment($event)"
+                    />
+                  </div>
+                </app-intervention-activity-thread>
               </div>
             </div>
           </div>
 
           <div hlmTabsContent="changes" class="min-w-0">
             <ng-template hlmTabsContentLazy>
-              <app-intervention-change-list
+              <app-intervention-change-table
+                [source]="tableQueries.changesSource()"
+                (retryRequested)="tableQueries.retryChanges()"
+                [query]="tableQueries.changesQuery()"
                 [changes]="store.changes()"
+                [queryChanges]="tableQueries.changes()"
+                [loading]="tableQueries.changesLoading()"
+                [error]="tableQueries.changesError()?.message ?? null"
                 [workItems]="store.workItems()"
                 [errors]="store.changeErrors()"
                 [defaultFilter]="intervention.status === 'published' ? 'applied' : 'proposed'"
                 [canReject]="canRejectChange()"
                 [pendingChangeIds]="store.pendingChangeIds()"
+                (queryChanged)="
+                  tableQueries.loadChanges({
+                    interventionId: interventionId(),
+                    search: $event.search,
+                    status: $event.status,
+                  })
+                "
                 (rejected)="rejectChange($event)"
               />
             </ng-template>
@@ -389,12 +429,25 @@
           <div hlmTabsContent="facilities" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-facilities-table
+                [source]="linkedResources.facilitiesSource()"
+                [hasLoaded]="linkedResources.facilitiesCallState().data !== null"
+                (retryRequested)="linkedResources.retryFacilities(interventionId())"
+                [query]="linkedResources.facilitiesQuery()"
                 [organizationId]="organizationId()"
                 [items]="linkedResources.facilities()"
                 [loading]="linkedResources.facilitiesLoading()"
                 [error]="linkedResources.facilitiesError()?.message ?? null"
                 [totalItems]="linkedResources.facilitiesTotalItems()"
                 [loadingMore]="linkedResources.facilitiesLoadingMore()"
+                [serverFiltering]="true"
+                (queryChanged)="
+                  linkedResources.queryFacilities({
+                    interventionId: interventionId(),
+                    search: $event.search,
+                    type: $event.type,
+                    status: $event.status,
+                  })
+                "
                 (loadMoreRequested)="linkedResources.loadMoreFacilities(interventionId())"
               />
             </ng-template>
@@ -403,12 +456,25 @@
           <div hlmTabsContent="equipment" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-equipment-table
+                [source]="linkedResources.equipmentSource()"
+                [hasLoaded]="linkedResources.equipmentCallState().data !== null"
+                (retryRequested)="linkedResources.retryEquipment(interventionId())"
+                [query]="linkedResources.equipmentQuery()"
                 [organizationId]="organizationId()"
                 [items]="linkedResources.equipment()"
                 [loading]="linkedResources.equipmentLoading()"
                 [error]="linkedResources.equipmentError()?.message ?? null"
                 [totalItems]="linkedResources.equipmentTotalItems()"
                 [loadingMore]="linkedResources.equipmentLoadingMore()"
+                [serverFiltering]="true"
+                (queryChanged)="
+                  linkedResources.queryEquipment({
+                    interventionId: interventionId(),
+                    search: $event.search,
+                    type: $event.type,
+                    status: $event.status,
+                  })
+                "
                 (loadMoreRequested)="linkedResources.loadMoreEquipment(interventionId())"
               />
             </ng-template>
@@ -417,6 +483,10 @@
           <div hlmTabsContent="inspections" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-inspections-table
+                [source]="linkedResources.inspectionsSource()"
+                [hasLoaded]="linkedResources.inspectionsCallState().data !== null"
+                (retryRequested)="linkedResources.retryInspections(interventionId())"
+                [query]="linkedResources.inspectionsQuery()"
                 [regionalFormatting]="regionalFormatting()"
                 [organizationId]="organizationId()"
                 [items]="linkedResources.inspections()"
@@ -424,15 +494,22 @@
                 [error]="linkedResources.inspectionsError()?.message ?? null"
                 [totalItems]="linkedResources.inspectionsTotalItems()"
                 [loadingMore]="linkedResources.inspectionsLoadingMore()"
+                [serverFiltering]="true"
+                (queryChanged)="
+                  linkedResources.queryInspections({
+                    interventionId: interventionId(),
+                    search: $event.search,
+                    status: $event.status,
+                    result: $event.result,
+                  })
+                "
                 (loadMoreRequested)="linkedResources.loadMoreInspections(interventionId())"
               />
             </ng-template>
           </div>
         </hlm-tabs>
 
-        <aside
-          class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-4 @4xl/detail:border-s @4xl/detail:border-border @4xl/detail:ps-6"
-        >
+        <aside class="flex flex-col gap-6 @4xl/detail:sticky @4xl/detail:top-40">
           <section
             class="flex flex-col gap-1 border-b border-border pb-3"
             aria-labelledby="intervention-detail-properties-title"
@@ -492,49 +569,6 @@
               />
             </div>
           }
-
-          <hlm-separator />
-
-          <section
-            hlmCollapsible
-            [expanded]="aboutExpanded() ?? false"
-            (expandedChange)="aboutExpanded.set($event)"
-            class="flex flex-col gap-3"
-            aria-labelledby="intervention-detail-about-title"
-            data-testid="intervention-detail-about"
-          >
-            <button
-              hlmCollapsibleTrigger
-              hlmBtn
-              variant="ghost"
-              type="button"
-              id="intervention-detail-about-title"
-              class="justify-between max-sm:min-h-11"
-            >
-              <span i18n="@@intervention.detail.aboutTitle">About</span>
-              <ng-icon
-                name="lucideChevronRight"
-                [class.rotate-90]="aboutExpanded()"
-                aria-hidden="true"
-              />
-            </button>
-            <div hlmCollapsibleContent class="flex flex-col gap-4">
-              <app-intervention-about
-                [regionalFormatting]="regionalFormatting()"
-                [intervention]="intervention"
-                [canEditDetails]="canEditDetails()"
-                [editState]="editState()"
-                (detailsChanged)="onDetailsChanged($event)"
-                (editTargetChanged)="onEditTargetChanged($event)"
-              />
-              <p
-                class="text-xs leading-relaxed text-muted-foreground"
-                data-testid="intervention-detail-meta"
-              >
-                {{ metaLine() }}
-              </p>
-            </div>
-          </section>
         </aside>
       </div>
     </div>
@@ -546,7 +580,7 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-detail-prev"
           [disabled]="prevInterventionId() === null"
           aria-keyshortcuts="K"
@@ -556,14 +590,14 @@
         >
           <ng-icon name="lucideChevronLeft" aria-hidden="true" />
           <span i18n="@@intervention.detail.prev">Previous intervention</span>
-          <kbd hlmKbd class="max-md:hidden">K</kbd>
+          <kbd hlmKbd class="mobile-ui:hidden">K</kbd>
         </button>
         <button
           hlmBtn
           type="button"
           variant="ghost"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-detail-next"
           [disabled]="nextInterventionId() === null"
           aria-keyshortcuts="J"
@@ -571,7 +605,7 @@
           i18n-aria-label="@@intervention.detail.next"
           (click)="navigateNext()"
         >
-          <kbd hlmKbd class="max-md:hidden">J</kbd>
+          <kbd hlmKbd class="mobile-ui:hidden">J</kbd>
           <span i18n="@@intervention.detail.next">Next intervention</span>
           <ng-icon name="lucideChevronRight" aria-hidden="true" />
         </button>
@@ -592,7 +626,7 @@
         <button
           hlmBtn
           type="button"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="intervention-detail-load-failed-retry"
           (click)="retryLoad()"
           i18n="@@common.tryAgain"
@@ -603,7 +637,7 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           (click)="navigateToList()"
         >
           <span i18n="@@intervention.detail.backToList">Back to interventions</span>
@@ -626,7 +660,7 @@
           hlmBtn
           type="button"
           variant="outline"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           (click)="navigateToList()"
         >
           <span i18n="@@intervention.detail.backToList">Back to interventions</span>
@@ -705,7 +739,7 @@
 />
 
 <app-intervention-publish-dialog
-  [visible]="publishConfirmOpen()"
+  [visible]="publishConfirmVisible()"
   [intervention]="store.intervention()"
   [pendingChangesCount]="pendingChangesCount()"
   [publishing]="publishing()"
@@ -737,6 +771,7 @@
   <app-intervention-team-assign-dialog
     [open]="teamAssignVisible()"
     [teams]="teams()"
+    [teamMemberOptions]="teamMemberOptions()"
     [teamsLoading]="teamsLoading()"
     [busy]="store.assignTeamCallState().status === 'pending'"
     [errorMessage]="store.assignTeamCallState().error?.message ?? null"
@@ -745,7 +780,24 @@
   />
 }
 
+@if ((isMobileInteractionMode() || mobileActionsVisible()) && store.intervention()) {
+  <footer
+    class="fixed inset-x-0 bottom-[var(--mobile-navigation-height,calc(4rem+env(safe-area-inset-bottom)))] z-30 max-h-32 overflow-y-auto overscroll-contain border-t border-border bg-background/95 px-4 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90"
+    data-testid="intervention-mobile-workflow-footer"
+    aria-label="Intervention actions"
+    i18n-aria-label="@@intervention.detail.mobileWorkflowActions"
+  >
+    <ng-container [ngTemplateOutlet]="workflowActions" />
+  </footer>
+}
+
 <ng-template #pageActions>
+  @if (!isMobileInteractionMode() && !mobileActionsVisible()) {
+    <ng-container [ngTemplateOutlet]="workflowActions" />
+  }
+</ng-template>
+
+<ng-template #workflowActions>
   @if (store.intervention(); as intervention) {
     <div
       class="flex min-w-0 flex-wrap items-center gap-2"
@@ -761,41 +813,34 @@
       }
       <div
         hlmButtonGroup
-        aria-label="More actions"
-        i18n-aria-label="@@intervention.detail.moreActions"
+        class="mobile-ui:w-full"
+        aria-label="Intervention actions"
+        i18n-aria-label="@@intervention.detail.mobileWorkflowActions"
       >
         @if (commandAction(); as action) {
           <button
             hlmBtn
             type="button"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-0 mobile-ui:flex-1"
             data-testid="intervention-detail-command"
             [disabled]="action.disabled || action.loading || store.saving()"
-            [attr.aria-describedby]="action.disabledReason ? 'intervention-command-reason' : null"
+            [attr.aria-busy]="action.loading ? 'true' : null"
             (click)="invokeCommandAction()"
           >
             @if (action.loading) {
-              <hlm-spinner />
+              <hlm-spinner size="xs" aria-hidden="true" />
             } @else {
               <ng-icon [name]="action.icon" aria-hidden="true" />
             }
             <span class="truncate">{{ action.label }}</span>
           </button>
-        } @else if (secondaryCommandAction(); as secondary) {
-          <button
-            hlmBtn
-            type="button"
-            data-testid="intervention-command-secondary"
-            [disabled]="secondary.disabled || secondary.loading || store.saving()"
-            (click)="requestChangesVisible.set(true)"
-          >
-            {{ secondary.label }}
-          </button>
-        } @else if (canDiscuss()) {
+        }
+        @if (!commandAction() && canDiscuss()) {
           <button
             hlmBtn
             variant="outline"
             type="button"
+            class="mobile-ui:min-h-11 mobile-ui:min-w-0 mobile-ui:flex-1"
             (click)="openActivity()"
             i18n="@@intervention.discussion.activityTrigger"
           >
@@ -803,25 +848,237 @@
             <span>Intervention activity</span>
           </button>
         }
-        <button
-          hlmBtn
-          type="button"
-          [variant]="commandAction() || secondaryCommandAction() ? 'default' : 'outline'"
-          size="icon"
-          align="end"
-          class="max-sm:size-11"
-          data-testid="intervention-detail-menu"
-          [hlmDropdownMenuTrigger]="moreMenu"
-        >
-          <ng-icon name="lucideChevronRight" class="rotate-90" aria-hidden="true" />
-          <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
-        </button>
+        @if (isMobileInteractionMode() || mobileActionsVisible()) {
+          <hlm-drawer
+            direction="bottom"
+            (stateChanged)="mobileActionsVisible.set($event === 'open')"
+            (closed)="onMobileActionsClosed($event)"
+          >
+            <button
+              hlmDrawerTrigger
+              hlmBtn
+              variant="outline"
+              type="button"
+              class="min-h-11 mobile-ui:shrink-0 mobile-ui:px-3"
+              data-testid="intervention-detail-mobile-actions"
+            >
+              <ng-icon name="lucideEllipsis" aria-hidden="true" />
+              <span class="mobile-ui:sr-only" i18n="@@intervention.detail.moreActions"
+                >More actions</span
+              >
+            </button>
+            <hlm-drawer-content
+              *hlmDrawerPortal="let drawer"
+              class="pb-[env(safe-area-inset-bottom)]"
+            >
+              <hlm-drawer-header>
+                <div class="text-start">
+                  <h3 hlmDrawerTitle i18n="@@intervention.detail.moreActions">More actions</h3>
+                  <p hlmDrawerDescription>{{ intervention.name }}</p>
+                </div>
+              </hlm-drawer-header>
+              <hlm-item-group
+                class="flex min-h-0 flex-col gap-2 overflow-y-auto overscroll-contain px-4 pb-4"
+              >
+                <button
+                  class="min-h-11 w-full flex-nowrap text-start"
+                  hlmItem
+                  type="button"
+                  data-testid="intervention-detail-discussion-trigger"
+                  (click)="drawer.close('activity')"
+                  i18n="@@intervention.discussion.activityTrigger"
+                >
+                  <span hlmItemMedia variant="icon"
+                    ><ng-icon name="lucideActivity" aria-hidden="true"
+                  /></span>
+                  <span hlmItemContent>
+                    <span hlmItemTitle>Intervention activity</span>
+                  </span>
+                </button>
+                <button
+                  class="min-h-11 w-full flex-nowrap text-start"
+                  hlmItem
+                  type="button"
+                  (click)="drawer.close('operations')"
+                  i18n="@@intervention.operations.view"
+                >
+                  <span hlmItemMedia variant="icon"
+                    ><ng-icon name="lucideHistory" aria-hidden="true"
+                  /></span>
+                  <span hlmItemContent>
+                    <span hlmItemTitle>View saved operations</span>
+                  </span>
+                </button>
+                @if (store.blockerCount() > 0) {
+                  <button
+                    class="min-h-11 w-full flex-nowrap text-start"
+                    hlmItem
+                    type="button"
+                    data-testid="intervention-detail-blockers"
+                    (click)="drawer.close('blockers')"
+                    i18n="@@intervention.band.blockers"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideCircleAlert" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>{{ store.blockerCount() }} blocking issues</span>
+                    </span>
+                  </button>
+                }
+                <hlm-item-separator />
+
+                @if (canDiscuss()) {
+                  <button
+                    class="min-h-11 w-full flex-nowrap text-start"
+                    hlmItem
+                    type="button"
+                    data-testid="intervention-detail-team-chat"
+                    (click)="drawer.close('discussion')"
+                    i18n="@@intervention.discussion.teamChat"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideMessagesSquare" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle>Team chat</span>
+                    </span>
+                  </button>
+                }
+
+                @if (transitionTargets().length > 0) {
+                  <div role="group" aria-labelledby="intervention-transition-group-label">
+                    <p
+                      class="text-sm font-medium"
+                      id="intervention-transition-group-label"
+                      i18n="@@intervention.detail.statusMenuLabel"
+                    >
+                      Send it to
+                    </p>
+                    @for (target of transitionTargets(); track target) {
+                      <button
+                        type="button"
+                        class="min-h-11 w-full flex-nowrap text-start"
+                        hlmItem
+                        data-testid="intervention-detail-transition"
+                        (click)="onMobileTransitionSelected(target, drawer)"
+                      >
+                        <span hlmItemContent
+                          ><span hlmItemTitle>
+                            <app-intervention-tag kind="status" [value]="target" asOption /> </span
+                        ></span>
+                      </button>
+                    }
+                  </div>
+                  <hlm-item-separator />
+                }
+                @if (canAssignTeam()) {
+                  <button
+                    type="button"
+                    class="min-h-11 w-full flex-nowrap text-start"
+                    hlmItem
+                    data-testid="intervention-detail-assign-team"
+                    (click)="drawer.close('team')"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideUsersRound" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle i18n="@@intervention.team.assign.menuEntry"
+                        >Assign team…</span
+                      >
+                    </span>
+                  </button>
+                }
+                @if (canPlan()) {
+                  <button
+                    type="button"
+                    class="min-h-11 w-full flex-nowrap text-start"
+                    hlmItem
+                    data-testid="intervention-detail-duplicate"
+                    (click)="duplicateIntervention(); drawer.close()"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideCopy" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle i18n="@@intervention.duplicate.action">Duplicate</span>
+                    </span>
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="min-h-11 w-full flex-nowrap text-start"
+                  hlmItem
+                  data-testid="intervention-detail-export-report"
+                  [disabled]="reportExporting()"
+                  [attr.aria-busy]="reportExporting() ? 'true' : null"
+                  (click)="exportReport(intervention); drawer.close()"
+                >
+                  <span hlmItemMedia variant="icon"
+                    ><ng-icon name="lucideFileDown" aria-hidden="true"
+                  /></span>
+                  <span hlmItemContent>
+                    <span hlmItemTitle i18n="@@intervention.detail.exportReport"
+                      >Export report</span
+                    >
+                  </span>
+                </button>
+                @if (canAbandon()) {
+                  <button
+                    type="button"
+                    class="min-h-11 w-full flex-nowrap text-start"
+                    hlmItem
+                    data-testid="intervention-detail-abandon"
+                    (click)="drawer.close('abandon')"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideBan" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle i18n="@@intervention.abandon.action"
+                        >Abandon intervention</span
+                      >
+                    </span>
+                  </button>
+                }
+                @if (canDeleteIntervention()) {
+                  <button
+                    type="button"
+                    class="min-h-11 w-full flex-nowrap text-start text-destructive"
+                    hlmItem
+                    data-testid="intervention-detail-delete"
+                    (click)="drawer.close('delete')"
+                  >
+                    <span hlmItemMedia variant="icon"
+                      ><ng-icon name="lucideTrash2" aria-hidden="true"
+                    /></span>
+                    <span hlmItemContent>
+                      <span hlmItemTitle i18n="@@intervention.delete.action"
+                        >Delete intervention</span
+                      >
+                    </span>
+                  </button>
+                }
+              </hlm-item-group>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        } @else {
+          <button
+            hlmBtn
+            type="button"
+            [variant]="commandAction() ? 'default' : 'outline'"
+            size="icon"
+            align="end"
+            class="mobile-ui:size-11"
+            data-testid="intervention-detail-menu"
+            [hlmDropdownMenuTrigger]="moreMenu"
+          >
+            <ng-icon name="lucideChevronRight" class="rotate-90" aria-hidden="true" />
+            <span class="sr-only" i18n="@@intervention.detail.moreActions">More actions</span>
+          </button>
+        }
       </div>
-      @if (commandAction()?.disabledReason; as reason) {
-        <span id="intervention-command-reason" class="w-full text-xs text-muted-foreground">{{
-          reason
-        }}</span>
-      }
       <ng-template #moreMenu>
         <hlm-dropdown-menu class="w-56">
           <button
@@ -967,7 +1224,8 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
+    class="w-full! mobile-ui:h-[85svh]! desktop-ui:w-[560px]! desktop-ui:max-w-none!"
+    [showCloseButton]="proofSheetSide() !== 'bottom'"
     data-testid="intervention-work-item-proofs"
   >
     <hlm-sheet-header>
@@ -988,10 +1246,22 @@
         (downloadRequested)="downloadAttachment($event)"
       />
     </div>
-    <hlm-sheet-footer>
+    <hlm-sheet-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+      @if (proofSheetSide() === 'bottom') {
+        <button
+          hlmSheetClose
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="min-h-11 mobile-ui:w-full"
+        >
+          <span i18n="@@common.close">Close</span>
+        </button>
+      }
       <button
         hlmBtn
         variant="outline"
+        class="mobile-ui:min-h-11 mobile-ui:w-full"
         (click)="proofItem.set(null); onLinkedTabActivated('attachments')"
         i18n="@@intervention.proofs.viewAll"
       >

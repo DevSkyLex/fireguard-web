@@ -6,10 +6,10 @@
 - **The selector is `app-` + the FOLDER name**, never the class name: folder `organization-members/` → `app-organization-members` (§9.4).
 - `ChangeDetectionStrategy.OnPush` on **every** component. External `templateUrl`, never an inline `template:`. No `styleUrl` (§1.1).
 - **No `standalone: true`** — it is the Angular 22 default and appears nowhere in this codebase.
-- Members carry an explicit access modifier, an explicit type, and `readonly`: `public` for `input()`/`output()`, `protected` for what the template reads, `private` for injected collaborators (§9.7).
+- Members carry an explicit access modifier and an explicit type; use `readonly` when the reference must remain stable: `public` for `input()`/`output()`, `protected` for what the template reads, `private` for injected collaborators (§9.7).
 - **Outputs are past-tense or nouns** — `submitted`, `cancelled`, `visibleChange`. Never `submit`, never `onSubmit`.
 - Every user-visible string is `$localize` with an explicit dotted id: `` $localize`:@@org.members.loadError:…` `` (§9.10).
-- **Only a page may inject a store or call a service.** A table, dataview, form, dialog, or sheet takes inputs and emits outputs — nothing else (§10.3, §10.5).
+- **Pages own business orchestration.** Tables, dataviews and forms take inputs and emit outputs; they do not call transport services or inject feature stores (§10.3, §10.5). Published infrastructure ports remain available to presentation components. Feature-owned widgets may orchestrate behavior only where their FEATURE.md explicitly authorizes it. Layouts compose those widgets through public APIs, never concrete feature stores.
 - **Forms are Signal Forms** (`@angular/forms/signals`): `form()` over a `signal()` model, rules in the schema, fields bound with `[formField]`. `ReactiveFormsModule`, `FormBuilder`, `FormGroup`, `FormControl` and `ValidatorFn` are banned in new code (§10.4). Read state from the field — `field().touched()`, `.invalid()`, `.errors()` — never mirror it into parallel signals.
 - **A reusable rule set is a validator**, in `.validator.ts`: the form's own `validators/` when private to it, the feature-level `validators/` when several of its forms share it (§10.4). Rules do not belong in `utils/`.
 - Tailwind classes must be **literal strings**; a computed class name produces no CSS. Dark mode is `html[data-theme="dark"]` — semantic theme tokens already carry both themes; use dark: only for a genuine variant.

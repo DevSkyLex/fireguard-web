@@ -64,7 +64,7 @@
 
       @if (canReadInterventions() && organizationId(); as orgId) {
         <a
-          class="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground hover:underline sm:min-h-0"
+          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11"
           data-testid="organization-member-profile-interventions"
           [routerLink]="['/organizations', orgId, 'interventions']"
           [queryParams]="{ responsible: memberId() }"

@@ -4,7 +4,7 @@
   (stateChanged)="onStateChanged($event)"
 >
   <hlm-alert-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain"
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
     *hlmAlertDialogPortal
     data-testid="organization-delete-dialog"
   >
@@ -22,7 +22,7 @@
         id="organization-delete-confirm-name"
         type="text"
         autocomplete="off"
-        class="w-full"
+        class="w-full mobile-ui:min-h-11 mobile-ui:text-base"
         data-testid="organization-delete-confirm-input"
         [value]="typedName()"
         (input)="onTypedNameInput($event)"
@@ -35,8 +35,9 @@
     </div>
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button class="mobile-ui:min-h-11" hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
       <button
+        class="mobile-ui:min-h-11"
         hlmAlertDialogAction
         variant="destructive"
         data-testid="organization-delete-confirm"

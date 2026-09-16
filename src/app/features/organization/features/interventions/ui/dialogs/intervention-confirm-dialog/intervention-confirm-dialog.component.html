@@ -29,13 +29,13 @@
     }
 
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel class="min-w-0 shrink">
+      <button hlmAlertDialogCancel class="min-w-0 shrink mobile-ui:min-h-11">
         <span class="truncate" i18n="@@common.cancel">Cancel</span>
       </button>
       <button
         hlmAlertDialogAction
         [variant]="acceptVariant()"
-        class="min-w-0 shrink"
+        class="min-w-0 shrink mobile-ui:min-h-11"
         data-testid="intervention-detail-confirm-accept"
         [disabled]="!canAccept()"
         (click)="accept()"

@@ -5,7 +5,8 @@
 >
   <hlm-sheet-content
     *hlmSheetPortal
-    class="w-full! max-sm:h-[85svh]! sm:w-[560px]! sm:max-w-none!"
+    class="w-full! mobile-ui:h-[85svh]! desktop-ui:w-[560px]! desktop-ui:max-w-[100vw]!"
+    [showCloseButton]="side() !== 'bottom'"
     data-testid="intervention-operations-sheet"
   >
     <hlm-sheet-header>
@@ -19,7 +20,13 @@
       </p>
       @if (callState().status === 'error') {
         <p role="alert" class="text-sm text-destructive">{{ callState().error?.message }}</p>
-        <button hlmBtn variant="outline" (click)="reloadRequested.emit()" i18n="@@common.retry">
+        <button
+          class="mobile-ui:min-h-11"
+          hlmBtn
+          variant="outline"
+          (click)="reloadRequested.emit()"
+          i18n="@@common.retry"
+        >
           Retry
         </button>
       } @else if (callState().status === 'pending' && operations().length === 0) {
@@ -73,6 +80,7 @@
             }
             <div class="flex flex-wrap gap-2">
               <button
+                class="mobile-ui:min-h-11"
                 hlmBtn
                 variant="outline"
                 size="sm"
@@ -85,6 +93,7 @@
                 Review and retry
               </button>
               <button
+                class="mobile-ui:min-h-11"
                 hlmBtn
                 variant="ghost"
                 size="sm"
@@ -99,6 +108,13 @@
         }
       </ol>
     </div>
+    @if (side() === 'bottom') {
+      <hlm-sheet-footer class="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button hlmSheetClose hlmBtn type="button" variant="outline" class="min-h-11 w-full">
+          <span i18n="@@common.close">Close</span>
+        </button>
+      </hlm-sheet-footer>
+    }
   </hlm-sheet-content>
 </hlm-sheet>
 <hlm-alert-dialog
@@ -135,8 +151,9 @@
       }
     }
     <hlm-alert-dialog-footer>
-      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button class="mobile-ui:min-h-11" hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
       <button
+        class="mobile-ui:min-h-11"
         hlmAlertDialogAction
         [variant]="confirmation()?.action === 'discard' ? 'destructive' : 'default'"
         (click)="confirm()"

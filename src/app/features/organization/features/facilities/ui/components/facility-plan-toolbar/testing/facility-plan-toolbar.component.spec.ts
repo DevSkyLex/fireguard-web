@@ -1,19 +1,26 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { FacilityPlanToolbar } from '../facility-plan-toolbar.component';
 
 describe('FacilityPlanToolbar', () => {
+  const mobile = signal(false);
   let fixture: ComponentFixture<FacilityPlanToolbar>;
 
   const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
+    mobile.set(false);
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
+      ],
     });
     fixture = TestBed.createComponent(FacilityPlanToolbar);
     await fixture.whenStable();
@@ -23,7 +30,8 @@ describe('FacilityPlanToolbar', () => {
     vi.unstubAllGlobals();
   });
 
-  async function useCompactFixture(): Promise<void> {
+  async function useMobileFixture(): Promise<void> {
+    mobile.set(true);
     fixture.destroy();
     vi.stubGlobal(
       'matchMedia',
@@ -119,7 +127,7 @@ describe('FacilityPlanToolbar', () => {
     expect(cancelled).toHaveBeenCalled();
   });
 
-  it('emits panelOpenRequested when the compact opener is activated', async () => {
+  it('emits panelOpenRequested when the mobile panel opener is activated', async () => {
     fixture.componentRef.setInput('panelOpenerVisible', true);
     await fixture.whenStable();
 
@@ -131,8 +139,8 @@ describe('FacilityPlanToolbar', () => {
     expect(requested).toHaveBeenCalled();
   });
 
-  it('uses a searchable drawer for a dense zone catalog on compact viewports', async () => {
-    await useCompactFixture();
+  it('uses a searchable drawer for a dense zone catalog in mobile interaction mode', async () => {
+    await useMobileFixture();
     fixture.componentRef.setInput('canWrite', true);
     fixture.componentRef.setInput('zoneCandidates', [
       { id: 'zone-a', name: 'Assembly hall' } as FacilityOutput,
@@ -141,7 +149,10 @@ describe('FacilityPlanToolbar', () => {
     await fixture.whenStable();
 
     const picked = vi.fn();
-    fixture.componentInstance.zoneDrawTargetPicked.subscribe(picked);
+    fixture.componentInstance.zoneDrawTargetPicked.subscribe((id) => {
+      expect(document.querySelector('hlm-drawer-content')?.getAttribute('data-state')).toBe('open');
+      picked(id);
+    });
     byTestId('facility-plan-editor-draw-zone-picker')?.click();
     await fixture.whenStable();
 
@@ -162,10 +173,11 @@ describe('FacilityPlanToolbar', () => {
     await fixture.whenStable();
 
     expect(picked).toHaveBeenCalledWith('zone-b');
+    expect(document.querySelector('hlm-drawer-content')).toBeNull();
   });
 
-  it('uses a searchable drawer for equipment candidates on compact viewports', async () => {
-    await useCompactFixture();
+  it('uses a searchable drawer for equipment candidates in mobile interaction mode', async () => {
+    await useMobileFixture();
     fixture.componentRef.setInput('canEditEquipment', true);
     fixture.componentRef.setInput('equipmentCandidates', [
       {
@@ -185,4 +197,79 @@ describe('FacilityPlanToolbar', () => {
     ).not.toBeNull();
     expect(document.body.textContent).toContain('Lobby');
   });
+  it('keeps the drawer open without selecting while the editor is busy', async () => {
+    await useMobileFixture();
+    fixture.componentRef.setInput('canWrite', true);
+    fixture.componentRef.setInput('zoneCandidates', [
+      { id: 'zone-a', name: 'Assembly hall' } as FacilityOutput,
+    ]);
+    await fixture.whenStable();
+    byTestId('facility-plan-editor-draw-zone-picker')?.click();
+    await fixture.whenStable();
+
+    const picked = vi.fn();
+    fixture.componentInstance.zoneDrawTargetPicked.subscribe(picked);
+    fixture.componentRef.setInput('editMode', 'draw-zone');
+    await fixture.whenStable();
+    const row = document.querySelector<HTMLButtonElement>('hlm-drawer-content [hlmitem]');
+    expect(row?.disabled).toBe(true);
+    row?.click();
+    expect(fixture.componentInstance['onZoneDrawTargetPicked']('zone-a')).toBe(false);
+    expect(picked).not.toHaveBeenCalled();
+    expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
+  });
+  it.each([
+    [
+      'zone',
+      'draw-zone',
+      'draw-zone',
+      'canWrite',
+      'zoneCandidates',
+      'zoneDrawTargetPicked',
+      'enter-coordinates',
+    ],
+    [
+      'equipment',
+      'place-pin',
+      'place-pin',
+      'canEditEquipment',
+      'equipmentCandidates',
+      'equipmentPlacePicked',
+      'enter-position',
+    ],
+  ] as const)(
+    'restores focus to the keyboard control after selecting %s disables its picker',
+    async (kind, picker, mode, permission, candidates, output, control) => {
+      await useMobileFixture();
+      document.body.appendChild(fixture.nativeElement);
+      fixture.componentRef.setInput(permission, true);
+      fixture.componentRef.setInput(
+        candidates,
+        kind === 'zone'
+          ? [{ id: 'zone-a', name: 'Assembly hall' } as FacilityOutput]
+          : [
+              {
+                id: 'equipment-a',
+                type: 'extinguisher',
+                serialNumber: 'EXT-42',
+              } as EquipmentOutput,
+            ],
+      );
+      fixture.componentInstance[output].subscribe(() =>
+        fixture.componentRef.setInput('editMode', mode),
+      );
+      await fixture.whenStable();
+      const trigger = byTestId('facility-plan-editor-' + picker + '-picker') as HTMLButtonElement;
+      trigger.focus();
+      trigger.click();
+      await fixture.whenStable();
+
+      document.querySelector<HTMLButtonElement>('hlm-drawer-content [hlmitem]')?.click();
+      await fixture.whenStable();
+
+      expect(trigger.disabled).toBe(true);
+      expect(document.querySelector('hlm-drawer-content')).toBeNull();
+      expect(document.activeElement).toBe(byTestId('facility-plan-editor-' + control));
+    },
+  );
 });

@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -53,6 +53,7 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { isCallPending, type CallState } from '@core/request-state';
@@ -152,8 +153,10 @@ import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmCheckboxImports } from '@shared/ui/checkbox';
+import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
@@ -395,8 +398,11 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    NgTemplateOutlet,
+    ...HlmDrawerImports,
     NgIcon,
     ...HlmEmptyImports,
+    ...HlmItemImports,
     HlmButtonGroup,
     ...HlmTabsImports,
     GateReasonDirective,
@@ -470,6 +476,28 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionsPage {
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Central interaction mode; viewport width only controls geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property mobileToolsVisible
+   * @readonly
+   * @description Keeps an open tools drawer mounted until dismissal restores focus after an interaction mode change.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly mobileToolsVisible: WritableSignal<boolean> = signal(false);
+
   //#region Inputs
   /** The workspace whose interventions are shown, bound from the route. */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -1398,13 +1426,21 @@ export class InterventionsPage {
   protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
     this.memberDisplayMap().get(value)?.label ?? '';
 
-  /** The organization's intervention labels, as the filter select's options. */
+  /**
+   * Property labelOptions
+   * @readonly
+   * @description The organization's intervention labels as filter options, including their semantic colors.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly SelectOption[]>}
+   */
   protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
     readonly SelectOption[]
   >(() =>
     this.planningOptions.labels().map((label): SelectOption => ({
       value: `/api/intervention-labels/${label.id}`,
       label: label.name,
+      color: label.color,
     })),
   );
 
@@ -2199,11 +2235,19 @@ export class InterventionsPage {
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   }
 
-  /** Sends the eligible selection and retains each failed row for a targeted retry. */
-  protected confirmBulkTransition(target: InterventionStatus): void {
-    if (this.batchPending()) return;
+  /**
+   * Method confirmBulkTransition
+   * @method confirmBulkTransition
+   * @description Starts transitions for the eligible selection and retains failed rows for targeted retries.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionStatus} target - The requested destination status.
+   * @returns {boolean}
+   */
+  protected confirmBulkTransition(target: InterventionStatus): boolean {
+    if (this.batchPending()) return false;
     const ids: ReadonlyArray<string> = this.transitionableSelectedIds(target);
-    if (ids.length === 0) return;
+    if (ids.length === 0) return false;
 
     const byId: ReadonlyMap<string, InterventionOutput> = new Map(
       this.items().map((item: InterventionListItemViewModel): [string, InterventionOutput] => [
@@ -2231,6 +2275,7 @@ export class InterventionsPage {
         });
       }
     }
+    return true;
   }
 
   /** Method retryFailedBatch
@@ -3162,4 +3207,22 @@ export class InterventionsPage {
   }
 
   //#endregion
+
+  /**
+   * Method onMobileToolsClosed
+   * @method onMobileToolsClosed
+   * @description Opens an eligible bulk action overlay after the tools drawer has finished closing.
+   * @access protected
+   * @since 1.0.0
+   * @param {unknown} action - The explicit native drawer close result.
+   * @returns {void}
+   */
+  protected onMobileToolsClosed(action: unknown): void {
+    if (this.batchPending()) return;
+
+    if (action === 'assign' && this.canAssign() && this.assignableSelectedIds().length > 0)
+      this.requestBulkAssign();
+    if (action === 'delete' && this.canDelete() && this.deletableSelectedIds().length > 0)
+      this.requestBulkDelete();
+  }
 }

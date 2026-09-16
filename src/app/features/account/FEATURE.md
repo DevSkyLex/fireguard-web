@@ -170,8 +170,8 @@ inside a layout: it reads user identity, and rendering location does not transfe
 (`ARCHITECTURE.md` §2.7). A shell contributes it to its sidebar-footer slot through
 `withAccountMenu()` — the shell renders the component without importing it, and never learns that
 a user profile exists. The menu consumes `AUTH_LOGOUT_PORT` for sign-out rather than reaching into
-auth state, and listens to Auth's public `sessionEnded` event so the persistent dashboard shell
-returns to `/auth/login` after the local session is dropped, including when the logout request fails.
+auth state. Auth owns the resulting navigation, including the failed remote-logout path, so this
+component has no authentication-event subscription.
 
 It is the entry point into the account, so it carries every route-level section and the notification
 preferences matrix. `AccountPage` mirrors those sections as persistent local navigation; adding an
@@ -195,9 +195,8 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   profile (including the hydrated handoff and a successful profile save) reconciles its `locale`
   with the active `/en`, `/fr` or `/es` bundle. `system` clears an explicit locale cookie once and
   lets the SSR server resolve the browser language.
-- Consumes `features/auth`'s public `authStoreEvents.sessionEnded` event in `AccountMenu` to leave
-  the dashboard shell after sign-out; the event is used instead of the request outcome because a
-  failed logout still ends the local session.
+- Consumes `features/auth`'s `AUTH_LOGOUT_PORT` in `AccountMenu`. The auth-owned session navigation
+  service observes logout outcomes and leaves the dashboard shell.
 - **Consumes `features/auth`'s published password policy** — `applyPasswordRules` and
   `applyPasswordConfirmation` — in the change-password form. Account owns the form; auth owns the
   policy, and is the single authority mirroring the API's constraints. Recorded in auth's
@@ -218,6 +217,11 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   features to gate routes or UI on a global permission.
 
 ## Shell Integration Notes
+
+AccountMenu and NotificationBell consume the central interaction-capabilities contract. Mobile account actions
+use native item rows in a drawer; notifications use a bounded scrolling drawer with the same
+lazy loading and mark-read handlers. Desktop retains the native menu and popover in narrow
+windows. Interaction-mode changes preserve the profile Signal Form and locale reconciliation.
 
 - `provideAccountFeature()` binds account-owned ports to concrete stores using `useExisting`, and
   primes the notification center once a profile is present.
@@ -248,21 +252,15 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   password exists; provider connection management remains available independently.
 - User profile remains account-owned even when auth bootstrap triggers its loading.
 - Shell-level user identity and notification behavior must cross feature boundaries through ports.
-- **The bell's panel is capped at `max-h-[165.75px]`, which is exactly three rows.** A row is an
-  `hlmItem size="xs"` and measures 55.25px, identical on chromium and webkit; 165.75px holds three
-  and cuts cleanly, leaving no sliver of a fourth. Two things about `HlmPopoverContent` make this
-  work and must not be undone: its base `gap-2.5 p-2.5` is neutralised with `gap-0 p-0` so the
-  separators run full-bleed, and `overflow-hidden` is then **required** — the primitive is
-  `rounded-lg` without it, because its own padding normally keeps children off the corners, so
-  full-bleed children would square them off. Any change to a row's padding or line count breaks the
-  cap — re-measure rather than adjusting it by eye.
+- The desktop notification popover keeps a short, internally scrollable preview; mobile uses a
+  bounded drawer. Both preserve full-width separators and expose the complete feed route.
 - **`/account/notifications` is one page with two tabs**, the feed and the preference matrix,
   selected by `?tab=inbox|preferences` (default `inbox`). They were two routes; they share the
   same type catalog and splitting them put "stop sending me these" a navigation away from "read
   these". The old `/account/notifications/preferences` survives as a `RedirectFunction` to
   `?tab=preferences`, so existing links and bookmarks still land. The matrix fetches its rows on
   first activation of its pane, never on arrival at the feed.
-- **The bell is a popover, not a dropdown menu.** `CdkMenuItem.trigger()` closes the whole menu
+- **The desktop bell is a popover, not a dropdown menu.** `CdkMenuItem.trigger()` closes the whole menu
   stack on every click and takes no per-item opt-out, so marking one notification read inside a
   dropdown would dismiss the panel. Measured on chromium and webkit before the switch.
 - **The bell's unread dot reads `NotificationStore.unreadCount`, never `hasUnread`.** `hasUnread` is
@@ -313,3 +311,10 @@ public confirmation on auth's `/auth/email-change/confirm`.
 The notification-center port publishes a monotonic `revision` signal for private realtime
 invalidation. Onboarding may observe it to refresh owned requests without accessing notification
 payloads; it grants no membership or permission locally.
+
+## Adaptive interaction
+
+The central interaction-capabilities contract selects account action and notification drawers on mobile, retaining
+the native desktop menu/popover. The notification three-row cap applies only to desktop; mobile
+has a bounded scrolling list. Both surfaces share loading, mark-read and navigation handlers.
+Touch density never changes the profile Signal Form, locale reconciliation or preference commits.

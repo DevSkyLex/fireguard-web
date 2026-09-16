@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   OrganizationPermissionOutput,
   OrganizationRoleOutput,
@@ -43,12 +44,26 @@ const checkboxFor = (name: string): HTMLElement | null =>
     ?.querySelector('[role="checkbox"]') as HTMLElement | null;
 
 describe('OrganizationRolePermissionsSheet', () => {
+  const mobileInteractionMode = signal(false);
+  beforeEach(() => {
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobileInteractionMode,
+            interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
+          },
+        },
+        provideZonelessChangeDetection(),
+      ],
+    });
+  });
   let fixture: ComponentFixture<OrganizationRolePermissionsSheet>;
   let emitted: ReadonlyArray<string>[];
 
   async function open(target: OrganizationRoleOutput): Promise<void> {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
-
     fixture = TestBed.createComponent(OrganizationRolePermissionsSheet);
     fixture.componentRef.setInput('role', target);
     fixture.componentRef.setInput('catalog', [
@@ -65,7 +80,6 @@ describe('OrganizationRolePermissionsSheet', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('should render nothing until the page opens it', async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
     fixture = TestBed.createComponent(OrganizationRolePermissionsSheet);
     await fixture.whenStable();
 

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  type Signal,
+} from '@angular/core';
 
 import type {
   PlanningCatalogueKind,
@@ -19,6 +26,7 @@ import { HlmButton } from '@shared/ui/button';
   imports: [HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './intervention-catalogue-status.component.html',
+  host: { '[class.hidden]': '!hasFeedback()' },
 })
 export class InterventionCatalogueStatus {
   /**
@@ -50,4 +58,28 @@ export class InterventionCatalogueStatus {
    */
 
   public readonly requested = output<PlanningCatalogueKind>();
+
+  /**
+   * Property hasFeedback
+   * @readonly
+   *
+   * @description
+   * Whether the catalogue has visible loading, error or coverage feedback.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+
+  protected readonly hasFeedback: Signal<boolean> = computed<boolean>(() => {
+    const catalogue = this.state();
+
+    return (
+      catalogue !== undefined &&
+      (catalogue.callState.status === 'pending' ||
+        catalogue.callState.error !== null ||
+        catalogue.loaded < catalogue.total)
+    );
+  });
 }

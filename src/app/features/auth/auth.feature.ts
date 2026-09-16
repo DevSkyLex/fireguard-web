@@ -5,12 +5,45 @@ import {
   makeEnvironmentProviders,
   PLATFORM_ID,
   provideAppInitializer,
+  provideEnvironmentInitializer,
   REQUEST,
 } from '@angular/core';
 import { BOOT_READINESS_PORT } from '@core/boot-readiness';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
+import { AuthSessionNavigationService } from '@features/auth/services';
 import { AuthStore } from '@features/auth/state';
+
+/**
+ * Function initializeAuthSessionNavigation
+ * @function initializeAuthSessionNavigation
+ * @description Starts auth-owned browser navigation before any logout outcome can be emitted.
+ * @access private
+ * @since 1.0.0
+ * @returns {void}
+ */
+function initializeAuthSessionNavigation(): void {
+  inject(AuthSessionNavigationService).start();
+}
+
+/**
+ * Function initializeAuthState
+ * @function initializeAuthState
+ * @description Restores authentication only in browser or request-bound SSR runtimes.
+ * @access private
+ * @since 1.0.0
+ * @returns {Promise<void> | void} Initialization completion, or nothing during prerender.
+ */
+function initializeAuthState(): Promise<void> | void {
+  const platformId: object = inject<object>(PLATFORM_ID);
+  const request: Request | null = inject<Request>(REQUEST, { optional: true });
+  const canInitialize: boolean =
+    isPlatformBrowser(platformId) || (isPlatformServer(platformId) && request !== null);
+
+  if (!canInitialize) return;
+
+  return inject(AuthStore).initialize();
+}
 
 /**
  * ProvideAuth
@@ -36,64 +69,12 @@ import { AuthStore } from '@features/auth/state';
  *   ]
  * };
  * ```
+ * @returns {EnvironmentProviders} Authentication providers and startup hooks.
  */
 export function provideAuthFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideAppInitializer(() => {
-      /**
-       * Constant platformId
-       * @const platformId
-       *
-       * @description
-       * Angular platform ID for checking runtime target (browser/server).
-       *
-       * @var {object}
-       */
-      const platformId: object = inject<object>(PLATFORM_ID);
-
-      /**
-       * Constant request
-       * @const request
-       *
-       * @description
-       * Optional request object available in server contexts. Used to determine
-       * if we're in a valid SSR context with a per-request session.
-       *
-       * @var {Request | null}
-       */
-      const request: Request | null = inject<Request>(REQUEST, { optional: true });
-
-      /**
-       * Constant canInitialize
-       * @const canInitialize
-       *
-       * @description
-       * Determines if auth initialization can proceed based
-       * on the runtime context.
-       *
-       * @var {boolean}
-       */
-      const canInitialize: boolean =
-        isPlatformBrowser(platformId) || (isPlatformServer(platformId) && !!request);
-
-      // Skip static prerender contexts without per-request session.
-      if (!canInitialize) return;
-
-      /**
-       * Constant authStore
-       * @const authStore
-       *
-       * @description
-       * Authentication store for managing auth
-       * state and session restoration.
-       *
-       * @var {AuthStore}
-       */
-      const authStore: AuthStore = inject<AuthStore>(AuthStore);
-
-      // Initialize auth state and attempt session restoration
-      return authStore.initialize();
-    }),
+    provideEnvironmentInitializer(initializeAuthSessionNavigation),
+    provideAppInitializer(initializeAuthState),
     {
       provide: AUTH_SESSION_PORT,
       useFactory: (authStore: AuthStore, userProfilePort: UserProfilePort) => ({

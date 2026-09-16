@@ -11,6 +11,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
@@ -73,6 +74,7 @@ const byPageActionsTestId = (id: string): HTMLElement | null =>
   renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 describe('CalendarPage', () => {
+  let mobile: WritableSignal<boolean>;
   let fixture: ComponentFixture<CalendarPage>;
   let items: WritableSignal<readonly CalendarFeedItemOutput[]>;
   let queryError: WritableSignal<StoreError | null>;
@@ -86,6 +88,7 @@ describe('CalendarPage', () => {
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   async function render(canWrite: boolean = false): Promise<void> {
+    mobile = signal(false);
     items = signal<readonly CalendarFeedItemOutput[]>([]);
     queryError = signal<StoreError | null>(null);
     isQueryLoading = signal<boolean>(false);
@@ -112,6 +115,13 @@ describe('CalendarPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: {
+            isMobileInteractionMode: mobile,
+            interactionMode: () => (mobile() ? 'mobile' : 'desktop'),
+          },
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission: () => canWrite } },
@@ -144,6 +154,38 @@ describe('CalendarPage', () => {
     await fixture.whenStable();
     (fixture.nativeElement as HTMLElement).appendChild(renderPageTabs());
   }
+
+  it('changes month composition without resetting dates or reloading the feed', async () => {
+    await render();
+    const month = fixture.componentInstance['month']();
+    const selectedDay = fixture.componentInstance['selectedDay']();
+    const calls = load.mock.calls.length;
+    expect(root().querySelector('app-calendar')).not.toBeNull();
+    mobile.set(true);
+    await fixture.whenStable();
+    expect(root().querySelector('app-calendar')).toBeNull();
+    expect(root().querySelector('[data-testid="calendar-agenda"]')).not.toBeNull();
+    expect(fixture.componentInstance['month']()).toBe(month);
+    expect(fixture.componentInstance['selectedDay']()).toBe(selectedDay);
+    expect(fixture.componentInstance['granularity']()).toBe('month');
+    expect(load).toHaveBeenCalledTimes(calls);
+    mobile.set(false);
+    await fixture.whenStable();
+    expect(root().querySelector('app-calendar')).not.toBeNull();
+    expect(load).toHaveBeenCalledTimes(calls);
+  });
+
+  it('keeps an explicitly selected week view across interaction mode changes', async () => {
+    await render();
+    fixture.componentInstance['onGranularityTabActivated']('week');
+    await fixture.whenStable();
+    const calls = load.mock.calls.length;
+    mobile.set(true);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['granularity']()).toBe('week');
+    expect(root().querySelectorAll('[data-testid="calendar-week-day"]')).toHaveLength(7);
+    expect(load).toHaveBeenCalledTimes(calls);
+  });
 
   it('loads the current month window on arrival', async () => {
     await render();
@@ -229,6 +271,7 @@ describe('CalendarPage', () => {
 
   it('groups the loaded window into agenda day sections for the mobile region', async () => {
     await render();
+    mobile.set(true);
     items.set([
       feedItem({ id: 'a', startsAt: '2026-08-09T09:00:00+02:00' }),
       feedItem({ id: 'b', startsAt: '2026-08-09T14:00:00+02:00' }),
@@ -247,6 +290,8 @@ describe('CalendarPage', () => {
 
   it('shows the empty agenda message once loaded with nothing scheduled', async () => {
     await render();
+    mobile.set(true);
+    await fixture.whenStable();
 
     const agenda: HTMLElement | null = root().querySelector('[data-testid="calendar-agenda"]');
     expect(agenda?.textContent).toContain('Nothing scheduled in this period.');

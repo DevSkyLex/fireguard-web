@@ -16,7 +16,7 @@ Keep the desktop primitive native:
 - actions: `hlm-dropdown-menu`;
 - anchored supporting controls: `hlm-popover`.
 
-Compose the phone surface with `hlm-drawer`, `hlmDrawerTrigger`, `*hlmDrawerPortal`,
+Compose the phone surface with `hlm-drawer direction="bottom"`, `hlmDrawerTrigger`, `*hlmDrawerPortal`,
 `hlm-drawer-content`, `hlm-drawer-header`, `hlmDrawerTitle`, `hlmDrawerDescription` and, when
 needed, `hlm-drawer-footer` or `hlmDrawerClose`.
 
@@ -32,13 +32,15 @@ model:
 ## Responsive ownership
 
 Use CSS visibility when the two dormant presentations have no side effects, duplicate IDs, form
-registration or eager data loading. If only one branch may exist, use the project's SSR-safe
-viewport abstraction and a stable server default. Never read `window`, `matchMedia` or viewport
+registration or eager data loading. If only one branch may exist, use the project's centralized
+`UI_EXPERIENCE_PORT.isMobileExperience` signal and its hydration-safe default, not a viewport
+breakpoint. Never read `window`, `matchMedia` or viewport
 dimensions during server rendering.
 
 Give duplicated triggers unique IDs and accessible names. Only the visible trigger may be
-focusable. Do not switch surfaces while one is open: close it, restore focus, then allow the new
-presentation after the breakpoint changes.
+focusable. Automatic classification is sampled once after rendering; resize, rotation, keyboard
+attachment and recent touch input must not switch an anchored desktop surface into a drawer.
+Do not remount a whole route or Signal Form just to change its presentation; preserve drafts.
 
 ## State flow
 
@@ -48,11 +50,21 @@ For a choice:
 2. The desktop primitive emits its native value change into the shared handler.
 3. A mobile row calls the same handler.
 4. A successful single selection closes the drawer and restores focus.
-5. A multi-select stages a draft and commits only through Apply; Cancel leaves the shared value
-   unchanged.
+5. A multi-select snapshots its draft once when opening and commits only through Apply; external
+   updates while open must not reset the draft. Cancel leaves the shared value unchanged.
 
-For actions, rows call the same permission-gated methods as the desktop menu. Close the drawer
-before navigation unless the action must show a pending state in that drawer. Do not imply that
+Emit the validated choice before explicitly closing the drawer. Do not combine a business
+click handler with `hlmDrawerClose`; keep that directive for dismissal-only buttons.
+When an action opens another overlay, close the current surface and open the next from
+its `closed` event, keeping the primitive's focus lifecycle intact.
+
+Preserve the native ancestor injector when rendering contributions inside a portal. Presentation
+context must not replace it with an injector created outside the dialog: that hides the parent
+`BrnDialogRef` and breaks close-then-open coordination. A global shortcut must belong to its
+feature's browser lifetime, not to a trigger instantiated only while a drawer is open.
+
+For actions, rows call the same permission-gated methods as the desktop menu. Use real RouterLink
+anchors for destinations; route teardown closes the old surface. Do not imply that
 closing an overlay cancels an already-started server operation.
 
 ## Mobile layout
@@ -73,5 +85,13 @@ identifiable without color, selection updates the visible trigger, the drawer cl
 and focus returns. Exercise enough options to prove internal scrolling and no document overflow.
 
 In desktop Chromium, assert that the native select/menu/popover opens and the drawer trigger is not
-available. If breakpoint logic is stateful rather than CSS-only, resize across the boundary and
-verify no overlay, backdrop or focus trap is stranded.
+available, including at 375px width and on a touch-capable Windows profile. Exercise a wide
+tablet and reload stability. Verify that automatic classification exposes no manual override and
+that no overlay, backdrop, draft or focus trap is stranded during the initial adaptive render.
+
+Test focus cycling in both Chromium and WebKit, not just Escape. The installed CDK iOS heuristic
+can miss radio/button-only content. When reproduced, use its public `cdkFocusRegionStart` and
+`cdkFocusRegionEnd` markers on intentional, programmatically focusable boundaries (for example,
+a title with `tabindex="-1"` and an always-enabled Close button). `autoFocus="first-heading"`
+can make that initial focus explicit. Verify Tab, Shift+Tab, selection and focus return; do not
+accept a hidden focus-trap sentinel as success or override the vendor's interaction checker.

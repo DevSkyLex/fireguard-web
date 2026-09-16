@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
  * Component AccountLeaveOrganizationDialog
@@ -49,7 +50,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
  */
 @Component({
   selector: 'app-account-leave-organization-dialog',
-  imports: [...HlmAlertDialogImports],
+  imports: [...HlmAlertDialogImports, HlmSpinner],
   templateUrl: './account-leave-organization-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

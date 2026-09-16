@@ -24,6 +24,7 @@ import { HlmDialogFooter } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSpinner } from '@shared/ui/spinner';
 import type { ChannelCreateDraft, NewChannelFormDraft } from './models';
 
 /** Matches `CreateChannelInput.name`'s server-side bounds. */
@@ -82,6 +83,7 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
     FormField,
     HlmButton,
     HlmInput,
+    HlmSpinner,
     ...HlmFieldImports,
     ...HlmSelectImports,
     HlmDialogFooter,

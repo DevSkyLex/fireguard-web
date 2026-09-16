@@ -1,6 +1,6 @@
 <hlm-dialog [state]="dialogState()" disableClose (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content
-    class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-xl"
+    class="max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)] gap-5 overflow-y-auto overscroll-contain sm:max-w-2xl"
     data-testid="intervention-label-manage-dialog"
     *hlmDialogPortal
   >
@@ -23,15 +23,36 @@
           Choose a short name and a color that remains recognizable in a list.
         </p>
 
-        <div hlmFieldGroup class="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_auto]">
+        <div hlmFieldGroup class="grid items-end gap-3 sm:grid-cols-[7rem_minmax(0,1fr)_auto]">
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              class="sr-only"
+              for="intervention-label-create-color"
+              i18n="@@intervention.labels.manage.colorLabel"
+              >Color</label
+            >
+            <input
+              #createColorInput
+              hlmInput
+              id="intervention-label-create-color"
+              type="color"
+              class="h-10 w-full cursor-pointer p-1 mobile-ui:min-h-11"
+              data-testid="intervention-label-create-color"
+              [value]="draftColor()"
+              (input)="draftColor.set(createColorInput.value)"
+            />
+          </hlm-field>
+
           <hlm-field>
             <label
               hlmFieldLabel
               for="intervention-label-create-name"
               i18n="@@intervention.labels.manage.nameLabel"
-              >Name</label
+              >Label</label
             >
             <input
+              #createNameInput
               hlmInput
               id="intervention-label-create-name"
               type="text"
@@ -40,31 +61,14 @@
               placeholder="e.g. Compliance"
               i18n-placeholder="@@intervention.labels.manage.namePlaceholder"
               [value]="draftName()"
-              (input)="draftName.set($any($event.target).value)"
-            />
-          </hlm-field>
-
-          <hlm-field>
-            <label
-              hlmFieldLabel
-              for="intervention-label-create-color"
-              i18n="@@intervention.labels.manage.colorLabel"
-              >Color</label
-            >
-            <input
-              id="intervention-label-create-color"
-              type="color"
-              class="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent p-1 max-sm:min-h-11"
-              data-testid="intervention-label-create-color"
-              [value]="draftColor()"
-              (input)="draftColor.set($any($event.target).value)"
+              (input)="draftName.set(createNameInput.value)"
             />
           </hlm-field>
 
           <button
             hlmBtn
             type="submit"
-            class="max-sm:min-h-11"
+            class="mobile-ui:min-h-11 mobile-ui:w-full"
             data-testid="intervention-label-create-submit"
             [disabled]="!canCreate()"
           >
@@ -146,12 +150,14 @@
                 @if (editingId() === label.id) {
                   <div hlmItemMedia>
                     <input
+                      #editColorInput
+                      hlmInput
                       type="color"
-                      class="size-8 shrink-0 cursor-pointer rounded-lg border border-input bg-transparent p-1 max-sm:size-11"
+                      class="size-8 shrink-0 cursor-pointer p-1 mobile-ui:size-11 mobile-ui:min-h-11"
                       [attr.aria-label]="rowAriaLabelOf('editColor', label.name)"
                       [attr.data-testid]="'intervention-label-edit-color-' + label.id"
                       [value]="editColor()"
-                      (input)="editColor.set($any($event.target).value)"
+                      (input)="editColor.set(editColorInput.value)"
                     />
                   </div>
                   <div hlmItemContent class="min-w-0">
@@ -159,6 +165,7 @@
                       {{ nameInputLabelOf(label) }}
                     </label>
                     <input
+                      class="mobile-ui:min-h-11"
                       #editNameInput
                       hlmInput
                       type="text"
@@ -167,11 +174,12 @@
                       [attr.aria-label]="rowAriaLabelOf('editName', label.name)"
                       [attr.data-testid]="'intervention-label-edit-name-' + label.id"
                       [value]="editName()"
-                      (input)="editName.set($any($event.target).value)"
+                      (input)="editName.set(editNameInput.value)"
                     />
                   </div>
-                  <div hlmItemActions class="ms-auto" hlmButtonGroup>
+                  <div hlmItemActions class="ms-auto flex-wrap">
                     <button
+                      class="mobile-ui:size-11 mobile-ui:min-h-11"
                       hlmBtn
                       type="button"
                       size="icon-sm"
@@ -187,6 +195,7 @@
                       }
                     </button>
                     <button
+                      class="mobile-ui:size-11 mobile-ui:min-h-11"
                       hlmBtn
                       type="button"
                       variant="outline"
@@ -211,14 +220,14 @@
                     </p>
                     <p hlmItemDescription>{{ label.name }}</p>
                   </div>
-                  <div hlmItemActions class="ms-auto" hlmButtonGroup>
+                  <div hlmItemActions class="ms-auto flex-wrap">
                     <button
                       #confirmDeleteButton
                       hlmBtn
                       type="button"
                       variant="destructive"
                       size="sm"
-                      class="max-sm:min-h-11"
+                      class="mobile-ui:min-h-11"
                       [attr.aria-label]="rowAriaLabelOf('confirmRemove', label.name)"
                       [attr.data-testid]="'intervention-label-remove-confirm-' + label.id"
                       [disabled]="removingId() === label.id"
@@ -234,7 +243,7 @@
                       type="button"
                       variant="outline"
                       size="sm"
-                      class="max-sm:min-h-11"
+                      class="mobile-ui:min-h-11"
                       [attr.aria-label]="rowAriaLabelOf('keep', label.name)"
                       (click)="confirmingRemoveId.set(null)"
                     >
@@ -253,12 +262,13 @@
                     <p hlmItemTitle class="truncate">{{ label.name }}</p>
                     <p hlmItemDescription class="font-mono uppercase">{{ label.color }}</p>
                   </div>
-                  <div hlmItemActions class="ms-auto" hlmButtonGroup>
+                  <div hlmItemActions class="ms-auto flex-wrap">
                     <button
                       hlmBtn
                       type="button"
                       variant="outline"
                       size="icon-sm"
+                      class="mobile-ui:size-11 mobile-ui:min-h-11"
                       [attr.aria-label]="rowAriaLabelOf('edit', label.name)"
                       [attr.data-testid]="'intervention-label-edit-' + label.id"
                       (click)="startEdit(label)"
@@ -270,6 +280,7 @@
                       type="button"
                       variant="outline"
                       size="icon-sm"
+                      class="mobile-ui:size-11 mobile-ui:min-h-11"
                       [attr.aria-label]="rowAriaLabelOf('remove', label.name)"
                       [attr.data-testid]="'intervention-label-remove-' + label.id"
                       (click)="requestRemove(label.id)"
@@ -291,7 +302,7 @@
         hlmBtn
         type="button"
         variant="outline"
-        class="max-sm:min-h-11"
+        class="mobile-ui:min-h-11"
         data-testid="intervention-label-manage-close"
       >
         <span i18n="@@common.close">Close</span>

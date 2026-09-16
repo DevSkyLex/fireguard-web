@@ -10,8 +10,9 @@ import type {
   CollectionSurfaceBreakpoint,
   CollectionSurfaceDensity,
 } from '@shared/collection-surface/models';
-import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmCaption, HlmTable, HlmTableContainer, HlmTBody, HlmTHead } from '@shared/ui/table';
+import { CollectionSkeletonCards } from '../collection-skeleton-cards';
 import { CollectionSkeletonRows } from '../collection-skeleton-rows';
 
 /** Which region the template shows once the first-load skeleton no longer applies. */
@@ -20,86 +21,11 @@ type CollectionSurfaceSlot = 'error' | 'empty' | 'surface';
 /**
  * Component CollectionSurface
  * @class CollectionSurface
- *
- * @description
- * The bordered, scrollable table shell every collection table in the
- * application re-implements by hand today — extracted per `DESIGN.md`
- * "Tables: `hlmTable` inside `hlmTableContainer`" and the audit behind this
- * change (40 files reference `hlmTable` outside vendored code; the 5
- * intervention sub-tables are missing `role="region"`/`tabindex="0"`/
- * `aria-labelledby` on their scroll container; 12 of 17 render skeleton rows
- * with no `role="status"` announcement; none give the table a card fallback
- * below its own container width). Presentational (`ARCHITECTURE.md`
- * §10.3) — it injects no store and calls no service.
- *
- * **The one loading contract this owns: "first load only."** {@link loading}
- * only draws the skeleton while {@link rowCount} is still `0`
- * (`isInitialLoading`, below) — a subsequent page fetch with rows already on
- * screen renders {@link rowCount}'s real content undisturbed, so a "load
- * more" affordance stays the caller's own concern (`intervention-equipment
- * -table`'s own busy button is the precedent this does not fold in).
- *
- * **Routing between states is this component's job, not the caller's.**
- * {@link hasError} beats {@link rowCount}, which beats a normal render:
- * loading first, then the `[surfaceError]` slot, then `[surfaceEmpty]`,
- * otherwise the table/card pair. A caller does not re-derive this ladder on
- * its own page seventeen times.
- *
- * **The sticky head sits on `hlmTableContainer` itself**
- * (`h-full overflow-y-auto`) — never split across a second wrapper —
- * because `overflow-x-auto` (which `HlmTableContainer` always carries)
- * forces `overflow-y` to compute as `auto` regardless of what is written, so
- * a second wrapper would pin the sticky head to the wrong, non-scrolling
- * ancestor (`interventions/FEATURE.md`'s own account of this trap).
- *
- * **The table/card switch is a container query, not a viewport one**
- * (`@container/surface`, {@link compactBreakpoint}), so a collapsed sidebar
- * does not force cards a wide-enough content column would not need.
- * Both layouts stay mounted; only a Tailwind `hidden`/`block` pair toggles,
- * because no directive here can react to a container query the way `@if`
- * reacts to a signal.
- *
- * **Column headers are pinned to the Label rung** (`text-xs`, `DESIGN.md`'s
- * type scale) here, not in the vendored `HlmTh`, which still renders the
- * inherited 14px body size — the fix lives at this level, once, rather than
- * as a class seventeen call sites would each have to repeat.
- *
+ * @description Presentational collection shell that owns first-load, error, empty and content
+ * precedence. Desktop always renders the native table. Mobile may use caller-provided cards below
+ * the configured container breakpoint while roomy tablets retain the table and touch targets.
+ * The caller owns queries, pagination and every domain decision.
  * @version 1.0.0
- *
- * @example
- * ```html
- * <app-collection-surface
- *   caption="The organization's interventions."
- *   testId="intervention-table"
- *   [loading]="loading()"
- *   [rowCount]="items().length"
- *   [columnCount]="8"
- *   [skeletonColumns]="['w-4', 'w-14', 'w-56', 'w-24', 'w-20']"
- * >
- *   <tr surfaceHead hlmTableRow>…</tr>
- *   @for (item of items(); track item.id) {
- *     <tr surfaceRows hlmTableRow>…</tr>
- *   }
- *   <div surfaceCards>…</div>
- *   <div hlmEmpty surfaceEmpty>
- *     <div hlmEmptyTitle>No interventions</div>
- *   </div>
- * </app-collection-surface>
- * ```
- *
- * The host is a flex column that takes its caller's height (`h-full`) instead
- * of sizing to its content. Both halves matter and one without the other does
- * nothing: `h-full` is what reaches the definite height a page table host gets
- * from `flex-1 min-h-0`, since that host is a `block` and a block child never
- * inherits a bound otherwise; the flex column is what lets the wrapper below
- * claim that height as `flex-1`. A caller that does not bound its own height
- * still gets content height, because `h-full` on an auto parent is auto.
- *
- * Before this the host was an auto-height block. The wrapper's `h-full`
- * resolved against `auto`, its `overflow-hidden` never clipped, and the table
- * grew past the bounded box of its parent — so the pager, correctly placed in
- * flow right after that box, was drawn across the middle of the rows.
- *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -110,10 +36,15 @@ type CollectionSurfaceSlot = 'error' | 'empty' | 'surface';
     HlmTableContainer,
     HlmTBody,
     HlmTHead,
-    HlmSkeleton,
+    CollectionSkeletonCards,
     CollectionSkeletonRows,
+    ...HlmSpinnerImports,
   ],
-  host: { class: '@container/surface flex h-auto w-full min-h-fit flex-col md:h-full md:min-h-0' },
+  host: {
+    class:
+      '@container/surface relative flex h-full w-full min-h-0 flex-col mobile-ui:h-auto mobile-ui:min-h-fit mobile-ui:md:h-full mobile-ui:md:min-h-0',
+    '[attr.aria-busy]': 'loading()',
+  },
   templateUrl: './collection-surface.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -169,6 +100,20 @@ export class CollectionSurface {
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
 
   /**
+   * Property hasLoaded
+   * @readonly
+   *
+   * @description
+   * Whether a completed result, including an empty one, exists and must survive refresh.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly hasLoaded: InputSignal<boolean> = input<boolean>(false);
+
+  /**
    * Property hasError
    * @readonly
    *
@@ -190,8 +135,8 @@ export class CollectionSurface {
    *
    * @description
    * The current real row count — never the skeleton row count. Drives both
-   * the first-load guard and the empty-state routing, so seventeen pages
-   * stop re-deriving `loading() && items().length === 0` on their own.
+   * the first-load guard and the empty-state routing, so callers do not have
+   * to re-derive `loading() && items().length === 0` on their own.
    *
    * @access public
    * @since 1.0.0
@@ -266,35 +211,13 @@ export class CollectionSurface {
   public readonly maxHeight: InputSignal<string | null> = input<string | null>(null);
 
   /**
-   * Property skeletonRowIndexes
-   * @readonly
-   *
-   * @description
-   * Track keys for the placeholder rows, so the card layout can draw as many
-   * placeholders as the table does. Without them the compact layout rendered
-   * nothing at all during a first load — a blank panel where the table shows
-   * skeletons, which reads as an empty collection rather than a loading one.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @type {Signal<readonly number[]>}
-   */
-  protected readonly skeletonRowIndexes: Signal<readonly number[]> = computed<readonly number[]>(
-    () => Array.from({ length: this.skeletonRowCount() }, (_, index: number) => index),
-  );
-
-  /**
    * Property density
    * @readonly
    *
    * @description
-   * The head/row rhythm — `'comfortable'` (default, 44px head, ≥44px rows)
-   * or `'compact'` (36px head). Applied through a descendant selector
-   * targeting the caller's own `[data-slot=table-head]`/`[data-slot=table
-   * -cell]` cells, since those cells belong to the projected
-   * `[surfaceHead]`/`[surfaceRows]` content, not to this component's own
-   * template.
+   * The row rhythm — `'comfortable'` (default, with at least 44px rows) or
+   * `'compact'`. Headers deliberately keep the installed Spartan defaults;
+   * the value only adjusts the projected body-cell spacing.
    *
    * @access public
    * @since 1.0.0
@@ -309,8 +232,8 @@ export class CollectionSurface {
    * @readonly
    *
    * @description
-   * The `@container/surface` width at which the table replaces the card
-   * layout. Defaults to `'2xl'`.
+   * The mobile `@container/surface` width at which a table replaces cards.
+   * Desktop always shows the table. Defaults to `'2xl'`.
    *
    * @access public
    * @since 1.0.0
@@ -337,7 +260,7 @@ export class CollectionSurface {
    * @type {Signal<boolean>}
    */
   protected readonly isInitialLoading: Signal<boolean> = computed<boolean>(
-    () => this.loading() && this.rowCount() === 0,
+    () => this.loading() && !this.hasLoaded() && this.rowCount() === 0,
   );
 
   /**
@@ -408,7 +331,7 @@ export class CollectionSurface {
    * @readonly
    *
    * @description
-   * The bordered outer shell's responsive classes, hidden below
+   * The bordered outer shell's classes, hidden only in mobile interaction mode below
    * {@link compactBreakpoint} in favor of cards. It grows as a bounded flex
    * item so the table body can own its scrolling.
    *
@@ -421,12 +344,12 @@ export class CollectionSurface {
 
     switch (this.compactBreakpoint()) {
       case 'xl':
-        return `${base} hidden @xl/surface:block`;
+        return `${base} block mobile-ui:hidden mobile-ui:@xl/surface:block`;
       case '3xl':
-        return `${base} hidden @3xl/surface:block`;
+        return `${base} block mobile-ui:hidden mobile-ui:@3xl/surface:block`;
       case '2xl':
       default:
-        return `${base} hidden @2xl/surface:block`;
+        return `${base} block mobile-ui:hidden mobile-ui:@2xl/surface:block`;
     }
   });
 
@@ -435,8 +358,8 @@ export class CollectionSurface {
    * @readonly
    *
    * @description
-   * The card layout's classes, hidden at and above
-   * {@link compactBreakpoint} in favor of the table.
+   * Mobile card layout, hidden on desktop and on mobile containers wide enough
+   * for the table at {@link compactBreakpoint}.
    *
    * @access protected
    * @since 1.0.0
@@ -446,40 +369,12 @@ export class CollectionSurface {
   protected readonly cardsWrapperClass: Signal<string> = computed<string>(() => {
     switch (this.compactBreakpoint()) {
       case 'xl':
-        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @xl/surface:hidden';
+        return 'hidden min-h-fit flex-none flex-col gap-2 overflow-visible mobile-ui:flex md:min-h-0 md:flex-1 md:overflow-y-auto mobile-ui:@xl/surface:hidden';
       case '3xl':
-        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @3xl/surface:hidden';
+        return 'hidden min-h-fit flex-none flex-col gap-2 overflow-visible mobile-ui:flex md:min-h-0 md:flex-1 md:overflow-y-auto mobile-ui:@3xl/surface:hidden';
       case '2xl':
       default:
-        return 'flex min-h-fit flex-none flex-col gap-2 overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto @2xl/surface:hidden';
-    }
-  });
-
-  /**
-   * Property theadClass
-   * @readonly
-   *
-   * @description
-   * The sticky head's own classes, plus the Label-rung correction
-   * (`text-xs font-medium`) and the {@link density}-driven head height —
-   * all targeting the caller's projected `[data-slot=table-head]` cells
-   * through a descendant selector.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {Signal<string>}
-   */
-  protected readonly theadClass: Signal<string> = computed<string>(() => {
-    const base: string =
-      'sticky top-0 z-10 bg-background [&_[data-slot=table-head]]:text-xs [&_[data-slot=table-head]]:font-medium';
-
-    switch (this.density()) {
-      case 'compact':
-        return `${base} [&_[data-slot=table-head]]:h-9 [&_[data-slot=table-head]]:px-2 [&_[data-slot=table-head]]:py-1.5`;
-      case 'comfortable':
-      default:
-        return `${base} [&_[data-slot=table-head]]:h-11 [&_[data-slot=table-head]]:px-3 [&_[data-slot=table-head]]:py-2.5`;
+        return 'hidden min-h-fit flex-none flex-col gap-2 overflow-visible mobile-ui:flex md:min-h-0 md:flex-1 md:overflow-y-auto mobile-ui:@2xl/surface:hidden';
     }
   });
 

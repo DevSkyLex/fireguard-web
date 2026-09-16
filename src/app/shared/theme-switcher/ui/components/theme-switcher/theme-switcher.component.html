@@ -1,9 +1,88 @@
-@if (slotPresentation === 'menu') {
+@if (interactionCapabilities.isMobileInteractionMode()) {
+  <hlm-drawer direction="bottom" autoFocus="first-heading">
+    <button
+      hlmItem
+      hlmDrawerTrigger
+      type="button"
+      class="min-h-12 w-full cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
+      [attr.aria-label]="triggerLabel()"
+    >
+      <span hlmItemMedia variant="icon"><ng-icon [name]="triggerIcon()" aria-hidden="true" /></span>
+      <span hlmItemContent
+        ><span hlmItemTitle>{{ triggerLabel() }}</span></span
+      >
+    </button>
+    <hlm-drawer-content *hlmDrawerPortal class="max-h-[85dvh]">
+      <hlm-drawer-header>
+        <div class="flex flex-col gap-1 text-start">
+          <h2 hlmDrawerTitle cdkFocusRegionStart tabindex="-1" i18n="@@uiExperience.appearance">
+            Appearance
+          </h2>
+          <p hlmDrawerDescription i18n="@@uiExperience.appearanceDescription">
+            Choose how Fireguard looks on this device.
+          </p>
+        </div>
+      </hlm-drawer-header>
+      <div class="min-h-0 overflow-y-auto px-4">
+        <fieldset hlmFieldSet class="gap-2">
+          <legend hlmFieldLegend variant="label" class="sr-only" i18n="@@uiExperience.appearance">
+            Appearance
+          </legend>
+          <hlm-radio-group
+            [value]="selected()"
+            (valueChange)="selectTheme($event)"
+            aria-label="Appearance"
+            i18n-aria-label="@@uiExperience.appearance"
+          >
+            @for (option of options; track option.mode) {
+              <label
+                hlmFieldLabel
+                class="min-h-11 cursor-pointer"
+                [for]="'theme-mode-' + option.mode"
+              >
+                <div hlmField orientation="horizontal" class="w-full">
+                  <hlm-radio
+                    [value]="option.mode"
+                    [inputId]="'theme-mode-' + option.mode"
+                    [aria-labelledby]="'theme-mode-label-' + option.mode"
+                  >
+                    <hlm-radio-indicator indicator />
+                  </hlm-radio>
+                  <div hlmFieldContent>
+                    <span
+                      hlmFieldTitle
+                      class="flex items-center gap-2"
+                      [id]="'theme-mode-label-' + option.mode"
+                    >
+                      <ng-icon [name]="option.icon" aria-hidden="true" />
+                      {{ option.label }}
+                    </span>
+                  </div>
+                </div>
+              </label>
+            }
+          </hlm-radio-group>
+        </fieldset>
+      </div>
+      <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button
+          hlmBtn
+          hlmDrawerClose
+          cdkFocusRegionEnd
+          variant="outline"
+          class="min-h-11"
+          i18n="@@common.close"
+        >
+          Close
+        </button>
+      </hlm-drawer-footer>
+    </hlm-drawer-content>
+  </hlm-drawer>
+} @else if (slotPresentation === 'menu') {
   <button
     hlmItem
     type="button"
     class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
-    id="theme-switcher-trigger"
     [attr.aria-label]="triggerLabel()"
     [hlmDropdownMenuTrigger]="menu"
     align="end"
@@ -20,7 +99,6 @@
     hlmBtn
     variant="ghost"
     size="icon-sm"
-    class="max-sm:size-11"
     id="theme-switcher-trigger"
     [attr.aria-label]="triggerLabel()"
     [hlmDropdownMenuTrigger]="menu"

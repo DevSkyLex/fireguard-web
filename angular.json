@@ -110,6 +110,20 @@
               "extractLicenses": false,
               "sourceMap": true
             },
+            "e2e-ssr": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "localize": false,
+              "serviceWorker": false,
+              "outputPath": "dist/fireguard-web-e2e-ssr"
+            },
             "e2e": {
               "fileReplacements": [
                 {

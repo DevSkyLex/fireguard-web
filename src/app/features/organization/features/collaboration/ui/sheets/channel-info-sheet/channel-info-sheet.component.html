@@ -1,7 +1,7 @@
 <hlm-sheet [side]="side()" [state]="sheetState()" (stateChanged)="onStateChanged($event)">
   <hlm-sheet-content
     *hlmSheetPortal
-    class="flex w-full! flex-col overflow-y-auto max-sm:max-h-[85svh] sm:w-[480px]! sm:max-w-none!"
+    class="flex w-full! flex-col overflow-y-auto mobile-ui:max-h-[85dvh] mobile-ui:pb-[env(safe-area-inset-bottom)] desktop-ui:sm:w-[480px]! desktop-ui:sm:max-w-none!"
     data-testid="channel-info-sheet"
   >
     <hlm-sheet-header>
@@ -102,7 +102,7 @@
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    class="shrink-0 max-sm:size-11"
+                    class="shrink-0 mobile-ui:size-11"
                     data-testid="channel-info-unpin"
                     i18n-aria-label="@@channels.info.unpinAria"
                     aria-label="Unpin this message"

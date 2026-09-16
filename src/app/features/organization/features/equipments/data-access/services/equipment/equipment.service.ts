@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
-import { HydraApiService, type PaginationOptions, type RequestOptions } from '@core/api';
+import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem } from '@core/api/models';
 import type {
   EquipmentOutput,
@@ -171,15 +171,21 @@ export class EquipmentService extends HydraApiService {
    * @param {string} interventionId - The intervention to scope the query to.
    * @param {PaginationOptions} [options] - Optional pagination.
    *
-   * @return {Observable<HydraCollection<EquipmentOutput>>} An observable emitting the linked equipment.
+   * @returns {Observable<HydraCollection<EquipmentOutput>>} An observable emitting the linked equipment.
    */
   public listByIntervention(
     interventionId: string,
-    options?: PaginationOptions,
+    options?: RequestOptions,
   ): Observable<HydraCollection<EquipmentOutput>> {
     return this.getCollection<EquipmentOutput>('/api/equipment', {
-      ...options,
-      params: { intervention: `/api/interventions/${interventionId}` },
+      page: options?.page,
+      itemsPerPage: options?.itemsPerPage,
+      sort: options?.sort,
+      search: options?.search,
+      params: {
+        ...options?.params,
+        intervention: `/api/interventions/${interventionId}`,
+      },
     });
   }
 

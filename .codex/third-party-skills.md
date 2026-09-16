@@ -11,7 +11,7 @@ and before/after hashes are recorded in the lock. Reapply it on updates; the val
 the directory boundary. Do not make unrelated changes to encode project design rules.
 
 In this repository the user's native Spartan requirement and DESIGN.md are authoritative:
-official neutral theme, Nova, Geist, semantic tokens, no parallel design system or unnecessary
+Nova, Geist, neutral surfaces, vermilion branding and semantic tokens, no parallel design system or unnecessary
 custom controls. Use upstream design advice to evaluate composition, hierarchy and interaction.
 Do not interpret its examples as permission to replace the stack, add a font/dependency,
 persist a generated design-system tree or override the requested visual direction.

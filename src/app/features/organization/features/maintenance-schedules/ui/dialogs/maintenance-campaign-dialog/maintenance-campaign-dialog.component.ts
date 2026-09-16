@@ -11,7 +11,8 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { StoreError } from '@core/request-state';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
-import { HlmDialogImports } from '@shared/ui/dialog';
+import { sheetSide } from '@shared/sheet-side';
+import { HlmSheetImports } from '@shared/ui/sheet';
 import { MaintenanceCampaignForm } from '../../forms/maintenance-campaign-form';
 
 /**
@@ -19,7 +20,7 @@ import { MaintenanceCampaignForm } from '../../forms/maintenance-campaign-form';
  * @class MaintenanceCampaignDialog
  *
  * @description
- * The spartan dialog hosting {@link MaintenanceCampaignForm}, which
+ * The spartan sheet hosting one persistent {@link MaintenanceCampaignForm}, which
  * generates an inspection campaign from the schedules currently due.
  *
  * Purely presentational: it owns the overlay chrome, forwards every input
@@ -34,11 +35,20 @@ import { MaintenanceCampaignForm } from '../../forms/maintenance-campaign-form';
  */
 @Component({
   selector: 'app-maintenance-campaign-dialog',
-  imports: [MaintenanceCampaignForm, ...HlmDialogImports],
+  imports: [MaintenanceCampaignForm, ...HlmSheetImports],
   templateUrl: './maintenance-campaign-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaintenanceCampaignDialog {
+  /**
+   * Property side
+   * @readonly
+   * @description The central interaction mode chooses bottom or right without recreating the campaign draft.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<'right' | 'bottom'>}
+   */
+  protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#region Inputs
   /**
    * Property visible

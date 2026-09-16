@@ -1,0 +1,89 @@
+<div
+  id="organization-more-page"
+  class="@container/more mx-auto flex w-full max-w-5xl flex-col gap-6 mobile-ui:gap-8"
+>
+  @if (navigation().organizationId !== null) {
+    <section aria-labelledby="organization-more-workspace-title" class="min-w-0">
+      <h2
+        id="organization-more-workspace-title"
+        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
+        i18n="@@org.more.workspace"
+      >
+        Current organization
+      </h2>
+      @defer (on immediate) {
+        <app-organization-switcher triggerId="organization-more-switcher-trigger" />
+      } @placeholder {
+        <hlm-skeleton class="h-12 w-full" />
+      }
+    </section>
+  }
+
+  <div class="grid items-start gap-6 @[40rem]/more:grid-cols-2 mobile-ui:gap-8">
+    @for (section of navigation().sections; track section.id) {
+      <nav
+        [attr.aria-labelledby]="'organization-more-' + section.id + '-title'"
+        [id]="'organization-more-' + section.id"
+        class="min-w-0"
+      >
+        <h2
+          [id]="'organization-more-' + section.id + '-title'"
+          class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
+        >
+          {{ section.label }}
+        </h2>
+        <ul hlmItemGroup class="mobile-ui:gap-0 mobile-ui:rounded-xl mobile-ui:bg-muted/30">
+          @for (link of section.links; track link.id) {
+            <li>
+              @if (!$first) {
+                <hlm-item-separator
+                  class="hidden mobile-ui:mx-3 mobile-ui:my-0 mobile-ui:block mobile-ui:w-auto"
+                />
+              }
+              <a
+                hlmItem
+                size="sm"
+                class="min-h-12 mobile-ui:min-h-11 mobile-ui:flex-nowrap"
+                [routerLink]="link.route"
+                [queryParams]="link.queryParams"
+                [attr.data-destination]="link.id"
+              >
+                <span hlmItemMedia variant="icon"
+                  ><ng-icon [name]="link.icon" aria-hidden="true"
+                /></span>
+                <span hlmItemContent class="min-w-0"
+                  ><span hlmItemTitle class="line-clamp-none wrap-anywhere">{{
+                    link.label
+                  }}</span></span
+                >
+                <span hlmItemActions><ng-icon name="lucideChevronRight" aria-hidden="true" /></span>
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    }
+
+    <section aria-labelledby="organization-more-appearance-title" class="min-w-0">
+      <h2
+        id="organization-more-appearance-title"
+        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
+        i18n="@@org.more.appearance"
+      >
+        Appearance
+      </h2>
+      <app-theme-switcher />
+    </section>
+
+    <section aria-labelledby="organization-more-session-title" class="min-w-0">
+      <h2
+        id="organization-more-session-title"
+        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
+        i18n="@@org.more.session"
+      >
+        Account and sign out
+      </h2>
+      <app-logout-control />
+    </section>
+  </div>
+</div>

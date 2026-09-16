@@ -1,28 +1,38 @@
-import { NgComponentOutlet } from '@angular/common';
+import { Dialog } from '@angular/cdk/dialog';
+import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 import {
+  afterRenderEffect,
+  type AfterRenderRef,
   ChangeDetectionStrategy,
   Component,
   computed,
+  DOCUMENT,
   type ElementRef,
   inject,
-  Injector,
   type Signal,
+  signal,
+  type WritableSignal,
   viewChild,
 } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucideMenu, lucidePanelLeft } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideEllipsis, lucideMenu, lucidePanelLeft } from '@ng-icons/lucide';
+import { filter } from 'rxjs';
 import { BreadcrumbService } from '@core/breadcrumb';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY } from '@core/routing';
+import { TitleService } from '@core/title';
 import {
   type ExclusiveSlotContribution,
   resolveExclusiveSlot,
-  SLOT_PRESENTATION,
   type SlotContribution,
   SlotOutlet,
 } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
-import { HlmDrawerImports } from '@shared/ui/drawer';
+import { HlmDrawer, HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmItemGroup } from '@shared/ui/item';
+import { HlmResizableImports } from '@shared/ui/resizable';
 import { HlmSeparator } from '@shared/ui/separator';
 import {
   HlmSidebar,
@@ -38,6 +48,7 @@ import { DashboardPageHeader } from './components';
 import type { SidebarExtensionContribution } from './models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
+  DASHBOARD_MOBILE_NAVIGATION_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
   DASHBOARD_SIDEBAR_EXTENSION_SLOT,
@@ -51,34 +62,17 @@ import {
  * @class DashboardLayout
  *
  * @description
- * The application shell, built on spartan's standard sidebar variant. The main
- * column fills its available area without outer gutters, rounded corners or
- * shadow, carrying the sidebar trigger, page tools and routed outlet. The
- * contextual panel is flush on desktop and remains an overlay on mobile.
- *
- * Everything it renders comes from slots, so the shell knows no feature. The
- * sidebar itself is spartan's — collapse state, its cookie, the Ctrl/Cmd+B
- * shortcut and the mobile sheet all come from `HlmSidebarService`, and are not
- * reimplemented here.
- *
- * The shell never scrolls: it is `overflow-hidden` and each column owns its own
- * scroller, so a pinned toolbar stays put while its content moves.
- * An exclusive sidebar extension can add a column between navigation and content.
- * Below 1024px its owner chooses whether that column or routed content is visible.
- *
- * The 48px header is sized to the 32px control rhythm, not to hold a title:
- * that lives in `DashboardPageHeader`, a second band beneath it carrying the
- * activated route's title as the document's one `<h1>`, the page's own
- * actions (`DashboardPageActions`) and optional primary navigation
- * (`DashboardPageTabs`) — the breadcrumb's current crumb is no longer a
- * heading, since it would otherwise repeat the same text. For the
- * toolbar, routed content and page-header content share the same centred
- * responsive `container`. That shared container owns horizontal alignment and
- * the standard page spacing, while full-height workspaces explicitly opt out. The header
- * backgrounds and separators still span the full content column.
- * On phones, the right-hand tools move into one native bottom drawer behind a single
- * trigger. A Spartan ItemGroup presents those contributions as Item rows with their
- * native icon and label; wider screens keep the direct icon-button cluster.
+ * Composes the routed shell from feature-owned slots while keeping business workflows outside
+ * the layout. Desktop uses Spartan's sidebar, a bounded resizable extension and direct tools;
+ * mobile interaction mode uses a title toolbar, bottom navigation and a native quick-actions
+ * drawer without recreating content.
+ * Backdrop dismissal targets only the topmost native dialog so a child drawer cannot dispose
+ * its owner. Explicit, Escape and swipe dismissal remain native; successful navigation closes
+ * the chooser.
+ * The main inset owns the page scrollbar while its toolbar and page header remain sticky, so the
+ * scrollbar spans the page chrome without introducing a second content-only scroll container.
+ * Quick actions focus their heading and declare public CDK region boundaries so
+ * button-only content retains native focus containment under the iOS tabbability heuristic.
  *
  * @version 1.0.0
  *
@@ -88,27 +82,21 @@ import {
  * ```
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
- *
- * Two things about the skip link. It precedes the sidebar because reaching the
- * page from the keyboard would otherwise mean passing every navigation row on
- * every navigation; its `href` keeps link semantics but its default is
- * prevented, since `<base href="/">` makes a bare fragment resolve against the
- * base and hard-navigate to the app root. And its padding sits behind
- * `focus:` on purpose — `not-sr-only` resets `padding` and `margin` to 0 and
- * outranks a bare `px-3`, which left the revealed link as bare text with the
- * background hugging the glyphs.
  */
 @Component({
   selector: 'app-dashboard-layout',
   imports: [
     NgComponentOutlet,
+    NgTemplateOutlet,
     NgIcon,
     RouterOutlet,
+    RouterLink,
     SlotOutlet,
     DashboardPageHeader,
     HlmButton,
     HlmDrawerImports,
     HlmItemGroup,
+    HlmResizableImports,
     HlmSeparator,
     HlmSidebar,
     HlmSidebarContent,
@@ -117,31 +105,238 @@ import {
     HlmSidebarInset,
     HlmSidebarWrapper,
   ],
-  providers: [BreadcrumbService, provideIcons({ lucideEllipsis, lucideMenu, lucidePanelLeft })],
+  providers: [
+    BreadcrumbService,
+    provideIcons({ lucideArrowLeft, lucideEllipsis, lucideMenu, lucidePanelLeft }),
+  ],
   templateUrl: './dashboard-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayout {
   //#region Properties
   /**
-   * Property mobileActionsInjector
+   * Property document
    * @readonly
-   *
-   * @description
-   * Child context asking action contributions to render their native Spartan
-   * menu-row anatomy inside the mobile drawer. Desktop contributions keep the
-   * token's default compact trigger presentation.
-   *
-   * @access protected
-   * @since 1.1.0
-   *
-   * @type {Injector}
+   * @description Browser viewport access without touching browser globals during SSR.
+   * @access private
+   * @since 1.0.0
+   * @type {Document}
    */
-  protected readonly mobileActionsInjector: Injector = Injector.create({
-    parent: inject(Injector),
-    providers: [{ provide: SLOT_PRESENTATION, useValue: 'menu' }],
+  private readonly document: Document = inject(DOCUMENT);
+
+  /**
+   * Property viewportHeight
+   * @readonly
+   * @description Available visual height, including on-screen keyboard occlusion; CSS handles the initial render.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
+  protected readonly viewportHeight: WritableSignal<string> = signal('100dvh');
+
+  /**
+   * Property observeViewportHeight
+   * @readonly
+   * @description Tracks visual height for browser chrome and the on-screen keyboard. Pinch zoom
+   * keeps the previous layout height rather than shrinking the application canvas.
+   * @access private
+   * @since 1.0.0
+   * @type {AfterRenderRef}
+   */
+  private readonly observeViewportHeight: AfterRenderRef = afterRenderEffect((onCleanup) => {
+    const browser: Window | null = this.document.defaultView;
+    if (!browser) return;
+    const viewport: VisualViewport | null = browser.visualViewport;
+    const updateHeight = (): void => {
+      if (viewport && viewport.scale !== 1) return;
+      const height: number = viewport?.height ?? browser.innerHeight;
+      if (height > 0) this.viewportHeight.set(`${height}px`);
+    };
+    viewport?.addEventListener('resize', updateHeight);
+    browser.addEventListener('resize', updateHeight);
+    updateHeight();
+    onCleanup(() => {
+      viewport?.removeEventListener('resize', updateHeight);
+      browser.removeEventListener('resize', updateHeight);
+    });
   });
 
+  /**
+   * Property mobileNavigation
+   * @readonly
+   * @description Feature-owned bottom navigation contributions.
+   * @access protected
+   * @since 1.0.0
+   * @type {readonly SlotContribution[]}
+   */
+  protected readonly mobileNavigation: readonly SlotContribution[] =
+    inject<SlotContribution[]>(DASHBOARD_MOBILE_NAVIGATION_SLOT, { optional: true }) ?? [];
+
+  /**
+   * Property navigationRegion
+   * @readonly
+   * @description Normal-flow navigation band, including its safe-area padding.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
+  private readonly navigationRegion: Signal<ElementRef<HTMLElement> | undefined> =
+    viewChild<ElementRef<HTMLElement>>('navigationRegion');
+
+  /**
+   * Property navigationHeight
+   * @readonly
+   * @description Measured navigation height; its initial minimum also reserves space before hydration.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string>}
+   */
+  protected readonly navigationHeight: WritableSignal<string> = signal(
+    'calc(4rem + env(safe-area-inset-bottom))',
+  );
+
+  /**
+   * Property observeNavigationHeight
+   * @readonly
+   * @description Publishes the navigation border-box height, including wrapped labels and safe areas.
+   * The browser-only observer and resize fallback are released when the band leaves the view.
+   * @access private
+   * @since 1.0.0
+   * @type {AfterRenderRef}
+   */
+  private readonly observeNavigationHeight: AfterRenderRef = afterRenderEffect((onCleanup) => {
+    const region: HTMLElement | undefined = this.navigationRegion()?.nativeElement;
+    if (!region) return;
+    const browser: Window | null = this.document.defaultView;
+    const updateHeight = (): void => {
+      const height: number = region.getBoundingClientRect().height;
+      if (height > 0) this.navigationHeight.set(`${height}px`);
+    };
+    const observer: ResizeObserver | null =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateHeight);
+    observer?.observe(region, { box: 'border-box' });
+    browser?.addEventListener('resize', updateHeight);
+    updateHeight();
+    onCleanup(() => {
+      observer?.disconnect();
+      browser?.removeEventListener('resize', updateHeight);
+    });
+  });
+
+  /**
+   * Property title
+   * @readonly
+   * @description Live route title displayed in the mobile toolbar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly title: Signal<string> = inject(TitleService).pageTitle;
+
+  /**
+   * Property breadcrumbs
+   * @readonly
+   * @description Route-owned destinations used for contextual back navigation.
+   * @access private
+   * @since 1.0.0
+   * @type {BreadcrumbService}
+   */
+  private readonly breadcrumbs: BreadcrumbService = inject(BreadcrumbService);
+
+  /**
+   * Property router
+   * @readonly
+   * @description Current destination used to exclude self links from back navigation.
+   * @access private
+   * @since 1.0.0
+   * @type {Router}
+   */
+  private readonly router: Router = inject(Router);
+
+  /**
+   * Property activatedRoute
+   * @readonly
+   * @description Active route tree used to distinguish primary destinations from detail screens.
+   * @access private
+   * @since 1.0.0
+   * @type {ActivatedRoute}
+   */
+  private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+
+  /**
+   * Property isMobileNavigationRoot
+   * @readonly
+   * @description Whether the deepest route is represented directly in bottom navigation.
+   * @access private
+   * @since 1.0.0
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly isMobileNavigationRoot: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property mobileActionsDrawer
+   * @readonly
+   * @description The shell chooser; closing it also disposes its feature-owned child overlays.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<HlmDrawer | undefined>}
+   */
+  private readonly mobileActionsDrawer: Signal<HlmDrawer | undefined> =
+    viewChild<HlmDrawer>('mobileActionsDrawer');
+
+  /**
+   * Property dialogs
+   * @readonly
+   * @description Public CDK registry underlying Spartan, used only for topmost backdrop dismissal.
+   * @access private
+   * @since 1.0.0
+   * @type {Dialog}
+   */
+  private readonly dialogs: Dialog = inject(Dialog);
+
+  /**
+   * Property observeActionsBackdrop
+   * @readonly
+   * @description The installed Brain outside handler does not distinguish nested global dialogs.
+   * Listen to this drawer's own backdrop instead, after its native ref exists, and release the
+   * listener on close or teardown. Child overlays keep their own native dismissal and focus.
+   * @access private
+   * @since 1.0.0
+   * @type {AfterRenderRef}
+   */
+  private readonly observeActionsBackdrop: AfterRenderRef = afterRenderEffect((onCleanup) => {
+    const drawer = this.mobileActionsDrawer();
+    if (drawer?.stateComputed() !== 'open') return;
+    const ref = this.dialogs.getDialogById<unknown, unknown>(drawer.id());
+    if (!ref) return;
+    const subscription = ref.backdropClick.subscribe((): void => {
+      if (this.dialogs.openDialogs.at(-1) === ref) drawer.close();
+    });
+    onCleanup((): void => subscription.unsubscribe());
+  });
+
+  /**
+   * Property backLink
+   * @readonly
+   * @description Nearest labelled ancestor, without relying on browser history or leaving the workspace.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly backLink: Signal<string | null> = computed(() => {
+    if (this.isMobileNavigationRoot()) return null;
+
+    return (
+      this.breadcrumbs
+        .items()
+        .findLast(
+          (item) =>
+            !item.current &&
+            item.routerLink &&
+            item.routerLink !== this.router.url.split(/[?#]/)[0],
+        )?.routerLink ?? null
+    );
+  });
   /**
    * Property sidebarExtensionContributions
    * @readonly
@@ -270,20 +465,40 @@ export class DashboardLayout {
     inject<SlotContribution[]>(DASHBOARD_HEADER_ACTIONS_SLOT, { optional: true }) ?? [];
 
   /**
-   * Property isMobile
+   * Property sidebarService
    * @readonly
    *
    * @description
-   * Whether header tools belong in the compact mobile actions drawer.
+   * Native sidebar geometry and collapse behavior in desktop interaction mode.
    *
-   * @access protected
+   * @access private
    * @since 1.1.0
    *
-   * @type {Signal<boolean>}
+   * @type {HlmSidebarService}
    */
   private readonly sidebarService: HlmSidebarService = inject<HlmSidebarService>(HlmSidebarService);
 
-  protected readonly isMobile: Signal<boolean> = this.sidebarService.isMobile;
+  /**
+   * Property isMobileInteractionMode
+   * @readonly
+   * @description Interaction-mode choice for phones and tablets, independent of viewport geometry.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isMobileInteractionMode: Signal<boolean> = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  ).isMobileInteractionMode;
+
+  /**
+   * Property compactSidebar
+   * @readonly
+   * @description Whether the desktop sidebar uses its native compact hamburger presentation.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly compactSidebar: Signal<boolean> = this.sidebarService.isMobile;
 
   /**
    * Property panelContributions
@@ -367,6 +582,42 @@ export class DashboardLayout {
 
   //#region Methods
   /**
+   * Constructor
+   * @constructor
+   * @description Dismisses the mobile chooser after successful navigation without affecting cancelled guards or feature state.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((): void => {
+        this.updateMobileNavigationRoot();
+        this.mobileActionsDrawer()?.close();
+      });
+  }
+
+  /**
+   * Method updateMobileNavigationRoot
+   * @method updateMobileNavigationRoot
+   * @description Reads only the deepest route's own metadata so detail children do not inherit a root marker.
+   * @access private
+   * @since 1.0.0
+   * @returns {void}
+   */
+  private updateMobileNavigationRoot(): void {
+    let route: ActivatedRoute = this.activatedRoute;
+    while (route.firstChild) route = route.firstChild;
+
+    this.isMobileNavigationRoot.set(
+      route.snapshot?.routeConfig?.data?.[DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY] === true,
+    );
+  }
+
+  /**
    * Method skipToContent
    * @method skipToContent
    *
@@ -382,7 +633,7 @@ export class DashboardLayout {
    *
    * @param {Event} event - The link activation.
    *
-   * @return {void}
+   * @returns {void}
    */
   protected skipToContent(event: Event): void {
     event.preventDefault();
@@ -393,6 +644,14 @@ export class DashboardLayout {
     target?.focus();
   }
 
+  /**
+   * Method toggleSidebar
+   * @method toggleSidebar
+   * @description Toggles the native desktop sidebar.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected toggleSidebar(): void {
     this.sidebarService.toggleSidebar();
   }

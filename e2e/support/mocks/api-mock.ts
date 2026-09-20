@@ -51,9 +51,15 @@ import type {
   ComplianceFacilityTreeOutputFixture,
   ComplianceSummaryOutputFixture,
 } from '../fixtures/compliance-fixtures';
-import type {
-  OrganizationDashboardOutputFixture,
-  OrganizationDashboardTrendOutputFixture,
+import {
+  equipmentCreatedTrendOutput,
+  facilitiesCreatedTrendOutput,
+  inspectionsTrendOutput,
+  nonConformitiesOpenedTrendOutput,
+  nonConformitiesResolvedTrendOutput,
+  organizationDashboardOutput,
+  type OrganizationDashboardOutputFixture,
+  type OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import { equipmentKpiOutput, type EquipmentKpiFixture } from '../fixtures/equipment-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
@@ -630,6 +636,41 @@ export class ApiMock {
     await this.page.route(/\/api\/organizations(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection(organizations));
     });
+
+    // Organization landing pages can be reached as a side effect of an
+    // onboarding action or a deep-link test. Keep the authenticated shell
+    // deterministic even when the spec is not asserting dashboard data.
+    // Feature-specific dashboard mocks registered after this session setup
+    // still win because Playwright evaluates routes last-registered-first.
+    await this.page.route(/\/api\/organizations\/[^/]+\/dashboard(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, organizationDashboardOutput());
+    });
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/dashboard\/trends\/(inspections|non-conformities-opened|non-conformities-resolved|equipment-created|facilities-created)(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const metric = new URL(route.request().url()).pathname.split('/').at(-1);
+        const trend: OrganizationDashboardTrendOutputFixture =
+          metric === 'inspections'
+            ? inspectionsTrendOutput()
+            : metric === 'non-conformities-opened'
+              ? nonConformitiesOpenedTrendOutput()
+              : metric === 'non-conformities-resolved'
+                ? nonConformitiesResolvedTrendOutput()
+                : metric === 'equipment-created'
+                  ? equipmentCreatedTrendOutput()
+                  : facilitiesCreatedTrendOutput();
+        await fulfillJson(route, 200, trend);
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facilities\/[^/]+\/(equipment|inspections)(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
 
     await Promise.all(
       organizations.flatMap((organization: OrganizationOutputFixture) => [

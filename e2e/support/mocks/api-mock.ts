@@ -82,9 +82,10 @@ import type {
   InterventionTemplateOutputFixture,
   InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
-import type {
-  OrganizationInvitationPreviewOutputFixture,
-  OrganizationMemberOutputFixture,
+import {
+  acceptedOrganizationMemberOutput,
+  type OrganizationInvitationPreviewOutputFixture,
+  type OrganizationMemberOutputFixture,
 } from '../fixtures/invitation-fixtures';
 import type { MaintenanceScheduleOutputFixture } from '../fixtures/maintenance-fixtures';
 import type { OrganizationInvitationOutputFixture } from '../fixtures/member-fixtures';
@@ -707,6 +708,60 @@ export class ApiMock {
       );
     });
     await this.page.route(/\/api\/organizations\/[^/]+\/facilities(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    // Workspace-shell prefetches and route resolvers can read these shared
+    // catalogs before a scenario registers its own fixture. Specific mocks
+    // registered after the authenticated session still win (last-registered-first).
+    await this.page.route(/\/api\/organizations\/[^/]+\/equipment(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/members\/[^/]+(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      const url = new URL(route.request().url());
+      const segments = url.pathname.split('/');
+      const organizationId = segments.at(-3) ?? E2E_ORGANIZATION_ID;
+      const memberId = segments.at(-1) ?? 'e2e-member-1';
+      await fulfillJson(
+        route,
+        200,
+        acceptedOrganizationMemberOutput({
+          '@id': `/api/organizations/${organizationId}/members/${memberId}`,
+          id: memberId,
+          organizationId,
+        }),
+      );
+    });
+    await this.page.route(/\/api\/organizations\/legal-types(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        hydraCollection([
+          optionOutput({ value: 'sas', label: 'SAS' }),
+          optionOutput({ value: 'sarl', label: 'SARL' }),
+        ]),
+      );
+    });
+    await this.page.route(/\/api\/intervention-work-items(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-changes(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/interventions\/[^/]+\/issues(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-templates(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-labels(\?.*)?$/, async (route) => {
       if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });

@@ -46,6 +46,7 @@ import {
 } from '../fixtures/role-fixtures';
 import { visualCatalogFixtures } from '../fixtures/visual-catalog-fixtures';
 import { ApiMock } from '../mocks/api-mock';
+import { WorkloadApiMock } from '../mocks/workload-api-mock';
 import { INTERACTION_MODE_INTERVENTIONS } from './interaction-mode';
 
 /**
@@ -122,6 +123,7 @@ export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
   await api.mockAuditEventList(org, [auditEventOutput()]);
   await api.mockImportJobList([importJobOutput()]);
   await api.mockMaintenanceScheduleList([maintenanceScheduleOutput()]);
+  await new WorkloadApiMock(page).projection();
   await api.mockInterventionList(org, INTERACTION_MODE_INTERVENTIONS);
   await api.mockInterventionLabels(org, []);
   await api.mockInterventionTemplates(org, []);

@@ -47,7 +47,8 @@ describe('DirectMessagePicker', () => {
 
   async function search(text: string): Promise<void> {
     const field: HTMLInputElement | null =
-      overlay()?.querySelector('[data-testid="new-direct-message-search"] input') ?? null;
+      overlay()?.querySelector<HTMLInputElement>('[data-testid="new-direct-message-search"]') ??
+      null;
 
     if (field === null) throw new Error('The picker has no search field.');
 

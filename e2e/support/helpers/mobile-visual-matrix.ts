@@ -105,6 +105,13 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     endpoint: `${api}/inspections`,
   },
   {
+    id: 'workload',
+    path: `${org}/workload`,
+    root: '#workload',
+    endpoint: `${api}/workload`,
+    limit: 'Projection overview only; capacity editing and day details are not exercised.',
+  },
+  {
     id: 'checklists',
     path: `${org}/checklists`,
     root: '#checklists',

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-workload-light-title fg-workload-light-description" class="fg-workload-light">
+  <title id="fg-workload-light-title">Workload</title>
+  <desc id="fg-workload-light-description">Three workload columns against a dashed capacity plane, the overloaded one in vermilion.</desc>
+  <defs>
+    <linearGradient id="fg-workload-light-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fafafb"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-workload-light { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; }
+    .fg-workload-light .edge, .fg-workload-light .seam { stroke: #777781; }
+    .fg-workload-light .seam, .fg-workload-light .accent-seam { stroke-width: 1.35; }
+    .fg-workload-light .shade { fill: #1b1b24; fill-opacity: .055; }
+    .fg-workload-light .soft { stroke: #a1a1ab; stroke-width: 1.1; }
+    .fg-workload-light .guide { stroke: #85858f; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-workload-light .accent-edge, .fg-workload-light .accent-seam, .fg-workload-light .accent { stroke: #f4511e; }
+    .fg-workload-light .accent { stroke-width: 1.1; }
+    .fg-workload-light .accent-fill { fill: #f4511e; }
+    .fg-workload-light .tf { fill: url(#fg-workload-light-plane); }
+    .fg-workload-light .lf { fill: #eeeef1; }
+    .fg-workload-light .rf { fill: #dddde3; }
+    .fg-workload-light .at { fill: #fadfd7; }
+    .fg-workload-light .af { fill: #f3d0c7; }
+    .fg-workload-light .ar { fill: #ecc0b4; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M73 56.5L89.5 66L73 75.5L56.5 66ZM56.5 70L73 79.5L89.5 70M350.7 48.5L359.3 53.5M350.7 53.5L359.3 48.5M373 165L365 165M373 243L365 243M371 191L367 191M371 217L367 217M223.5 288a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM230.5 292a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="guide" d="M56.5 66L56.5 70L73 79.5M369 165L369 243"/><path class="accent" d="M369 168L369 176"/><path class="accent-fill" d="M216.4 284a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 68)">
+<polygon class="shade" points="92.6,134 151.5,168 92.6,202 33.7,168"/>
+<polygon class="shade" points="200,134 258.9,168 200,202 141.1,168"/>
+<polygon class="shade" points="307.4,134 366.3,168 307.4,202 248.5,168"/>
+<polygon class="guide" points="200,-18 352.4,70 200,158 47.6,70"/>
+<g data-part="volume"><polygon class="lf" points="92.6,96 137.6,122 137.6,168 92.6,194 47.6,168 47.6,122"/><polygon class="rf" points="137.6,122 92.6,148 92.6,194 137.6,168"/><polygon class="tf" points="92.6,96 137.6,122 92.6,148 47.6,122"/><path class="seam" d="M92.6 148L137.6 122M92.6 148L47.6 122M92.6 148L92.6 194"/><polygon class="edge" points="92.6,96 137.6,122 137.6,168 92.6,194 47.6,168 47.6,122"/></g>
+<g data-part="volume"><polygon class="lf" points="200,60 245,86 245,168 200,194 155,168 155,86"/><polygon class="rf" points="245,86 200,112 200,194 245,168"/><polygon class="tf" points="200,60 245,86 200,112 155,86"/><path class="seam" d="M200 112L245 86M200 112L155 86M200 112L200 194"/><polygon class="edge" points="200,60 245,86 245,168 200,194 155,168 155,86"/></g>
+<g data-part="volume"><polygon class="af" points="307.4,24 352.4,50 352.4,168 307.4,194 262.4,168 262.4,50"/><polygon class="ar" points="352.4,50 307.4,76 307.4,194 352.4,168"/><polygon class="at" points="307.4,24 352.4,50 307.4,76 262.4,50"/><path class="accent-seam" d="M307.4 76L352.4 50M307.4 76L262.4 50M307.4 76L307.4 194"/><polygon class="accent-edge" points="307.4,24 352.4,50 352.4,168 307.4,194 262.4,168 262.4,50"/></g>
+<polyline class="accent-seam" points="262.4,70 307.4,96 352.4,70"/>
+  </g></g></g>
+</svg>

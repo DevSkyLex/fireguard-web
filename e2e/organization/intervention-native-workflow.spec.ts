@@ -49,10 +49,7 @@ for (const mode of [
     await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
     await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/interventions`);
-    const firstRow = page
-      .getByTestId(mode.width === 375 ? 'intervention-table-card' : 'intervention-table-row')
-      .filter({ visible: true })
-      .first();
+    const firstRow = page.getByTestId('intervention-table-row').filter({ visible: true }).first();
     await expect(firstRow).toBeVisible();
     await expect(page.getByRole('tabpanel', { name: 'List', exact: true })).toBeVisible();
     await expect(firstRow).toBeInViewport();

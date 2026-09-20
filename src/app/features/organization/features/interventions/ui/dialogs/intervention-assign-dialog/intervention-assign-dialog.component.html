@@ -24,7 +24,26 @@
           placeholder="Search a member"
           i18n-placeholder="@@intervention.cf.responsiblePlaceholder"
           data-testid="intervention-assign-member-input"
-        />
+        >
+          @if (selectedMemberOption(); as member) {
+            <span hlmInputGroupAddon align="inline-start" aria-hidden="true">
+              <hlm-avatar size="sm" class="shrink-0">
+                @if (member.avatarUrl; as avatarUrl) {
+                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                }
+                <span hlmAvatarFallback>{{ member.initials }}</span>
+              </hlm-avatar>
+            </span>
+            <span
+              hlmInputGroupAddon
+              align="inline-end"
+              class="order-none max-w-28 min-w-0"
+              [attr.title]="member.roleLabel"
+            >
+              <span class="truncate text-xs">{{ member.roleLabel }}</span>
+            </span>
+          }
+        </hlm-combobox-input>
         <hlm-combobox-content *hlmComboboxPortal>
           <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
             >No member matches.</hlm-combobox-empty

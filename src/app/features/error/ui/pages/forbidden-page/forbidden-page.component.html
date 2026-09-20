@@ -1,4 +1,7 @@
-<div id="forbidden-page" class="flex w-full max-w-xl flex-col items-center gap-8 text-center">
+<div
+  id="forbidden-page"
+  class="flex w-full max-w-full min-w-0 flex-col items-center gap-8 text-center sm:max-w-xl"
+>
   <div class="flex flex-col gap-2">
     <div
       class="relative mx-auto mb-6 flex w-full max-w-lg items-center justify-center py-8 sm:py-10"
@@ -43,7 +46,7 @@
     <button
       hlmBtn
       size="lg"
-      class="min-h-11 gap-2"
+      class="h-11 min-h-11 gap-2"
       [disabled]="logoutPort.isLoggingOut()"
       [attr.aria-busy]="logoutPort.isLoggingOut() ? 'true' : null"
       (click)="logoutPort.logout()"
@@ -55,7 +58,7 @@
       hlmBtn
       variant="outline"
       size="lg"
-      class="min-h-11"
+      class="h-11 min-h-11"
       routerLink="/"
       i18n="@@error.forbidden.home"
     >

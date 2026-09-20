@@ -159,7 +159,18 @@
                         {{ initialsOf(member.displayName) }}
                       </span>
                     </hlm-avatar>
-                    <span class="truncate text-sm text-foreground">{{ member.displayName }}</span>
+                    <span class="flex min-w-0 flex-1 flex-col">
+                      <span class="text-sm wrap-anywhere whitespace-normal text-foreground">{{
+                        member.displayName
+                      }}</span>
+                      <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">
+                        @if (member.roleNames.length) {
+                          {{ member.roleNames.join(', ') }}
+                        } @else {
+                          <span i18n="@@org.member.noRole">No assigned role</span>
+                        }
+                      </span>
+                    </span>
                   </button>
                 </li>
               }

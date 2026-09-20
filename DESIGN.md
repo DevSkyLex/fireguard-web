@@ -172,11 +172,23 @@ action remains accessible on mobile; a footer must never cover content or errors
 | Overlays           | Sheet for contextual creation; dialog for short edits; alert dialog for consequential confirmation       |
 | Feedback           | Field error locally; action error in an inline alert; brief global toast                                 |
 | Loading            | Skeleton matching the expected structure; spinner in the pending action; retain existing data on refresh |
-| Empty collections  | Existing `app-empty-state` / `hlmEmpty`, one explanation and one available action                        |
+| Empty collections  | Native `hlmEmpty` anatomy, one explanation and one available action                                      |
 
 Use these same patterns for account, settings, members, sites, equipment and
 inspection surfaces. Do not create generic replacements for native controls or
 edit vendored primitives to encode a feature's workflow.
+
+Genuinely empty resource collections may replace their Empty media icon with the matching
+isometric asset through `ResourceIllustration`. Keep the native Empty structure and existing
+permission-gated action. Use one decorative illustration per empty region at 160 px on small
+screens / 192 px from `sm`, following the applied app theme. Search/filter misses, loading,
+errors and empty pagination pages of a nonempty collection do not use resource artwork.
+Navigation icons and populated tables remain compact. See `RESOURCE-ILLUSTRATIONS.md`.
+Judge resource artwork at those rendered sizes: contours should remain legible, face values
+should explain volume, and details/decorations should stay secondary to the silhouette.
+Improve the SVG's optical hierarchy rather than enlarging Empty media or increasing its orange area.
+Dark resource artwork keeps near-black neutral faces, lighter outer contours and subdued
+internal lines; avoid pale-gray filled panels inside these illustrations.
 
 ## Interaction and accessibility
 

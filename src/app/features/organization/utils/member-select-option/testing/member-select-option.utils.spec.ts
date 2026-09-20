@@ -20,6 +20,26 @@ const memberOf = (overrides: Partial<OrganizationMemberOutput> = {}): Organizati
   }) as unknown as OrganizationMemberOutput;
 
 describe('toMemberSelectOption', () => {
+  it('accepts a scoped workforce profile without account permissions or a full member record', () => {
+    expect(
+      toMemberSelectOption(
+        {
+          id: 'member',
+          userId: 'member',
+          displayName: 'Alex Rivera',
+          avatarUrl: '/avatars/alex.png',
+          roleNames: ['Planner', 'Technician'],
+        },
+        'org',
+        'member',
+      ),
+    ).toMatchObject({
+      value: 'member',
+      label: 'Alex Rivera',
+      roleLabel: 'Planner, Technician',
+      avatarUrl: '/avatars/alex.png',
+    });
+  });
   it('should default the value to the member IRI and derive name, initials and roles', () => {
     expect(toMemberSelectOption(memberOf(), 'org-1')).toEqual({
       value: '/api/organizations/org-1/members/member-1',

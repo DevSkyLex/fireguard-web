@@ -14,8 +14,12 @@ import { InterventionOfflineService } from '@features/organization/features/inte
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import type { InterventionOperationsState } from './models/state.interface';
 
-/** Store InterventionOperationsStore
- * @description Reads and retries only the active intervention queue. Conflict retries require an explicit UI confirmation.
+/**
+ * Store InterventionOperationsStore
+ *
+ * @description
+ * Reads and retries only the active intervention queue. Conflict retries require an explicit UI confirmation.
+ *
  * @since 1.0.0
  */
 export const InterventionOperationsStore = signalStore(
@@ -88,16 +92,27 @@ export const InterventionOperationsStore = signalStore(
       );
       return {
         load,
-        /** Method resolve
-         * @description Applies a confirmed operation decision, then refreshes this queue. No other intervention is retried or discarded.
+
+        /**
+         * Method resolve
+         *
+         * @description
+         * Applies a confirmed operation decision, then refreshes this queue. No other intervention is retried or discarded.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ id: string; action: 'retry' | 'discard' }} request - Explicit operation decision.
          * @returns {void}
          */
-        resolve: rxMethod<{ id: string; action: 'retry' | 'discard' }>(
+        resolve: rxMethod<{
+          id: string;
+          action: 'retry' | 'discard';
+          workloadToken?: string;
+          reviewedRevision?: number;
+        }>(
           pipe(
-            mergeMap(({ id, action }) => {
+            mergeMap(({ id, action, workloadToken, reviewedRevision }) => {
               if (
                 !store.operations().some((operation) => operation.id === id) ||
                 store.mutations()[id]?.status === 'pending'
@@ -115,6 +130,9 @@ export const InterventionOperationsStore = signalStore(
               patchState(store, { mutations: { ...store.mutations(), [id]: pendingCallState() } });
               return defer(async () => {
                 if (action === 'discard') await offline.removeOutbox(id);
+                else if (workloadToken) await offline.confirmOutboxWorkload(id, workloadToken);
+                else if (reviewedRevision !== undefined)
+                  await offline.confirmOutboxRevision(id, reviewedRevision);
                 else await offline.retryOutbox(id);
                 if (!current()) return;
                 if (action === 'retry')

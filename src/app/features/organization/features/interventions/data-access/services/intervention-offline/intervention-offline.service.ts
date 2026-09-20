@@ -29,6 +29,7 @@ import type { InterventionWorkspaceSnapshot } from './models';
  * purges that span both workspace and outbox stores are orchestrated here.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -429,10 +430,20 @@ export class InterventionOfflineService {
    * @param {string} id - id value.
    * @param {string} error - error value.
    *
-   * @return {Promise<void>} Result of the mark outbox conflict operation.
+   * @param {WorkloadAssessment | null} assessment - Overload assessment awaiting explicit consent.
+   * @param {{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null} review - Current server values for human conflict review.
+   * @returns {Promise<void>} Resolves once the conflict is persisted.
    */
-  public markOutboxConflict(id: string, error: string): Promise<void> {
-    return this.outbox.markOutboxConflict(id, error);
+  public markOutboxConflict(
+    id: string,
+    error: string,
+    assessment: WorkloadAssessment | null = null,
+    review: {
+      readonly revision: number;
+      readonly values: Readonly<Record<string, string | number | boolean | null>>;
+    } | null = null,
+  ): Promise<void> {
+    return this.outbox.markOutboxConflict(id, error, assessment, review);
   }
 
   /**
@@ -468,6 +479,42 @@ export class InterventionOfflineService {
   public retryOutbox(id: string): Promise<void> {
     return this.outbox.retryOutbox(id);
   }
+
+  /**
+   * Method confirmOutboxWorkload
+   * @method confirmOutboxWorkload
+   *
+   * @description
+   * Forwards reviewed workload consent.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - Queued operation.
+   * @param {string} token - Explicitly confirmed assessment.
+   * @returns {Promise<void>}
+   */
+  public confirmOutboxWorkload(id: string, token: string): Promise<void> {
+    return this.outbox.confirmWorkload(id, token);
+  }
+
+  /**
+   * Method confirmOutboxRevision
+   * @method confirmOutboxRevision
+   *
+   * @description
+   * Forwards reviewed conflict resolution without an automatic merge.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - Queued operation.
+   * @param {number} revision - Explicitly reviewed revision.
+   * @returns {Promise<void>}
+   */
+  public confirmOutboxRevision(id: string, revision: number): Promise<void> {
+    return this.outbox.confirmRevision(id, revision);
+  }
   //#endregion
 
   //#region Purge
@@ -484,13 +531,21 @@ export class InterventionOfflineService {
    *
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<void>} A promise resolving once local intervention data is cleared.
+   * @returns {Promise<void>} A promise resolving once local intervention data is cleared.
    */
   public async clearIntervention(interventionId: string): Promise<void> {
     await this.database.ensureOwnerBound();
     const interventionIri = `/api/interventions/${interventionId}`;
     await Promise.all([
       this.database.remove('interventions', interventionId),
+      this.database.removeWhere<InterventionScopedRecord>(
+        'timeJournals',
+        (record) => record.interventionId === interventionId,
+      ),
+      this.database.removeWhere<InterventionScopedRecord>(
+        'timeDrafts',
+        (record) => record.interventionId === interventionId,
+      ),
       this.database.removeWhere<InterventionWorkItemOutput>(
         'workItems',
         (item) => item.intervention === interventionIri,
@@ -533,3 +588,4 @@ export class InterventionOfflineService {
   }
   //#endregion
 }
+import type { WorkloadAssessment } from '@features/organization/features/workload/models';

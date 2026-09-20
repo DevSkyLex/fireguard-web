@@ -447,9 +447,11 @@
                 } @else {
                   <div hlmEmpty class="border border-border">
                     <div hlmEmptyHeader>
-                      <div hlmEmptyMedia variant="icon">
-                        <ng-icon name="lucideUsersRound" aria-hidden="true" />
-                      </div>
+                      @if (
+                        store.loadCallState().status === 'success' && store.membersTotal() === 0
+                      ) {
+                        <app-resource-illustration hlmEmptyMedia resource="member" />
+                      }
                       <p hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</p>
                       <p hlmEmptyDescription i18n="@@org.members.emptyText">
                         Invite someone to give them access to this organization.

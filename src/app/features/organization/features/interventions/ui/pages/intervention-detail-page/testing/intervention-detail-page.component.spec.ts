@@ -59,7 +59,10 @@ import {
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
-import { InterventionStore } from '@features/organization/features/interventions/state';
+import {
+  InterventionStore,
+  InterventionTimeStore,
+} from '@features/organization/features/interventions/state';
 import { InterventionTableQueryStore } from '@features/organization/features/interventions/state/intervention-table-query';
 import { allowedTransitions } from '@features/organization/features/interventions/utils';
 import {
@@ -511,15 +514,18 @@ describe('InterventionDetailPage', () => {
             exportReport,
             get: vi.fn().mockImplementation(() => of(current())),
             listIssues: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
-            listAllWorkItems: vi
+            listWorkItems: vi
               .fn()
               .mockImplementation(
                 (_interventionId: string, options?: { readonly status?: readonly string[] }) =>
-                  of(
-                    options?.status
+                  of({
+                    member: options?.status
                       ? workItems().filter((item) => options.status?.includes(item.status))
                       : workItems(),
-                  ),
+                    totalItems: workItems().filter(
+                      (item) => !options?.status || options.status.includes(item.status),
+                    ).length,
+                  }),
               ),
             listAllChanges: vi
               .fn()
@@ -610,6 +616,7 @@ describe('InterventionDetailPage', () => {
     TestBed.overrideComponent(InterventionDetailPage, {
       remove: {
         providers: [
+          InterventionTimeStore,
           InterventionWorkspaceStore,
           InterventionPlanningOptionsStore,
           InterventionLinkedResourcesStore,
@@ -617,6 +624,7 @@ describe('InterventionDetailPage', () => {
       },
       add: {
         providers: [
+          { provide: InterventionTimeStore, useValue: { load: vi.fn(), scope: signal(null) } },
           {
             provide: InterventionWorkspaceStore,
             useValue: {
@@ -634,6 +642,7 @@ describe('InterventionDetailPage', () => {
               error: loadError,
               loadFailed,
               transitionCallState: signal(idleCallState()),
+              planningConfirmation: signal(null),
               updateDetailsCallState,
               workItemErrors: signal({}),
               changeErrors: signal({}),
@@ -1806,6 +1815,9 @@ describe('InterventionDetailPage', () => {
           action: 'inventory',
           target: undefined,
           assignee: undefined,
+          estimatedMinutes: null,
+          workStartsOn: null,
+          workEndsOn: null,
           source: 'planned',
           required: true,
         },

@@ -14,7 +14,7 @@ describe('InterventionTableQueryStore', () => {
   const workItem = { id: 'work-1' } as InterventionWorkItemOutput;
   const change = { id: 'change-1' } as InterventionChangeOutput;
   let service: {
-    listAllWorkItems: ReturnType<typeof vi.fn>;
+    listWorkItems: ReturnType<typeof vi.fn>;
     listAllChanges: ReturnType<typeof vi.fn>;
   };
   let store: InstanceType<typeof InterventionTableQueryStore>;
@@ -23,7 +23,7 @@ describe('InterventionTableQueryStore', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     service = {
-      listAllWorkItems: vi.fn().mockReturnValue(of([workItem])),
+      listWorkItems: vi.fn().mockReturnValue(of({ member: [workItem], totalItems: 1 })),
       listAllChanges: vi.fn().mockReturnValue(of([change])),
     };
     offline.getWorkspace.mockReset().mockResolvedValue(null);
@@ -39,6 +39,116 @@ describe('InterventionTableQueryStore', () => {
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it('loads only the requested page and retains its total independently of row count', () => {
+    service.listWorkItems.mockReturnValue(of({ member: [workItem], totalItems: 32 }));
+    store.loadWorkItems({
+      interventionId: 'A',
+      search: '',
+      statuses: ['planned', 'in_progress'],
+      page: 2,
+      itemsPerPage: 10,
+      prioritizeAssignee: '/members/me',
+    });
+    expect(service.listWorkItems).toHaveBeenCalledTimes(1);
+    expect(service.listWorkItems).toHaveBeenCalledWith('A', {
+      search: undefined,
+      status: ['planned', 'in_progress'],
+      page: 2,
+      itemsPerPage: 10,
+      prioritizeAssignee: '/members/me',
+    });
+    expect(store.workItems()).toEqual([workItem]);
+    expect(store.workItemsTotal()).toBe(32);
+    expect(store.workItemsPage()).toBe(2);
+  });
+
+  it('retains rendered pagination on failure and retries the requested page', () => {
+    service.listWorkItems.mockReturnValueOnce(of({ member: [workItem], totalItems: 32 }));
+    store.activateWorkItems('A', { search: '', statuses: null });
+    service.listWorkItems.mockReturnValueOnce(throwError(() => new Error('page failed')));
+    store.loadWorkItems({ interventionId: 'A', search: '', statuses: null, page: 2 });
+    expect(store.workItemsPage()).toBe(1);
+    expect(store.workItemsTotal()).toBe(32);
+    service.listWorkItems.mockReturnValueOnce(of({ member: [], totalItems: 32 }));
+    store.retryWorkItems();
+    expect(store.workItemsPage()).toBe(2);
+    expect(service.listWorkItems).toHaveBeenLastCalledWith(
+      'A',
+      expect.objectContaining({ page: 2 }),
+    );
+  });
+
+  it('clamps an invalidated last page after a deletion', () => {
+    service.listWorkItems
+      .mockReturnValueOnce(of({ member: [], totalItems: 20 }))
+      .mockReturnValueOnce(of({ member: [workItem], totalItems: 20 }));
+    store.loadWorkItems({ interventionId: 'A', search: '', statuses: null, page: 3 });
+    expect(service.listWorkItems).toHaveBeenCalledTimes(2);
+    expect(store.workItemsQuery().page).toBe(2);
+    expect(store.workItemsPage()).toBe(2);
+    expect(store.workItems()).toEqual([workItem]);
+  });
+
+  it('cancels obsolete page requests when pagination changes', () => {
+    const obsolete = new Subject<{ member: InterventionWorkItemOutput[]; totalItems: number }>();
+    service.listWorkItems
+      .mockReturnValueOnce(obsolete)
+      .mockReturnValueOnce(of({ member: [workItem], totalItems: 32 }));
+    store.loadWorkItems({ interventionId: 'A', search: '', statuses: null });
+    store.loadWorkItems({ interventionId: 'A', search: '', statuses: null, page: 2 });
+    expect(obsolete.observed).toBe(false);
+    obsolete.next({ member: [], totalItems: 0 });
+    expect(store.workItemsTotal()).toBe(32);
+    expect(store.workItemsPage()).toBe(2);
+  });
+
+  it('filters and prioritizes the complete saved snapshot before slicing its page', async () => {
+    offline.getWorkspace.mockResolvedValue({
+      intervention: { id: 'A' },
+      workItems: Array.from({ length: 23 }, (_, index) => ({
+        ...workItem,
+        id: String(index).padStart(2, '0'),
+        status: index === 22 ? 'completed' : 'planned',
+        updatedAt: '2026-09-16',
+        assignee: index > 15 ? '/members/me' : null,
+      })),
+      changes: [],
+      issues: [],
+    });
+    store.setOffline(true);
+    store.loadWorkItems({
+      interventionId: 'A',
+      search: '',
+      statuses: ['planned'],
+      page: 1,
+      prioritizeAssignee: '/members/me',
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.workItemsTotal()).toBe(22);
+    expect(store.workItems()?.map((item) => item.id)).toEqual([
+      '16',
+      '17',
+      '18',
+      '19',
+      '20',
+      '21',
+      '00',
+      '01',
+      '02',
+      '03',
+    ]);
+    store.loadWorkItems({
+      interventionId: 'A',
+      search: '',
+      statuses: ['planned'],
+      page: 3,
+      prioritizeAssignee: '/members/me',
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.workItems()?.map((item) => item.id)).toEqual(['14', '15']);
+    expect(service.listWorkItems).not.toHaveBeenCalled();
+  });
 
   it('uses the complete saved snapshot and local operations offline, never the API', async () => {
     offline.getWorkspace.mockResolvedValue({
@@ -67,7 +177,7 @@ describe('InterventionTableQueryStore', () => {
     store.setOffline(true);
     store.activateWorkItems('A', { search: '', statuses: ['planned', 'in_progress'] });
     await vi.advanceTimersByTimeAsync(0);
-    expect(service.listAllWorkItems).not.toHaveBeenCalled();
+    expect(service.listWorkItems).not.toHaveBeenCalled();
     expect(store.workItems()).toEqual([]);
     expect(store.workItemsSource()).toBe('saved');
     store.loadWorkItems({ interventionId: 'A', search: 'pump', statuses: null });
@@ -89,7 +199,7 @@ describe('InterventionTableQueryStore', () => {
 
   it('keeps prior rows after a refresh error and retries identical criteria', () => {
     store.activateWorkItems('A', { search: '', statuses: null });
-    service.listAllWorkItems.mockReturnValueOnce(throwError(() => new Error('refresh failed')));
+    service.listWorkItems.mockReturnValueOnce(throwError(() => new Error('refresh failed')));
     store.refreshWorkItems();
     expect(store.workItems()).toEqual([workItem]);
     expect(store.workItemsError()).not.toBeNull();
@@ -98,13 +208,13 @@ describe('InterventionTableQueryStore', () => {
   });
 
   it('forces retry and refresh with identical criteria', () => {
-    service.listAllWorkItems.mockReturnValueOnce(throwError(() => new Error('failed')));
+    service.listWorkItems.mockReturnValueOnce(throwError(() => new Error('failed')));
     store.activateWorkItems('A', { search: 'pump', statuses: ['planned'] });
     expect(store.workItemsError()).not.toBeNull();
     store.retryWorkItems();
     store.refreshWorkItems();
-    expect(service.listAllWorkItems).toHaveBeenCalledTimes(3);
-    expect(store.workItemsQuery()).toEqual({ search: 'pump', statuses: ['planned'] });
+    expect(service.listWorkItems).toHaveBeenCalledTimes(3);
+    expect(store.workItemsQuery()).toMatchObject({ search: 'pump', statuses: ['planned'] });
   });
 
   it('reconciles create, completion and deletion under the retained Remaining criteria', () => {
@@ -114,7 +224,7 @@ describe('InterventionTableQueryStore', () => {
       status: 'planned',
     } as InterventionWorkItemOutput;
     let rows = [initial];
-    service.listAllWorkItems.mockImplementation(() => of(rows));
+    service.listWorkItems.mockImplementation(() => of({ member: rows, totalItems: rows.length }));
     store.activateWorkItems('A', { search: '', statuses: ['planned', 'in_progress'] });
     const created = { ...initial, id: 'created' };
     rows = [initial, created];
@@ -131,7 +241,7 @@ describe('InterventionTableQueryStore', () => {
     store.invalidate('A', ['workItems']);
     expect(store.workItems()).toEqual([]);
     expect(store.workItemsQuery().statuses).toEqual(['planned', 'in_progress']);
-    expect(service.listAllWorkItems).toHaveBeenCalledTimes(4);
+    expect(service.listWorkItems).toHaveBeenCalledTimes(4);
   });
 
   it('reconciles a rejection then lets the API recompute Proposed membership', () => {
@@ -160,7 +270,7 @@ describe('InterventionTableQueryStore', () => {
     store.activateChanges('A', { search: '', status: 'proposed' });
     store.activateWorkItems('A', { search: '', statuses: null });
     expect(store.workItemsQuery().search).toBe('pump');
-    expect(service.listAllWorkItems).toHaveBeenCalledTimes(2);
+    expect(service.listWorkItems).toHaveBeenCalledTimes(2);
     store.activateWorkItems('B', { search: '', statuses: null });
     expect(store.workItemsQuery().search).toBe('');
     expect(store.changesVisited()).toBe(false);
@@ -170,18 +280,18 @@ describe('InterventionTableQueryStore', () => {
     store.activateWorkItems('A', { search: '', statuses: null });
     store.activateChanges('A', { search: '', status: 'proposed' });
     store.invalidate('A', ['workItems', 'changes']);
-    expect(service.listAllWorkItems).toHaveBeenCalledTimes(1);
+    expect(service.listWorkItems).toHaveBeenCalledTimes(1);
     expect(service.listAllChanges).toHaveBeenCalledTimes(2);
     store.activateWorkItems('A', { search: '', statuses: null });
-    expect(service.listAllWorkItems).toHaveBeenCalledTimes(2);
+    expect(service.listWorkItems).toHaveBeenCalledTimes(2);
   });
 
   it('cancels an obsolete work response before the next search debounce elapses', async () => {
-    const old = new Subject<readonly InterventionWorkItemOutput[]>();
-    service.listAllWorkItems.mockReturnValueOnce(old);
+    const old = new Subject<{ member: InterventionWorkItemOutput[]; totalItems: number }>();
+    service.listWorkItems.mockReturnValueOnce(old);
     store.loadWorkItems({ interventionId: 'A', search: '', statuses: null });
     store.loadWorkItems({ interventionId: 'A', search: 'pump', statuses: null });
-    old.next([workItem]);
+    old.next({ member: [workItem], totalItems: 1 });
     expect(store.workItems()).toBeNull();
     expect(old.observed).toBe(false);
     await vi.advanceTimersByTimeAsync(300);
@@ -226,13 +336,16 @@ describe('InterventionTableQueryStore', () => {
       statuses: ['planned', 'in_progress'],
     });
 
-    expect(service.listAllWorkItems).not.toHaveBeenCalled();
+    expect(service.listWorkItems).not.toHaveBeenCalled();
     expect(store.workItemsLoading()).toBe(true);
     await vi.advanceTimersByTimeAsync(300);
 
-    expect(service.listAllWorkItems).toHaveBeenCalledWith('intervention-1', {
+    expect(service.listWorkItems).toHaveBeenCalledWith('intervention-1', {
       search: 'pump',
       status: ['planned', 'in_progress'],
+      page: 1,
+      itemsPerPage: 10,
+      prioritizeAssignee: undefined,
     });
     expect(store.workItems()).toEqual([workItem]);
   });

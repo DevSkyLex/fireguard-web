@@ -1,0 +1,53 @@
+@if ((day().capacityMinutes ?? 0) > 0) {
+  <brn-progress
+    [value]="meter()"
+    class="row-span-2 inline-flex size-7 shrink-0"
+    [attr.aria-label]="label()"
+  >
+    <brn-progress-indicator class="contents">
+      <svg class="size-full -rotate-90" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <circle
+          data-testid="workload-day-ring-track"
+          class="fill-none stroke-muted-foreground/25"
+          cx="16"
+          cy="16"
+          r="13"
+          stroke-width="3"
+        />
+        @if (meter() > 0) {
+          <circle
+            data-testid="workload-day-ring-value"
+            class="fill-none"
+            [class.stroke-primary]="!((day().overloadMinutes ?? 0) > 0)"
+            [class.stroke-destructive]="(day().overloadMinutes ?? 0) > 0"
+            cx="16"
+            cy="16"
+            r="13"
+            stroke-width="3"
+            stroke-linecap="round"
+            pathLength="100"
+            stroke-dasharray="100"
+            [attr.stroke-dashoffset]="100 - meter()"
+          />
+        }
+      </svg>
+    </brn-progress-indicator>
+  </brn-progress>
+}
+<span class="col-start-2 max-w-full text-sm font-medium whitespace-normal tabular-nums">
+  <span class="whitespace-nowrap">{{
+    duration(day().actualMinutes + day().remainingMinutes)
+  }}</span>
+  / <span class="whitespace-nowrap">{{ duration(day().capacityMinutes) }}</span>
+</span>
+<span
+  class="col-start-2 max-w-40 text-xs whitespace-normal"
+  [class.text-destructive]="(day().overloadMinutes ?? 0) > 0"
+  [class.text-muted-foreground]="!((day().overloadMinutes ?? 0) > 0)"
+  >{{ label() }}</span
+>
+@if (day().draftMinutes > 0) {
+  <span hlmBadge variant="secondary" class="col-start-2 text-xs whitespace-normal"
+    ><span i18n="@@workload.draft">Draft</span>: {{ duration(day().draftMinutes) }}</span
+  >
+}

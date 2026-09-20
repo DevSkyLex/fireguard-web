@@ -167,10 +167,14 @@
   } @else if (!store.isLoadingRootFacilities() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasSearchOrFilters() ? 'lucideSearch' : 'lucideNetwork'; as iconName) {
+        @if (hasSearchOrFilters()) {
           <div hlmEmptyMedia variant="icon">
-            <ng-icon [name]="iconName" aria-hidden="true" />
+            <ng-icon name="lucideSearch" aria-hidden="true" />
           </div>
+        } @else if (
+          store.rootListCallState().status === 'success' && store.totalRootFacilities() === 0
+        ) {
+          <app-resource-illustration hlmEmptyMedia resource="site" />
         }
         <p hlmEmptyTitle i18n="@@facility.list.emptyTitle">No facilities found</p>
         <p hlmEmptyDescription i18n="@@facility.list.emptyDesc">

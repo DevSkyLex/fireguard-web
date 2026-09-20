@@ -51,6 +51,7 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -125,6 +126,7 @@ const INSPECTION_RESULT_OPTIONS: readonly CollectionFilterOption[] = INSPECTION_
     ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
+    ResourceIllustration,
     OrgDatePipe,
     RouterLink,
     HlmBadge,

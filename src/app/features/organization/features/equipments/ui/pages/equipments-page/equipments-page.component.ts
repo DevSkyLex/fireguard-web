@@ -69,6 +69,7 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -123,6 +124,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     EquipmentCreateSheet,
     EquipmentKpiStrip,
     EquipmentStatusTag,

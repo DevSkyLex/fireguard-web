@@ -87,19 +87,23 @@ describe('OrganizationNav', () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    expect(rows()).toEqual(['Dashboard', 'Interventions']);
+    expect(rows()).toEqual(['Dashboard', 'Interventions', 'Workload']);
     expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(0);
   });
 
-  it('should render nothing for a member granted nothing', () => {
-    expect(routes()).toEqual([]);
+  it('keeps personal workload available without a team-workload grant', () => {
+    expect(routes()).toEqual(['/organizations/org-1/workload']);
   });
 
   it('should prefix every destination with the routed organization', async () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    expect(routes()).toEqual(['/organizations/org-1', '/organizations/org-1/interventions']);
+    expect(routes()).toEqual([
+      '/organizations/org-1',
+      '/organizations/org-1/interventions',
+      '/organizations/org-1/workload',
+    ]);
   });
 
   it('should drop a section whose destinations are all denied', async () => {

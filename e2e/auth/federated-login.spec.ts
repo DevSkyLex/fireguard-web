@@ -76,6 +76,10 @@ for (const outcome of ['cancelled', 'account_exists'] as const) {
       await page.route('**/api/auth/federated/google/complete', (route) =>
         route.fulfill({ status: 409, json: { status: 409, detail: 'account_exists' } }),
       );
+    } else {
+      await page.route('**/api/auth/federated/google/complete', (route) =>
+        route.fulfill({ status: 400, json: { status: 400, detail: 'provider_cancelled' } }),
+      );
     }
     const callback =
       outcome === 'cancelled'

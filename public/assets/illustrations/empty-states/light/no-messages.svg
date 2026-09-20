@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-no-messages-light-title fg-empty-no-messages-light-description" class="fg-empty-no-messages-light">
+  <title id="fg-empty-no-messages-light-title">No messages</title>
+  <desc id="fg-empty-no-messages-light-description">Two isometric conversation panels, one waiting for the first message.</desc>
+  <defs>
+    <linearGradient id="fg-empty-no-messages-light-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fafafb"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-empty-no-messages-light { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; }
+    .fg-empty-no-messages-light .edge, .fg-empty-no-messages-light .seam { stroke: #777781; }
+    .fg-empty-no-messages-light .seam { stroke-width: 1.35; }
+    .fg-empty-no-messages-light .shade { fill: #1b1b24; fill-opacity: .055; }
+    .fg-empty-no-messages-light .soft { stroke: #a1a1ab; stroke-width: 1.1; }
+    .fg-empty-no-messages-light .guide { stroke: #85858f; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-empty-no-messages-light .accent { stroke: #f4511e; }
+    .fg-empty-no-messages-light .accent { stroke-width: 1.1; }
+    .fg-empty-no-messages-light .accent-fill { fill: #f4511e; }
+    .fg-empty-no-messages-light .tf { fill: url(#fg-empty-no-messages-light-plane); }
+    .fg-empty-no-messages-light .lf { fill: #eeeef1; }
+    .fg-empty-no-messages-light .rf { fill: #dddde3; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M74 56L89.6 65L74 74L58.4 65ZM58.4 69L74 78L89.6 69M331.7 106.5L340.3 111.5M331.7 111.5L340.3 106.5M319.5 279a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM326.5 283a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM59 245.5L55 252.5M89.3 263L85.3 270"/><path class="guide" d="M58.4 65L58.4 69L74 78M57 249L87.3 266.5"/><path class="accent" d="M59.6 250.5L66.5 254.5"/><path class="accent-fill" d="M312.4 275a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(-1.7 18.2)">
+<polygon class="shade" points="186.1,89 305.7,158 217.3,209 97.8,140"/>
+<polygon class="shade" points="197.4,178.5 287.5,230.5 221.7,268.5 131.6,216.5"/>
+<path class="guide" d="M190.9 90.8L295.7 151.2M295.7 154.8L234.2 190.2M228.1 190.2L123.4 129.8M123.4 126.2L184.8 90.8M190.9 25.8L295.7 86.2M295.7 89.8L234.2 125.2M228.1 125.2L123.4 64.8M123.4 61.2L184.8 25.8M187.9 85.5L187.9 27.5M298.7 149.5L298.7 91.5M231.2 188.5L231.2 130.5M120.3 124.5L120.3 66.5"/>
+<g data-part="volume"><polygon class="lf" points="148,70 120.3,54 120.3,63 148,79"/><path class="seam" d="M148 79L120.3 63M148 70L148 79M120.3 54L120.3 63"/><polygon class="lf" points="168.8,82 128.1,81.5 128.1,90.5 168.8,91"/><path class="seam" d="M168.8 91L128.1 90.5M128.1 81.5L128.1 90.5"/><polygon class="rf" points="298.7,79 231.2,118 231.2,127 298.7,88"/><path class="seam" d="M298.7 88L231.2 127M298.7 79L298.7 88"/><polygon class="lf" points="231.2,118 168.8,82 168.8,91 231.2,127"/><path class="seam" d="M231.2 127L168.8 91M231.2 118L231.2 127M168.8 82L168.8 91"/><polygon class="tf" points="187.9,15 298.7,79 231.2,118 168.8,82 128.1,81.5 148,70 120.3,54"/><polygon class="edge" points="187.9,15 298.7,79 231.2,118 168.8,82 128.1,81.5 148,70 120.3,54"/></g>
+<g data-part="detail"><path class="soft" d="M181.8 45.5L232.9 75"/></g>
+<g data-part="volume"><polygon class="lf" points="180.1,231.5 138.5,207.5 138.5,216.5 180.1,240.5"/><path class="seam" d="M180.1 240.5L138.5 216.5M138.5 207.5L138.5 216.5"/><polygon class="rf" points="271.9,222.5 218.2,253.5 218.2,262.5 271.9,231.5"/><path class="seam" d="M271.9 231.5L218.2 262.5M271.9 222.5L271.9 231.5"/><polygon class="lf" points="183.5,249.5 180.1,231.5 180.1,240.5 183.5,258.5"/><path class="seam" d="M183.5 258.5L180.1 240.5M180.1 231.5L180.1 240.5"/><polygon class="rf" points="197.4,241.5 183.5,249.5 183.5,258.5 197.4,250.5"/><path class="seam" d="M197.4 250.5L183.5 258.5M183.5 249.5L183.5 258.5"/><polygon class="lf" points="218.2,253.5 197.4,241.5 197.4,250.5 218.2,262.5"/><path class="seam" d="M218.2 262.5L197.4 250.5M218.2 253.5L218.2 262.5M197.4 241.5L197.4 250.5"/><polygon class="tf" points="192.2,176.5 271.9,222.5 218.2,253.5 197.4,241.5 183.5,249.5 180.1,231.5 138.5,207.5"/><polygon class="edge" points="192.2,176.5 271.9,222.5 218.2,253.5 197.4,241.5 183.5,249.5 180.1,231.5 138.5,207.5"/></g>
+<g data-part="detail"><path class="accent-fill" d="M196.5 208C195.1 208.8 192.8 208.8 191.3 208C189.9 207.2 189.9 205.8 191.3 205C192.8 204.2 195.1 204.2 196.5 205C198 205.8 198 207.2 196.5 208Z"/><path class="accent" d="M209.5 215.5C208.1 216.3 205.8 216.3 204.3 215.5C202.9 214.7 202.9 213.3 204.3 212.5C205.8 211.7 208.1 211.7 209.5 212.5C211 213.3 211 214.7 209.5 215.5Z"/><path class="accent" d="M222.5 223C221.1 223.8 218.7 223.8 217.3 223C215.9 222.2 215.9 220.8 217.3 220C218.7 219.2 221.1 219.2 222.5 220C223.9 220.8 223.9 222.2 222.5 223Z"/></g>
+  </g></g></g>
+</svg>

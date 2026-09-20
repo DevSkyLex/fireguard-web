@@ -31,6 +31,34 @@ This subfeature is responsible for:
 - intervention publication and issue checks,
 - intervention offline persistence and outbox replay.
 
+## Effort, time and workload
+
+Intervention owns nullable task estimates, explicitly reassessed remaining effort,
+optional local-date work periods, assignments and an independent versioned time journal.
+Minutes are integral; missing values are unknown, never zero. Logging or correcting
+time never updates task status, remaining work or the intervention's publication revision.
+Task actions use server-provided capabilities, including former-assignee journal access.
+Completed or skipped tasks expose only authorized journal operations, not planning edits.
+
+Task creation accepts optional whole hours plus a minute remainder, converted to integral minutes
+only on submission. Both empty parts remain unknown. Its optional Spartan calendar range uses
+organization-local intervention bounds; clearing the override restores inheritance without copying
+dates. The mobile calendar stages a complete range until Apply, preserving the form on dismissal.
+
+Approved sibling dependency: Workload publishes `models`, `utils`,
+`ui/components` (assignee indicator) and `ui/dialogs` (overload confirmation).
+Intervention may consume these public APIs; it never computes global capacity.
+The server rechecks every planning mutation transactionally. A confirmation retries
+the captured command and revision with the exact presented token, not edited form state.
+
+Time journals and drafts are account-scoped IndexedDB records separate from operational
+workspace snapshots. Authorized journals are prefetched with saved workspaces; missing
+offline history remains explicitly unknown. Stable entry IDs and independent revisions
+make replay idempotent. Drafts survive failed writes; failed device persistence retains
+the latest input in memory and guards dismissal. Time, effort and assignment conflicts
+preserve local intent and server values until human review; generic retry cannot bypass
+revision review or overload consent. No offline workspace implies global availability.
+
 ## Entry Points
 
 - Routes: `interventions.routes.ts`
@@ -1766,13 +1794,15 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   swapped for a plain one (`[showCloseButton]="false"` on
   `hlm-sheet-content`) because it calls the dialog ref's `close()` directly
   rather than through this same guarded path.
-- **Work-item search and status filters are server-side.** The detail table's
-  query store reloads `listAllWorkItems` with the current search and status
-  selection. A status group such as Remaining is fanned out into scalar API
-  requests and merged after every matching page has been drained, because the
-  endpoint's `status` input is scalar. The workspace store still owns the
-  unfiltered complete checklist required by the offline scene; mine-first is
-  presentation ordering only.
+- **Work-item search, status, mine-first ordering and pagination are server-side.**
+  The detail query store reads one page through `listWorkItems`, passing Remaining as
+  repeated statuses in a single query. The shared pagination uses the filtered API
+  total; global progress remains based on the complete intervention. Search, filters,
+  ordering and page-size changes return to page one; an invalidated last page is clamped.
+  Retained rows keep their own pagination metadata through refresh errors. The workspace
+  store still owns the complete unfiltered checklist for offline work and scan navigation.
+  Saved queries filter and stably order that snapshot before slicing, with explicit saved
+  provenance; a paginated API result must never replace the complete workspace snapshot.
 
 ## Detail table query and rendering contracts
 
@@ -2193,8 +2223,12 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   recommended work items are distinct from required server prerequisites.
 - Selection catalogues load independently with server search and pagination. Keep cached
   selected labels across searches within the same organization; reset across organizations.
-- Work items use the shared search and collection filter bar. Desktop rows give target, action,
-  requirement, assignee, state and source their own columns; mobile keeps one tactile row.
+- Work items use shared search, filters and pagination. Desktop rows give target, action,
+  assignee and state their own columns; mobile keeps one tactile row. Optional tasks are
+  marked beside the target instead of repeating Required in a dedicated column. State and
+  field-discovery badges wrap within their cell; the default planned origin is omitted.
+  Target labels lead both layouts, with the Next marker beside them and independent effort
+  values below. Missing estimates remain explicit; zero recorded time is omitted, not inferred.
   Completed, skipped and remaining counts stay distinct.
   A scan reveals and focuses the exact item even when the previous filter excluded it.
 - Changes expose proposed, rejected and applied states. Display proposed values only; the

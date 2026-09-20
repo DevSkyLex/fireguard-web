@@ -1,12 +1,57 @@
 import type { InterventionWorkItemAction } from '@features/organization/features/interventions/models';
 
 /**
- * A task being added to the prepared scope.
+ * Interface InterventionWorkItemFormValues
+ * @interface InterventionWorkItemFormValues
  *
- * Only the action is required: a target and an assignee can be decided now or
- * left for field execution, which is what the backend accepts.
+ * @description
+ * Prepared-scope task draft. Only the action is required; target, assignee and
+ * estimate may remain unknown until field execution.
+ *
+ * @version 1.0.0
  */
 export interface InterventionWorkItemFormValues {
+  /**
+   * Property estimatedMinutes
+   * @readonly
+   *
+   * @description
+   * Optional reference estimate in integral minutes; blank remains unknown.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  readonly estimatedMinutes: string;
+
+  /**
+   * Property workStartsOn
+   * @readonly
+   *
+   * @description
+   * Optional first organization-local work date.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  readonly workStartsOn: string;
+
+  /**
+   * Property workEndsOn
+   * @readonly
+   *
+   * @description
+   * Optional last organization-local work date.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
+  readonly workEndsOn: string;
   readonly action: InterventionWorkItemAction;
   readonly target: string;
   readonly assignee: string;

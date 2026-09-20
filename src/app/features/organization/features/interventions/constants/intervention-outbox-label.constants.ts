@@ -16,6 +16,9 @@ import type { InterventionOutboxType } from '@features/organization/features/int
  * @type {Readonly<Record<InterventionOutboxType, string>>}
  */
 export const INTERVENTION_OUTBOX_LABEL: Readonly<Record<InterventionOutboxType, string>> = {
+  'time-entry.create': $localize`:@@intervention.sync.op.timeCreate:Time recorded`,
+  'time-entry.correct': $localize`:@@intervention.sync.op.timeCorrect:Time correction`,
+  'time-entry.cancel': $localize`:@@intervention.sync.op.timeCancel:Time cancellation`,
   'facility.create': $localize`:@@intervention.sync.op.facilityCreate:New facility`,
   'equipment.create': $localize`:@@intervention.sync.op.equipmentCreate:New equipment`,
   'inspection.create': $localize`:@@intervention.sync.op.inspectionCreate:New inspection`,

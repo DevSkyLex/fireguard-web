@@ -66,6 +66,7 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -124,6 +125,7 @@ type FacilityLayout = 'list' | 'grid';
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     RouterLink,
     FacilityCreateSheet,
     FacilityGrid,

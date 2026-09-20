@@ -10,6 +10,7 @@ import type {
   InterventionOutboxQueueEntry,
   InterventionOutboxType,
 } from '@features/organization/features/interventions/models';
+import type { WorkloadAssessment } from '@features/organization/features/workload/models';
 import { InterventionDatabaseService } from './intervention-database.service';
 
 /**
@@ -22,6 +23,7 @@ import { InterventionDatabaseService } from './intervention-database.service';
  * dequeue or mark operations. Persists onto {@link InterventionDatabaseService}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -433,9 +435,19 @@ export class InterventionOutboxRepository {
    * @param {string} id - id value.
    * @param {string} error - error value.
    *
-   * @return {Promise<void>} Result of the mark outbox conflict operation.
+   * @param {WorkloadAssessment | null} workloadAssessment - Overload assessment awaiting explicit consent.
+   * @param {{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null} review - Current server values for human conflict review.
+   * @returns {Promise<void>} Resolves once the conflict is persisted.
    */
-  public async markOutboxConflict(id: string, error: string): Promise<void> {
+  public async markOutboxConflict(
+    id: string,
+    error: string,
+    workloadAssessment: WorkloadAssessment | null = null,
+    review: {
+      readonly revision: number;
+      readonly values: Readonly<Record<string, string | number | boolean | null>>;
+    } | null = null,
+  ): Promise<void> {
     await this.database.ensureOwnerBound();
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (!operation) return;
@@ -444,7 +456,9 @@ export class InterventionOutboxRepository {
       baseRevision:
         operation.baseRevision ??
         ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
-      serverRevision: null,
+      serverRevision: review?.revision ?? null,
+      serverValues: review?.values ?? null,
+      workloadAssessment,
       status: 'conflict',
       error,
     });
@@ -510,12 +524,12 @@ export class InterventionOutboxRepository {
    *
    * @param {string} id - id value.
    *
-   * @return {Promise<void>} Result of the retry outbox operation.
+   * @returns {Promise<void>} Result of the retry outbox operation.
    */
   public async retryOutbox(id: string): Promise<void> {
     await this.database.ensureOwnerBound();
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
-    if (!operation) return;
+    if (!operation || operation.workloadAssessment || operation.serverValues) return;
     await this.database.put('outbox', id, { ...operation, status: 'pending', error: null });
     this.unsynced.set(true);
     this.pending.set(true);
@@ -524,6 +538,75 @@ export class InterventionOutboxRepository {
     }
   }
 
+  /**
+   * Method confirmWorkload
+   * @method confirmWorkload
+   *
+   * @description
+   * Applies consent only to the persisted assessment, retaining the original revision.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - Operation identifier.
+   * @param {string} token - Reviewed workload token.
+   * @returns {Promise<void>}
+   */
+  public async confirmWorkload(id: string, token: string): Promise<void> {
+    const owner = this.database.currentOwnerId();
+    if (!owner) return;
+    await this.database.ensureOwnerBound();
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    if (this.database.currentOwnerId() !== owner) return;
+    if (!operation?.workloadAssessment || operation.workloadAssessment.confirmationToken !== token)
+      return;
+    if (!['work-item.create', 'work-item.update', 'intervention.update'].includes(operation.type))
+      return;
+    await this.database.put('outbox', id, {
+      ...operation,
+      payload: { ...operation.payload, workloadConfirmationToken: token },
+      workloadAssessment: null,
+      status: 'pending',
+      error: null,
+    });
+    await this.refresh();
+  }
+
+  /**
+   * Method confirmRevision
+   * @method confirmRevision
+   *
+   * @description
+   * Reapplies local intent only after a human has reviewed the authoritative snapshot.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} id - Operation identifier.
+   * @param {number} revision - Revision explicitly reviewed alongside current server values.
+   * @returns {Promise<void>}
+   */
+  public async confirmRevision(id: string, revision: number): Promise<void> {
+    const owner = this.database.currentOwnerId();
+    if (!owner) return;
+    await this.database.ensureOwnerBound();
+    const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    if (this.database.currentOwnerId() !== owner) return;
+    if (
+      !operation?.serverValues ||
+      operation.serverRevision !== revision ||
+      !('revision' in operation.payload)
+    )
+      return;
+    await this.database.put('outbox', id, {
+      ...operation,
+      payload: { ...operation.payload, revision },
+      serverValues: null,
+      status: 'pending',
+      error: null,
+    });
+    await this.refresh();
+  }
   /**
    * Method refresh
    * @method refresh

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-equipment-light-title fg-equipment-light-description" class="fg-equipment-light">
+  <title id="fg-equipment-light-title">Equipment</title>
+  <desc id="fg-equipment-light-description">A neutral fire extinguisher with vermilion details, a smoke detector and a manual call point.</desc>
+  <defs>
+    <linearGradient id="fg-equipment-light-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fafafb"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-equipment-light { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; }
+    .fg-equipment-light .top { fill: url(#fg-equipment-light-plane); stroke: #777781; }
+    .fg-equipment-light .right { fill: #dddde3; stroke: #777781; }
+    .fg-equipment-light .edge, .fg-equipment-light .seam { stroke: #777781; }
+    .fg-equipment-light .seam { stroke-width: 1.35; }
+    .fg-equipment-light .shade { fill: #1b1b24; fill-opacity: .055; }
+    .fg-equipment-light .soft { stroke: #a1a1ab; stroke-width: 1.1; }
+    .fg-equipment-light .accent { stroke: #f4511e; }
+    .fg-equipment-light .accent { stroke-width: 1.1; }
+    .fg-equipment-light .accent-fill { fill: #f4511e; }
+    .fg-equipment-light .accent-tint { fill: #fadfd7; stroke: #f4511e; stroke-width: 1.1; }
+    .fg-equipment-light .tf { fill: url(#fg-equipment-light-plane); }
+    .fg-equipment-light .lf { fill: #eeeef1; }
+    .fg-equipment-light .rf { fill: #dddde3; }
+    .fg-equipment-light .lens { fill: #ffffff; stroke: #f4511e; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M70 107A17 9.8 0 0 1 103.9 106.1M70 104L70 110M103.9 103.1L103.9 109.1M311.7 102.5L320.3 107.5M311.7 107.5L320.3 102.5M303.5 279a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM310.5 283a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="accent-fill" d="M296.4 275a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(-8.5 67.5)">
+<polygon class="shade" points="200,114 293.5,168 200,222 106.5,168"/>
+<polygon class="shade" points="310.9,157 361.1,186 338.6,199 288.3,170"/>
+<g data-part="volume"><polygon class="lf" points="310.9,112 352.4,136 352.4,186 338.6,194 297,170 297,120"/><polygon class="rf" points="352.4,136 338.6,144 338.6,194 352.4,186"/><polygon class="tf" points="310.9,112 352.4,136 338.6,144 297,120"/><path class="seam" d="M338.6 144L352.4 136M338.6 144L297 120M338.6 144L338.6 194"/><polygon class="edge" points="310.9,112 352.4,136 352.4,186 338.6,194 297,170 297,120"/></g>
+<g data-part="detail"><path class="accent-tint" d="M303.9 141L331.6 157L331.6 180L303.9 164Z"/><path class="accent" d="M313.5 158.5L322.1 163.5"/></g>
+<g data-part="plate"><path class="lf" d="M122.9 156Q122.9 154.5 125.5 153L194.8 113Q200 110 205.2 113L274.5 153Q277.1 154.5 277.1 156L277.1 168Q277.1 169.5 274.5 171L205.2 211Q200 214 194.8 211L125.5 171Q122.9 169.5 122.9 168Z"/><path class="tf" d="M194.8 113Q200 110 205.2 113L274.5 153Q279.7 156 274.5 159L205.2 199Q200 202 194.8 199L125.5 159Q120.3 156 125.5 153Z"/><path class="seam" d="M277.1 156Q277.1 157.5 274.5 159L205.2 199Q200 202 194.8 199L125.5 159Q122.9 157.5 122.9 156"/><path class="edge" d="M122.9 156Q122.9 154.5 125.5 153L194.8 113Q200 110 205.2 113L274.5 153Q277.1 154.5 277.1 156L277.1 168Q277.1 169.5 274.5 171L205.2 211Q200 214 194.8 211L125.5 171Q122.9 169.5 122.9 168Z"/></g>
+<ellipse class="shade" cx="200" cy="156" rx="44.1" ry="25.5"/>
+<g data-part="volume" data-object="extinguisher-shell"><path class="rf" d="M179.2 0A20.8 12 0 0 1 220.8 0C220.8 8 236.7 7 236.7 20L236.7 156A36.7 21.2 0 0 1 163.3 156L163.3 20C163.3 7 179.2 8 179.2 0Z"/><path class="tf" d="M179.2 0A20.8 12 0 0 1 220.8 0C220.8 8 236.7 7 236.7 20A36.7 21.2 0 0 1 163.3 20C163.3 7 179.2 8 179.2 0Z"/><path class="seam" d="M179.2 0A20.8 12 0 0 0 220.8 0"/><path class="soft" d="M163.3 20A36.7 21.2 0 0 0 236.7 20"/><path class="edge" d="M179.2 0A20.8 12 0 0 1 220.8 0C220.8 8 236.7 7 236.7 20L236.7 156A36.7 21.2 0 0 1 163.3 156L163.3 20C163.3 7 179.2 8 179.2 0Z"/></g>
+<g data-part="cylinder-label"><path class="top" d="M175 50.5A36.7 21.2 0 0 0 225 50.5L225 90.5A36.7 21.2 0 0 1 175 90.5Z"/><path class="accent-fill" d="M181 59.2A36.7 21.2 0 0 0 219 59.2L219 64.2A36.7 21.2 0 0 1 181 64.2Z"/><path class="soft" d="M183 76.8A36.7 21.2 0 0 0 217 76.8"/></g>
+<g data-part="volume"><path class="rf" d="M189 -7A11 6.4 0 0 1 211 -7L211 0A11 6.4 0 0 1 189 0Z"/><ellipse class="tf" cx="200" cy="-7" rx="11" ry="6.4"/><path class="seam" d="M189 -7A11 6.4 0 0 0 211 -7"/><path class="edge" d="M189 -7A11 6.4 0 0 1 211 -7L211 0A11 6.4 0 0 1 189 0Z"/></g>
+<g data-part="volume"><polygon class="lf" points="196.5,-29 220.8,-15 220.8,-5 203.5,5 179.2,-9 179.2,-19"/><polygon class="rf" points="220.8,-15 203.5,-5 203.5,5 220.8,-5"/><polygon class="tf" points="196.5,-29 220.8,-15 203.5,-5 179.2,-19"/><path class="seam" d="M203.5 -5L220.8 -15M203.5 -5L179.2 -19M203.5 -5L203.5 5"/><polygon class="edge" points="196.5,-29 220.8,-15 220.8,-5 203.5,5 179.2,-9 179.2,-19"/></g>
+<g data-part="detail"><path class="lens" d="M189.1 -8.3C189.1 -5.9 187.4 -4.9 185.3 -6.1C183.2 -7.3 181.5 -10.3 181.5 -12.7C181.5 -15.1 183.2 -16.1 185.3 -14.9C187.4 -13.7 189.1 -10.7 189.1 -8.3Z"/><path class="accent" d="M185.3 -10.5L187 -12.1"/></g>
+<g data-part="volume"><polygon class="lf" points="189.6,-34 215.6,-19 215.6,-13 206.9,-8 180.9,-23 180.9,-29"/><polygon class="rf" points="215.6,-19 206.9,-14 206.9,-8 215.6,-13"/><polygon class="tf" points="189.6,-34 215.6,-19 206.9,-14 180.9,-29"/><path class="seam" d="M206.9 -14L215.6 -19M206.9 -14L180.9 -29M206.9 -14L206.9 -8"/><polygon class="edge" points="189.6,-34 215.6,-19 215.6,-13 206.9,-8 180.9,-23 180.9,-29"/></g>
+<g data-part="volume"><polygon class="lf" points="196.5,-37 219.1,-24 219.1,-19 210.4,-14 187.9,-27 187.9,-32"/><polygon class="rf" points="219.1,-24 210.4,-19 210.4,-14 219.1,-19"/><polygon class="tf" points="196.5,-37 219.1,-24 210.4,-19 187.9,-32"/><path class="seam" d="M210.4 -19L219.1 -24M210.4 -19L187.9 -32M210.4 -19L210.4 -14"/><polygon class="edge" points="196.5,-37 219.1,-24 219.1,-19 210.4,-14 187.9,-27 187.9,-32"/></g>
+<g data-part="detail"><path class="right" d="M212.1 -10C236.4 -1 252 27 252 59C252 91 248.5 111 245 131L239 125.5C242.4 107.5 245.9 87.5 245.9 55.5C245.9 29.5 232.9 9 212.1 -3Z"/><path class="right" d="M239 125.5L245 131L241.6 147L232.9 138Z"/></g>
+<g data-part="smoke-detector">
+<ellipse class="shade" cx="92.6" cy="124" rx="36.7" ry="21.2"/>
+<g data-part="volume"><path class="rf" d="M60.8 118A31.8 18.4 0 0 1 124.5 118L124.5 124A31.8 18.4 0 0 1 60.8 124Z"/><ellipse class="tf" cx="92.6" cy="118" rx="31.8" ry="18.4"/><path class="seam" d="M60.8 118A31.8 18.4 0 0 0 124.5 118"/><path class="edge" d="M60.8 118A31.8 18.4 0 0 1 124.5 118L124.5 124A31.8 18.4 0 0 1 60.8 124Z"/></g>
+<g data-part="volume"><path class="rf" d="M65.7 106A26.9 15.6 0 0 1 119.6 106L124.5 118A31.8 18.4 0 0 1 60.8 118Z"/><ellipse class="tf" cx="92.6" cy="106" rx="26.9" ry="15.6"/><path class="seam" d="M65.7 106A26.9 15.6 0 0 0 119.6 106"/><path class="edge" d="M65.7 106A26.9 15.6 0 0 1 119.6 106L124.5 118A31.8 18.4 0 0 1 60.8 118Z"/></g>
+<ellipse class="soft" cx="92.6" cy="106" rx="8.6" ry="4.9"/>
+<path class="soft" d="M106.1 139.2L106.1 135.7M84.4 140.3L84.4 136.8M66.5 133L66.5 129.5"/>
+<ellipse class="accent-fill" cx="103" cy="112" rx="2.4" ry="1.4"/>
+</g>
+  </g></g></g>
+</svg>

@@ -11,3 +11,5 @@ export {
   INTERVENTION_ATTACHMENT_QUEUE_MAX_BYTES,
   INTERVENTION_ATTACHMENT_QUEUE_MAX_FILES,
 } from './services/intervention-offline/constants';
+export { InterventionTimeService } from './services/intervention-time/intervention-time.service';
+export { InterventionTimeRepository } from './services/intervention-offline/intervention-time.repository';

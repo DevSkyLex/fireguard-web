@@ -1,4 +1,5 @@
 import type { BooleanInput } from '@angular/cdk/coercion';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   afterRenderEffect,
   ElementRef,
@@ -40,6 +41,7 @@ import {
   type InterventionWorkItemStatus,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
+import { orderInterventionWorkItems } from '@features/organization/features/interventions/utils';
 import {
   CollectionFilterBar,
   CollectionFilterSelect,
@@ -48,8 +50,10 @@ import {
   type CollectionFilterField,
   type CollectionFilterOption,
 } from '@shared/collection-filters';
+import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSurface } from '@shared/collection-surface';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { formatDurationMinutes } from '@shared/duration-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
@@ -72,13 +76,16 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
  *
  * @description
  * The field work, as an `hlmTable` grid an operator ticks off. One column per
- * datum — completion checkbox, target, action, requirement, assignee, state badge and row
+ * datum — completion checkbox, target, action, assignee, state badge and row
  * menu — instead of a single stacked cell, on the density `InterventionTable`
  * already sets for §10.3 grids.
- * The default planned origin is omitted when the state already says the same;
- * a field discovery or a missing legacy state stays visible beside it. Evidence
+ * Optional tasks are marked beside their target instead of repeating Required in a column.
+ * The default planned origin is omitted; field discovery stays visible beside the state. Evidence
  * consultation lives in the fixed-width row menu so adding a photo cannot
  * resize every data column.
+ * Desktop targets stay on one line and independent effort values occupy a dedicated column;
+ * keyboard-accessible tooltips retain the full text. Mobile cards keep the expanded summary.
+ * Missing estimates remain explicit, while zero recorded time adds no placeholder metric.
  *
  * The workflow checkbox has a 44px target — unconditionally, not `max-sm:`, because
  * the surface is a gloved hand on a tablet. It is the one place this app
@@ -97,8 +104,10 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
   imports: [
     InterventionTableFeedback,
     NgIcon,
+    NgTemplateOutlet,
     ...HlmEmptyImports,
     CollectionSurface,
+    CollectionPagination,
     CollectionFilterBar,
     CollectionFilterSelect,
     CollectionFilterToggle,
@@ -134,6 +143,78 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemTable {
+  /**
+   * Property effortRequested
+   * @readonly
+   *
+   * @description
+   * Explicit factual reestimation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionWorkItemOutput>}
+   */
+  public readonly effortRequested: OutputEmitterRef<InterventionWorkItemOutput> = output();
+
+  /**
+   * Property planningRequested
+   * @readonly
+   *
+   * @description
+   * Assignment and period planning.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionWorkItemOutput>}
+   */
+  public readonly planningRequested: OutputEmitterRef<InterventionWorkItemOutput> = output();
+
+  /**
+   * Property timeRequested
+   * @readonly
+   *
+   * @description
+   * Opens the independent time journal.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<InterventionWorkItemOutput>}
+   */
+  public readonly timeRequested: OutputEmitterRef<InterventionWorkItemOutput> = output();
+
+  /**
+   * Property formatDuration
+   * @readonly
+   *
+   * @description
+   * Formats each independent effort value without deriving remaining work from recorded time.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {typeof formatDurationMinutes}
+   */
+  protected readonly formatDuration: typeof formatDurationMinutes = formatDurationMinutes;
+
+  /**
+   * Method canOpenTime
+   * @method canOpenTime
+   *
+   * @description
+   * Uses server capabilities rather than the intervention execution lifecycle.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InterventionWorkItemOutput} item - Work item.
+   * @returns {boolean}
+   */
+  protected canOpenTime(item: InterventionWorkItemOutput): boolean {
+    return item.allowedActions?.canLogTime === true || item.allowedActions?.canManageTime === true;
+  }
   /**
    * Property source
    * @readonly
@@ -268,8 +349,16 @@ export class InterventionWorkItemTable {
    * @returns {void}
    */
   public revealItem(id: string): void {
+    const index = orderInterventionWorkItems(
+      this.items(),
+      this.query()?.prioritizeAssignee ?? null,
+    ).findIndex((item) => item.id === id);
     this.filterChanged.emit('all');
-    this.emitQuery({ search: '', statuses: null });
+    this.emitQuery({
+      search: '',
+      statuses: null,
+      page: Math.floor(Math.max(0, index) / (this.query()?.itemsPerPage ?? 10)) + 1,
+    });
     this.pendingRevealId = id;
     this.focusedItemId.set(id);
     this.focusRequest.update((value) => value + 1);
@@ -354,6 +443,60 @@ export class InterventionWorkItemTable {
   public readonly queryItems: InputSignal<readonly InterventionWorkItemOutput[] | null> = input<
     readonly InterventionWorkItemOutput[] | null
   >(null);
+
+  /**
+   * Property queryTotal
+   * @readonly
+   *
+   * @description Total matching tasks across every server page, independent of global progress.
+   *
+   * @access public
+   * @since 6.2.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly queryTotal: InputSignal<number> = input(0);
+
+  /**
+   * Property resultPage
+   * @readonly
+   *
+   * @description Page associated with retained results, including during failed refreshes.
+   *
+   * @access public
+   * @since 6.2.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly resultPage: InputSignal<number> = input(1);
+
+  /**
+   * Property resultPageSize
+   * @readonly
+   *
+   * @description Page size associated with the rendered result.
+   *
+   * @access public
+   * @since 6.2.0
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly resultPageSize: InputSignal<number> = input(10);
+
+  /**
+   * Property pageCount
+   * @readonly
+   *
+   * @description Total matching pages, including an empty first page.
+   *
+   * @access protected
+   * @since 6.2.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly pageCount: Signal<number> = computed(() =>
+    Math.max(1, Math.ceil(this.queryTotal() / this.resultPageSize())),
+  );
 
   /**
    * Property error
@@ -857,9 +1000,11 @@ export class InterventionWorkItemTable {
    * @description Whether the operator's own rows are pulled to the top.
    * @access protected
    * @since 6.1.0
-   * @type {WritableSignal<boolean>}
+   * @type {Signal<boolean>}
    */
-  protected readonly mineFirst: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly mineFirst: Signal<boolean> = computed(
+    () => !!this.query()?.prioritizeAssignee,
+  );
   //#endregion
 
   //#region Properties
@@ -876,7 +1021,7 @@ export class InterventionWorkItemTable {
       'ms-3 size-5 rounded-full',
       'w-32 max-w-full',
       'w-24',
-      'w-20',
+      'w-40',
       'w-32',
       'w-28',
       ...(this.showActionsColumn() ? ['ms-auto w-6'] : []),
@@ -922,9 +1067,8 @@ export class InterventionWorkItemTable {
    * @readonly
    *
    * @description
-   * The rows the table actually renders. Search and status are evaluated by
-   * the API; this dataview only keeps the optional "mine first" presentation
-   * ordering without narrowing the returned collection.
+   * The API evaluates search, status, ordering and pagination over the full collection.
+   * The dataview never reorders a returned page.
    *
    * @access protected
    * @since 6.1.0
@@ -935,11 +1079,7 @@ export class InterventionWorkItemTable {
     readonly InterventionWorkItemOutput[]
   >(() => {
     const serverItems: readonly InterventionWorkItemOutput[] | null = this.queryItems();
-    return filterAndGroupInterventionWorkItems(
-      serverItems ?? (this.query() ? [] : this.items()),
-      'all',
-      this.mineFirst() && this.showMineFirstToggle() ? this.currentMemberId() : null,
-    );
+    return serverItems ?? (this.query() ? [] : this.items());
   });
 
   /**
@@ -1136,7 +1276,7 @@ export class InterventionWorkItemTable {
    */
   protected canToggleItem(item: InterventionWorkItemOutput): boolean {
     return (
-      this.canToggle() &&
+      (item.allowedActions?.canExecute ?? this.canToggle()) &&
       item.status !== 'skipped' &&
       (!item.assignee || item.assignee === this.currentMemberId())
     );
@@ -1161,15 +1301,19 @@ export class InterventionWorkItemTable {
 
   /**
    * Method canSkipItem
-   * @description Whether this row may still be skipped.
+   *
+   * @description
+   * Whether this row may still be skipped.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
    * @returns {boolean} True when a skip is offered.
    */
   protected canSkipItem(item: InterventionWorkItemOutput): boolean {
     return (
-      this.canSkip() &&
+      (item.allowedActions?.canExecute ?? this.canSkip()) &&
       item.status !== 'completed' &&
       item.status !== 'skipped' &&
       (!item.assignee || item.assignee === this.currentMemberId())
@@ -1191,19 +1335,31 @@ export class InterventionWorkItemTable {
    * @returns {boolean} True when a removal is offered.
    */
   protected canDeleteItem(item: InterventionWorkItemOutput): boolean {
-    return this.canDelete() && item.source === 'planned';
+    return (
+      this.canDelete() && item.source === 'planned' && !(item.spentMinutes && item.spentMinutes > 0)
+    );
   }
 
   /**
    * Method hasRowActions
-   * @description Whether the overflow menu has anything to offer for this row.
+   *
+   * @description
+   * Whether the overflow menu has anything to offer for this row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
    * @returns {boolean} True when the menu should render.
    */
   protected hasRowActions(item: InterventionWorkItemOutput): boolean {
-    return item.evidenceCount > 0 || this.canSkipItem(item) || this.canDeleteItem(item);
+    if (item.allowedActions?.canReestimate || item.allowedActions?.canEditPlanning) return true;
+    return (
+      this.canOpenTime(item) ||
+      item.evidenceCount > 0 ||
+      this.canSkipItem(item) ||
+      this.canDeleteItem(item)
+    );
   }
 
   /**
@@ -1360,17 +1516,20 @@ export class InterventionWorkItemTable {
    * @description
    * Emits the complete API query after an explicit search or filter interaction.
    *
-   * @access private
+   * @access protected
    * @since 1.0.0
    *
-   * @param {Partial<InterventionWorkItemTableQuery>} overrides - Criteria to merge into the current table query.
+   * @param {Partial<InterventionWorkItemTableQuery>} overrides - Criteria to merge; edits reset to page one unless a page is specified.
    * @returns {void} No value is returned.
    */
-  private emitQuery(overrides: Partial<InterventionWorkItemTableQuery> = {}): void {
+  protected emitQuery(overrides: Partial<InterventionWorkItemTableQuery> = {}): void {
     this.pendingRevealId = null;
     this.queryChanged.emit({
       search: this.searchTerm(),
       statuses: this.statusesForFilter(this.activeFilter()),
+      page: 1,
+      itemsPerPage: this.query()?.itemsPerPage ?? 10,
+      prioritizeAssignee: this.query()?.prioritizeAssignee ?? null,
       ...overrides,
     });
   }

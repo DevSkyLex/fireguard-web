@@ -90,6 +90,7 @@ import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSkeletonCards, CollectionSkeletonRows } from '@shared/collection-surface';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -148,6 +149,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
   selector: 'app-organization-assets-page',
   imports: [
     CollectionPagination,
+    ResourceIllustration,
     CollectionSkeletonCards,
     CollectionSkeletonRows,
     NgIcon,

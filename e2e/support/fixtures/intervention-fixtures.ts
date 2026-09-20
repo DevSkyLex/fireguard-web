@@ -221,6 +221,10 @@ export function interventionRecurrenceOutput(
 }
 
 export interface InterventionWorkItemOutputFixture {
+  readonly estimatedMinutes?: number | null;
+  readonly remainingMinutes?: number | null;
+  readonly spentMinutes?: number;
+  readonly allowedActions?: Readonly<Record<string, boolean>>;
   readonly '@id': string;
   readonly '@type': string;
   readonly id: string;

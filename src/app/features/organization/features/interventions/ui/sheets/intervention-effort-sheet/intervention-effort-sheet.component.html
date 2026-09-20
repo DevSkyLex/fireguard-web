@@ -1,0 +1,67 @@
+<hlm-sheet
+  [side]="side()"
+  state="open"
+  [disableClose]="pending()"
+  (stateChanged)="$event === 'closed' && requestClose()"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! mobile-ui:max-h-[90svh] desktop-ui:w-[480px]! desktop-ui:max-w-[100vw]!"
+  >
+    <hlm-sheet-header
+      ><h2 hlmSheetTitle>
+        @if (mode() === 'remaining') {
+          <span i18n="@@intervention.effort.reestimate">Reestimate remaining work</span>
+        } @else {
+          <span i18n="@@intervention.effort.plan">Plan this task</span>
+        }
+      </h2>
+      <p hlmSheetDescription i18n="@@intervention.effort.description">
+        Time already worked remains with its contributor. Changing the estimate never deducts
+        recorded time.
+      </p></hlm-sheet-header
+    >
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      @if (!online()) {
+        <div hlmAlert>
+          <p hlmAlertDescription i18n="@@intervention.effort.offline">
+            This change will be saved locally. Assignment workload is unverified until
+            synchronization and may require confirmation.
+          </p>
+        </div>
+      }
+      @if (error()) {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription>{{ error() }}</p>
+        </div>
+      }
+      <app-intervention-effort-form
+        [workloadOrganizationId]="workloadOrganizationId()"
+        [workloadStartsOn]="workloadStartsOn()"
+        [workloadEndsOn]="workloadEndsOn()"
+        [item]="item()"
+        [mode]="mode()"
+        [members]="members()"
+        [pending]="pending()"
+        (dirtyChanged)="dirty.set($event)"
+        (submitted)="submitted.emit($event)"
+      />
+    </div>
+    <hlm-sheet-footer
+      ><button
+        hlmBtn
+        variant="outline"
+        [disabled]="pending()"
+        (click)="requestClose()"
+        i18n="@@common.close"
+      >
+        Close
+      </button></hlm-sheet-footer
+    >
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="discard() ? 'open' : 'closed'"
+  (confirmed)="closed.emit()"
+  (dismissed)="discard.set(false)"
+/>

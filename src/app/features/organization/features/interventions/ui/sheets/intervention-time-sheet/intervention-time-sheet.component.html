@@ -1,0 +1,326 @@
+<hlm-sheet
+  [side]="side()"
+  state="open"
+  [disableClose]="pending() || draftState().status === 'pending'"
+  (stateChanged)="$event === 'closed' && requestClose()"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! mobile-ui:max-h-[90svh] desktop-ui:w-[520px]! desktop-ui:max-w-[100vw]!"
+  >
+    <hlm-sheet-header
+      ><h2 hlmSheetTitle i18n="@@intervention.time.title">Time journal</h2>
+      <p hlmSheetDescription i18n="@@intervention.time.description">
+        Actual work is recorded separately from the intervention's published record.
+      </p></hlm-sheet-header
+    >
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      <p class="text-sm font-medium">{{ item().targetSummary?.label ?? item().action }}</p>
+      @if (offline()) {
+        <div hlmAlert role="status">
+          <p hlmAlertDescription i18n="@@intervention.time.offline">
+            Times are saved on this device and will be checked on synchronization. Global workload
+            is unavailable offline.
+          </p>
+        </div>
+      }
+      @if (draftState().status === 'error') {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription i18n="@@intervention.time.draftError">
+            The draft could not be saved on this device. Keep this panel open and try again.
+          </p>
+          <button
+            hlmBtn
+            variant="outline"
+            class="mt-2"
+            (click)="draftChanged.emit(draft())"
+            i18n="@@common.tryAgain"
+          >
+            Try again
+          </button>
+        </div>
+      }
+      @if (writeState().status === 'error') {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription>{{ writeState().error?.message }}</p>
+        </div>
+      }
+      @if (editing(); as value) {
+        <app-intervention-time-form
+          [initial]="value"
+          [today]="today()"
+          [members]="members()"
+          [manageOthers]="item().allowedActions?.canManageTime === true"
+          [pending]="pending()"
+          (draftChanged)="draftChanged.emit($event)"
+          (submitted)="submitted.emit($event)"
+          (cancelled)="editing.set(null)"
+        />
+      } @else {
+        @if (!offline()) {
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [disabled]="pending()"
+            (click)="retried.emit()"
+            i18n="@@intervention.time.refresh"
+          >
+            Refresh journal
+          </button>
+        }
+        @if (draft()) {
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            [disabled]="pending()"
+            (click)="discardingDraft.set(true)"
+          >
+            <span i18n="@@intervention.time.discardDraft">Discard draft</span>
+          </button>
+        }
+        @if (draftServerEntry(); as latest) {
+          <div hlmAlert variant="destructive">
+            <p hlmAlertDescription i18n="@@intervention.time.staleDraft">
+              This entry changed since your correction began. Compare the current server values
+              before saving.
+            </p>
+            <button
+              hlmBtn
+              variant="outline"
+              [disabled]="latest.cancelled"
+              (click)="reviewingDraft.set(true)"
+            >
+              <span i18n="@@intervention.time.reviewCorrection">Review correction</span>
+            </button>
+          </div>
+        }
+        @if (readState().status === 'pending') {
+          <hlm-skeleton class="h-36" />
+        } @else if (readState().status === 'error') {
+          <div hlmAlert variant="destructive" role="alert">
+            <p hlmAlertDescription>{{ readState().error?.message }}</p>
+            <button hlmBtn variant="outline" (click)="retried.emit()" i18n="@@common.tryAgain">
+              Try again
+            </button>
+          </div>
+        } @else {
+          @if (canWrite()) {
+            <button hlmBtn (click)="begin()" data-testid="time-new">
+              @if (draft()) {
+                <span i18n="@@intervention.time.resume">Resume draft</span>
+              } @else {
+                <span i18n="@@intervention.time.log">Log time</span>
+              }
+            </button>
+          }
+          @if (historyUnavailable()) {
+            <div hlmAlert>
+              <p hlmAlertDescription i18n="@@intervention.time.historyUnavailable">
+                No journal has been saved on this device. Reconnect to load its history.
+              </p>
+            </div>
+          }
+          @for (entry of entries(); track entry.id) {
+            <article class="flex flex-col gap-2 rounded-lg border p-3" data-testid="time-entry">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="font-medium">{{
+                  entry.workedOn + 'T00:00:00Z' | date: 'mediumDate' : 'UTC'
+                }}</span
+                ><span class="font-medium">{{ duration(entry.minutes) }}</span>
+              </div>
+              <p class="text-sm">{{ memberName(entry.memberId) }}</p>
+              @if (entry.note) {
+                <p class="text-sm whitespace-pre-wrap text-muted-foreground">{{ entry.note }}</p>
+              }
+              @if (entry.cancelled) {
+                <span hlmBadge variant="secondary" i18n="@@intervention.time.cancelled"
+                  >Cancelled</span
+                >
+              }
+              @if (entry.syncStatus === 'pending') {
+                <span hlmBadge variant="outline" i18n="@@intervention.time.pending"
+                  >Awaiting synchronization</span
+                >
+              }
+              @if (entry.syncStatus === 'conflict' || entry.syncStatus === 'failed') {
+                <div hlmAlert variant="destructive">
+                  <p hlmAlertDescription i18n="@@intervention.time.conflict">
+                    This local change needs review in pending operations. It has not overwritten
+                    server history.
+                  </p>
+                </div>
+              }
+              <div hlmCollapsible>
+                <button
+                  hlmBtn
+                  variant="link"
+                  size="sm"
+                  hlmCollapsibleTrigger
+                  i18n="@@intervention.time.versions"
+                >
+                  Correction history
+                </button>
+                <div hlmCollapsibleContent>
+                  <ol class="flex flex-col gap-2 pt-2 text-xs text-muted-foreground">
+                    @for (version of entry.versions; track version.revision) {
+                      <li>
+                        <span
+                          >v{{ version.revision }} ·
+                          {{ version.workedOn + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }} ·
+                          {{ duration(version.minutes) }} · {{ memberName(version.actorId) }}</span
+                        >
+                        @if (version.cancelled) {
+                          <span i18n="@@intervention.time.cancelled">Cancelled</span>
+                        }
+                        @if (version.note) {
+                          <p class="whitespace-pre-wrap">{{ version.note }}</p>
+                        }
+                      </li>
+                    }
+                  </ol>
+                </div>
+              </div>
+              @if (canCorrect(entry)) {
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    [disabled]="pending() || (draft() !== null && draft()?.id !== entry.id)"
+                    (click)="correct(entry)"
+                    i18n="@@intervention.time.correct"
+                  >
+                    Correct
+                  </button>
+                  <button
+                    hlmBtn
+                    variant="ghost"
+                    size="sm"
+                    [disabled]="pending()"
+                    (click)="cancelling.set(entry)"
+                    i18n="@@intervention.time.cancelEntry"
+                  >
+                    Cancel entry
+                  </button>
+                </div>
+              }
+            </article>
+          } @empty {
+            @if (!historyUnavailable()) {
+              <div hlmEmpty>
+                <div hlmEmptyHeader>
+                  <h3 hlmEmptyTitle i18n="@@intervention.time.empty">No time logged yet</h3>
+                  <p hlmEmptyDescription i18n="@@intervention.time.emptyDescription">
+                    Log actual work without changing the remaining estimate.
+                  </p>
+                </div>
+              </div>
+            }
+          }
+        }
+      }
+    </div>
+    <hlm-sheet-footer
+      ><button
+        hlmBtn
+        variant="outline"
+        [disabled]="pending() || draftState().status === 'pending'"
+        (click)="requestClose()"
+        i18n="@@common.close"
+      >
+        Close
+      </button></hlm-sheet-footer
+    >
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="discardOnClose() ? 'open' : 'closed'"
+  (confirmed)="closed.emit()"
+  (dismissed)="discardOnClose.set(false)"
+/>
+<hlm-alert-dialog
+  [state]="cancelling() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && cancelling.set(null)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle i18n="@@intervention.time.cancelTitle">Cancel this time entry?</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.time.cancelDescription">
+        It will no longer count as time spent. Its full correction history will be retained.
+      </p></hlm-alert-dialog-header
+    >
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel (click)="cancelling.set(null)" i18n="@@common.back">Back</button
+      ><button
+        hlmAlertDialogAction
+        (click)="confirmCancellation()"
+        i18n="@@intervention.time.cancelEntry"
+      >
+        Cancel entry
+      </button></hlm-alert-dialog-footer
+    >
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>
+<hlm-alert-dialog
+  [state]="discardingDraft() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && discardingDraft.set(false)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal
+    ><hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle i18n="@@intervention.time.discardDraft">Discard draft</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.time.discardDraftDescription">
+        Only the unfinished input will be removed. Saved and queued time entries are not affected.
+      </p></hlm-alert-dialog-header
+    >
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel i18n="@@common.back">Back</button
+      ><button
+        hlmAlertDialogAction
+        variant="destructive"
+        (click)="draftChanged.emit(null); discardingDraft.set(false)"
+      >
+        <span i18n="@@intervention.time.discardDraft">Discard draft</span>
+      </button></hlm-alert-dialog-footer
+    ></hlm-alert-dialog-content
+  >
+</hlm-alert-dialog>
+<hlm-alert-dialog
+  [state]="reviewingDraft() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && reviewingDraft.set(false)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal
+    ><hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle i18n="@@intervention.time.reviewCorrection">Review correction</h2>
+      <p hlmAlertDialogDescription i18n="@@intervention.time.reviewDescription">
+        Continue editing your draft against the displayed server revision. Nothing is saved until
+        you submit the form.
+      </p></hlm-alert-dialog-header
+    >
+    @if (draftServerEntry(); as entry) {
+      <h3 class="font-medium" i18n="@@intervention.operations.serverValues">
+        Current server values
+      </h3>
+      <p class="text-sm">
+        {{ entry.workedOn }} · {{ duration(entry.minutes) }} · v{{ entry.revision }}
+      </p>
+      <p class="text-sm whitespace-pre-wrap">{{ entry.note }}</p>
+      @if (draft(); as value) {
+        <h3 class="font-medium" i18n="@@intervention.time.yourDraft">Your draft</h3>
+        <p class="text-sm">{{ value.workedOn }} · {{ value.minutes }} min</p>
+        <p class="text-sm whitespace-pre-wrap">{{ value.note }}</p>
+      }
+    }
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel i18n="@@common.back">Back</button
+      ><button
+        hlmAlertDialogAction
+        (click)="reviewCorrection()"
+        i18n="@@intervention.time.continueCorrection"
+      >
+        Continue correction
+      </button></hlm-alert-dialog-footer
+    ></hlm-alert-dialog-content
+  >
+</hlm-alert-dialog>

@@ -9,4 +9,4 @@
  *
  * @type {number}
  */
-export const INTERVENTION_DATABASE_VERSION = 4;
+export const INTERVENTION_DATABASE_VERSION = 5;

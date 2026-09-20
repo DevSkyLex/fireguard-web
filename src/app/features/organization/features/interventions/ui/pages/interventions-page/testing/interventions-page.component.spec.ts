@@ -30,6 +30,7 @@ import {
   toStoreError,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
@@ -238,6 +239,14 @@ describe('InterventionsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
         provideInteractionCapabilities(),
         {
@@ -275,6 +284,7 @@ describe('InterventionsPage', () => {
             transitioningInterventionIds,
             createdInterventionId,
             listError,
+            listCallState: signal<CallState>(successCallState(null)),
             pendingDuplicatePrefill,
             totalInterventions,
             servedFromLocalCache,
@@ -384,6 +394,9 @@ describe('InterventionsPage', () => {
       label: '/api/intervention-labels/l-1',
       member: '/api/organizations/org-1/members/member-1',
     });
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-resource-illustration img'),
+    ).toBeNull();
   });
 
   it('should drop an unknown filter value instead of sending it', async () => {

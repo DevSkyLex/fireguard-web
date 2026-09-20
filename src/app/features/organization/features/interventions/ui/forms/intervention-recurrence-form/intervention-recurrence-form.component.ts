@@ -36,6 +36,7 @@ import type {
   SelectOption,
 } from '@features/organization/features/interventions/models';
 import { interventionRecurrenceFrequencyLabel } from '@features/organization/features/interventions/utils';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 
 import { RequiredMarker } from '@shared/required-marker';
@@ -114,6 +115,7 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
 @Component({
   selector: 'app-intervention-recurrence-form',
   imports: [
+    HlmInputGroupAddon,
     DatePipe,
     InterventionCatalogueStatus,
     ...HlmAvatarImports,
@@ -133,6 +135,22 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionRecurrenceForm {
+  /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () => this.memberOptions().find((member) => member.value === this.model().responsible) ?? null,
+  );
+
   /**
    * Property catalogues
    * @readonly

@@ -53,6 +53,7 @@ import {
 } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { BrnDialogContext, BrnDialogState } from '@spartan-ng/brain/dialog';
+import { DateTime } from 'luxon';
 import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { FeedbackService } from '@core/feedback';
@@ -133,6 +134,11 @@ import {
   type InterventionTableQueryStoreType,
 } from '@features/organization/features/interventions/state/intervention-table-query';
 import {
+  InterventionTimeStore,
+  interventionTimeEvents,
+  type InterventionTimeStoreType,
+} from '@features/organization/features/interventions/state/intervention-time';
+import {
   InterventionWorkspaceStore,
   interventionWorkspaceStoreEvents,
   type InterventionWorkspaceStoreType,
@@ -144,6 +150,7 @@ import {
   resolveInterventionResponsibleLabel,
   summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
+import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
 import {
   ORGANIZATION_PERMISSION,
   type MemberSelectOption,
@@ -194,7 +201,9 @@ import { InterventionTeamAssignDialog } from '../../dialogs/intervention-team-as
 import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
+import { InterventionEffortSheet } from '../../sheets/intervention-effort-sheet';
 import { InterventionOperationsSheet } from '../../sheets/intervention-operations-sheet';
+import { InterventionTimeSheet } from '../../sheets/intervention-time-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
 import { InterventionChangeTable } from '../../tables/intervention-change-table';
 import { InterventionEquipmentTable } from '../../tables/intervention-equipment-table';
@@ -336,11 +345,15 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
+    WorkloadConfirmationDialog,
+    InterventionEffortSheet,
+    InterventionTimeSheet,
     ...HlmTabsImports,
   ],
   providers: [
     InterventionOperationsStore,
     InterventionWorkspaceStore,
+    InterventionTimeStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
     InterventionTableQueryStore,
@@ -380,6 +393,102 @@ const IDLE_EDIT_STATE: InterventionEditState = {
   host: { '(document:keydown)': 'onDocumentKeydown($event)' },
 })
 export class InterventionDetailPage {
+  /**
+   * Property effortItem
+   * @readonly
+   *
+   * @description
+   * Captured effort or planning edit.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<{ readonly item: InterventionWorkItemOutput; readonly mode: 'remaining' | 'planning' } | null>}
+   */
+  protected readonly effortItem: WritableSignal<{
+    readonly item: InterventionWorkItemOutput;
+    readonly mode: 'remaining' | 'planning';
+  } | null> = signal(null);
+
+  /**
+   * Property workloadMemberNames
+   * @readonly
+   *
+   * @description
+   * Contributor names for overload confirmation.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<Readonly<Record<string, string>>>}
+   */
+  protected readonly workloadMemberNames: Signal<Readonly<Record<string, string>>> = computed(() =>
+    Object.fromEntries(
+      this.planningOptions
+        .members()
+        .map((member) => [member.value.split('/').at(-1) ?? member.value, member.displayName]),
+    ),
+  );
+
+  /**
+   * Property timeStore
+   * @readonly
+   *
+   * @description
+   * Independent, page-scoped time journal.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {InterventionTimeStoreType}
+   */
+  protected readonly timeStore: InterventionTimeStoreType = inject(InterventionTimeStore);
+
+  /**
+   * Property timeItem
+   * @readonly
+   *
+   * @description
+   * Task whose journal is open.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InterventionWorkItemOutput | null>}
+   */
+  protected readonly timeItem: WritableSignal<InterventionWorkItemOutput | null> = signal(null);
+
+  /**
+   * Property timeActorId
+   * @readonly
+   *
+   * @description
+   * Current active organization member.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly timeActorId: Signal<string> = computed(
+    () => this.memberAccess.profile()?.id ?? '',
+  );
+
+  /**
+   * Property timeToday
+   * @readonly
+   *
+   * @description
+   * Current work date in the organization's timezone.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly timeToday: Signal<string> = computed(
+    () => DateTime.now().setZone(this.regionalFormatting().timezone).toISODate() ?? '',
+  );
   /**
    * Property tableQueriesReady
    * @readonly
@@ -870,7 +979,10 @@ export class InterventionDetailPage {
   /**
    * Constructor
    * @constructor
-   * @description Registers page actions and tabs, route-driven loading, mutation feedback, and lifecycle cleanup.
+   *
+   * @description
+   * Registers page actions and tabs, route-driven loading, mutation feedback, and lifecycle cleanup.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -1095,6 +1207,25 @@ export class InterventionDetailPage {
       untracked((): void => this.signingSubmitPending.set(false));
     });
 
+    effect(() => {
+      const item = this.timeItem();
+      const actorId = this.timeActorId();
+      const interventionId = this.interventionId();
+      this.connectivity.online();
+      untracked(() =>
+        this.timeStore.load(
+          item && actorId ? { workItemId: item.id, interventionId, actorId } : null,
+        ),
+      );
+    });
+    this.events
+      .on(interventionTimeEvents.written)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
+        if (payload.scope.interventionId !== this.interventionId()) return;
+        this.tableQueries.invalidate(payload.scope.interventionId, ['workItems']);
+      });
+
     this.events
       .on(interventionWorkspaceStoreEvents.mutationSucceeded)
       .pipe(takeUntilDestroyed())
@@ -1102,6 +1233,7 @@ export class InterventionDetailPage {
         if (payload.interventionId !== this.interventionId()) return;
         if (payload.source === 'queued') this.tableQueries.setOffline(true, false);
         if (payload.workItem) this.tableQueries.reconcileWorkItem(payload.workItem);
+        if (payload.workItem?.id === this.effortItem()?.item.id) this.effortItem.set(null);
         if (payload.change) this.tableQueries.reconcileChange(payload.change);
         if (payload.deletedWorkItemIds)
           this.tableQueries.removeWorkItems(payload.interventionId, payload.deletedWorkItemIds);
@@ -1116,6 +1248,12 @@ export class InterventionDetailPage {
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }): void => {
         this.refreshAfterWorkspace(payload.interventionId, payload.collections);
+        const scope = this.timeStore.scope();
+        if (
+          scope?.interventionId === payload.interventionId &&
+          payload.collections.includes('workItems')
+        )
+          this.timeStore.load(scope);
       });
 
     this.events
@@ -2825,6 +2963,9 @@ export class InterventionDetailPage {
         action: values.action,
         target: values.target === '' ? undefined : values.target,
         assignee: values.assignee === '' ? undefined : values.assignee,
+        estimatedMinutes: values.estimatedMinutes === '' ? null : Number(values.estimatedMinutes),
+        workStartsOn: values.workStartsOn || null,
+        workEndsOn: values.workEndsOn || null,
         source: 'planned',
         required: true,
       },

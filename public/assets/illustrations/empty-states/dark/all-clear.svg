@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-all-clear-dark-title fg-empty-all-clear-dark-description" class="fg-empty-all-clear-dark">
+  <title id="fg-empty-all-clear-dark-title">All clear</title>
+  <desc id="fg-empty-all-clear-dark-description">A completed stack of sheets with a projected check and a small approval stamp.</desc>
+  <defs>
+    <linearGradient id="fg-empty-all-clear-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-empty-all-clear-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-empty-all-clear-dark .edge, .fg-empty-all-clear-dark .seam { stroke: #a1a1aa; }
+    .fg-empty-all-clear-dark .seam { stroke: #51515c; }
+    .fg-empty-all-clear-dark .seam { stroke-width: 1.35; }
+    .fg-empty-all-clear-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-empty-all-clear-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-empty-all-clear-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-empty-all-clear-dark .accent { stroke: #ff7043; }
+    .fg-empty-all-clear-dark .accent { stroke-width: 1.1; }
+    .fg-empty-all-clear-dark .accent-fill { fill: #ff7043; }
+    .fg-empty-all-clear-dark .tf { fill: url(#fg-empty-all-clear-dark-plane); }
+    .fg-empty-all-clear-dark .lf { fill: #141417; }
+    .fg-empty-all-clear-dark .rf { fill: #0d0d0f; }
+    .fg-empty-all-clear-dark .accent { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M74 56L89.6 65L74 74L58.4 65ZM58.4 69L74 78L89.6 69M331.7 106.5L340.3 111.5M331.7 111.5L340.3 106.5M319.5 279a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM326.5 283a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM59 245.5L55 252.5M89.3 263L85.3 270"/><path class="guide" d="M58.4 65L58.4 69L74 78M57 249L87.3 266.5"/><path class="accent" d="M59.6 250.5L66.5 254.5"/><path class="accent-fill" d="M312.4 275a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(1.3 -2)">
+<polygon class="shade" points="172.3,96 281.4,159 160.2,229 51,166"/>
+<ellipse class="shade" cx="310.9" cy="180" rx="35.5" ry="20.5"/>
+<g data-part="volume"><polygon class="lf" points="172.3,107 267.5,162 267.5,165 160.2,227 64.9,172 64.9,169"/><polygon class="rf" points="267.5,162 160.2,224 160.2,227 267.5,165"/><polygon class="tf" points="172.3,107 267.5,162 160.2,224 64.9,169"/><path class="seam" d="M160.2 224L267.5 162M160.2 224L64.9 169M160.2 224L160.2 227"/><polygon class="edge" points="172.3,107 267.5,162 267.5,165 160.2,227 64.9,172 64.9,169"/></g>
+<g data-part="volume"><polygon class="lf" points="172.3,101 267.5,156 267.5,159 160.2,221 64.9,166 64.9,163"/><polygon class="rf" points="267.5,156 160.2,218 160.2,221 267.5,159"/><polygon class="tf" points="172.3,101 267.5,156 160.2,218 64.9,163"/><path class="seam" d="M160.2 218L267.5 156M160.2 218L64.9 163M160.2 218L160.2 221"/><polygon class="edge" points="172.3,101 267.5,156 267.5,159 160.2,221 64.9,166 64.9,163"/></g>
+<g data-part="volume"><polygon class="lf" points="172.3,95 267.5,150 267.5,153 160.2,215 64.9,160 64.9,157"/><polygon class="rf" points="267.5,150 160.2,212 160.2,215 267.5,153"/><polygon class="tf" points="172.3,95 267.5,150 160.2,212 64.9,157"/><path class="seam" d="M160.2 212L267.5 150M160.2 212L64.9 157M160.2 212L160.2 215"/><polygon class="edge" points="172.3,95 267.5,150 267.5,153 160.2,215 64.9,160 64.9,157"/></g>
+<g data-part="check-mark"><polyline class="accent" points="149.2,144.8 149.2,156.4 193.3,156.4"/></g>
+<g data-part="volume"><path class="rf" d="M282.7 170A28.2 16.3 0 0 1 339 170L339 180A28.2 16.3 0 0 1 282.7 180Z"/><ellipse class="tf" cx="310.9" cy="170" rx="28.2" ry="16.3"/><path class="seam" d="M282.7 170A28.2 16.3 0 0 0 339 170"/><path class="edge" d="M282.7 170A28.2 16.3 0 0 1 339 170L339 180A28.2 16.3 0 0 1 282.7 180Z"/></g>
+<g data-part="volume"><path class="rf" d="M299.8 138A11 6.4 0 0 1 321.9 138L321.9 170A11 6.4 0 0 1 299.8 170Z"/><ellipse class="tf" cx="310.9" cy="138" rx="11" ry="6.4"/><path class="seam" d="M299.8 138A11 6.4 0 0 0 321.9 138"/><path class="edge" d="M299.8 138A11 6.4 0 0 1 321.9 138L321.9 170A11 6.4 0 0 1 299.8 170Z"/></g>
+<g data-part="volume"><path class="rf" d="M293.7 131A17.1 9.9 0 0 1 328 131L328 138A17.1 9.9 0 0 1 293.7 138Z"/><ellipse class="tf" cx="310.9" cy="131" rx="17.1" ry="9.9"/><path class="seam" d="M293.7 131A17.1 9.9 0 0 0 328 131"/><path class="edge" d="M293.7 131A17.1 9.9 0 0 1 328 131L328 138A17.1 9.9 0 0 1 293.7 138Z"/></g>
+<ellipse class="accent" cx="310.9" cy="131" rx="17.1" ry="9.9"/>
+  </g></g></g>
+</svg>

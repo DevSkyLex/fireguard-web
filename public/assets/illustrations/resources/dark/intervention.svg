@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-intervention-dark-title fg-intervention-dark-description" class="fg-intervention-dark">
+  <title id="fg-intervention-dark-title">Intervention</title>
+  <desc id="fg-intervention-dark-description">A compact field service case with two latches, a parts box and a work order, with a pencil resting alongside on the ground.</desc>
+  <defs>
+    <linearGradient id="fg-intervention-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-intervention-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-intervention-dark .top { fill: url(#fg-intervention-dark-plane); stroke: #a1a1aa; }
+    .fg-intervention-dark .edge, .fg-intervention-dark .seam { stroke: #a1a1aa; }
+    .fg-intervention-dark .seam, .fg-intervention-dark .top { stroke: #51515c; }
+    .fg-intervention-dark .seam { stroke-width: 1.35; }
+    .fg-intervention-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-intervention-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-intervention-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-intervention-dark .rear { stroke: #46464f; stroke-width: .8; stroke-dasharray: .8 1.6; opacity: .7; }
+    .fg-intervention-dark .accent { stroke: #ff7043; }
+    .fg-intervention-dark .accent { stroke-width: 1.1; }
+    .fg-intervention-dark .accent-fill { fill: #ff7043; }
+    .fg-intervention-dark .accent-tint { fill: #43261d; stroke: #ff7043; stroke-width: 1.1; }
+    .fg-intervention-dark .tf { fill: url(#fg-intervention-dark-plane); }
+    .fg-intervention-dark .lf { fill: #141417; }
+    .fg-intervention-dark .rf { fill: #0d0d0f; }
+    .fg-intervention-dark .graphite-tip { fill: #6b6b75; stroke: #6b6b75; }
+    .fg-intervention-dark .accent, .fg-intervention-dark .accent-tint { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M69 66.5L85.5 76L69 85.5L52.5 76ZM52.5 80L69 89.5L85.5 80M344.7 146.5L353.3 151.5M344.7 151.5L353.3 146.5M63 254.5L59 261.5M113.2 283.5L109.2 290.5M78.7 265.9L76.7 269.4M95.5 275.6L93.5 279.1M332.5 261a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM339.5 265a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="guide" d="M52.5 76L52.5 80L69 89.5M61 258L111.2 287"/><path class="accent" d="M63.6 259.5L70.5 263.5"/><path class="accent-fill" d="M325.4 257a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(19.5 1.8)">
+<polygon class="shade" points="180.9,83 312.6,159 219.1,213 87.4,137"/>
+<polygon class="shade" points="179.2,192 265.8,242 200,280 113.4,230"/>
+<polygon class="shade" points="84.8,138.5 122.9,160.5 86.6,181.5 48.4,159.5"/>
+<path class="shade" d="M259.8 252.5Q263.2 250.5 266.7 252.5L266.7 252.5Q270.1 254.5 266.7 256.5L219.9 283.5Q216.5 285.5 213 283.5L213 283.5Q209.5 281.5 213 279.5Z"/>
+<g data-part="volume"><polygon class="lf" points="180.9,31 298.7,99 298.7,159 219.1,205 101.3,137 101.3,77"/><polygon class="rf" points="298.7,99 219.1,145 219.1,205 298.7,159"/><polygon class="tf" points="180.9,31 298.7,99 219.1,145 101.3,77"/><path class="seam" d="M219.1 145L298.7 99M219.1 145L101.3 77M219.1 145L219.1 205"/><polygon class="edge" points="180.9,31 298.7,99 298.7,159 219.1,205 101.3,137 101.3,77"/></g>
+<g data-part="detail"><path class="soft" d="M101.3 95L219.1 163"/><path class="top" d="M118.6 97L127.3 102L127.3 118L118.6 113Z"/><path class="top" d="M193.1 140L201.8 145L201.8 161L193.1 156Z"/><path class="accent-tint" d="M146.3 133L174 149L174 171L146.3 155Z"/></g>
+<g data-part="check-mark"><polyline class="accent" points="154.6,149.2 158.1,155.2 165.8,150.8"/></g>
+<g data-part="detail"><path class="soft" d="M219.1 163L298.8 117"/></g>
+<g data-part="case-handle"><polygon class="tf" points="167.1,53 174,49 232.9,83 226,87"/><polygon class="rf" points="226,87 232.9,83 232.9,103 226,107"/><polygon class="rf" points="174,63 180.9,59 180.9,73 174,77"/><polyline class="edge" points="174,49 232.9,83"/><polyline class="edge" points="167.1,53 174,49"/><polyline class="edge" points="232.9,83 232.9,103"/><polyline class="seam" points="226,87 232.9,83"/><polyline class="edge" points="226,107 232.9,103"/><polyline class="edge" points="180.9,59 180.9,73"/><polyline class="edge" points="174,63 180.9,59"/><polyline class="edge" points="174,77 180.9,73"/><g data-part="handle-front"><polygon class="lf" points="167.1,73 167.1,53 226,87 226,107 219.1,103 219.1,89 174,63 174,77"/></g><polyline class="edge" points="167.1,73 167.1,53"/><polyline class="seam" points="167.1,53 226,87"/><polyline class="seam" points="226,87 226,107"/><polyline class="edge" points="226,107 219.1,103"/><polyline class="edge" points="219.1,103 219.1,89"/><polyline class="edge" points="219.1,89 174,63"/><polyline class="seam" points="174,63 174,77"/><polyline class="edge" points="174,77 167.1,73"/></g>
+<g data-part="volume"><polygon class="lf" points="84.8,124.5 112.5,140.5 112.5,160.5 86.6,175.5 58.8,159.5 58.8,139.5"/><polygon class="rf" points="112.5,140.5 86.6,155.5 86.6,175.5 112.5,160.5"/><polygon class="tf" points="84.8,124.5 112.5,140.5 86.6,155.5 58.8,139.5"/><path class="seam" d="M86.6 155.5L112.5 140.5M86.6 155.5L58.8 139.5M86.6 155.5L86.6 175.5"/><polygon class="edge" points="84.8,124.5 112.5,140.5 112.5,160.5 86.6,175.5 58.8,159.5 58.8,139.5"/></g>
+<g data-part="volume"><polygon class="lf" points="179.2,197 252,239 252,242 200,272 127.3,230 127.3,227"/><polygon class="rf" points="252,239 200,269 200,272 252,242"/><polygon class="tf" points="179.2,197 252,239 200,269 127.3,227"/><path class="seam" d="M200 269L252 239M200 269L127.3 227M200 269L200 272"/><polygon class="edge" points="179.2,197 252,239 252,242 200,272 127.3,230 127.3,227"/></g>
+<g data-part="detail"><path class="soft" d="M174 214L220.8 241M157.5 223.5L188.7 241.5"/></g>
+<g data-part="pencil"><path class="tf" d="M263.9 254.2L229.3 274.2L218.7 276.9Q218.1 277 218.5 276.5L226.1 268.6L260.8 248.6C261.6 248.1 263.1 249 263.9 250.5C264.8 252 264.8 253.7 263.9 254.2Z"/><path class="lf" d="M229.3 274.2L218.7 276.9Q218.1 277 218.5 276.5L226.1 268.6C227 268.1 228.4 269 229.3 270.5C230.2 272 230.2 273.7 229.3 274.2Z"/><path class="rear" data-part="tip-rear" d="M229.3 274.2C228.4 274.7 227 273.8 226.1 272.3C225.2 270.8 225.2 269.1 226.1 268.6"/><path class="seam" data-part="tip-front" d="M229.3 274.2C230.2 273.7 230.2 272 229.3 270.5C228.4 269 227 268.1 226.1 268.6"/><path class="soft" d="M256 256.4L232.6 269.9"/><path class="rear" d="M260.5 256.2C259.6 256.7 258.2 255.8 257.3 254.3C256.4 252.8 256.4 251.1 257.3 250.6"/><path class="soft" d="M260.5 256.2C261.4 255.7 261.4 254 260.5 252.5C259.6 251 258.2 250.1 257.3 250.6"/><path class="edge" d="M263.9 254.2L229.3 274.2L218.7 276.9Q218.1 277 218.5 276.5L226.1 268.6L260.8 248.6C261.6 248.1 263.1 249 263.9 250.5C264.8 252 264.8 253.7 263.9 254.2Z"/><path class="graphite-tip" data-part="graphite-tip" d="M222.6 275.8L218.7 276.9Q218.1 277 218.5 276.5L221.4 273.6Q222.5 274.4 222.6 275.8Z"/></g>
+  </g></g></g>
+</svg>

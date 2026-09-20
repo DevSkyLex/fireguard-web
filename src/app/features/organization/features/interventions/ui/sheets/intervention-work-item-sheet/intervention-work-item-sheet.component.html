@@ -18,6 +18,9 @@
     </hlm-sheet-header>
 
     <app-intervention-work-item-form
+      [workloadOrganizationId]="workloadOrganizationId()"
+      [workloadStartsOn]="workloadStartsOn()"
+      [workloadEndsOn]="workloadEndsOn()"
       [catalogues]="catalogues()"
       (catalogueRequested)="catalogueRequested.emit($event)"
       (catalogueSearched)="catalogueSearched.emit($event)"

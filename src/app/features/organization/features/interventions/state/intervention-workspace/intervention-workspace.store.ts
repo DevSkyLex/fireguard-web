@@ -55,7 +55,9 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
 import { projectInterventionWorkspace } from '@features/organization/features/interventions/utils';
+import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import { interventionWorkspaceStoreEvents } from './events';
+import type { InterventionWorkItemUpdateCommand } from './models';
 import type {
   InterventionAttachmentUploadCommand,
   InterventionChangeRejectCommand,
@@ -80,6 +82,7 @@ import type {
  * @type {InterventionWorkspaceState}
  */
 const INITIAL_STATE: InterventionWorkspaceState = {
+  planningConfirmation: null,
   contextId: null,
   loadGeneration: 0,
   intervention: null,
@@ -127,6 +130,7 @@ const INITIAL_STATE: InterventionWorkspaceState = {
  * @type {Partial<InterventionWorkspaceState>}
  */
 const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
+  planningConfirmation: null,
   transitionCallState: idleCallState(),
   updateDetailsCallState: idleCallState(),
   createWorkItemCallState: idleCallState(),
@@ -867,119 +871,140 @@ export const InterventionWorkspaceStore = signalStore(
         transition: rxMethod<InterventionTransitionRequest>(
           pipe(
             tap(() => patchState(store, { transitionCallState: pendingCallState() })),
-            exhaustMap(({ interventionId, status, reviewNote }) => {
-              const intervention = store.intervention();
-              const currentContext = (): boolean => store.contextId() === interventionId;
-              if (!currentContext()) return EMPTY;
+            exhaustMap(
+              ({ interventionId, status, reviewNote, revision, workloadConfirmationToken }) => {
+                const intervention = store.intervention();
+                const currentContext = (): boolean => store.contextId() === interventionId;
+                if (!currentContext()) return EMPTY;
 
-              /**
-               * Queues the transition and applies it optimistically. Reused by
-               * the offline branch and by the online branch when the request
-               * fails on a network error.
-               */
-              const queueTransition = (current: InterventionOutput) =>
-                from(
-                  offline.queue(interventionId, 'intervention.update', {
-                    status,
-                    reviewNote,
-                    revision: current.revision,
-                  }),
-                ).pipe(
-                  map(() => {
-                    if (!currentContext()) return current;
-                    const updatedIntervention = optimistic.transition(current, {
-                      interventionId,
+                /**
+                 * Queues the transition and applies it optimistically. Reused by
+                 * the offline branch and by the online branch when the request
+                 * fails on a network error.
+                 */
+                const queueTransition = (current: InterventionOutput) =>
+                  from(
+                    offline.queue(interventionId, 'intervention.update', {
                       status,
                       reviewNote,
-                    });
-                    patchState(store, {
-                      intervention: updatedIntervention,
-                      transitionCallState: successCallState(null),
-                    });
-                    void offline
-                      .saveWorkspace(
-                        updatedIntervention,
-                        store.workItems(),
-                        store.changes(),
-                        store.issues(),
-                        [],
-                        { replace: false },
-                      )
-                      .catch(() => undefined);
-                    dispatcher.dispatch(
-                      interventionWorkspaceStoreEvents.transitionSucceeded({
+                      revision: revision ?? current.revision,
+                      ...(workloadConfirmationToken ? { workloadConfirmationToken } : {}),
+                    }),
+                  ).pipe(
+                    map(() => {
+                      if (!currentContext()) return current;
+                      const updatedIntervention = optimistic.transition(current, {
                         interventionId,
                         status,
-                      }),
-                    );
-                    dispatcher.dispatch(
-                      interventionWorkspaceStoreEvents.mutationSucceeded({
-                        interventionId,
-                        source: 'queued',
-                        collections: ['activity'],
-                      }),
-                    );
-                    return updatedIntervention;
-                  }),
-                );
+                        reviewNote,
+                      });
+                      patchState(store, {
+                        intervention: updatedIntervention,
+                        transitionCallState: successCallState(null),
+                      });
+                      void offline
+                        .saveWorkspace(
+                          updatedIntervention,
+                          store.workItems(),
+                          store.changes(),
+                          store.issues(),
+                          [],
+                          { replace: false },
+                        )
+                        .catch(() => undefined);
+                      dispatcher.dispatch(
+                        interventionWorkspaceStoreEvents.transitionSucceeded({
+                          interventionId,
+                          status,
+                        }),
+                      );
+                      dispatcher.dispatch(
+                        interventionWorkspaceStoreEvents.mutationSucceeded({
+                          interventionId,
+                          source: 'queued',
+                          collections: ['activity'],
+                        }),
+                      );
+                      return updatedIntervention;
+                    }),
+                  );
 
-              if (connectivity.isOffline() && intervention) {
-                return queueTransition(intervention);
-              }
+                if (connectivity.isOffline() && intervention) {
+                  return queueTransition(intervention);
+                }
 
-              return service
-                .update(interventionId, { status, reviewNote }, intervention?.revision)
-                .pipe(
-                  tap((updatedIntervention) => {
-                    if (!currentContext()) return;
-                    patchState(store, {
-                      intervention: updatedIntervention,
-                      transitionCallState: successCallState(null),
-                    });
-                    dispatcher.dispatch(
-                      interventionWorkspaceStoreEvents.transitionSucceeded({
-                        interventionId,
-                        status,
-                      }),
-                    );
-                    refreshIssues(interventionId);
-                    dispatcher.dispatch(
-                      interventionWorkspaceStoreEvents.mutationSucceeded({
-                        interventionId,
-                        source: 'remote',
-                        collections: ['activity'],
-                      }),
-                    );
-                  }),
-                  catchError((error: unknown) => {
-                    if (!currentContext()) return EMPTY;
-                    if (connectivity.isNetworkFailure(error) && intervention) {
-                      return queueTransition(intervention);
-                    }
-                    const storeError = toStoreError(error);
-                    patchState(store, {
-                      transitionCallState: errorCallState({
-                        ...storeError,
-                        message:
-                          storeError.code === 412
-                            ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
-                            : storeError.code === 403
-                              ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
-                              : storeError.code === 422
-                                ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
-                                : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
-                      }),
-                    });
-                    return EMPTY;
-                  }),
-                );
-            }),
+                return service
+                  .update(
+                    interventionId,
+                    { status, reviewNote, workloadConfirmationToken },
+                    revision ?? intervention?.revision,
+                  )
+                  .pipe(
+                    tap((updatedIntervention) => {
+                      if (!currentContext()) return;
+                      patchState(store, {
+                        intervention: updatedIntervention,
+                        transitionCallState: successCallState(null),
+                      });
+                      dispatcher.dispatch(
+                        interventionWorkspaceStoreEvents.transitionSucceeded({
+                          interventionId,
+                          status,
+                        }),
+                      );
+                      refreshIssues(interventionId);
+                      dispatcher.dispatch(
+                        interventionWorkspaceStoreEvents.mutationSucceeded({
+                          interventionId,
+                          source: 'remote',
+                          collections: ['activity'],
+                        }),
+                      );
+                    }),
+                    catchError((error: unknown) => {
+                      if (!currentContext()) return EMPTY;
+                      if (connectivity.isNetworkFailure(error) && intervention) {
+                        return queueTransition(intervention);
+                      }
+                      const assessment = workloadAssessmentFromError(error);
+                      if (assessment)
+                        patchState(store, {
+                          planningConfirmation: {
+                            kind: 'transition',
+                            assessment,
+                            command: {
+                              interventionId,
+                              status,
+                              reviewNote,
+                              revision: revision ?? intervention?.revision,
+                            },
+                          },
+                        });
+                      const storeError = toStoreError(error);
+                      patchState(store, {
+                        transitionCallState: errorCallState({
+                          ...storeError,
+                          message:
+                            storeError.code === 412
+                              ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
+                              : storeError.code === 403
+                                ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
+                                : storeError.code === 422
+                                  ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
+                                  : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
+                        }),
+                      });
+                      return EMPTY;
+                    }),
+                  );
+              },
+            ),
           ),
         ),
         updateDetails: rxMethod<InterventionDetailsUpdateCommand>(
           pipe(
             tap(() => patchState(store, { updateDetailsCallState: pendingCallState() })),
-            concatMap(({ interventionId, input }) => {
+            concatMap(({ interventionId, input, revision }) => {
               const intervention = store.intervention();
               const currentContext = (): boolean => store.contextId() === interventionId;
               if (!currentContext()) return EMPTY;
@@ -999,7 +1024,7 @@ export const InterventionWorkspaceStore = signalStore(
                     ? { plannedStartAt: plannedStartAt?.toISOString() ?? null }
                     : {}),
                   ...(dueAt !== undefined ? { dueAt: dueAt?.toISOString() ?? null } : {}),
-                  revision: current.revision,
+                  revision: revision ?? current.revision,
                 };
                 return from(offline.queue(interventionId, 'intervention.update', queuedInput)).pipe(
                   concatMap(async (): Promise<InterventionOutput> => {
@@ -1055,7 +1080,7 @@ export const InterventionWorkspaceStore = signalStore(
                 return queueDetails(intervention);
               }
 
-              return service.update(interventionId, input, intervention?.revision).pipe(
+              return service.update(interventionId, input, revision ?? intervention?.revision).pipe(
                 tap((updatedIntervention) => {
                   if (!currentContext()) return;
                   patchState(store, {
@@ -1076,6 +1101,19 @@ export const InterventionWorkspaceStore = signalStore(
                   if (connectivity.isNetworkFailure(error) && intervention) {
                     return queueDetails(intervention);
                   }
+                  const assessment = workloadAssessmentFromError(error);
+                  if (assessment)
+                    patchState(store, {
+                      planningConfirmation: {
+                        kind: 'details',
+                        assessment,
+                        command: {
+                          interventionId,
+                          input,
+                          revision: revision ?? intervention?.revision,
+                        },
+                      },
+                    });
                   patchState(store, {
                     updateDetailsCallState: errorCallState(
                       workspaceFailure(
@@ -1158,6 +1196,133 @@ export const InterventionWorkspaceStore = signalStore(
         ),
 
         /**
+         * Method updateWorkItem
+         * @method updateWorkItem
+         *
+         * @description
+         * Persists explicit effort, period or assignment edits; offline proposals remain unverified until replay.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @param {InterventionWorkItemUpdateCommand} command - Captured task and explicit changes.
+         * @returns {void}
+         */
+        updateWorkItem: rxMethod<InterventionWorkItemUpdateCommand>(
+          pipe(
+            exhaustMap((command) => {
+              const { interventionId, item, input } = command;
+              if (store.pendingWorkItemIds().has(item.id)) return EMPTY;
+              const owner = offline.publicationOwner();
+              const current = (): boolean =>
+                store.contextId() === interventionId && owner === offline.publicationOwner();
+              patchState(store, {
+                workItemWriteCallState: pendingCallState(),
+                pendingWorkItemIds: withId(store.pendingWorkItemIds(), item.id),
+                workItemErrors: { ...store.workItemErrors(), [item.id]: null },
+              });
+              let queued = false;
+              const queue = () =>
+                defer(() => {
+                  queued = true;
+                  return offline.queue(interventionId, 'work-item.update', {
+                    ...input,
+                    workItemId: item.id,
+                    revision: item.revision,
+                  });
+                }).pipe(
+                  map((): InterventionWorkItemOutput => ({
+                    ...item,
+                    ...input,
+                    assigneeProfile:
+                      input.assignee !== undefined && input.assignee !== item.assignee
+                        ? null
+                        : item.assigneeProfile,
+                    revision: item.revision + 1,
+                  })),
+                );
+              const request = connectivity.isOffline()
+                ? queue()
+                : service
+                    .updateWorkItem(item.id, input, item.revision)
+                    .pipe(
+                      catchError((error: unknown) =>
+                        connectivity.isNetworkFailure(error) ? queue() : throwError(() => error),
+                      ),
+                    );
+              return request.pipe(
+                tapResponse({
+                  next: (updated) => {
+                    if (!current()) return;
+                    const parent = store.intervention();
+                    const intervention = parent
+                      ? input.status
+                        ? optimistic.updateWorkItem(parent, item, {
+                            workItemId: item.id,
+                            status: input.status,
+                            skipReason: input.skipReason ?? undefined,
+                          }).intervention
+                        : optimistic.touch(parent)
+                      : null;
+                    patchState(store, {
+                      intervention,
+                      workItems: replaceWorkItem(store.workItems(), item.id, updated),
+                      workItemWriteCallState: successCallState(null),
+                    });
+                    dispatcher.dispatch(
+                      interventionWorkspaceStoreEvents.mutationSucceeded({
+                        interventionId,
+                        source: queued ? 'queued' : 'remote',
+                        collections: ['workItems', 'activity'],
+                        workItem: updated,
+                      }),
+                    );
+                    if (intervention)
+                      void offline
+                        .saveWorkspace(
+                          intervention,
+                          store.workItems(),
+                          store.changes(),
+                          store.issues(),
+                          [],
+                          { replace: false },
+                        )
+                        .catch(() => undefined);
+                    if (!queued) refreshIssues(interventionId);
+                  },
+                  error: (error: unknown) => {
+                    if (!current()) return;
+                    const assessment = workloadAssessmentFromError(error);
+                    patchState(store, {
+                      ...(assessment
+                        ? {
+                            planningConfirmation: {
+                              kind: 'workItem' as const,
+                              command,
+                              assessment,
+                            },
+                          }
+                        : {}),
+                      workItemWriteCallState: errorCallState(toStoreError(error)),
+                      workItemErrors: {
+                        ...store.workItemErrors(),
+                        [item.id]: toStoreError(error).message,
+                      },
+                    });
+                  },
+                  finalize: () => {
+                    if (current())
+                      patchState(store, {
+                        pendingWorkItemIds: withoutId(store.pendingWorkItemIds(), item.id),
+                      });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
          * Method createWorkItem
          * @method createWorkItem
          *
@@ -1236,8 +1401,18 @@ export const InterventionWorkspaceStore = signalStore(
                     if (!connectivity.isOffline()) refreshIssues(interventionId);
                   },
                   error: (error: unknown) => {
+                    const assessment = workloadAssessmentFromError(error);
                     if (current())
                       patchState(store, {
+                        ...(assessment
+                          ? {
+                              planningConfirmation: {
+                                kind: 'create' as const,
+                                assessment,
+                                command: { interventionId, input: payload },
+                              },
+                            }
+                          : {}),
                         createWorkItemCallState: errorCallState(
                           workspaceFailure(
                             error,
@@ -1251,6 +1426,7 @@ export const InterventionWorkspaceStore = signalStore(
             }),
           ),
         ),
+
         /**
          * Method setWorkItemStatus
          * @method setWorkItemStatus
@@ -1355,8 +1531,22 @@ export const InterventionWorkspaceStore = signalStore(
                     if (!connectivity.isOffline()) refreshIssues(interventionId);
                   },
                   error: (error: unknown) => {
+                    const assessment = workloadAssessmentFromError(error);
                     if (current())
                       patchState(store, {
+                        ...(item && assessment
+                          ? {
+                              planningConfirmation: {
+                                kind: 'workItem' as const,
+                                assessment,
+                                command: {
+                                  interventionId,
+                                  item,
+                                  input: { status, skipReason: reason },
+                                },
+                              },
+                            }
+                          : {}),
                         workItemErrors: {
                           ...store.workItemErrors(),
                           [workItemId]: toStoreError(error).message,
@@ -1899,6 +2089,70 @@ export const InterventionWorkspaceStore = signalStore(
       };
     },
   ),
+  withMethods((store) => ({
+    /**
+     * Method dismissPlanningConfirmation
+     * @method dismissPlanningConfirmation
+     *
+     * @description
+     * Cancels only the proposal awaiting consent.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @returns {void}
+     */
+    dismissPlanningConfirmation(): void {
+      patchState(store, { planningConfirmation: null });
+    },
+
+    /**
+     * Method confirmPlanning
+     * @method confirmPlanning
+     *
+     * @description
+     * Retries the captured intention against its original revision and exact assessment.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @param {string} token - Explicitly reviewed assessment token.
+     * @returns {void}
+     */
+    confirmPlanning(token: string): void {
+      const pending = store.planningConfirmation();
+      if (
+        !pending ||
+        pending.assessment.confirmationToken !== token ||
+        pending.command.interventionId !== store.contextId()
+      )
+        return;
+      patchState(store, { planningConfirmation: null });
+      switch (pending.kind) {
+        case 'create':
+          store.createWorkItem({
+            ...pending.command,
+            input: { ...pending.command.input, workloadConfirmationToken: token },
+          });
+          break;
+        case 'details':
+          store.updateDetails({
+            ...pending.command,
+            input: { ...pending.command.input, workloadConfirmationToken: token },
+          });
+          break;
+        case 'transition':
+          store.transition({ ...pending.command, workloadConfirmationToken: token });
+          break;
+        case 'workItem':
+          store.updateWorkItem({
+            ...pending.command,
+            input: { ...pending.command.input, workloadConfirmationToken: token },
+          });
+          break;
+      }
+    },
+  })),
 );
 
 /**

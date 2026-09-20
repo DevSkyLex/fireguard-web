@@ -1,0 +1,160 @@
+@if (interaction.isMobileInteractionMode()) {
+  <div class="flex flex-col gap-6" data-testid="workload-mobile-list">
+    @for (member of projection().members; track member.memberId) {
+      @let identity = membersById().get(member.memberId);
+      <section class="min-w-0" [attr.aria-labelledby]="'workload-member-' + member.memberId">
+        <div class="mb-2 flex min-w-0 items-center gap-2">
+          <hlm-avatar aria-hidden="true">
+            @if (identity?.avatarUrl; as avatarUrl) {
+              <img hlmAvatarImage [src]="avatarUrl" alt="" />
+            }
+            <span hlmAvatarFallback>{{ identity?.initials ?? '?' }}</span>
+          </hlm-avatar>
+          <div class="flex min-w-0 flex-1 flex-col">
+            <h2
+              class="text-base font-semibold wrap-anywhere"
+              [id]="'workload-member-' + member.memberId"
+            >
+              {{ identity?.displayName || member.displayName || member.memberId }}
+            </h2>
+            <p class="text-xs wrap-anywhere text-muted-foreground">
+              {{ identity?.roleLabel ?? '—' }}
+            </p>
+          </div>
+        </div>
+        <div class="divide-y rounded-lg border">
+          @for (day of member.days; track day.date) {
+            <button
+              type="button"
+              class="flex min-h-16 w-full items-center justify-between gap-4 p-3 text-left outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring data-[unavailable=true]:bg-muted/30 data-[unavailable=true]:bg-[repeating-linear-gradient(135deg,color-mix(in_oklab,var(--muted-foreground)_6%,transparent)_0_1px,transparent_1px_12px)] data-[unavailable=true]:text-muted-foreground data-[unavailable=true]:hover:bg-muted/50"
+              [attr.data-unavailable]="day.capacityMinutes === 0"
+              [class.bg-destructive/5]="(day.overloadMinutes ?? 0) > 0"
+              [attr.aria-current]="day.date === projection().today ? 'date' : null"
+              (click)="dayOpened.emit({ member, day })"
+            >
+              <span class="flex shrink-0 flex-col gap-1 text-sm"
+                ><span>{{ day.date + 'T00:00:00Z' | date: 'EEE d' : 'UTC' }}</span>
+                @if (day.date === projection().today) {
+                  <span class="text-xs font-medium" i18n="@@workload.today">Today</span>
+                }
+              </span>
+              <span
+                class="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center justify-items-end gap-x-2 gap-y-1"
+              >
+                <app-workload-day-cell
+                  class="contents"
+                  [day]="day"
+                  [label]="statusLabel(day)"
+                  [meter]="meterValue(day)"
+                />
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else {
+  <div hlmTableContainer class="rounded-lg border" data-testid="workload-matrix">
+    <table hlmTable class="min-w-4xl table-fixed">
+      <caption hlmTableCaption class="sr-only" i18n="@@workload.matrixCaption">
+        Daily workload by member. Open a day to see its contributions.
+      </caption>
+      <colgroup>
+        <col />
+        @for (day of projection().members.at(0)?.days ?? []; track day.date) {
+          <col
+            class="data-[unavailable=true]:bg-muted/30 data-[unavailable=true]:bg-[repeating-linear-gradient(135deg,color-mix(in_oklab,var(--muted-foreground)_6%,transparent)_0_1px,transparent_1px_12px)]"
+            [class.bg-muted/30]="day.date === projection().today"
+            [attr.data-unavailable]="unavailableDates().has(day.date)"
+            [attr.data-date]="day.date"
+          />
+        }
+      </colgroup>
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead scope="col" class="w-52" i18n="@@workload.member">Member</th>
+          @for (day of projection().members.at(0)?.days ?? []; track day.date) {
+            <th
+              hlmTableHead
+              scope="col"
+              class="text-center"
+              [class.bg-muted]="
+                day.date === projection().today && !unavailableDates().has(day.date)
+              "
+              [class.text-muted-foreground]="unavailableDates().has(day.date)"
+              [attr.aria-current]="day.date === projection().today ? 'date' : null"
+            >
+              {{ day.date + 'T00:00:00Z' | date: 'EEE d' : 'UTC' }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody hlmTableBody>
+        @for (member of projection().members; track member.memberId) {
+          @let identity = membersById().get(member.memberId);
+          <tr hlmTableRow class="hover:bg-transparent">
+            <th hlmTableHead scope="row" class="max-w-64 py-2">
+              <div class="flex min-w-0 items-center gap-2">
+                <hlm-avatar aria-hidden="true">
+                  @if (identity?.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback>{{ identity?.initials ?? '?' }}</span>
+                </hlm-avatar>
+                <div
+                  class="flex min-w-0 flex-1 flex-col rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  tabindex="0"
+                  [hlmTooltip]="
+                    (identity?.displayName || member.displayName || member.memberId) +
+                    ' · ' +
+                    (identity?.roleLabel ?? '—')
+                  "
+                  data-testid="workload-member-identity"
+                >
+                  <span class="truncate">{{
+                    identity?.displayName || member.displayName || member.memberId
+                  }}</span>
+                  <span class="truncate text-xs font-normal text-muted-foreground">{{
+                    identity?.roleLabel ?? '—'
+                  }}</span>
+                </div>
+              </div>
+            </th>
+            @for (day of member.days; track day.date) {
+              <td
+                hlmTableCell
+                class="p-1 align-top data-[unavailable=true]:bg-muted/30 data-[unavailable=true]:bg-[repeating-linear-gradient(135deg,color-mix(in_oklab,var(--muted-foreground)_6%,transparent)_0_1px,transparent_1px_12px)]"
+                [attr.data-unavailable]="
+                  day.capacityMinutes === 0 && !unavailableDates().has(day.date)
+                "
+              >
+                <button
+                  type="button"
+                  class="flex min-h-24 w-full flex-col items-center justify-center gap-1 rounded-md px-2 py-3 text-center outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring data-[unavailable=true]:text-muted-foreground"
+                  [attr.data-unavailable]="day.capacityMinutes === 0"
+                  [class.bg-destructive/5]="(day.overloadMinutes ?? 0) > 0"
+                  (click)="dayOpened.emit({ member, day })"
+                  [attr.aria-label]="
+                    (member.displayName || member.memberId) +
+                    ', ' +
+                    day.date +
+                    ', ' +
+                    statusLabel(day)
+                  "
+                >
+                  <app-workload-day-cell
+                    class="contents"
+                    [day]="day"
+                    [label]="statusLabel(day)"
+                    [meter]="meterValue(day)"
+                  />
+                </button>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

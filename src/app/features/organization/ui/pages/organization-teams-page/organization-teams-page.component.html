@@ -26,12 +26,10 @@
         </button>
       </div>
     </div>
-  } @else if (!store.isLoading() && store.teams().length === 0) {
+  } @else if (store.listCallState().status === 'success' && store.teams().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideUsersRound" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="team" />
         <p hlmEmptyTitle i18n="@@org.teams.emptyTitle">No teams yet</p>
         <p hlmEmptyDescription i18n="@@org.teams.emptyText">
           Create a named group of members to assign to interventions.

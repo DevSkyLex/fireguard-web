@@ -7,6 +7,19 @@
  * blueprint, materialized into a real work item at instantiation.
  */
 export interface InterventionTemplateItemOutput {
+  /**
+   * Property estimatedMinutes
+   * @readonly
+   *
+   * @description
+   * Optional estimate copied to new occurrences, never actual time.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {number | null}
+   */
+  readonly estimatedMinutes?: number | null;
   //#region Properties
   /**
    * Property id

@@ -7,9 +7,11 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import {
   InterventionOfflineService,
   InterventionService,
+  InterventionTimeService,
 } from '@features/organization/features/interventions/data-access';
 import type { InterventionCollectionsChange } from '@features/organization/features/interventions/models';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
+import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
   HTTP_CONFLICT,
@@ -54,6 +56,7 @@ interface BlockedResources {
  * stays consistent.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -67,6 +70,20 @@ export class InterventionSyncService {
    * @type {Dispatcher}
    */
   private readonly dispatcher: Dispatcher = inject(Dispatcher);
+
+  /**
+   * Property time
+   * @readonly
+   *
+   * @description
+   * Independent journal transport for idempotent time replay.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionTimeService}
+   */
+  private readonly time: InterventionTimeService = inject(InterventionTimeService);
   //#region Properties
   /**
    * Property service
@@ -178,9 +195,13 @@ export class InterventionSyncService {
   /**
    * Method replayInterventionOutbox
    * @method replayInterventionOutbox
-   * @description Replays an outbox after intervention-level serialization has been acquired.
+   *
+   * @description
+   * Replays an outbox after intervention-level serialization has been acquired.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} organizationId - Active organization identifier.
    * @param {string} interventionId - Intervention identifier.
    * @returns {Promise<number>} Number of operations effectively replayed.
@@ -193,6 +214,11 @@ export class InterventionSyncService {
     const collections = new Set<InterventionCollectionsChange['collections'][number]>();
     const applied = (operation: InterventionOutboxOperation): void => {
       switch (operation.type) {
+        case 'time-entry.create':
+        case 'time-entry.correct':
+        case 'time-entry.cancel':
+          collections.add('workItems');
+          break;
         case 'work-item.create':
         case 'work-item.update':
           collections.add('workItems');
@@ -332,7 +358,34 @@ export class InterventionSyncService {
         applied(operation);
         return advance(replayed + 1);
       }
+      const assessment =
+        workloadAssessmentFromError(error) ?? workloadAssessmentFromError(response.error);
+      if (response.status === HTTP_CONFLICT && assessment) {
+        await this.offline.markOutboxConflict(operation.id, detail, assessment);
+        this.block(operation, blocked.permanent);
+        return advance(replayed);
+      }
       if (response.status === HTTP_PRECONDITION_FAILED) {
+        if (
+          operation.type.startsWith('time-entry.') ||
+          (operation.type === 'intervention.update' &&
+            ('plannedStartAt' in operation.payload ||
+              'dueAt' in operation.payload ||
+              'status' in operation.payload ||
+              'responsible' in operation.payload ||
+              'participants' in operation.payload)) ||
+          (operation.type === 'work-item.update' &&
+            ('assignee' in operation.payload ||
+              'remainingMinutes' in operation.payload ||
+              'estimatedMinutes' in operation.payload ||
+              'workStartsOn' in operation.payload ||
+              'workEndsOn' in operation.payload))
+        ) {
+          const review = await this.currentValues(operation);
+          await this.offline.markOutboxConflict(operation.id, detail, null, review);
+          this.block(operation, blocked.permanent);
+          return advance(replayed);
+        }
         // A stale-revision conflict would otherwise loop forever on retry (the
         // same If-Match is re-sent). Re-fetch the current server revision and
         // rebase the queued payload so a retry sends a valid If-Match; fall back
@@ -377,13 +430,48 @@ export class InterventionSyncService {
    * @param {string} organizationId - Active organization identifier.
    * @param {InterventionOutboxOperation} operation - Queued operation to replay.
    *
-   * @return {Promise<void>} A promise resolving once the operation is replayed.
+   * @returns {Promise<void>} A promise resolving once the operation is replayed.
    */
   private async replay(
     organizationId: string,
     operation: InterventionOutboxOperation,
   ): Promise<void> {
     switch (operation.type) {
+      case 'time-entry.create':
+        await firstValueFrom(
+          this.time.createEntry(operation.payload.workItemId, {
+            id: operation.payload.id,
+            memberId: operation.payload.memberId,
+            workedOn: operation.payload.workedOn,
+            minutes: operation.payload.minutes,
+            note: operation.payload.note,
+          }),
+        );
+        break;
+      case 'time-entry.correct':
+        await firstValueFrom(
+          this.time.correctEntry(
+            operation.payload.workItemId,
+            {
+              id: operation.payload.id,
+              memberId: operation.payload.memberId,
+              workedOn: operation.payload.workedOn,
+              minutes: operation.payload.minutes,
+              note: operation.payload.note,
+            },
+            operation.payload.revision,
+          ),
+        );
+        break;
+      case 'time-entry.cancel':
+        await firstValueFrom(
+          this.time.cancelEntry(
+            operation.payload.workItemId,
+            operation.payload.id,
+            operation.payload.revision,
+          ),
+        );
+        break;
       case 'facility.create':
         await firstValueFrom(
           this.facilities.createForIntervention(
@@ -611,10 +699,25 @@ export class InterventionSyncService {
   }
 
   /**
-   * Adds the resource an operation would create to a blocked set, so operations
-   * later in the queue that reference it wait or fail with it.
+   * Method block
+   * @method block
+   *
+   * @description
+   * Blocks the resource created or modified by a conflicted operation so later
+   * dependent writes cannot replay against stale task or time-entry data.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionOutboxOperation} operation - Operation that could not replay.
+   * @param {Set<string>} resources - Resource identifiers to block in this replay.
+   * @returns {void}
    */
   private block(operation: InterventionOutboxOperation, resources: Set<string>): void {
+    if (operation.type.startsWith('time-entry.') && 'id' in operation.payload)
+      resources.add(`/api/time-entries/${operation.payload.id}`);
+    if (operation.type === 'work-item.update')
+      resources.add(`/api/intervention-work-items/${operation.payload.workItemId}`);
     const createdResource = this.createdResource(operation);
     if (createdResource) resources.add(createdResource);
   }
@@ -656,13 +759,105 @@ export class InterventionSyncService {
   }
 
   /**
-   * Checks whether an operation references a resource whose creation is in conflict.
+   * Method currentValues
+   * @method currentValues
+   *
+   * @description
+   * Reads a small authorized comparison without rebasing the queued intention.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionOutboxOperation} operation - Conflicting write.
+   * @returns {Promise<{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null>}
+   */
+  private async currentValues(operation: InterventionOutboxOperation): Promise<{
+    readonly revision: number;
+    readonly values: Readonly<Record<string, string | number | boolean | null>>;
+  } | null> {
+    try {
+      if (operation.type === 'time-entry.correct' || operation.type === 'time-entry.cancel') {
+        const journal = await firstValueFrom(this.time.journal(operation.payload.workItemId));
+        const entry = journal.entries.find((row) => row.id === operation.payload.id);
+        return entry
+          ? {
+              revision: entry.revision,
+              values: {
+                memberId: entry.memberId,
+                workedOn: entry.workedOn,
+                minutes: entry.minutes,
+                note: entry.note ?? null,
+                cancelled: entry.cancelled,
+              },
+            }
+          : null;
+      }
+      if (operation.type === 'work-item.update') {
+        const rows = await firstValueFrom(this.service.listAllWorkItems(operation.interventionId));
+        const item = rows.find((row) => row.id === operation.payload.workItemId);
+        return item
+          ? {
+              revision: item.revision,
+              values: {
+                assignee: item.assignee ?? null,
+                status: item.status,
+                estimatedMinutes: item.estimatedMinutes ?? null,
+                remainingMinutes: item.remainingMinutes ?? null,
+                workStartsOn: item.workStartsOn ?? null,
+                workEndsOn: item.workEndsOn ?? null,
+              },
+            }
+          : null;
+      }
+      if (operation.type === 'intervention.update') {
+        const item = await firstValueFrom(this.service.get(operation.interventionId));
+        return {
+          revision: item.revision,
+          values: {
+            status: item.status,
+            plannedStartAt: item.plannedStartAt ?? null,
+            dueAt: item.dueAt ?? null,
+            responsible: item.responsible ?? null,
+          },
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Method dependsOnBlockedResource
+   * @method dependsOnBlockedResource
+   *
+   * @description
+   * Checks whether a queued write depends on a resource blocked earlier in this replay.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionOutboxOperation} operation - Queued write to evaluate.
+   * @param {ReadonlySet<string>} blockedResources - Resources awaiting successful replay or review.
+   * @returns {boolean} Whether the operation must wait for a blocked resource.
    */
   private dependsOnBlockedResource(
     operation: InterventionOutboxOperation,
     blockedResources: ReadonlySet<string>,
   ): boolean {
     if (blockedResources.size === 0) return false;
+
+    if (
+      'workItemId' in operation.payload &&
+      blockedResources.has(`/api/intervention-work-items/${operation.payload.workItemId}`)
+    )
+      return true;
+    if (
+      operation.type.startsWith('time-entry.') &&
+      'id' in operation.payload &&
+      blockedResources.has(`/api/time-entries/${operation.payload.id}`)
+    )
+      return true;
 
     return this.containsBlockedResource(operation.payload, blockedResources);
   }

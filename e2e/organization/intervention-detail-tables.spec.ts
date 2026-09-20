@@ -94,7 +94,7 @@ test('offers a working retry after the initial Work query fails', async ({ page 
   const path = await arrange(page);
   let fail = true;
   await page.route(/\/api\/intervention-work-items\?/, (route) => {
-    if (new URL(route.request().url()).searchParams.has('status') && fail)
+    if (new URL(route.request().url()).searchParams.has('status[]') && fail)
       return route.fulfill({
         status: 500,
         contentType: 'application/ld+json',
@@ -193,7 +193,10 @@ for (const { tab, actions } of [
       });
       const endpoint = tab === 'work-item' ? 'intervention-work-items' : 'intervention-changes';
       await page.route(new RegExp('/api/' + endpoint + '\\?'), async (route) => {
-        if (!new URL(route.request().url()).searchParams.has('status')) return route.fallback();
+        const searchParams = new URL(route.request().url()).searchParams;
+        if (!searchParams.has('status') && !searchParams.has('status[]')) {
+          return route.fallback();
+        }
         await held;
         return route.fallback();
       });

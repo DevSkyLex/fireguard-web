@@ -451,6 +451,11 @@ test.describe('Facility Plans tab', () => {
     await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
     await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
     await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlanOverlay(
+      E2E_ORGANIZATION_ID,
+      E2E_FACILITY_ID,
+      facilityPlanOverlayOutput(),
+    );
     const facilities = new FacilitiesPage(page);
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);

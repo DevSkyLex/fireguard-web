@@ -1,0 +1,111 @@
+<form class="flex flex-col gap-4" (submit)="submit($event)">
+  <fieldset class="flex flex-col gap-4" [disabled]="pending()">
+    <hlm-field
+      ><label hlmFieldLabel for="effort-minutes">
+        @if (mode() === 'remaining') {
+          <span i18n="@@intervention.effort.remaining">Remaining work (minutes)</span>
+        } @else {
+          <span i18n="@@intervention.effort.estimated">Baseline estimate (minutes)</span>
+        }
+      </label>
+      <input hlmInput id="effort-minutes" inputmode="numeric" [formField]="fields.minutes" />
+      <p hlmFieldDescription i18n="@@intervention.effort.unknown">
+        Leave blank when unknown. Zero is a known duration, not an unknown estimate.
+      </p>
+      @if (fields.minutes().touched()) {
+        @for (error of fields.minutes().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    @if (mode() === 'planning') {
+      <hlm-field
+        ><label hlmFieldLabel for="effort-assignee" i18n="@@intervention.wit.columnAssignee"
+          >Assignee</label
+        >
+        <hlm-combobox
+          [value]="model().assignee || null"
+          (valueChange)="assigneeChanged($event)"
+          [itemToString]="memberLabel"
+          [disabled]="pending() || !item().allowedActions?.canReassign"
+        >
+          <hlm-combobox-input
+            inputId="effort-assignee"
+            [showClear]="true"
+            placeholder="Unassigned"
+            i18n-placeholder="@@intervention.effort.unassigned"
+          >
+            @if (selectedMemberOption(); as member) {
+              <span hlmInputGroupAddon align="inline-start" aria-hidden="true">
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (member.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback>{{ member.initials }}</span>
+                </hlm-avatar>
+              </span>
+              <span
+                hlmInputGroupAddon
+                align="inline-end"
+                class="order-none max-w-28 min-w-0"
+                [attr.title]="member.roleLabel"
+              >
+                <span class="truncate text-xs">{{ member.roleLabel }}</span>
+              </span>
+            }
+          </hlm-combobox-input>
+          <hlm-combobox-content *hlmComboboxPortal
+            ><hlm-combobox-empty i18n="@@workload.noMembers">No members found</hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (member of members(); track member.value) {
+                <hlm-combobox-item class="mobile-ui:min-h-11" [value]="member.value">
+                  <hlm-avatar class="size-8 shrink-0" aria-hidden="true">
+                    @if (member.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback>{{ member.initials }}</span>
+                  </hlm-avatar>
+                  <span class="flex min-w-0 flex-1 flex-col text-left">
+                    <span class="wrap-anywhere whitespace-normal">{{ member.displayName }}</span>
+                    <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">{{
+                      member.roleLabel
+                    }}</span>
+                  </span>
+                </hlm-combobox-item>
+              }
+            </div></hlm-combobox-content
+          >
+        </hlm-combobox>
+      </hlm-field>
+      @if (workloadOrganizationId() && model().assignee) {
+        <app-workload-assignee-indicator
+          [organizationId]="workloadOrganizationId()"
+          [member]="model().assignee"
+          [startsOn]="model().workStartsOn || workloadStartsOn()"
+          [endsOn]="model().workEndsOn || workloadEndsOn()"
+        />
+      }
+      <div class="grid grid-cols-2 gap-3">
+        <hlm-field
+          ><label hlmFieldLabel for="effort-start" i18n="@@intervention.effort.startsOn"
+            >Work starts on</label
+          ><input hlmInput id="effort-start" type="date" [formField]="fields.workStartsOn"
+        /></hlm-field>
+        <hlm-field
+          ><label hlmFieldLabel for="effort-end" i18n="@@intervention.effort.endsOn"
+            >Work ends on</label
+          ><input hlmInput id="effort-end" type="date" [formField]="fields.workEndsOn"
+        /></hlm-field>
+      </div>
+      <p class="text-sm text-muted-foreground" i18n="@@intervention.effort.inheritPeriod">
+        Leave both dates blank to use the intervention's period.
+      </p>
+      @if (fields.workEndsOn().touched()) {
+        @for (error of fields.workEndsOn().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    }
+  </fieldset>
+  <button hlmBtn type="submit" [disabled]="pending()" i18n="@@common.save">Save</button>
+</form>

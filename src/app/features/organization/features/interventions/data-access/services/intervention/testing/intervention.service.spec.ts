@@ -162,51 +162,47 @@ describe('InterventionService', () => {
     expect(result).toEqual([first, second]);
   });
 
-  it('fans out multi-status work-item filters as scalar server requests', () => {
-    const planned = { id: 'work-item-planned' } as InterventionWorkItemOutput;
+  it('paginates a combined status query without draining later pages', () => {
     const inProgress = { id: 'work-item-in-progress' } as InterventionWorkItemOutput;
-    let result: readonly InterventionWorkItemOutput[] = [];
-
+    let total = 0;
     service
-      .listAllWorkItems('intervention-1', {
+      .listWorkItems('intervention-1', {
         search: 'pump',
         status: ['planned', 'in_progress'],
+        page: 2,
+        itemsPerPage: 10,
+        prioritizeAssignee: '/api/organizations/org/members/member',
       })
-      .subscribe((items) => {
-        result = items;
+      .subscribe((result) => {
+        total = result.totalItems;
       });
-
-    const requests = httpMock.match(
-      (candidate) =>
-        candidate.url === `${mockEnv.apiUrl}/api/intervention-work-items` &&
-        candidate.params.get('search') === 'pump' &&
-        candidate.params.get('intervention') === '/api/interventions/intervention-1',
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === `${mockEnv.apiUrl}/api/intervention-work-items`,
     );
-    expect(requests).toHaveLength(2);
-    expect(requests.map((request) => request.request.params.get('status')).toSorted()).toEqual([
-      'in_progress',
-      'planned',
-    ]);
-    expect(requests.every((request) => !request.request.params.has('status[]'))).toBe(true);
+    expect(request.request.params.getAll('status[]')).toEqual(['planned', 'in_progress']);
+    expect(request.request.params.has('status')).toBe(false);
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('itemsPerPage')).toBe('10');
+    expect(request.request.params.get('search')).toBe('pump');
+    expect(request.request.params.get('prioritizeAssignee')).toBe(
+      '/api/organizations/org/members/member',
+    );
+    request.flush({
+      member: [inProgress],
+      totalItems: 32,
+      view: { next: '/api/intervention-work-items?page=3' },
+    });
+    expect(total).toBe(32);
+    httpMock.expectNone((candidate) => candidate.url.endsWith('/intervention-work-items'));
+  });
 
-    requests
-      .find((request) => request.request.params.get('status') === 'planned')
-      ?.flush({
-        '@id': '/api/intervention-work-items?status=planned',
-        '@type': 'Collection',
-        totalItems: 1,
-        member: [planned],
-      });
-    requests
-      .find((request) => request.request.params.get('status') === 'in_progress')
-      ?.flush({
-        '@id': '/api/intervention-work-items?status=in_progress',
-        '@type': 'Collection',
-        totalItems: 1,
-        member: [inProgress],
-      });
-
-    expect(result).toEqual([planned, inProgress]);
+  it('drains combined statuses only for a complete workspace snapshot', () => {
+    service.listAllWorkItems('intervention-1', { status: ['planned', 'in_progress'] }).subscribe();
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === `${mockEnv.apiUrl}/api/intervention-work-items`,
+    );
+    expect(request.request.params.getAll('status[]')).toEqual(['planned', 'in_progress']);
+    request.flush({ member: [], totalItems: 0 });
   });
 
   it('forwards one scalar status when listing one work-item page', () => {

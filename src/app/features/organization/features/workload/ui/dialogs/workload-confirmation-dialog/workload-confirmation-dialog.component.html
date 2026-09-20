@@ -1,0 +1,51 @@
+<hlm-alert-dialog state="open" (stateChanged)="$event === 'closed' && cancelled.emit()">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal class="max-h-[85svh] overflow-y-auto">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@workload.confirmTitle">Confirm workload overload</h2>
+      <p hlmAlertDialogDescription i18n="@@workload.confirmDescription">
+        This plan creates or increases an overload. No other member will be assigned automatically.
+      </p>
+    </hlm-alert-dialog-header>
+    @if (assessment().completeness !== 'complete') {
+      <div hlmAlert>
+        <p hlmAlertDescription i18n="@@workload.confirmPartial">
+          Some work or capacity is unknown. The total overload may be higher.
+        </p>
+      </div>
+    }
+    <ul class="flex flex-col gap-3 text-sm">
+      @for (day of assessment().increases; track $index) {
+        <li class="rounded-lg border p-3">
+          <p class="font-medium">
+            {{ day.memberName ?? memberNames()[day.memberId] ?? day.memberId }}
+            @if (day.date) {
+              · {{ day.date + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}
+            }
+          </p>
+          @if (day.date) {
+            <p i18n="@@workload.overloadComparison">
+              Overload: {{ duration(day.beforeMinutes) }} → {{ duration(day.afterMinutes) }}
+            </p>
+            <p class="text-muted-foreground" i18n="@@workload.confirmCapacity">
+              Capacity: {{ duration(day.capacityMinutes) }}
+            </p>
+          } @else {
+            <p i18n="@@workload.noAvailableDay">No available day in this work period.</p>
+            <p>{{ duration(day.afterMinutes) }}</p>
+          }
+        </li>
+      }
+    </ul>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel (click)="cancelled.emit()" i18n="@@common.back">Back</button>
+      <button
+        hlmAlertDialogAction
+        (click)="confirmed.emit(assessment().confirmationToken)"
+        data-testid="workload-confirm"
+        i18n="@@workload.confirmOverload"
+      >
+        Confirm overload
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

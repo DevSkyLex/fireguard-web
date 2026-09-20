@@ -44,6 +44,7 @@ import {
 } from '@shared/collection-filters';
 import { CollectionSurface } from '@shared/collection-surface';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -107,6 +108,7 @@ const EQUIPMENT_STATUS_OPTIONS: readonly CollectionFilterOption[] = EQUIPMENT_ST
     ...HlmEmptyImports,
     NgTemplateOutlet,
     CollectionSurface,
+    ResourceIllustration,
     RouterLink,
     HlmBadge,
     HlmButton,

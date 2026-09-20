@@ -114,7 +114,11 @@ test.describe('Form sheets confirm before discarding a dirty draft', () => {
     await detail.goto(E2E_ORGANIZATION_ID, interventionId);
     await expect(detail.root).toBeVisible();
 
-    await page.getByTestId('intervention-command-secondary').click();
+    await page.getByTestId('intervention-detail-menu').click();
+    await page
+      .getByTestId('intervention-detail-transition')
+      .filter({ hasText: 'Changes requested' })
+      .click();
     const sheet = page.getByTestId('intervention-request-changes-dialog');
     await expect(sheet).toBeVisible();
 

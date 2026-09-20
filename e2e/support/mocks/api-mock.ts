@@ -33,12 +33,13 @@ import type {
   ApprovalRequestOutputFixture,
 } from '../fixtures/approval-fixtures';
 import type { AuditEventOutputFixture } from '../fixtures/audit-fixtures';
-import type {
-  InvoiceOutputFixture,
-  OrganizationQuotaOutputFixture,
-  OrganizationSubscriptionOutputFixture,
-  PlanOutputFixture,
-  PlanPricingOutputFixture,
+import {
+  organizationQuotaOutput,
+  type InvoiceOutputFixture,
+  type OrganizationQuotaOutputFixture,
+  type OrganizationSubscriptionOutputFixture,
+  type PlanOutputFixture,
+  type PlanPricingOutputFixture,
 } from '../fixtures/billing-fixtures';
 import {
   messageOutput,
@@ -51,9 +52,15 @@ import type {
   ComplianceFacilityTreeOutputFixture,
   ComplianceSummaryOutputFixture,
 } from '../fixtures/compliance-fixtures';
-import type {
-  OrganizationDashboardOutputFixture,
-  OrganizationDashboardTrendOutputFixture,
+import {
+  equipmentCreatedTrendOutput,
+  facilitiesCreatedTrendOutput,
+  inspectionsTrendOutput,
+  nonConformitiesOpenedTrendOutput,
+  nonConformitiesResolvedTrendOutput,
+  organizationDashboardOutput,
+  type OrganizationDashboardOutputFixture,
+  type OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import { equipmentKpiOutput, type EquipmentKpiFixture } from '../fixtures/equipment-fixtures';
 import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
@@ -75,9 +82,10 @@ import type {
   InterventionTemplateOutputFixture,
   InterventionWorkItemOutputFixture,
 } from '../fixtures/intervention-fixtures';
-import type {
-  OrganizationInvitationPreviewOutputFixture,
-  OrganizationMemberOutputFixture,
+import {
+  acceptedOrganizationMemberOutput,
+  type OrganizationInvitationPreviewOutputFixture,
+  type OrganizationMemberOutputFixture,
 } from '../fixtures/invitation-fixtures';
 import type { MaintenanceScheduleOutputFixture } from '../fixtures/maintenance-fixtures';
 import type { OrganizationInvitationOutputFixture } from '../fixtures/member-fixtures';
@@ -372,14 +380,12 @@ export class ApiMock {
   /** Successful mutations remain visible to later mocked collection GETs. */
   private readonly updatedInterventionRows = new Map<string, unknown>();
 
-  /** Applies the requested scalar facets, text and pagination instead of acknowledging every query. */
+  /** Applies scalar/repeated facets, text, assignee ordering and pagination like the API. */
   private interventionCollection(rows: readonly unknown[], url: URL): unknown {
     const search = (url.searchParams.get('search') ?? '').trim().toLowerCase();
-    const status = url.searchParams.get('status');
+    const statuses = [...url.searchParams.getAll('status'), ...url.searchParams.getAll('status[]')];
     const type = url.searchParams.get('type');
     const result = url.searchParams.get('result');
-    if ([...url.searchParams.keys()].some((key) => key.startsWith('status[')))
-      throw new Error('Intervention table status queries must be scalar.');
     const matching = rows
       .map((row) => {
         const record = row as { id: string };
@@ -388,7 +394,7 @@ export class ApiMock {
       .filter((row) => {
         const record = row as Record<string, unknown>;
         return (
-          (!status || record['status'] === status) &&
+          (!statuses.length || statuses.includes(String(record['status']))) &&
           (!type || record['type'] === type) &&
           (!result || record['result'] === result) &&
           (!search ||
@@ -399,6 +405,18 @@ export class ApiMock {
               .includes(search))
         );
       });
+    if (url.pathname.endsWith('/intervention-work-items')) {
+      const assignee = url.searchParams.get('prioritizeAssignee');
+      matching.sort((left, right) => {
+        const a = left as InterventionWorkItemOutputFixture;
+        const b = right as InterventionWorkItemOutputFixture;
+        return (
+          (assignee ? Number(b.assignee === assignee) - Number(a.assignee === assignee) : 0) ||
+          Date.parse(b.updatedAt) - Date.parse(a.updatedAt) ||
+          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        );
+      });
+    }
     const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
     const size =
       url.searchParams.get('pagination') === 'false'
@@ -585,15 +603,7 @@ export class ApiMock {
     // the current member profile then lists interventions `responsible=` them
     // for offline warm-caching. Every authenticated session hits this once.
     await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
-      const request = route.request();
-      if (
-        request.method() !== 'GET' ||
-        !organizations.some(
-          (organization) =>
-            new URL(request.url()).searchParams.get('organization') === organization['@id'],
-        )
-      )
-        return route.fallback();
+      if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     // `MemberDirectoryStore` (bound to `MEMBER_DIRECTORY_PORT` by
@@ -619,6 +629,141 @@ export class ApiMock {
     });
     await this.page.route(/\/api\/organizations(\?.*)?$/, async (route) => {
       await fulfillJson(route, 200, hydraCollection(organizations));
+    });
+
+    // Organization landing pages can be reached as a side effect of an
+    // onboarding action or a deep-link test. Keep the authenticated shell
+    // deterministic even when the spec is not asserting dashboard data.
+    // Feature-specific dashboard mocks registered after this session setup
+    // still win because Playwright evaluates routes last-registered-first.
+    await this.page.route(/\/api\/organizations\/[^/]+\/dashboard(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, organizationDashboardOutput());
+    });
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/dashboard\/trends\/(inspections|non-conformities-opened|non-conformities-resolved|equipment-created|facilities-created)(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const metric = new URL(route.request().url()).pathname.split('/').at(-1);
+        const trend: OrganizationDashboardTrendOutputFixture =
+          metric === 'inspections'
+            ? inspectionsTrendOutput()
+            : metric === 'non-conformities-opened'
+              ? nonConformitiesOpenedTrendOutput()
+              : metric === 'non-conformities-resolved'
+                ? nonConformitiesResolvedTrendOutput()
+                : metric === 'equipment-created'
+                  ? equipmentCreatedTrendOutput()
+                  : facilitiesCreatedTrendOutput();
+        await fulfillJson(route, 200, trend);
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facilities\/[^/]+\/(equipment|inspections)(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/compliance\/register-snapshots(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    // These secondary organization reads are started by feature pages before
+    // their scenario-specific mocks are registered. Specific routes added
+    // after `mockAuthenticatedSession` still win (last-registered-first).
+    await this.page.route(/\/api\/organizations\/[^/]+\/facility-tree(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/equipment\/kpis(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, equipmentKpiOutput());
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/checklists(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/invitations(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/roles(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/quota(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      const organizationId: string = new URL(route.request().url()).pathname.split('/')[3] ?? '';
+      await fulfillJson(
+        route,
+        200,
+        organizationQuotaOutput({
+          '@id': `/api/organizations/${organizationId}/quota`,
+          organizationId,
+        }),
+      );
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/facilities(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    // Workspace-shell prefetches and route resolvers can read these shared
+    // catalogs before a scenario registers its own fixture. Specific mocks
+    // registered after the authenticated session still win (last-registered-first).
+    await this.page.route(/\/api\/organizations\/[^/]+\/equipment(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/members\/[^/]+(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      const url = new URL(route.request().url());
+      const segments = url.pathname.split('/');
+      const organizationId = segments.at(-3) ?? E2E_ORGANIZATION_ID;
+      const memberId = segments.at(-1) ?? 'e2e-member-1';
+      await fulfillJson(
+        route,
+        200,
+        acceptedOrganizationMemberOutput({
+          '@id': `/api/organizations/${organizationId}/members/${memberId}`,
+          id: memberId,
+          organizationId,
+        }),
+      );
+    });
+    await this.page.route(/\/api\/organizations\/legal-types(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(
+        route,
+        200,
+        hydraCollection([
+          optionOutput({ value: 'sas', label: 'SAS' }),
+          optionOutput({ value: 'sarl', label: 'SARL' }),
+        ]),
+      );
+    });
+    await this.page.route(/\/api\/intervention-work-items(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-changes(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/interventions\/[^/]+\/issues(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-templates(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/intervention-labels(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
     });
 
     await Promise.all(
@@ -1359,6 +1504,25 @@ export class ApiMock {
         return route.fallback();
       await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
     });
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facilities\/[^/]+\/plan-overlay(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const attachmentId: string =
+          new URL(route.request().url()).searchParams.get('attachmentId') ??
+          plans.find((plan) => plan.isPrimaryPlan)?.id ??
+          plans[0]?.id ??
+          uploadResponse.id;
+        const attachment = [...plans, uploadResponse].find((plan) => plan.id === attachmentId);
+        await fulfillJson(route, 200, {
+          attachmentId,
+          imageWidth: attachment?.imageWidth ?? 1200,
+          imageHeight: attachment?.imageHeight ?? 800,
+          zones: [],
+          equipment: [],
+        });
+      },
+    );
   }
 
   /**

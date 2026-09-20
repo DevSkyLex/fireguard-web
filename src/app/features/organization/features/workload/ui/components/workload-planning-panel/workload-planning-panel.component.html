@@ -1,0 +1,170 @@
+@if (groups().length) {
+  <section
+    id="workload-planning"
+    aria-labelledby="workload-planning-title"
+    class="@container flex min-w-0 flex-col gap-4"
+  >
+    <div class="flex flex-col gap-1">
+      <h2
+        id="workload-planning-title"
+        class="text-lg font-semibold"
+        i18n="@@workload.planning.title"
+      >
+        Work to plan
+      </h2>
+      <p class="max-w-prose text-sm text-muted-foreground" i18n="@@workload.planning.description">
+        These tasks are not included in daily totals. Expand a reason to see what needs attention.
+      </p>
+    </div>
+    <div class="min-w-0 divide-y rounded-xl border">
+      @for (group of groups(); track group.reason) {
+        <div
+          hlmCollapsible
+          [expanded]="expandedReason() === group.reason"
+          (expandedChange)="expandedReason.set($event ? group.reason : null)"
+          class="min-w-0 p-1"
+        >
+          <h3>
+            <button
+              hlmBtn
+              variant="ghost"
+              hlmCollapsibleTrigger
+              [id]="'workload-planning-trigger-' + group.reason"
+              class="h-auto min-h-12 w-full justify-start gap-3 text-left whitespace-normal"
+            >
+              <ng-icon
+                [name]="group.icon"
+                aria-hidden="true"
+                class="shrink-0 text-muted-foreground"
+              />
+              <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                <span class="min-w-0 wrap-anywhere">{{ group.title }}</span>
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="shrink-0 tabular-nums"
+                  i18n="@@workload.planning.taskCount"
+                  >{group.taskCount, plural, =1 {1 task} other {{{ group.taskCount }} tasks}}</span
+                >
+              </span>
+              <ng-icon
+                name="lucideChevronRight"
+                aria-hidden="true"
+                class="shrink-0 text-muted-foreground motion-safe:transition-transform"
+                [class.rotate-90]="expandedReason() === group.reason"
+              />
+            </button>
+          </h3>
+          <div
+            hlmCollapsibleContent
+            role="region"
+            [attr.aria-labelledby]="'workload-planning-trigger-' + group.reason"
+          >
+            @if (expandedReason() === group.reason) {
+              <div
+                class="flex min-w-0 flex-col gap-3 px-2 pt-1 pb-2 desktop-ui:px-3 desktop-ui:pb-3"
+              >
+                <p class="max-w-prose px-3 pb-1 text-sm leading-relaxed text-muted-foreground">
+                  {{ group.description }}
+                </p>
+                <ul hlmItemGroup>
+                  @for (row of group.rows; track row.key) {
+                    <li class="flex min-w-0 flex-col gap-2">
+                      <a
+                        hlmItem
+                        size="sm"
+                        variant="muted"
+                        [routerLink]="[
+                          '/organizations',
+                          organizationId(),
+                          'interventions',
+                          row.interventionId,
+                        ]"
+                        class="min-w-0"
+                      >
+                        <div
+                          class="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 @min-[44rem]:grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto]"
+                        >
+                          <div hlmItemContent class="min-w-0">
+                            <span
+                              class="font-medium wrap-anywhere underline decoration-border underline-offset-4 group-hover/item:decoration-foreground"
+                              >{{ row.label }}</span
+                            >
+                            <div
+                              class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                            >
+                              <span i18n="@@workload.planning.rowCount">{row.taskCount, plural,
+                                =1 {1 task}
+                                other {{{ row.taskCount }} tasks}
+                              }</span>
+                              @if (row.remainingMinutes !== null) {
+                                <span
+                                  class="font-medium text-foreground tabular-nums"
+                                  i18n="@@workload.planning.remaining"
+                                  >{{ duration(row.remainingMinutes) }} remaining</span
+                                >
+                              }
+                              @if (row.isDraft) {
+                                <span hlmBadge variant="outline" i18n="@@workload.draft"
+                                  >Draft</span
+                                >
+                              }
+                            </div>
+                          </div>
+                          @if (row.memberId; as memberId) {
+                            @let identity = membersById().get(memberId);
+                            <div
+                              class="col-start-1 row-start-2 flex min-w-0 items-center gap-2 @min-[44rem]:col-start-2 @min-[44rem]:row-start-1 @min-[44rem]:w-56"
+                            >
+                              <hlm-avatar size="sm" class="shrink-0" aria-hidden="true">
+                                @if (identity?.avatarUrl; as avatarUrl) {
+                                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                                }
+                                <span hlmAvatarFallback>{{ identity?.initials ?? '?' }}</span>
+                              </hlm-avatar>
+                              <div class="min-w-0">
+                                <p class="text-sm wrap-anywhere">
+                                  {{ identity?.displayName || row.displayName }}
+                                </p>
+                                @if (identity?.roleLabel; as role) {
+                                  <p class="text-xs wrap-anywhere text-muted-foreground">
+                                    {{ role }}
+                                  </p>
+                                }
+                              </div>
+                            </div>
+                          }
+                          <ng-icon
+                            name="lucideArrowRight"
+                            size="16"
+                            aria-hidden="true"
+                            class="col-start-2 row-start-1 shrink-0 text-muted-foreground @min-[44rem]:col-start-3"
+                          />
+                        </div>
+                      </a>
+                      @if (row.capacityMemberId; as capacityMemberId) {
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          size="sm"
+                          class="self-start mobile-ui:min-h-11 desktop-ui:self-end"
+                          (click)="capacityRequested.emit(capacityMemberId)"
+                          i18n="@@workload.configureCapacity"
+                        >
+                          Configure capacity
+                        </button>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    <p class="text-xs text-muted-foreground" i18n="@@workload.planning.scope">
+      Members on this page and unassigned tasks in the current view.
+    </p>
+  </section>
+}

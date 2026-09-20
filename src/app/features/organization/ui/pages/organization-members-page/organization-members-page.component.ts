@@ -82,6 +82,7 @@ import { OrganizationJoinRequestPanel } from '@features/organization/ui/componen
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
@@ -237,6 +238,7 @@ type OrganizationMembersKpiTile = {
     OrganizationJoinRequestPanel,
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     HlmCardTitle,
     HlmButton,
     ...HlmCommandImports,

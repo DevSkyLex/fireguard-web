@@ -26,7 +26,7 @@ import { HlmButton } from '@shared/ui/button';
   imports: [RouterLink, NgIcon, PageHeading, HlmButton],
   providers: [provideIcons({ lucideLockKeyhole, lucideKeyRound, lucideLogOut, lucideShieldX })],
   templateUrl: './forbidden-page.component.html',
-  host: { class: 'my-auto block w-full max-w-xl shrink-0' },
+  host: { class: 'my-auto block min-w-0 w-full max-w-full shrink-0 sm:max-w-xl' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ForbiddenPage {

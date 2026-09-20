@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-error-light-title fg-empty-error-light-description" class="fg-empty-error-light">
+  <title id="fg-empty-error-light-title">Something went wrong</title>
+  <desc id="fg-empty-error-light-description">A folded recovery sign with a clear orange exclamation on its front plane.</desc>
+  <defs>
+    <linearGradient id="fg-empty-error-light-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fafafb"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-empty-error-light { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; }
+    .fg-empty-error-light .edge, .fg-empty-error-light .seam { stroke: #777781; }
+    .fg-empty-error-light .seam { stroke-width: 1.35; }
+    .fg-empty-error-light .shade { fill: #1b1b24; fill-opacity: .055; }
+    .fg-empty-error-light .soft { stroke: #a1a1ab; stroke-width: 1.1; }
+    .fg-empty-error-light .guide { stroke: #85858f; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-empty-error-light .accent { stroke: #f4511e; }
+    .fg-empty-error-light .accent { stroke-width: 1.1; }
+    .fg-empty-error-light .accent-fill { fill: #f4511e; }
+    .fg-empty-error-light .tf { fill: url(#fg-empty-error-light-plane); }
+    .fg-empty-error-light .rf { fill: #dddde3; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M74 56L89.6 65L74 74L58.4 65ZM58.4 69L74 78L89.6 69M331.7 106.5L340.3 111.5M331.7 111.5L340.3 106.5M319.5 279a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM326.5 283a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM59 245.5L55 252.5M89.3 263L85.3 270"/><path class="guide" d="M58.4 65L58.4 69L74 78M57 249L87.3 266.5"/><path class="accent" d="M59.6 250.5L66.5 254.5"/><path class="accent-fill" d="M312.4 275a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 28.5)">
+<polygon class="shade" points="193.1,104 310.9,172 206.9,232 89.1,164"/>
+<g data-part="folded-panel"><polygon class="rf" points="293.5,170 196.5,114 196.5,117 293.5,173"/><polygon class="rf" points="196.5,114 151.5,31 151.5,34 196.5,117"/><polygon class="tf" points="151.5,31 248.5,87 293.5,170 196.5,114"/><polyline class="seam" points="293.5,170 196.5,114"/><polyline class="seam" points="196.5,114 151.5,31"/><polyline class="seam" points="196.5,114 196.5,117"/><polygon class="edge" points="151.5,31 248.5,87 248.5,87 293.5,170 293.5,173 196.5,117 196.5,117 151.5,34"/></g>
+<polyline class="soft" points="196.5,114 106.5,166"/>
+<polyline class="soft" points="293.5,170 203.5,222"/>
+<g data-part="folded-panel"><polygon class="rf" points="248.5,87 203.5,222 203.5,225 248.5,90"/><polygon class="rf" points="203.5,222 106.5,166 106.5,169 203.5,225"/><polygon class="tf" points="151.5,31 248.5,87 203.5,222 106.5,166"/><polyline class="seam" points="248.5,87 203.5,222"/><polyline class="seam" points="203.5,222 106.5,166"/><polyline class="seam" points="203.5,222 203.5,225"/><polygon class="edge" points="151.5,31 248.5,87 248.5,90 203.5,225 203.5,225 106.5,169 106.5,166 151.5,31"/></g>
+<g data-part="detail"><path class="accent" d="M191.3 85L195.9 170.4L140.5 138.4Z"/><path class="accent" d="M183.9 107.3L176.5 129.6"/><path class="accent-fill" d="M174.4 143.2C173.8 144.8 172.5 145.6 171.3 145C170.2 144.3 169.7 142.4 170.2 140.8C170.8 139.1 172.2 138.3 173.3 139C174.5 139.7 174.9 141.5 174.4 143.2Z"/></g>
+  </g></g></g>
+</svg>

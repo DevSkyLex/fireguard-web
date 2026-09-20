@@ -28,6 +28,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { serverMessagesOf } from '@shared/form-feedback';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
 
 import { sheetSide } from '@shared/sheet-side';
@@ -79,6 +80,7 @@ import { HlmItemImports } from '@shared/ui/item';
 @Component({
   selector: 'app-intervention-create-sheet',
   imports: [
+    HlmInputGroupAddon,
     InterventionCatalogueStatus,
     ...HlmAvatarImports,
     ...HlmItemImports,
@@ -97,6 +99,23 @@ import { HlmItemImports } from '@shared/ui/item';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateSheet {
+  /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () =>
+      this.memberOptions().find((member) => member.value === this.overrideResponsible()) ?? null,
+  );
+
   /**
    * Property catalogueSearched
    * @readonly

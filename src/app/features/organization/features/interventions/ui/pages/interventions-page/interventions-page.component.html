@@ -910,6 +910,8 @@
       @if (enumFieldOperator('responsible') === 'isAnyOf') {
         <app-collection-filter-multi-select
           [options]="planningOptions.members()"
+          [optionTemplate]="memberOptionRow"
+          [valueTemplate]="memberSelectedValue"
           [values]="responsibleValues()"
           placeholder="Responsible"
           i18n-placeholder="@@intervention.list.filterResponsible"
@@ -927,6 +929,8 @@
       } @else {
         <app-collection-filter-select
           [options]="planningOptions.members()"
+          [optionTemplate]="memberOptionRow"
+          [valueTemplate]="memberSelectedValue"
           [value]="responsibleScalar()"
           placeholder="Responsible"
           i18n-placeholder="@@intervention.list.filterResponsible"
@@ -1145,7 +1149,7 @@
           </div>
         </div>
       } @else if (!store.isLoadingInterventions() && items().length === 0) {
-        @if (hasSearch()) {
+        @if (hasSearch() || activeFilterKeys().length > 0) {
           <div hlmEmpty class="border border-border">
             <div hlmEmptyHeader>
               <div hlmEmptyMedia variant="icon">
@@ -1167,9 +1171,9 @@
         } @else {
           <div hlmEmpty class="border border-border">
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideClipboardList" aria-hidden="true" />
-              </div>
+              @if (store.listCallState().status === 'success' && store.totalInterventions() === 0) {
+                <app-resource-illustration hlmEmptyMedia resource="intervention" />
+              }
               <p hlmEmptyTitle i18n="@@intervention.list.emptyTitle">No interventions yet</p>
               <p hlmEmptyDescription i18n="@@intervention.list.emptyDescription">
                 Create your first intervention to start planning field work.
@@ -1436,3 +1440,38 @@
   (submitted)="submitAssign($event)"
   (dismissed)="dismissAssign()"
 />
+<ng-template #memberOptionRow let-option>
+  <span class="flex max-w-sm min-w-0 items-center gap-2">
+    <hlm-avatar class="size-8 shrink-0" aria-hidden="true">
+      @if (option.avatarUrl; as avatarUrl) {
+        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+      }
+      <span hlmAvatarFallback>{{ option.initials }}</span>
+    </hlm-avatar>
+    <span class="flex min-w-0 flex-1 flex-col text-left">
+      <span class="wrap-anywhere whitespace-normal">{{ option.displayName }}</span>
+      <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">{{
+        option.roleLabel
+      }}</span>
+    </span>
+  </span>
+</ng-template>
+<ng-template #memberSelectedValue let-option>
+  <span
+    class="inline-flex min-w-0 items-center gap-1.5"
+    [attr.title]="option.roleLabel ? option.label + ' · ' + option.roleLabel : option.label"
+  >
+    <hlm-avatar size="sm" class="shrink-0" aria-hidden="true">
+      @if (option.avatarUrl; as avatarUrl) {
+        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+      }
+      <span hlmAvatarFallback>{{ option.initials ?? '?' }}</span>
+    </hlm-avatar>
+    <span class="truncate"
+      >{{ option.label }}
+      @if (option.roleLabel) {
+        · {{ option.roleLabel }}
+      }
+    </span>
+  </span>
+</ng-template>

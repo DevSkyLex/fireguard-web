@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-access-denied-dark-title fg-empty-access-denied-dark-description" class="fg-empty-access-denied-dark">
+  <title id="fg-empty-access-denied-dark-title">Access restricted</title>
+  <desc id="fg-empty-access-denied-dark-description">A solid padlock with a round metal shackle and a small orange keyhole.</desc>
+  <defs>
+    <linearGradient id="fg-empty-access-denied-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-empty-access-denied-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-empty-access-denied-dark .left { fill: #141417; stroke: #a1a1aa; }
+    .fg-empty-access-denied-dark .right { fill: #0d0d0f; stroke: #a1a1aa; }
+    .fg-empty-access-denied-dark .edge, .fg-empty-access-denied-dark .seam { stroke: #a1a1aa; }
+    .fg-empty-access-denied-dark .seam { stroke: #51515c; }
+    .fg-empty-access-denied-dark .seam { stroke-width: 1.35; }
+    .fg-empty-access-denied-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-empty-access-denied-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-empty-access-denied-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-empty-access-denied-dark .accent { stroke: #ff7043; }
+    .fg-empty-access-denied-dark .accent { stroke-width: 1.1; }
+    .fg-empty-access-denied-dark .accent-fill { fill: #ff7043; }
+    .fg-empty-access-denied-dark .tf { fill: url(#fg-empty-access-denied-dark-plane); }
+    .fg-empty-access-denied-dark .lf { fill: #141417; }
+    .fg-empty-access-denied-dark .rf { fill: #0d0d0f; }
+    .fg-empty-access-denied-dark .accent { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M72 72L82.4 78L82.4 88.8L72 94.8L61.6 88.8L61.6 78ZM82.4 78L72 84L61.6 78M72 84L72 94.8M321.7 108.5L330.3 113.5M321.7 113.5L330.3 108.5M296.5 272a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM303.5 276a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM67 220.5L63 227.5M99 239L95 246"/><path class="guide" d="M61.6 88.8L72 82.8L82.4 88.8M65 224L97 242.5"/><path class="accent" d="M67.6 225.5L74.5 229.5"/><path class="accent-fill" d="M289.4 268a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 51.2)">
+<polygon class="shade" points="179.2,111 298.7,180 220.8,225 101.3,156"/>
+<g data-part="plate"><path class="lf" d="M117.7 144Q117.7 142.5 120.3 141L174 110Q179.2 107 184.4 110L279.7 165Q282.3 166.5 282.3 168L282.3 180Q282.3 181.5 279.7 183L226 214Q220.8 217 215.6 214L120.3 159Q117.7 157.5 117.7 156Z"/><path class="tf" d="M174 110Q179.2 107 184.4 110L279.7 165Q284.9 168 279.7 171L226 202Q220.8 205 215.6 202L120.3 147Q115.1 144 120.3 141Z"/><path class="seam" d="M282.3 168Q282.3 169.5 279.7 171L226 202Q220.8 205 215.6 202L120.3 147Q117.7 145.5 117.7 144"/><path class="edge" d="M117.7 144Q117.7 142.5 120.3 141L174 110Q179.2 107 184.4 110L279.7 165Q282.3 166.5 282.3 168L282.3 180Q282.3 181.5 279.7 183L226 214Q220.8 217 215.6 214L120.3 159Q117.7 157.5 117.7 156Z"/></g>
+<g data-part="detail"><path class="right" d="M174 68L174 20C174 0 187 -7.5 204.3 2.5C221.6 12.5 234.6 35 234.6 55L234.6 103L223.4 96.5L223.4 48.5C223.4 35.5 215.6 22 204.3 15.5C193.1 9 185.3 13.5 185.3 26.5L185.3 74.5Z"/></g>
+<g data-part="detail"><path class="left" d="M166.2 72.5L166.2 24.5C166.2 4.5 179.2 -3 196.5 7C213.8 17 226.8 39.5 226.8 59.5L226.8 107.5L215.6 101L215.6 53C215.6 40 207.8 26.5 196.5 20C185.3 13.5 177.5 18 177.5 31L177.5 79Z"/></g>
+<g data-part="volume"><polygon class="lf" points="175.8,50 264.1,101 264.1,170 224.2,193 135.9,142 135.9,73"/><polygon class="rf" points="264.1,101 224.2,124 224.2,193 264.1,170"/><polygon class="tf" points="175.8,50 264.1,101 224.2,124 135.9,73"/><path class="seam" d="M224.2 124L264.1 101M224.2 124L135.9 73M224.2 124L224.2 193"/><polygon class="edge" points="175.8,50 264.1,101 264.1,170 224.2,193 135.9,142 135.9,73"/></g>
+<g data-part="detail"><path class="accent" d="M180.1 121.5C186.1 125 188.7 136.5 183.5 137.5L186.1 151L174 144L176.6 133.5C171.4 126.5 174 118 180.1 121.5Z"/></g>
+  </g></g></g>
+</svg>

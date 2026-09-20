@@ -13,6 +13,7 @@ import { InterventionOutboxRepository } from '../intervention-outbox.repository'
  */
 function inMemoryDatabase(store: Map<string, InterventionOutboxOperation>): {
   browser: boolean;
+  currentOwnerId: ReturnType<typeof vi.fn>;
   ensureOwnerBound: ReturnType<typeof vi.fn>;
   put: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
@@ -21,6 +22,7 @@ function inMemoryDatabase(store: Map<string, InterventionOutboxOperation>): {
 } {
   return {
     browser: true,
+    currentOwnerId: vi.fn().mockReturnValue('account'),
     ensureOwnerBound: vi.fn().mockResolvedValue(undefined),
     put: vi.fn(async (_collection: string, key: string, value: InterventionOutboxOperation) => {
       store.set(key, value);
@@ -49,6 +51,100 @@ function build(
 }
 
 describe('InterventionOutboxRepository', () => {
+  it('requires explicit consent to the exact overload assessment and retains the original revision', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(entries));
+    await repository.queue('intervention', 'work-item.update', {
+      workItemId: 'task',
+      revision: 1,
+      assignee: '/api/organization-members/new-member',
+    });
+    const [{ id }] = [...entries.values()];
+    const assessment = {
+      confirmationRequired: true,
+      confirmationToken: 'reviewed-token',
+      completeness: 'complete' as const,
+      increases: [
+        {
+          memberId: 'new-member',
+          date: '2026-09-16',
+          reason: 'daily_overload',
+          beforeMinutes: 0,
+          afterMinutes: 60,
+          capacityMinutes: 420,
+        },
+      ],
+    };
+    await repository.markOutboxConflict(id, 'Overloaded', assessment);
+    await repository.retryOutbox(id);
+    expect(entries.get(id)?.status).toBe('conflict');
+    await repository.confirmWorkload(id, 'stale-token');
+    expect(entries.get(id)?.status).toBe('conflict');
+    await repository.confirmWorkload(id, 'reviewed-token');
+    expect(entries.get(id)).toMatchObject({
+      status: 'pending',
+      workloadAssessment: null,
+      payload: {
+        revision: 1,
+        assignee: '/api/organization-members/new-member',
+        workloadConfirmationToken: 'reviewed-token',
+      },
+    });
+  });
+  it('never automatically overwrites a time correction on a newer server revision', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(entries));
+    await repository.queue('intervention', 'time-entry.correct', {
+      workItemId: 'task',
+      id: 'entry',
+      memberId: 'member',
+      actorId: 'member',
+      workedOn: '2026-09-16',
+      minutes: 120,
+      note: 'My correction',
+      revision: 1,
+    });
+    const [{ id }] = [...entries.values()];
+    await repository.markOutboxConflict(id, 'Changed', null, {
+      revision: 3,
+      values: { minutes: 90, note: 'Server correction', revision: 3 },
+    });
+    await repository.retryOutbox(id);
+    await repository.confirmRevision(id, 2);
+    expect(entries.get(id)).toMatchObject({
+      status: 'conflict',
+      payload: { revision: 1, minutes: 120 },
+    });
+    await repository.confirmRevision(id, 3);
+    expect(entries.get(id)).toMatchObject({
+      status: 'pending',
+      baseRevision: 1,
+      serverRevision: 3,
+      serverValues: null,
+      payload: { revision: 3, minutes: 120, note: 'My correction' },
+    });
+  });
+  it('ignores reviewed revisions when the account changes while reading the queue', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries);
+    const repository = build(database);
+    await repository.queue('intervention', 'work-item.update', {
+      workItemId: 'task',
+      revision: 1,
+      remainingMinutes: 180,
+    });
+    const [{ id }] = [...entries.values()];
+    await repository.markOutboxConflict(id, 'Changed', null, {
+      revision: 2,
+      values: { remainingMinutes: 60, revision: 2 },
+    });
+    database.get.mockImplementationOnce(async (_collection: string, key: string) => {
+      database.currentOwnerId.mockReturnValue('other-account');
+      return entries.get(key);
+    });
+    await repository.confirmRevision(id, 2);
+    expect(entries.get(id)).toMatchObject({ status: 'conflict', payload: { revision: 1 } });
+  });
   it('persists a grouped field intention in one IndexedDB transaction', async () => {
     const database = {
       browser: false,

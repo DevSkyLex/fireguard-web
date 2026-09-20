@@ -146,10 +146,12 @@
   } @else if (!store.isLoadingInspections() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasSearchOrFilters() ? 'lucideListFilter' : 'lucideClipboardCheck'; as iconName) {
+        @if (hasSearchOrFilters()) {
           <div hlmEmptyMedia variant="icon">
-            <ng-icon [name]="iconName" aria-hidden="true" />
+            <ng-icon name="lucideListFilter" aria-hidden="true" />
           </div>
+        } @else if (store.listCallState().status === 'success' && store.totalInspections() === 0) {
+          <app-resource-illustration hlmEmptyMedia resource="inspection" />
         }
         <p hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</p>
         <p hlmEmptyDescription i18n="@@inspection.table.emptyDesc">

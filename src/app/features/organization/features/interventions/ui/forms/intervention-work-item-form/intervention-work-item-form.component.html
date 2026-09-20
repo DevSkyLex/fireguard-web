@@ -98,7 +98,26 @@
           inputId="intervention-work-item-assignee"
           placeholder="Assign this work item"
           i18n-placeholder="@@intervention.wif.assigneePlaceholder"
-        />
+        >
+          @if (selectedMemberOption(); as member) {
+            <span hlmInputGroupAddon align="inline-start" aria-hidden="true">
+              <hlm-avatar size="sm" class="shrink-0">
+                @if (member.avatarUrl; as avatarUrl) {
+                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                }
+                <span hlmAvatarFallback>{{ member.initials }}</span>
+              </hlm-avatar>
+            </span>
+            <span
+              hlmInputGroupAddon
+              align="inline-end"
+              class="order-none max-w-28 min-w-0"
+              [attr.title]="member.roleLabel"
+            >
+              <span class="truncate text-xs">{{ member.roleLabel }}</span>
+            </span>
+          }
+        </hlm-combobox-input>
         <hlm-combobox-content *hlmComboboxPortal>
           <hlm-combobox-empty i18n="@@intervention.list.filterNoMember"
             >No member matches.</hlm-combobox-empty
@@ -135,6 +154,215 @@
       <hlm-field-description i18n="@@intervention.wif.assigneeHint">
         Unassigned items can be picked up by any field agent.
       </hlm-field-description>
+      @if (workloadOrganizationId() && model().assignee) {
+        <app-workload-assignee-indicator
+          [organizationId]="workloadOrganizationId()"
+          [member]="model().assignee"
+          [startsOn]="workStartsOn() || workloadStartsOn()"
+          [endsOn]="workEndsOn() || workloadEndsOn()"
+        />
+      }
+    </hlm-field>
+    <fieldset hlmFieldSet class="gap-2" aria-describedby="work-item-estimate-hint">
+      <legend hlmFieldLegend variant="label" i18n="@@intervention.wif.estimatedTime">
+        Estimated time
+      </legend>
+      <div class="grid grid-cols-2 gap-3">
+        <hlm-field>
+          <label hlmFieldLabel for="work-item-estimate-hours" i18n="@@intervention.wif.hours"
+            >Hours</label
+          >
+          <div hlmInputGroup class="mobile-ui:h-11">
+            <input
+              hlmInputGroupInput
+              id="work-item-estimate-hours"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="0"
+              [formField]="workItemForm.estimateHours"
+              [attr.aria-describedby]="
+                workItemForm.estimateHours().touched() && workItemForm.estimateHours().invalid()
+                  ? 'work-item-estimate-hint work-item-hours-error'
+                  : 'work-item-estimate-hint'
+              "
+            />
+            <span hlmInputGroupAddon align="inline-end" aria-hidden="true">h</span>
+          </div>
+          @if (workItemForm.estimateHours().touched() && workItemForm.estimateHours().invalid()) {
+            <hlm-field-error id="work-item-hours-error" [forceShow]="true">{{
+              workItemForm.estimateHours().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="work-item-estimate-minutes" i18n="@@intervention.wif.minutes"
+            >Minutes</label
+          >
+          <div hlmInputGroup class="mobile-ui:h-11">
+            <input
+              hlmInputGroupInput
+              id="work-item-estimate-minutes"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="0"
+              [formField]="workItemForm.estimateMinutes"
+              [attr.aria-describedby]="
+                workItemForm.estimateMinutes().touched() && workItemForm.estimateMinutes().invalid()
+                  ? 'work-item-estimate-hint work-item-minutes-error'
+                  : 'work-item-estimate-hint'
+              "
+            />
+            <span hlmInputGroupAddon align="inline-end" aria-hidden="true">min</span>
+          </div>
+          @if (
+            workItemForm.estimateMinutes().touched() && workItemForm.estimateMinutes().invalid()
+          ) {
+            <hlm-field-error id="work-item-minutes-error" [forceShow]="true">{{
+              workItemForm.estimateMinutes().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+      </div>
+      <p
+        hlmFieldDescription
+        id="work-item-estimate-hint"
+        i18n="@@intervention.wif.estimatedTimeHint"
+      >
+        Optional. Leave both fields empty if not estimated yet.
+      </p>
+    </fieldset>
+    <hlm-field>
+      <label hlmFieldLabel for="work-item-period" i18n="@@intervention.wif.workPeriod"
+        >Work period</label
+      >
+      @if (isMobileInteractionMode()) {
+        <hlm-drawer
+          direction="bottom"
+          restoreFocus="#work-item-period"
+          [state]="calendarState()"
+          (stateChanged)="changeCalendarState($event)"
+        >
+          <button
+            #periodTrigger
+            hlmDrawerTrigger
+            hlmBtn
+            type="button"
+            variant="outline"
+            id="work-item-period"
+            class="min-h-11 w-full justify-between"
+            [disabled]="pending() || disabled()"
+            [attr.aria-invalid]="
+              workItemForm.workPeriod().touched() && workItemForm.workPeriod().invalid()
+                ? 'true'
+                : null
+            "
+            [attr.aria-describedby]="
+              workItemForm.workPeriod().touched() && workItemForm.workPeriod().invalid()
+                ? 'work-item-period-hint work-item-period-error'
+                : 'work-item-period-hint'
+            "
+          >
+            @if (model().workPeriod; as range) {
+              <span class="min-w-0 text-start whitespace-normal">{{
+                formatWorkPeriod(range)
+              }}</span>
+            } @else {
+              <span i18n="@@intervention.wif.selectWorkPeriod">Choose specific dates</span>
+            }
+            <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+          </button>
+          <hlm-drawer-content *hlmDrawerPortal class="overflow-hidden">
+            <hlm-drawer-header>
+              <div class="flex flex-col gap-1 text-start">
+                <h2 hlmDrawerTitle i18n="@@intervention.wif.workPeriod">Work period</h2>
+                <p hlmDrawerDescription i18n="@@intervention.wif.chooseWorkPeriod">
+                  Choose the first and last day of work.
+                </p>
+              </div>
+            </hlm-drawer-header>
+            <div class="min-h-0 overflow-y-auto px-4 pb-3">
+              <hlm-calendar-range
+                class="mx-auto w-full max-w-sm border-0 p-0 [--cell-size:--spacing(11)]"
+                [startDate]="calendarStart()"
+                [endDate]="calendarEnd()"
+                [defaultFocusedDate]="minWorkDate()"
+                [min]="minWorkDate()"
+                [max]="maxWorkDate()"
+                [disabled]="pending() || disabled()"
+                (startDateChange)="calendarStart.set($event)"
+                (endDateChange)="calendarEnd.set($event)"
+              />
+            </div>
+            <hlm-drawer-footer
+              class="grid grid-cols-2 gap-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            >
+              <button
+                hlmDrawerClose
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="min-h-11"
+                i18n="@@common.cancel"
+              >
+                Cancel
+              </button>
+              <button
+                hlmBtn
+                type="button"
+                class="min-h-11"
+                [disabled]="!calendarRangeComplete() || pending() || disabled()"
+                (click)="applyCalendarRange()"
+                i18n="@@common.apply"
+              >
+                Apply
+              </button>
+            </hlm-drawer-footer>
+          </hlm-drawer-content>
+        </hlm-drawer>
+      } @else {
+        <hlm-date-range-picker
+          [formField]="workItemForm.workPeriod"
+          [minDate]="minWorkDate()"
+          [maxDate]="maxWorkDate()"
+          [formatDates]="formatWorkPeriod"
+          autoCloseOnEndSelection
+          align="start"
+        >
+          <hlm-date-picker-trigger #periodTrigger buttonId="work-item-period" class="w-full">
+            <span i18n="@@intervention.wif.selectWorkPeriod">Choose specific dates</span>
+          </hlm-date-picker-trigger>
+        </hlm-date-range-picker>
+      }
+      <p hlmFieldDescription id="work-item-period-hint">
+        @if (inheritedPeriodLabel(); as period) {
+          <span i18n="@@intervention.wif.inheritedPeriod">By default: {{ period }}.</span>
+        } @else {
+          <span i18n="@@intervention.wif.inheritedPeriodPending"
+            >Optional. Uses the intervention dates once scheduled.</span
+          >
+        }
+      </p>
+      @if (model().workPeriod) {
+        <button
+          hlmBtn
+          type="button"
+          variant="link"
+          size="sm"
+          class="h-auto justify-start self-start px-0 mobile-ui:min-h-11"
+          [disabled]="pending() || disabled()"
+          (click)="clearWorkPeriod()"
+          i18n="@@intervention.wif.resetWorkPeriod"
+        >
+          Use intervention dates
+        </button>
+      }
+      @if (workItemForm.workPeriod().touched() && workItemForm.workPeriod().invalid()) {
+        <hlm-field-error id="work-item-period-error" [forceShow]="true">{{
+          workItemForm.workPeriod().errors()[0].message
+        }}</hlm-field-error>
+      }
     </hlm-field>
   </hlm-field-group>
 

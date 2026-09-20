@@ -180,10 +180,12 @@
   } @else if (!store.isLoading() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasFilters() ? 'lucideCircleAlert' : 'lucidePackage'; as iconName) {
+        @if (hasFilters()) {
           <div hlmEmptyMedia variant="icon">
-            <ng-icon [name]="iconName" aria-hidden="true" />
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
           </div>
+        } @else if (store.listCallState().status === 'success' && store.totalSchedules() === 0) {
+          <app-resource-illustration hlmEmptyMedia resource="maintenance" />
         }
         <p hlmEmptyTitle i18n="@@maintenance.list.emptyTitle">No maintenance schedules found</p>
         <p hlmEmptyDescription i18n="@@maintenance.list.emptyDesc">

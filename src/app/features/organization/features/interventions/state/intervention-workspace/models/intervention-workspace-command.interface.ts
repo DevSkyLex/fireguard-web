@@ -16,6 +16,19 @@ import type {
  * @since 1.0.0
  */
 export interface InterventionDetailsUpdateCommand {
+  /**
+   * Property revision
+   * @readonly
+   *
+   * @description
+   * Captured revision retained during overload confirmation.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {number}
+   */
+  readonly revision?: number;
   readonly interventionId: string;
   readonly input: UpdateInterventionInput;
 }

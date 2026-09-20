@@ -177,6 +177,7 @@ test.describe('Facility map', () => {
       await api.mockComplianceTree(E2E_ORGANIZATION_ID, [
         complianceTreeNodeOutput({ complianceRate: 28 }),
       ]);
+      await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
       const facilities = new FacilitiesPage(page);
 
       await facilities.gotoMap(E2E_ORGANIZATION_ID);

@@ -33,12 +33,13 @@ import type {
   ApprovalRequestOutputFixture,
 } from '../fixtures/approval-fixtures';
 import type { AuditEventOutputFixture } from '../fixtures/audit-fixtures';
-import type {
-  InvoiceOutputFixture,
-  OrganizationQuotaOutputFixture,
-  OrganizationSubscriptionOutputFixture,
-  PlanOutputFixture,
-  PlanPricingOutputFixture,
+import {
+  organizationQuotaOutput,
+  type InvoiceOutputFixture,
+  type OrganizationQuotaOutputFixture,
+  type OrganizationSubscriptionOutputFixture,
+  type PlanOutputFixture,
+  type PlanPricingOutputFixture,
 } from '../fixtures/billing-fixtures';
 import {
   messageOutput,
@@ -601,15 +602,7 @@ export class ApiMock {
     // the current member profile then lists interventions `responsible=` them
     // for offline warm-caching. Every authenticated session hits this once.
     await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
-      const request = route.request();
-      if (
-        request.method() !== 'GET' ||
-        !organizations.some(
-          (organization) =>
-            new URL(request.url()).searchParams.get('organization') === organization['@id'],
-        )
-      )
-        return route.fallback();
+      if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     // `MemberDirectoryStore` (bound to `MEMBER_DIRECTORY_PORT` by
@@ -673,6 +666,66 @@ export class ApiMock {
     );
     await this.page.route(
       /\/api\/organizations\/[^/]+\/compliance\/register-snapshots(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    // These secondary organization reads are started by feature pages before
+    // their scenario-specific mocks are registered. Specific routes added
+    // after `mockAuthenticatedSession` still win (last-registered-first).
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facility-tree(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/equipment\/kpis(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, equipmentKpiOutput());
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/checklists(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/invitations(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/roles(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/quota(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const organizationId: string = new URL(route.request().url()).pathname.split('/')[3] ?? '';
+        await fulfillJson(
+          route,
+          200,
+          organizationQuotaOutput({
+            '@id': `/api/organizations/${organizationId}/quota`,
+            organizationId,
+          }),
+        );
+      },
+    );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facilities(\?.*)?$/,
       async (route) => {
         if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection([]));
@@ -1417,6 +1470,25 @@ export class ApiMock {
         return route.fallback();
       await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
     });
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/facilities\/[^/]+\/plan-overlay(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const attachmentId: string =
+          new URL(route.request().url()).searchParams.get('attachmentId') ??
+          plans.find((plan) => plan.isPrimaryPlan)?.id ??
+          plans[0]?.id ??
+          uploadResponse.id;
+        const attachment = [...plans, uploadResponse].find((plan) => plan.id === attachmentId);
+        await fulfillJson(route, 200, {
+          attachmentId,
+          imageWidth: attachment?.imageWidth ?? 1200,
+          imageHeight: attachment?.imageHeight ?? 800,
+          zones: [],
+          equipment: [],
+        });
+      },
+    );
   }
 
   /**

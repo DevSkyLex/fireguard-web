@@ -87,6 +87,7 @@ test.describe('Assets explorer', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockComplianceFacilityTree(E2E_ORGANIZATION_ID, complianceFacilityTreeOutput());
     const explorer = new AssetsExplorerPage(page);
 
     await explorer.goto(E2E_ORGANIZATION_ID);

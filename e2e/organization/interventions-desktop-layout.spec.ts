@@ -39,27 +39,26 @@ const intervention = interventionOutput({
     'Vérifier les accès aux équipements et consigner les anomalies avec une photographie. Prévenir le responsable du site avant toute mise hors service.',
 });
 
-test('keeps description editing and disclosure choices through desktop resize', async ({
+test('keeps description editing and properties visible through desktop resize', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await prepare(page);
   await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/interventions/${intervention.id}`);
-  const about = page.getByRole('button', { name: 'About', exact: true });
-  await expect(about).toHaveAttribute('aria-expanded', 'true');
+  const properties = page.getByTestId('intervention-detail-properties');
+  await expect(properties).toBeVisible();
   await page.getByTestId('intervention-description-field').getByRole('button').first().click();
   const editor = page.getByTestId('intervention-description-input');
   await expect(editor).toBeFocused();
   await editor.fill('Draft preserved while the workspace becomes narrower.');
   await page.setViewportSize({ width: 1000, height: 768 });
-  await expect(about).toHaveAttribute('aria-expanded', 'true');
+  await expect(properties).toBeVisible();
   await expect(editor).toBeFocused();
   await expect(editor).toBeEditable();
   await expect(editor).toHaveValue('Draft preserved while the workspace becomes narrower.');
   await page.keyboard.press('Escape');
-  await about.click();
   await page.setViewportSize({ width: 1366, height: 768 });
-  await expect(about).toHaveAttribute('aria-expanded', 'false');
+  await expect(properties).toBeVisible();
 });
 
 async function prepare(page: Page): Promise<void> {
@@ -220,15 +219,10 @@ for (const viewport of [
       });
       await page.keyboard.press('Escape');
       await page.keyboard.press('Escape');
-      const about = page.getByRole('button', { name: 'About', exact: true });
-      await expect(about).toHaveAttribute('aria-expanded', 'true');
-      await about.click();
-      await expect(about).toHaveAttribute('aria-expanded', 'false');
-      await about.click();
-      await expect(about).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.getByTestId('intervention-detail-properties')).toBeVisible();
       await page.screenshot({
         animations: 'disabled',
-        path: `${CAPTURES}/${mode}-details-expanded.png`,
+        path: `${CAPTURES}/${mode}-details-visible.png`,
       });
       await expectNoHorizontalOverflow(page);
       await page.getByRole('tab', { name: 'Inspections', exact: false }).click();

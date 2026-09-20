@@ -109,10 +109,11 @@ test.describe('Intervention detail — the forward command', () => {
     const detail = new InterventionDetailPage(page);
     await detail.goto(E2E_ORGANIZATION_ID, SUBMITTED_ID);
 
-    const sendBack = page.getByTestId('intervention-command-secondary');
-    await expect(sendBack).toBeVisible();
-    await expect(sendBack).toContainText('Send back for changes');
     await expect(detail.commandButton).toHaveCount(0);
+    await page.getByTestId('intervention-detail-menu').click();
+    await expect(
+      page.getByTestId('intervention-detail-transition').filter({ hasText: 'Changes requested' }),
+    ).toBeVisible();
   });
 
   test('renders the split command at 375px in dark mode', async ({ page, context, baseURL }) => {

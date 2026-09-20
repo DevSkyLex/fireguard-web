@@ -73,7 +73,8 @@ for (const width of [390, 768, 1440]) {
         )
         .filter({ visible: true });
       await expect(rows).toHaveCount(4);
-      await expect(rows.first()).toBeInViewport({ ratio: 0.5 });
+      await expect(rows.first()).toBeVisible();
+      await expect(rows.first().getByRole('checkbox')).toBeInViewport();
       await expect(page.getByTestId('intervention-activity-thread')).toBeVisible();
       expect(
         await page
@@ -85,8 +86,7 @@ for (const width of [390, 768, 1440]) {
         path: testInfo.outputPath(`workspace-${width}-${dark ? 'dark' : 'light'}.png`),
         animations: 'disabled',
       });
-      await page.getByTestId('intervention-work-items-filter').click();
-      await page.getByRole('option', { name: /^All 7$/ }).click();
+      await page.getByTestId('intervention-work-items-filter-chip-remove').click();
       await expect(rows).toHaveCount(7);
       await rows.last().scrollIntoViewIfNeeded();
       const last = await rows.last().boundingBox();

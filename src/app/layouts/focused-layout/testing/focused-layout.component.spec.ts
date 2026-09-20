@@ -61,8 +61,6 @@ describe('FocusedLayout', () => {
     expect(element.querySelector('footer')?.classList).toContain(
       'mobile-ui:pb-[max(0.75rem,env(safe-area-inset-bottom))]',
     );
-    expect(element.querySelector('#focused-layout-content > div')?.classList).toContain(
-      'max-sm:my-0',
-    );
+    expect(element.querySelector('#focused-layout-content > div')?.classList).toContain('my-auto');
   });
 });

@@ -107,7 +107,7 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
   {
     id: 'workload',
     path: `${org}/workload`,
-    root: '#workload',
+    root: '[data-testid="workload-page"]',
     endpoint: `${api}/workload`,
     limit: 'Projection overview only; capacity editing and day details are not exercised.',
   },

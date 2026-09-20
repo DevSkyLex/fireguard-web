@@ -193,7 +193,10 @@ for (const { tab, actions } of [
       });
       const endpoint = tab === 'work-item' ? 'intervention-work-items' : 'intervention-changes';
       await page.route(new RegExp('/api/' + endpoint + '\\?'), async (route) => {
-        if (!new URL(route.request().url()).searchParams.has('status')) return route.fallback();
+        const searchParams = new URL(route.request().url()).searchParams;
+        if (!searchParams.has('status') && !searchParams.has('status[]')) {
+          return route.fallback();
+        }
         await held;
         return route.fallback();
       });

@@ -22,9 +22,9 @@ test('records two hours without subtracting from three hours remaining', async (
   expect(mock.timeWrites[0]).not.toHaveProperty('status');
   await page.screenshot({ path: info.outputPath('time-journal.png'), animations: 'disabled' });
   await page.keyboard.press('Escape');
-  await expect(
-    page.getByText('Estimated 5 h · Spent 0 min · Remaining 3 h').filter({ visible: true }),
-  ).toBeVisible();
+  const effort = page.getByTestId('intervention-work-item-effort').filter({ visible: true });
+  await expect(effort.locator('dt')).toHaveText(['Estimated', 'Remaining']);
+  await expect(effort.locator('dd')).toHaveText(['5 h', '3 h']);
   await expectNoHorizontalOverflow(page);
   expect(errors).toEqual([]);
 });

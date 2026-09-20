@@ -80,8 +80,7 @@ test.describe('Intervention detail — blocker checklist through to the submit g
     await detail.toggleWorkItem('Site setup');
 
     await expect(detail.workItemToggle('Site setup')).toHaveCount(0);
-    await page.getByTestId('intervention-work-items-filter').click();
-    await page.getByTestId('intervention-work-items-filter-all').click();
+    await page.getByTestId('intervention-work-items-filter-chip-remove').click();
     await expect(detail.workItemToggle('Site setup')).toBeChecked();
 
     await expect(detail.commandButton).toContainText('Submit for review');

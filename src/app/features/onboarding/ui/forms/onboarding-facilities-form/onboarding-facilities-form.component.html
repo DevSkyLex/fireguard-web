@@ -82,7 +82,7 @@
                 ><span i18n="@@onboarding.facilitiesForm.name"> Name</span><app-required-marker
               /></label>
               <input
-                class="mobile-ui:min-h-11"
+                class="max-sm:min-h-11 mobile-ui:min-h-11"
                 hlmInput
                 id="onboarding-facility-name"
                 #draftInput
@@ -103,7 +103,7 @@
               <hlm-select [itemToString]="typeLabelOf" [formField]="draftForm.type">
                 <hlm-select-trigger
                   buttonId="onboarding-facility-type"
-                  class="w-full mobile-ui:min-h-11"
+                  class="w-full max-sm:min-h-11 mobile-ui:min-h-11"
                   data-testid="onboarding-facility-type"
                 >
                   @if (selectedTypeIcon(); as icon) {
@@ -146,7 +146,7 @@
                 inputId="onboarding-facility-address"
                 (input)="addressInputChanged($event)"
                 data-testid="onboarding-facility-address"
-                class="mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
+                class="max-sm:min-h-11 max-sm:[&_input]:min-h-11 mobile-ui:min-h-11 mobile-ui:[&_input]:min-h-11"
                 [showTrigger]="false"
                 placeholder="Start typing a street and city"
                 i18n-placeholder="@@onboarding.facilitiesForm.addressPlaceholder"
@@ -209,7 +209,7 @@
                 id="onboarding-facility-city"
                 type="text"
                 autocomplete="address-level2"
-                class="mobile-ui:min-h-11"
+                class="max-sm:min-h-11 mobile-ui:min-h-11"
                 [formField]="draftForm.city"
                 (input)="addressPartChanged('city', $event)"
               />
@@ -219,7 +219,7 @@
               <label hlmFieldLabel for="onboarding-facility-country"
                 ><span i18n="@@onboarding.facilitiesForm.country">Country</span></label
               >
-              <div hlmInputGroup class="mobile-ui:min-h-11">
+              <div hlmInputGroup class="max-sm:min-h-11 mobile-ui:min-h-11">
                 @if (selectedCountryIcon(); as icon) {
                   <span hlmInputGroupAddon>
                     <ng-icon
@@ -234,7 +234,7 @@
                   id="onboarding-facility-country"
                   type="text"
                   autocomplete="country-name"
-                  class="mobile-ui:min-h-11"
+                  class="max-sm:min-h-11 mobile-ui:min-h-11"
                   [formField]="draftForm.country"
                   (input)="addressPartChanged('country', $event)"
                 />
@@ -250,7 +250,7 @@
                 id="onboarding-facility-postalCode"
                 type="text"
                 autocomplete="postal-code"
-                class="mobile-ui:min-h-11"
+                class="max-sm:min-h-11 mobile-ui:min-h-11"
                 [formField]="draftForm.postalCode"
                 (input)="addressPartChanged('postalCode', $event)"
               />
@@ -264,7 +264,7 @@
               type="button"
               variant="outline"
               size="sm"
-              class="mobile-ui:min-h-11"
+              class="max-sm:min-h-11 mobile-ui:min-h-11"
               data-testid="onboarding-facility-add"
               [disabled]="draftForm().invalid() || pending()"
               (click)="addFacility()"

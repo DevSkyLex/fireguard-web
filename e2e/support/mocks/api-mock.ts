@@ -671,6 +671,13 @@ export class ApiMock {
         await fulfillJson(route, 200, hydraCollection([]));
       },
     );
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/compliance\/register-snapshots(\?.*)?$/,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
 
     await Promise.all(
       organizations.flatMap((organization: OrganizationOutputFixture) => [

@@ -1,0 +1,42 @@
+@if (member() && organizationId()) {
+  @if (!connectivity.online()) {
+    <p class="text-xs text-muted-foreground" i18n="@@workload.assignmentOffline">
+      Workload cannot be checked offline.
+    </p>
+  } @else if (!period()) {
+    <p class="text-xs text-muted-foreground" i18n="@@workload.assignmentPeriod">
+      Set a work period to inspect this member's workload.
+    </p>
+  } @else if (store.projectionCallState().status === 'pending') {
+    <hlm-skeleton class="h-10" />
+  } @else if (data(); as memberLoad) {
+    <div class="flex flex-col gap-1 rounded-md border p-3 text-xs" data-testid="assignee-workload">
+      <p class="font-medium" i18n="@@workload.assignmentCurrent">
+        Current load: {{ duration(load()) }} / {{ duration(capacity()) }}
+      </p>
+      <p class="text-muted-foreground" i18n="@@workload.assignmentProposal">
+        The proposed change is checked when you save.
+      </p>
+      @if (
+        memberLoad.unallocated.length ||
+        store.projectionCallState().data?.projection?.completeness !== 'complete'
+      ) {
+        <p class="text-warning" i18n="@@workload.assignmentIncomplete">
+          Incomplete data: availability cannot be guaranteed.
+        </p>
+      }
+      @for (day of problemDays(); track day.date) {
+        <p class="text-destructive">
+          {{ day.date + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }} ·
+          <span i18n="@@workload.assignmentOverload"
+            >Overload {{ duration(day.overloadMinutes) }}</span
+          >
+        </p>
+      }
+    </div>
+  } @else {
+    <p class="text-xs text-muted-foreground" i18n="@@workload.assignmentUnavailable">
+      Workload evaluation unavailable.
+    </p>
+  }
+}

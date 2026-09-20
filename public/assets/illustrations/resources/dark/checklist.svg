@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-checklist-dark-title fg-checklist-dark-description" class="fg-checklist-dark">
+  <title id="fg-checklist-dark-title">Checklist</title>
+  <desc id="fg-checklist-dark-description">A clipboard of task lines under a vermilion clip, one item checked off.</desc>
+  <defs>
+    <linearGradient id="fg-checklist-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-checklist-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-checklist-dark .edge, .fg-checklist-dark .seam { stroke: #a1a1aa; }
+    .fg-checklist-dark .seam { stroke: #51515c; }
+    .fg-checklist-dark .seam, .fg-checklist-dark .accent-seam { stroke-width: 1.35; }
+    .fg-checklist-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-checklist-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-checklist-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-checklist-dark .accent-edge, .fg-checklist-dark .accent-seam, .fg-checklist-dark .accent { stroke: #ff7043; }
+    .fg-checklist-dark .accent { stroke-width: 1.1; }
+    .fg-checklist-dark .accent-fill { fill: #ff7043; }
+    .fg-checklist-dark .accent-tint { fill: #43261d; stroke: #ff7043; stroke-width: 1.1; }
+    .fg-checklist-dark .tf { fill: url(#fg-checklist-dark-plane); }
+    .fg-checklist-dark .lf { fill: #141417; }
+    .fg-checklist-dark .rf { fill: #0d0d0f; }
+    .fg-checklist-dark .at { fill: #4a2a20; }
+    .fg-checklist-dark .af { fill: #3c221a; }
+    .fg-checklist-dark .ar { fill: #2e1a14; }
+    .fg-checklist-dark .accent-edge, .fg-checklist-dark .accent-seam, .fg-checklist-dark .accent, .fg-checklist-dark .accent-tint { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M80 73.5L94.7 82L94.7 97.3L80 105.8L65.3 97.3L65.3 82ZM94.7 82L80 90.5L65.3 82M80 90.5L80 105.8M296.5 70a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM303.5 74a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM263 277.5L267 284.5M326.2 241L330.2 248M285.1 267.1L287.1 270.6M306.1 254.9L308.1 258.4M76.7 264.5L85.3 269.5M76.7 269.5L85.3 264.5"/><path class="guide" d="M65.3 97.3L80 88.8L94.7 97.3M265 281L328.2 244.5"/><path class="accent" d="M267.6 279.5L274.5 275.5"/><path class="accent-fill" d="M289.4 66a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 -7.5)">
+<polygon class="shade" points="187.9,83 347.2,175 212.1,253 52.8,161"/>
+<g data-part="plate"><path class="lf" d="M69.2 152Q69.2 150.5 71.8 149L182.7 85Q187.9 82 193.1 85L328.2 163Q330.8 164.5 330.8 166L330.8 175Q330.8 176.5 328.2 178L217.3 242Q212.1 245 206.9 242L71.8 164Q69.2 162.5 69.2 161Z"/><path class="tf" d="M182.7 85Q187.9 82 193.1 85L328.2 163Q333.4 166 328.2 169L217.3 233Q212.1 236 206.9 233L71.8 155Q66.6 152 71.8 149Z"/><path class="seam" d="M330.8 166Q330.8 167.5 328.2 169L217.3 233Q212.1 236 206.9 233L71.8 155Q69.2 153.5 69.2 152"/><path class="edge" d="M69.2 152Q69.2 150.5 71.8 149L182.7 85Q187.9 82 193.1 85L328.2 163Q330.8 164.5 330.8 166L330.8 175Q330.8 176.5 328.2 178L217.3 242Q212.1 245 206.9 242L71.8 164Q69.2 162.5 69.2 161Z"/></g>
+<g data-part="volume"><polygon class="lf" points="187.9,83 319.5,159 319.5,162 212.1,224 80.5,148 80.5,145"/><polygon class="rf" points="319.5,159 212.1,221 212.1,224 319.5,162"/><polygon class="tf" points="187.9,83 319.5,159 212.1,221 80.5,145"/><path class="seam" d="M212.1 221L319.5 159M212.1 221L80.5 145M212.1 221L212.1 224"/><polygon class="edge" points="187.9,83 319.5,159 319.5,162 212.1,224 80.5,148 80.5,145"/></g>
+<g data-part="detail"><path class="soft" d="M187 131.5L232.1 157.5"/><path class="soft" d="M134.2 132L149.8 141L134.2 150L118.6 141Z"/><path class="soft" d="M152.4 151.5L226.9 194.5"/><path class="accent-tint" d="M168.8 112L184.4 121L168.8 130L153.3 121Z"/></g>
+<g data-part="check-mark"><polyline class="accent" points="164.2,118.7 164.2,121.8 176.2,121.8"/></g>
+<g data-part="volume"><polygon class="af" points="227.7,99 283.1,131 283.1,140 265.8,150 210.4,118 210.4,109"/><polygon class="ar" points="283.1,131 265.8,141 265.8,150 283.1,140"/><polygon class="at" points="227.7,99 283.1,131 265.8,141 210.4,109"/><path class="accent-seam" d="M265.8 141L283.1 131M265.8 141L210.4 109M265.8 141L265.8 150"/><polygon class="accent-edge" points="227.7,99 283.1,131 283.1,140 265.8,150 210.4,118 210.4,109"/></g>
+  </g></g></g>
+</svg>

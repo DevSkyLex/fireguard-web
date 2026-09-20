@@ -554,17 +554,19 @@ export class InterventionService extends HydraApiService {
    *
    * @description
    * Reads one page of `/api/intervention-work-items` filtered to the
-   * intervention, optionally narrowed by assignee, source, action or status.
+   * intervention, optionally narrowed by assignee, source, action or statuses.
+   * Assignee prioritization applies before pagination without excluding other members.
    *
    * @access public
    * @since 1.0.0
    *
    * @param {string} interventionId - intervention Id value.
-   * @param {PaginationOptions & {
+   * @param {RequestOptions & {
    * assignee?: string;
    * source?: string;
    * action?: string;
-   * status?: InterventionWorkItemStatus;
+   * status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
+   * prioritizeAssignee?: string;
    * }} [options] - options value.
    *
    * @returns {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work items operation.
@@ -575,7 +577,8 @@ export class InterventionService extends HydraApiService {
       assignee?: string;
       source?: string;
       action?: string;
-      status?: InterventionWorkItemStatus;
+      status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
+      prioritizeAssignee?: string;
     },
   ): Observable<HydraCollection<InterventionWorkItemOutput>> {
     const params: NonNullable<RequestOptions['params']> = {
@@ -586,6 +589,7 @@ export class InterventionService extends HydraApiService {
     if (options?.source) params['source'] = options.source;
     if (options?.action) params['action'] = options.action;
     if (options?.status) params['status'] = options.status;
+    if (options?.prioritizeAssignee) params['prioritizeAssignee'] = options.prioritizeAssignee;
 
     return this.getCollection<InterventionWorkItemOutput>('/api/intervention-work-items', {
       page: options?.page,
@@ -600,8 +604,8 @@ export class InterventionService extends HydraApiService {
    * @method listAllWorkItems
    *
    * @description
-   * Drains every page of {@link listWorkItems} into one flat array. Multiple
-   * statuses are queried separately because the endpoint accepts scalar values.
+   * Drains every page of {@link listWorkItems} into one complete workspace snapshot.
+   * Multiple statuses share one server query and one globally ordered result set.
    *
    * @access public
    * @since 1.0.0
@@ -625,26 +629,13 @@ export class InterventionService extends HydraApiService {
       status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
     },
   ): Observable<readonly InterventionWorkItemOutput[]> {
-    const requestedStatus = options?.status;
-    const statuses: readonly (InterventionWorkItemStatus | undefined)[] =
-      typeof requestedStatus === 'string'
-        ? [requestedStatus]
-        : requestedStatus?.length
-          ? [...new Set(requestedStatus)]
-          : [undefined];
-
-    return forkJoin(
-      statuses.map((status) =>
-        this.collectPages((page) =>
-          this.listWorkItems(interventionId, {
-            ...options,
-            page,
-            itemsPerPage: WORKSPACE_PAGE_SIZE,
-            status,
-          }),
-        ),
-      ),
-    ).pipe(map((groups) => groups.flat()));
+    return this.collectPages((page) =>
+      this.listWorkItems(interventionId, {
+        ...options,
+        page,
+        itemsPerPage: WORKSPACE_PAGE_SIZE,
+      }),
+    );
   }
 
   /**

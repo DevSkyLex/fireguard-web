@@ -14,12 +14,16 @@ import {
 
 /**
  * Function projectInterventionWorkspace
- * @description Overlays only outstanding local operations, including conflicts, on complete data.
+ *
+ * @description
+ * Overlays only outstanding local operations, including conflicts, on complete data.
  * Applying the same outbox twice is idempotent. Unrelated fresh server fields remain authoritative.
+ *
  * @param {InterventionWorkspaceData} base - Complete saved or freshly fetched workspace.
  * @param {readonly InterventionOutboxOperation[]} operations - Remaining local intent in queue order.
  * @param {InterventionWorkspaceData} saved - Saved labels for pending local associations.
  * @returns {InterventionWorkspaceData} Projected workspace without mutating inputs.
+ *
  * @since 6.2.0
  */
 export function projectInterventionWorkspace(
@@ -49,6 +53,11 @@ export function projectInterventionWorkspace(
           assignee: input.assignee ?? null,
           source: input.source,
           status: 'planned',
+          estimatedMinutes: input.estimatedMinutes ?? null,
+          remainingMinutes: input.estimatedMinutes ?? null,
+          spentMinutes: 0,
+          workStartsOn: input.workStartsOn ?? null,
+          workEndsOn: input.workEndsOn ?? null,
           required: input.required,
           skipReason: null,
           evidenceCount: 0,
@@ -72,6 +81,13 @@ export function projectInterventionWorkspace(
           workItems.set(workItemId, {
             ...item,
             ...fields,
+            ...((item.status === 'completed' || item.status === 'skipped') &&
+            fields.status &&
+            fields.status !== 'completed' &&
+            fields.status !== 'skipped' &&
+            fields.remainingMinutes === undefined
+              ? { remainingMinutes: null }
+              : {}),
             ...(fields.assignee !== undefined && fields.assignee !== item.assignee
               ? {
                   assigneeProfile:

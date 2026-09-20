@@ -94,7 +94,7 @@ test('offers a working retry after the initial Work query fails', async ({ page 
   const path = await arrange(page);
   let fail = true;
   await page.route(/\/api\/intervention-work-items\?/, (route) => {
-    if (new URL(route.request().url()).searchParams.has('status') && fail)
+    if (new URL(route.request().url()).searchParams.has('status[]') && fail)
       return route.fulfill({
         status: 500,
         contentType: 'application/ld+json',
@@ -203,7 +203,7 @@ for (const { tab, actions } of [
       const columns = await table
         .locator('thead th')
         .evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width));
-      expect(columns).toHaveLength(tab === 'work-item' ? 7 : actions ? 5 : 4);
+      expect(columns).toHaveLength(tab === 'work-item' ? 6 : actions ? 5 : 4);
       const height = await table
         .locator('tbody tr')
         .first()

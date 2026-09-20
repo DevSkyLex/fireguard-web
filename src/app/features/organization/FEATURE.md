@@ -29,10 +29,18 @@ This feature is responsible for:
 - nested organization-scoped subfeatures: facilities, equipments, inspections, interventions,
   maintenance-schedules, approvals (the four-eyes decision surface), checklists (the checklist
   template library), imports (the bulk CSV import surface), audit (the read-only audit journal)
-  and collaboration (the conversational surface),
+  collaboration (the conversational surface) and workload (member capacity and daily demand),
 - publishing organization context to layouts and approved consumers.
 
 This feature does not own generic shell composition or account-level user identity.
+
+## Workload boundary
+
+The nested Workload feature owns `/organizations/:organizationId/workload` and its
+desktop/mobile Operations navigation entry. Every active member may view their own
+load; the API authorizes team visibility and capacity administration separately.
+Organization publishes member access, regional settings and organization context
+through its existing ports. It does not distribute task effort or store time entries.
 
 ## Entry Points
 

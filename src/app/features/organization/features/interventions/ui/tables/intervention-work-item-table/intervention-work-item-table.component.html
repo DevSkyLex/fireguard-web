@@ -110,7 +110,9 @@
             class="mobile-ui:min-h-11"
             data-testid="intervention-work-items-mine-first"
             [state]="mineFirst() ? 'on' : 'off'"
-            (stateChange)="mineFirst.set($event === 'on')"
+            (stateChange)="
+              emitQuery({ prioritizeAssignee: $event === 'on' ? currentMemberId() : null })
+            "
           >
             <span i18n="@@intervention.wit.mineFirst">Mine first</span>
           </button>
@@ -144,7 +146,7 @@
         (retryRequested)="retryRequested.emit()"
       />
       <app-collection-surface
-        class="[&_[data-slot=table]]:min-w-[57rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-[57px]"
+        class="[&_[data-slot=table]]:min-w-[50rem] [&_[data-slot=table]]:table-fixed [&_tbody_tr]:h-[57px]"
         caption="The intervention's work items."
         i18n-caption="@@intervention.wit.tableCaption"
         testId="intervention-work-item-table"
@@ -179,15 +181,13 @@
         </div>
         <ng-container surfaceHead>
           <tr hlmTableRow>
-            <th hlmTableHead class="w-16">
+            <th hlmTableHead class="w-14">
               <span class="sr-only" i18n="@@intervention.wit.columnStatus">Status</span>
             </th>
             <th hlmTableHead class="" i18n="@@intervention.wit.columnTarget">Target</th>
-            <th hlmTableHead class="w-36" i18n="@@intervention.wit.columnAction">Action</th>
-            <th hlmTableHead class="w-32" i18n="@@intervention.wit.columnRequirement">
-              Requirement
-            </th>
-            <th hlmTableHead class="w-40" i18n="@@intervention.wit.columnAssignee">Assignee</th>
+            <th hlmTableHead class="w-28" i18n="@@intervention.wit.columnAction">Action</th>
+            <th hlmTableHead class="w-44" i18n="@@intervention.wit.columnTime">Time</th>
+            <th hlmTableHead class="w-32" i18n="@@intervention.wit.columnAssignee">Assignee</th>
             <th hlmTableHead class="w-36" i18n="@@intervention.wit.columnState">State</th>
             @if (showActionsColumn()) {
               <th hlmTableHead class="w-20">
@@ -220,11 +220,35 @@
                 />
               </td>
 
-              <td hlmTableCell class="min-w-0 py-4 font-medium text-foreground">
-                @if (targetLabelOf(item); as target) {
-                  <span class="block truncate" [hlmTooltip]="target">{{ target }}</span>
-                } @else {
-                  <span aria-hidden="true">—</span>
+              <td hlmTableCell class="min-w-0 font-medium text-foreground">
+                <div class="flex min-w-0 items-center gap-2">
+                  @if (targetLabelOf(item); as target) {
+                    <span
+                      class="min-w-0 flex-1 truncate rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      [hlmTooltip]="target"
+                      tabindex="0"
+                      data-testid="intervention-work-item-title"
+                      >{{ target }}</span
+                    >
+                  } @else {
+                    <span class="flex-1" aria-hidden="true">—</span>
+                  }
+                  @if (isNext(item)) {
+                    <span hlmBadge variant="outline" i18n="@@intervention.wit.next">Next</span>
+                  }
+                  @if (!item.required) {
+                    <span hlmBadge variant="outline" i18n="@@intervention.wit.optional"
+                      >Optional</span
+                    >
+                  }
+                </div>
+                @if (item.status === 'skipped' && item.skipReason) {
+                  <span
+                    class="block truncate rounded-sm text-sm font-normal text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    tabindex="0"
+                    [hlmTooltip]="item.skipReason"
+                    >{{ item.skipReason }}</span
+                  >
                 }
               </td>
 
@@ -234,26 +258,27 @@
                 </span>
               </td>
 
-              <td hlmTableCell class="whitespace-nowrap">
-                <span class="inline-flex items-center gap-2">
-                  @if (item.required) {
-                    <span class="text-sm text-foreground" i18n="@@intervention.wit.required"
-                      >Required</span
-                    >
-                  } @else {
-                    <span aria-hidden="true">—</span>
-                  }
-                  @if (isNext(item)) {
-                    <span hlmBadge variant="outline" i18n="@@intervention.wit.next">Next</span>
-                  }
-                </span>
-                @if (item.status === 'skipped' && item.skipReason) {
-                  <span
-                    class="block max-w-full truncate text-sm text-muted-foreground"
-                    [hlmTooltip]="item.skipReason"
-                    >{{ item.skipReason }}</span
+              <td hlmTableCell class="min-w-0">
+                <div
+                  class="min-w-0 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  tabindex="0"
+                  [hlmTooltip]="effortDetails"
+                >
+                  <ng-container
+                    [ngTemplateOutlet]="effortSummary"
+                    [ngTemplateOutletContext]="{ $implicit: item, compact: true }"
+                  />
+                </div>
+                <ng-template #effortDetails>
+                  <div
+                    class="max-w-xs [&_[data-testid=intervention-work-item-effort]]:text-inherit [&_dd]:text-inherit"
                   >
-                }
+                    <ng-container
+                      [ngTemplateOutlet]="effortSummary"
+                      [ngTemplateOutletContext]="{ $implicit: item }"
+                    />
+                  </div>
+                </ng-template>
               </td>
 
               <td hlmTableCell>
@@ -279,10 +304,22 @@
               </td>
 
               <td hlmTableCell>
-                <span class="flex min-w-0 items-center gap-2 whitespace-nowrap">
-                  <app-intervention-tag kind="workItemStatus" [value]="item.status" />
-                  @if (item.source !== item.status) {
-                    <span hlmBadge variant="outline">{{ sourceLabelOf(item) }}</span>
+                <span
+                  class="flex min-w-0 flex-wrap items-center gap-1.5 whitespace-normal"
+                  data-testid="intervention-work-item-state"
+                >
+                  <app-intervention-tag
+                    class="max-w-full min-w-0 [&>span]:h-auto [&>span]:min-h-5 [&>span]:max-w-full [&>span]:whitespace-normal"
+                    kind="workItemStatus"
+                    [value]="item.status"
+                  />
+                  @if (item.source === 'discovered') {
+                    <span
+                      hlmBadge
+                      variant="outline"
+                      class="h-auto min-h-5 max-w-full wrap-anywhere whitespace-normal"
+                      >{{ sourceLabelOf(item) }}</span
+                    >
                   }
                   @if (queuedIds().has(item.id)) {
                     <span
@@ -351,6 +388,37 @@
 
                     <ng-template #rowMenu>
                       <hlm-dropdown-menu class="w-52">
+                        @if (item.allowedActions?.canReestimate) {
+                          <button
+                            hlmDropdownMenuItem
+                            class="mobile-ui:min-h-11"
+                            data-testid="work-item-reestimate"
+                            (click)="effortRequested.emit(item)"
+                          >
+                            <span i18n="@@intervention.effort.reestimate"
+                              >Reestimate remaining work</span
+                            >
+                          </button>
+                        }
+                        @if (item.allowedActions?.canEditPlanning) {
+                          <button
+                            hlmDropdownMenuItem
+                            class="mobile-ui:min-h-11"
+                            (click)="planningRequested.emit(item)"
+                          >
+                            <span i18n="@@intervention.effort.plan">Plan this task</span>
+                          </button>
+                        }
+                        @if (canOpenTime(item)) {
+                          <button
+                            hlmDropdownMenuItem
+                            class="mobile-ui:min-h-11"
+                            data-testid="work-item-time"
+                            (click)="timeRequested.emit(item)"
+                          >
+                            <span i18n="@@intervention.time.title">Time journal</span>
+                          </button>
+                        }
                         @if (item.evidenceCount > 0) {
                           <button
                             class="mobile-ui:min-h-11"
@@ -418,11 +486,20 @@
               />
 
               <div class="flex min-w-0 flex-1 flex-col gap-1">
-                @if (targetLabelOf(item); as target) {
-                  <span class="font-medium text-foreground">{{ target }}</span>
-                }
+                <div class="flex min-w-0 items-start gap-2">
+                  <span
+                    class="min-w-0 flex-1 font-medium wrap-anywhere text-foreground"
+                    data-testid="intervention-work-item-title"
+                    >{{ targetLabelOf(item) || actionLabelOf(item) }}</span
+                  >
+                  @if (isNext(item)) {
+                    <span hlmBadge variant="outline" i18n="@@intervention.wit.next">Next</span>
+                  }
+                </div>
                 <span class="inline-flex flex-wrap items-center gap-2 font-medium text-foreground">
-                  {{ actionLabelOf(item) }}
+                  @if (targetLabelOf(item)) {
+                    {{ actionLabelOf(item) }}
+                  }
                   @if (queuedIds().has(item.id)) {
                     <span
                       class="block text-xs text-muted-foreground"
@@ -431,20 +508,22 @@
                       >Saved on this device</span
                     >
                   }
-                  @if (item.required) {
-                    <span class="text-xs text-muted-foreground" i18n="@@intervention.wit.required"
-                      >Required</span
+                  @if (!item.required) {
+                    <span hlmBadge variant="outline" i18n="@@intervention.wit.optional"
+                      >Optional</span
                     >
                   }
-                  @if (isNext(item)) {
-                    <span hlmBadge variant="outline" i18n="@@intervention.wit.next">Next</span>
-                  }
                 </span>
+
+                <ng-container
+                  [ngTemplateOutlet]="effortSummary"
+                  [ngTemplateOutletContext]="{ $implicit: item }"
+                />
 
                 <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <app-intervention-tag kind="workItemStatus" [value]="item.status" />
                   @if (item.assigneeProfile; as assignee) {
-                    <div class="flex items-center gap-2">
+                    <div class="flex max-w-full min-w-0 items-center gap-2">
                       <hlm-avatar size="sm" class="shrink-0">
                         @if (assignee.avatarUrl; as avatarUrl) {
                           <img hlmAvatarImage [src]="avatarUrl" alt="" />
@@ -464,7 +543,9 @@
                   @if (item.status === 'skipped' && item.skipReason) {
                     <span class="block text-sm text-muted-foreground">{{ item.skipReason }}</span>
                   }
-                  <span>{{ sourceLabelOf(item) }}</span>
+                  @if (item.source === 'discovered') {
+                    <span>{{ sourceLabelOf(item) }}</span>
+                  }
                 </div>
               </div>
 
@@ -521,6 +602,36 @@
 
                   <ng-template #rowMenu>
                     <hlm-dropdown-menu class="w-52">
+                      @if (item.allowedActions?.canReestimate) {
+                        <button
+                          hlmDropdownMenuItem
+                          class="mobile-ui:min-h-11"
+                          (click)="effortRequested.emit(item)"
+                        >
+                          <span i18n="@@intervention.effort.reestimate"
+                            >Reestimate remaining work</span
+                          >
+                        </button>
+                      }
+                      @if (item.allowedActions?.canEditPlanning) {
+                        <button
+                          hlmDropdownMenuItem
+                          class="mobile-ui:min-h-11"
+                          (click)="planningRequested.emit(item)"
+                        >
+                          <span i18n="@@intervention.effort.plan">Plan this task</span>
+                        </button>
+                      }
+                      @if (canOpenTime(item)) {
+                        <button
+                          hlmDropdownMenuItem
+                          class="mobile-ui:min-h-11"
+                          data-testid="work-item-time-card"
+                          (click)="timeRequested.emit(item)"
+                        >
+                          <span i18n="@@intervention.time.title">Time journal</span>
+                        </button>
+                      }
                       @if (item.evidenceCount > 0) {
                         <button
                           class="mobile-ui:min-h-11"
@@ -579,6 +690,19 @@
           </div>
         </div>
       </app-collection-surface>
+      @if (query() && queryItems() !== null) {
+        <app-collection-pagination
+          testIdPrefix="intervention-work-items"
+          [page]="resultPage()"
+          [pageCount]="pageCount()"
+          [pageSize]="resultPageSize()"
+          [pageSizes]="[10, 25, 50]"
+          [total]="queryTotal()"
+          [shown]="viewItems().length"
+          (pageChanged)="emitQuery({ page: $event })"
+          (pageSizeChanged)="emitQuery({ itemsPerPage: $event })"
+        />
+      }
     } @else {
       <div
         hlmEmpty
@@ -612,3 +736,48 @@
     }
   </div>
 </section>
+
+<ng-template #effortSummary let-item let-compact="compact">
+  <div
+    class="min-w-0 text-xs font-normal text-muted-foreground"
+    [class]="compact ? 'block truncate' : 'flex flex-wrap gap-x-3 gap-y-1 whitespace-normal'"
+    data-testid="intervention-work-item-effort"
+  >
+    @if (item.estimatedMinutes == null && item.remainingMinutes == null) {
+      <span [class.mr-3]="compact" i18n="@@intervention.wit.notEstimated">Not estimated</span>
+    }
+    <dl [class]="compact ? 'inline' : 'flex min-w-0 flex-wrap gap-x-3 gap-y-1'">
+      @if (item.estimatedMinutes != null) {
+        <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
+          <dt class="inline" i18n="@@intervention.wit.estimated">Estimated</dt>
+          <dd class="inline font-medium text-foreground tabular-nums" [class.ml-1]="compact">
+            {{ formatDuration(item.estimatedMinutes) }}
+          </dd>
+        </div>
+      }
+      @if (item.spentMinutes > 0) {
+        <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
+          <dt class="inline" i18n="@@intervention.wit.spent">Spent</dt>
+          <dd class="inline font-medium text-foreground tabular-nums" [class.ml-1]="compact">
+            {{ formatDuration(item.spentMinutes) }}
+          </dd>
+        </div>
+      }
+      @if (item.remainingMinutes != null) {
+        <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
+          <dt class="inline" i18n="@@intervention.wit.remaining">Remaining</dt>
+          <dd class="inline font-medium text-foreground tabular-nums" [class.ml-1]="compact">
+            {{ formatDuration(item.remainingMinutes) }}
+          </dd>
+        </div>
+      } @else if (item.estimatedMinutes != null) {
+        <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
+          <dt class="inline" i18n="@@intervention.wit.remaining">Remaining</dt>
+          <dd class="inline" [class.ml-1]="compact" i18n="@@intervention.wit.notEstimated">
+            Not estimated
+          </dd>
+        </div>
+      }
+    </dl>
+  </div>
+</ng-template>

@@ -1,0 +1,366 @@
+<hlm-sheet
+  [side]="side()"
+  state="open"
+  [disableClose]="pending()"
+  (stateChanged)="$event === 'closed' && requestClose()"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! mobile-ui:max-h-[85svh] desktop-ui:w-[520px]! desktop-ui:max-w-[100vw]!"
+  >
+    <hlm-sheet-header class="pr-12">
+      <h2 hlmSheetTitle i18n="@@workload.configureCapacity">Configure capacity</h2>
+      <p hlmSheetDescription i18n="@@workload.capacityEditorDescription">
+        Set available time in hours and minutes. Previous versions are kept.
+      </p>
+    </hlm-sheet-header>
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      @if (!online()) {
+        <div hlmAlert role="status">
+          <p hlmAlertDescription i18n="@@workload.capacityOnline">
+            Reconnect to save availability. Your draft is kept open.
+          </p>
+        </div>
+      }
+      <hlm-field>
+        <div class="flex items-center justify-between gap-2">
+          <label hlmFieldLabel for="capacity-scope" i18n="@@workload.capacityAppliesTo"
+            >Applies to</label
+          >
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="mobile-ui:min-h-11"
+            [disabled]="pending() || !dirty()"
+            (click)="requestReset()"
+            i18n="@@workload.resetDraft"
+          >
+            Reset changes
+          </button>
+        </div>
+        <hlm-combobox
+          [value]="memberId()"
+          (valueChange)="setScope($event ?? null)"
+          [itemToString]="scopeLabel"
+          [disabled]="dirty() || pending()"
+        >
+          <hlm-combobox-input
+            inputId="capacity-scope"
+            [showClear]="true"
+            placeholder="Organization default"
+            i18n-placeholder="@@workload.organizationDefault"
+          >
+            @if (selectedMemberOption(); as member) {
+              <span hlmInputGroupAddon align="inline-start" aria-hidden="true">
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (member.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback>{{ member.initials }}</span>
+                </hlm-avatar>
+              </span>
+              <span
+                hlmInputGroupAddon
+                align="inline-end"
+                class="order-none max-w-28 min-w-0"
+                [attr.title]="member.roleLabel"
+              >
+                <span class="truncate text-xs">{{ member.roleLabel }}</span>
+              </span>
+            }
+          </hlm-combobox-input>
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@workload.noMembers">No members found</hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (member of members(); track member.value) {
+                <hlm-combobox-item class="mobile-ui:min-h-11" [value]="member.value">
+                  <hlm-avatar class="size-8 shrink-0" aria-hidden="true">
+                    @if (member.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback>{{ member.initials }}</span>
+                  </hlm-avatar>
+                  <span class="flex min-w-0 flex-1 flex-col text-left">
+                    <span class="wrap-anywhere whitespace-normal">{{ member.displayName }}</span>
+                    <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">{{
+                      member.roleLabel
+                    }}</span>
+                  </span>
+                </hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+        @if (readState().status === 'success' && mode() === 'week') {
+          <p hlmFieldDescription class="text-xs">
+            @if (!memberId()) {
+              <span i18n="@@workload.organizationWeekHint"
+                >The default week applies to members without an individual pattern.</span
+              >
+            } @else if (inheritsOrganizationWeek()) {
+              <span i18n="@@workload.inheritedWeekHint"
+                >Prefilled from the organization default. Saving creates an individual weekly
+                pattern.</span
+              >
+            } @else {
+              <span i18n="@@workload.individualWeekHint"
+                >This weekly pattern replaces the organization default for this member.</span
+              >
+            }
+          </p>
+        }
+      </hlm-field>
+      @if (readState().status === 'pending') {
+        <hlm-skeleton class="h-72" />
+      } @else if (readState().status === 'error') {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription>{{ readState().error?.message }}</p>
+          <button
+            hlmBtn
+            variant="outline"
+            (click)="requested.emit(memberId())"
+            i18n="@@common.tryAgain"
+          >
+            Try again
+          </button>
+        </div>
+      } @else if (readState().data; as configuration) {
+        @if (memberId()) {
+          <hlm-toggle-group
+            type="single"
+            variant="outline"
+            [nullable]="false"
+            [value]="mode()"
+            [disabled]="dirty() || pending()"
+            (valueChange)="setMode($event)"
+            class="mobile-ui:w-full"
+            aria-label="Capacity configuration"
+            i18n-aria-label="@@workload.capacityMode"
+          >
+            <button
+              hlmToggleGroupItem
+              value="week"
+              class="mobile-ui:min-h-11 mobile-ui:flex-1 mobile-ui:whitespace-normal"
+              i18n="@@workload.weekPattern"
+            >
+              Weekly pattern
+            </button>
+            <button
+              hlmToggleGroupItem
+              value="exception"
+              class="mobile-ui:min-h-11 mobile-ui:flex-1 mobile-ui:whitespace-normal"
+              i18n="@@workload.absenceOrReduction"
+            >
+              Absence or reduced hours
+            </button>
+          </hlm-toggle-group>
+        }
+        @if (writeState().status === 'error') {
+          <div hlmAlert variant="destructive" role="alert">
+            <p hlmAlertDescription>{{ writeState().error?.message }}</p>
+          </div>
+        }
+        <app-workload-capacity-form
+          [mode]="mode()"
+          [initialDate]="today()"
+          [initialWeek]="initialWeek()"
+          [firstDayOfWeek]="firstDayOfWeek()"
+          [pending]="pending() || !online()"
+          (dirtyChanged)="dirty.set($event)"
+          (weekSubmitted)="saveWeek($event)"
+          (exceptionSubmitted)="saveException($event)"
+        />
+        @if (memberId() && configuration.configuration.exceptions.length) {
+          <section class="flex min-w-0 flex-col gap-3 border-t pt-4">
+            <h3 class="text-sm font-semibold" i18n="@@workload.savedExceptions">
+              Saved availability exceptions
+            </h3>
+            <ul class="divide-y">
+              @for (exception of configuration.configuration.exceptions; track exception.id) {
+                <li class="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
+                  <div class="min-w-0">
+                    <p class="font-medium">
+                      {{ exception.startsOn + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }} –
+                      {{ exception.endsOn + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}
+                    </p>
+                    <p class="text-muted-foreground">
+                      {{ duration(exception.minutes) }}
+                      <span i18n="@@workload.perDay">per day</span>
+                    </p>
+                  </div>
+                  <button
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    class="mobile-ui:min-h-11"
+                    [disabled]="dirty() || pending() || !online()"
+                    (click)="cancelExceptionId.set(exception.id)"
+                    i18n="@@workload.cancelException"
+                  >
+                    Cancel exception
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        <section
+          hlmCollapsible
+          [expanded]="historyExpanded()"
+          (expandedChange)="historyExpanded.set($event)"
+          class="flex flex-col gap-3 border-t pt-3"
+        >
+          <button
+            hlmBtn
+            variant="ghost"
+            hlmCollapsibleTrigger
+            class="w-full justify-between mobile-ui:min-h-11"
+          >
+            <span i18n="@@workload.capacityHistory">Capacity history</span>
+            <ng-icon
+              name="lucideChevronDown"
+              [class.rotate-180]="historyExpanded()"
+              aria-hidden="true"
+            />
+          </button>
+          <div hlmCollapsibleContent hlmItemGroup class="@container flex flex-col gap-3">
+            @for (week of configuration.configuration.weeks; track week.id) {
+              <article
+                hlmItem
+                variant="outline"
+                size="sm"
+                data-testid="workload-capacity-history-week"
+              >
+                <div hlmItemContent class="min-w-0 gap-3">
+                  <div class="flex min-w-0 flex-col gap-0.5">
+                    <p hlmItemTitle>
+                      <time [attr.datetime]="week.effectiveOn">{{
+                        week.effectiveOn + 'T00:00:00Z' | date: 'mediumDate' : 'UTC'
+                      }}</time>
+                    </p>
+                    <p class="text-xs wrap-anywhere text-muted-foreground">
+                      @if (week.scopeId === organizationId()) {
+                        <span i18n="@@workload.organizationDefault">Organization default</span>
+                      } @else {
+                        {{ scopeLabel(week.scopeId) }}
+                      }
+                    </p>
+                  </div>
+                  <dl
+                    class="grid grid-cols-4 gap-x-2 gap-y-3 border-t pt-3 @min-[26rem]:grid-cols-7"
+                  >
+                    @for (minutes of week.minutes; track $index) {
+                      <div class="flex min-w-0 flex-col gap-1">
+                        <dt class="text-xs text-muted-foreground">
+                          {{ '2024-01-0' + ($index + 1) + 'T00:00:00Z' | date: 'EEE' : 'UTC' }}
+                        </dt>
+                        <dd
+                          class="text-xs font-medium tabular-nums"
+                          [class.text-muted-foreground]="minutes === 0"
+                        >
+                          {{ duration(minutes) }}
+                        </dd>
+                      </div>
+                    }
+                  </dl>
+                </div>
+              </article>
+            } @empty {
+              <p class="text-sm text-muted-foreground">
+                <span i18n="@@workload.capacityUnknown">Capacity not configured</span>
+              </p>
+            }
+          </div>
+        </section>
+      }
+    </div>
+    <hlm-sheet-footer class="flex-row justify-end gap-2">
+      <button
+        hlmBtn
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        (click)="requestClose()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      @if (readState().status === 'success') {
+        <button
+          hlmBtn
+          type="submit"
+          form="workload-capacity-form"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending() || !online()"
+          [attr.aria-busy]="pending() ? 'true' : null"
+        >
+          @if (pending()) {
+            <hlm-spinner aria-hidden="true" />
+          }
+          <span i18n="@@workload.saveCapacity">Save availability</span>
+        </button>
+      }
+    </hlm-sheet-footer>
+  </hlm-sheet-content>
+</hlm-sheet>
+<hlm-alert-dialog
+  [state]="discardOpen() ? 'open' : 'closed'"
+  [disableClose]="true"
+  (stateChanged)="$event === 'closed' && discardOpen.set(false)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="unsaved-changes-dialog">
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@shared.unsavedChanges.title">Discard unsaved changes?</h2>
+      @if (resetRequested()) {
+        <p hlmAlertDialogDescription i18n="@@workload.resetDraftDescription">
+          The form will return to its saved values. Nothing will be changed on the server.
+        </p>
+      } @else {
+        <p hlmAlertDialogDescription i18n="@@shared.unsavedChanges.description">
+          Your changes have not been saved. Leaving now discards them.
+        </p>
+      }
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button hlmAlertDialogCancel i18n="@@common.cancel">Cancel</button>
+      <button
+        hlmAlertDialogAction
+        variant="destructive"
+        data-testid="unsaved-changes-discard"
+        (click)="confirmDiscard()"
+        i18n="@@shared.unsavedChanges.discardAction"
+      >
+        Discard
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>
+<hlm-alert-dialog
+  [state]="cancelExceptionId() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && cancelExceptionId.set(null)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle i18n="@@workload.cancelExceptionTitle">
+        Cancel this availability exception?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@workload.cancelExceptionDescription">
+        The effective weekly capacity will apply again to these dates. The cancelled exception
+        remains in the audit history.
+      </p></hlm-alert-dialog-header
+    >
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel (click)="cancelExceptionId.set(null)" i18n="@@common.back">
+        Back</button
+      ><button
+        hlmAlertDialogAction
+        (click)="confirmCancellation()"
+        i18n="@@workload.cancelException"
+      >
+        Cancel exception
+      </button></hlm-alert-dialog-footer
+    >
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

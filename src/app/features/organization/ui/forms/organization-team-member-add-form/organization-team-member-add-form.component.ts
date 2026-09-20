@@ -74,6 +74,22 @@ const NO_PICK_VALUE: string = '';
 })
 export class OrganizationTeamMemberAddForm {
   /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () => this.candidates().find((member) => member.value === this.selectedMemberId()) ?? null,
+  );
+
+  /**
    * Property isMobileInteractionMode
    * @readonly
    * @description Selects the inline touch picker without replacing this form or its draft.

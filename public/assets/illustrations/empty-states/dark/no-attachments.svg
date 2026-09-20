@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-no-attachments-dark-title fg-empty-no-attachments-dark-description" class="fg-empty-no-attachments-dark">
+  <title id="fg-empty-no-attachments-dark-title">No attachments</title>
+  <desc id="fg-empty-no-attachments-dark-description">An open tabbed folder with a visible empty interior.</desc>
+  <defs>
+    <linearGradient id="fg-empty-no-attachments-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-empty-no-attachments-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-empty-no-attachments-dark .edge, .fg-empty-no-attachments-dark .seam { stroke: #a1a1aa; }
+    .fg-empty-no-attachments-dark .seam { stroke: #51515c; }
+    .fg-empty-no-attachments-dark .seam { stroke-width: 1.35; }
+    .fg-empty-no-attachments-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-empty-no-attachments-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-empty-no-attachments-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-empty-no-attachments-dark .accent { stroke: #ff7043; }
+    .fg-empty-no-attachments-dark .accent { stroke-width: 1.1; }
+    .fg-empty-no-attachments-dark .accent-fill { fill: #ff7043; }
+    .fg-empty-no-attachments-dark .tf { fill: url(#fg-empty-no-attachments-dark-plane); }
+    .fg-empty-no-attachments-dark .lf { fill: #141417; }
+    .fg-empty-no-attachments-dark .rf { fill: #0d0d0f; }
+    .fg-empty-no-attachments-dark .accent { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M67 53L82.6 62L67 71L51.4 62ZM51.4 66L67 75L82.6 66M337.7 92.5L346.3 97.5M337.7 97.5L346.3 92.5M312.5 284a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM319.5 288a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM64 244.5L60 251.5M96 263L92 270"/><path class="guide" d="M51.4 62L51.4 66L67 75M62 248L94 266.5"/><path class="accent" d="M64.6 249.5L71.5 253.5"/><path class="accent-fill" d="M305.4 280a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 37.5)">
+<polygon class="shade" points="168,106.5 306.5,186.5 232,229.5 93.5,149.5"/>
+<g data-part="folded-panel"><polygon class="rf" points="283.1,192 158.4,120 158.4,123 283.1,195"/><polygon class="tf" points="158.4,22 169.7,15.5 220.8,45 228.6,62.5 283.1,94 283.1,192 158.4,120"/><polyline class="seam" points="283.1,192 158.4,120"/><polygon class="edge" points="158.4,22 169.7,15.5 169.7,15.5 220.8,45 220.8,45 228.6,62.5 228.6,62.5 283.1,94 283.1,94 283.1,192 283.1,195 158.4,123 158.4,120 158.4,22"/></g>
+<g data-part="volume"><polygon class="lf" points="158.4,117 283.1,189 283.1,192 238.1,218 113.4,146 113.4,143"/><polygon class="rf" points="283.1,189 238.1,215 238.1,218 283.1,192"/><polygon class="tf" points="158.4,117 283.1,189 238.1,215 113.4,143"/><path class="seam" d="M238.1 215L283.1 189M238.1 215L113.4 143M238.1 215L238.1 218"/><polygon class="edge" points="158.4,117 283.1,189 283.1,192 238.1,218 113.4,146 113.4,143"/></g>
+<g data-part="detail"><path class="accent" d="M173.1 27.5L204.3 45.5"/></g>
+<polygon class="rf" points="283.1,192 283.1,98 226,147 241.6,216"/>
+<polyline class="seam" points="283.1,98 226,147"/>
+<g data-part="folded-panel"><polygon class="rf" points="241.6,216 116.9,144 116.9,147 241.6,219"/><polygon class="rf" points="116.9,144 101.3,75 101.3,78 116.9,147"/><polygon class="tf" points="101.3,75 226,147 241.6,216 116.9,144"/><polyline class="seam" points="241.6,216 116.9,144"/><polyline class="seam" points="116.9,144 101.3,75"/><polyline class="seam" points="116.9,144 116.9,147"/><polygon class="edge" points="101.3,75 226,147 226,147 241.6,216 241.6,219 116.9,147 116.9,147 101.3,78"/></g>
+  </g></g></g>
+</svg>

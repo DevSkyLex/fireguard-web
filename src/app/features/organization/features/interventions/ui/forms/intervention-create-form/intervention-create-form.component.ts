@@ -42,6 +42,7 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InterventionCatalogueStatus } from '../../components/intervention-catalogue-status';
@@ -103,6 +104,7 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
 @Component({
   selector: 'app-intervention-create-form',
   imports: [
+    HlmInputGroupAddon,
     InterventionCatalogueStatus,
     RequiredMarker,
     FormField,
@@ -121,6 +123,22 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCreateForm {
+  /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () => this.memberOptions().find((member) => member.value === this.model().responsible) ?? null,
+  );
+
   /**
    * Property catalogueSearched
    * @readonly

@@ -17,6 +17,7 @@ import type {
   OrganizationTransferOwnershipConfirmedEvent,
   MemberSelectOption,
 } from '@features/organization/models';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -64,6 +65,7 @@ const NO_CANDIDATE_VALUE = '';
 @Component({
   selector: 'app-organization-transfer-ownership-dialog',
   imports: [
+    HlmInputGroupAddon,
     ...HlmAvatarImports,
     ...HlmItemImports,
     HlmFieldLabel,
@@ -75,6 +77,22 @@ const NO_CANDIDATE_VALUE = '';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationTransferOwnershipDialog {
+  /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () => this.candidates().find((member) => member.value === this.selectedUserId()) ?? null,
+  );
+
   //#region Inputs
   /**
    * Property visible

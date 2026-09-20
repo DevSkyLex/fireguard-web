@@ -54,7 +54,7 @@ describe('buildOrganizationMobileNavigation', () => {
       navigation.sections
         .find((section) => section.id === 'operations')
         ?.links.map((link) => link.id),
-    ).toEqual(['calendar', 'inspections', 'checklists', 'maintenance', 'approvals']);
+    ).toEqual(['calendar', 'inspections', 'workload', 'checklists', 'maintenance', 'approvals']);
   });
 
   it('omits denied primary destinations without substituting secondary destinations', () => {
@@ -64,7 +64,7 @@ describe('buildOrganizationMobileNavigation', () => {
     );
     expect(navigation.primary.map((link) => link.id)).toEqual(['more']);
     expect(navigation.sections.map((section) => section.id)).toEqual(['operations', 'account']);
-    expect(navigation.sections[0]?.links.map((link) => link.id)).toEqual(['calendar']);
+    expect(navigation.sections[0]?.links.map((link) => link.id)).toEqual(['calendar', 'workload']);
   });
 
   it.each(['organization.messaging.read', 'organization.messaging.*', 'organization.*'])(
@@ -84,7 +84,8 @@ describe('buildOrganizationMobileNavigation', () => {
       new Set(['organization.messaging.write', 'other.*']),
     );
     expect(navigation.primary.map((link) => link.id)).toEqual(['more']);
-    expect(navigation.sections.map((section) => section.id)).toEqual(['account']);
+    expect(navigation.sections.map((section) => section.id)).toEqual(['operations', 'account']);
+    expect(navigation.sections[0]?.links.map((link) => link.id)).toEqual(['workload']);
   });
 
   it.each([

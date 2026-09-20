@@ -6,3 +6,8 @@ export type { InterventionStoreType, InterventionState } from './intervention';
 export { interventionStoreEvents } from './intervention';
 export { InterventionStatisticsStore } from './intervention-statistics';
 export type { InterventionStatisticsStoreType } from './intervention-statistics';
+export {
+  InterventionTimeStore,
+  type InterventionTimeStoreType,
+  interventionTimeEvents,
+} from './intervention-time';

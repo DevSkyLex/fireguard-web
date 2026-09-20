@@ -26,6 +26,7 @@ import type {
   InterventionOutboxType,
 } from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
+import { InterventionOperationsStore } from '@features/organization/features/interventions/state/intervention-operations';
 import { formatInterventionRelativeTime } from '@features/organization/features/interventions/utils';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmBadge } from '@shared/ui/badge';
@@ -41,6 +42,7 @@ import {
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionSyncDiscardDialog } from '../../dialogs/intervention-sync-discard-dialog';
+import { InterventionOperationsSheet } from '../../sheets/intervention-operations-sheet';
 
 /**
  * Type InterventionSyncIndicatorState
@@ -89,6 +91,7 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
 @Component({
   selector: 'app-intervention-sync-indicator',
   imports: [
+    InterventionOperationsSheet,
     NgTemplateOutlet,
     ...HlmDrawerImports,
     NgIcon,
@@ -104,6 +107,7 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
     ...HlmSpinnerImports,
   ],
   providers: [
+    InterventionOperationsStore,
     provideIcons({
       lucideCloudCheck,
       lucideCloudOff,
@@ -117,6 +121,37 @@ type InterventionSyncIndicatorState = 'offline' | 'blocked' | 'syncing' | 'pendi
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionSyncIndicator {
+  /**
+   * Property operations
+   * @readonly
+   *
+   * @description
+   * Contextual review of one queued intervention.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {InstanceType<typeof InterventionOperationsStore>}
+   */
+  protected readonly operations: InstanceType<typeof InterventionOperationsStore> = inject(
+    InterventionOperationsStore,
+  );
+
+  /**
+   * Property reviewWorkspace
+   * @readonly
+   *
+   * @description
+   * Local context for explicit conflict review.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<Awaited<ReturnType<InterventionOfflineService['getWorkspace']>>>}
+   */
+  protected readonly reviewWorkspace: WritableSignal<
+    Awaited<ReturnType<InterventionOfflineService['getWorkspace']>>
+  > = signal(null);
   /**
    * Property mobilePanelVisible
    * @readonly
@@ -487,13 +522,29 @@ export class InterventionSyncIndicator {
 
   /**
    * Method retryOperation
-   * @description Retries one blocked operation, leaving the rest of the queue alone.
+   *
+   * @description
+   * Retries one blocked operation, leaving the rest of the queue alone.
+   *
    * @access protected
    * @since 7.0.0
+   *
    * @param {string} id - The operation identifier.
    * @returns {void}
    */
   protected retryOperation(id: string): void {
+    const operation = this.queue().find((row) => row.id === id);
+    if (operation?.workloadAssessment || operation?.serverValues) {
+      const owner = this.offline.publicationOwner();
+      void this.offline.getWorkspace(operation.interventionId).then((workspace) => {
+        if (!workspace || owner !== this.offline.publicationOwner()) return;
+        const organizationId = workspace.intervention.organization.split('/').at(-1);
+        if (!organizationId) return;
+        this.operations.load({ organizationId, interventionId: operation.interventionId });
+        this.reviewWorkspace.set(workspace);
+      });
+      return;
+    }
     void this.offline.retryOutbox(id).then(() => this.loadQueue());
   }
 

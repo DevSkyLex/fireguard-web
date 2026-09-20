@@ -1,0 +1,278 @@
+<div class="flex min-w-0 flex-col gap-5" data-testid="workload-page">
+  <div class="flex flex-wrap items-center gap-3">
+    <button
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="mobile-ui:min-h-11"
+      (click)="currentWeek()"
+      i18n="@@workload.currentWeek"
+    >
+      This week
+    </button>
+    <div class="flex items-center gap-1">
+      <button
+        hlmBtn
+        variant="outline"
+        size="icon-sm"
+        class="mobile-ui:size-11"
+        aria-label="Previous week"
+        i18n-aria-label="@@workload.previousWeek"
+        (click)="stepWeek(-1)"
+      >
+        <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        variant="outline"
+        size="icon-sm"
+        class="mobile-ui:size-11"
+        aria-label="Next week"
+        i18n-aria-label="@@workload.nextWeek"
+        (click)="stepWeek(1)"
+      >
+        <ng-icon name="lucideChevronRight" aria-hidden="true" />
+      </button>
+    </div>
+    <p class="text-base font-semibold" aria-live="polite">
+      {{ query().from + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }} –
+      {{ query().to + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}
+    </p>
+    <div
+      class="ml-auto flex flex-wrap items-center gap-2 mobile-ui:w-full mobile-ui:justify-between"
+    >
+      @if (data()) {
+        <app-collection-filter-toggle
+          label="Filters"
+          i18n-label="@@workload.filters"
+          [visible]="filtersVisible()"
+          [activeCount]="activeFilterKeys().length"
+          testIdPrefix="workload"
+          (visibleChange)="filtersVisible.set($event)"
+        />
+      }
+      @if (data()?.canManageCapacity) {
+        <button
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          [disabled]="connectivity.offline()"
+          (click)="openCapacity(memberFilter())"
+        >
+          <span i18n="@@workload.configureCapacity">Configure capacity</span>
+        </button>
+      }
+    </div>
+  </div>
+  @if (data()) {
+    @if (filtersVisible()) {
+      <app-collection-filter-bar
+        [fields]="filterFields()"
+        [activeKeys]="activeFilterKeys()"
+        [pendingKey]="openFilterKey()"
+        [templates]="chipTemplates()"
+        testIdPrefix="workload"
+        (fieldPicked)="openFilterKey.set($event)"
+        (fieldRemoved)="setFilter($event, null)"
+        (filtersCleared)="clearFilters()"
+      />
+    }
+  }
+  <ng-template #memberChip>
+    <app-collection-filter-select
+      [options]="memberOptions()"
+      [optionTemplate]="memberOptionRow"
+      [valueTemplate]="memberSelectedValue"
+      [value]="memberFilter()"
+      placeholder="All members"
+      i18n-placeholder="@@workload.allMembers"
+      emptyLabel="No members found"
+      i18n-emptyLabel="@@workload.noMembers"
+      accessibleName="Member"
+      i18n-accessibleName="@@workload.member"
+      triggerId="workload-filter-member"
+      testId="workload-filter-member"
+      [state]="openFilterKey() === 'member' ? 'open' : 'closed'"
+      (valueChanged)="setFilter('member', $event)"
+      (stateChanged)="filterStateChanged('member', $event)"
+    />
+  </ng-template>
+  <ng-template #teamChip>
+    <app-collection-filter-select
+      [options]="teamOptions()"
+      [value]="teamFilter()"
+      placeholder="All teams"
+      i18n-placeholder="@@workload.allTeams"
+      emptyLabel="No teams found"
+      i18n-emptyLabel="@@workload.noTeams"
+      accessibleName="Team"
+      i18n-accessibleName="@@workload.team"
+      triggerId="workload-filter-team"
+      testId="workload-filter-team"
+      [state]="openFilterKey() === 'team' ? 'open' : 'closed'"
+      (valueChanged)="setFilter('team', $event)"
+      (stateChanged)="filterStateChanged('team', $event)"
+    />
+  </ng-template>
+  <ng-template #overloadChip>
+    <app-collection-filter-select
+      [options]="overloadOptions"
+      [value]="overloadedOnly() ? 'overloaded' : null"
+      placeholder="All loads"
+      i18n-placeholder="@@workload.allLoads"
+      emptyLabel="No matching option"
+      i18n-emptyLabel="@@workload.noFilterOption"
+      accessibleName="Load"
+      i18n-accessibleName="@@workload.loadFilter"
+      triggerId="workload-filter-overloaded"
+      testId="workload-filter-overloaded"
+      [state]="openFilterKey() === 'overloaded' ? 'open' : 'closed'"
+      (valueChanged)="setFilter('overloaded', $event)"
+      (stateChanged)="filterStateChanged('overloaded', $event)"
+    />
+  </ng-template>
+  @if (connectivity.offline()) {
+    <div hlmAlert role="status">
+      <p hlmAlertTitle i18n="@@workload.offlineTitle">Workload assessment unavailable offline</p>
+      <p hlmAlertDescription i18n="@@workload.offlineDescription">
+        A saved intervention cannot show the full organization's workload. Connect to check
+        capacity.
+      </p>
+    </div>
+  } @else if (store.projectionCallState().status === 'error') {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertTitle i18n="@@workload.loadError">Workload could not be loaded</p>
+      <p hlmAlertDescription>{{ store.projectionCallState().error?.message }}</p>
+      <button
+        hlmBtn
+        variant="outline"
+        class="mt-3 mobile-ui:min-h-11"
+        (click)="reload()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </div>
+  } @else if (store.projectionCallState().status === 'pending') {
+    <div role="status" aria-label="Loading workload" i18n-aria-label="@@workload.loading">
+      <hlm-skeleton class="h-72 w-full" />
+    </div>
+  } @else if (data(); as result) {
+    @if (result.projection.completeness !== 'complete') {
+      <div hlmAlert role="status">
+        <p hlmAlertTitle i18n="@@workload.partialTitle">Some work cannot be quantified</p>
+        <p hlmAlertDescription i18n="@@workload.partialDescription">
+          Missing capacity, estimates or dates are listed below. The displayed totals do not
+          establish availability.
+        </p>
+      </div>
+    }
+    @if (result.projection.members.length) {
+      <p class="text-sm text-muted-foreground" i18n="@@workload.matrixLegend">
+        Recorded + remaining / capacity. Open a day for details; draft work is separate.
+      </p>
+      <app-workload-table
+        [projection]="result.projection"
+        [members]="memberOptions()"
+        (dayOpened)="selectedDay.set($event)"
+      />
+    } @else {
+      <div hlmEmpty class="border border-dashed">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+          </div>
+          <p hlmEmptyTitle i18n="@@workload.empty">No members match these filters</p>
+        </div>
+        @if (activeFilterKeys().length) {
+          <button
+            hlmBtn
+            variant="outline"
+            (click)="clearFilters()"
+            i18n="@@workload.clearFiltersAction"
+          >
+            Clear filters
+          </button>
+        }
+      </div>
+    }
+    <app-collection-pagination
+      [page]="result.page"
+      [pageSize]="result.pageSize"
+      [pageSizes]="[10, 20, 50]"
+      [pageCount]="pageCount()"
+      [total]="result.totalItems"
+      [shown]="result.projection.members.length"
+      testIdPrefix="workload"
+      (pageChanged)="changePage($event)"
+      (pageSizeChanged)="changePageSize($event)"
+    />
+    <app-workload-planning-panel
+      [organizationId]="organizationId()"
+      [projection]="result.projection"
+      [members]="memberOptions()"
+      [canManageCapacity]="result.canManageCapacity && connectivity.online()"
+      (capacityRequested)="openCapacity($event)"
+    />
+    <p class="text-xs text-muted-foreground" i18n="@@workload.calculatedAt">
+      Calculated {{ calculatedAt() }}. Draft work is shown separately.
+    </p>
+  }
+</div>
+<app-workload-day-sheet
+  [organizationId]="organizationId()"
+  [selection]="selectedDay()"
+  [identity]="selectedIdentity()"
+  (closed)="selectedDay.set(null)"
+/>
+@if (capacityOpen() && data()?.canManageCapacity) {
+  <app-workload-capacity-sheet
+    [organizationId]="organizationId()"
+    [members]="memberOptions()"
+    [initialMemberId]="capacityMemberId()"
+    [today]="data()!.projection.today"
+    [firstDayOfWeek]="data()!.projection.firstDayOfWeek"
+    [online]="connectivity.online()"
+    [readState]="store.capacityCallState()"
+    [writeState]="store.capacityWriteCallState()"
+    (requested)="store.loadCapacity({ organizationId: organizationId(), memberId: $event })"
+    (submitted)="store.saveCapacity($event)"
+    (closed)="closeCapacity()"
+  />
+}
+<ng-template #memberOptionRow let-option>
+  <span class="flex max-w-sm min-w-0 items-center gap-2">
+    <hlm-avatar class="size-8 shrink-0" aria-hidden="true">
+      @if (option.avatarUrl; as avatarUrl) {
+        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+      }
+      <span hlmAvatarFallback>{{ option.initials }}</span>
+    </hlm-avatar>
+    <span class="flex min-w-0 flex-1 flex-col text-left">
+      <span class="wrap-anywhere whitespace-normal">{{ option.displayName }}</span>
+      <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">{{
+        option.roleLabel
+      }}</span>
+    </span>
+  </span>
+</ng-template>
+<ng-template #memberSelectedValue let-option>
+  <span
+    class="inline-flex min-w-0 items-center gap-1.5"
+    [attr.title]="option.roleLabel ? option.label + ' · ' + option.roleLabel : option.label"
+  >
+    <hlm-avatar class="size-4 shrink-0" aria-hidden="true">
+      @if (option.avatarUrl; as avatarUrl) {
+        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+      }
+      <span hlmAvatarFallback class="text-[9px]">{{ option.initials ?? '?' }}</span>
+    </hlm-avatar>
+    <span class="truncate"
+      >{{ option.label }}
+      @if (option.roleLabel) {
+        · {{ option.roleLabel }}
+      }
+    </span>
+  </span>
+</ng-template>

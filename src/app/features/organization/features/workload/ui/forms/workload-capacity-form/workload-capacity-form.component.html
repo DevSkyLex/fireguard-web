@@ -1,0 +1,310 @@
+<form [id]="formId()" (submit)="submit($event)" novalidate>
+  <span id="capacity-unit-hours" class="sr-only" i18n="@@workload.hours">Hours</span>
+  <span id="capacity-unit-minutes" class="sr-only" i18n="@@workload.minutes">Minutes</span>
+  <fieldset hlmFieldSet class="gap-4" [disabled]="pending()">
+    @if (mode() === 'week') {
+      <hlm-field>
+        <label hlmFieldLabel for="capacity-effective-on" i18n="@@workload.effectiveOn"
+          >Effective from</label
+        >
+        @if (interaction.isMobileInteractionMode()) {
+          <hlm-drawer
+            direction="bottom"
+            [state]="calendarState()"
+            (stateChanged)="calendarState.set($event)"
+          >
+            <button
+              #effectiveDateTrigger
+              hlmDrawerTrigger
+              hlmBtn
+              type="button"
+              variant="outline"
+              id="capacity-effective-on"
+              class="min-h-11 w-full justify-start"
+              [disabled]="pending()"
+              [attr.aria-invalid]="
+                weekForm.effectiveOn().touched() && weekForm.effectiveOn().invalid() ? 'true' : null
+              "
+              [attr.aria-describedby]="
+                weekForm.effectiveOn().touched() && weekForm.effectiveOn().invalid()
+                  ? 'capacity-effective-on-error'
+                  : null
+              "
+            >
+              @if (weekModel().effectiveOn; as date) {
+                {{ formatEffectiveDate(date) }}
+              } @else {
+                <span i18n="@@workload.dateRequired">Choose a date.</span>
+              }
+            </button>
+            <hlm-drawer-content *hlmDrawerPortal class="overflow-hidden">
+              <hlm-drawer-header class="text-start">
+                <h2 hlmDrawerTitle i18n="@@workload.effectiveOn">Effective from</h2>
+                <p hlmDrawerDescription i18n="@@workload.dateRequired">Choose a date.</p>
+              </hlm-drawer-header>
+              <div class="min-h-0 overflow-y-auto px-1 pb-3">
+                <hlm-calendar
+                  class="mx-auto w-fit border-0 p-0 [--cell-size:--spacing(11)]"
+                  [date]="weekModel().effectiveOn ?? undefined"
+                  [weekStartsOn]="
+                    firstDayOfWeek() === 'sunday' ? 0 : firstDayOfWeek() === 'saturday' ? 6 : 1
+                  "
+                  [disabled]="pending()"
+                  (dateChange)="chooseEffectiveDate($event)"
+                />
+              </div>
+              <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <button
+                  hlmBtn
+                  hlmDrawerClose
+                  type="button"
+                  variant="outline"
+                  class="min-h-11"
+                  i18n="@@common.cancel"
+                >
+                  Cancel
+                </button>
+              </hlm-drawer-footer>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        } @else {
+          <hlm-date-picker
+            [formField]="weekForm.effectiveOn"
+            [formatDate]="formatEffectiveDate"
+            [autoCloseOnSelect]="true"
+            align="start"
+          >
+            <hlm-date-picker-trigger
+              buttonId="capacity-effective-on"
+              class="w-full mobile-ui:min-h-11"
+            >
+              <span i18n="@@workload.dateRequired">Choose a date.</span>
+            </hlm-date-picker-trigger>
+          </hlm-date-picker>
+        }
+        @if (weekForm.effectiveOn().touched() && weekForm.effectiveOn().invalid()) {
+          <hlm-field-error id="capacity-effective-on-error" [forceShow]="true">{{
+            weekForm.effectiveOn().errorSummary()[0]?.message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+      <fieldset hlmFieldSet class="gap-3" aria-describedby="capacity-week-hint">
+        <legend hlmFieldLegend i18n="@@workload.weekPattern">Weekly pattern</legend>
+        <p id="capacity-week-hint" hlmFieldDescription i18n="@@workload.durationHint">
+          Available time per day. Use 0 hours for days off.
+        </p>
+        <div class="flex flex-col gap-3">
+          @for (weekday of weekdays(); track weekday.index) {
+            @let day = weekForm.days[weekday.index];
+            <hlm-field>
+              <div class="grid grid-cols-[minmax(0,1fr)_4.5rem_5rem] items-center gap-2">
+                <div class="flex min-w-0 flex-col gap-0.5">
+                  <span
+                    [id]="'capacity-day-' + weekday.index + '-label'"
+                    class="text-sm font-medium"
+                    >{{ weekday.date | date: 'EEEE' : 'UTC' }}</span
+                  >
+                  @if (day().touched() && day().invalid()) {
+                    <hlm-field-error
+                      class="text-xs"
+                      [id]="'capacity-day-' + weekday.index + '-error'"
+                      [forceShow]="true"
+                      >{{ day().errorSummary()[0]?.message }}</hlm-field-error
+                    >
+                  }
+                </div>
+                <div hlmInputGroup class="mobile-ui:h-11">
+                  <input
+                    hlmInputGroupInput
+                    [id]="'capacity-day-' + weekday.index + '-hours'"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    [formField]="day.hours"
+                    [attr.aria-labelledby]="
+                      'capacity-day-' + weekday.index + '-label' + ' capacity-unit-hours'
+                    "
+                    [attr.aria-invalid]="
+                      day.hours().touched() && day.hours().invalid() ? 'true' : null
+                    "
+                    [attr.aria-describedby]="
+                      day().touched() && day().invalid()
+                        ? 'capacity-day-' + weekday.index + '-error'
+                        : null
+                    "
+                  />
+                  <span hlmInputGroupAddon align="inline-end" aria-hidden="true">h</span>
+                </div>
+                <div hlmInputGroup class="mobile-ui:h-11">
+                  <input
+                    hlmInputGroupInput
+                    [id]="'capacity-day-' + weekday.index + '-minutes'"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    [formField]="day.minutes"
+                    [attr.aria-labelledby]="
+                      'capacity-day-' + weekday.index + '-label' + ' capacity-unit-minutes'
+                    "
+                    [attr.aria-invalid]="
+                      day.minutes().touched() && day.minutes().invalid() ? 'true' : null
+                    "
+                    [attr.aria-describedby]="
+                      day().touched() && day().invalid()
+                        ? 'capacity-day-' + weekday.index + '-error'
+                        : null
+                    "
+                  />
+                  <span hlmInputGroupAddon align="inline-end" aria-hidden="true">min</span>
+                </div>
+              </div>
+            </hlm-field>
+          }
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="h-auto min-h-8 whitespace-normal mobile-ui:min-h-11"
+            (click)="repeatWorkingDay()"
+            [disabled]="!repeatSource()"
+          >
+            @if (repeatSource(); as source) {
+              <span i18n="@@workload.repeatWorkingDay"
+                >Repeat {{ source.date | date: 'EEEE' : 'UTC' }} on working days</span
+              >
+            } @else {
+              <span i18n="@@workload.repeatWorkingDayEmpty"
+                >Enter one working day to repeat it</span
+              >
+            }
+          </button>
+          <p class="text-xs text-muted-foreground" i18n="@@workload.repeatWorkingDayHint">
+            Days set to zero stay off. You can still adjust each day.
+          </p>
+        </div>
+        <dl
+          class="flex items-center justify-between gap-3 border-t pt-3 text-sm"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <dt i18n="@@workload.weeklyTotal">Weekly capacity</dt>
+          <dd class="font-semibold tabular-nums" data-testid="workload-capacity-total">
+            {{ weeklyTotal() }}
+          </dd>
+        </dl>
+      </fieldset>
+    } @else {
+      <div class="grid grid-cols-2 gap-3">
+        <hlm-field>
+          <label hlmFieldLabel for="capacity-starts-on" i18n="@@workload.startsOn">From</label>
+          <input
+            hlmInput
+            id="capacity-starts-on"
+            type="date"
+            [formField]="exceptionForm.startsOn"
+            [attr.aria-invalid]="
+              exceptionForm.startsOn().touched() && exceptionForm.startsOn().invalid()
+                ? 'true'
+                : null
+            "
+          />
+          @if (exceptionForm.startsOn().touched() && exceptionForm.startsOn().invalid()) {
+            <hlm-field-error [forceShow]="true">{{
+              exceptionForm.startsOn().errorSummary()[0]?.message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="capacity-ends-on" i18n="@@workload.endsOn">Through</label>
+          <input
+            hlmInput
+            id="capacity-ends-on"
+            type="date"
+            [formField]="exceptionForm.endsOn"
+            [attr.aria-invalid]="
+              exceptionForm.endsOn().touched() && exceptionForm.endsOn().invalid() ? 'true' : null
+            "
+          />
+          @if (exceptionForm.endsOn().touched() && exceptionForm.endsOn().invalid()) {
+            <hlm-field-error [forceShow]="true">{{
+              exceptionForm.endsOn().errorSummary()[0]?.message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+      </div>
+      <hlm-field>
+        <span id="capacity-available-label" hlmFieldLabel i18n="@@workload.availableDuration"
+          >Available time per day</span
+        >
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="self-start mobile-ui:min-h-11"
+          (click)="setFullAbsence()"
+          i18n="@@workload.fullAbsence"
+        >
+          Full absence · 0 h
+        </button>
+        <div class="grid grid-cols-2 gap-3">
+          <div hlmInputGroup class="mobile-ui:h-11">
+            <input
+              hlmInputGroupInput
+              [id]="'capacity-available' + '-hours'"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              [formField]="exceptionForm.duration.hours"
+              [attr.aria-labelledby]="'capacity-available-label' + ' capacity-unit-hours'"
+              [attr.aria-invalid]="
+                exceptionForm.duration.hours().touched() && exceptionForm.duration.hours().invalid()
+                  ? 'true'
+                  : null
+              "
+              [attr.aria-describedby]="
+                exceptionForm.duration().touched() && exceptionForm.duration().invalid()
+                  ? 'capacity-available' + '-error'
+                  : null
+              "
+            />
+            <span hlmInputGroupAddon align="inline-end" aria-hidden="true">h</span>
+          </div>
+          <div hlmInputGroup class="mobile-ui:h-11">
+            <input
+              hlmInputGroupInput
+              [id]="'capacity-available' + '-minutes'"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              [formField]="exceptionForm.duration.minutes"
+              [attr.aria-labelledby]="'capacity-available-label' + ' capacity-unit-minutes'"
+              [attr.aria-invalid]="
+                exceptionForm.duration.minutes().touched() &&
+                exceptionForm.duration.minutes().invalid()
+                  ? 'true'
+                  : null
+              "
+              [attr.aria-describedby]="
+                exceptionForm.duration().touched() && exceptionForm.duration().invalid()
+                  ? 'capacity-available' + '-error'
+                  : null
+              "
+            />
+            <span hlmInputGroupAddon align="inline-end" aria-hidden="true">min</span>
+          </div>
+        </div>
+        <p hlmFieldDescription i18n="@@workload.exceptionDurationHint">
+          Use 0 hours for a full absence, or enter the time still available each day. This cannot
+          exceed the weekly pattern.
+        </p>
+        @if (exceptionForm.duration().touched() && exceptionForm.duration().invalid()) {
+          <hlm-field-error id="capacity-available-error" [forceShow]="true">{{
+            exceptionForm.duration().errorSummary()[0]?.message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+    }
+  </fieldset>
+</form>

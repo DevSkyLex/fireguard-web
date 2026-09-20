@@ -404,9 +404,15 @@
         } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
           <div hlmEmpty>
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideWrench" aria-hidden="true" />
-              </div>
+              @if (
+                pane.equipmentListCallState().status === 'success' && pane.equipmentTotal() === 0
+              ) {
+                <app-resource-illustration hlmEmptyMedia resource="equipment" />
+              } @else {
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideWrench" aria-hidden="true" />
+                </div>
+              }
               <p hlmEmptyTitle i18n="@@org.assets.equipment.empty">No equipment in view.</p>
             </div>
           </div>
@@ -551,9 +557,15 @@
         } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
           <div hlmEmpty>
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideClipboardList" aria-hidden="true" />
-              </div>
+              @if (
+                pane.inspectionListCallState().status === 'success' && pane.inspectionTotal() === 0
+              ) {
+                <app-resource-illustration hlmEmptyMedia resource="inspection" />
+              } @else {
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideClipboardList" aria-hidden="true" />
+                </div>
+              }
               <p hlmEmptyTitle i18n="@@org.assets.inspections.empty">No inspections in view.</p>
             </div>
           </div>
@@ -960,13 +972,19 @@
         }
       </div>
     } @else if (compliance.snapshots().length === 0) {
-      <p
-        class="text-sm text-muted-foreground"
-        data-testid="assets-compliance-snapshots-empty"
-        i18n="@@org.assets.compliance.snapshotsEmpty"
-      >
-        No archived register yet. "Archive register" stores a dated copy of the safety register.
-      </p>
+      <div hlmEmpty class="border border-border" data-testid="assets-compliance-snapshots-empty">
+        <div hlmEmptyHeader>
+          @if (
+            compliance.snapshotsCallState().status === 'success' &&
+            compliance.snapshotsCallState().data?.totalItems === 0
+          ) {
+            <app-resource-illustration hlmEmptyMedia resource="document" />
+          }
+          <p hlmEmptyDescription i18n="@@org.assets.compliance.snapshotsEmpty">
+            No archived register yet. "Archive register" stores a dated copy of the safety register.
+          </p>
+        </div>
+      </div>
     } @else {
       @if (isMobileInteractionMode()) {
         <div class="grid gap-3 sm:grid-cols-2" data-testid="assets-compliance-snapshots-cards">

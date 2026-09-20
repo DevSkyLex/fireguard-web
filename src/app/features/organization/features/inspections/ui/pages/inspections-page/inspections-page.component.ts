@@ -70,6 +70,7 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -133,6 +134,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     RouterLink,
     InspectionCreateSheet,
     InspectionStatusTag,

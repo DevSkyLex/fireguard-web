@@ -22,6 +22,7 @@ import {
   errorCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
@@ -94,6 +95,14 @@ describe('EquipmentsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
@@ -232,6 +241,7 @@ describe('EquipmentsPage', () => {
 
     const element: HTMLElement = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[data-testid="equipments-retry"]')).not.toBeNull();
+    expect(element.querySelector('app-resource-illustration img')).toBeNull();
 
     (element.querySelector('[data-testid="equipments-retry"]') as HTMLButtonElement).click();
 
@@ -244,6 +254,28 @@ describe('EquipmentsPage', () => {
     fixture = await createPage();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No equipment found');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-resource-illustration img'),
+    ).not.toBeNull();
+  });
+
+  it('should instantiate artwork only for a successful unfiltered zero-total collection', async () => {
+    fixture = await createPage();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('app-resource-illustration img')).toBeNull();
+
+    listCallState.set(successCallState(null));
+    totalEquipment.set(12);
+    await fixture.whenStable();
+    expect(element.querySelector('app-resource-illustration img')).toBeNull();
+
+    totalEquipment.set(0);
+    await fixture.whenStable();
+    expect(element.querySelector('app-resource-illustration img')).not.toBeNull();
+
+    fixture.componentRef.setInput('q', 'extinguisher');
+    await fixture.whenStable();
+    expect(element.querySelector('app-resource-illustration img')).toBeNull();
   });
 
   it('should default the ordering to createdAt/asc and toggle its direction on a re-picked field', async () => {

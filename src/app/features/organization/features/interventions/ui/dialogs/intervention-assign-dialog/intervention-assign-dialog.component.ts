@@ -22,6 +22,7 @@ import type {
   PlanningCatalogueState,
 } from '@features/organization/features/interventions/models';
 import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -54,6 +55,7 @@ import { InterventionCatalogueStatus } from '../../components/intervention-catal
 @Component({
   selector: 'app-intervention-assign-dialog',
   imports: [
+    HlmInputGroupAddon,
     InterventionCatalogueStatus,
     FormField,
     ...HlmAlertImports,
@@ -68,6 +70,22 @@ import { InterventionCatalogueStatus } from '../../components/intervention-catal
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionAssignDialog {
+  /**
+   * Property selectedMemberOption
+   * @readonly
+   *
+   * @description
+   * Organization identity of the selected member; the submitted identifier remains unchanged.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<MemberSelectOption | null>}
+   */
+  protected readonly selectedMemberOption: Signal<MemberSelectOption | null> = computed(
+    () => this.members().find((member) => member.value === this.selectedMember()) ?? null,
+  );
+
   //#region Inputs
   /**
    * Property catalogue

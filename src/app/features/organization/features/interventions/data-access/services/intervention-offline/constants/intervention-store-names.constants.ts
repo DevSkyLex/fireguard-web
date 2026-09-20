@@ -12,6 +12,8 @@
 export const INTERVENTION_STORE_NAMES = [
   'interventions',
   'workItems',
+  'timeJournals',
+  'timeDrafts',
   'changes',
   'resources',
   'media',

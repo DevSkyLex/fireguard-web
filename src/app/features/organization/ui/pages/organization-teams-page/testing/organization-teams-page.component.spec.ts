@@ -9,6 +9,7 @@ import {
   pendingCallState,
   successCallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import { ORGANIZATION_PERMISSION, type TeamOutput } from '@features/organization/models';
@@ -57,6 +58,14 @@ describe('OrganizationTeamsPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {
@@ -223,6 +232,7 @@ describe('OrganizationTeamsPage', () => {
 
   it('should render the empty state once loaded with no teams', async () => {
     teams = signal<readonly TeamOutput[]>([]);
+    listCallState.set(successCallState(null));
     await createPage();
 
     expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).not.toBeNull();
@@ -231,6 +241,7 @@ describe('OrganizationTeamsPage', () => {
 
   it('should gate the empty state’s create action on TEAMS_WRITE', async () => {
     teams = signal<readonly TeamOutput[]>([]);
+    listCallState.set(successCallState(null));
     permissions = signal<ReadonlyArray<string>>([]);
     await createPage();
 

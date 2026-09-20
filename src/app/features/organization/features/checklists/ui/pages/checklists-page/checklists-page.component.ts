@@ -51,6 +51,7 @@ import {
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -104,6 +105,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     ChecklistArchiveDialog,
     ChecklistStatusTag,
     ChecklistTable,

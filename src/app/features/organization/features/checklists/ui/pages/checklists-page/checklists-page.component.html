@@ -99,9 +99,13 @@
   } @else if (!store.isLoadingChecklists() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideListChecks" aria-hidden="true" />
-        </div>
+        @if (searchTerm().trim() !== '' || status() !== null) {
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideListChecks" aria-hidden="true" />
+          </div>
+        } @else if (store.listCallState().status === 'success' && store.totalChecklists() === 0) {
+          <app-resource-illustration hlmEmptyMedia resource="checklist" />
+        }
         <p hlmEmptyTitle i18n="@@checklists.list.emptyTitle">No checklists</p>
         <p hlmEmptyDescription i18n="@@checklists.list.emptyDesc">
           No checklist templates match this filter.

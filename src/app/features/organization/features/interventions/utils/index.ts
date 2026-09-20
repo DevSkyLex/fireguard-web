@@ -44,3 +44,5 @@ export {
   searchSavedWorkItems,
   searchSavedChanges,
 } from './intervention-workspace-projection/intervention-workspace-projection.utils';
+export { projectInterventionTime } from './project-intervention-time/project-intervention-time.utils';
+export { orderInterventionWorkItems } from './order-intervention-work-items/order-intervention-work-items.utils';

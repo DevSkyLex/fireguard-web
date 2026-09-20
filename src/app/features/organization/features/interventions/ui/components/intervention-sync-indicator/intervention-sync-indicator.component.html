@@ -303,7 +303,11 @@
                 [attr.aria-label]="retryLabel(operation.type)"
                 (click)="retryOperation(operation.id)"
               >
-                <span i18n="@@intervention.sync.queueRetry">Retry</span>
+                @if (operation.workloadAssessment || operation.serverValues) {
+                  <span i18n="@@intervention.operations.retry">Review and retry</span>
+                } @else {
+                  <span i18n="@@intervention.sync.queueRetry">Retry</span>
+                }
               </button>
               <button
                 hlmBtn
@@ -381,3 +385,17 @@
   (confirmed)="confirmDiscard()"
   (dismissed)="discardConfirmVisible.set(false)"
 />
+@if (reviewWorkspace(); as workspace) {
+  <app-intervention-operations-sheet
+    [visible]="true"
+    [interventionName]="workspace.intervention.name"
+    [workItems]="workspace.workItems"
+    [operations]="operations.operations()"
+    [callState]="operations.loadCallState()"
+    [mutations]="operations.mutations()"
+    [online]="state() !== 'offline'"
+    [syncing]="state() === 'syncing'"
+    (visibleChange)="!$event && reviewWorkspace.set(null)"
+    (resolved)="operations.resolve($event)"
+  />
+}

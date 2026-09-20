@@ -293,6 +293,9 @@
                   [contextId]="interventionId()"
                   [items]="store.workItems()"
                   [queryItems]="tableQueries.workItems()"
+                  [queryTotal]="tableQueries.workItemsTotal()"
+                  [resultPage]="tableQueries.workItemsPage()"
+                  [resultPageSize]="tableQueries.workItemsPageSize()"
                   [queuedIds]="operationsStore.queuedWorkItemIds()"
                   [errors]="store.workItemErrors()"
                   [loading]="store.loading() || tableQueries.workItemsLoading()"
@@ -315,12 +318,18 @@
                       interventionId: interventionId(),
                       search: $event.search,
                       statuses: $event.statuses,
+                      page: $event.page,
+                      itemsPerPage: $event.itemsPerPage,
+                      prioritizeAssignee: $event.prioritizeAssignee,
                     })
                   "
                   (statusChanged)="onWorkItemStatusChanged($event)"
                   (skipRequested)="requestSkipWorkItem($event)"
                   (deleteRequested)="requestDeleteWorkItem($event)"
                   (addRequested)="workItemSheetVisible.set(true)"
+                  (timeRequested)="timeItem.set($event)"
+                  (effortRequested)="effortItem.set({ item: $event, mode: 'remaining' })"
+                  (planningRequested)="effortItem.set({ item: $event, mode: 'planning' })"
                   (evidenceRequested)="onEvidenceRequested($event)"
                 />
                 <input
@@ -670,7 +679,56 @@
   }
 </div>
 
+@if (timeItem(); as item) {
+  @if (timeStore.scope(); as scope) {
+    <app-intervention-time-sheet
+      [item]="item"
+      [actorId]="timeActorId()"
+      [today]="timeToday()"
+      [members]="planningOptions.members()"
+      [entries]="timeStore.entities()"
+      [draft]="timeStore.draft()"
+      [readState]="timeStore.readCallState()"
+      [writeState]="timeStore.writeCallState()"
+      [draftState]="timeStore.draftCallState()"
+      [offline]="!online()"
+      [historyUnavailable]="timeStore.historyUnavailable()"
+      (retried)="timeStore.load(scope)"
+      (closed)="timeItem.set(null)"
+      (draftChanged)="timeStore.saveDraft({ scope, draft: $event })"
+      (submitted)="timeStore.write({ scope, command: $event })"
+    />
+  }
+}
+@if (effortItem(); as editing) {
+  <app-intervention-effort-sheet
+    [workloadOrganizationId]="organizationId()"
+    [workloadStartsOn]="store.intervention()?.plannedStartAt ?? null"
+    [workloadEndsOn]="store.intervention()?.dueAt ?? null"
+    [item]="editing.item"
+    [mode]="editing.mode"
+    [members]="planningOptions.members()"
+    [pending]="store.pendingWorkItemIds().has(editing.item.id)"
+    [error]="store.workItemErrors()[editing.item.id] ?? null"
+    [online]="online()"
+    (closed)="effortItem.set(null)"
+    (submitted)="
+      store.updateWorkItem({ interventionId: interventionId(), item: editing.item, input: $event })
+    "
+  />
+}
+@if (store.planningConfirmation(); as pending) {
+  <app-workload-confirmation-dialog
+    [assessment]="pending.assessment"
+    [memberNames]="workloadMemberNames()"
+    (confirmed)="store.confirmPlanning($event)"
+    (cancelled)="store.dismissPlanningConfirmation()"
+  />
+}
 <app-intervention-work-item-sheet
+  [workloadOrganizationId]="organizationId()"
+  [workloadStartsOn]="store.intervention()?.plannedStartAt ?? null"
+  [workloadEndsOn]="store.intervention()?.dueAt ?? null"
   [catalogues]="planningOptions.catalogues()"
   (catalogueRequested)="planningOptions.loadMore($event)"
   (catalogueSearched)="planningOptions.search($event)"
@@ -1204,6 +1262,7 @@
 </ng-template>
 
 <app-intervention-operations-sheet
+  [memberNames]="workloadMemberNames()"
   [visible]="operationsVisible()"
   [interventionName]="store.intervention()?.name ?? ''"
   [operations]="operationsStore.operations()"

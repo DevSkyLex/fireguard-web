@@ -36,6 +36,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
+import { HlmInputGroupAddon } from '@shared/ui/input-group';
 import { InterventionCatalogueStatus } from '../intervention-catalogue-status';
 
 import {
@@ -114,6 +115,7 @@ const DESCRIPTION_MAX_LENGTH: number = 2000;
 @Component({
   selector: 'app-intervention-properties-grid',
   imports: [
+    HlmInputGroupAddon,
     NgIcon,
     InterventionCatalogueStatus,
     ...HlmAvatarImports,
@@ -843,13 +845,18 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method memberOf
-   * @description Resolves a member IRI against the loaded options.
-   * @access private
+   *
+   * @description
+   * Resolves a member IRI against the loaded organization identities.
+   *
+   * @access protected
    * @since 1.0.0
+   *
    * @param {string | null | undefined} iri - The member IRI to resolve.
+   *
    * @returns {MemberSelectOption | null} The matching option, or null.
    */
-  private memberOf(iri: string | null | undefined): MemberSelectOption | null {
+  protected memberOf(iri: string | null | undefined): MemberSelectOption | null {
     return iri == null
       ? null
       : (this.memberOptions().find((option) => option.value === iri) ?? null);

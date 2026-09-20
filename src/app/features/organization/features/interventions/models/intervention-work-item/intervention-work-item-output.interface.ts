@@ -14,6 +14,96 @@ import type { InterventionWorkItemTarget } from './intervention-work-item-target
  */
 export interface InterventionWorkItemOutput extends HydraItem {
   /**
+   * Property estimatedMinutes
+   * @readonly
+   *
+   * @description
+   * Reference estimate; null means not estimated.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {number | null}
+   */
+  readonly estimatedMinutes?: number | null;
+
+  /**
+   * Property workStartsOn
+   * @readonly
+   *
+   * @description
+   * Optional organization-local work period start.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string | null}
+   */
+  readonly workStartsOn?: string | null;
+
+  /**
+   * Property workEndsOn
+   * @readonly
+   *
+   * @description
+   * Optional organization-local work period end.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {string | null}
+   */
+  readonly workEndsOn?: string | null;
+
+  /**
+   * Property remainingMinutes
+   * @readonly
+   *
+   * @description
+   * Explicit remaining effort, independent of time recorded.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {number | null}
+   */
+  readonly remainingMinutes?: number | null;
+
+  /**
+   * Property spentMinutes
+   * @readonly
+   *
+   * @description
+   * Total non-cancelled time recorded by all contributors.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {number}
+   */
+  readonly spentMinutes?: number;
+
+  /**
+   * Property allowedActions
+   * @readonly
+   *
+   * @description
+   * Caller-specific capabilities; missing cached capabilities do not imply permission.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {{ readonly canLogTime: boolean; readonly canManageTime: boolean; readonly canReestimate: boolean; readonly canReassign: boolean; readonly canEditPlanning: boolean }}
+   */
+  readonly allowedActions?: {
+    readonly canExecute?: boolean;
+    readonly canLogTime: boolean;
+    readonly canManageTime: boolean;
+    readonly canReestimate: boolean;
+    readonly canReassign: boolean;
+    readonly canEditPlanning: boolean;
+  };
+  /**
    * Property id
    * @readonly
    *

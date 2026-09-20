@@ -132,3 +132,13 @@ export type {
 } from './planning/planning-catalogue.interface';
 export type { InterventionWorkspaceData } from './intervention-table-query/intervention-workspace-data.interface';
 export type { InterventionTableSource } from './intervention-table-query/intervention-table-source.type';
+export type { InterventionTimeEntryVersion } from './intervention-time/intervention-time-entry-version.interface';
+export type { InterventionTimeEntry } from './intervention-time/intervention-time-entry.interface';
+export type { WriteInterventionTimeEntryInput } from './intervention-time/write-intervention-time-entry-input.interface';
+export type { InterventionTimeJournalOutput } from './intervention-time/intervention-time-journal-output.interface';
+export type { InterventionTimeEntryOutput } from './intervention-time/intervention-time-entry-output.interface';
+export type { InterventionTimeDraft } from './intervention-time/intervention-time-draft.interface';
+export type { InterventionTimeScope } from './intervention-time/intervention-time-scope.interface';
+export type { InterventionTimeWrite } from './intervention-time/intervention-time-write.type';
+export type { InterventionTimeEntryView } from './intervention-time/intervention-time-entry-view.interface';
+export type { InterventionTimeJournalView } from './intervention-time/intervention-time-journal-view.interface';

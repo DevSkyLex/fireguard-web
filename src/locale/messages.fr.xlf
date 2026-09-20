@@ -3512,6 +3512,10 @@
         <source>Target</source>
         <target>Cible</target>
       </trans-unit>
+      <trans-unit id="intervention.wit.columnTime" datatype="html">
+        <source>Time</source>
+        <target>Temps</target>
+      </trans-unit>
       <trans-unit id="intervention.wit.columnAction" datatype="html">
         <source>Action</source>
         <target>Action</target>
@@ -12030,6 +12034,10 @@
         <source>Required</source>
         <target>Obligatoire</target>
       </trans-unit>
+      <trans-unit id="intervention.wit.optional" datatype="html">
+        <source>Optional</source>
+        <target>Facultatif</target>
+      </trans-unit>
       <trans-unit id="intervention.workItems.savedLocally" datatype="html">
         <source>Saved on this device</source>
         <target>Enregistré sur cet appareil</target>
@@ -15138,6 +15146,858 @@
       <trans-unit id="shared.collectionSurface.refreshing" datatype="html">
         <source>Refreshing…</source>
         <target>Actualisation…</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.remaining" datatype="html">
+        <source>Remaining work (minutes)</source>
+        <target>Reste à faire (minutes)</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.estimated" datatype="html">
+        <source>Baseline estimate (minutes)</source>
+        <target>Estimation de référence (minutes)</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.unknown" datatype="html">
+        <source> Leave blank when unknown. Zero is a known duration, not an unknown estimate. </source>
+        <target>Laissez vide si inconnu. Zéro est une durée connue, pas une estimation inconnue.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.unassigned" datatype="html">
+        <source>Unassigned</source>
+        <target>Non affecté</target>
+      </trans-unit>
+      <trans-unit id="workload.noMembers" datatype="html">
+        <source>No members found</source>
+        <target>Aucun membre trouvé</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.startsOn" datatype="html">
+        <source>Work starts on</source>
+        <target>Début du travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.endsOn" datatype="html">
+        <source>Work ends on</source>
+        <target>Fin du travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.inheritPeriod" datatype="html">
+        <source> Leave both dates blank to use the intervention&apos;s period. </source>
+        <target>Laissez les deux dates vides pour utiliser la période de l’intervention.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.wholeMinutes" datatype="html">
+        <source>Enter whole minutes, or leave empty if unknown.</source>
+        <target>Saisissez un nombre entier de minutes positif ou nul, ou laissez vide si inconnu.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.period" datatype="html">
+        <source>Choose both dates in chronological order, or leave both blank.</source>
+        <target>Renseignez les deux dates dans l’ordre chronologique, ou laissez-les vides.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.contributor" datatype="html">
+        <source>Contributor</source>
+        <target>Contributeur</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.workedOn" datatype="html">
+        <source>Work date</source>
+        <target>Date du travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.minutes" datatype="html">
+        <source>Time spent (minutes)</source>
+        <target>Temps passé (minutes)</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.independent" datatype="html">
+        <source> Logging time does not change the task status or remaining work. </source>
+        <target>Saisir du temps ne modifie ni l’état de la tâche ni le reste à faire.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.note" datatype="html">
+        <source>Note (optional)</source>
+        <target>Note (facultatif)</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.noteLimit" datatype="html">
+        <source>Use at most 2000 characters.</source>
+        <target>Utilisez au maximum 2 000 caractères.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.keepDraft" datatype="html">
+        <source> Keep draft </source>
+        <target>Conserver le brouillon</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.save" datatype="html">
+        <source> Save time </source>
+        <target>Enregistrer le temps</target>
+      </trans-unit>
+      <trans-unit id="workload.dateRequired" datatype="html">
+        <source>Choose a date.</source>
+        <target>Choisissez une date.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.future" datatype="html">
+        <source>Work dates cannot be in the future.</source>
+        <target>La date du travail ne peut pas être dans le futur.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.durationRange" datatype="html">
+        <source>Enter whole minutes between 1 and 1440.</source>
+        <target>Saisissez un nombre entier de minutes entre 1 et 1 440.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.estimateMinutes" datatype="html">
+        <source>Estimate (minutes)</source>
+        <target>Estimation (minutes)</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.estimateHint" datatype="html">
+        <source> Leave empty if unknown. Time recorded will not automatically reduce the remaining work. </source>
+        <target>Laissez vide si inconnu. Le temps saisi ne réduit pas automatiquement le reste à faire.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.periodHint" datatype="html">
+        <source> Optional. Dates must fit within the intervention period; leave both empty to use that period. </source>
+        <target>Facultatif. Les dates doivent être comprises dans la période de l’intervention. Laissez-les vides pour hériter de cette période.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.periodRequired" datatype="html">
+        <source>Set both dates in chronological order, or leave both empty.</source>
+        <target>Renseignez les deux dates dans l’ordre chronologique, ou laissez-les vides.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.reestimate" datatype="html">
+        <source>Reestimate remaining work</source>
+        <target>Réévaluer le reste à faire</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.plan" datatype="html">
+        <source>Plan this task</source>
+        <target>Planifier cette tâche</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.description" datatype="html">
+        <source> Time already worked remains with its contributor. Changing the estimate never deducts recorded time. </source>
+        <target>Le temps réalisé reste attribué à son contributeur. Modifier l’estimation ne déduit jamais le temps saisi.</target>
+      </trans-unit>
+      <trans-unit id="intervention.effort.offline" datatype="html">
+        <source> This change will be saved locally. Assignment workload is unverified until synchronization and may require confirmation. </source>
+        <target>Cette modification sera enregistrée localement. La charge de l’affectation sera vérifiée à la synchronisation et pourra nécessiter votre confirmation.</target>
+      </trans-unit>
+      <trans-unit id="intervention.operations.serverValues" datatype="html">
+        <source> Current server values </source>
+        <target>Valeurs actuelles du serveur</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.title" datatype="html">
+        <source>Time journal</source>
+        <target>Journal des temps</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.description" datatype="html">
+        <source> Actual work is recorded separately from the intervention&apos;s published record. </source>
+        <target>Le temps réalisé est enregistré séparément du dossier publié de l’intervention.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.offline" datatype="html">
+        <source> Times are saved on this device and will be checked on synchronization. Global workload is unavailable offline. </source>
+        <target>Les temps sont enregistrés sur cet appareil et seront vérifiés à la synchronisation. La charge globale est indisponible hors ligne.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.draftError" datatype="html">
+        <source> The draft could not be saved on this device. Keep this panel open and try again. </source>
+        <target>Le brouillon n’a pas pu être enregistré sur cet appareil. Gardez ce panneau ouvert et réessayez.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.refresh" datatype="html">
+        <source> Refresh journal </source>
+        <target>Actualiser le journal</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.discardDraft" datatype="html">
+        <source>Discard draft</source>
+        <target>Supprimer le brouillon</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.staleDraft" datatype="html">
+        <source> This entry changed since your correction began. Compare the current server values before saving. </source>
+        <target>Cette saisie a changé depuis le début de votre correction. Comparez les valeurs actuelles du serveur avant d’enregistrer.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewCorrection" datatype="html">
+        <source>Review correction</source>
+        <target>Examiner la correction</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.resume" datatype="html">
+        <source>Resume draft</source>
+        <target>Reprendre le brouillon</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.log" datatype="html">
+        <source>Log time</source>
+        <target>Saisir du temps</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyUnavailable" datatype="html">
+        <source> No journal has been saved on this device. Reconnect to load its history. </source>
+        <target>Aucun journal n’est enregistré sur cet appareil. Reconnectez-vous pour charger l’historique.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.cancelled" datatype="html">
+        <source>Cancelled</source>
+        <target>Annulée</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.pending" datatype="html">
+        <source>Awaiting synchronization</source>
+        <target>En attente de synchronisation</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.conflict" datatype="html">
+        <source> This local change needs review in pending operations. It has not overwritten server history. </source>
+        <target>Cette modification locale doit être examinée dans les opérations en attente. Elle n’a pas écrasé l’historique du serveur.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.versions" datatype="html">
+        <source> Correction history </source>
+        <target>Historique des corrections</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.correct" datatype="html">
+        <source> Correct </source>
+        <target>Corriger</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.cancelEntry" datatype="html">
+        <source> Cancel entry </source>
+        <target>Annuler la saisie</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.empty" datatype="html">
+        <source>No time logged yet</source>
+        <target>Aucun temps saisi</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.emptyDescription" datatype="html">
+        <source> Log actual work without changing the remaining estimate. </source>
+        <target>Saisissez le travail réalisé sans modifier l’estimation restante.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.cancelTitle" datatype="html">
+        <source>Cancel this time entry?</source>
+        <target>Annuler cette saisie de temps ?</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.cancelDescription" datatype="html">
+        <source> It will no longer count as time spent. Its full correction history will be retained. </source>
+        <target>Elle ne comptera plus dans le temps passé. L’historique complet des corrections sera conservé.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.discardDraftDescription" datatype="html">
+        <source> Only the unfinished input will be removed. Saved and queued time entries are not affected. </source>
+        <target>Seule la saisie inachevée sera supprimée. Les temps enregistrés et en attente ne sont pas concernés.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewDescription" datatype="html">
+        <source> Continue editing your draft against the displayed server revision. Nothing is saved until you submit the form. </source>
+        <target>Continuez la correction de votre brouillon à partir de la révision du serveur affichée. Rien ne sera enregistré avant l’envoi du formulaire.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.yourDraft" datatype="html">
+        <source>Your draft</source>
+        <target>Votre brouillon</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.continueCorrection" datatype="html">
+        <source> Continue correction </source>
+        <target>Continuer la correction</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.notEstimated" datatype="html">
+        <source>Not estimated</source>
+        <target>Non estimé</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.estimated" datatype="html">
+        <source>Estimated</source>
+        <target>Estimé</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.spent" datatype="html">
+        <source>Spent</source>
+        <target>Passé</target>
+      </trans-unit>
+      <trans-unit id="intervention.wit.remaining" datatype="html">
+        <source>Remaining</source>
+        <target>Restant</target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentOffline" datatype="html">
+        <source> Workload cannot be checked offline. </source>
+        <target>La charge ne peut pas être vérifiée hors ligne.</target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentPeriod" datatype="html">
+        <source> Set a work period to inspect this member&apos;s workload. </source>
+        <target>Définissez une période de travail pour consulter la charge de ce membre.</target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentCurrent" datatype="html">
+        <source> Current load: <x id="INTERPOLATION" equiv-text="{{ duration(load()) }}"/> / <x id="INTERPOLATION_1" equiv-text="{{ duration(capacity()) }}"/> </source>
+        <target>Charge actuelle : <x id="INTERPOLATION" equiv-text="{{ duration(load()) }}" /> / <x id="INTERPOLATION_1" equiv-text="{{ duration(capacity()) }}" /></target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentProposal" datatype="html">
+        <source> The proposed change is checked when you save. </source>
+        <target>La modification proposée sera vérifiée à l’enregistrement.</target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentIncomplete" datatype="html">
+        <source> Incomplete data: availability cannot be guaranteed. </source>
+        <target>Données incomplètes : la disponibilité n’est pas garantie.</target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentOverload" datatype="html">
+        <source>Overload <x id="INTERPOLATION" equiv-text="{{ duration(day.overloadMinutes) }}"/></source>
+        <target>Surcharge de <x id="INTERPOLATION" equiv-text="{{ duration(day.overloadMinutes) }}" /></target>
+      </trans-unit>
+      <trans-unit id="workload.assignmentUnavailable" datatype="html">
+        <source> Workload evaluation unavailable. </source>
+        <target>Évaluation de la charge indisponible.</target>
+      </trans-unit>
+      <trans-unit id="workload.confirmTitle" datatype="html">
+        <source>Confirm workload overload</source>
+        <target>Confirmer la surcharge</target>
+      </trans-unit>
+      <trans-unit id="workload.confirmDescription" datatype="html">
+        <source> This plan creates or increases an overload. No other member will be assigned automatically. </source>
+        <target>Cette planification crée ou augmente une surcharge. Aucun autre membre ne sera affecté automatiquement.</target>
+      </trans-unit>
+      <trans-unit id="workload.confirmPartial" datatype="html">
+        <source> Some work or capacity is unknown. The total overload may be higher. </source>
+        <target>Une partie du travail ou de la capacité est inconnue. La surcharge totale peut être supérieure.</target>
+      </trans-unit>
+      <trans-unit id="workload.overloadComparison" datatype="html">
+        <source> Overload: <x id="INTERPOLATION" equiv-text="{{ duration(day.beforeMinutes) }}"/> → <x id="INTERPOLATION_1" equiv-text="{{ duration(day.afterMinutes) }}"/> </source>
+        <target>Surcharge : <x id="INTERPOLATION" equiv-text="{{ duration(day.beforeMinutes) }}" /> → <x id="INTERPOLATION_1" equiv-text="{{ duration(day.afterMinutes) }}" /></target>
+      </trans-unit>
+      <trans-unit id="workload.confirmCapacity" datatype="html">
+        <source> Capacity: <x id="INTERPOLATION" equiv-text="{{ duration(day.capacityMinutes) }}"/> </source>
+        <target>Capacité : <x id="INTERPOLATION" equiv-text="{{ duration(day.capacityMinutes) }}" /></target>
+      </trans-unit>
+      <trans-unit id="workload.noAvailableDay" datatype="html">
+        <source>No available day in this work period.</source>
+        <target>Aucun jour disponible sur cette période de travail.</target>
+      </trans-unit>
+      <trans-unit id="workload.confirmOverload" datatype="html">
+        <source> Confirm overload </source>
+        <target>Confirmer la surcharge</target>
+      </trans-unit>
+      <trans-unit id="workload.effectiveOn" datatype="html">
+        <source>Effective from</source>
+        <target>À compter du</target>
+      </trans-unit>
+      <trans-unit id="workload.weekHint" datatype="html">
+        <source> Set available minutes for every day. Enter zero for days off. Individual weeks replace the organization week. </source>
+        <target>Renseignez les minutes disponibles chaque jour. Saisissez zéro pour les jours non travaillés. Une semaine individuelle remplace celle de l’organisation.</target>
+      </trans-unit>
+      <trans-unit id="workload.minutesUnit" datatype="html">
+        <source>(minutes)</source>
+        <target>(minutes)</target>
+      </trans-unit>
+      <trans-unit id="workload.startsOn" datatype="html">
+        <source>From</source>
+        <target>Du</target>
+      </trans-unit>
+      <trans-unit id="workload.endsOn" datatype="html">
+        <source>Through</source>
+        <target>Au</target>
+      </trans-unit>
+      <trans-unit id="workload.availableMinutes" datatype="html">
+        <source>Available minutes per day</source>
+        <target>Minutes disponibles par jour</target>
+      </trans-unit>
+      <trans-unit id="workload.exceptionHint" datatype="html">
+        <source> Enter actual availability, including zero for an absence. Availability cannot exceed the configured week. </source>
+        <target>Renseignez la disponibilité réelle, y compris zéro pour une absence. Elle ne peut pas dépasser la semaine configurée.</target>
+      </trans-unit>
+      <trans-unit id="workload.saveCapacity" datatype="html">
+        <source> Save availability </source>
+        <target>Enregistrer la disponibilité</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityRequired" datatype="html">
+        <source>Enter a capacity, including zero for unavailable days.</source>
+        <target>Renseignez une capacité, y compris zéro pour les jours indisponibles.</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityRange" datatype="html">
+        <source>Enter whole minutes between 0 and 1440.</source>
+        <target>Saisissez un nombre entier de minutes entre 0 et 1 440.</target>
+      </trans-unit>
+      <trans-unit id="workload.periodOrder" datatype="html">
+        <source>The end must not precede the start.</source>
+        <target>La fin ne doit pas précéder le début.</target>
+      </trans-unit>
+      <trans-unit id="workload.currentWeek" datatype="html">
+        <source> This week </source>
+        <target>Cette semaine</target>
+      </trans-unit>
+      <trans-unit id="workload.previousWeek" datatype="html">
+        <source>Previous week</source>
+        <target>Semaine précédente</target>
+      </trans-unit>
+      <trans-unit id="workload.nextWeek" datatype="html">
+        <source>Next week</source>
+        <target>Semaine suivante</target>
+      </trans-unit>
+      <trans-unit id="workload.configureCapacity" datatype="html">
+        <source>Configure capacity</source>
+        <target>Configurer les capacités</target>
+      </trans-unit>
+      <trans-unit id="workload.member" datatype="html">
+        <source>Member</source>
+        <target>Membre</target>
+      </trans-unit>
+      <trans-unit id="workload.allMembers" datatype="html">
+        <source>All members</source>
+        <target>Tous les membres</target>
+      </trans-unit>
+      <trans-unit id="workload.team" datatype="html">
+        <source>Team</source>
+        <target>Équipe</target>
+      </trans-unit>
+      <trans-unit id="workload.allTeams" datatype="html">
+        <source>All teams</source>
+        <target>Toutes les équipes</target>
+      </trans-unit>
+      <trans-unit id="workload.noTeams" datatype="html">
+        <source>No teams found</source>
+        <target>Aucune équipe trouvée</target>
+      </trans-unit>
+      <trans-unit id="workload.overloadedOnly" datatype="html">
+        <source>Members with overload</source>
+        <target>Membres en surcharge</target>
+      </trans-unit>
+      <trans-unit id="workload.offlineTitle" datatype="html">
+        <source>Workload assessment unavailable offline</source>
+        <target>Évaluation de la charge indisponible hors ligne</target>
+      </trans-unit>
+      <trans-unit id="workload.offlineDescription" datatype="html">
+        <source> A saved intervention cannot show the full organization&apos;s workload. Connect to check capacity. </source>
+        <target>Une intervention sauvegardée ne représente pas toute la charge de l’organisation. Connectez-vous pour vérifier la capacité.</target>
+      </trans-unit>
+      <trans-unit id="workload.loadError" datatype="html">
+        <source>Workload could not be loaded</source>
+        <target>Impossible de charger la charge de travail</target>
+      </trans-unit>
+      <trans-unit id="workload.loading" datatype="html">
+        <source>Loading workload</source>
+        <target>Chargement de la charge de travail</target>
+      </trans-unit>
+      <trans-unit id="workload.partialTitle" datatype="html">
+        <source>Some work cannot be quantified</source>
+        <target>Une partie du travail n’est pas quantifiable</target>
+      </trans-unit>
+      <trans-unit id="workload.partialDescription" datatype="html">
+        <source> Missing capacity, estimates or dates are listed below. The displayed totals do not establish availability. </source>
+        <target>Les capacités, estimations et dates manquantes sont indiquées ci-dessous. Les totaux affichés ne garantissent pas la disponibilité.</target>
+      </trans-unit>
+      <trans-unit id="workload.empty" datatype="html">
+        <source>No members match these filters</source>
+        <target>Aucun membre ne correspond à ces filtres</target>
+      </trans-unit>
+      <trans-unit id="workload.outsideTotals" datatype="html">
+        <source>Work outside daily totals</source>
+        <target>Travail hors des totaux quotidiens</target>
+      </trans-unit>
+      <trans-unit id="workload.unassigned" datatype="html">
+        <source>To assign</source>
+        <target>À affecter</target>
+      </trans-unit>
+      <trans-unit id="workload.calculatedAt" datatype="html">
+        <source> Calculated <x id="INTERPOLATION" equiv-text="{{ calculatedAt() }}"/>. Draft work is shown separately. </source>
+        <target>Calculé le <x id="INTERPOLATION" equiv-text="{{ result.projection.calculatedAt | date: 'medium' : result.projection.timezone }}" />. La charge des brouillons est affichée séparément.</target>
+      </trans-unit>
+      <trans-unit id="workload.capacity" datatype="html">
+        <source>Capacity</source>
+        <target>Capacité</target>
+      </trans-unit>
+      <trans-unit id="workload.actual" datatype="html">
+        <source>Time recorded</source>
+        <target>Temps saisi</target>
+      </trans-unit>
+      <trans-unit id="workload.remaining" datatype="html">
+        <source>Remaining committed work</source>
+        <target>Reste à faire engagé</target>
+      </trans-unit>
+      <trans-unit id="workload.draft" datatype="html">
+        <source>Draft</source>
+        <target>Brouillon</target>
+      </trans-unit>
+      <trans-unit id="workload.dayIncomplete" datatype="html">
+        <source> This day&apos;s workload is incomplete. Review the unquantified tasks in the weekly view. </source>
+        <target>La charge de cette journée est incomplète. Consultez les tâches non quantifiées dans la vue hebdomadaire.</target>
+      </trans-unit>
+      <trans-unit id="workload.noContributions" datatype="html">
+        <source> No recorded or allocated work for this day. </source>
+        <target>Aucun travail saisi ou réparti sur cette journée.</target>
+      </trans-unit>
+      <trans-unit id="workload.unestimated" datatype="html">
+        <source>Remaining work not estimated</source>
+        <target>Reste à faire non estimé</target>
+      </trans-unit>
+      <trans-unit id="workload.undated" datatype="html">
+        <source>Work period not set</source>
+        <target>Période de travail non renseignée</target>
+      </trans-unit>
+      <trans-unit id="workload.overdue" datatype="html">
+        <source>Overdue work</source>
+        <target>Travail en retard</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityUnknown" datatype="html">
+        <source>Capacity not configured</source>
+        <target>Capacité non renseignée</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityDescription" datatype="html">
+        <source> Set real availability. Changes take effect on the selected date; previous versions are retained. </source>
+        <target>Renseignez la disponibilité réelle. Les changements prennent effet à la date choisie ; les versions précédentes sont conservées.</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityOnline" datatype="html">
+        <source> Reconnect to save availability. Your draft is kept open. </source>
+        <target>Reconnectez-vous pour enregistrer la disponibilité. Votre brouillon reste ouvert.</target>
+      </trans-unit>
+      <trans-unit id="workload.capacitySubject" datatype="html">
+        <source>Individual override</source>
+        <target>Semaine individuelle</target>
+      </trans-unit>
+      <trans-unit id="workload.organizationDefault" datatype="html">
+        <source>Organization default</source>
+        <target>Valeur par défaut de l’organisation</target>
+      </trans-unit>
+      <trans-unit id="workload.scopeDirty" datatype="html">
+        <source> Save or discard your changes before choosing another scope. </source>
+        <target>Enregistrez ou abandonnez vos modifications avant de choisir un autre périmètre.</target>
+      </trans-unit>
+      <trans-unit id="workload.weekPattern" datatype="html">
+        <source> Weekly pattern </source>
+        <target>Semaine type</target>
+      </trans-unit>
+      <trans-unit id="workload.exception" datatype="html">
+        <source> Availability exception </source>
+        <target>Exception de disponibilité</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityHistory" datatype="html">
+        <source> Capacity history </source>
+        <target>Historique des capacités</target>
+      </trans-unit>
+      <trans-unit id="workload.perDay" datatype="html">
+        <source>per day</source>
+        <target>par jour</target>
+      </trans-unit>
+      <trans-unit id="workload.cancelException" datatype="html">
+        <source> Cancel exception </source>
+        <target>Annuler l’exception</target>
+      </trans-unit>
+      <trans-unit id="workload.cancelExceptionTitle" datatype="html">
+        <source> Cancel this availability exception? </source>
+        <target>Annuler cette exception de disponibilité ?</target>
+      </trans-unit>
+      <trans-unit id="workload.cancelExceptionDescription" datatype="html">
+        <source> The effective weekly capacity will apply again to these dates. The cancelled exception remains in the audit history. </source>
+        <target>La semaine type applicable sera de nouveau utilisée à ces dates. L’exception annulée reste dans l’historique d’audit.</target>
+      </trans-unit>
+      <trans-unit id="workload.matrixCaption" datatype="html">
+        <source> Daily workload by member. Open a day to see its contributions. </source>
+        <target>Charge quotidienne par membre. Ouvrez une journée pour voir ses contributions.</target>
+      </trans-unit>
+      <trans-unit id="workload.unavailable" datatype="html">
+        <source>Unavailable</source>
+        <target>Indisponible</target>
+      </trans-unit>
+      <trans-unit id="workload.excess" datatype="html">
+        <source>Overload: <x id="duration" equiv-text="this.duration(day.overloadMinutes)"/></source>
+        <target>Surcharge : <x id="duration" equiv-text="this.duration(day.overloadMinutes)" /></target>
+      </trans-unit>
+      <trans-unit id="workload.incomplete" datatype="html">
+        <source>Incomplete workload</source>
+        <target>Charge incomplète</target>
+      </trans-unit>
+      <trans-unit id="workload.fullyAllocated" datatype="html">
+        <source>Fully allocated</source>
+        <target>Capacité atteinte</target>
+      </trans-unit>
+      <trans-unit id="workload.available" datatype="html">
+        <source>Available</source>
+        <target>Disponible</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.timeCreate" datatype="html">
+        <source>Time recorded</source>
+        <target>Temps saisi</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.timeCorrect" datatype="html">
+        <source>Time correction</source>
+        <target>Correction de temps</target>
+      </trans-unit>
+      <trans-unit id="intervention.sync.op.timeCancel" datatype="html">
+        <source>Time cancellation</source>
+        <target>Annulation de temps</target>
+      </trans-unit>
+      <trans-unit id="route.workload" datatype="html">
+        <source>Workload</source>
+        <target>Charge de travail</target>
+      </trans-unit>
+      <trans-unit id="duration.minutes" datatype="html">
+        <source><x id="minutes" equiv-text="minutes"/> min</source>
+        <target><x id="minutes" equiv-text="minutes" /> min</target>
+      </trans-unit>
+      <trans-unit id="duration.hours" datatype="html">
+        <source><x id="hours" equiv-text="hours"/> h</source>
+        <target><x id="hours" equiv-text="hours" /> h</target>
+      </trans-unit>
+      <trans-unit id="duration.hoursMinutes" datatype="html">
+        <source><x id="hours" equiv-text="hours"/> h <x id="minutes" equiv-text="minutes"/> min</source>
+        <target><x id="hours" equiv-text="hours" /> h <x id="minutes" equiv-text="minutes" /> min</target>
+      </trans-unit>
+      <trans-unit id="workload.hoursRequired" datatype="html">
+        <source>Enter the hours, or 0 for a day off.</source>
+        <target>Saisissez les heures, ou 0 pour un jour non travaillé.</target>
+      </trans-unit>
+      <trans-unit id="workload.hoursRange" datatype="html">
+        <source>Enter whole hours between 0 and 24.</source>
+        <target>Saisissez un nombre entier d’heures entre 0 et 24.</target>
+      </trans-unit>
+      <trans-unit id="workload.minutesRange" datatype="html">
+        <source>Enter whole minutes between 0 and 59.</source>
+        <target>Saisissez un nombre entier de minutes entre 0 et 59.</target>
+      </trans-unit>
+      <trans-unit id="workload.durationRange" datatype="html">
+        <source>A day cannot exceed 24 hours.</source>
+        <target>Une journée ne peut pas dépasser 24 heures.</target>
+      </trans-unit>
+      <trans-unit id="workload.hours" datatype="html">
+        <source>Hours</source>
+        <target>Heures</target>
+      </trans-unit>
+      <trans-unit id="workload.minutes" datatype="html">
+        <source>Minutes</source>
+        <target>Minutes</target>
+      </trans-unit>
+      <trans-unit id="workload.durationHint" datatype="html">
+        <source> Available time per day. Use 0 hours for days off. </source>
+        <target>Temps disponible par jour. Indiquez 0 heure pour les jours non travaillés.</target>
+      </trans-unit>
+      <trans-unit id="workload.weeklyTotal" datatype="html">
+        <source>Weekly capacity</source>
+        <target>Capacité hebdomadaire</target>
+      </trans-unit>
+      <trans-unit id="workload.availableDuration" datatype="html">
+        <source>Available time per day</source>
+        <target>Temps disponible par jour</target>
+      </trans-unit>
+      <trans-unit id="workload.exceptionDurationHint" datatype="html">
+        <source> Use 0 hours for a full absence, or enter the time still available each day. This cannot exceed the weekly pattern. </source>
+        <target>Indiquez 0 heure pour une absence complète, ou le temps restant disponible chaque jour, sans dépasser la semaine type.</target>
+      </trans-unit>
+      <trans-unit id="workload.filters" datatype="html">
+        <source>Filters</source>
+        <target>Filtres</target>
+      </trans-unit>
+      <trans-unit id="workload.allLoads" datatype="html">
+        <source>All loads</source>
+        <target>Toutes les charges</target>
+      </trans-unit>
+      <trans-unit id="workload.noFilterOption" datatype="html">
+        <source>No matching option</source>
+        <target>Aucune option correspondante</target>
+      </trans-unit>
+      <trans-unit id="workload.loadFilter" datatype="html">
+        <source>Load</source>
+        <target>Charge</target>
+      </trans-unit>
+      <trans-unit id="workload.overloaded" datatype="html">
+        <source>Overloaded</source>
+        <target>En surcharge</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityEditorDescription" datatype="html">
+        <source> Set available time in hours and minutes. Previous versions are kept. </source>
+        <target>Définissez le temps disponible en heures et minutes. Les versions précédentes sont conservées.</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityAppliesTo" datatype="html">
+        <source>Applies to</source>
+        <target>S’applique à</target>
+      </trans-unit>
+      <trans-unit id="workload.capacityMode" datatype="html">
+        <source>Capacity configuration</source>
+        <target>Configuration des capacités</target>
+      </trans-unit>
+      <trans-unit id="workload.timeOff" datatype="html">
+        <source> Time off </source>
+        <target>Absences</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.estimatedTime" datatype="html">
+        <source> Estimated time </source>
+        <target> Temps estimé </target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.hours" datatype="html">
+        <source>Hours</source>
+        <target>Heures</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.minutes" datatype="html">
+        <source>Minutes</source>
+        <target>Minutes</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.estimatedTimeHint" datatype="html">
+        <source> Optional. Leave both fields empty if not estimated yet. </source>
+        <target> Facultatif. Laissez les deux champs vides si le temps n’est pas encore estimé. </target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.workPeriod" datatype="html">
+        <source>Work period</source>
+        <target>Période de travail</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.selectWorkPeriod" datatype="html">
+        <source>Choose specific dates</source>
+        <target>Choisir des dates spécifiques</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.chooseWorkPeriod" datatype="html">
+        <source> Choose the first and last day of work. </source>
+        <target> Choisissez le premier et le dernier jour de travail. </target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.inheritedPeriod" datatype="html">
+        <source>By default: <x id="INTERPOLATION" equiv-text="{{ period }}"/>.</source>
+        <target>Par défaut : <x id="INTERPOLATION" equiv-text="{{ period }}"/>.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.inheritedPeriodPending" datatype="html">
+        <source>Optional. Uses the intervention dates once scheduled.</source>
+        <target>Facultatif. Utilise les dates de l’intervention une fois planifiée.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.resetWorkPeriod" datatype="html">
+        <source> Use intervention dates </source>
+        <target> Utiliser les dates de l’intervention </target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.hoursInvalid" datatype="html">
+        <source>Enter a valid number of whole hours, or leave empty.</source>
+        <target>Saisissez un nombre entier d’heures valide, ou laissez le champ vide.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.minutesInvalid" datatype="html">
+        <source>Enter whole minutes between 0 and 59.</source>
+        <target>Saisissez un nombre entier de minutes entre 0 et 59.</target>
+      </trans-unit>
+      <trans-unit id="intervention.wif.periodInvalid" datatype="html">
+        <source>Choose a start and end date within the intervention period.</source>
+        <target>Choisissez des dates de début et de fin comprises dans la période de l’intervention.</target>
+      </trans-unit>
+      <trans-unit id="workload.repeatWorkingDay" datatype="html">
+        <source>Repeat <x id="INTERPOLATION"/> on working days</source>
+        <target>Appliquer les horaires du <x id="INTERPOLATION"/> aux jours travaillés</target>
+      </trans-unit>
+      <trans-unit id="workload.repeatWorkingDayEmpty" datatype="html">
+        <source>Enter one working day to repeat it</source>
+        <target>Renseignez une journée de travail pour la répéter</target>
+      </trans-unit>
+      <trans-unit id="workload.repeatWorkingDayHint" datatype="html">
+        <source>Days set to zero stay off. You can still adjust each day.</source>
+        <target>Les jours à zéro restent non travaillés. Chaque journée reste modifiable.</target>
+      </trans-unit>
+      <trans-unit id="workload.fullAbsence" datatype="html">
+        <source>Full absence · 0 h</source>
+        <target>Absence complète · 0 h</target>
+      </trans-unit>
+      <trans-unit id="workload.matrixLegend" datatype="html">
+        <source>Recorded + remaining / capacity. Open a day for details; draft work is separate.</source>
+        <target>Temps saisi + restant / capacité. Ouvrez une journée pour voir le détail ; les brouillons sont séparés.</target>
+      </trans-unit>
+      <trans-unit id="workload.clearFiltersAction" datatype="html">
+        <source>Clear filters</source>
+        <target>Effacer les filtres</target>
+      </trans-unit>
+      <trans-unit id="workload.dayOverload" datatype="html">
+        <source>Over capacity by <x id="INTERPOLATION"/></source>
+        <target>Dépassement de <x id="INTERPOLATION"/></target>
+      </trans-unit>
+      <trans-unit id="workload.dayOverloadHint" datatype="html">
+        <source>Review the remaining work or availability for this day.</source>
+        <target>Revoyez le travail restant ou les disponibilités de cette journée.</target>
+      </trans-unit>
+      <trans-unit id="workload.dailyLoad" datatype="html">
+        <source>Daily workload</source>
+        <target>Charge de la journée</target>
+      </trans-unit>
+      <trans-unit id="workload.draftExcluded" datatype="html">
+        <source>Draft (not included)</source>
+        <target>Brouillon (non inclus)</target>
+      </trans-unit>
+      <trans-unit id="workload.dayIncompleteHint" datatype="html">
+        <source>Missing capacity, estimates or dates prevent a reliable availability assessment.</source>
+        <target>Des capacités, estimations ou dates manquantes empêchent d’évaluer la disponibilité de façon fiable.</target>
+      </trans-unit>
+      <trans-unit id="workload.resetDraft" datatype="html">
+        <source>Reset changes</source>
+        <target>Réinitialiser</target>
+      </trans-unit>
+      <trans-unit id="workload.resetDraftDescription" datatype="html">
+        <source>The form will return to its saved values. Nothing will be changed on the server.</source>
+        <target>Le formulaire retrouvera ses valeurs enregistrées. Aucune donnée ne sera modifiée sur le serveur.</target>
+      </trans-unit>
+      <trans-unit id="workload.absenceOrReduction" datatype="html">
+        <source>Absence or reduced hours</source>
+        <target>Absence ou horaires réduits</target>
+      </trans-unit>
+      <trans-unit id="workload.organizationWeekHint" datatype="html">
+        <source>The default week applies to members without an individual pattern.</source>
+        <target>Semaine par défaut des membres sans horaires individuels.</target>
+      </trans-unit>
+      <trans-unit id="workload.inheritedWeekHint" datatype="html">
+        <source>Prefilled from the organization default. Saving creates an individual weekly pattern.</source>
+        <target>Prérempli avec la semaine de l’organisation. L’enregistrement crée des horaires individuels.</target>
+      </trans-unit>
+      <trans-unit id="workload.individualWeekHint" datatype="html">
+        <source>This weekly pattern replaces the organization default for this member.</source>
+        <target>Ces horaires remplacent la semaine par défaut pour ce membre.</target>
+      </trans-unit>
+      <trans-unit id="workload.savedExceptions" datatype="html">
+        <source>Saved availability exceptions</source>
+        <target>Exceptions de disponibilité enregistrées</target>
+      </trans-unit>
+      <trans-unit id="workload.today" datatype="html">
+        <source>Today</source>
+        <target>Aujourd’hui</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.title" datatype="html">
+        <source> Work to plan </source>
+        <target> Travail à planifier </target>
+      </trans-unit>
+      <trans-unit id="workload.planning.description" datatype="html">
+        <source> These tasks are not included in daily totals. Expand a reason to see what needs attention. </source>
+        <target> Ces tâches ne sont pas incluses dans les totaux quotidiens. Dépliez un motif pour voir ce qui reste à traiter. </target>
+      </trans-unit>
+      <trans-unit id="workload.planning.taskCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 task} other {<x id="INTERPOLATION"/> tasks}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 tâche} other {<x id="INTERPOLATION"/> tâches}}</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.rowCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 task} other {<x id="INTERPOLATION"/> tasks}}</source>
+        <target>{VAR_PLURAL, plural, =1 {1 tâche} other {<x id="INTERPOLATION"/> tâches}}</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.remaining" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="{{ duration(row.remainingMinutes) }}"/> remaining</source>
+        <target><x id="INTERPOLATION" equiv-text="{{ duration(row.remainingMinutes) }}"/> restantes</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.scope" datatype="html">
+        <source> Members on this page and unassigned tasks in the current view. </source>
+        <target> Membres de cette page et tâches non affectées de la vue actuelle. </target>
+      </trans-unit>
+      <trans-unit id="workload.planning.estimates" datatype="html">
+        <source>Estimates to add</source>
+        <target>Estimations à renseigner</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.estimatesHint" datatype="html">
+        <source>Open an intervention and estimate the remaining work on its tasks. Recording time alone does not update the remaining work.</source>
+        <target>Ouvrez une intervention pour estimer le travail restant sur ses tâches. Saisir du temps ne met pas automatiquement à jour le reste à faire.</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.dates" datatype="html">
+        <source>Dates to set</source>
+        <target>Dates à définir</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.datesHint" datatype="html">
+        <source>Set a work period on the intervention or its tasks so the remaining work can be distributed across days.</source>
+        <target>Définissez une période sur l’intervention ou ses tâches pour répartir le travail restant sur les journées.</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.overdue" datatype="html">
+        <source>Overdue work to replan</source>
+        <target>Travail en retard à replanifier</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.overdueHint" datatype="html">
+        <source>The work period has ended. Review the remaining work and move it to a current or future period.</source>
+        <target>La période de travail est terminée. Réévaluez le reste à faire et déplacez-le vers une période actuelle ou future.</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.capacity" datatype="html">
+        <source>Capacity to configure</source>
+        <target>Capacités à configurer</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.capacityHint" datatype="html">
+        <source>Availability is missing for the work period. An authorized manager can configure it for the affected members.</source>
+        <target>La disponibilité n’est pas renseignée pour cette période. Un responsable habilité peut la configurer pour les membres concernés.</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.availability" datatype="html">
+        <source>Periods without availability</source>
+        <target>Périodes sans disponibilité</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.availabilityHint" datatype="html">
+        <source>No day is available in the work period. Review the dates, assignee or availability; the work has not been placed on a day.</source>
+        <target>Aucune journée n’est disponible sur cette période. Revoyez les dates, l’affectataire ou sa disponibilité : le travail n’a pas été réparti.</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.unassigned" datatype="html">
+        <source>Tasks to assign</source>
+        <target>Tâches à affecter</target>
+      </trans-unit>
+      <trans-unit id="workload.planning.unassignedHint" datatype="html">
+        <source>These tasks have no assignee. Open an intervention to assign them before checking the member's workload.</source>
+        <target>Ces tâches n’ont pas d’affectataire. Ouvrez une intervention pour les affecter avant de vérifier la charge du membre.</target>
+      </trans-unit>
+      <trans-unit id="workload.day.partialHint" datatype="html">
+        <source>Some work or capacity is unknown. These totals do not confirm availability.</source>
+        <target>Une partie du travail ou de la capacité est inconnue. Ces totaux ne garantissent pas la disponibilité.</target>
+      </trans-unit>
+      <trans-unit id="workload.day.interventions" datatype="html">
+        <source>Interventions for this day</source>
+        <target>Interventions de la journée</target>
+      </trans-unit>
+      <trans-unit id="workload.day.excluded" datatype="html">
+        <source>Work not included</source>
+        <target>Travail non inclus</target>
+      </trans-unit>
+      <trans-unit id="workload.day.excludedScope" datatype="html">
+        <source>Across this member's work, not only this day. These tasks are excluded from the totals above.</source>
+        <target>Concerne tout le travail de ce membre, pas uniquement cette journée. Ces tâches sont exclues des totaux ci-dessus.</target>
+      </trans-unit>
+      <trans-unit id="workload.day.excludedCount" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {1 task} other {<x id="INTERPOLATION" equiv-text="selected.member.unallocated.length"/> tasks} }</source>
+        <target>{VAR_PLURAL, plural, =1 {1 tâche} other {<x id="INTERPOLATION" equiv-text="selected.member.unallocated.length"/> tâches} }</target>
       </trans-unit>
     </body>
   </file>

@@ -27,8 +27,10 @@ import {
   projectInterventionWorkspace,
   searchSavedWorkItems,
   searchSavedChanges,
+  orderInterventionWorkItems,
 } from '@features/organization/features/interventions/utils';
 import type { InterventionTableQueryState, InterventionTableRequest } from './models';
+import type { InterventionWorkItemPage } from './models/intervention-work-item-page.interface';
 
 /**
  * Constant INITIAL_STATE
@@ -44,7 +46,13 @@ const INITIAL_STATE: InterventionTableQueryState = {
   activeTable: null,
   workItemsInterventionId: null,
   workItemsCallState: idleCallState(),
-  workItemsQuery: { search: '', statuses: null },
+  workItemsQuery: {
+    search: '',
+    statuses: null,
+    page: 1,
+    itemsPerPage: 10,
+    prioritizeAssignee: null,
+  },
   workItemsGeneration: 0,
   workItemsVisited: false,
   workItemsInvalidated: false,
@@ -65,7 +73,10 @@ const INITIAL_STATE: InterventionTableQueryState = {
 export const InterventionTableQueryStore = signalStore(
   withState<InterventionTableQueryState>(INITIAL_STATE),
   withComputed((store) => ({
-    workItems: computed(() => store.workItemsCallState().data),
+    workItems: computed(() => store.workItemsCallState().data?.items ?? null),
+    workItemsTotal: computed(() => store.workItemsCallState().data?.total ?? 0),
+    workItemsPage: computed(() => store.workItemsCallState().data?.page ?? 1),
+    workItemsPageSize: computed(() => store.workItemsCallState().data?.itemsPerPage ?? 10),
     workItemsLoading: computed(() => isCallPending(store.workItemsCallState())),
     workItemsError: computed(() => store.workItemsCallState().error),
     changes: computed(() => store.changesCallState().data),
@@ -97,38 +108,68 @@ export const InterventionTableQueryStore = signalStore(
             switchMap((request) => {
               if (!request) return EMPTY;
               const { interventionId, criteria, generation, delay } = request;
+              const requestedPage = criteria.page ?? 1;
+              const itemsPerPage = criteria.itemsPerPage ?? 10;
               const current = (): boolean =>
                 store.contextId() === interventionId && store.workItemsGeneration() === generation;
               return (delay ? timer(delay) : of(0)).pipe(
                 switchMap(() => {
                   const saved = () =>
                     from(savedWorkspace(interventionId)).pipe(
-                      map((workspace) => ({
-                        rows: searchSavedWorkItems(workspace.workItems, criteria),
-                        source: 'saved' as const,
-                      })),
+                      map((workspace) => {
+                        const matching = orderInterventionWorkItems(
+                          searchSavedWorkItems(workspace.workItems, criteria),
+                          criteria.prioritizeAssignee ?? null,
+                        );
+                        const page = Math.min(
+                          requestedPage,
+                          Math.max(1, Math.ceil(matching.length / itemsPerPage)),
+                        );
+                        const result: InterventionWorkItemPage = {
+                          items: matching.slice((page - 1) * itemsPerPage, page * itemsPerPage),
+                          total: matching.length,
+                          page,
+                          itemsPerPage,
+                        };
+                        return { result, source: 'saved' as const };
+                      }),
                     );
+                  const readPage = (page: number) =>
+                    service
+                      .listWorkItems(interventionId, {
+                        search: criteria.search.trim() || undefined,
+                        status: criteria.statuses ?? undefined,
+                        prioritizeAssignee: criteria.prioritizeAssignee ?? undefined,
+                        page,
+                        itemsPerPage,
+                      })
+                      .pipe(
+                        map((response): InterventionWorkItemPage => ({
+                          items: response.member,
+                          total: response.totalItems,
+                          page,
+                          itemsPerPage,
+                        })),
+                      );
                   return store.offline()
                     ? saved()
-                    : service
-                        .listAllWorkItems(interventionId, {
-                          search: criteria.search.trim() || undefined,
-                          status: criteria.statuses ?? undefined,
-                        })
-                        .pipe(
-                          map((rows) => ({ rows, source: 'api' as const })),
-                          catchError((error: unknown) =>
-                            connectivity.isNetworkFailure(error)
-                              ? saved()
-                              : throwError(() => error),
-                          ),
-                        );
+                    : readPage(requestedPage).pipe(
+                        switchMap((result) => {
+                          const lastPage = Math.max(1, Math.ceil(result.total / itemsPerPage));
+                          return requestedPage > lastPage ? readPage(lastPage) : of(result);
+                        }),
+                        map((result) => ({ result, source: 'api' as const })),
+                        catchError((error: unknown) =>
+                          connectivity.isNetworkFailure(error) ? saved() : throwError(() => error),
+                        ),
+                      );
                 }),
                 tapResponse({
-                  next: ({ rows, source }) => {
+                  next: ({ result, source }) => {
                     if (current())
                       patchState(store, {
-                        workItemsCallState: successCallState(rows),
+                        workItemsCallState: successCallState(result),
+                        workItemsQuery: { ...criteria, page: result.page },
                         workItemsSource: source,
                         workItemsInvalidated: false,
                       });
@@ -242,13 +283,21 @@ export const InterventionTableQueryStore = signalStore(
         const previous = store.workItemsQuery();
         const sameStatus = (previous.statuses ?? []).join('|') === (query.statuses ?? []).join('|');
         const sameSearch = previous.search.trim() === query.search.trim();
+        const samePriority =
+          (previous.prioritizeAssignee ?? null) === (query.prioritizeAssignee ?? null);
+        const sameSize = (previous.itemsPerPage ?? 10) === (query.itemsPerPage ?? 10);
         const visited = store.workItemsVisited();
         const criteria: InterventionWorkItemTableQuery = {
           search: query.search,
           statuses: query.statuses,
+          page: Math.max(1, query.page ?? 1),
+          itemsPerPage: Math.max(1, Math.min(100, query.itemsPerPage ?? 10)),
+          prioritizeAssignee: query.prioritizeAssignee ?? null,
         };
         patchState(store, { workItemsQuery: criteria });
-        if (!force && visited && sameStatus && sameSearch) return;
+        const samePage = (previous.page ?? 1) === criteria.page;
+        if (!force && visited && sameStatus && sameSearch && samePriority && sameSize && samePage)
+          return;
         const generation = store.workItemsGeneration() + 1;
         patchState(store, {
           workItemsInterventionId: query.interventionId,
@@ -261,7 +310,13 @@ export const InterventionTableQueryStore = signalStore(
           interventionId: query.interventionId,
           criteria,
           generation,
-          delay: !force && (!visited || sameStatus) && !sameSearch && query.search.trim() ? 300 : 0,
+          delay:
+            !force &&
+            (!visited || (sameStatus && samePriority && sameSize)) &&
+            !sameSearch &&
+            query.search.trim()
+              ? 300
+              : 0,
         });
       }
 
@@ -427,7 +482,10 @@ export const InterventionTableQueryStore = signalStore(
             patchState(store, {
               workItemsCallState: {
                 ...state,
-                data: state.data.map((row) => (row.id === item.id ? item : row)),
+                data: {
+                  ...state.data,
+                  items: state.data.items.map((row) => (row.id === item.id ? item : row)),
+                },
               },
             });
         },
@@ -464,7 +522,15 @@ export const InterventionTableQueryStore = signalStore(
             patchState(store, {
               workItemsCallState: {
                 ...state,
-                data: state.data.filter((row) => !ids.includes(row.id)),
+                data: {
+                  ...state.data,
+                  items: state.data.items.filter((row) => !ids.includes(row.id)),
+                  total: Math.max(
+                    0,
+                    state.data.total -
+                      state.data.items.filter((row) => ids.includes(row.id)).length,
+                  ),
+                },
               },
             });
         },

@@ -43,6 +43,13 @@
               </div>
               <div hlmItemContent>
                 <span hlmItemTitle class="truncate font-normal">{{ member.displayName }}</span>
+                <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">
+                  @if (member.roleNames.length) {
+                    {{ member.roleNames.join(', ') }}
+                  } @else {
+                    <span i18n="@@org.member.noRole">No assigned role</span>
+                  }
+                </span>
               </div>
             </button>
           </li>

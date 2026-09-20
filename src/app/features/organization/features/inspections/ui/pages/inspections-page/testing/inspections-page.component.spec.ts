@@ -22,6 +22,7 @@ import {
   errorCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
@@ -89,6 +90,14 @@ describe('InspectionsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
         provideInteractionCapabilities(),
         provideRouter([]),

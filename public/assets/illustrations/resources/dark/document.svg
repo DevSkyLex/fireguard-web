@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-document-dark-title fg-document-dark-description" class="fg-document-dark">
+  <title id="fg-document-dark-title">Document</title>
+  <desc id="fg-document-dark-description">A tabbed stack of records whose top sheet has a vermilion folded corner.</desc>
+  <defs>
+    <linearGradient id="fg-document-dark-plane" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141416"/>
+      <stop offset="1" stop-color="#101012"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .fg-document-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
+    .fg-document-dark .edge, .fg-document-dark .seam { stroke: #a1a1aa; }
+    .fg-document-dark .seam { stroke: #51515c; }
+    .fg-document-dark .seam { stroke-width: 1.35; }
+    .fg-document-dark .shade { fill: #000000; fill-opacity: .28; }
+    .fg-document-dark .soft { stroke: #46464f; stroke-width: 1.1; }
+    .fg-document-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
+    .fg-document-dark .accent { stroke: #ff7043; }
+    .fg-document-dark .accent { stroke-width: 1.1; }
+    .fg-document-dark .accent-fill { fill: #ff7043; }
+    .fg-document-dark .accent-tint { fill: #43261d; stroke: #ff7043; stroke-width: 1.1; }
+    .fg-document-dark .tf { fill: url(#fg-document-dark-plane); }
+    .fg-document-dark .lf { fill: #141417; }
+    .fg-document-dark .rf { fill: #0d0d0f; }
+    .fg-document-dark .accent, .fg-document-dark .accent-tint { stroke-opacity: 1; }
+  </style>
+  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M325 62L338.9 70L338.9 84.4L325 92.4L311.1 84.4L311.1 70ZM338.9 70L325 78L311.1 70M325 78L325 92.4M62 253.5L58 260.5M127 291L123 298M82.7 267.8L80.7 271.2M104.3 280.3L102.3 283.7M69.7 105.5L78.3 110.5M69.7 110.5L78.3 105.5M318.5 263a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM325.5 267a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="guide" d="M311.1 84.4L325 76.4L338.9 84.4M60 257L125 294.5"/><path class="accent" d="M62.6 258.5L69.5 262.5"/><path class="accent-fill" d="M311.4 259a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 -5.8)">
+<polygon class="shade" points="185.3,98.5 344.6,190.5 214.7,265.5 55.4,173.5"/>
+<g data-part="volume"><polygon class="lf" points="185.3,103.5 330.8,187.5 330.8,190.5 214.7,257.5 69.2,173.5 69.2,170.5"/><polygon class="rf" points="330.8,187.5 214.7,254.5 214.7,257.5 330.8,190.5"/><polygon class="tf" points="185.3,103.5 330.8,187.5 214.7,254.5 69.2,170.5"/><path class="seam" d="M214.7 254.5L330.8 187.5M214.7 254.5L69.2 170.5M214.7 254.5L214.7 257.5"/><polygon class="edge" points="185.3,103.5 330.8,187.5 330.8,190.5 214.7,257.5 69.2,173.5 69.2,170.5"/></g>
+<g data-part="volume"><polygon class="lf" points="90,146.5 117.7,162.5 117.7,165.5 102.1,174.5 74.4,158.5 74.4,155.5"/><polygon class="rf" points="117.7,162.5 102.1,171.5 102.1,174.5 117.7,165.5"/><polygon class="tf" points="90,146.5 117.7,162.5 102.1,171.5 74.4,155.5"/><path class="seam" d="M102.1 171.5L117.7 162.5M102.1 171.5L74.4 155.5M102.1 171.5L102.1 174.5"/><polygon class="edge" points="90,146.5 117.7,162.5 117.7,165.5 102.1,174.5 74.4,158.5 74.4,155.5"/></g>
+<g data-part="volume"><polygon class="lf" points="122.9,165.5 150.6,181.5 150.6,184.5 135,193.5 107.3,177.5 107.3,174.5"/><polygon class="rf" points="150.6,181.5 135,190.5 135,193.5 150.6,184.5"/><polygon class="tf" points="122.9,165.5 150.6,181.5 135,190.5 107.3,174.5"/><path class="seam" d="M135 190.5L150.6 181.5M135 190.5L107.3 174.5M135 190.5L135 193.5"/><polygon class="edge" points="122.9,165.5 150.6,181.5 150.6,184.5 135,193.5 107.3,177.5 107.3,174.5"/></g>
+<g data-part="volume"><polygon class="lf" points="212.1,217 66.6,133 66.6,136 212.1,220"/><path class="seam" d="M212.1 220L66.6 136M66.6 133L66.6 136"/><polygon class="rf" points="295.3,169 212.1,217 212.1,220 295.3,172"/><path class="seam" d="M295.3 172L212.1 220M295.3 169L295.3 172M212.1 217L212.1 220"/><polygon class="tf" points="182.7,66 295.3,131 295.3,169 212.1,217 66.6,133"/><polygon class="edge" points="182.7,66 295.3,131 295.3,169 212.1,217 66.6,133"/></g>
+<g data-part="detail"><path class="soft" d="M168.8 94L224.3 126M129 117L215.6 167"/></g>
+<polygon class="accent-tint" points="295.3,131 295.3,169 262.4,150"/>
+  </g></g></g>
+</svg>

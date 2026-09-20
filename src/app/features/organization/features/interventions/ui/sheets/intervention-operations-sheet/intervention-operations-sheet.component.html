@@ -144,6 +144,14 @@
           undone.
         </p>
       } @else {
+        @if (operation.serverValues) {
+          <h3 class="font-medium" i18n="@@intervention.operations.serverValues">
+            Current server values
+          </h3>
+          <pre class="max-h-64 overflow-auto rounded-lg border p-3 text-xs whitespace-pre-wrap">{{
+            serverComparison(operation)
+          }}</pre>
+        }
         <p class="text-sm" i18n="@@intervention.operations.reapply">
           Your stored values will be sent again using the available revision. The server can reject
           them if the resource has changed. No automatic merge will be performed.
@@ -164,3 +172,13 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+@if (workloadReview(); as operation) {
+  @if (operation.workloadAssessment; as assessment) {
+    <app-workload-confirmation-dialog
+      [assessment]="assessment"
+      [memberNames]="memberNames()"
+      (confirmed)="confirmWorkload($event)"
+      (cancelled)="workloadReview.set(null)"
+    />
+  }
+}

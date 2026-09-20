@@ -15,14 +15,17 @@ import type { MemberSelectOption, OrganizationMemberOutput } from '@features/org
  * @access public
  * @since 1.0.0
  *
- * @param {OrganizationMemberOutput} member - Raw organization member.
+ * @param {Pick<OrganizationMemberOutput, 'id' | 'userId' | 'displayName' | 'firstName' | 'lastName' | 'avatarUrl' | 'roleNames'>} member - Organization-scoped member identity.
  * @param {string} organizationId - Organization owning the member, for the default IRI.
  * @param {string} [value] - What a form submits; defaults to the member IRI.
  *
  * @returns {MemberSelectOption} The picker option.
  */
 export function toMemberSelectOption(
-  member: OrganizationMemberOutput,
+  member: Pick<
+    OrganizationMemberOutput,
+    'id' | 'userId' | 'displayName' | 'firstName' | 'lastName' | 'avatarUrl' | 'roleNames'
+  >,
   organizationId: string,
   value: string = `/api/organizations/${organizationId}/members/${member.id}`,
 ): MemberSelectOption {

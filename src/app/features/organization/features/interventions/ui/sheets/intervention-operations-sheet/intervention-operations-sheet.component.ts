@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import type { InputSignal, OutputEmitterRef, WritableSignal } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import type { CallState } from '@core/request-state';
 import { INTERVENTION_OUTBOX_LABEL } from '@features/organization/features/interventions/constants';
@@ -7,19 +8,31 @@ import {
   type InterventionOutboxOperation,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
+import { formatDurationMinutes } from '@shared/duration-format';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
-/** Component InterventionOperationsSheet
+/**
+ * Component InterventionOperationsSheet
  * @class InterventionOperationsSheet
- * @description Contextual local queue with explicit conflict retry and discard confirmations. Receives data and emits intentions only.
+ *
+ * @description
+ * Contextual local queue with explicit conflict retry and discard confirmations. Receives data and emits intentions only.
+ *
  * @since 1.0.0
  */
 @Component({
   selector: 'app-intervention-operations-sheet',
-  imports: [DatePipe, HlmButton, ...HlmSheetImports, ...HlmAlertDialogImports],
+  imports: [
+    WorkloadConfirmationDialog,
+    DatePipe,
+    HlmButton,
+    ...HlmSheetImports,
+    ...HlmAlertDialogImports,
+  ],
   templateUrl: './intervention-operations-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -114,15 +127,25 @@ export class InterventionOperationsSheet {
    * @type {OutputEmitterRef<void>}
    */
   public readonly reloadRequested = output<void>();
+
   /**
    * Property resolved
    * @readonly
-   * @description Explicitly confirmed retry or discard intention.
+   *
+   * @description
+   * Explicitly confirmed retry or discard intention.
+   *
    * @access public
    * @since 1.0.0
-   * @type {OutputEmitterRef<{ id: string; action: 'retry' | 'discard' }>}
+   *
+   * @type {OutputEmitterRef<{ id: string; action: 'retry' | 'discard'; workloadToken?: string; reviewedRevision?: number }>}
    */
-  public readonly resolved = output<{ id: string; action: 'retry' | 'discard' }>();
+  public readonly resolved: OutputEmitterRef<{
+    id: string;
+    action: 'retry' | 'discard';
+    workloadToken?: string;
+    reviewedRevision?: number;
+  }> = output();
   /**
    * Property side
    * @readonly
@@ -163,6 +186,37 @@ export class InterventionOperationsSheet {
    */
   protected readonly confirmedOperation = computed(() => this.confirmation()?.operation ?? null);
 
+  /**
+   * Property workloadReview
+   * @readonly
+   *
+   * @description
+   * Separate overload confirmation for a queued proposal.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<InterventionOutboxOperation | null>}
+   */
+  protected readonly workloadReview: WritableSignal<InterventionOutboxOperation | null> =
+    signal(null);
+
+  /**
+   * Property memberNames
+   * @readonly
+   *
+   * @description
+   * Names for daily overload review.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<Readonly<Partial<Record<string, string>>>>}
+   */
+  public readonly memberNames: InputSignal<Readonly<Partial<Record<string, string>>>> = input<
+    Readonly<Partial<Record<string, string>>>
+  >({});
+
   /** Method target
    * @description Gives a queued task or file a readable identity using the workspace data available.
    * @access protected
@@ -182,15 +236,26 @@ export class InterventionOperationsSheet {
     return this.interventionName();
   }
 
-  /** Method preview
-   * @description Exposes stored local content without inventing a server comparison or displaying binary data.
+  /**
+   * Method preview
+   *
+   * @description
+   * Exposes stored local content without inventing a server comparison or displaying binary data.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Local entry.
    * @returns {string} Stored text or state.
    */
   protected preview(operation: InterventionOutboxOperation): string {
     const payload = operation.payload;
+    if ('minutes' in payload)
+      return [payload.workedOn, formatDurationMinutes(payload.minutes), payload.note]
+        .filter(Boolean)
+        .join(' · ');
+    if (operation.type === 'work-item.update' && !('status' in payload && payload.status))
+      return JSON.stringify(payload, null, 2);
     if ('body' in payload) return payload.body;
     if ('reviewNote' in payload && payload.reviewNote) return payload.reviewNote;
     if ('skipReason' in payload && payload.skipReason) return payload.skipReason;
@@ -218,27 +283,86 @@ export class InterventionOperationsSheet {
     return operation.serverRevision ?? null;
   }
 
-  /** Method retry
-   * @description Requires reviewing a conflicting local value before explicitly reapplying it.
+  /**
+   * Method retry
+   *
+   * @description
+   * Requires reviewing a conflicting local value before explicitly reapplying it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Retry target.
    * @returns {void}
    */
   protected retry(operation: InterventionOutboxOperation): void {
+    if (operation.workloadAssessment) {
+      this.workloadReview.set(operation);
+      return;
+    }
     if (operation.status === 'conflict') this.confirmation.set({ operation, action: 'retry' });
     else this.resolved.emit({ id: operation.id, action: 'retry' });
   }
 
-  /** Method confirm
-   * @description Emits the reviewed decision; dismissal never mutates the queue.
+  /**
+   * Method confirm
+   *
+   * @description
+   * Emits the reviewed decision; dismissal never mutates the queue.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirm(): void {
     const request = this.confirmation();
-    if (request) this.resolved.emit({ id: request.operation.id, action: request.action });
+    if (request)
+      this.resolved.emit({
+        id: request.operation.id,
+        action: request.action,
+        ...(request.operation.serverValues &&
+        request.operation.serverRevision !== null &&
+        request.operation.serverRevision !== undefined
+          ? { reviewedRevision: request.operation.serverRevision }
+          : {}),
+      });
     this.confirmation.set(null);
+  }
+
+  /**
+   * Method serverComparison
+   * @method serverComparison
+   *
+   * @description
+   * Displays the authoritative values before explicit reapplication.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {InterventionOutboxOperation} operation - Operation under review.
+   * @returns {string}
+   */
+  protected serverComparison(operation: InterventionOutboxOperation): string {
+    return JSON.stringify(operation.serverValues, null, 2);
+  }
+
+  /**
+   * Method confirmWorkload
+   * @method confirmWorkload
+   *
+   * @description
+   * Confirms one proposal without retrying unrelated queue entries.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} token - Displayed assessment token.
+   * @returns {void}
+   */
+  protected confirmWorkload(token: string): void {
+    const operation = this.workloadReview();
+    if (operation) this.resolved.emit({ id: operation.id, action: 'retry', workloadToken: token });
+    this.workloadReview.set(null);
   }
 }

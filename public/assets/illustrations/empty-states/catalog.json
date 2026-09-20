@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "width": 400,
+  "height": 320,
+  "viewBox": "0 0 400 320",
+  "variants": {
+    "light": "light/{state}.svg",
+    "dark": "dark/{state}.svg"
+  },
+  "states": [
+    "empty-collection",
+    "no-results",
+    "empty-inbox",
+    "no-messages",
+    "no-attachments",
+    "upload",
+    "offline",
+    "access-denied",
+    "error",
+    "all-clear",
+    "waiting",
+    "no-notifications"
+  ]
+}

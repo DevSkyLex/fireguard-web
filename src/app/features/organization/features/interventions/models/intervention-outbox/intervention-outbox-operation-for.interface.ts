@@ -1,14 +1,46 @@
+import type { WorkloadAssessment } from '@features/organization/features/workload/models';
 import type { InterventionOutboxPayloadMap } from './intervention-outbox-payload-map.interface';
 import type { InterventionOutboxType } from './intervention-outbox-type.type';
 
 /**
  * Interface InterventionOutboxOperationFor
  * @interface InterventionOutboxOperationFor
- * @description Typed queued operation with optional conflict evidence, backward compatible with existing local entries.
+ *
+ * @description
+ * Typed queued operation with optional conflict evidence, backward compatible with existing local entries.
+ *
  * @template Type - Queued operation kind.
+ *
  * @since 1.0.0
  */
 export interface InterventionOutboxOperationFor<Type extends InterventionOutboxType> {
+  /**
+   * Property workloadAssessment
+   * @readonly
+   *
+   * @description
+   * Daily overload requiring explicit human agreement.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {WorkloadAssessment | null}
+   */
+  readonly workloadAssessment?: WorkloadAssessment | null;
+
+  /**
+   * Property serverValues
+   * @readonly
+   *
+   * @description
+   * Latest authorized server values for explicit revision review; never merged automatically.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {Readonly<Record<string, string | number | boolean | null>> | null}
+   */
+  readonly serverValues?: Readonly<Record<string, string | number | boolean | null>> | null;
   readonly id: string;
   readonly interventionId: string;
   readonly type: Type;

@@ -149,6 +149,8 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
@@ -398,10 +400,12 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    HlmAvatarImports,
     NgTemplateOutlet,
     ...HlmDrawerImports,
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     ...HlmItemImports,
     HlmButtonGroup,
     ...HlmTabsImports,

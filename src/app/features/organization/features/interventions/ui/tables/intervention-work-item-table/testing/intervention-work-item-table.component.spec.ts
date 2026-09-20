@@ -1,10 +1,12 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
+  InterventionWorkItemTableQuery,
 } from '@features/organization/features/interventions/models';
 import { InterventionWorkItemTable } from '../intervention-work-item-table.component';
 
@@ -63,6 +65,7 @@ describe('InterventionWorkItemTable', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
@@ -107,6 +110,89 @@ describe('InterventionWorkItemTable', () => {
     expect(rows()[0]?.textContent).toContain('Extinguisher A-12');
   });
 
+  it.each([
+    { estimatedMinutes: null, remainingMinutes: null, spentMinutes: 0 },
+    { estimatedMinutes: undefined, remainingMinutes: undefined, spentMinutes: undefined },
+  ])(
+    'replaces missing effort placeholders with one honest hint in both layouts (%j)',
+    async (effort) => {
+      fixture.componentRef.setInput('items', [item(effort)]);
+      await fixture.whenStable();
+
+      const summaries = root().querySelectorAll('[data-testid="intervention-work-item-effort"]');
+      expect(summaries).toHaveLength(2);
+      for (const summary of summaries) {
+        expect(summary.textContent?.trim()).toBe('Not estimated');
+        expect(summary.querySelectorAll('dd')).toHaveLength(0);
+      }
+    },
+  );
+
+  it.each([
+    {
+      effort: { estimatedMinutes: 300, spentMinutes: 120, remainingMinutes: 180 },
+      labels: ['Estimated', 'Spent', 'Remaining'],
+      values: ['5 h', '2 h', '3 h'],
+    },
+    {
+      effort: { estimatedMinutes: 0, spentMinutes: 0, remainingMinutes: 0 },
+      labels: ['Estimated', 'Remaining'],
+      values: ['0 min', '0 min'],
+    },
+    {
+      effort: { estimatedMinutes: 90, spentMinutes: 0, remainingMinutes: null },
+      labels: ['Estimated', 'Remaining'],
+      values: ['1 h 30 min', 'Not estimated'],
+    },
+    {
+      effort: { estimatedMinutes: null, spentMinutes: 45, remainingMinutes: null },
+      labels: ['Spent'],
+      values: ['45 min'],
+    },
+    {
+      effort: { estimatedMinutes: null, spentMinutes: undefined, remainingMinutes: 180 },
+      labels: ['Remaining'],
+      values: ['3 h'],
+    },
+  ])(
+    'keeps known effort independent and explicit zero estimates visible (%j)',
+    async ({ effort, labels, values }) => {
+      fixture.componentRef.setInput('items', [item(effort)]);
+      await fixture.whenStable();
+
+      const summaries = root().querySelectorAll('[data-testid="intervention-work-item-effort"]');
+      expect(summaries).toHaveLength(2);
+      for (const summary of summaries) {
+        expect(
+          Array.from(summary.querySelectorAll('dt'), (label) => label.textContent?.trim()),
+        ).toEqual(labels);
+        expect(
+          Array.from(summary.querySelectorAll('dd'), (value) => value.textContent?.trim()),
+        ).toEqual(values);
+      }
+    },
+  );
+
+  it('leads with the target and keeps the next marker beside it before effort in both layouts', async () => {
+    fixture.componentRef.setInput('items', [item({ required: false, estimatedMinutes: 120 })]);
+    fixture.componentRef.setInput('nextItemId', 'wi-1');
+    await fixture.whenStable();
+
+    for (const surface of [rows()[0], byTestId('intervention-work-item-table-card')]) {
+      const title = surface?.querySelector('[data-testid="intervention-work-item-title"]');
+      const effort = surface?.querySelector('[data-testid="intervention-work-item-effort"]');
+      expect(title?.textContent?.trim()).toBe('Extinguisher A-12');
+      expect(title?.parentElement?.textContent).toContain('Next');
+      expect(surface?.getAttribute('aria-current')).toBe('step');
+      expect(surface?.textContent).toContain('Optional');
+      expect(
+        title &&
+          effort &&
+          Boolean(title.compareDocumentPosition(effort) & Node.DOCUMENT_POSITION_FOLLOWING),
+      ).toBe(true);
+    }
+  });
+
   it('should disable another member’s work before any mutation is emitted', async () => {
     fixture.componentRef.setInput('currentMemberId', '/api/organizations/org-1/members/me');
     fixture.componentRef.setInput('items', [
@@ -145,7 +231,7 @@ describe('InterventionWorkItemTable', () => {
 
     expect(rows()[0]?.textContent).toContain('Inventory');
     expect(rows()[0]?.textContent).not.toContain('undefined');
-    expect(rows()[0]?.textContent).not.toContain('·');
+    expect(rows()[0]?.textContent).not.toContain('Inventory ·');
   });
 
   it('should not print a bare IRI as a target', async () => {
@@ -464,7 +550,7 @@ describe('InterventionWorkItemTable', () => {
       'Status',
       'Target',
       'Action',
-      'Requirement',
+      'Time',
       'Assignee',
       'State',
       'Actions',
@@ -538,11 +624,81 @@ describe('InterventionWorkItemTable', () => {
 
     expect(rows()[0]?.textContent).toContain('Not mine');
 
+    const queries: InterventionWorkItemTableQuery[] = [];
+    fixture.componentInstance.queryChanged.subscribe((query) => queries.push(query));
     (byTestId('intervention-work-items-mine-first') as HTMLButtonElement).click();
     await fixture.whenStable();
 
-    expect(rows()[0]?.textContent).toContain('Mine');
-    expect(rows()[1]?.textContent).toContain('Not mine');
+    expect(queries[0]).toMatchObject({
+      page: 1,
+      prioritizeAssignee: '/api/organizations/org-1/members/m-1',
+    });
+    expect(rows()[0]?.textContent).toContain('Not mine');
+    expect(rows()[1]?.textContent).toContain('Mine');
+  });
+
+  it('marks optional work next to the target without repeating the default planned origin', async () => {
+    fixture.componentRef.setInput('items', [item({ required: false, status: 'in_progress' })]);
+    await fixture.whenStable();
+    expect(rows()[0]?.textContent).toContain('Optional');
+    expect(rows()[0]?.textContent).not.toContain('Required');
+    expect(byTestId('intervention-work-item-state')?.textContent).toContain('In progress');
+    expect(byTestId('intervention-work-item-state')?.textContent).not.toContain('Planned');
+  });
+
+  it('keeps the discovered origin and skipped reason visible', async () => {
+    fixture.componentRef.setInput('items', [
+      item({ source: 'discovered', status: 'skipped', skipReason: 'Access denied' }),
+    ]);
+    await fixture.whenStable();
+    expect(rows()[0]?.textContent).toContain('Access denied');
+    expect(byTestId('intervention-work-item-state')?.textContent).toContain('Discovered');
+  });
+
+  it('emits page changes with current server criteria and resets search to page one', async () => {
+    const queries: InterventionWorkItemTableQuery[] = [];
+    fixture.componentInstance.queryChanged.subscribe((query) => queries.push(query));
+    fixture.componentRef.setInput('query', {
+      search: '',
+      statuses: ['planned', 'in_progress'],
+      page: 2,
+      itemsPerPage: 10,
+      prioritizeAssignee: '/members/me',
+    });
+    fixture.componentRef.setInput('queryItems', [item({})]);
+    fixture.componentRef.setInput('queryTotal', 32);
+    fixture.componentRef.setInput('resultPage', 2);
+    await fixture.whenStable();
+    (byTestId('intervention-work-items-page-next') as HTMLButtonElement).click();
+    expect(queries.at(-1)).toMatchObject({
+      page: 3,
+      itemsPerPage: 10,
+      prioritizeAssignee: '/members/me',
+    });
+    const input = byTestId('intervention-work-items-search') as HTMLInputElement;
+    input.value = 'pump';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(queries.at(-1)).toMatchObject({ page: 1, search: 'pump' });
+  });
+
+  it('navigates to the stable page containing a scanned task', () => {
+    const queries: InterventionWorkItemTableQuery[] = [];
+    fixture.componentInstance.queryChanged.subscribe((query) => queries.push(query));
+    fixture.componentRef.setInput(
+      'items',
+      Array.from({ length: 21 }, (_, index) =>
+        item({ id: 'wi-' + String(index).padStart(2, '0') }),
+      ),
+    );
+    fixture.componentRef.setInput('query', {
+      search: 'hidden',
+      statuses: ['completed'],
+      page: 1,
+      itemsPerPage: 10,
+    });
+    fixture.componentInstance.revealItem('wi-20');
+    expect(queries.at(-1)).toMatchObject({ page: 3, search: '', statuses: null });
   });
 
   it('should render the progress bar and count only when the page asks for it', async () => {

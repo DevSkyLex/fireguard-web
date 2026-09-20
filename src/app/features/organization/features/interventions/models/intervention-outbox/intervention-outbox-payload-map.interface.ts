@@ -4,15 +4,40 @@ import type { CreateInspectionInput } from '@features/organization/features/insp
 import type { InterventionAttachmentKind } from '../intervention-attachment/intervention-attachment-kind.type';
 import type { CreateInterventionChangeInput } from '../intervention-change/create-intervention-change-input.interface';
 import type { UpdateInterventionChangeInput } from '../intervention-change/update-intervention-change-input.interface';
+import type { WriteInterventionTimeEntryInput } from '../intervention-time/write-intervention-time-entry-input.interface';
 import type { CreateInterventionWorkItemInput } from '../intervention-work-item/create-intervention-work-item-input.interface';
 import type { UpdateInterventionWorkItemInput } from '../intervention-work-item/update-intervention-work-item-input.interface';
 import type { InterventionOutput } from '../intervention/intervention-output.interface';
 import type { InterventionStatus } from '../intervention/intervention-status.type';
 
 /**
+ * Interface InterventionOutboxPayloadMap
+ * @interface InterventionOutboxPayloadMap
+ *
+ * @description
  * Associates every queued operation with its persisted payload contract.
+ *
+ * @version 1.0.0
  */
 export interface InterventionOutboxPayloadMap {
+  readonly 'time-entry.create': WriteInterventionTimeEntryInput & {
+    readonly workItemId: string;
+    readonly actorId: string;
+    readonly clientId?: string;
+  };
+  readonly 'time-entry.correct': WriteInterventionTimeEntryInput & {
+    readonly workItemId: string;
+    readonly actorId: string;
+    readonly revision: number;
+    readonly clientId?: string;
+  };
+  readonly 'time-entry.cancel': {
+    readonly id: string;
+    readonly workItemId: string;
+    readonly actorId: string;
+    readonly revision: number;
+    readonly clientId?: string;
+  };
   readonly 'facility.create': CreateFacilityInput;
   readonly 'equipment.create': CreateEquipmentInput;
   readonly 'inspection.create': CreateInspectionInput;
@@ -50,6 +75,7 @@ export interface InterventionOutboxPayloadMap {
     readonly reviewNote: string | null;
     readonly description: string | null;
     readonly labelIds: readonly string[];
+    readonly workloadConfirmationToken: string;
   }>;
   readonly 'work-item.create': CreateInterventionWorkItemInput;
   readonly 'work-item.update': UpdateInterventionWorkItemInput & {

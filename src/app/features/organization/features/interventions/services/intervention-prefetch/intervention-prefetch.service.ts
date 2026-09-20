@@ -6,6 +6,8 @@ import { OrganizationMemberService } from '@features/organization/data-access';
 import {
   InterventionOfflineService,
   InterventionService,
+  InterventionTimeService,
+  InterventionTimeRepository,
 } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
@@ -80,6 +82,34 @@ export class InterventionPrefetchService {
    * @type {InterventionService}
    */
   private readonly service: InterventionService = inject<InterventionService>(InterventionService);
+
+  /**
+   * Property time
+   * @readonly
+   *
+   * @description
+   * Authorized independent time journals.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionTimeService}
+   */
+  private readonly time: InterventionTimeService = inject(InterventionTimeService);
+
+  /**
+   * Property timeRepository
+   * @readonly
+   *
+   * @description
+   * Durable journal snapshots kept separate from operational data.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionTimeRepository}
+   */
+  private readonly timeRepository: InterventionTimeRepository = inject(InterventionTimeRepository);
 
   /**
    * Property offline
@@ -211,16 +241,44 @@ export class InterventionPrefetchService {
    * @returns {Observable<void>} Completes once the workspace is persisted.
    */
   private prefetch(organizationId: string, intervention: InterventionOutput): Observable<void> {
+    const owner = this.offline.publicationOwner();
     return forkJoin({
       workItems: this.service.listAllWorkItems(intervention.id),
       changes: this.service.listAllChanges(intervention.id),
       issues: this.service.listIssues(intervention.id),
     }).pipe(
       switchMap(({ workItems, changes, issues }) => {
-        // The routed identifier, not the loaded entity: mid-switch the entity
-        // is briefly absent, which would abort a prefetch that is still valid.
         if (this.organization.selectedOrganizationId() !== organizationId) return EMPTY;
-        return from(this.offline.saveWorkspace(intervention, workItems, changes, issues.member));
+        return from(
+          this.offline.saveWorkspace(intervention, workItems, changes, issues.member),
+        ).pipe(
+          switchMap(() =>
+            from(
+              workItems.filter(
+                (item) => item.allowedActions?.canLogTime || item.allowedActions?.canManageTime,
+              ),
+            ),
+          ),
+          mergeMap(
+            (item) =>
+              this.time.journal(item.id).pipe(
+                switchMap((journal) =>
+                  from(
+                    this.timeRepository.saveJournal(
+                      {
+                        interventionId: intervention.id,
+                        workItemId: item.id,
+                        entries: journal.entries,
+                      },
+                      owner,
+                    ),
+                  ),
+                ),
+                catchError(() => EMPTY),
+              ),
+            4,
+          ),
+        );
       }),
       map(() => undefined),
     );

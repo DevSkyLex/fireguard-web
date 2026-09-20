@@ -3,9 +3,9 @@ import type { InterventionTableSource } from '@features/organization/features/in
 import type {
   InterventionChangeOutput,
   InterventionChangeTableQuery,
-  InterventionWorkItemOutput,
   InterventionWorkItemTableQuery,
 } from '@features/organization/features/interventions/models';
+import type { InterventionWorkItemPage } from './intervention-work-item-page.interface';
 
 /**
  * Interface InterventionTableQueryState
@@ -20,7 +20,7 @@ export interface InterventionTableQueryState {
   readonly contextId: string | null;
   readonly activeTable: 'workItems' | 'changes' | null;
   readonly workItemsInterventionId: string | null;
-  readonly workItemsCallState: CallState<readonly InterventionWorkItemOutput[]>;
+  readonly workItemsCallState: CallState<InterventionWorkItemPage>;
   readonly workItemsQuery: InterventionWorkItemTableQuery;
   readonly workItemsGeneration: number;
   readonly workItemsVisited: boolean;

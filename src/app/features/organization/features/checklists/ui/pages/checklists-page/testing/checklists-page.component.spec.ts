@@ -13,6 +13,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
@@ -93,6 +94,14 @@ describe('ChecklistsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
         {
           provide: REGIONAL_FORMATTING_PORT,

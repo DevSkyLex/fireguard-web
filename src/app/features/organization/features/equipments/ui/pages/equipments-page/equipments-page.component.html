@@ -183,10 +183,12 @@
   } @else if (!store.isLoadingEquipment() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasSearchOrFilters() ? 'lucideSearch' : 'lucidePackage'; as iconName) {
+        @if (hasSearchOrFilters()) {
           <div hlmEmptyMedia variant="icon">
-            <ng-icon [name]="iconName" aria-hidden="true" />
+            <ng-icon name="lucideSearch" aria-hidden="true" />
           </div>
+        } @else if (store.listCallState().status === 'success' && store.totalEquipment() === 0) {
+          <app-resource-illustration hlmEmptyMedia resource="equipment" />
         }
         <p hlmEmptyTitle i18n="@@equipment.table.emptyTitle">No equipment found</p>
         <p hlmEmptyDescription i18n="@@equipment.table.emptyDesc">

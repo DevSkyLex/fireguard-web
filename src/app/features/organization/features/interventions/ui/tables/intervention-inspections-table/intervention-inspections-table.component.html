@@ -189,13 +189,19 @@
 
     <div hlmEmpty surfaceEmpty data-testid="intervention-inspections-empty">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          @if (hasActiveQuery()) {
+        @if (hasActiveQuery()) {
+          <div hlmEmptyMedia variant="icon">
             <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          } @else {
+          </div>
+        } @else if (
+          hasLoaded() && !loading() && !error() && items().length === 0 && totalItems() === 0
+        ) {
+          <app-resource-illustration hlmEmptyMedia resource="inspection" />
+        } @else {
+          <div hlmEmptyMedia variant="icon">
             <ng-icon name="lucideClipboardCheck" aria-hidden="true" />
-          }
-        </div>
+          </div>
+        }
         @if (hasActiveQuery()) {
           <p hlmEmptyTitle i18n="@@intervention.linked.inspections.filteredEmptyTitle">
             No inspections match the current search or filters

@@ -35,6 +35,7 @@ import {
 } from '@features/organization/ports';
 import { OrganizationTeamsStore } from '@features/organization/state/organization-teams';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { OrganizationTeamDeleteDialog } from '../../dialogs/organization-team-delete-dialog';
@@ -83,6 +84,7 @@ import { OrganizationTeamTable } from '../../tables/organization-team-table';
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
     HlmButton,
     OrganizationTeamCreateSheet,
     OrganizationTeamDeleteDialog,

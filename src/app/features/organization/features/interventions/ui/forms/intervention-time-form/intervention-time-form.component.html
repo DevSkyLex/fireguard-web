@@ -1,0 +1,109 @@
+<form class="flex flex-col gap-4" (submit)="submit($event)" data-testid="intervention-time-form">
+  <fieldset class="flex flex-col gap-4" [disabled]="pending()">
+    @if (manageOthers() && model().baseRevision === null) {
+      <hlm-field
+        ><label hlmFieldLabel for="time-contributor" i18n="@@intervention.time.contributor"
+          >Contributor</label
+        >
+        <hlm-combobox
+          [value]="model().memberId"
+          [itemToString]="memberLabel"
+          (valueChange)="selectMember($event)"
+          [disabled]="pending()"
+        >
+          <hlm-combobox-input inputId="time-contributor">
+            @if (selectedMemberOption(); as member) {
+              <span hlmInputGroupAddon align="inline-start" aria-hidden="true">
+                <hlm-avatar size="sm" class="shrink-0">
+                  @if (member.avatarUrl; as avatarUrl) {
+                    <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                  }
+                  <span hlmAvatarFallback>{{ member.initials }}</span>
+                </hlm-avatar>
+              </span>
+              <span
+                hlmInputGroupAddon
+                align="inline-end"
+                class="order-none max-w-28 min-w-0"
+                [attr.title]="member.roleLabel"
+              >
+                <span class="truncate text-xs">{{ member.roleLabel }}</span>
+              </span>
+            }
+          </hlm-combobox-input>
+          <hlm-combobox-content *hlmComboboxPortal
+            ><hlm-combobox-empty i18n="@@workload.noMembers">No members found</hlm-combobox-empty>
+            <div hlmComboboxList>
+              @for (member of members(); track member.value) {
+                <hlm-combobox-item
+                  class="mobile-ui:min-h-11"
+                  [value]="member.value.split('/').at(-1)"
+                >
+                  <hlm-avatar class="size-8 shrink-0" aria-hidden="true">
+                    @if (member.avatarUrl; as avatarUrl) {
+                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                    }
+                    <span hlmAvatarFallback>{{ member.initials }}</span>
+                  </hlm-avatar>
+                  <span class="flex min-w-0 flex-1 flex-col text-left">
+                    <span class="wrap-anywhere whitespace-normal">{{ member.displayName }}</span>
+                    <span class="text-xs wrap-anywhere whitespace-normal text-muted-foreground">{{
+                      member.roleLabel
+                    }}</span>
+                  </span>
+                </hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+      </hlm-field>
+    }
+    <hlm-field
+      ><label hlmFieldLabel for="time-date" i18n="@@intervention.time.workedOn">Work date</label>
+      <input hlmInput id="time-date" type="date" [max]="today()" [formField]="fields.workedOn" />
+      @if (fields.workedOn().touched()) {
+        @for (error of fields.workedOn().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    <hlm-field
+      ><label hlmFieldLabel for="time-minutes" i18n="@@intervention.time.minutes"
+        >Time spent (minutes)</label
+      >
+      <input hlmInput id="time-minutes" inputmode="numeric" [formField]="fields.minutes" />
+      <p hlmFieldDescription i18n="@@intervention.time.independent">
+        Logging time does not change the task status or remaining work.
+      </p>
+      @if (fields.minutes().touched()) {
+        @for (error of fields.minutes().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    <hlm-field
+      ><label hlmFieldLabel for="time-note" i18n="@@intervention.time.note">Note (optional)</label>
+      <textarea hlmTextarea id="time-note" rows="3" [formField]="fields.note"></textarea>
+      @if (fields.note().touched() && fields.note().invalid()) {
+        <hlm-field-error i18n="@@intervention.time.noteLimit"
+          >Use at most 2000 characters.</hlm-field-error
+        >
+      }
+    </hlm-field>
+  </fieldset>
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@intervention.time.keepDraft"
+    >
+      Keep draft
+    </button>
+    <button hlmBtn type="submit" [disabled]="pending()" i18n="@@intervention.time.save">
+      Save time
+    </button>
+  </div>
+</form>

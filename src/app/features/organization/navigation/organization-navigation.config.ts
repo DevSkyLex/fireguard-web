@@ -162,6 +162,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.INSPECTION_READ],
   },
   {
+    id: 'workload',
+    label: $localize`:@@route.workload:Workload`,
+    icon: 'lucideCalendarDays',
+    path: 'workload',
+    group: 'operations',
+    permissions: [],
+  },
+  {
     id: 'checklists',
     label: $localize`:@@route.checklists:Checklists`,
     icon: 'lucideListChecks',

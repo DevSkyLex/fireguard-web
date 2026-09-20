@@ -59,6 +59,47 @@ import {
 })
 export class InterventionWorkItemSheet {
   /**
+   * Property workloadOrganizationId
+   * @readonly
+   *
+   * @description
+   * Organization used for optional assignment load.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly workloadOrganizationId: InputSignal<string> = input('');
+
+  /**
+   * Property workloadStartsOn
+   * @readonly
+   *
+   * @description
+   * Inherited intervention period start.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly workloadStartsOn: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property workloadEndsOn
+   * @readonly
+   *
+   * @description
+   * Inherited intervention period end.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly workloadEndsOn: InputSignal<string | null> = input<string | null>(null);
+  /**
    * Property catalogueSearched
    * @readonly
    * @description Requests remote options without replacing the draft.

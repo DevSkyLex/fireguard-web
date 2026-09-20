@@ -181,13 +181,19 @@
 
     <div hlmEmpty surfaceEmpty data-testid="intervention-facilities-empty">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          @if (hasActiveQuery()) {
+        @if (hasActiveQuery()) {
+          <div hlmEmptyMedia variant="icon">
             <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          } @else {
+          </div>
+        } @else if (
+          hasLoaded() && !loading() && !error() && items().length === 0 && totalItems() === 0
+        ) {
+          <app-resource-illustration hlmEmptyMedia resource="site" />
+        } @else {
+          <div hlmEmptyMedia variant="icon">
             <ng-icon name="lucideMapPin" aria-hidden="true" />
-          }
-        </div>
+          </div>
+        }
         @if (hasActiveQuery()) {
           <p hlmEmptyTitle i18n="@@intervention.linked.facilities.filteredEmptyTitle">
             No facilities match the current search or filters

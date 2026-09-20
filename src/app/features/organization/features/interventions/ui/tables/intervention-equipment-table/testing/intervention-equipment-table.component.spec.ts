@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { InterventionEquipmentTable } from '../intervention-equipment-table.component';
 
@@ -38,6 +39,14 @@ describe('InterventionEquipmentTable', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+        {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
         },
@@ -51,6 +60,29 @@ describe('InterventionEquipmentTable', () => {
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('items', []);
     await fixture.whenStable();
+  });
+
+  it('illustrates a loaded, genuinely empty collection', async () => {
+    fixture.componentRef.setInput('hasLoaded', true);
+    await fixture.whenStable();
+
+    expect(root().querySelector('app-resource-illustration img')?.getAttribute('src')).toBe(
+      '/assets/illustrations/resources/light/equipment.svg',
+    );
+  });
+
+  it.each([
+    ['before the first result', 'hasLoaded', false],
+    ['while loading', 'loading', true],
+    ['after an error', 'error', 'Unable to load'],
+    ['with an active query', 'query', { search: 'missing', type: null, status: null }],
+    ['on an empty page of a populated collection', 'totalItems', 1],
+  ])('does not request an illustration %s', async (_label, input, value) => {
+    fixture.componentRef.setInput('hasLoaded', true);
+    fixture.componentRef.setInput(input as string, value);
+    await fixture.whenStable();
+
+    expect(root().querySelector('app-resource-illustration')).toBeNull();
   });
 
   it('should render each linked equipment by type, brand/model and status', async () => {

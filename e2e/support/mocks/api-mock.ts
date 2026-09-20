@@ -372,14 +372,12 @@ export class ApiMock {
   /** Successful mutations remain visible to later mocked collection GETs. */
   private readonly updatedInterventionRows = new Map<string, unknown>();
 
-  /** Applies the requested scalar facets, text and pagination instead of acknowledging every query. */
+  /** Applies scalar/repeated facets, text, assignee ordering and pagination like the API. */
   private interventionCollection(rows: readonly unknown[], url: URL): unknown {
     const search = (url.searchParams.get('search') ?? '').trim().toLowerCase();
-    const status = url.searchParams.get('status');
+    const statuses = [...url.searchParams.getAll('status'), ...url.searchParams.getAll('status[]')];
     const type = url.searchParams.get('type');
     const result = url.searchParams.get('result');
-    if ([...url.searchParams.keys()].some((key) => key.startsWith('status[')))
-      throw new Error('Intervention table status queries must be scalar.');
     const matching = rows
       .map((row) => {
         const record = row as { id: string };
@@ -388,7 +386,7 @@ export class ApiMock {
       .filter((row) => {
         const record = row as Record<string, unknown>;
         return (
-          (!status || record['status'] === status) &&
+          (!statuses.length || statuses.includes(String(record['status']))) &&
           (!type || record['type'] === type) &&
           (!result || record['result'] === result) &&
           (!search ||
@@ -399,6 +397,18 @@ export class ApiMock {
               .includes(search))
         );
       });
+    if (url.pathname.endsWith('/intervention-work-items')) {
+      const assignee = url.searchParams.get('prioritizeAssignee');
+      matching.sort((left, right) => {
+        const a = left as InterventionWorkItemOutputFixture;
+        const b = right as InterventionWorkItemOutputFixture;
+        return (
+          (assignee ? Number(b.assignee === assignee) - Number(a.assignee === assignee) : 0) ||
+          Date.parse(b.updatedAt) - Date.parse(a.updatedAt) ||
+          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        );
+      });
+    }
     const page = Math.max(1, Number(url.searchParams.get('page') ?? 1));
     const size =
       url.searchParams.get('pagination') === 'false'

@@ -23,6 +23,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
@@ -157,6 +158,14 @@ describe('OrganizationMembersPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {

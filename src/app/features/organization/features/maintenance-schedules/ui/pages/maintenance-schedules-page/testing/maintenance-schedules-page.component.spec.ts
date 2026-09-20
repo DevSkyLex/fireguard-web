@@ -16,6 +16,7 @@ import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
@@ -100,6 +101,14 @@ describe('MaintenanceSchedulesPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
         {
           provide: REGIONAL_FORMATTING_PORT,
@@ -123,6 +132,7 @@ describe('MaintenanceSchedulesPage', () => {
             resetCampaignOperation,
             schedules: signal<readonly MaintenanceScheduleOutput[]>([schedule]),
             totalSchedules,
+            listCallState: signal<CallState>(successCallState(null)),
             isLoading: signal(false),
             hasListError: signal(false),
             isListForbidden: signal(false),

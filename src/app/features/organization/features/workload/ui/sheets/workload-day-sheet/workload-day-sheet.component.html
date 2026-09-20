@@ -1,0 +1,283 @@
+<hlm-sheet
+  autoFocus="dialog"
+  [side]="side()"
+  [state]="selection() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && closed.emit()"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! overflow-hidden mobile-ui:max-h-[85svh] desktop-ui:w-[520px]! desktop-ui:max-w-[100vw]!"
+  >
+    @if (selection(); as selected) {
+      <hlm-sheet-header class="shrink-0 pr-12">
+        <div class="flex min-w-0 items-center gap-3">
+          <hlm-avatar class="shrink-0" aria-hidden="true">
+            @if (identity()?.avatarUrl; as avatarUrl) {
+              <img hlmAvatarImage [src]="avatarUrl" alt="" />
+            }
+            <span hlmAvatarFallback>{{ identity()?.initials ?? '?' }}</span>
+          </hlm-avatar>
+          <div class="min-w-0">
+            <h2 hlmSheetTitle class="wrap-anywhere">
+              {{ selected.member.displayName || selected.member.memberId }}
+            </h2>
+            <p class="text-xs wrap-anywhere text-muted-foreground">{{ identity()?.roleLabel }}</p>
+          </div>
+        </div>
+        <p hlmSheetDescription>
+          {{ selected.day.date + 'T00:00:00Z' | date: 'fullDate' : 'UTC' }}
+        </p>
+      </hlm-sheet-header>
+      <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-4">
+        <section class="flex min-w-0 flex-col gap-3" aria-labelledby="workload-day-summary">
+          <dl class="grid grid-cols-2 gap-4 text-sm">
+            <div class="flex min-w-0 flex-col gap-1">
+              <dt id="workload-day-summary" i18n="@@workload.dailyLoad">Daily workload</dt>
+              <dd class="text-xl font-semibold tabular-nums" data-testid="workload-day-total">
+                {{ duration(selected.day.actualMinutes + selected.day.remainingMinutes) }}
+              </dd>
+            </div>
+            <div class="flex min-w-0 flex-col gap-1 text-right">
+              <dt class="text-muted-foreground" i18n="@@workload.capacity">Capacity</dt>
+              <dd class="font-medium tabular-nums">
+                @if (selected.day.capacityMinutes == null) {
+                  <span class="text-sm text-muted-foreground" i18n="@@workload.capacityUnknown"
+                    >Capacity not configured</span
+                  >
+                } @else {
+                  <span class="text-xl">{{ duration(selected.day.capacityMinutes) }}</span>
+                }
+              </dd>
+            </div>
+          </dl>
+          @if (progress() !== null) {
+            <hlm-progress [value]="progress()" aria-labelledby="workload-day-summary">
+              <hlm-progress-indicator />
+            </hlm-progress>
+          }
+          <dl class="grid grid-cols-2 gap-4 text-sm">
+            <div class="flex min-w-0 flex-col gap-1">
+              <dt class="flex-1 text-muted-foreground" i18n="@@workload.actual">Time recorded</dt>
+              <dd class="font-medium tabular-nums">{{ duration(selected.day.actualMinutes) }}</dd>
+            </div>
+            <div class="flex min-w-0 flex-col gap-1 text-right">
+              <dt class="flex-1 text-muted-foreground" i18n="@@workload.remaining">
+                Remaining committed work
+              </dt>
+              <dd class="font-medium tabular-nums">
+                {{ duration(selected.day.remainingMinutes) }}
+              </dd>
+            </div>
+          </dl>
+          @if (selected.day.draftMinutes > 0) {
+            <p class="flex items-baseline justify-between gap-3 text-sm text-muted-foreground">
+              <span i18n="@@workload.draftExcluded">Draft (not included)</span>
+              <span class="shrink-0 tabular-nums">{{ duration(selected.day.draftMinutes) }}</span>
+            </p>
+          }
+          @if ((selected.day.overloadMinutes ?? 0) > 0) {
+            <div hlmAlert variant="destructive" role="status">
+              <p hlmAlertTitle i18n="@@workload.dayOverload">
+                Over capacity by {{ duration(selected.day.overloadMinutes) }}
+              </p>
+              <p hlmAlertDescription i18n="@@workload.dayOverloadHint">
+                Review the remaining work or availability for this day.
+              </p>
+            </div>
+          } @else if (selected.day.capacityMinutes === 0) {
+            <div hlmAlert role="status">
+              <p hlmAlertTitle i18n="@@workload.unavailable">Unavailable</p>
+            </div>
+          }
+          @if (selected.day.completeness !== 'complete') {
+            <div hlmAlert role="status">
+              <p hlmAlertTitle i18n="@@workload.incomplete">Incomplete workload</p>
+              <p hlmAlertDescription i18n="@@workload.day.partialHint">
+                Some work or capacity is unknown. These totals do not confirm availability.
+              </p>
+            </div>
+          }
+        </section>
+        <section class="flex min-w-0 flex-col gap-3" aria-labelledby="workload-day-interventions">
+          <h3
+            id="workload-day-interventions"
+            class="text-sm font-semibold"
+            i18n="@@workload.day.interventions"
+          >
+            Interventions for this day
+          </h3>
+          @if (interventions().length) {
+            <div hlmItemGroup>
+              @for (intervention of interventions(); track intervention.key) {
+                <div hlmItem variant="outline" size="sm" data-testid="workload-day-intervention">
+                  <div hlmItemContent class="min-w-0">
+                    <div class="flex items-baseline justify-between gap-3">
+                      @if (intervention.interventionId) {
+                        <a
+                          class="min-w-0 font-medium wrap-anywhere underline decoration-border underline-offset-4 hover:decoration-current mobile-ui:inline-flex mobile-ui:min-h-11 mobile-ui:items-center"
+                          [routerLink]="[
+                            '/organizations',
+                            organizationId(),
+                            'interventions',
+                            intervention.interventionId,
+                          ]"
+                          >{{ intervention.label }}</a
+                        >
+                      } @else {
+                        <span class="min-w-0 font-medium wrap-anywhere">{{
+                          intervention.label
+                        }}</span>
+                      }
+                      @if (
+                        intervention.actualMinutes !== null ||
+                        intervention.remainingMinutes !== null
+                      ) {
+                        <span
+                          class="shrink-0 font-semibold tabular-nums"
+                          data-testid="workload-day-intervention-total"
+                          >{{
+                            duration(
+                              (intervention.actualMinutes ?? 0) +
+                                (intervention.remainingMinutes ?? 0)
+                            )
+                          }}</span
+                        >
+                      }
+                    </div>
+                    <dl class="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
+                      @if (intervention.actualMinutes !== null) {
+                        <div class="flex items-baseline justify-between gap-3">
+                          <dt i18n="@@workload.actual">Time recorded</dt>
+                          <dd class="shrink-0 tabular-nums">
+                            {{ duration(intervention.actualMinutes) }}
+                          </dd>
+                        </div>
+                      }
+                      @if (intervention.remainingMinutes !== null) {
+                        <div class="flex items-baseline justify-between gap-3">
+                          <dt i18n="@@workload.remaining">Remaining committed work</dt>
+                          <dd class="shrink-0 tabular-nums">
+                            {{ duration(intervention.remainingMinutes) }}
+                          </dd>
+                        </div>
+                      }
+                      @if (intervention.draftMinutes !== null) {
+                        <div class="flex items-baseline justify-between gap-3">
+                          <dt i18n="@@workload.draftExcluded">Draft (not included)</dt>
+                          <dd class="shrink-0 tabular-nums">
+                            {{ duration(intervention.draftMinutes) }}
+                          </dd>
+                        </div>
+                      }
+                    </dl>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div hlmEmpty class="border border-dashed" data-testid="workload-day-empty">
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon">
+                  <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+                </div>
+                <p hlmEmptyDescription i18n="@@workload.noContributions">
+                  No recorded or allocated work for this day.
+                </p>
+              </div>
+            </div>
+          }
+        </section>
+        @if (selected.member.unallocated.length) {
+          <div
+            hlmCollapsible
+            [expanded]="isExcludedExpanded()"
+            (expandedChange)="isExcludedExpanded.set($event)"
+          >
+            <h3>
+              <button
+                hlmBtn
+                hlmCollapsibleTrigger
+                variant="ghost"
+                class="h-auto min-h-11 w-full justify-start gap-3 text-left whitespace-normal"
+                id="workload-day-excluded-trigger"
+              >
+                <ng-icon
+                  name="lucideChevronDown"
+                  [class.rotate-180]="isExcludedExpanded()"
+                  aria-hidden="true"
+                />
+                <span class="min-w-0 flex-1" i18n="@@workload.day.excluded">Work not included</span>
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="shrink-0"
+                  i18n="@@workload.day.excludedCount"
+                  >{selected.member.unallocated.length, plural,
+                    =1 {1 task}
+                    other {{{ selected.member.unallocated.length }} tasks}
+                  }</span
+                >
+              </button>
+            </h3>
+            <div
+              hlmCollapsibleContent
+              role="region"
+              aria-labelledby="workload-day-excluded-trigger"
+            >
+              @if (isExcludedExpanded()) {
+                <div class="flex flex-col gap-3 pt-3">
+                  <p class="text-sm text-muted-foreground" i18n="@@workload.day.excludedScope">
+                    Across this member's work, not only this day. These tasks are excluded from the
+                    totals above.
+                  </p>
+                  <ul class="divide-y">
+                    @for (task of selected.member.unallocated; track task.taskId) {
+                      <li class="flex flex-col gap-1 py-3 text-sm">
+                        <a
+                          class="wrap-anywhere underline underline-offset-4 mobile-ui:inline-flex mobile-ui:min-h-11 mobile-ui:items-center"
+                          [routerLink]="[
+                            '/organizations',
+                            organizationId(),
+                            'interventions',
+                            task.interventionId,
+                          ]"
+                          >{{ task.label }}</a
+                        >
+                        <span class="text-xs text-muted-foreground"
+                          >{{ unallocatedLabel(task) }}
+                          @if (task.remainingMinutes != null) {
+                            · {{ duration(task.remainingMinutes) }}
+                          }
+                        </span>
+                        @if (task.commitment === 'draft') {
+                          <span
+                            hlmBadge
+                            variant="secondary"
+                            class="self-start"
+                            i18n="@@workload.draft"
+                            >Draft</span
+                          >
+                        }
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <hlm-sheet-footer class="shrink-0">
+        <button
+          hlmBtn
+          hlmSheetClose
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          i18n="@@common.close"
+        >
+          Close
+        </button>
+      </hlm-sheet-footer>
+    }
+  </hlm-sheet-content>
+</hlm-sheet>

@@ -1,7 +1,9 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import {
   InterventionWorkItemForm,
   type InterventionWorkItemFormValues,
@@ -32,7 +34,14 @@ describe('InterventionWorkItemSheet', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(InterventionWorkItemSheet);
@@ -80,7 +89,16 @@ describe('InterventionWorkItemSheet', () => {
 
     (inSheet('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
 
-    expect(submissions).toEqual([{ action: 'inventory', target: '', assignee: '' }]);
+    expect(submissions).toEqual([
+      {
+        action: 'inventory',
+        target: '',
+        assignee: '',
+        estimatedMinutes: '',
+        workStartsOn: '',
+        workEndsOn: '',
+      },
+    ]);
   });
 
   it('should forward the target and member options down to the form', async () => {

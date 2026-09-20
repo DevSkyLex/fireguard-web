@@ -12,6 +12,7 @@ import {
   toStoreError,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
@@ -185,6 +186,14 @@ describe('OrganizationAssetsPage', () => {
         },
         provideRouter([]),
         {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+        {
           provide: FacilityTreeStore,
           useValue: {
             roots: rootsSignal,
@@ -203,12 +212,14 @@ describe('OrganizationAssetsPage', () => {
           provide: OrganizationAssetsPaneStore,
           useValue: {
             equipment: signal([]),
+            equipmentListCallState: signal(successCallState([])),
             equipmentTotal: signal(0),
             equipmentPage: signal(1),
             equipmentPageCount: signal(1),
             isLoadingEquipment: signal(false),
             hasEquipmentError: signal(false),
             inspections: signal([]),
+            inspectionListCallState: signal(successCallState([])),
             inspectionTotal: signal(0),
             inspectionPage: signal(1),
             inspectionPageCount: signal(1),
@@ -234,6 +245,7 @@ describe('OrganizationAssetsPage', () => {
             loadSummary,
             exportSafetyRegister,
             snapshots: snapshotsSignal,
+            snapshotsCallState: signal(successCallState({ member: [], totalItems: 0 })),
             isLoadingSnapshots: signal(false),
             hasSnapshotsError: signal(false),
             isArchiving: isArchivingSignal,
@@ -463,6 +475,31 @@ describe('OrganizationAssetsPage', () => {
 
     expect(loadEquipment).not.toHaveBeenCalled();
     expect(loadInspections).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('app-resource-illustration')).toBeNull();
+  });
+
+  it('uses matching artwork for the two completed empty resource panes', async () => {
+    fixture = await createPage({ organizationId: 'org-1', axis: 'everything' });
+    const images = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      'app-resource-illustration img',
+    );
+
+    expect([...images].map((image) => image.getAttribute('src'))).toEqual([
+      '/assets/illustrations/resources/light/equipment.svg',
+      '/assets/illustrations/resources/light/inspection.svg',
+    ]);
+  });
+
+  it('uses document artwork for an empty archive without replacing the archive action', async () => {
+    fixture = await createPage({ organizationId: 'org-1', axis: 'compliance' });
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(
+      host
+        .querySelector('[data-testid="assets-compliance-snapshots-empty"] img')
+        ?.getAttribute('src'),
+    ).toBe('/assets/illustrations/resources/light/document.svg');
+    expect(host.textContent).toContain('Archive register');
   });
 
   it('scopes the right pane to the selected facility', async () => {

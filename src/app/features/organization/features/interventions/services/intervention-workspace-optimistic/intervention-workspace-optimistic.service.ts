@@ -86,6 +86,11 @@ export class InterventionWorkspaceOptimisticService {
       required: input.required,
       skipReason: null,
       evidenceCount: 0,
+      estimatedMinutes: input.estimatedMinutes ?? null,
+      remainingMinutes: input.estimatedMinutes ?? null,
+      workStartsOn: input.workStartsOn ?? null,
+      workEndsOn: input.workEndsOn ?? null,
+      spentMinutes: 0,
       revision: 1,
       createdAt: now,
       updatedAt: now,
@@ -252,6 +257,11 @@ export class InterventionWorkspaceOptimisticService {
     const workItem: InterventionWorkItemOutput = {
       ...item,
       status: request.status,
+      ...((item.status === 'completed' || item.status === 'skipped') &&
+      request.status !== 'completed' &&
+      request.status !== 'skipped'
+        ? { remainingMinutes: null }
+        : {}),
       skipReason,
       revision: item.revision + 1,
       updatedAt: new Date().toISOString(),

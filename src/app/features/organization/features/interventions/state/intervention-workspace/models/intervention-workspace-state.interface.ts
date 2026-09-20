@@ -8,14 +8,31 @@ import type {
   InterventionQueuedAttachment,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import type { InterventionPlanningConfirmation } from './intervention-planning-confirmation.type';
 
 /**
  * Interface InterventionWorkspaceState
  * @interface InterventionWorkspaceState
- * @description State of one intervention workspace and its independent mutation lifecycles.
+ *
+ * @description
+ * State of one intervention workspace and its independent mutation lifecycles.
+ *
  * @since 1.0.0
  */
 export interface InterventionWorkspaceState {
+  /**
+   * Property planningConfirmation
+   * @readonly
+   *
+   * @description
+   * Overload requiring an explicit human decision.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InterventionPlanningConfirmation | null}
+   */
+  readonly planningConfirmation: InterventionPlanningConfirmation | null;
   readonly contextId: string | null;
   readonly loadGeneration: number;
   readonly intervention: InterventionOutput | null;

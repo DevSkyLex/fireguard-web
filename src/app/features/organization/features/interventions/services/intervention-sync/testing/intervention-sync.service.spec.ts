@@ -8,6 +8,7 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import {
   InterventionOfflineService,
   InterventionService,
+  InterventionTimeService,
 } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionOutboxOperationFor,
@@ -88,6 +89,15 @@ describe('InterventionSyncService', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionSyncService,
+        {
+          provide: InterventionTimeService,
+          useValue: {
+            journal: vi.fn().mockReturnValue(of({ entries: [] })),
+            createEntry: vi.fn().mockReturnValue(of({})),
+            correctEntry: vi.fn().mockReturnValue(of({})),
+            cancelEntry: vi.fn().mockReturnValue(of(undefined)),
+          },
+        },
         { provide: InterventionService, useValue: mockInterventionService },
         { provide: FacilityService, useValue: mockFacilities },
         { provide: EquipmentService, useValue: mockEquipment },
@@ -119,6 +129,98 @@ describe('InterventionSyncService', () => {
     });
     expect(mockOffline.removeOutbox).toHaveBeenNthCalledWith(1, 'op-1');
     expect(mockOffline.removeOutbox).toHaveBeenNthCalledWith(2, 'op-2');
+  });
+
+  it('retains a time correction and the server snapshot when its journal revision is stale', async () => {
+    const time = TestBed.inject(InterventionTimeService);
+    vi.mocked(time.correctEntry).mockReturnValue(
+      throwError(() => ({
+        status: 412,
+        detail: 'Time entry changed.',
+      })),
+    );
+    vi.mocked(time.journal).mockReturnValue(
+      of({
+        '@id': '/api/intervention-work-items/task/time-entries',
+        '@type': 'InterventionTimeJournal',
+        workItemId: 'task',
+        entries: [
+          {
+            id: 'entry',
+            workItemId: 'task',
+            memberId: 'member',
+            workedOn: '2026-09-16',
+            minutes: 90,
+            note: 'Server note',
+            revision: 3,
+            cancelled: false,
+            createdBy: 'member',
+            updatedBy: 'manager',
+            createdAt: '2026-09-16T09:00:00Z',
+            updatedAt: '2026-09-16T10:00:00Z',
+            versions: [],
+          },
+        ],
+      }),
+    );
+    const input = {
+      id: 'entry',
+      workItemId: 'task',
+      actorId: 'member',
+      memberId: 'member',
+      workedOn: '2026-09-16',
+      minutes: 120,
+      note: 'Local note',
+      revision: 1,
+    };
+    mockOffline.listOutbox.mockResolvedValue([operation('time-op', 'time-entry.correct', input)]);
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'time-op',
+      'Time entry changed.',
+      null,
+      {
+        revision: 3,
+        values: {
+          memberId: 'member',
+          workedOn: '2026-09-16',
+          minutes: 90,
+          note: 'Server note',
+          cancelled: false,
+        },
+      },
+    );
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(input.revision).toBe(1);
+  });
+
+  it('keeps rejected time visible when permission is lost before synchronization', async () => {
+    const time = TestBed.inject(InterventionTimeService);
+    vi.mocked(time.createEntry).mockReturnValue(
+      throwError(() => ({
+        status: 403,
+        detail: 'Time entry permission is required.',
+      })),
+    );
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('time-op', 'time-entry.create', {
+        id: 'stable-entry',
+        workItemId: 'task',
+        actorId: 'member',
+        memberId: 'member',
+        workedOn: '2026-09-16',
+        minutes: 120,
+        note: null,
+      }),
+    ]);
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.markOutboxFailed).toHaveBeenCalledWith(
+      'time-op',
+      'Time entry permission is required.',
+    );
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
   });
 
   it('invalidates only effectively replayed collections after a partial replay', async () => {
@@ -299,7 +401,7 @@ describe('InterventionSyncService', () => {
     expect(mockFacilities.createForIntervention).toHaveBeenCalledOnce();
   });
 
-  it('should rebase a stale update onto the current revision and continue replaying', async () => {
+  it('preserves a stale planning revision for explicit comparison while independent operations replay', async () => {
     mockOffline.listOutbox.mockResolvedValue([
       operation('op-1', 'intervention.update', { status: 'in_progress', revision: 3 }),
       operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
@@ -307,20 +409,22 @@ describe('InterventionSyncService', () => {
     mockInterventionService.update.mockReturnValue(
       throwError(() => ({ status: 412, error: { detail: 'The intervention changed.' } })),
     );
-    mockInterventionService.get.mockReturnValue(of({ revision: 7 }));
+    mockInterventionService.get.mockReturnValue(of({ revision: 7, status: 'planned' }));
 
     const replayed = await service.replayOutbox('org-1', 'intervention-1');
 
-    // op-1 is rebased onto the fresh revision (so a retry no longer loops on the
-    // stale If-Match) and surfaced as a conflict; the independent op-2 replays.
     expect(replayed).toBe(1);
     expect(mockInterventionService.get).toHaveBeenCalledWith('intervention-1');
-    expect(mockOffline.rebaseOutboxRevision).toHaveBeenCalledWith(
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
       'op-1',
-      7,
       'The intervention changed.',
+      null,
+      {
+        revision: 7,
+        values: { status: 'planned', plannedStartAt: null, dueAt: null, responsible: null },
+      },
     );
-    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-2');
     expect(mockEquipment.createForIntervention).toHaveBeenCalled();
   });

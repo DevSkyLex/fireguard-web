@@ -203,6 +203,11 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./features/calendar/calendar.routes').then((m) => m.CALENDAR_ROUTES),
       },
       {
+        path: 'workload',
+        loadChildren: () =>
+          import('./features/workload/workload.routes').then((m) => m.WORKLOAD_ROUTES),
+      },
+      {
         path: 'statistics',
         pathMatch: 'full',
         redirectTo: '',

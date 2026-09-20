@@ -206,7 +206,7 @@ for (const { tab, actions } of [
       const columns = await table
         .locator('thead th')
         .evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width));
-      expect(columns).toHaveLength(tab === 'work-item' ? 6 : actions ? 5 : 4);
+      expect(columns).toHaveLength(tab === 'work-item' ? 7 : actions ? 5 : 4);
       const height = await table
         .locator('tbody tr')
         .first()

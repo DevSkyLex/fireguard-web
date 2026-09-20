@@ -39,9 +39,7 @@ const intervention = interventionOutput({
     'Vérifier les accès aux équipements et consigner les anomalies avec une photographie. Prévenir le responsable du site avant toute mise hors service.',
 });
 
-test('keeps description editing and detail disclosure through desktop resize', async ({
-  page,
-}) => {
+test('keeps description editing and detail disclosure through desktop resize', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await prepare(page);
   await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/interventions/${intervention.id}`);

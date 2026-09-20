@@ -72,10 +72,10 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^22.1.8",
-    "@angular/cli": "^22.1.8",
+    "@angular/build": "22.1.2",
+    "@angular/cli": "22.1.2",
     "@angular/compiler-cli": "^22.1.7",
-    "@angular/language-server": "^22.1.7",
+    "@angular/language-server": "22.1.2",
     "@playwright/test": "1.62.1",
     "@spartan-ng/cli": "^1.4.1",
     "@tailwindcss/postcss": "^4.1.12",

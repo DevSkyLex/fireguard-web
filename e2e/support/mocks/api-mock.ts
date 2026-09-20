@@ -674,63 +674,42 @@ export class ApiMock {
     // These secondary organization reads are started by feature pages before
     // their scenario-specific mocks are registered. Specific routes added
     // after `mockAuthenticatedSession` still win (last-registered-first).
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/facility-tree(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, hydraCollection([]));
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/equipment\/kpis(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, equipmentKpiOutput());
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/checklists(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, hydraCollection([]));
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/invitations(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, hydraCollection([]));
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/roles(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, hydraCollection([]));
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/quota(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        const organizationId: string = new URL(route.request().url()).pathname.split('/')[3] ?? '';
-        await fulfillJson(
-          route,
-          200,
-          organizationQuotaOutput({
-            '@id': `/api/organizations/${organizationId}/quota`,
-            organizationId,
-          }),
-        );
-      },
-    );
-    await this.page.route(
-      /\/api\/organizations\/[^/]+\/facilities(\?.*)?$/,
-      async (route) => {
-        if (route.request().method() !== 'GET') return route.fallback();
-        await fulfillJson(route, 200, hydraCollection([]));
-      },
-    );
+    await this.page.route(/\/api\/organizations\/[^/]+\/facility-tree(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/equipment\/kpis(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, equipmentKpiOutput());
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/checklists(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/invitations(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/roles(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/quota(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      const organizationId: string = new URL(route.request().url()).pathname.split('/')[3] ?? '';
+      await fulfillJson(
+        route,
+        200,
+        organizationQuotaOutput({
+          '@id': `/api/organizations/${organizationId}/quota`,
+          organizationId,
+        }),
+      );
+    });
+    await this.page.route(/\/api\/organizations\/[^/]+\/facilities(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, hydraCollection([]));
+    });
 
     await Promise.all(
       organizations.flatMap((organization: OrganizationOutputFixture) => [

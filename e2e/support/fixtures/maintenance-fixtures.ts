@@ -20,6 +20,7 @@ export interface MaintenanceScheduleOutputFixture {
   readonly nextDueAt?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly evaluatedAt?: string | null;
 }
 
 /** An overdue fire-extinguisher schedule with no inspection ever recorded. */

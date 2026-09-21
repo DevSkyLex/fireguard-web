@@ -132,6 +132,74 @@
         </div>
       </div>
     } @else {
+      @if (!store.isComplete()) {
+        <div
+          role="status"
+          data-testid="calendar-partial"
+          class="mb-3 flex shrink-0 flex-wrap items-start justify-between gap-3 rounded-lg border p-3"
+        >
+          <div class="flex min-w-0 flex-col gap-1">
+            <p class="text-sm font-medium" i18n="@@calendar.partial.title">Partial results</p>
+            <ul class="text-sm text-muted-foreground">
+              @for (source of store.partialSources(); track source.sourceKey) {
+                <li>
+                  @switch (source.sourceKey) {
+                    @case ('calendar_event') {
+                      <span i18n="@@calendar.source.event">Event</span>
+                    }
+                    @case ('inspection') {
+                      <span i18n="@@calendar.source.inspection">Inspection</span>
+                    }
+                    @case ('intervention') {
+                      <span i18n="@@calendar.source.intervention">Intervention</span>
+                    }
+                    @case ('maintenance') {
+                      <span i18n="@@calendar.source.maintenance">Maintenance</span>
+                    }
+                  }
+                  <span aria-hidden="true"> · </span>
+                  @if (!source.available) {
+                    <span i18n="@@calendar.partial.unavailable">Temporarily unavailable</span>
+                  } @else {
+                    <span i18n="@@calendar.partial.truncated"
+                      >More events exist in this period</span
+                    >
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              type="button"
+              class="mobile-ui:min-h-11"
+              data-testid="calendar-partial-retry"
+              [disabled]="store.isQueryLoading()"
+              (click)="reload()"
+              i18n="@@common.tryAgain"
+            >
+              Try again
+            </button>
+            @if (store.hasTruncation() && granularity() !== 'day') {
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                type="button"
+                class="mobile-ui:min-h-11"
+                data-testid="calendar-reduce-period"
+                (click)="switchGranularity('day')"
+                i18n="@@calendar.partial.reducePeriod"
+              >
+                Show one day
+              </button>
+            }
+          </div>
+        </div>
+      }
       @switch (granularity()) {
         @case ('month') {
           <div hlmTabsContent="month" class="flex min-h-0 flex-1 flex-col">
@@ -170,7 +238,7 @@
                     hlmCardContent
                     class="flex flex-col p-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
                   >
-                    @if (dayItems().length === 0) {
+                    @if (dayItems().length === 0 && store.isComplete() && !store.isQueryLoading()) {
                       <div hlmEmpty>
                         <div hlmEmptyHeader>
                           <div hlmEmptyMedia variant="icon">
@@ -201,7 +269,7 @@
               >
                 @if (store.isQueryLoading() && events().length === 0) {
                   <hlm-skeleton class="h-48 w-full" />
-                } @else if (agendaGroups().length === 0) {
+                } @else if (agendaGroups().length === 0 && store.isComplete()) {
                   <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
                     Nothing scheduled in this period.
                   </p>
@@ -258,7 +326,7 @@
                       </button>
                     }
                   </div>
-                  @if (group.items.length === 0) {
+                  @if (group.items.length === 0 && store.isComplete()) {
                     <p class="text-sm text-muted-foreground" i18n="@@calendar.weekDayEmpty">
                       Nothing scheduled this day.
                     </p>
@@ -300,7 +368,7 @@
             }
             @if (store.isQueryLoading() && store.items().length === 0) {
               <hlm-skeleton class="h-48 w-full" />
-            } @else if (dayViewItems().length === 0) {
+            } @else if (dayViewItems().length === 0 && store.isComplete()) {
               <div hlmEmpty>
                 <div hlmEmptyHeader>
                   <div hlmEmptyMedia variant="icon">

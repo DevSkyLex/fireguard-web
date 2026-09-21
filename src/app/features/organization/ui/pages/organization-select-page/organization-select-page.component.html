@@ -1,0 +1,85 @@
+<section
+  class="mx-auto flex w-full max-w-2xl flex-col gap-6"
+  aria-label="Choose an organization"
+  i18n-aria-label="@@organization.select.title"
+>
+  <header class="flex flex-col gap-2">
+    <p class="text-sm text-muted-foreground" i18n="@@organization.select.description">
+      Open one of your available workspaces to continue.
+    </p>
+  </header>
+  @if (store.listCallState().status === 'idle' || store.isLoadingOrganizations()) {
+    <p class="flex items-center gap-2" role="status">
+      <hlm-spinner /><span i18n="@@account.organizations.loadingAria"
+        >Loading your organizations</span
+      >
+    </p>
+  } @else if (store.listCallState().status === 'error') {
+    <div hlmAlert variant="destructive">
+      <p hlmAlertDescription i18n="@@organization.select.error">
+        Your access could not be refreshed. Please try again.
+      </p>
+      <button
+        hlmBtn
+        variant="outline"
+        class="mt-3 min-h-11"
+        (click)="load(page())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div hlmItemGroup class="gap-3">
+      @for (organization of store.organizations(); track organization.id) {
+        <a
+          hlmItem
+          variant="outline"
+          class="min-h-14 rounded-md"
+          [routerLink]="['/organizations', organization.id]"
+        >
+          <div hlmItemContent>
+            <span hlmItemTitle class="break-words">{{ organization.name }}</span>
+          </div>
+        </a>
+      }
+    </div>
+    @if (store.totalOrganizations() === 0) {
+      <a
+        hlmBtn
+        class="min-h-11 self-start"
+        routerLink="/onboarding/workspace"
+        i18n="@@organization.select.findWorkspace"
+        >Find a workspace</a
+      >
+    }
+    @if (store.totalOrganizations() > 30 || page() > 1) {
+      <nav
+        class="flex justify-between gap-3"
+        aria-label="Organization pages"
+        i18n-aria-label="@@organization.select.pages"
+      >
+        <button
+          hlmBtn
+          variant="outline"
+          class="min-h-11"
+          [disabled]="page() === 1"
+          (click)="load(page() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous
+        </button>
+        <button
+          hlmBtn
+          variant="outline"
+          class="min-h-11"
+          [disabled]="page() * 30 >= store.totalOrganizations()"
+          (click)="load(page() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  }
+</section>

@@ -130,6 +130,7 @@
       [memberLabelOf]="memberLabelOf"
       (approveRequested)="openApprove($event)"
       (rejectRequested)="openReject($event)"
+      (withdrawRequested)="openWithdraw($event)"
     />
 
     <app-collection-pagination
@@ -146,9 +147,14 @@
 </div>
 
 <app-approval-decision-dialog
-  [target]="decisionTarget()"
+  [target]="currentDecisionTarget()"
   [pending]="store.isDeciding()"
   [errorText]="store.decideErrorText()"
+  [refreshing]="store.refreshCallState().status === 'pending'"
+  [refreshErrorText]="store.refreshCallState().error?.message ?? null"
+  (refreshRequested)="
+    decisionTarget() && store.refresh([organizationId(), decisionTarget()!.request.id])
+  "
   (decided)="submitDecision($event)"
   (dismissed)="closeDecisionDialog()"
 />

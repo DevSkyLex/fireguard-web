@@ -15,7 +15,7 @@
       <th hlmTableHead i18n="@@approvals.table.colRequested">Requested</th>
       <th hlmTableHead i18n="@@approvals.table.colExpires">Expires</th>
       <th hlmTableHead i18n="@@approvals.table.colStatus">Status</th>
-      @if (canDecide()) {
+      @if (showActions()) {
         <th hlmTableHead class="w-px">
           <span class="sr-only" i18n="@@common.actions">Actions</span>
         </th>
@@ -59,7 +59,7 @@
           <ng-container [ngTemplateOutlet]="decisionDetail" [ngTemplateOutletContext]="{ item }" />
         </td>
 
-        @if (canDecide()) {
+        @if (showActions()) {
           <td hlmTableCell>
             <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
           </td>
@@ -79,7 +79,7 @@
             {{ actionTypeLabelOf()(item.actionType) }}
           </span>
 
-          @if (canDecide()) {
+          @if (showActions()) {
             <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
           }
         </div>
@@ -135,6 +135,9 @@
           {{ memberLabelOf()(item.decisionByMemberId ?? '') }}</span
         >
       }
+      @if (item.decidedAt) {
+        <span>{{ item.decidedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span>
+      }
       @if (item.decisionNote) {
         <span class="italic">"{{ item.decisionNote }}"</span>
       }
@@ -147,31 +150,56 @@
 
 <ng-template #rowActions let-item="item">
   @if (item.status === 'pending') {
-    <div class="flex gap-1">
-      <button
-        hlmBtn
-        type="button"
-        variant="ghost"
-        size="sm"
-        class="max-sm:min-h-11"
-        data-testid="approval-request-table-approve"
-        [attr.aria-label]="approveAriaLabelOf(item)"
-        (click)="approveRequested.emit(item)"
-      >
-        <ng-icon name="lucideCheck" aria-hidden="true" />
-      </button>
-      <button
-        hlmBtn
-        type="button"
-        variant="ghost"
-        size="sm"
-        class="max-sm:min-h-11"
-        data-testid="approval-request-table-reject"
-        [attr.aria-label]="rejectAriaLabelOf(item)"
-        (click)="rejectRequested.emit(item)"
-      >
-        <ng-icon name="lucideX" aria-hidden="true" />
-      </button>
+    <div class="flex flex-wrap gap-1">
+      @if (canDecide()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="approval-request-table-approve"
+          [disabled]="item.allowedActions && !item.allowedActions.includes('approve')"
+          [attr.aria-label]="approveAriaLabelOf(item)"
+          (click)="approveRequested.emit(item)"
+        >
+          <ng-icon name="lucideCheck" aria-hidden="true" />
+        </button>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="approval-request-table-reject"
+          [disabled]="item.allowedActions && !item.allowedActions.includes('reject')"
+          [attr.aria-label]="rejectAriaLabelOf(item)"
+          (click)="rejectRequested.emit(item)"
+        >
+          <ng-icon name="lucideX" aria-hidden="true" />
+        </button>
+      }
+      @if (item.allowedActions?.includes('withdraw')) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="max-sm:min-h-11"
+          data-testid="approval-request-table-withdraw"
+          (click)="withdrawRequested.emit(item)"
+        >
+          <span i18n="@@approvals.decide.withdrawAccept">Withdraw request</span>
+        </button>
+      }
     </div>
+    @if (
+      canDecide() &&
+        !item.allowedActions?.includes('withdraw') &&
+        decisionReason(item.decisionBlockReason);
+      as reason
+    ) {
+      <p class="mt-1 max-w-64 text-xs text-muted-foreground">{{ reason }}</p>
+    }
   }
 </ng-template>

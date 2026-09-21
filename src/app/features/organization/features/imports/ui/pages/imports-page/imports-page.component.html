@@ -1,11 +1,8 @@
-<div
-  id="imports"
-  class="flex min-h-0 w-full flex-1 flex-col gap-4 mobile-ui:min-h-fit mobile-ui:flex-none"
->
+<div id="imports" class="flex min-h-fit w-full flex-1 flex-col gap-4 mobile-ui:flex-none">
   @if (canUpload()) {
     <section
       hlmCard
-      class="max-w-xl mobile-ui:shrink-0 mobile-ui:gap-4 mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:bg-transparent mobile-ui:shadow-none mobile-ui:ring-0"
+      class="max-w-xl shrink-0 mobile-ui:gap-4 mobile-ui:rounded-none mobile-ui:border-0 mobile-ui:bg-transparent mobile-ui:shadow-none mobile-ui:ring-0"
       data-testid="imports-upload-card"
     >
       <div hlmCardHeader class="mobile-ui:px-0">
@@ -20,6 +17,9 @@
           [pending]="store.isCreating()"
           [error]="store.createError()"
           [acceptedJobId]="store.createCallState().data?.id ?? null"
+          [templatePending]="store.templateCallState().status === 'pending'"
+          [templateError]="store.templateCallState().error?.message ?? null"
+          (templateRequested)="store.downloadTemplate($event)"
           (submitted)="upload($event)"
         />
       </div>
@@ -56,7 +56,7 @@
 
   <ng-template #kindChip>
     <app-collection-filter-select
-      [options]="kindFilterOptions"
+      [options]="kindFilterOptions()"
       [value]="kindFilter()"
       placeholder="Any kind"
       i18n-placeholder="@@imports.list.filterKindPlaceholder"
@@ -132,7 +132,7 @@
     </div>
   } @else {
     <app-import-job-table
-      class="mobile-ui:min-h-fit mobile-ui:flex-none"
+      class="min-h-64 mobile-ui:min-h-fit mobile-ui:flex-none"
       [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoading() && items().length === 0"
@@ -161,5 +161,20 @@
     selectedJobId() ? (store.pollCallStates()[selectedJobId()!]?.error?.message ?? null) : null
   "
   (refreshRequested)="selectedJobId() && store.refresh(selectedJobId()!)"
+  [resuming]="
+    selectedJobId() ? store.resumeCallStates()[selectedJobId()!]?.status === 'pending' : false
+  "
+  [resumeError]="
+    selectedJobId() ? (store.resumeCallStates()[selectedJobId()!]?.error?.message ?? null) : null
+  "
+  (resumeRequested)="selectedJobId() && store.resume(selectedJobId()!)"
+  [confirming]="
+    selectedJobId() ? store.confirmCallStates()[selectedJobId()!]?.status === 'pending' : false
+  "
+  [confirmError]="
+    selectedJobId() ? (store.confirmCallStates()[selectedJobId()!]?.error?.message ?? null) : null
+  "
+  (confirmRequested)="selectedJobId() && store.confirm(selectedJobId()!)"
+  (confirmedReportRequested)="openConfirmedReport($event)"
   (visibleChange)="closeReport()"
 />

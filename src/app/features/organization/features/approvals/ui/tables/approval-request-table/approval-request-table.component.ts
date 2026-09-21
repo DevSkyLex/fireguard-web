@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideX } from '@ng-icons/lucide';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
+import { approvalDecisionReason } from '@features/organization/features/approvals/utils';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -96,6 +97,15 @@ const SUBJECT_LABELS: Readonly<Record<string, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApprovalRequestTable {
+  /**
+   * Property decisionReason
+   * @readonly
+   * @description Localizes the server capability reason beside unavailable actions.
+   * @access protected
+   * @since 1.0.0
+   * @type {typeof approvalDecisionReason}
+   */
+  protected readonly decisionReason: typeof approvalDecisionReason = approvalDecisionReason;
   //#region Inputs
   /**
    * Property items
@@ -201,9 +211,32 @@ export class ApprovalRequestTable {
    */
   public readonly rejectRequested: OutputEmitterRef<ApprovalRequestOutput> =
     output<ApprovalRequestOutput>();
+  /**
+   * Property withdrawRequested
+   * @readonly
+   * @description A row's Reject action was activated; carries that row's request.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<ApprovalRequestOutput>}
+   */
+  public readonly withdrawRequested: OutputEmitterRef<ApprovalRequestOutput> =
+    output<ApprovalRequestOutput>();
   //#endregion
 
   //#region Properties
+  /**
+   * Property showActions
+   * @readonly
+   * @description Includes requester withdrawal independently of decision permissions.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly showActions: Signal<boolean> = computed(
+    () =>
+      this.canDecide() || this.items().some((item) => item.allowedActions?.includes('withdraw')),
+  );
+
   /**
    * Property skeletonColumnWidths
    * @readonly
@@ -213,7 +246,8 @@ export class ApprovalRequestTable {
    * @type {Signal<readonly string[]>}
    */
   protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
-    () => (this.canDecide() ? [...SKELETON_COLUMN_WIDTHS, 'ms-auto w-16'] : SKELETON_COLUMN_WIDTHS),
+    () =>
+      this.showActions() ? [...SKELETON_COLUMN_WIDTHS, 'ms-auto w-16'] : SKELETON_COLUMN_WIDTHS,
   );
   //#endregion
 
@@ -313,7 +347,7 @@ export class ApprovalRequestTable {
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return this.canDecide() ? 7 : 6;
+    return this.showActions() ? 7 : 6;
   }
   //#endregion
 }

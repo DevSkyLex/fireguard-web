@@ -32,6 +32,16 @@ export interface MyOrganizationsState {
    * @since 1.0.0
    * @type {CallState}
    */
-  readonly leaveCallState: CallState;
+  readonly leaveCallState: CallState<number>;
+
+  /**
+   * Property departureConfirmed
+   * @readonly
+   * @description The server accepted departure; subsequent attempts only refresh access.
+   * @access public
+   * @since 1.0.0
+   * @type {boolean}
+   */
+  readonly departureConfirmed: boolean;
   //#endregion
 }

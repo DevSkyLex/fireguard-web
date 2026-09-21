@@ -106,7 +106,10 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28',
     }),
   ],
   templateUrl: './audit-event-table.component.html',
-  host: { class: 'block min-h-0 w-full flex-1' },
+  host: {
+    class:
+      'block min-h-0 w-full flex-1 mobile-ui:min-h-fit mobile-ui:flex-none mobile-ui:md:min-h-0 mobile-ui:md:flex-1',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuditEventTable {
@@ -269,7 +272,20 @@ export class AuditEventTable {
    * @returns {string} The humanized field label.
    */
   protected metadataLabelOf(key: string): string {
-    return this.humanizeIdentifier(key);
+    switch (key) {
+      case 'operation':
+        return $localize`:@@audit.metadata.operation:Change`;
+      case 'attachment_id':
+        return $localize`:@@audit.metadata.attachment:Floor plan`;
+      case 'previous_attachment_id':
+        return $localize`:@@audit.metadata.previousAttachment:Previous floor plan`;
+      case 'revision':
+        return $localize`:@@audit.metadata.revision:Revision`;
+      case 'intervention_id':
+        return $localize`:@@audit.metadata.intervention:Intervention`;
+      default:
+        return this.humanizeIdentifier(key);
+    }
   }
 
   /**
@@ -284,10 +300,21 @@ export class AuditEventTable {
    * @since 1.2.0
    *
    * @param {unknown} value - The metadata value supplied by the API.
+   * @param {string} key - The metadata key controlling known enum labels.
    *
    * @returns {string} A stable reader-facing representation.
    */
-  protected metadataValueOf(value: unknown): string {
+  protected metadataValueOf(value: unknown, key: string = ''): string {
+    if (key === 'operation') {
+      switch (value) {
+        case 'placed':
+          return $localize`:@@audit.metadata.placed:Placed on plan`;
+        case 'moved':
+          return $localize`:@@audit.metadata.moved:Moved on plan`;
+        case 'cleared':
+          return $localize`:@@audit.metadata.cleared:Removed from plan`;
+      }
+    }
     if (value === null || value === undefined || value === '') return '—';
     if (typeof value === 'boolean') {
       return value ? $localize`:@@common.yes:Yes` : $localize`:@@common.no:No`;

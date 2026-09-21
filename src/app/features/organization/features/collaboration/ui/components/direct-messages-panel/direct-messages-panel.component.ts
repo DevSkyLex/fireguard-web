@@ -14,7 +14,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBookmark, lucideSearch } from '@ng-icons/lucide';
+import { lucideBookmark, lucideSearch, lucideSendHorizontal } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type {
   ConversationOutput,
@@ -85,7 +85,7 @@ import { DirectMessagePicker } from '../direct-message-picker';
     HlmSkeleton,
     DirectMessagePicker,
   ],
-  providers: [provideIcons({ lucideBookmark, lucideSearch })],
+  providers: [provideIcons({ lucideBookmark, lucideSearch, lucideSendHorizontal })],
   templateUrl: './direct-messages-panel.component.html',
   host: { class: 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' },
   changeDetection: ChangeDetectionStrategy.OnPush,

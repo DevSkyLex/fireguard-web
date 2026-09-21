@@ -1,9 +1,22 @@
-import { DOCUMENT } from '@angular/common';
-import { computed, inject } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { computed, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  exhaustMap,
+  last,
+  map,
+  pipe,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  timer,
+  timeout,
+} from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -22,10 +35,18 @@ import type {
   PlanPricingOutput,
   PortalSessionOutput,
 } from '@features/organization/models';
-import type { BillingCheckoutParams, OrganizationBillingState } from './models';
+import { organizationBillingStoreEvents } from './events';
+import type {
+  BillingCheckoutExpectation,
+  BillingCheckoutParams,
+  OrganizationBillingState,
+} from './models';
 
 //#region Initial State
 const INITIAL_STATE: OrganizationBillingState = {
+  currentOrganizationId: null,
+  checkoutExpectation: null,
+  reconciliationCallState: idleCallState(),
   subscriptionCallState: idleCallState(),
   pricingCallState: idleCallState(),
   invoicesCallState: idleCallState(),
@@ -74,8 +95,39 @@ export const OrganizationBillingStore = signalStore(
   withComputed((store) => ({
     subscription: computed<OrganizationSubscriptionOutput | null>(() => {
       const state = store.subscriptionCallState();
-      return isCallSuccess(state) ? state.data : null;
+      return state.data ?? null;
     }),
+    /**
+     * Property awaitingCheckout
+     * @readonly
+     * @description Keeps an unconfirmed return visible after polling stops or connectivity fails.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<boolean>}
+     */
+    awaitingCheckout: computed<boolean>(
+      () => store.checkoutExpectation() !== null && store.reconciliationCallState().data !== true,
+    ),
+    /**
+     * Property isCheckingCheckout
+     * @readonly
+     * @description Indicates that the bounded server confirmation check is running.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<boolean>}
+     */
+    isCheckingCheckout: computed<boolean>(
+      () => store.reconciliationCallState().status === 'pending',
+    ),
+    /**
+     * Property checkoutConfirmed
+     * @readonly
+     * @description True only when the API confirms the requested active plan and billing interval.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<boolean>}
+     */
+    checkoutConfirmed: computed<boolean>(() => store.reconciliationCallState().data === true),
     isLoadingSubscription: computed<boolean>(
       () => store.subscriptionCallState().status === 'pending',
     ),
@@ -98,6 +150,7 @@ export const OrganizationBillingStore = signalStore(
     resumeSucceeded: computed<boolean>(() => isCallSuccess(store.resumeCallState())),
     billingError: computed<StoreError | null>(
       () =>
+        store.reconciliationCallState().error ??
         store.subscriptionCallState().error ??
         store.checkoutCallState().error ??
         store.portalCallState().error ??
@@ -111,6 +164,8 @@ export const OrganizationBillingStore = signalStore(
       store,
       billingService = inject<BillingService>(BillingService),
       documentRef = inject(DOCUMENT),
+      platformId = inject(PLATFORM_ID),
+      dispatcher = inject(Dispatcher),
     ) => ({
       /**
        * Method loadSubscription
@@ -119,27 +174,107 @@ export const OrganizationBillingStore = signalStore(
        * @description
        * Loads the organization's current subscription state.
        *
-       * @param {string} organizationId - The organization identifier.
+       * @param {string | null} organizationId - The organization identifier, or null to cancel and clear.
        */
-      loadSubscription: rxMethod<string>(
+      loadSubscription: rxMethod<string | null>(
         pipe(
-          tap(() =>
+          tap((organizationId) =>
             patchState(store, {
-              subscriptionCallState: pendingCallState(store.subscriptionCallState().data),
+              currentOrganizationId: organizationId,
+              subscriptionCallState:
+                organizationId === null
+                  ? idleCallState()
+                  : pendingCallState(
+                      organizationId === store.currentOrganizationId()
+                        ? store.subscriptionCallState().data
+                        : undefined,
+                    ),
             }),
           ),
-          switchMap((organizationId: string) =>
-            billingService.getSubscription(organizationId).pipe(
+          switchMap((organizationId: string | null) =>
+            organizationId === null
+              ? EMPTY
+              : billingService.getSubscription(organizationId).pipe(
+                  tapResponse({
+                    next: (subscription: OrganizationSubscriptionOutput) =>
+                      patchState(store, { subscriptionCallState: successCallState(subscription) }),
+                    error: (err: unknown) =>
+                      patchState(store, {
+                        subscriptionCallState: errorCallState(
+                          toStoreError(err),
+                          store.subscriptionCallState().data,
+                        ),
+                      }),
+                  }),
+                ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method watchCheckout
+       * @method watchCheckout
+       * @description Checks at most fifteen times, retains the latest server state and cancels obsolete checks. A missing legacy target stays unconfirmed.
+       * @access public
+       * @since 1.0.0
+       * @param {BillingCheckoutExpectation | null} expectation - Server-provided Checkout target, or null to stop.
+       * @returns {void}
+       */
+      watchCheckout: rxMethod<BillingCheckoutExpectation | null>(
+        pipe(
+          tap((expectation) =>
+            patchState(store, {
+              checkoutExpectation: expectation,
+              reconciliationCallState: expectation === null ? idleCallState() : pendingCallState(),
+              ...(expectation === null
+                ? {}
+                : {
+                    currentOrganizationId: expectation.organizationId,
+                    subscriptionCallState:
+                      expectation.organizationId === store.currentOrganizationId()
+                        ? store.subscriptionCallState()
+                        : idleCallState(),
+                  }),
+            }),
+          ),
+          switchMap((expectation) => {
+            if (expectation === null || !isPlatformBrowser(platformId)) return EMPTY;
+            return timer(0, 2000).pipe(
+              take(15),
+              exhaustMap(() =>
+                billingService.getSubscription(expectation.organizationId).pipe(timeout(10000)),
+              ),
+              tap((subscription) =>
+                patchState(store, { subscriptionCallState: successCallState(subscription) }),
+              ),
+              map(
+                (subscription) =>
+                  subscription.organizationId === expectation.organizationId &&
+                  subscription.active &&
+                  expectation.planKey !== null &&
+                  subscription.planKey === expectation.planKey &&
+                  expectation.interval !== null &&
+                  subscription.interval === expectation.interval,
+              ),
+              takeWhile((confirmed) => !confirmed, true),
+              last(),
               tapResponse({
-                next: (subscription: OrganizationSubscriptionOutput) =>
-                  patchState(store, { subscriptionCallState: successCallState(subscription) }),
-                error: (err: unknown) =>
+                next: (confirmed) => {
+                  patchState(store, { reconciliationCallState: successCallState(confirmed) });
+                  if (confirmed)
+                    dispatcher.dispatch(
+                      organizationBillingStoreEvents.checkoutReconciled({
+                        organizationId: expectation.organizationId,
+                      }),
+                    );
+                },
+                error: (error: unknown) =>
                   patchState(store, {
-                    subscriptionCallState: errorCallState(toStoreError(err)),
+                    reconciliationCallState: errorCallState(toStoreError(error)),
                   }),
               }),
-            ),
-          ),
+            );
+          }),
         ),
       ),
 

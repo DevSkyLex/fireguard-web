@@ -77,7 +77,10 @@ import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status
   ],
   providers: [provideIcons({ lucidePencil })],
   templateUrl: './maintenance-schedule-table.component.html',
-  host: { class: 'block min-h-0 w-full flex-1' },
+  host: {
+    class:
+      'block min-h-0 w-full flex-1 mobile-ui:min-h-fit mobile-ui:flex-none mobile-ui:md:min-h-0 mobile-ui:md:flex-1',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaintenanceScheduleTable {

@@ -576,11 +576,12 @@ and `facilityEquipment` (this facility's assigned equipment, via
 (`availableZoneCandidates`/`availableEquipmentCandidates`) to the ones the
 loaded overlay does not already show. A successful write reloads the
 overlay (`loadOverlay`, the same rxMethod the `withHooks` effect uses) so
-the plan reflects the change without a page refresh; a 409 is reworded
-client-side into the ancestry ("this floor plan is not part of this zone's
-facility ancestry") or assignment ("this equipment is not assigned to a
-facility") constraint the backend enforces, since the raw `detail` is not
-guaranteed to be member-facing.
+the plan reflects the change without a page refresh. Errors use stable API codes
+for ancestry, assignment, decommissioning and revision conflicts. A 409/412 refreshes
+the overlay while retaining drawing/placement context and the coordinate dialog draft.
+Accepted writes are serialized; their observation does not cancel the server mutation.
+Coordinate dialogs use Signal Forms and reseed only on opening. They close after
+confirmed success and retain their draft across failed writes and refreshed inputs.
 
 `ui/components/facility-plan-editor` (`FacilityPlanEditor`) wraps the
 read-only `FacilityPlanOverlay` unchanged — that component stays exactly as

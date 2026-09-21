@@ -68,4 +68,11 @@ export interface ImportJobOutput extends HydraItem {
 
   /** @type {string} */
   readonly updatedAt: string;
+
+  /** Server permission and lease check for resuming the same import. @type {boolean | undefined} */
+  readonly canResume?: boolean;
+  /** Server-authorized successful simulation confirmation. */
+  readonly canConfirm?: boolean;
+  /** The existing real import created by this simulation's confirmation. */
+  readonly confirmedJobId?: string | null;
 }

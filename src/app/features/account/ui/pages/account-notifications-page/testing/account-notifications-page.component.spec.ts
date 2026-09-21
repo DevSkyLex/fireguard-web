@@ -14,7 +14,11 @@ import type {
   NotificationTypeOutput,
   UpdateNotificationPreferencesInput,
 } from '@features/account/models';
-import { AccountNotificationPreferencesStore, NotificationStore } from '@features/account/state';
+import {
+  AccountNotificationPreferencesStore,
+  InboxStore,
+  NotificationStore,
+} from '@features/account/state';
 import { AccountNotificationsPage } from '../account-notifications-page.component';
 
 const TYPES: ReadonlyArray<NotificationTypeOutput> = [
@@ -121,6 +125,22 @@ describe('AccountNotificationsPage', () => {
         provideRouter([]),
         { provide: LOCALE_ID, useValue: 'en-US' },
         { provide: NotificationStore, useValue: store },
+        {
+          provide: InboxStore,
+          useValue: {
+            ensureLoaded: vi.fn(),
+            entryEntities: signal([]),
+            isLoading: signal(false),
+            isLoadingMore: signal(false),
+            complete: signal(true),
+            listError: signal(null),
+            readCallState: signal({ status: 'idle' }),
+            hasMore: signal(false),
+            markAsRead: vi.fn(),
+            load: vi.fn(),
+            loadMore: vi.fn(),
+          },
+        },
       ],
     })
       .overrideComponent(AccountNotificationsPage, {
@@ -189,11 +209,14 @@ describe('AccountNotificationsPage', () => {
     expect(fixture.componentInstance['activeCategory']()).toBe('intervention');
   });
 
-  it('should say the reader is caught up when nothing is unread', () => {
+  it('should say the reader is caught up when nothing is unread', async () => {
+    fixture.componentRef.setInput('tab', 'notifications');
+    await fixture.whenStable();
     expect(root().textContent).toContain('all caught up');
   });
 
   it('should show the unread count when there is one', async () => {
+    fixture.componentRef.setInput('tab', 'notifications');
     store.unreadCount.set(4);
     await fixture.whenStable();
 
@@ -202,6 +225,7 @@ describe('AccountNotificationsPage', () => {
   });
 
   it('should clear every unread notification at once', async () => {
+    fixture.componentRef.setInput('tab', 'notifications');
     store.unreadCount.set(3);
     await fixture.whenStable();
 

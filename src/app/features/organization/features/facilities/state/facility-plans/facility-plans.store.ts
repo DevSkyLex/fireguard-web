@@ -20,7 +20,7 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -46,6 +46,7 @@ import type {
 } from '@features/organization/features/facilities/models';
 import { facilityPlansStoreEvents } from './events';
 import type { FacilityPlansState } from './models';
+import { planWriteErrorMessage } from './utils/plan-write-error-message/plan-write-error-message.utils';
 
 /** Facility types eligible as a `draw-zone` target — a zone outline is drawn for a zone or an area. */
 const ZONE_CANDIDATE_TYPES: ReadonlySet<string> = new Set(['zone', 'area']);
@@ -414,9 +415,9 @@ export const FacilityPlansStore = signalStore(
        * is `null`) one facility's outline on the selected plan. On success,
        * leaves `draw-zone` mode (a no-op when called from the dialog or the
        * clear action), invalidates the cached candidate lists so they
-       * re-fetch on next open, and reloads the overlay. A 409 is reworded
-       * into the ancestry constraint the backend enforces, since its own
-       * `detail` is written for logs, not necessarily for a member.
+       * re-fetch on next open, and reloads the overlay. Conflicts refresh the
+       * overlay while retaining the draft; stable API codes supply recovery guidance.
+       * Concurrent submissions never cancel an accepted write.
        *
        * @since 1.4.0
        *
@@ -432,12 +433,13 @@ export const FacilityPlansStore = signalStore(
           tap((): void => {
             patchState(store, { saveZoneGeometryCallState: pendingCallState() });
           }),
-          switchMap(({ organizationId, facilityId, attachmentId, points }) =>
+          exhaustMap(({ organizationId, facilityId, attachmentId, points }) =>
             facilityService
               .setPlanGeometry(organizationId, facilityId, { attachmentId, points })
               .pipe(
                 tapResponse({
                   next: (): void => {
+                    if (store.organizationId() !== organizationId) return;
                     patchState(store, {
                       saveZoneGeometryCallState: successCallState(null),
                       editMode: 'none',
@@ -466,15 +468,30 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
+                    if (store.organizationId() !== organizationId) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
+                    const currentFacilityId: string | null = store.facilityId();
+                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                    if (
+                      (storeError.code === 409 || storeError.code === 412) &&
+                      currentFacilityId &&
+                      plan
+                    ) {
+                      loadOverlayFn({
+                        organizationId,
+                        facilityId: currentFacilityId,
+                        attachmentId: plan.id,
+                      });
+                    }
+
                     dispatcher.dispatch(
                       facilityPlansStoreEvents.zoneGeometrySaveFailed(
                         errorFeedback(
-                          storeError.code === 409
-                            ? $localize`:@@facility.plans.editor.error.zoneConflict:This floor plan is not part of this zone's facility ancestry.`
-                            : (storeError.message ??
-                                $localize`:@@facility.plans.editor.error.zoneSaveFailed:Failed to save the zone outline`),
+                          planWriteErrorMessage(
+                            storeError,
+                            $localize`:@@facility.plans.editor.error.zoneSaveFailed:Failed to save the zone outline`,
+                          ),
                           {
                             code: storeError.code,
                             retryable: storeError.retryable,
@@ -499,8 +516,8 @@ export const FacilityPlansStore = signalStore(
        * are `null`) one equipment item's pin on the selected plan. On
        * success, leaves `place-pin` mode when `exitPlaceMode` is set,
        * invalidates the cached equipment candidates, and reloads the
-       * overlay. A 409 is reworded into the assignment constraint the
-       * backend enforces.
+       * overlay. Conflicts preserve the editor context and refresh the
+       * overlay. Stable API codes identify the relevant business constraint.
        *
        * @since 1.4.0
        *
@@ -518,12 +535,13 @@ export const FacilityPlansStore = signalStore(
           tap((): void => {
             patchState(store, { savePinPositionCallState: pendingCallState() });
           }),
-          switchMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) =>
+          exhaustMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) =>
             equipmentService
               .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y })
               .pipe(
                 tapResponse({
                   next: (): void => {
+                    if (store.organizationId() !== organizationId) return;
                     patchState(store, {
                       savePinPositionCallState: successCallState(null),
                       ...(exitPlaceMode
@@ -552,15 +570,30 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
+                    if (store.organizationId() !== organizationId) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { savePinPositionCallState: errorCallState(storeError) });
+                    const currentFacilityId: string | null = store.facilityId();
+                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                    if (
+                      (storeError.code === 409 || storeError.code === 412) &&
+                      currentFacilityId &&
+                      plan
+                    ) {
+                      loadOverlayFn({
+                        organizationId,
+                        facilityId: currentFacilityId,
+                        attachmentId: plan.id,
+                      });
+                    }
+
                     dispatcher.dispatch(
                       facilityPlansStoreEvents.pinPositionSaveFailed(
                         errorFeedback(
-                          storeError.code === 409
-                            ? $localize`:@@facility.plans.editor.error.pinConflict:This equipment is not assigned to a facility.`
-                            : (storeError.message ??
-                                $localize`:@@facility.plans.editor.error.pinSaveFailed:Failed to save the equipment position`),
+                          planWriteErrorMessage(
+                            storeError,
+                            $localize`:@@facility.plans.editor.error.pinSaveFailed:Failed to save the equipment position`,
+                          ),
                           {
                             code: storeError.code,
                             retryable: storeError.retryable,

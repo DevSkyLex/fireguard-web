@@ -6,11 +6,13 @@ import {
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { disabled, form, FormField, validate, type FieldTree } from '@angular/forms/signals';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { HlmButton } from '@shared/ui/button';
 import {
@@ -22,6 +24,7 @@ import {
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
+import { HlmField, HlmFieldLabel, HlmFieldError } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
@@ -58,6 +61,10 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
     HlmDialogPortal,
     HlmDialogTitle,
     HlmInput,
+    HlmField,
+    HlmFieldLabel,
+    HlmFieldError,
+    FormField,
     ...HlmSpinnerImports,
   ],
   templateUrl: './facility-plan-pin-position-dialog.component.html',
@@ -65,47 +72,157 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
 })
 export class FacilityPlanPinPositionDialog {
   //#region Inputs
-  /** Whether the dialog is open. */
+  /**
+   * Property visible
+   * @readonly
+   * @description Whether the dialog is open.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
 
-  /** The equipment's display name, for the dialog title. */
+  /**
+   * Property equipmentName
+   * @readonly
+   * @description The equipment's display name, for the dialog title.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<string>}
+   */
   public readonly equipmentName: InputSignal<string> = input<string>('');
 
-  /** The pin's current normalized horizontal position, seeding the draft on every open. */
+  /**
+   * Property x
+   * @readonly
+   * @description The pin's current normalized horizontal position, seeding the draft on every open.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<number>}
+   */
   public readonly x: InputSignal<number> = input<number>(0.5);
 
-  /** The pin's current normalized vertical position, seeding the draft on every open. */
+  /**
+   * Property y
+   * @readonly
+   * @description The pin's current normalized vertical position, seeding the draft on every open.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<number>}
+   */
   public readonly y: InputSignal<number> = input<number>(0.5);
 
-  /** Whether a save or remove this dialog triggered is still in flight. */
+  /**
+   * Property pending
+   * @readonly
+   * @description Whether a save or remove this dialog triggered is still in flight.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
-  /** The dialog wants to open or close. */
+  /**
+   * Property visibleChange
+   * @readonly
+   * @description The dialog wants to open or close.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<boolean>}
+   */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
 
-  /** Emits the validated position, in normalized `[0, 1]` image coordinates. */
+  /**
+   * Property submitted
+   * @readonly
+   * @description Emits the validated position, in normalized `[0, 1]` image coordinates.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<readonly [number, number]>}
+   */
   public readonly submitted: OutputEmitterRef<readonly [number, number]> =
     output<readonly [number, number]>();
 
-  /** The "Remove from plan" action. */
+  /**
+   * Property removed
+   * @readonly
+   * @description The "Remove from plan" action.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly removed: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The edited horizontal draft, as a percent string. */
+  /**
+   * Property xDraft
+   * @readonly
+   * @description The edited horizontal draft, as a percent string.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<string>}
+   */
   protected readonly xDraft: WritableSignal<string> = signal('50.0');
 
-  /** The edited vertical draft, as a percent string. */
+  /**
+   * Property yDraft
+   * @readonly
+   * @description The edited vertical draft, as a percent string.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<string>}
+   */
   protected readonly yDraft: WritableSignal<string> = signal('50.0');
 
-  /** Whether both drafts parse to a number in `[0, 100]`. */
+  /**
+   * Property xForm
+   * @readonly
+   * @description Validates the percent coordinate and preserves the draft during a plan refresh.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<string>}
+   */
+  protected readonly xForm: FieldTree<string> = form(this.xDraft, (path): void => {
+    disabled(path, { when: (): boolean => this.pending() });
+    validate(path, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
+  });
+
+  /**
+   * Property yForm
+   * @readonly
+   * @description Validates the percent coordinate and preserves the draft during a plan refresh.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<string>}
+   */
+  protected readonly yForm: FieldTree<string> = form(this.yDraft, (path): void => {
+    disabled(path, { when: (): boolean => this.pending() });
+    validate(path, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
+  });
+
+  /**
+   * Property canSubmit
+   * @readonly
+   * @description Whether both drafts parse to a number in `[0, 100]`.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<boolean>}
+   */
   protected readonly canSubmit: Signal<boolean> = computed<boolean>(
-    () => isValidPercent(this.xDraft()) && isValidPercent(this.yDraft()),
+    () => this.xForm().valid() && this.yForm().valid(),
   );
 
-  /** The overlay's own open/closed state, derived from {@link visible}. */
+  /**
+   * Property dialogState
+   * @readonly
+   * @description The overlay's own open/closed state, derived from {@link visible}.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
@@ -123,8 +240,8 @@ export class FacilityPlanPinPositionDialog {
     effect((): void => {
       if (!this.visible()) return;
 
-      this.xDraft.set(toPercentString(this.x()));
-      this.yDraft.set(toPercentString(this.y()));
+      this.xDraft.set(toPercentString(untracked(this.x)));
+      this.yDraft.set(toPercentString(untracked(this.y)));
     });
   }
   //#endregion
@@ -189,6 +306,7 @@ export class FacilityPlanPinPositionDialog {
 
 /**
  * Function toPercentString
+ * @description Formats a normalized coordinate for the percent input.
  * @access private
  * @since 1.4.0
  * @param {number} normalized - A normalized `[0, 1]` coordinate.
@@ -200,6 +318,7 @@ function toPercentString(normalized: number): string {
 
 /**
  * Function toNormalized
+ * @description Converts a percent coordinate to the server representation.
  * @access private
  * @since 1.4.0
  * @param {string} percent - A percent string in `[0, 100]`.
@@ -211,6 +330,7 @@ function toNormalized(percent: string): number {
 
 /**
  * Function isValidPercent
+ * @description Validates a finite percent within the plan bounds.
  * @access private
  * @since 1.4.0
  * @param {string} value - The raw draft string.

@@ -73,6 +73,7 @@ const INITIAL_THREAD_STATE = {
   messagesTotal: 0,
   threadCallState: idleCallState(),
   askCallState: idleCallState(),
+  controlCallState: idleCallState(),
   generatingMessageId: null,
   generationStalled: false,
 } satisfies Omit<AssistantState, 'panelOpen'>;
@@ -88,6 +89,23 @@ function cookieName(organization: string): string {
 }
 
 /**
+ * Function toFrame
+ * @description Normalizes a persisted reply to the realtime contract.
+ * @access private
+ * @since 1.1.0
+ * @param {AssistantMessageOutput} message - Server reply.
+ * @returns {AssistantFrame} The canonical accumulated update.
+ */
+function toFrame(message: AssistantMessageOutput): AssistantFrame {
+  return {
+    ...message,
+    messageId: message.id,
+    tokenCount: message.tokenCount ?? null,
+    errorCode: message.errorCode ?? null,
+  };
+}
+
+/**
  * Constant AssistantStore
  * @const AssistantStore
  *
@@ -100,24 +118,10 @@ function cookieName(organization: string): string {
  * visible to the `PANEL_SLOT` factory, evaluated in that same environment
  * injector.
  *
- * Four behaviours exist because of what the backend does *not* offer.
- *
- * A thread is created on the **first question**, never on panel open, and its
- * id is remembered in a cookie. The listing endpoint takes no member filter, so
- * a thread that is not remembered is lost — and opening the panel eagerly would
- * leave an empty thread behind every time.
- *
- * A reply's text lives only in Mercure frames until it completes: the database
- * column stays empty, so frames are applied straight to state and the
- * refetch-on-frame pattern used by the message thread would show nothing here.
- *
- * The subscriber token expires after 900 seconds and nothing renews it, while
- * `MercureService` reconnects forever without surfacing an error — so the
- * subscription is re-minted on a timer rather than waiting to notice.
- *
- * And a generation whose worker dies has no terminal frame, no cancel and no
- * server-side deadline, so silence long enough to look like failure is reported
- * as one.
+ * The current thread is remembered per organization. Persisted partial replies
+ * are merged with monotonic Mercure frames using attempt identity and sequence.
+ * Silence prompts a canonical read; only a server command cancels a generation.
+ * Subscriber tokens are renewed while the panel owns the conversation.
  *
  * @since 1.0.0
  *
@@ -139,6 +143,8 @@ export const AssistantStore = signalStore(
     ),
 
     isLoading: computed((): boolean => isCallPending(store.threadCallState())),
+    isControlling: computed((): boolean => isCallPending(store.controlCallState())),
+    controlError: computed((): StoreError | null => store.controlCallState().error),
     isAsking: computed((): boolean => isCallPending(store.askCallState())),
     loadError: computed((): StoreError | null => store.threadCallState().error),
     askError: computed((): StoreError | null => store.askCallState().error),
@@ -164,6 +170,8 @@ export const AssistantStore = signalStore(
       organizationContext = inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT),
     ) => {
       /** Bare id of the organization the panel is scoped to, from the URL. */
+      let scopeRevision = 0;
+
       function organizationId(): string | null {
         return organizationContext.selectedOrganizationId();
       }
@@ -212,6 +220,36 @@ export const AssistantStore = signalStore(
       }
 
       /**
+       * Function acceptDetail
+       * @description Keeps newer live attempts when an older HTTP response arrives.
+       * @access private
+       * @since 1.1.0
+       * @param {AssistantThreadDetailOutput} detail - Persisted page.
+       * @returns {void}
+       */
+      function acceptDetail(detail: AssistantThreadDetailOutput): void {
+        const messages = detail.messages.map((incoming) => {
+          const current = store.messages().find((item) => item.id === incoming.id);
+          return current ? applyAssistantFrame([current], toFrame(incoming))[0] : incoming;
+        });
+        // A read started before an accepted question must not remove its new turns.
+        for (const current of store.messages()) {
+          if (!messages.some((item) => item.id === current.id)) messages.push(current);
+        }
+        const generating =
+          messages.findLast((item) => item.status === 'pending' || item.status === 'streaming')
+            ?.id ?? null;
+        patchState(store, {
+          threadId: detail.id,
+          messages,
+          messagesTotal: Math.max(detail.messagesTotal, messages.length),
+          generatingMessageId: generating,
+          generationStalled: false,
+        });
+        watchForStall(generating);
+      }
+
+      /**
        * Ends the wait on a generation that has gone quiet for too long.
        *
        * Re-armed on every frame, so the timeout measures silence rather than
@@ -228,6 +266,7 @@ export const AssistantStore = signalStore(
           switchMap((messageId: string | null) => {
             if (messageId === null) return EMPTY;
 
+            const revision = scopeRevision;
             return timer(ASSISTANT_STALL_TIMEOUT_MS).pipe(
               switchMap(() => {
                 const organization: string | null = organizationId();
@@ -241,25 +280,14 @@ export const AssistantStore = signalStore(
 
                 return readLatest(organization, threadId).pipe(
                   tap((detail: AssistantThreadDetailOutput): void => {
-                    const target: AssistantMessageOutput | undefined = detail.messages.find(
-                      (message: AssistantMessageOutput): boolean => message.id === messageId,
-                    );
-                    const settled: boolean =
-                      target?.status === 'complete' || target?.status === 'failed';
-
-                    patchState(
-                      store,
-                      settled
-                        ? {
-                            messages: [...detail.messages],
-                            messagesTotal: detail.messagesTotal,
-                            generatingMessageId: null,
-                            generationStalled: false,
-                          }
-                        : { generationStalled: true },
-                    );
+                    if (scopeRevision !== revision) return;
+                    acceptDetail(detail);
+                    patchState(store, {
+                      generationStalled: store.generatingMessageId() === messageId,
+                    });
                   }),
                   catchError(() => {
+                    if (scopeRevision !== revision) return EMPTY;
                     patchState(store, { generationStalled: true });
 
                     return EMPTY;
@@ -271,29 +299,23 @@ export const AssistantStore = signalStore(
         ),
       );
 
-      /** Applies one frame, then re-arms or disarms the watchdog. */
+      /**
+       * Function acceptFrame
+       * @description Accepts monotonic updates for the current attempt and leaves late frames inert.
+       * @access private
+       * @since 1.1.0
+       * @param {AssistantFrame} frame - Canonical accumulated update.
+       * @returns {void}
+       */
       function acceptFrame(frame: AssistantFrame): void {
-        const settled: boolean = frame.status === 'complete' || frame.status === 'failed';
-        const generating: string | null = store.generatingMessageId();
-
-        // A settled frame clears the tracker only when it is about the reply we
-        // are waiting on; a settled frame for anything else — or one arriving
-        // when nothing is generating — must never adopt that message as
-        // "generating", which would disable the composer forever. A live frame
-        // identifies the active generation.
-        const nextGenerating: string | null = settled
-          ? frame.messageId === generating
-            ? null
-            : generating
-          : frame.messageId;
-
-        patchState(store, {
-          messages: applyAssistantFrame(store.messages(), frame),
-          generationStalled: false,
-          generatingMessageId: nextGenerating,
-        });
-
-        watchForStall(settled ? null : frame.messageId);
+        const messages = applyAssistantFrame(store.messages(), frame);
+        if (messages === store.messages()) return;
+        const generating =
+          messages.findLast(
+            (message) => message.status === 'pending' || message.status === 'streaming',
+          )?.id ?? null;
+        patchState(store, { messages, generatingMessageId: generating, generationStalled: false });
+        watchForStall(generating);
       }
 
       /**
@@ -348,36 +370,16 @@ export const AssistantStore = signalStore(
 
             if (organization === null) return EMPTY;
 
+            const revision = scopeRevision;
             return readLatest(organization, threadId).pipe(
               tapResponse({
                 next: (detail: AssistantThreadDetailOutput): void => {
-                  patchState(store, {
-                    threadId: detail.id,
-                    messages: [...detail.messages],
-                    messagesTotal: detail.messagesTotal,
-                    threadCallState: successCallState(null),
-                  });
-
-                  // A remembered thread can be restored mid-generation: its
-                  // last turn is an assistant reply still `pending`/`streaming`
-                  // with an empty body. Adopt it as the active generation and
-                  // arm the watchdog — without this the panel shows "Thinking…"
-                  // forever, with no stall banner and no way out.
-                  const last: AssistantMessageOutput | undefined = detail.messages.at(-1);
-
-                  if (
-                    last !== undefined &&
-                    last.role !== 'user' &&
-                    (last.status === 'pending' || last.status === 'streaming')
-                  ) {
-                    patchState(store, {
-                      generatingMessageId: last.id,
-                      generationStalled: false,
-                    });
-                    watchForStall(last.id);
-                  }
+                  if (scopeRevision !== revision) return;
+                  acceptDetail(detail);
+                  patchState(store, { threadCallState: successCallState(null) });
                 },
                 error: (error: unknown): void => {
+                  if (scopeRevision !== revision) return;
                   const storeError: StoreError = toStoreError(error);
 
                   // A remembered thread the server no longer has is not an
@@ -397,7 +399,43 @@ export const AssistantStore = signalStore(
         ),
       );
 
+      const controlAttempt = rxMethod<{ messageId: string; retry: boolean }>(
+        pipe(
+          exhaustMap(({ messageId, retry }) => {
+            const organization = organizationId();
+            const threadId = store.threadId();
+            const message = store.messages().find((item) => item.id === messageId);
+            if (
+              !organization ||
+              !threadId ||
+              !message?.attemptId ||
+              !(retry ? message.canRetry : message.canCancel)
+            )
+              return EMPTY;
+            const revision = scopeRevision;
+            patchState(store, { controlCallState: pendingCallState() });
+            return service
+              .controlAttempt(organization, threadId, messageId, message.attemptId, retry)
+              .pipe(
+                tapResponse({
+                  next: (reply) => {
+                    if (scopeRevision !== revision) return;
+                    acceptFrame(toFrame(reply));
+                    patchState(store, { controlCallState: successCallState(null) });
+                  },
+                  error: (error: unknown) => {
+                    if (scopeRevision !== revision) return;
+                    patchState(store, { controlCallState: errorCallState(toStoreError(error)) });
+                    loadThread(threadId);
+                  },
+                }),
+              );
+          }),
+        ),
+      );
+
       return {
+        controlAttempt,
         /**
          * Restores the remembered thread of an organization, resetting first.
          *
@@ -408,6 +446,9 @@ export const AssistantStore = signalStore(
          */
         resume: rxMethod<string | null>(
           tap((organization: string | null): void => {
+            ++scopeRevision;
+            watchForStall(null);
+            connect(null);
             patchState(store, { ...INITIAL_THREAD_STATE });
 
             if (organization === null) return;
@@ -434,7 +475,9 @@ export const AssistantStore = signalStore(
             exhaustMap((body: string) => {
               const organization: string | null = organizationId();
 
-              if (organization === null || !store.isAvailable()) return EMPTY;
+              if (organization === null || !store.isAvailable() || store.isControlling())
+                return EMPTY;
+              const revision = scopeRevision;
 
               patchState(store, { askCallState: pendingCallState() });
 
@@ -443,6 +486,7 @@ export const AssistantStore = signalStore(
               const thread: Observable<string> = isNewThread
                 ? service.startThread(organization).pipe(
                     tap((created: AssistantThreadOutput): void => {
+                      if (scopeRevision !== revision) return;
                       patchState(store, { threadId: created.id });
                       rememberThread(organization, created.id);
                     }),
@@ -452,9 +496,11 @@ export const AssistantStore = signalStore(
 
               return thread.pipe(
                 switchMap((id: string) =>
-                  service
-                    .ask(organization, id, { body })
-                    .pipe(map((result: AskAssistantQuestionOutput) => ({ result, id }))),
+                  scopeRevision !== revision
+                    ? EMPTY
+                    : service
+                        .ask(organization, id, { body })
+                        .pipe(map((result: AskAssistantQuestionOutput) => ({ result, id }))),
                 ),
                 tapResponse({
                   next: ({
@@ -464,6 +510,7 @@ export const AssistantStore = signalStore(
                     result: AskAssistantQuestionOutput;
                     id: string;
                   }): void => {
+                    if (scopeRevision !== revision) return;
                     patchState(store, {
                       messages: [...store.messages(), result.userMessage, result.assistantMessage],
                       messagesTotal: store.messagesTotal() + 2,
@@ -479,44 +526,20 @@ export const AssistantStore = signalStore(
                     // thread is already connected from resume or a prior ask.
                     if (isNewThread) connect(id);
                   },
-                  error: (error: unknown): void =>
-                    patchState(store, { askCallState: errorCallState(toStoreError(error)) }),
+                  error: (error: unknown): void => {
+                    if (scopeRevision !== revision) return;
+                    patchState(store, { askCallState: errorCallState(toStoreError(error)) });
+                  },
                 }),
               );
             }),
           ),
         ),
 
-        /**
-         * Gives up on a stalled generation locally.
-         *
-         * Local only, and it has to be: there is no cancel endpoint. The row
-         * stays `streaming` server-side; asking again is the only way forward,
-         * which is what the panel offers.
-         */
+        /** Requests server cancellation of the stalled attempt. */
         dismissStalled(): void {
-          const messageId: string | null = store.generatingMessageId();
-
-          if (messageId === null) return;
-
-          const stalled: AssistantMessageOutput | undefined = store
-            .messages()
-            .find((message: AssistantMessageOutput): boolean => message.id === messageId);
-
-          // Expressed as a frame the server will never send, so the transcript
-          // is folded by the one function that knows how.
-          patchState(store, {
-            messages: applyAssistantFrame(store.messages(), {
-              messageId,
-              status: 'failed',
-              body: stalled?.body ?? '',
-              tokenCount: stalled?.tokenCount ?? null,
-              errorCode: 'client_stalled',
-            }),
-            generatingMessageId: null,
-            generationStalled: false,
-          });
-          watchForStall(null);
+          const messageId = store.generatingMessageId();
+          if (messageId) controlAttempt({ messageId, retry: false });
         },
 
         /**
@@ -526,6 +549,7 @@ export const AssistantStore = signalStore(
          * organization owner can still read it through the API.
          */
         startNewThread(): void {
+          ++scopeRevision;
           const organization: string | null = organizationId();
 
           if (organization !== null) rememberThread(organization, null);

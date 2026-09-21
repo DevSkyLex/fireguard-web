@@ -44,6 +44,14 @@ describe('ImportsPage', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {}
+      },
+    );
     load = vi.fn();
     create = vi.fn();
     hasPermission = vi.fn().mockReturnValue(true);
@@ -69,6 +77,12 @@ describe('ImportsPage', () => {
             createCallState: signal({ status: 'idle', data: null }),
             jobEntityMap: signal({ [job.id]: job }),
             pollCallStates: signal({}),
+            resumeCallStates: signal({}),
+            confirmCallStates: signal({}),
+            templateCallState: signal({ status: 'idle', data: null, error: null }),
+            confirm: vi.fn(),
+            downloadTemplate: vi.fn(),
+            resume: vi.fn(),
             load,
             create,
             refresh: vi.fn(),
@@ -86,6 +100,8 @@ describe('ImportsPage', () => {
       ],
     });
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('should load the first page for the active organization on arrival', async () => {
     fixture = await createPage();
@@ -175,6 +191,30 @@ describe('ImportsPage', () => {
     expect(load).toHaveBeenCalledWith({
       organizationId: 'org-1',
       options: { page: 1, itemsPerPage: 30 },
+    });
+  });
+
+  it('offers readable kinds and clears a filter whose permission is removed', async () => {
+    const allowed = signal<string[]>([ORGANIZATION_PERMISSION.FACILITIES_READ]);
+    hasPermission.mockImplementation((permission: string) => allowed().includes(permission));
+    fixture = await createPage();
+    const page = fixture.componentInstance as unknown as {
+      kindFilterOptions(): readonly { value: string }[];
+      kindFilter(): string | null;
+      applyKindFilter(kind: string): void;
+    };
+    expect(page.kindFilterOptions().map((option) => option.value)).toEqual(['facility']);
+    page.applyKindFilter('facility');
+    await fixture.whenStable();
+    expect(page.kindFilter()).toBe('facility');
+    allowed.set([ORGANIZATION_PERMISSION.EQUIPMENT_READ]);
+    await fixture.whenStable();
+    expect(page.kindFilter()).toBeNull();
+    expect(page.kindFilterOptions().map((option) => option.value)).toEqual(['equipment']);
+    expect(load).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      options: { page: 1, itemsPerPage: 30 },
+      query: undefined,
     });
   });
 });

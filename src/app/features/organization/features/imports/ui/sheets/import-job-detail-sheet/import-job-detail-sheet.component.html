@@ -35,6 +35,90 @@
         @if (job.jobError) {
           <p role="alert" class="text-sm text-destructive">{{ job.jobError }}</p>
         }
+        @if (resumeError(); as message) {
+          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            (click)="refreshRequested.emit()"
+            i18n="@@imports.report.refresh"
+            class="mobile-ui:min-h-11"
+          >
+            Check job status
+          </button>
+        }
+        @if (job.canResume) {
+          <div class="my-3 flex flex-col items-start gap-2">
+            <p class="text-sm text-muted-foreground" i18n="@@imports.report.resumeHint">
+              Resume this import. Rows already confirmed will be kept.
+            </p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="resuming()"
+              (click)="resumeRequested.emit()"
+              class="mobile-ui:min-h-11"
+              data-testid="import-resume"
+            >
+              @if (resuming()) {
+                <span i18n="@@imports.report.resuming">Resuming…</span>
+              } @else {
+                <span i18n="@@imports.report.resume">Resume import</span>
+              }
+            </button>
+          </div>
+        }
+        @if (confirmError(); as message) {
+          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            (click)="refreshRequested.emit()"
+            i18n="@@imports.report.refresh"
+          >
+            Check job status
+          </button>
+        }
+        @if (job.canConfirm) {
+          <div class="my-3 flex flex-col gap-2">
+            <p class="text-sm text-muted-foreground" i18n="@@imports.confirm.hint">
+              The simulation succeeded. Start the import using this retained file. Current
+              permissions, quotas and references will be checked again; some rows may be skipped.
+            </p>
+            <button
+              hlmBtn
+              type="button"
+              [disabled]="confirming()"
+              [attr.aria-busy]="confirming()"
+              class="mobile-ui:min-h-11"
+              data-testid="import-confirm"
+              (click)="confirmRequested.emit()"
+            >
+              <span i18n="@@imports.confirm.accept">Confirm and start import</span>
+            </button>
+          </div>
+        }
+        @if (job.confirmedJobId; as confirmedId) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="my-3 mobile-ui:min-h-11"
+            data-testid="import-confirmed-report"
+            (click)="confirmedReportRequested.emit(confirmedId)"
+          >
+            <span i18n="@@imports.confirm.open">Open confirmed import</span>
+          </button>
+        }
+        @if (job.processedRows > 0) {
+          <p class="my-2 text-xs text-muted-foreground">
+            <span i18n="@@imports.report.confirmedAt">Last confirmed update:</span>
+            {{ job.updatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+        }
         @if (summary(); as message) {
           <p class="text-sm text-foreground" data-testid="import-job-detail-summary">
             {{ message }}
@@ -82,6 +166,29 @@
           }
         }
       </div>
+    } @else {
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle i18n="@@imports.report.title">Import report</h3>
+        <p hlmSheetDescription>
+          @if (!trackingError()) {
+            <span i18n="@@imports.report.loading">Loading the latest report…</span>
+          }
+        </p>
+      </hlm-sheet-header>
+      @if (trackingError(); as message) {
+        <div class="flex flex-col gap-2 p-4">
+          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            (click)="refreshRequested.emit()"
+            i18n="@@imports.report.refresh"
+          >
+            Check job status
+          </button>
+        </div>
+      }
     }
     @if (side() === 'bottom') {
       <hlm-sheet-footer class="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">

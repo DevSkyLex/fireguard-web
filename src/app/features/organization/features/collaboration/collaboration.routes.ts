@@ -46,6 +46,15 @@ export const COLLABORATION_ROUTES: Routes = [
     } satisfies DashboardRouteData,
     children: [
       {
+        path: 'failed',
+        loadComponent: () =>
+          import('./ui/pages/failed-messages-page/failed-messages-page.component').then(
+            (m) => m.FailedMessagesPage,
+          ),
+        title: $localize`:@@messages.failed.title:Failed sends`,
+        data: { breadcrumb: false },
+      },
+      {
         path: 'saved',
         loadComponent: () =>
           import('./ui/pages/saved-messages-page/saved-messages-page.component').then(

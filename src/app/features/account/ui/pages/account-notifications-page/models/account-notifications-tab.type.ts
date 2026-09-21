@@ -1,11 +1,10 @@
 /**
  * Type AccountNotificationsTabId
- * @typedef AccountNotificationsTabId
+ * @type AccountNotificationsTabId
  *
  * @description
- * The two halves of the notifications screen: the feed that arrived, and the
- * matrix deciding what arrives next.
+ * Unified inbox, category-filtered account notifications, and delivery preferences.
  *
  * @since 1.2.0
  */
-export type AccountNotificationsTabId = 'inbox' | 'preferences';
+export type AccountNotificationsTabId = 'inbox' | 'notifications' | 'preferences';

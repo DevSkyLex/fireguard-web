@@ -104,6 +104,23 @@
         />
       </hlm-field>
 
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        data-testid="import-template-download"
+        [disabled]="!model().kind || templatePending()"
+        [attr.aria-busy]="templatePending()"
+        (click)="downloadTemplate()"
+      >
+        <span i18n="@@imports.template.download">Download CSV template</span>
+      </button>
+      @if (templateError(); as message) {
+        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+      }
+
       <hlm-collapsible [expanded]="helpExpanded()" (expandedChange)="helpExpanded.set($event)">
         <button
           hlmCollapsibleTrigger
@@ -161,6 +178,8 @@
         >
           @if (pending()) {
             <span i18n="@@imports.upload.submitting">Uploading…</span>
+          } @else if (model().dryRun) {
+            <span i18n="@@imports.upload.simulate">Simulate import</span>
           } @else {
             <span i18n="@@imports.upload.submit">Start import</span>
           }

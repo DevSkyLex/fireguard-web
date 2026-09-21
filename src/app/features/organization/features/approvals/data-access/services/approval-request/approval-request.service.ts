@@ -48,7 +48,7 @@ export class ApprovalRequestService extends HydraApiService {
    * @param {RequestOptions} [options] - Pagination options.
    * @param {ApprovalRequestListQuery} [query] - Optional status/action-type narrowing.
    *
-   * @return {Observable<HydraCollection<ApprovalRequestOutput>>} An observable emitting the requests collection.
+   * @returns {Observable<HydraCollection<ApprovalRequestOutput>>} An observable emitting the requests collection.
    */
   public list(
     organizationId: string,
@@ -75,7 +75,7 @@ export class ApprovalRequestService extends HydraApiService {
    * @since 1.0.0
    * @param {string} organizationId - The owning organization.
    * @param {string} requestId - The request to read.
-   * @return {Observable<ApprovalRequestOutput>} An observable emitting the request.
+   * @returns {Observable<ApprovalRequestOutput>} An observable emitting the request.
    */
   public get(organizationId: string, requestId: string): Observable<ApprovalRequestOutput> {
     const url: string = `/api/organizations/${organizationId}/approval-requests/${requestId}`;
@@ -99,7 +99,7 @@ export class ApprovalRequestService extends HydraApiService {
    * @param {string} requestId - The request to approve.
    * @param {DecideApprovalRequestInput} [input] - The optional decision note.
    *
-   * @return {Observable<ApprovalRequestOutput>} An observable emitting the recomputed request.
+   * @returns {Observable<ApprovalRequestOutput>} An observable emitting the recomputed request.
    */
   public approve(
     organizationId: string,
@@ -125,7 +125,7 @@ export class ApprovalRequestService extends HydraApiService {
    * @param {string} requestId - The request to reject.
    * @param {DecideApprovalRequestInput} [input] - The optional decision note.
    *
-   * @return {Observable<ApprovalRequestOutput>} An observable emitting the recomputed request.
+   * @returns {Observable<ApprovalRequestOutput>} An observable emitting the recomputed request.
    */
   public reject(
     organizationId: string,
@@ -133,6 +133,31 @@ export class ApprovalRequestService extends HydraApiService {
     input?: DecideApprovalRequestInput,
   ): Observable<ApprovalRequestOutput> {
     const url: string = `/api/organizations/${organizationId}/approval-requests/${requestId}/reject`;
+    return this.post<DecideApprovalRequestInput, ApprovalRequestOutput>(url, input ?? {});
+  }
+
+  /**
+   * Method withdraw
+   *
+   * @description
+   * Withdraws a pending request; the deferred action is never executed. The
+   * server requires active requester membership and rechecks the deadline under lock.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {string} organizationId - The owning organization.
+   * @param {string} requestId - The request to withdraw.
+   * @param {DecideApprovalRequestInput} [input] - The optional decision note.
+   *
+   * @returns {Observable<ApprovalRequestOutput>} An observable emitting the recomputed request.
+   */
+  public withdraw(
+    organizationId: string,
+    requestId: string,
+    input?: DecideApprovalRequestInput,
+  ): Observable<ApprovalRequestOutput> {
+    const url: string = `/api/organizations/${organizationId}/approval-requests/${requestId}/withdraw`;
     return this.post<DecideApprovalRequestInput, ApprovalRequestOutput>(url, input ?? {});
   }
 
@@ -148,7 +173,7 @@ export class ApprovalRequestService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Observable<HydraCollection<ApprovalActionTypeOutput>>} An observable emitting the catalog.
+   * @returns {Observable<HydraCollection<ApprovalActionTypeOutput>>} An observable emitting the catalog.
    */
   public listActionTypes(): Observable<HydraCollection<ApprovalActionTypeOutput>> {
     return this.getCollection<ApprovalActionTypeOutput>(ACTION_TYPES_PATH);

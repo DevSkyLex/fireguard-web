@@ -5,3 +5,5 @@ export type {
 } from './models';
 export { OrganizationSettingsStore } from './organization-settings.store';
 export type { OrganizationSettingsStore as OrganizationSettingsStoreType } from './organization-settings.store';
+
+export { organizationSettingsStoreEvents } from './events';

@@ -1,6 +1,7 @@
 import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, Router } from '@angular/router';
+import { Dispatcher } from '@ngrx/signals/events';
 import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
@@ -11,6 +12,8 @@ import {
   type OrganizationRoleOutput,
 } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../../active-organization';
+import { myOrganizationsStoreEvents } from '../../my-organizations/events';
+import { organizationSettingsStoreEvents } from '../../organization-settings/events';
 import { OrganizationMemberAccessStore } from '../organization-member-access.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -310,6 +313,31 @@ describe('OrganizationMemberAccessStore', () => {
 
     expect(store.accessCallState().status).toBe('error');
     expect(store.accessError()).not.toBeNull();
+    expect(store.permissions()).toEqual([]);
+  });
+  it('drops a pending guard profile after departure and ignores its late response', async () => {
+    const pending = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(pending);
+    const result = firstValueFrom(store.ensureAccessResolved('org-1'));
+    TestBed.inject(Dispatcher).dispatch(
+      myOrganizationsStoreEvents.leaveSucceeded({ organizationId: 'org-1' }),
+    );
+    pending.next(profile);
+    await expect(result).resolves.toBe(false);
+    expect(store.profile()).toBeNull();
+    expect(store.permissions()).toEqual([]);
+  });
+
+  it('refreshes permissions after a confirmed ownership or status update', async () => {
+    selectedOrganization.set({ id: 'org-1' });
+    await flushEffects();
+    expect(store.permissions()).not.toEqual([]);
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(
+      of({ ...profile, permissions: [] }),
+    );
+    TestBed.inject(Dispatcher).dispatch(
+      organizationSettingsStoreEvents.organizationUpdated({ id: 'org-1' } as never),
+    );
     expect(store.permissions()).toEqual([]);
   });
 });

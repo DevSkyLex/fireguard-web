@@ -1,1 +1,5 @@
-export type { OrganizationBillingState, BillingCheckoutParams } from './state.interface';
+export type {
+  OrganizationBillingState,
+  BillingCheckoutParams,
+  BillingCheckoutExpectation,
+} from './state.interface';

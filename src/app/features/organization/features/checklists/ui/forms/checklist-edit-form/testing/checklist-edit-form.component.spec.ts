@@ -34,6 +34,11 @@ describe('ChecklistEditForm', () => {
   let fixture: ComponentFixture<ChecklistEditForm>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const requiredElement = <T extends HTMLElement>(selector: string): T => {
+    const element = root().querySelector<T>(selector);
+    if (element === null) throw new Error(`Missing ${selector}`);
+    return element;
+  };
 
   const render = async (value: ChecklistOutput): Promise<void> => {
     fixture.componentRef.setInput('checklist', value);
@@ -61,7 +66,7 @@ describe('ChecklistEditForm', () => {
     expect(rows[1].textContent).toContain('Optional');
   });
 
-  it('should emit the edited name and full item replacement list', async () => {
+  it('emits only changed metadata and preserves the item identities', async () => {
     const emitted: UpdateChecklistInput[] = [];
     fixture.componentInstance.submitted.subscribe((value: UpdateChecklistInput): void => {
       emitted.push(value);
@@ -78,15 +83,7 @@ describe('ChecklistEditForm', () => {
     root().querySelector<HTMLButtonElement>('[data-testid="checklist-edit-submit"]')?.click();
     await fixture.whenStable();
 
-    expect(emitted).toEqual([
-      {
-        name: 'Electrical audit v2',
-        items: [
-          { label: 'Check panel', description: undefined, required: true, position: 0 },
-          { label: 'Check breakers', description: 'Visual check', required: false, position: 1 },
-        ],
-      },
-    ]);
+    expect(emitted).toEqual([{ name: 'Electrical audit v2' }]);
   });
 
   it('should remove a seeded item before submission', async () => {
@@ -126,5 +123,57 @@ describe('ChecklistEditForm', () => {
     root().querySelector<HTMLButtonElement>('[data-testid="checklist-edit-cancel"]')?.click();
 
     expect(emitted.length).toBe(1);
+  });
+  it('keeps in-use items read-only while permitting a reference change', async () => {
+    const emitted: UpdateChecklistInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await render(checklist({ canEditItems: false, canEditMetadata: true, referenceCode: 'OLD' }));
+    expect(root().querySelector<HTMLInputElement>('#checklist-row-label-0')?.disabled).toBe(true);
+    expect(root().querySelector('[data-testid="checklist-edit-item-add"]')).toBeNull();
+    const reference = requiredElement<HTMLInputElement>('#checklist-reference');
+    reference.value = 'NEW';
+    reference.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    requiredElement<HTMLButtonElement>('[data-testid="checklist-edit-submit"]').click();
+    await fixture.whenStable();
+    expect(emitted).toEqual([{ referenceCode: 'NEW' }]);
+  });
+
+  it('requires a new version and does not copy a unique reference into a revision draft', async () => {
+    const emitted: UpdateChecklistInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    fixture.componentRef.setInput('creating', true);
+    await render(checklist({ canEditItems: false, referenceCode: 'CHK-V1' }));
+    expect(root().querySelector<HTMLInputElement>('#checklist-reference')?.value).toBe('');
+    expect(root().querySelector<HTMLInputElement>('#checklist-row-label-0')?.disabled).toBe(false);
+    requiredElement<HTMLButtonElement>('[data-testid="checklist-edit-submit"]').click();
+    await fixture.whenStable();
+    expect(emitted).toEqual([]);
+    const version = requiredElement<HTMLInputElement>('#checklist-version');
+    version.value = '2.0';
+    version.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    requiredElement<HTMLButtonElement>('[data-testid="checklist-edit-submit"]').click();
+    await fixture.whenStable();
+    expect(emitted).toEqual([
+      expect.objectContaining({ version: '2.0', referenceCode: null, items: expect.any(Array) }),
+    ]);
+  });
+
+  it('emits a full item replacement only when the structure actually changes', async () => {
+    const emitted: UpdateChecklistInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await render(checklist());
+    requiredElement<HTMLButtonElement>('[data-testid="checklist-edit-item-remove-0"]').click();
+    await fixture.whenStable();
+    requiredElement<HTMLButtonElement>('[data-testid="checklist-edit-submit"]').click();
+    await fixture.whenStable();
+    expect(emitted).toEqual([
+      {
+        items: [
+          { label: 'Check breakers', description: 'Visual check', required: false, position: 0 },
+        ],
+      },
+    ]);
   });
 });

@@ -50,6 +50,33 @@ describe('ImportJobService', () => {
     httpMock.verify();
   });
 
+  it('confirms a simulation without uploading another file', () => {
+    service.confirm(jobId).subscribe();
+    const request = httpMock.expectOne(`${importsUrl}/${jobId}/confirm`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({});
+    request.flush(job);
+  });
+
+  it('reads a template with the organization and kind in its path', () => {
+    let content: string | undefined;
+    service
+      .template(organizationId, 'facility')
+      .subscribe((template) => (content = template.content));
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/organizations/${organizationId}/import-templates/facility`,
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      '@id': '/template',
+      '@type': 'ImportTemplate',
+      filename: 'facilities.csv',
+      content: 'type,name\r\n',
+      mediaType: 'text/csv;charset=utf-8',
+    });
+    expect(content).toBe('type,name\r\n');
+  });
+
   describe('create', () => {
     it('should POST the organization IRI, kind and file as multipart parts', () => {
       const file = new File(['a,b\n1,2'], 'equipment.csv', { type: 'text/csv' });

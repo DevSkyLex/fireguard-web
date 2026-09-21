@@ -28,6 +28,7 @@ export interface ComplianceFacilityTreeOutputFixture {
 }
 
 export interface ComplianceSummaryTotalsFixture {
+  readonly unevaluatedEquipmentCount?: number;
   readonly totalEquipmentCount: number;
   readonly activeEquipmentCount: number;
   readonly upToDateEquipmentCount: number;
@@ -43,6 +44,7 @@ export interface ComplianceSummaryTotalsFixture {
 }
 
 export interface ComplianceSummaryOutputFixture {
+  readonly dataEvaluatedAt?: string | null;
   readonly '@id': string;
   readonly '@type': string;
   readonly organizationId: string;

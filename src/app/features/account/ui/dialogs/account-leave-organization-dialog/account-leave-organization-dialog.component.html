@@ -9,10 +9,17 @@
     data-testid="account-leave-organization-dialog"
   >
     <hlm-alert-dialog-header>
-      <h2 hlmAlertDialogTitle i18n="@@account.organizations.leaveConfirmTitle">
-        Leave this organization?
-      </h2>
-      <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+      @if (departureConfirmed()) {
+        <h2 hlmAlertDialogTitle i18n="@@account.organizations.leftTitle">Organization left</h2>
+        <p hlmAlertDialogDescription i18n="@@account.organizations.leftDescription">
+          Your departure is complete. We need to check your remaining workspaces before continuing.
+        </p>
+      } @else {
+        <h2 hlmAlertDialogTitle i18n="@@account.organizations.leaveConfirmTitle">
+          Leave this organization?
+        </h2>
+        <p hlmAlertDialogDescription>{{ confirmText() }}</p>
+      }
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
@@ -29,7 +36,7 @@
       <button hlmAlertDialogCancel class="mobile-ui:min-h-11" i18n="@@common.cancel">Cancel</button>
       <button
         hlmAlertDialogAction
-        variant="destructive"
+        [variant]="departureConfirmed() ? 'default' : 'destructive'"
         class="mobile-ui:min-h-11"
         data-testid="account-leave-organization-confirm"
         aria-live="polite"
@@ -39,7 +46,13 @@
       >
         @if (pending()) {
           <hlm-spinner aria-hidden="true" />
-          <span i18n="@@account.organizations.leaving">Leaving…</span>
+          @if (departureConfirmed()) {
+            <span i18n="@@account.organizations.refreshingAccess">Refreshing access…</span>
+          } @else {
+            <span i18n="@@account.organizations.leaving">Leaving…</span>
+          }
+        } @else if (departureConfirmed()) {
+          <span i18n="@@account.organizations.refreshAccess">Refresh access</span>
         } @else {
           <span i18n="@@account.organizations.leaveConfirmAction">Leave organization</span>
         }

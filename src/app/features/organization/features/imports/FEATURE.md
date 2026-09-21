@@ -52,7 +52,7 @@ same canonical collection, `organization` passed as a required query
 parameter. `pollJob` re-reads a job once every 2.5 s until it leaves
 `pending`/`processing`, bounded to 240 emissions (~10 minutes) — the same
 bounded-poll shape as `InterventionService.pollPublication`, since the
-worker flushes progress every 50 rows and there is no push channel.
+worker confirms each row transactionally and there is no push channel.
 
 ## Cross-Feature Dependencies
 
@@ -69,6 +69,17 @@ worker flushes progress every 50 rows and there is no push channel.
   but the import-job domain stays local to this subfeature.
 
 ## Invariants
+
+- The kind filter exposes only readable kinds. Backend collections and totals use
+  the same authorization scope before pagination. Losing a kind's permission or
+  changing organization clears an invalid filter; upload permissions remain separate.
+
+- Only the server's `canResume` capability enables resumption. Resuming keeps the
+  same job and confirmed counters/report, then restarts observation. A lost browser
+  connection never marks a job failed. Conflicts retain the last report and offer a
+  fresh read. Requests and their results are scoped to the current organization.
+- The upload section must not collapse the job list below a usable height. The page
+  scrolls when both sections cannot fit; mobile keeps the natural list flow.
 
 - Mobile touch targets and report-sheet geometry follow the central interaction-capabilities contract.
   Upload controls, chosen files, file-level errors, polling recovery and paginated row reports
@@ -89,10 +100,8 @@ worker flushes progress every 50 rows and there is no push channel.
   the partial-application outcome in one line (e.g. "38 of 50 created; 12
   skipped — plan limit reached") rather than leaving the reader to infer it
   from the row list.
-- No CSV template endpoint exists on the backend. The column contract
-  (`ImportUploadForm`'s "Expected CSV format" block,
-  `IMPORT_CSV_COLUMN_HELP`) is hard-coded against the Import module's
-  parser and must be kept in sync by hand if that parser changes.
+- CSV downloads come from `/organizations/{organizationId}/import-templates/{kind}`.
+  Explanatory column hints remain local copy and follow the same parser contract.
 - Status is never colour-only: `ImportStatusTag` and the row report's code
   badges always pair their severity tint with an icon and a label.
 - The upload card is gated client-side per kind (`ImportsPage.availableKindOptions`,
@@ -104,3 +113,10 @@ worker flushes progress every 50 rows and there is no push channel.
   `already_invited`) is non-fatal and renders as a `warning` tag;
   `unknown_role` is a genuine row failure (`danger`). The `roles` column
   takes role names separated by `|`, blank meaning the default member role.
+
+Simulation is the upload default. The typed `reportReady` event opens the accepted job,
+then its server `canConfirm` capability enables explicit confirmation. Retries reuse the
+simulation identifier and retained file; `confirmedJobId` links to the single real import.
+Confirmation and template requests have independent request states, cancel on organization
+change and never clear a failed report. `templateReady` delegates browser download to the
+parent organization's published BrowserDownloadService; no file is put in TransferState.

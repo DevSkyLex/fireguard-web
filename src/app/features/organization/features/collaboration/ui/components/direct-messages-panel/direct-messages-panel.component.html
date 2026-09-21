@@ -56,6 +56,23 @@
         <ng-icon name="lucideBookmark" aria-hidden="true" />
         <span i18n="@@messages.nav.saved">Saved messages</span>
       </a>
+      <a
+        hlmBtn
+        variant="ghost"
+        size="sm"
+        class="w-full justify-start gap-2 hover:bg-sidebar-accent dark:hover:bg-sidebar-accent mobile-ui:min-h-11"
+        data-testid="direct-messages-panel-failed"
+        [routerLink]="[messagesRouteBase(), 'failed']"
+        routerLinkActive
+        #failedActive="routerLinkActive"
+        [class.bg-sidebar-accent]="failedActive.isActive"
+        [attr.aria-current]="failedActive.isActive ? 'page' : null"
+      >
+        <ng-icon name="lucideSendHorizontal" aria-hidden="true" /><span
+          i18n="@@messages.failed.title"
+          >Failed sends</span
+        >
+      </a>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto" [attr.aria-busy]="isLoading()">
       @if (isLoading() && conversations().length === 0) {

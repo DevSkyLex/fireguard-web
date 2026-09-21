@@ -15,6 +15,9 @@ describe('ImportJobsStore', () => {
     list: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    confirm: ReturnType<typeof vi.fn>;
+    template: ReturnType<typeof vi.fn>;
+    resume: ReturnType<typeof vi.fn>;
     pollJob: ReturnType<typeof vi.fn>;
   };
 
@@ -49,6 +52,9 @@ describe('ImportJobsStore', () => {
       list: vi.fn().mockReturnValue(of(collection)),
       get: vi.fn().mockReturnValue(of(job)),
       create: vi.fn().mockReturnValue(of(job)),
+      confirm: vi.fn(),
+      template: vi.fn(),
+      resume: vi.fn().mockReturnValue(of(job)),
       pollJob: vi.fn().mockReturnValue(of(job)),
     };
 
@@ -57,6 +63,49 @@ describe('ImportJobsStore', () => {
     });
 
     store = TestBed.inject(ImportJobsStore);
+  });
+
+  it('retries confirmation of the same simulation after a lost reply', () => {
+    const source = { ...job, status: 'completed' as const, dryRun: true, canConfirm: true };
+    mockService.list.mockReturnValue(of({ ...collection, member: [source] }));
+    store.load({ organizationId });
+    const pending = new Subject<ImportJobOutput>();
+    mockService.confirm.mockReturnValue(pending);
+    store.confirm(job.id);
+    store.confirm(job.id);
+    expect(mockService.confirm).toHaveBeenCalledTimes(1);
+    pending.error({ status: 0 });
+    expect(store.confirmCallStates()[job.id].status).toBe('error');
+    expect(store.jobEntityMap()[job.id]).toEqual(source);
+    const real = { ...job, id: 'real-job', status: 'completed' as const };
+    mockService.confirm.mockReturnValue(of(real));
+    mockService.list.mockReturnValue(
+      of({ ...collection, member: [{ ...source, canConfirm: false, confirmedJobId: real.id }] }),
+    );
+    store.confirm(job.id);
+    expect(mockService.confirm).toHaveBeenNthCalledWith(2, job.id);
+    expect(store.jobEntityMap()[job.id].confirmedJobId).toBe(real.id);
+    expect(store.jobEntityMap()[real.id]).toEqual(real);
+    expect(store.confirmCallStates()[job.id].status).toBe('success');
+  });
+
+  it('cancels template and confirmation responses after organization change', () => {
+    const source = { ...job, dryRun: true, status: 'completed' as const, canConfirm: true };
+    mockService.list.mockReturnValue(of({ ...collection, member: [source] }));
+    store.load({ organizationId });
+    const confirmation = new Subject<ImportJobOutput>();
+    const template = new Subject<never>();
+    mockService.confirm.mockReturnValue(confirmation);
+    mockService.template.mockReturnValue(template);
+    store.confirm(job.id);
+    store.downloadTemplate('equipment');
+    mockService.list.mockReturnValue(of({ ...collection, member: [], totalItems: 0 }));
+    store.load({ organizationId: 'other' });
+    expect(confirmation.observed).toBe(false);
+    expect(template.observed).toBe(false);
+    confirmation.next({ ...job, id: 'late' });
+    expect(store.jobEntityMap()['late']).toBeUndefined();
+    expect(store.templateCallState().status).toBe('idle');
   });
 
   describe('load', () => {
@@ -80,6 +129,57 @@ describe('ImportJobsStore', () => {
       expect(store.hasListError()).toBe(true);
       expect(store.isLoading()).toBe(false);
     });
+  });
+
+  it('resumes the same job once, preserving confirmed rows after a rejected request', async () => {
+    const stalled = {
+      ...job,
+      status: 'failed' as const,
+      processedRows: 7,
+      successfulRows: 7,
+      canResume: true,
+    };
+    mockService.list.mockReturnValue(of({ ...collection, member: [stalled] }));
+    const reply = new Subject<ImportJobOutput>();
+    mockService.resume.mockReturnValue(reply);
+    store.load({ organizationId });
+    store.resume(job.id);
+    store.resume(job.id);
+    expect(mockService.resume).toHaveBeenCalledExactlyOnceWith(job.id);
+    expect(store.resumeCallStates()[job.id]?.status).toBe('pending');
+    reply.error({ status: 409, message: 'Another worker owns the import.' });
+    await flushEffects();
+    expect(store.resumeCallStates()[job.id]?.status).toBe('error');
+    expect(store.jobEntityMap()[job.id]).toEqual(stalled);
+    expect(mockService.create).not.toHaveBeenCalled();
+  });
+
+  it('starts observation after acceptance and ignores a resume response after organization changes', async () => {
+    const stalled = {
+      ...job,
+      status: 'failed' as const,
+      processedRows: 7,
+      successfulRows: 7,
+      canResume: true,
+    };
+    mockService.list.mockReturnValue(of({ ...collection, member: [stalled] }));
+    store.load({ organizationId });
+    const resumed = { ...stalled, status: 'pending' as const, canResume: false };
+    mockService.resume.mockReturnValue(of(resumed));
+    mockService.pollJob.mockReturnValue(of(resumed));
+    store.resume(job.id);
+    expect(store.jobEntityMap()[job.id]?.processedRows).toBe(7);
+    expect(mockService.pollJob).toHaveBeenCalledWith(resumed);
+    store.load({ organizationId });
+    const late = new Subject<ImportJobOutput>();
+    mockService.resume.mockReturnValue(late);
+    store.resume(job.id);
+    mockService.list.mockReturnValue(of({ ...collection, member: [], totalItems: 0 }));
+    store.load({ organizationId: 'org-2' });
+    late.next(resumed);
+    await flushEffects();
+    expect(store.jobs()).toEqual([]);
+    expect(store.resumeCallStates()).toEqual({});
   });
 
   describe('create', () => {

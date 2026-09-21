@@ -9,3 +9,4 @@ export type { ImportStatusTagDescriptor } from './import-tag/import-status-tag-d
 export { resolveImportStatusTag } from './import-tag/import-status-tag.util';
 export type { ImportRowErrorTagDescriptor } from './import-row-error-tag/import-row-error-tag-descriptor.interface';
 export { resolveImportRowErrorTag } from './import-row-error-tag/import-row-error-tag.util';
+export type { ImportTemplateOutput } from './import-template/import-template-output.interface';

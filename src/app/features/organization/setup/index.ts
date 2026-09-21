@@ -16,3 +16,8 @@ export type {
   SetupOrganizationRole,
 } from './organization-setup.types';
 export { organizationMembershipEvents } from '@features/organization/state';
+
+export {
+  myOrganizationsStoreEvents,
+  organizationSettingsStoreEvents,
+} from '@features/organization/state';

@@ -45,7 +45,11 @@ import type {
   StartOnboardingInput,
 } from '@features/onboarding/models';
 import { onboardingSetupEvents } from '@features/onboarding/state/setup';
-import { organizationMembershipEvents } from '@features/organization/setup';
+import {
+  organizationMembershipEvents,
+  myOrganizationsStoreEvents,
+  organizationSettingsStoreEvents,
+} from '@features/organization/setup';
 import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { onboardingStoreEvents } from './events';
 import type { OnboardingStoreState } from './models';
@@ -717,6 +721,9 @@ export const OnboardingStore = signalStore(
           authStoreEvents.sessionEnded,
           organizationInvitationAcceptStoreEvents.acceptSucceeded,
           organizationMembershipEvents.joined,
+          myOrganizationsStoreEvents.leaveSucceeded,
+          organizationSettingsStoreEvents.membershipLeft,
+          organizationSettingsStoreEvents.organizationUpdated,
         )
         .pipe(takeUntilDestroyed())
         .subscribe(() => {

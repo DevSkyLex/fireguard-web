@@ -733,6 +733,31 @@
         </div>
       </div>
     } @else if (compliance.summary(); as summary) {
+      <div
+        class="space-y-1 text-sm text-muted-foreground"
+        data-testid="assets-compliance-freshness"
+      >
+        <p>
+          <span i18n="@@org.assets.compliance.generatedAt">Generated</span> ·
+          {{ summary.generatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+        </p>
+        <p>
+          @if (summary.dataEvaluatedAt) {
+            <span i18n="@@org.assets.compliance.evaluatedAt">Oldest evaluation</span> ·
+            {{ summary.dataEvaluatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          } @else {
+            <span i18n="@@org.assets.compliance.evaluationUnknown"
+              >Evaluation date unavailable</span
+            >
+          }
+        </p>
+        @if ((summary.totals.unevaluatedEquipmentCount ?? 0) > 0) {
+          <p role="status" data-testid="assets-compliance-unevaluated" class="text-foreground">
+            <span i18n="@@org.assets.compliance.unevaluated">Equipment not yet evaluated</span> ·
+            {{ summary.totals.unevaluatedEquipmentCount }}
+          </p>
+        }
+      </div>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <span
           hlmBadge

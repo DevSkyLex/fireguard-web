@@ -354,7 +354,7 @@ describe('MaintenanceSchedulesPage', () => {
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
     });
 
-    it('should warn that the dueBefore bound is not exportable and leave it out', async () => {
+    it('should forward the same dueBefore bound without dropping any active filter', async () => {
       fixture = await createPage();
       fixture.componentInstance['filters'].set({
         dueStatus: null,
@@ -366,12 +366,13 @@ describe('MaintenanceSchedulesPage', () => {
       fixture.componentInstance['exportCsv']();
       await fixture.whenStable();
 
-      expect(feedbackWarn).toHaveBeenCalledTimes(1);
+      expect(feedbackWarn).not.toHaveBeenCalled();
       expect(exportCsv.mock.calls[0][0]).toEqual({
         organization: '/api/organizations/org-1',
         facility: undefined,
         equipmentType: undefined,
         dueStatus: undefined,
+        dueBefore: '2026-12-31T00:00:00.000Z',
       });
     });
 

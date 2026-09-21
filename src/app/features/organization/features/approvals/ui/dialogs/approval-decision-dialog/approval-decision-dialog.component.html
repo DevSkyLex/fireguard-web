@@ -11,6 +11,9 @@
     <hlm-alert-dialog-header>
       <h2 hlmAlertDialogTitle>{{ title() }}</h2>
       <p hlmAlertDialogDescription>{{ description() }}</p>
+      @if (target(); as current) {
+        <app-approval-status-tag [value]="current.request.status" />
+      }
     </hlm-alert-dialog-header>
 
     <hlm-field class="gap-1">
@@ -27,25 +30,39 @@
         rows="3"
         class="w-full"
         data-testid="approval-decision-note"
-        [attr.maxlength]="maxLength"
         placeholder="Add context for the record"
         i18n-placeholder="@@approvals.decide.notePlaceholder"
-        [value]="noteDraft()"
-        (input)="onNoteInput($event)"
+        [formField]="noteForm.note"
       ></textarea>
       <hlm-field-description
         id="approval-decision-note-counter"
         class="self-end text-xs text-muted-foreground"
         data-testid="approval-decision-note-counter"
       >
-        {{ noteDraft().length }}/{{ maxLength }}
+        {{ noteModel().note.length }}/{{ maxLength }}
       </hlm-field-description>
     </hlm-field>
 
-    @if (errorText(); as error) {
+    @if (errorText() || blockedReason(); as error) {
       <p class="text-sm text-destructive" role="alert" data-testid="approval-decision-error">
         {{ error }}
       </p>
+    }
+
+    @if (refreshErrorText(); as error) {
+      <p class="text-sm text-destructive" role="alert">{{ error }}</p>
+    }
+    @if (errorText() || refreshErrorText()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="refreshing() || pending()"
+        (click)="refreshRequested.emit()"
+        data-testid="approval-decision-refresh"
+      >
+        <span i18n="@@approvals.decide.refresh">Check latest state</span>
+      </button>
     }
 
     <hlm-alert-dialog-footer>
@@ -56,7 +73,7 @@
         hlmAlertDialogAction
         class="min-w-0 shrink"
         data-testid="approval-decision-accept"
-        [disabled]="pending()"
+        [disabled]="pending() || refreshing() || !canSubmit() || noteForm().invalid()"
         [attr.aria-busy]="pending()"
         (click)="accept()"
       >

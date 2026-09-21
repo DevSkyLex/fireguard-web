@@ -25,6 +25,9 @@ export interface ImportJobOutputFixture {
   readonly errorReport: ReadonlyArray<unknown>;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly canResume?: boolean;
+  readonly canConfirm?: boolean;
+  readonly confirmedJobId?: string | null;
 }
 
 /** A completed equipment import job with every row successful. */

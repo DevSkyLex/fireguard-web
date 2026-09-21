@@ -113,7 +113,7 @@ export class AccountOrganizationsPage implements OnInit {
   /**
    * Property isEmpty
    * @readonly
-   * @description Whether the list has landed empty — never true in practice (every member belongs to at least one organization), kept for the loading/error-free empty case.
+   * @description Whether a completed list contains no membership.
    * @access protected
    * @since 1.0.0
    * @type {Signal<boolean>}
@@ -147,17 +147,16 @@ export class AccountOrganizationsPage implements OnInit {
    * @readonly
    *
    * @description
-   * Once leaving succeeds, closes the dialog; if the left organization was
-   * the one open in the workspace, also returns to `/organizations` so the
-   * reader is never left on a dead page — mirroring
-   * `OrganizationSettingsPage`'s `navigateAwayOnLeave`. Leaving any other
-   * organization stays on this page with the row removed.
+   * After server-confirmed access refresh, closes the dialog and opens workspace
+   * onboarding when no access remains, or the organization selector otherwise.
    *
    * @access private
    * @since 1.0.0
+   * @type {EffectRef}
    */
   private readonly navigateAwayOnLeaveActive: EffectRef = effect((): void => {
-    const status: string = this.myOrganizations.leaveCallState().status;
+    const departure = this.myOrganizations.leaveCallState();
+    const status: string = departure.status;
     const leftId: string | null = this.leftOrganizationId;
 
     if (status !== 'success' || leftId === null) return;
@@ -165,9 +164,9 @@ export class AccountOrganizationsPage implements OnInit {
     untracked((): void => {
       this.leftOrganizationId = null;
       this.confirmingLeaveId.set(null);
-      if (leftId === this.myOrganizations.activeOrganizationId()) {
-        void this.router.navigate(['/organizations']);
-      }
+      void this.router.navigate([
+        departure.data === 0 ? '/onboarding/workspace' : '/organizations/select',
+      ]);
     });
   });
   //#endregion

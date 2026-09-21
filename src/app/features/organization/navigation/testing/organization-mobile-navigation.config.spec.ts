@@ -54,7 +54,15 @@ describe('buildOrganizationMobileNavigation', () => {
       navigation.sections
         .find((section) => section.id === 'operations')
         ?.links.map((link) => link.id),
-    ).toEqual(['calendar', 'inspections', 'workload', 'checklists', 'maintenance', 'approvals']);
+    ).toEqual([
+      'automations',
+      'calendar',
+      'inspections',
+      'workload',
+      'checklists',
+      'maintenance',
+      'approvals',
+    ]);
   });
 
   it('omits denied primary destinations without substituting secondary destinations', () => {

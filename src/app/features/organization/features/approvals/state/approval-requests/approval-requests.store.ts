@@ -1,10 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import { removeAllEntities, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { exhaustMap, filter, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection, RequestOptions } from '@core/api/models';
 import {
   errorCallState,
@@ -37,6 +37,8 @@ import { decideErrorMessage } from './utils/decide-error-message/decide-error-me
  * @since 1.0.0
  */
 const INITIAL_STATE: ApprovalRequestsState = {
+  organizationId: null,
+  refreshCallState: idleCallState(),
   listCallState: idleCallState(),
   totalRequests: 0,
   decideCallState: idleCallState(),
@@ -146,7 +148,15 @@ export const ApprovalRequestsStore = signalStore(
         query?: ApprovalRequestListQuery;
       }>(
         pipe(
-          tap((): void => {
+          tap(({ organizationId }): void => {
+            if (store.organizationId() !== organizationId) {
+              patchState(store, removeAllEntities({ collection: 'request' }), {
+                organizationId,
+                totalRequests: 0,
+                decideCallState: idleCallState(),
+                refreshCallState: idleCallState(),
+              });
+            }
             patchState(store, { listCallState: pendingCallState() });
           }),
           switchMap(({ organizationId, options, query }) =>
@@ -189,16 +199,37 @@ export const ApprovalRequestsStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @param {string} organizationId - The owning organization.
-       * @param {string} requestId - The request to re-read.
+       * @param {readonly [string, string]} scope - Organization and request identifiers.
        *
        * @returns {void}
        */
-      refresh(organizationId: string, requestId: string): void {
-        approvalRequestService.get(organizationId, requestId).subscribe((request) => {
-          patchState(store, setEntity(request, { collection: 'request' }));
-        });
-      },
+      refresh: rxMethod<readonly [organizationId: string, requestId: string]>(
+        pipe(
+          filter(
+            ([organizationId]) =>
+              !store.organizationId() || store.organizationId() === organizationId,
+          ),
+          tap(([organizationId]) =>
+            patchState(store, { organizationId, refreshCallState: pendingCallState() }),
+          ),
+          switchMap(([organizationId, requestId]) =>
+            approvalRequestService.get(organizationId, requestId).pipe(
+              tapResponse({
+                next: (request) => {
+                  if (store.organizationId() !== organizationId) return;
+                  patchState(store, setEntity(request, { collection: 'request' }), {
+                    refreshCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown) => {
+                  if (store.organizationId() !== organizationId) return;
+                  patchState(store, { refreshCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
 
       /**
        * Method approve
@@ -215,8 +246,13 @@ export const ApprovalRequestsStore = signalStore(
        */
       approve: rxMethod<DecideParams>(
         pipe(
-          tap((): void => {
-            patchState(store, { decideCallState: pendingCallState() });
+          filter(
+            ({ organizationId }) =>
+              !store.isDeciding() &&
+              (!store.organizationId() || store.organizationId() === organizationId),
+          ),
+          tap(({ organizationId }): void => {
+            patchState(store, { organizationId, decideCallState: pendingCallState() });
           }),
           exhaustMap(({ organizationId, requestId, note }) => {
             const input: DecideApprovalRequestInput | undefined = note
@@ -226,11 +262,13 @@ export const ApprovalRequestsStore = signalStore(
             return approvalRequestService.approve(organizationId, requestId, input).pipe(
               tapResponse({
                 next: (request: ApprovalRequestOutput): void => {
+                  if (store.organizationId() !== organizationId) return;
                   patchState(store, setEntity(request, { collection: 'request' }), {
                     decideCallState: successCallState(null),
                   });
                 },
                 error: (error: unknown): void => {
+                  if (store.organizationId() !== organizationId) return;
                   patchState(store, { decideCallState: errorCallState(toStoreError(error)) });
                 },
               }),
@@ -253,8 +291,13 @@ export const ApprovalRequestsStore = signalStore(
        */
       reject: rxMethod<DecideParams>(
         pipe(
-          tap((): void => {
-            patchState(store, { decideCallState: pendingCallState() });
+          filter(
+            ({ organizationId }) =>
+              !store.isDeciding() &&
+              (!store.organizationId() || store.organizationId() === organizationId),
+          ),
+          tap(({ organizationId }): void => {
+            patchState(store, { organizationId, decideCallState: pendingCallState() });
           }),
           exhaustMap(({ organizationId, requestId, note }) => {
             const input: DecideApprovalRequestInput | undefined = note
@@ -264,11 +307,58 @@ export const ApprovalRequestsStore = signalStore(
             return approvalRequestService.reject(organizationId, requestId, input).pipe(
               tapResponse({
                 next: (request: ApprovalRequestOutput): void => {
+                  if (store.organizationId() !== organizationId) return;
                   patchState(store, setEntity(request, { collection: 'request' }), {
                     decideCallState: successCallState(null),
                   });
                 },
                 error: (error: unknown): void => {
+                  if (store.organizationId() !== organizationId) return;
+                  patchState(store, { decideCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method withdraw
+       * @method withdraw
+       *
+       * @description
+       * Withdraws a pending request; the deferred action is never executed.
+       * `exhaustMap` prevents a concurrent submission.
+       *
+       * @since 1.0.0
+       *
+       * @type {RxMethod<DecideParams>}
+       */
+      withdraw: rxMethod<DecideParams>(
+        pipe(
+          filter(
+            ({ organizationId }) =>
+              !store.isDeciding() &&
+              (!store.organizationId() || store.organizationId() === organizationId),
+          ),
+          tap(({ organizationId }): void => {
+            patchState(store, { organizationId, decideCallState: pendingCallState() });
+          }),
+          exhaustMap(({ organizationId, requestId, note }) => {
+            const input: DecideApprovalRequestInput | undefined = note
+              ? { decisionNote: note }
+              : undefined;
+
+            return approvalRequestService.withdraw(organizationId, requestId, input).pipe(
+              tapResponse({
+                next: (request: ApprovalRequestOutput): void => {
+                  if (store.organizationId() !== organizationId) return;
+                  patchState(store, setEntity(request, { collection: 'request' }), {
+                    decideCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  if (store.organizationId() !== organizationId) return;
                   patchState(store, { decideCallState: errorCallState(toStoreError(error)) });
                 },
               }),

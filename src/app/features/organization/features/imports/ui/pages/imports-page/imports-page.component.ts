@@ -14,6 +14,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -22,6 +23,7 @@ import {
   lucideTag,
   lucideUpload,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
@@ -31,6 +33,7 @@ import type {
 import { IMPORT_JOB_KIND_OPTIONS } from '@features/organization/features/imports/options';
 import {
   ImportJobsStore,
+  importJobsStoreEvents,
   type ImportJobsStoreType,
 } from '@features/organization/features/imports/state';
 import {
@@ -47,6 +50,7 @@ import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import {
   CollectionFilterBar,
   CollectionFilterSelect,
@@ -75,6 +79,18 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
 };
 
 /**
+ * Constant IMPORT_KIND_READ_PERMISSION
+ * @description Permissions governing collection visibility and its kind filter.
+ * @since 1.0.0
+ * @type {Readonly<Record<ImportJobKind, OrganizationPermissionName>>}
+ */
+const IMPORT_KIND_READ_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPermissionName>> = {
+  equipment: ORGANIZATION_PERMISSION.EQUIPMENT_READ,
+  facility: ORGANIZATION_PERMISSION.FACILITIES_READ,
+  member: ORGANIZATION_PERMISSION.MEMBERS_READ,
+};
+
+/**
  * Component ImportsPage
  * @class ImportsPage
  *
@@ -93,9 +109,9 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
  * {@link availableKindOptions} the active member holds the matching write
  * permission for, and disappears entirely once no kind is writable —
  * the route itself needs only one read permission, so a reader may reach the
- * page with no write permission at all. The "Kind" filter is unrelated to
- * that gate: it narrows what a reader sees and offers every kind regardless
- * of the active member's write permissions ({@link kindFilterOptions}).
+ * page with no write permission at all. The "Kind" filter offers only the
+ * kinds the member may read ({@link kindFilterOptions}), matching server
+ * collection visibility and totals.
  * There is no search box: `ImportJobCollectionProvider` accepts only
  * `organization` and `kind`, so this page has nothing else to send. The
  * "Kind" chip's value control is `app-collection-filter-select` — its
@@ -126,7 +142,7 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
     provideIcons({ lucideCircleAlert, lucideLock, lucideSearch, lucideTag, lucideUpload }),
   ],
   templateUrl: './imports-page.component.html',
-  host: { class: 'flex min-h-0 flex-1 flex-col' },
+  host: { class: 'flex min-h-0 flex-1 flex-col overflow-y-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportsPage {
@@ -195,14 +211,39 @@ export class ImportsPage {
     return id ? (this.store.jobEntityMap()[id] ?? null) : null;
   });
 
-  /** The active "Kind" narrowing, or `null` when every kind is shown. Not URL-synced — this page persists no other query state either. */
-  protected readonly kindFilter: WritableSignal<ImportJobKind | null> =
-    signal<ImportJobKind | null>(null);
+  /**
+   * Property kindFilterOptions
+   * @readonly
+   * @description Readable kinds in the current organization; write permissions govern upload separately.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<typeof IMPORT_JOB_KIND_OPTIONS>}
+   */
+  protected readonly kindFilterOptions: Signal<typeof IMPORT_JOB_KIND_OPTIONS> = computed(() =>
+    IMPORT_JOB_KIND_OPTIONS.filter((option) =>
+      this.permissions.hasPermission(IMPORT_KIND_READ_PERMISSION[option.value]),
+    ),
+  );
 
   /**
-   * * Every kind the filter offers, unlike {@link availableKindOptions} — narrowing what a reader sees needs no write permission.
+   * Property kindFilter
+   * @readonly
+   * @description Resets narrowing when its permission is lost or the organization changes.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<ImportJobKind | null>}
    */
-  protected readonly kindFilterOptions: typeof IMPORT_JOB_KIND_OPTIONS = IMPORT_JOB_KIND_OPTIONS;
+  protected readonly kindFilter: WritableSignal<ImportJobKind | null> = linkedSignal<
+    { organizationId: string; kinds: typeof IMPORT_JOB_KIND_OPTIONS },
+    ImportJobKind | null
+  >({
+    source: () => ({ organizationId: this.organizationId(), kinds: this.kindFilterOptions() }),
+    computation: (source, previous) =>
+      previous?.source.organizationId === source.organizationId &&
+      source.kinds.some((option) => option.value === previous.value)
+        ? previous.value
+        : null,
+  });
 
   /** The filter bar's field catalog — a single "Kind" chip. */
   protected readonly filterFields: readonly CollectionFilterField[] = [
@@ -302,9 +343,16 @@ export class ImportsPage {
     () => this.availableKindOptions().length > 0,
   );
 
-  /** Whether the report panel is open. */
+  /**
+   * Property detailVisible
+   * @readonly
+   * @description Keeps a requested report open while its first read is pending or failed.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
   protected readonly detailVisible: Signal<boolean> = computed<boolean>(
-    () => this.selectedJob() !== null,
+    () => this.selectedJobId() !== null,
   );
   //#endregion
 
@@ -317,6 +365,24 @@ export class ImportsPage {
    * @since 1.0.0
    */
   public constructor() {
+    const downloads = inject(BrowserDownloadService);
+    const events = inject(Events);
+    events
+      .on(importJobsStoreEvents.reportReady)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
+        if (payload.organizationId === this.organizationId()) this.selectedJobId.set(payload.jobId);
+      });
+    events
+      .on(importJobsStoreEvents.templateReady)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
+        if (payload.organizationId === this.organizationId())
+          downloads.trigger(
+            new Blob([payload.template.content], { type: payload.template.mediaType }),
+            payload.template.filename,
+          );
+      });
     effect((): void => {
       const organizationId: string = this.organizationId();
       const page: number = this.page();
@@ -488,6 +554,19 @@ export class ImportsPage {
   protected openReport(job: ImportJobOutput): void {
     this.selectedJobId.set(job.id);
     this.store.refresh(job.id);
+  }
+
+  /**
+   * Method openConfirmedReport
+   * @description Opens the persistent real-import link from a previously confirmed simulation.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} jobId - The server-provided import identifier.
+   * @returns {void}
+   */
+  protected openConfirmedReport(jobId: string): void {
+    this.selectedJobId.set(jobId);
+    this.store.refresh(jobId);
   }
 
   /**

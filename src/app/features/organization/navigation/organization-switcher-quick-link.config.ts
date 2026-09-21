@@ -43,6 +43,16 @@ export const ORGANIZATION_SWITCHER_QUICK_LINKS: ReadonlyArray<OrganizationSwitch
       match: 'any',
     },
     {
+      id: 'webhooks',
+      label: $localize`:@@route.webhooks:Webhooks`,
+      icon: 'lucideWebhook',
+      shortcutKey: '',
+      path: 'integrations/webhooks',
+      queryParams: null,
+      permissions: [ORGANIZATION_PERMISSION.WEBHOOKS_READ],
+      match: 'all',
+    },
+    {
       id: 'audit',
       label: $localize`:@@org.switcher.audit:Audit journal`,
       icon: 'lucideHistory',

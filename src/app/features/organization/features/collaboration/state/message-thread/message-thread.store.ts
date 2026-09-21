@@ -25,6 +25,7 @@ import {
   catchError,
   concatMap,
   debounceTime,
+  defer,
   EMPTY,
   exhaustMap,
   map,
@@ -85,6 +86,7 @@ const INITIAL_STATE: MessageThreadState = {
   newestLoadedPage: 0,
   listCallState: idleCallState(),
   postCallState: idleCallState(),
+  outboxCallState: idleCallState(),
   interactionCallState: idleCallState(),
   editCallState: idleCallState(),
   deleteCallState: idleCallState(),
@@ -207,12 +209,16 @@ export const MessageThreadStore = signalStore(
   withState<MessageThreadState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    isLoading: computed((): boolean => isCallPending(store.listCallState())),
+    isLoading: computed(
+      (): boolean =>
+        isCallPending(store.listCallState()) ||
+        (store.messageEntities().length === 0 && isCallPending(store.outboxCallState())),
+    ),
     isPosting: computed((): boolean => isCallPending(store.postCallState())),
     isEditing: computed((): boolean => isCallPending(store.editCallState())),
     isDeleting: computed((): boolean => isCallPending(store.deleteCallState())),
     isInteracting: computed((): boolean => isCallPending(store.interactionCallState())),
-    loadError: computed(() => store.listCallState().error),
+    loadError: computed(() => store.listCallState().error ?? store.outboxCallState().error),
     postError: computed(() => store.postCallState().error),
     editError: computed(() => store.editCallState().error),
     deleteError: computed(() => store.deleteCallState().error),
@@ -232,6 +238,86 @@ export const MessageThreadStore = signalStore(
       store.messageEntities().toSorted(byCreatedAt),
     ),
   })),
+
+  withMethods(
+    (
+      store,
+      outbox = inject(MessagingOutboxRepository),
+      memberAccess = inject(ORGANIZATION_MEMBER_ACCESS_PORT),
+      identity = inject(USER_IDENTITY_PORT),
+    ) => ({
+      /**
+       * Method restoreQueued
+       * @method restoreQueued
+       * @description Restores durable local sends after an authorized server read, retaining IDs and timestamps without replacing confirmed rows.
+       * @access private
+       * @since 1.1.0
+       * @param {string} conversationId - Conversation whose read has succeeded.
+       * @returns {void}
+       */
+      restoreQueued: rxMethod<string>(
+        pipe(
+          switchMap((conversationId) => {
+            const ownerId = identity.profile()?.id ?? identity.profile()?.sub;
+            if (!ownerId) return EMPTY;
+            patchState(store, { outboxCallState: pendingCallState() });
+            return defer(() => outbox.listForConversation(conversationId)).pipe(
+              tapResponse({
+                next: (operations) => {
+                  if (
+                    store.conversationId() !== conversationId ||
+                    (identity.profile()?.id ?? identity.profile()?.sub) !== ownerId
+                  )
+                    return;
+                  const missing = operations.filter(
+                    (operation) => !store.messageEntityMap()[operation.payload.clientId],
+                  );
+                  const messages = missing.map((operation): MessageOutput => ({
+                    ...optimisticMessage(
+                      operation.payload.clientId,
+                      conversationId,
+                      operation.payload.input,
+                      memberAccess,
+                      identity.displayName(),
+                    ),
+                    createdAt: operation.createdAt,
+                    updatedAt: operation.createdAt,
+                  }));
+                  patchState(store, addEntities(messages, { collection: 'message' }), {
+                    failedMessageIds: [
+                      ...new Set([
+                        ...store.failedMessageIds(),
+                        ...missing
+                          .filter((operation) => operation.status === 'failed')
+                          .map((operation) => operation.payload.clientId),
+                      ]),
+                    ],
+                    pendingMessageIds: [
+                      ...new Set([
+                        ...store.pendingMessageIds(),
+                        ...missing
+                          .filter((operation) => operation.status !== 'failed')
+                          .map((operation) => operation.payload.clientId),
+                      ]),
+                    ],
+                    outboxCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown) => {
+                  if (
+                    store.conversationId() !== conversationId ||
+                    (identity.profile()?.id ?? identity.profile()?.sub) !== ownerId
+                  )
+                    return;
+                  patchState(store, { outboxCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      ),
+    }),
+  ),
 
   withMethods(
     (
@@ -272,7 +358,8 @@ export const MessageThreadStore = signalStore(
                       );
               }),
               tapResponse({
-                next: ({ page, collection }: LoadedMessagePage): void =>
+                next: ({ page, collection }: LoadedMessagePage): void => {
+                  if (store.conversationId() !== conversationId) return;
                   patchState(
                     store,
                     setAllEntities([...collection.member], { collection: 'message' }),
@@ -282,7 +369,9 @@ export const MessageThreadStore = signalStore(
                       newestLoadedPage: page,
                       listCallState: successCallState(null),
                     },
-                  ),
+                  );
+                  store.restoreQueued(conversationId);
+                },
                 error: (error: unknown): void => {
                   const storeError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });

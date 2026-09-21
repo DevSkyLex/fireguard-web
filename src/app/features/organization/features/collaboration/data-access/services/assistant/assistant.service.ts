@@ -1,9 +1,11 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { HydraItem } from '@core/api/models';
 import type {
   AskAssistantQuestionInput,
   AskAssistantQuestionOutput,
+  AssistantMessageOutput,
   AssistantSubscriptionOutput,
   AssistantThreadDetailOutput,
   AssistantThreadOutput,
@@ -151,6 +153,32 @@ export class AssistantService extends HydraApiService {
   //#endregion
 
   //#region Internals
+  /**
+   * Method controlAttempt
+   * @method controlAttempt
+   * @description Controls one expected attempt without reposting the question.
+   * @access public
+   * @since 1.1.0
+   * @param {string} organizationId - Owning organization.
+   * @param {string} threadId - Private thread.
+   * @param {string} messageId - Reply identifier.
+   * @param {string} attemptId - Expected attempt identity.
+   * @param {boolean} retry - Retry instead of cancel.
+   * @returns {Observable<AssistantMessageOutput>} Canonical reply state.
+   */
+  public controlAttempt(
+    organizationId: string,
+    threadId: string,
+    messageId: string,
+    attemptId: string,
+    retry: boolean,
+  ): Observable<AssistantMessageOutput> {
+    return this.post<{ attemptId: string }, AssistantMessageOutput & HydraItem>(
+      `${this.threadsEndpoint(organizationId)}/${threadId}/messages/${messageId}/${retry ? 'retry' : 'cancel'}`,
+      { attemptId },
+    );
+  }
+
   /**
    * Method threadsEndpoint
    * @method threadsEndpoint

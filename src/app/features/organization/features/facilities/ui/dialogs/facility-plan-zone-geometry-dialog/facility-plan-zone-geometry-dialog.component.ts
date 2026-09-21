@@ -6,11 +6,20 @@ import {
   input,
   output,
   signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import {
+  applyEach,
+  disabled,
+  form,
+  FormField,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
@@ -24,14 +33,11 @@ import {
   HlmDialogPortal,
   HlmDialogTitle,
 } from '@shared/ui/dialog';
+import { HlmField, HlmFieldLabel, HlmFieldError } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
-/** A draft coordinate row, kept as percent strings so a mid-edit blank field does not force a value. */
-interface ZoneGeometryDraftRow {
-  readonly x: string;
-  readonly y: string;
-}
+import type { ZoneGeometryDraftRow } from './models/zone-geometry-draft-row.interface';
 
 /** Minimum vertex count the backend accepts for a polygon. */
 const MIN_POLYGON_VERTICES = 3;
@@ -74,6 +80,10 @@ const MIN_POLYGON_VERTICES = 3;
     HlmDialogPortal,
     HlmDialogTitle,
     HlmInput,
+    HlmField,
+    HlmFieldLabel,
+    HlmFieldError,
+    FormField,
     ...HlmSpinnerImports,
   ],
   providers: [provideIcons({ lucidePlus, lucideTrash2 })],
@@ -82,36 +92,114 @@ const MIN_POLYGON_VERTICES = 3;
 })
 export class FacilityPlanZoneGeometryDialog {
   //#region Inputs
-  /** Whether the dialog is open. */
+  /**
+   * Property visible
+   * @readonly
+   * @description Whether the dialog is open.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
 
-  /** The zone's display name, for the dialog title. */
+  /**
+   * Property zoneName
+   * @readonly
+   * @description The zone's display name, for the dialog title.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<string>}
+   */
   public readonly zoneName: InputSignal<string> = input<string>('');
 
-  /** The zone's current outline, seeding the draft on every open. */
+  /**
+   * Property points
+   * @readonly
+   * @description The zone's current outline, seeding the draft on every open.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<ReadonlyArray<readonly [number, number]>>}
+   */
   public readonly points: InputSignal<ReadonlyArray<readonly [number, number]>> = input<
     ReadonlyArray<readonly [number, number]>
   >([]);
 
-  /** Whether a save or clear this dialog triggered is still in flight. */
+  /**
+   * Property pending
+   * @readonly
+   * @description Whether a save or clear this dialog triggered is still in flight.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<boolean>}
+   */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
-  /** The dialog wants to open or close. */
+  /**
+   * Property visibleChange
+   * @readonly
+   * @description The dialog wants to open or close.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<boolean>}
+   */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
 
-  /** Emits the validated outline, in normalized `[0, 1]` image coordinates. */
+  /**
+   * Property submitted
+   * @readonly
+   * @description Emits the validated outline, in normalized `[0, 1]` image coordinates.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<ReadonlyArray<readonly [number, number]>>}
+   */
   public readonly submitted: OutputEmitterRef<ReadonlyArray<readonly [number, number]>> =
     output<ReadonlyArray<readonly [number, number]>>();
 
-  /** The "Clear geometry" action. */
+  /**
+   * Property cleared
+   * @readonly
+   * @description The "Clear geometry" action.
+   * @access public
+   * @since 1.4.0
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly cleared: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The edited draft rows, as percent strings. */
+  /**
+   * Property rows
+   * @readonly
+   * @description The edited draft rows, as percent strings.
+   * @access protected
+   * @since 1.4.0
+   * @type {WritableSignal<ReadonlyArray<ZoneGeometryDraftRow>>}
+   */
   protected readonly rows: WritableSignal<ReadonlyArray<ZoneGeometryDraftRow>> = signal([]);
+
+  /**
+   * Property coordinatesForm
+   * @readonly
+   * @description Validates each percent coordinate and disables edits during persistence.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<readonly ZoneGeometryDraftRow[]>}
+   */
+  protected readonly coordinatesForm: FieldTree<readonly ZoneGeometryDraftRow[]> = form(
+    this.rows,
+    (path): void => {
+      disabled(path, { when: (): boolean => this.pending() });
+      validate(path, ({ value }) =>
+        value().length >= MIN_POLYGON_VERTICES ? null : { kind: 'minimumVertices' },
+      );
+      applyEach(path, (row): void => {
+        validate(row.x, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
+        validate(row.y, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
+      });
+    },
+  );
 
   /**
    * Property canSubmit
@@ -121,16 +209,16 @@ export class FacilityPlanZoneGeometryDialog {
    * @since 1.4.0
    * @type {Signal<boolean>}
    */
-  protected readonly canSubmit: Signal<boolean> = computed<boolean>(() => {
-    const rows: ReadonlyArray<ZoneGeometryDraftRow> = this.rows();
+  protected readonly canSubmit: Signal<boolean> = computed(() => this.coordinatesForm().valid());
 
-    return (
-      rows.length >= MIN_POLYGON_VERTICES &&
-      rows.every((row) => isValidPercent(row.x) && isValidPercent(row.y))
-    );
-  });
-
-  /** The overlay's own open/closed state, derived from {@link visible}. */
+  /**
+   * Property dialogState
+   * @readonly
+   * @description The overlay's own open/closed state, derived from {@link visible}.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
@@ -148,7 +236,7 @@ export class FacilityPlanZoneGeometryDialog {
     effect((): void => {
       if (!this.visible()) return;
 
-      const seeded: ReadonlyArray<readonly [number, number]> = this.points();
+      const seeded: ReadonlyArray<readonly [number, number]> = untracked(this.points);
       this.rows.set(
         seeded.length > 0
           ? seeded.map(([x, y]) => ({ x: toPercentString(x), y: toPercentString(y) }))
@@ -225,22 +313,6 @@ export class FacilityPlanZoneGeometryDialog {
   }
 
   /**
-   * Method updateRow
-   * @description Patches one row's x or y draft value.
-   * @access protected
-   * @since 1.4.0
-   * @param {number} index - The row's position.
-   * @param {'x' | 'y'} axis - Which coordinate changed.
-   * @param {string} value - The input's raw string value.
-   * @returns {void}
-   */
-  protected updateRow(index: number, axis: 'x' | 'y', value: string): void {
-    this.rows.set(
-      this.rows().map((row, i) => (i === index ? Object.assign({}, row, { [axis]: value }) : row)),
-    );
-  }
-
-  /**
    * Method addRow
    * @description Appends a blank row.
    * @access protected
@@ -295,6 +367,7 @@ export class FacilityPlanZoneGeometryDialog {
 
 /**
  * Function toPercentString
+ * @description Formats a normalized coordinate for the percent input.
  * @access private
  * @since 1.4.0
  * @param {number} normalized - A normalized `[0, 1]` coordinate.
@@ -306,6 +379,7 @@ function toPercentString(normalized: number): string {
 
 /**
  * Function toNormalized
+ * @description Converts a percent coordinate to the server representation.
  * @access private
  * @since 1.4.0
  * @param {string} percent - A percent string in `[0, 100]`.
@@ -317,6 +391,7 @@ function toNormalized(percent: string): number {
 
 /**
  * Function isValidPercent
+ * @description Validates a finite percent within the plan bounds.
  * @access private
  * @since 1.4.0
  * @param {string} value - The raw draft string.

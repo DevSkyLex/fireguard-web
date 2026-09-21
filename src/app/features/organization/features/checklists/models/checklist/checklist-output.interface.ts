@@ -26,6 +26,16 @@ export interface ChecklistOutput extends HydraItem {
   readonly name: string;
   /** @type {string} */
   readonly version: string;
+  /** Optional reference, unique within the organization. @type {string | null} */
+  readonly referenceCode?: string | null;
+  /** Previous immutable revision. @type {string | null} */
+  readonly previousChecklistId?: string | null;
+  /** Server-authorized metadata update. @type {boolean} */
+  readonly canEditMetadata?: boolean;
+  /** Server-authorized structural update. @type {boolean} */
+  readonly canEditItems?: boolean;
+  /** Server-authorized creation of a linked revision. @type {boolean} */
+  readonly canCreateRevision?: boolean;
   /** @type {ChecklistStatus} */
   readonly status: ChecklistStatus;
   /** @type {ReadonlyArray<ChecklistItemOutput>} */

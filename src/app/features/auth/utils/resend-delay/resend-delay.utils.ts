@@ -1,15 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { isApiError } from '@core/api/utils';
 import type { StoreError } from '@core/request-state';
 
 /**
  * Function toResendDelaySeconds
  *
  * @description
- * Extracts the retry delay, in seconds, from a rate-limited (429) resend
- * error. The API's 429 detail always reads "Please wait N seconds before
- * resending.", and that detail lands verbatim in `StoreError.message` — so
- * parsing it here is what recovers the delay without propagating the
- * `Retry-After` header through the transport layer, which no other call
- * needs (`FEATURE.md`, auth).
+ * Reads the server's structured cooldown from a rate-limited resend error.
+ * Human-readable copy does not participate in recovery decisions.
  *
  * @access public
  * @since 1.0.0
@@ -17,14 +15,17 @@ import type { StoreError } from '@core/request-state';
  * @param {StoreError} error - The normalized resend failure.
  *
  * @returns {number | null} The delay in seconds, or `null` when the error is
- * not a parseable rate limit.
+ * missing a valid rate-limit recovery contract.
  */
 export function toResendDelaySeconds(error: StoreError): number | null {
   if (error.code !== 429) return null;
 
-  const match: RegExpExecArray | null = /(\d+)\s*second/.exec(error.message ?? '');
-
-  return match ? Number(match[1]) : null;
+  const body: unknown = error.error instanceof HttpErrorResponse ? error.error.error : error.error;
+  if (!isApiError(body) || body.code !== 'rate_limit_exceeded') return null;
+  const seconds: number | null | undefined = body.retryAfterSeconds;
+  return typeof seconds === 'number' && Number.isSafeInteger(seconds) && seconds >= 0
+    ? seconds
+    : null;
 }
 
 /**

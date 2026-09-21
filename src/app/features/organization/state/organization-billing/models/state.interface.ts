@@ -19,6 +19,9 @@ import type {
  * subscription.
  */
 export interface OrganizationBillingState {
+  readonly currentOrganizationId: string | null;
+  readonly checkoutExpectation: BillingCheckoutExpectation | null;
+  readonly reconciliationCallState: CallState<boolean>;
   readonly subscriptionCallState: CallState<OrganizationSubscriptionOutput>;
   readonly pricingCallState: CallState<ReadonlyArray<PlanPricingOutput>>;
   readonly invoicesCallState: CallState<ReadonlyArray<InvoiceOutput>>;
@@ -26,6 +29,18 @@ export interface OrganizationBillingState {
   readonly portalCallState: CallState<PortalSessionOutput>;
   readonly cancelCallState: CallState<OrganizationSubscriptionOutput>;
   readonly resumeCallState: CallState<OrganizationSubscriptionOutput>;
+}
+
+/**
+ * Interface BillingCheckoutExpectation
+ * @interface BillingCheckoutExpectation
+ * @description Desired Checkout state to compare with the API; it never grants access locally.
+ * @since 1.0.0
+ */
+export interface BillingCheckoutExpectation {
+  readonly organizationId: string;
+  readonly planKey: string | null;
+  readonly interval: BillingInterval | null;
 }
 
 /**

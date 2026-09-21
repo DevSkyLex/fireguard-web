@@ -1,4 +1,6 @@
 export type { UserInput } from './user/user-input.interface';
+export type { InboxItemOutput } from './inbox/inbox-item-output.interface';
+export type { InboxOutput } from './inbox/inbox-output.interface';
 export type { UpdateUserInput } from './user/update-user-input.type';
 export type { UpdateCurrentUserProfileInput } from './user/update-current-user-profile-input.interface';
 export type { UserOutput } from './user/user-output.interface';

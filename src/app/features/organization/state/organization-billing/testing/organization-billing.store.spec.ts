@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Dispatcher } from '@ngrx/signals/events';
+import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection, HydraItem } from '@core/api/models';
 import { BillingService } from '@features/organization/data-access';
 import type {
@@ -10,6 +11,7 @@ import type {
   PlanPricingOutput,
   PortalSessionOutput,
 } from '@features/organization/models';
+import { organizationBillingStoreEvents } from '../events';
 import { OrganizationBillingStore } from '../organization-billing.store';
 
 const collection = <T extends HydraItem>(member: readonly T[]): HydraCollection<T> =>
@@ -84,6 +86,103 @@ describe('OrganizationBillingStore', () => {
       ],
     });
     store = TestBed.inject(OrganizationBillingStore);
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.useRealTimers();
+  });
+
+  describe('Checkout confirmation', () => {
+    const expectation = { organizationId: 'org-1', planKey: 'pro', interval: 'month' as const };
+    const confirmed = {
+      ...subscription,
+      active: true,
+      planKey: 'pro',
+      interval: 'month',
+    } as OrganizationSubscriptionOutput;
+
+    it('waits for the requested plan and interval and emits confirmation once', async () => {
+      vi.useFakeTimers();
+      const dispatch = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+      billingService.getSubscription
+        .mockReturnValueOnce(of({ ...confirmed, planKey: 'starter' }))
+        .mockReturnValueOnce(of({ ...confirmed, interval: 'year' }))
+        .mockReturnValue(of(confirmed));
+
+      store.watchCheckout(expectation);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(store.awaitingCheckout()).toBe(true);
+      expect(store.subscription()?.planKey).toBe('starter');
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(dispatch).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(store.checkoutConfirmed()).toBe(true);
+      expect(store.isCheckingCheckout()).toBe(false);
+      expect(dispatch).toHaveBeenCalledExactlyOnceWith(
+        organizationBillingStoreEvents.checkoutReconciled({ organizationId: 'org-1' }),
+      );
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(billingService.getSubscription).toHaveBeenCalledTimes(3);
+    });
+
+    it('keeps the last server data after a connection failure and supports an explicit retry', async () => {
+      vi.useFakeTimers();
+      billingService.getSubscription
+        .mockReturnValueOnce(of(subscription))
+        .mockReturnValue(throwError(() => ({ status: 0 })));
+      store.watchCheckout(expectation);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(store.subscription()).toEqual(subscription);
+      expect(store.awaitingCheckout()).toBe(true);
+      expect(store.isCheckingCheckout()).toBe(false);
+      expect(store.billingError()).not.toBeNull();
+
+      billingService.getSubscription.mockReturnValue(of(confirmed));
+      store.watchCheckout(expectation);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(store.checkoutConfirmed()).toBe(true);
+      expect(store.billingError()).toBeNull();
+    });
+
+    it('stops automatically without presenting a delayed or legacy Checkout as confirmed', async () => {
+      vi.useFakeTimers();
+      billingService.getSubscription.mockReturnValue(of(confirmed));
+      store.watchCheckout({ ...expectation, planKey: null, interval: null });
+      await vi.advanceTimersByTimeAsync(40000);
+      expect(billingService.getSubscription).toHaveBeenCalledTimes(15);
+      expect(store.awaitingCheckout()).toBe(true);
+      expect(store.isCheckingCheckout()).toBe(false);
+      expect(store.checkoutConfirmed()).toBe(false);
+      expect(store.billingError()).toBeNull();
+    });
+
+    it('bounds a stalled request and cancels a previous organization response', async () => {
+      vi.useFakeTimers();
+      const previous = new Subject<OrganizationSubscriptionOutput>();
+      const current = new Subject<OrganizationSubscriptionOutput>();
+      billingService.getSubscription.mockReturnValueOnce(previous).mockReturnValue(current);
+      store.watchCheckout(expectation);
+      await vi.advanceTimersByTimeAsync(0);
+      store.watchCheckout({ ...expectation, organizationId: 'org-2' });
+      await vi.advanceTimersByTimeAsync(0);
+      previous.next(confirmed);
+      expect(store.subscription()).toBeNull();
+      expect(store.checkoutConfirmed()).toBe(false);
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(store.isCheckingCheckout()).toBe(false);
+      expect(store.awaitingCheckout()).toBe(true);
+      expect(store.billingError()).not.toBeNull();
+    });
+
+    it('cancels polling when the page is destroyed', async () => {
+      vi.useFakeTimers();
+      store.watchCheckout(expectation);
+      await vi.advanceTimersByTimeAsync(0);
+      TestBed.resetTestingModule();
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(billingService.getSubscription).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('initial state', () => {

@@ -26,6 +26,17 @@ describe('isApiError', () => {
     expect(isApiError(REAL_401)).toBe(true);
   });
 
+  it('accepts Problem Details without JSON-LD metadata', () => {
+    const error: ApiError = {
+      type: '/errors/409',
+      status: 409,
+      detail: 'The request has already been decided.',
+      code: 'approval_request_not_pending',
+    };
+
+    expect(isApiError(error)).toBe(true);
+  });
+
   it('accepts a payload that omits every optional field', () => {
     const minimal = { '@type': 'Error', status: 500, detail: 'Server error' };
 

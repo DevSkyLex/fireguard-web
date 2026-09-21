@@ -47,23 +47,30 @@ the backend.
 ## State and Data Access
 
 Primary store: `ApprovalRequestsStore` — `withEntities<ApprovalRequestOutput>`
-keyed by id, plus three independent `CallState` fields (`listCallState`,
-`decideCallState` shared by approve and reject since only one decision
+keyed by id, plus four independent `CallState` fields (`listCallState`, `refreshCallState`,
+`decideCallState` shared by approve, reject and withdraw since only one decision
 dialog is ever open at a time, `actionTypesCallState`). A successful
 decision replaces exactly the decided entity from the server's full
 recomputed response; the list is never refetched for it. `decideErrorText`
-maps a decide failure's HTTP status **and** RFC 7807 `detail` text to
-specific, actionable copy (`state/approval-requests/utils/decide-error-message/`):
+maps stable API `code` values to actionable copy; it never parses English
+error messages (`state/approval-requests/utils/decide-error-message/`):
 409 either means someone else already decided the request, or — approve
 only — the deferred action's subject changed state in the meantime (the
 request is now `cancelled` server-side); 403 either means self-approval is
 disallowed or the deciding member is below the action's minimum approver
-role. On a 409 the page calls `refresh(organizationId, requestId)` to
+role. On a 409 the page calls `refresh([organizationId, requestId])` to
 re-read the row without closing the dialog, so the table is correct the
 moment the reader dismisses it.
 
+The API's `allowedActions` and `decisionBlockReason` drive the table and
+dialog capabilities. They are advisory; the server revalidates under its
+decision lock. A conflict refresh retains the Signal Forms note, displays
+the latest status and disables actions no longer permitted. A failed refresh
+retains the last row and offers an explicit retry. Organization changes clear
+the decision context and prevent late responses from restoring another scope.
+
 Primary service: `ApprovalRequestService` — extends `HydraApiService`.
-`list`/`get`/`approve`/`reject` call the organization-scoped
+`list`/`get`/`approve`/`reject`/`withdraw` call the organization-scoped
 `/api/organizations/{organizationId}/approval-requests` routes;
 `listActionTypes` calls the **canonical** `/api/approvals/action-types`
 reference catalog, the same canonical-collection-bypass shape
@@ -103,3 +110,8 @@ reference catalog, the same canonical-collection-bypass shape
   client-side.
 - Status is never colour-only: `ApprovalStatusTag` always pairs its
   severity tint with an icon and a label (`models/approval-tag/`).
+
+Withdrawal is a server capability independent of the decide permission. Only an active
+requester may withdraw a pending, unexpired request. The same dialog retains its note on
+conflict, and the resulting row shows the actor, decision time and reason with status
+`withdrawn`. It never runs the deferred action.

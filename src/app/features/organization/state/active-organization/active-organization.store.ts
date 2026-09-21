@@ -10,8 +10,8 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, filter, tap } from 'rxjs';
+import { Dispatcher, Events } from '@ngrx/signals/events';
+import { Observable, Subject, filter, takeUntil, tap } from 'rxjs';
 import { CookieService } from '@core/cookie';
 import {
   errorCallState,
@@ -22,6 +22,7 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
 } from '@core/request-state';
+import { authStoreEvents } from '@features/auth';
 import {
   LAST_ORGANIZATION_COOKIE_MAX_AGE,
   LAST_ORGANIZATION_COOKIE_NAME,
@@ -33,6 +34,8 @@ import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { myOrganizationsStoreEvents } from '../my-organizations/events';
+import { organizationSettingsStoreEvents } from '../organization-settings/events';
 import { activeOrganizationStoreEvents } from './events';
 import type { ActiveOrganizationState } from './models';
 
@@ -176,6 +179,8 @@ export const ActiveOrganizationStore = signalStore(
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
       organizationService: OrganizationService = inject<OrganizationService>(OrganizationService),
     ) => {
+      const cancelled = new Subject<void>();
+      const cookieService = inject(CookieService);
       return {
         /**
          * Method setOrganization
@@ -213,6 +218,7 @@ export const ActiveOrganizationStore = signalStore(
           });
 
           return organizationService.get(id).pipe(
+            takeUntil(cancelled),
             tap({
               next: (organization: OrganizationOutput): void => {
                 patchState(store, {
@@ -265,17 +271,44 @@ export const ActiveOrganizationStore = signalStore(
             getCallState: idleCallState(),
           });
         },
+        /**
+         * Method forgetOrganization
+         * @method forgetOrganization
+         * @description Removes a revoked selection and cancels responses that could restore it.
+         * @access public
+         * @since 1.0.0
+         * @param {string | null} organizationId - Revoked organization, or null at session end.
+         * @returns {void}
+         */
+        forgetOrganization(organizationId: string | null): void {
+          if (organizationId !== null && store.selectedOrganizationId() !== organizationId) return;
+          cancelled.next();
+          cookieService.deleteCookie(LAST_ORGANIZATION_COOKIE_NAME);
+          patchState(store, INITIAL_ACTIVE_ORGANIZATION_STATE);
+        },
       };
     },
   ),
 
   withHooks((store) => {
+    const accessEvents = inject(Events);
     const router: Router = inject<Router>(Router);
     const cookieService: CookieService = inject<CookieService>(CookieService);
     const platformId: object = inject<object>(PLATFORM_ID);
 
     return {
       onInit(): void {
+        accessEvents
+          .on(authStoreEvents.sessionEnded)
+          .pipe(takeUntilDestroyed())
+          .subscribe(() => store.forgetOrganization(null));
+        accessEvents
+          .on(
+            myOrganizationsStoreEvents.leaveSucceeded,
+            organizationSettingsStoreEvents.membershipLeft,
+          )
+          .pipe(takeUntilDestroyed())
+          .subscribe(({ payload }) => store.forgetOrganization(payload.organizationId));
         patchState(store, {
           rememberedOrganizationId: cookieService.getCookie<string>(LAST_ORGANIZATION_COOKIE_NAME),
         });

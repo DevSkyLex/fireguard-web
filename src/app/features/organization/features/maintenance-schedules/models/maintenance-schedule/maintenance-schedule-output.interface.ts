@@ -62,4 +62,7 @@ export interface MaintenanceScheduleOutput extends HydraItem {
 
   /** @type {string} */
   readonly updatedAt: string;
+
+  /** Last successful server evaluation; null means not yet evaluated. @type {string | null | undefined} */
+  readonly evaluatedAt?: string | null;
 }

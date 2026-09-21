@@ -30,6 +30,25 @@ export class OrganizationSettingsPage {
   );
   public readonly invoiceRows: Locator = this.page.getByTestId('org-settings-invoice-row');
   public readonly dangerOpenButton: Locator = this.page.getByTestId('org-settings-danger-open');
+  public readonly checkoutPending: Locator = this.page.getByTestId('org-settings-checkout-pending');
+  public readonly checkoutConfirmed: Locator = this.page.getByTestId(
+    'org-settings-checkout-confirmed',
+  );
+  public readonly checkoutRefresh: Locator = this.page.getByTestId('org-settings-checkout-refresh');
+
+  public async returnFromCheckout(
+    organizationId: string,
+    planKey: string,
+    interval: 'month' | 'year',
+  ): Promise<void> {
+    await this.page.goto(
+      `/organizations/${organizationId}/settings?tab=subscription&checkout=success&checkoutPlan=${encodeURIComponent(planKey)}&checkoutInterval=${interval}`,
+    );
+  }
+
+  public async refreshCheckout(): Promise<void> {
+    await this.checkoutRefresh.click();
+  }
 
   public async goto(organizationId: string, tab?: string): Promise<void> {
     const url = tab

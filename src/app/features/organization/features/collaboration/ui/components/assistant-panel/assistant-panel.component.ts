@@ -186,6 +186,7 @@ export class AssistantPanel {
     (): boolean =>
       this.model().question.trim().length > 0 &&
       this.questionForm.question().valid() &&
+      !this.store.isControlling() &&
       !this.store.isAsking() &&
       !this.store.isGenerating(),
   );
@@ -222,6 +223,9 @@ export class AssistantPanel {
     const last: AssistantMessageOutput | undefined = this.store.messages().at(-1);
 
     if (!this.asked() || last === undefined || last.role === 'user') return '';
+
+    if (last.status === 'cancelled')
+      return $localize`:@@workspace.assistant.cancelled:Generation stopped.`;
 
     return last.status === 'failed'
       ? $localize`:@@workspace.assistant.status.failed:The assistant could not answer.`
@@ -351,7 +355,7 @@ export class AssistantPanel {
    * @returns {void}
    */
   protected askSuggestion(question: string): void {
-    if (this.store.isAsking() || this.store.isGenerating()) return;
+    if (this.store.isControlling() || this.store.isAsking() || this.store.isGenerating()) return;
 
     this.ask(question);
   }

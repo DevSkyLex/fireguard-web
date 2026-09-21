@@ -381,6 +381,8 @@ export interface CurrentOrganizationMemberProfileOutputFixture {
  * guard-denial test.
  */
 export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = [
+  'organization.automation.manage',
+  'organization.automation.read',
   'organization.dashboard.read',
   'organization.members.read',
   'organization.members.manage',

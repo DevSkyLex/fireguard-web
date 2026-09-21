@@ -15,8 +15,7 @@ existing business behavior.
 Owns the organization's read surface over the backend Maintenance module and
 the two actions it exposes to an operator:
 
-- listing maintenance schedules — one row per tracked equipment type per
-  facility — with server-side search, filtering and pagination,
+- listing maintenance schedules — one row per published equipment — with server-side search, filtering and pagination,
 - overriding a single schedule's inspection interval, or clearing the
   override back to the organization default,
 - generating an inspection campaign (an intervention) from every schedule
@@ -32,7 +31,7 @@ This subfeature does not own equipment lifecycle, facility records, or
 intervention workflow past creation — it hands off to `equipments`,
 `facilities` and `interventions` respectively. It does not compute
 `dueStatus` client-side; that value is authoritative from the backend's
-hourly sweep and is rendered as-is.
+event-driven recalculation with an hourly recovery sweep and is rendered as-is.
 
 ## Entry Points
 
@@ -78,9 +77,7 @@ The list toolbar's **Export** button downloads a server-side CSV
 direct `this.http` call, `responseType: 'blob'`, saved through
 `BrowserDownloadService`); the organization travels as the same required
 `organization` IRI query parameter the list uses. The screen's
-`facility`/`equipmentType`/`dueStatus` narrowing is forwarded; `dueBefore`
-is **not** part of the export's contract, so an active bound raises the
-`maintenance.list.exportFiltersDropped` warn toast. The server caps the
+`facility`/`equipmentType`/`dueStatus`/`dueBefore` narrowing is forwarded identically. The server caps the
 collection at 50,000 rows; the resulting 422's RFC 7807 `detail` (read back
 through `resolveCsvExportErrorDetail`, `@features/organization/utils`) is
 surfaced as the error toast.
@@ -125,3 +122,7 @@ toast.
   this feature refetches the list for it.
 - Status is never colour-only: `MaintenanceDueStatusTag` always pairs its
   severity tint with an icon and a label (`models/maintenance-tag/`).
+
+- `evaluatedAt` is the last successful server evaluation, distinct from `updatedAt`.
+  A missing evaluation renders an explicit pending state, including legacy rows awaiting
+  their first recalculation. The frontend never infers evaluation freshness from due dates.

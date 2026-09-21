@@ -99,6 +99,44 @@ describe('ApprovalDecisionDialog', () => {
     expect(acceptButton().disabled).toBe(true);
   });
 
+  it('keeps the note when the same request is refreshed and disables a forbidden decision', async () => {
+    await setTarget({
+      mode: 'approve',
+      request: { ...request, allowedActions: ['approve', 'reject'] },
+    });
+    noteField().value = 'Evidence reviewed on site';
+    noteField().dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    await setTarget({
+      mode: 'approve',
+      request: {
+        ...request,
+        status: 'rejected',
+        allowedActions: [],
+        decisionBlockReason: 'approval_not_pending',
+      },
+    });
+    expect(noteField().value).toBe('Evidence reviewed on site');
+    expect(acceptButton().disabled).toBe(true);
+    expect(content()?.textContent).toContain('already decided');
+  });
+
+  it('allows explicit withdrawal even when decision permission is denied', async () => {
+    await setTarget({
+      mode: 'withdraw',
+      request: {
+        ...request,
+        allowedActions: ['withdraw'],
+        decisionBlockReason: 'approval_permission_required',
+      },
+    });
+    expect(acceptButton().disabled).toBe(false);
+    expect(content()?.textContent).toContain('without executing the action');
+    expect(content()?.querySelector('[role="alert"]')).toBeNull();
+    await setTarget({ mode: 'withdraw', request });
+    expect(acceptButton().disabled).toBe(true);
+  });
+
   it('should emit dismissed when the dialog closes without deciding', async () => {
     await setTarget({ mode: 'approve', request });
 

@@ -46,6 +46,8 @@ export const ORGANIZATION_PERMISSION = {
   /** Permission required to open an assistant thread and ask questions. */
   ASSISTANT_USE: 'organization.assistant.use',
   /** Permission required to manage organization settings (general, notifications, regional). */
+  AUTOMATION_READ: 'organization.automation.read',
+  AUTOMATION_MANAGE: 'organization.automation.manage',
   SETTINGS_WRITE: 'organization.settings.write',
   /** Read access to the compliance rollup, facility tree and per-facility summaries. */
   COMPLIANCE_READ: 'organization.compliance.read',

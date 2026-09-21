@@ -1,7 +1,9 @@
 <div class="mx-auto flex w-full max-w-4xl flex-col gap-6" data-testid="checklist-detail-page">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-xl font-semibold">
-      @if (checklistId()) {
+      @if (revising()) {
+        <span i18n="@@checklists.detail.newRevision">New revision</span>
+      } @else if (checklistId()) {
         {{ active.selectedChecklist()?.name }}
       } @else {
         <span i18n="@@checklists.list.new">New checklist</span>
@@ -18,6 +20,24 @@
       Back to checklists
     </button>
   </div>
+  @if (canCreateRevision() && !revising()) {
+    <button
+      hlmBtn
+      variant="outline"
+      class="self-start mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="startRevision()"
+      i18n="@@checklists.detail.createRevision"
+    >
+      Create a new revision
+    </button>
+  }
+  @if (revising()) {
+    <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.revisionHelp">
+      This creates a new checklist. Existing inspections keep their original revision. Enter a new
+      version and a distinct reference code if needed.
+    </p>
+  }
   @if (active.getCallState().status === 'error') {
     <div role="alert" class="flex flex-col gap-3">
       <p class="text-destructive">{{ active.getCallState().error?.message }}</p>
@@ -36,6 +56,24 @@
   } @else {
     @if (active.selectedChecklist(); as checklist) {
       <div class="flex flex-wrap items-center gap-3 text-sm">
+        <span i18n="@@checklists.detail.version">Version {{ checklist.version }}</span>
+        @if (checklist.referenceCode) {
+          <span>{{ checklist.referenceCode }}</span>
+        }
+        @if (checklist.previousChecklistId) {
+          <a
+            hlmBtn
+            variant="link"
+            [routerLink]="[
+              '/organizations',
+              organizationId(),
+              'checklists',
+              checklist.previousChecklistId,
+            ]"
+            i18n="@@checklists.detail.previous"
+            >Previous revision</a
+          >
+        }
         <app-checklist-status-tag [value]="checklist.status" /><span
           i18n="@@checklists.detail.itemCount"
           >{{ checklist.items.length }} items</span
@@ -49,7 +87,7 @@
       </p>
       <app-checklist-edit-form
         [visible]="true"
-        [creating]="!checklistId()"
+        [creating]="!checklistId() || revising()"
         [checklist]="active.selectedChecklist()"
         [pending]="pending()"
         [error]="store.updateError()?.message ?? store.createError()?.message ?? null"

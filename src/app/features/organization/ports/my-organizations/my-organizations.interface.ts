@@ -63,14 +63,24 @@ export interface MyOrganizationsPort {
    * @readonly
    * @description The full leave call state, so a consumer can key off the transition into `'success'` rather than re-deriving it from {@link isLeaving} and {@link leaveError} alone.
    * @since 1.0.0
-   * @type {Signal<CallState<void>>}
+   * @type {Signal<CallState<number>>}
    */
-  readonly leaveCallState: Signal<CallState<void>>;
+  readonly leaveCallState: Signal<CallState<number>>;
+
+  /**
+   * Property departureConfirmed
+   * @readonly
+   * @description Departure was accepted; retry only the remaining-access query.
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  readonly departureConfirmed: Signal<boolean>;
 
   /**
    * Property activeOrganizationId
    * @readonly
-   * @description The organization currently open in the workspace, or `null`. Used to mark the active row and to decide whether leaving it must navigate away.
+   * @description Organization selected in the current account.
+   * @access public
    * @since 1.0.0
    * @type {Signal<string | null>}
    */

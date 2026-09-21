@@ -417,6 +417,9 @@ export const OrganizationSettingsStore = signalStore(
                 next: () => {
                   patchState(store, { leaveCallState: successCallState(undefined) });
                   dispatcher.dispatch(
+                    organizationSettingsStoreEvents.membershipLeft({ organizationId }),
+                  );
+                  dispatcher.dispatch(
                     organizationSettingsStoreEvents.leaveSucceeded(
                       successFeedback(
                         $localize`:@@org.settings.leftDetail:You have left the organization.`,

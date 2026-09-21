@@ -1,5 +1,6 @@
 /**
  * Type AuditActionId
+ * @type AuditActionId
  *
  * @description
  * Every `module.snake_case` action id the backend's audit ledger currently
@@ -38,6 +39,8 @@ export type AuditActionId =
   | 'organization.team_member_added'
   | 'organization.team_member_removed'
   // facility
+  | 'facility.plan_geometry_changed'
+  | 'equipment.plan_position_changed'
   | 'facility.created'
   | 'facility.archived'
   | 'facility.restored'
@@ -95,5 +98,6 @@ export type AuditActionId =
   | 'approval.requested'
   | 'approval.approved'
   | 'approval.rejected'
+  | 'approval.withdrawn'
   | 'approval.expired'
   | 'approval.execution_failed';

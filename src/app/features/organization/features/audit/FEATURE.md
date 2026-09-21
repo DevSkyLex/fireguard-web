@@ -6,7 +6,7 @@ Owns the organization audit journal: a read-only, server-paginated view over
 the backend's organization-scoped audit ledger
 (`GET /api/organizations/{organizationId}/audit-events`), the frontend
 action-id presentation registry (label, module group, and icon per module,
-for all 68 actions the backend currently emits), and the actor/subject
+for all registered actions the backend currently emits), and the actor/subject
 rendering rules that fill the gaps the backend deliberately leaves — no
 actor name for a system/client/anonymous actor, no subject route for a type
 with none.
@@ -108,3 +108,11 @@ poll or refresh a row from.
   subfeatures' own route trees by **path only** — string segments, not an
   imported symbol from any of them. No `data-access`, `models` or `state`
   barrel of a sibling subfeature is imported.
+
+### Spatial history
+
+Published zone outlines and equipment placement changes have dedicated actions. Metadata
+localizes placement, movement and removal and names the plan ids, revision and intervention.
+Coordinates are not exposed in audit metadata. Durable delivery preserves the initiating
+actor when known; legacy or system events keep the neutral actor fallback. Expanded mobile
+cards grow above pagination rather than clipping their final metadata entry.

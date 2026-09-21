@@ -295,7 +295,7 @@ describe('AuthStore', () => {
     expect(store.mfaResendAvailableIn()).toBeLessThanOrEqual(60);
   });
 
-  it('should memorize the retry delay parsed from a 429 resend refusal', async () => {
+  it('should memorize the structured retry delay from a 429 resend refusal', async () => {
     const mfaResponse: LoginOutput = {
       ...loginResponse,
       access_token: null,
@@ -308,7 +308,9 @@ describe('AuthStore', () => {
       throwError(() => ({
         '@type': 'hydra:Error',
         status: 429,
-        detail: 'Please wait 42 seconds before resending.',
+        code: 'rate_limit_exceeded',
+        retryAfterSeconds: 42,
+        detail: 'Réessayez plus tard.',
       })),
     );
 

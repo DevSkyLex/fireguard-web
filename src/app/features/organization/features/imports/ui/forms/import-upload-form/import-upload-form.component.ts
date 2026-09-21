@@ -38,7 +38,7 @@ interface ImportUploadDraft {
 }
 
 /** A blank draft. */
-const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: false };
+const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: true };
 
 /**
  * Component ImportUploadForm
@@ -49,14 +49,12 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: false };
  * extension/size pre-checks (friendlier than waiting for the backend's 422),
  * a dry-run toggle explaining what it does, and a collapsible "Expected CSV
  * format" help block sourced from {@link IMPORT_CSV_COLUMN_HELP} — the
- * column contract this app hard-codes since no template endpoint exists.
+ * column hints paired with a downloadable server-owned CSV template.
  *
  * Presentational: it validates and emits {@link submitted}, never calling the
  * store itself (`ARCHITECTURE.md` §10.3). Resets its own draft and picked
- * file immediately on submit rather than waiting on the page to report a
- * result, mirroring `OrganizationLogoPicker`'s picked-file handling — a
- * failed upload's message is shown via {@link error} without repopulating
- * the (now-cleared) form, since the operator must re-pick the file either way.
+ * file only after server acceptance. Simulation is selected by default; the
+ * resulting report offers explicit confirmation using the retained file.
  *
  * @version 1.0.0
  *
@@ -160,6 +158,36 @@ export class ImportUploadForm {
     output<ImportUploadSubmission>();
   //#endregion
 
+  /**
+   * Property templateRequested
+   * @readonly
+   * @description Requests the selected kind’s server template.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<ImportJobKind>}
+   */
+  public readonly templateRequested: OutputEmitterRef<ImportJobKind> = output<ImportJobKind>();
+
+  /**
+   * Property templatePending
+   * @readonly
+   * @description Whether the requested template is loading.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly templatePending: InputSignal<boolean> = input(false);
+
+  /**
+   * Property templateError
+   * @readonly
+   * @description The last template download failure.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly templateError: InputSignal<string | null> = input<string | null>(null);
+
   //#region Properties
   /** Whether the "Expected CSV format" block is expanded. */
   protected readonly helpExpanded: WritableSignal<boolean> = signal<boolean>(false);
@@ -207,6 +235,18 @@ export class ImportUploadForm {
   //#endregion
 
   //#region Methods
+  /**
+   * Method downloadTemplate
+   * @description Requests the selected type without submitting or clearing the file draft.
+   * @access protected
+   * @since 1.1.0
+   * @returns {void}
+   */
+  protected downloadTemplate(): void {
+    const kind = this.model().kind;
+    if (kind && !this.templatePending()) this.templateRequested.emit(kind);
+  }
+
   /**
    * Method pick
    * @method pick

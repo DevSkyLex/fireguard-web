@@ -23,6 +23,45 @@
         }
       </hlm-field>
 
+      <hlm-field>
+        <label hlmFieldLabel for="checklist-reference" i18n="@@checklists.form.reference"
+          >Reference code (optional)</label
+        >
+        <input
+          hlmInput
+          id="checklist-reference"
+          [formField]="nameForm.referenceCode"
+          class="mobile-ui:min-h-11"
+        />
+        @if (nameForm.referenceCode().touched() && nameForm.referenceCode().invalid()) {
+          <hlm-field-error i18n="@@checklists.form.referenceLength"
+            >Use at most 40 characters.</hlm-field-error
+          >
+        }
+      </hlm-field>
+      @if (creating()) {
+        <hlm-field>
+          <label hlmFieldLabel for="checklist-version"
+            ><span i18n="@@checklists.form.version">Version</span><app-required-marker
+          /></label>
+          <input
+            hlmInput
+            id="checklist-version"
+            [formField]="nameForm.version"
+            class="mobile-ui:min-h-11"
+          />
+          @if (nameForm.version().touched() && nameForm.version().invalid()) {
+            <hlm-field-error i18n="@@checklists.form.versionInvalid"
+              >Enter a version of at most 50 characters.</hlm-field-error
+            >
+          }
+        </hlm-field>
+      }
+      @if (!itemsEditable()) {
+        <p class="text-sm text-muted-foreground" i18n="@@checklists.form.itemsFrozen">
+          Existing inspections use these items. Create a new revision to change their structure.
+        </p>
+      }
       @if (staged().length > 0) {
         <ul class="flex flex-col gap-2" data-testid="checklist-edit-items">
           @for (item of staged(); track $index; let i = $index) {
@@ -48,119 +87,125 @@
                   >
                 }
               </div>
-              <div class="flex shrink-0 items-center gap-1 mobile-ui:justify-end">
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="mobile-ui:min-h-11 mobile-ui:min-w-11"
-                  [disabled]="i === 0"
-                  [attr.data-testid]="'checklist-edit-item-up-' + i"
-                  (click)="moveItem(i, -1)"
-                >
-                  <span class="sr-only" i18n="@@checklists.form.itemMoveUp">Move up</span>
-                  <span aria-hidden="true">&uarr;</span>
-                </button>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="mobile-ui:min-h-11 mobile-ui:min-w-11"
-                  [disabled]="i === staged().length - 1"
-                  [attr.data-testid]="'checklist-edit-item-down-' + i"
-                  (click)="moveItem(i, 1)"
-                >
-                  <span class="sr-only" i18n="@@checklists.form.itemMoveDown">Move down</span>
-                  <span aria-hidden="true">&darr;</span>
-                </button>
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="mobile-ui:min-h-11"
-                  [attr.data-testid]="'checklist-edit-item-remove-' + i"
-                  (click)="removeItem(i)"
-                >
-                  <span i18n="@@checklists.form.itemRemove">Remove</span>
-                </button>
-              </div>
+              @if (itemsEditable()) {
+                <div class="flex shrink-0 items-center gap-1 mobile-ui:justify-end">
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="mobile-ui:min-h-11 mobile-ui:min-w-11"
+                    [disabled]="i === 0"
+                    [attr.data-testid]="'checklist-edit-item-up-' + i"
+                    (click)="moveItem(i, -1)"
+                  >
+                    <span class="sr-only" i18n="@@checklists.form.itemMoveUp">Move up</span>
+                    <span aria-hidden="true">&uarr;</span>
+                  </button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="mobile-ui:min-h-11 mobile-ui:min-w-11"
+                    [disabled]="i === staged().length - 1"
+                    [attr.data-testid]="'checklist-edit-item-down-' + i"
+                    (click)="moveItem(i, 1)"
+                  >
+                    <span class="sr-only" i18n="@@checklists.form.itemMoveDown">Move down</span>
+                    <span aria-hidden="true">&darr;</span>
+                  </button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="mobile-ui:min-h-11"
+                    [attr.data-testid]="'checklist-edit-item-remove-' + i"
+                    (click)="removeItem(i)"
+                  >
+                    <span i18n="@@checklists.form.itemRemove">Remove</span>
+                  </button>
+                </div>
+              }
             </li>
           }
         </ul>
       }
 
-      <fieldset
-        hlmFieldSet
-        class="min-w-0 mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4 desktop-ui:contents"
-      >
-        <legend hlmFieldLegend class="desktop-ui:sr-only" i18n="@@checklists.form.itemAdd">
-          Add item
-        </legend>
-        <hlm-field>
-          <label hlmFieldLabel for="checklist-edit-item-label" i18n="@@checklists.form.itemLabel"
-            >Item label</label
-          >
-          <input
-            hlmInput
-            id="checklist-edit-item-label"
-            type="text"
-            class="mobile-ui:min-h-11"
-            data-testid="checklist-edit-item-label"
-            [formField]="itemDraftForm.label"
-            [attr.aria-invalid]="itemDraftForm.label().touched() && itemDraftForm.label().invalid()"
-          />
-          @if (itemDraftForm.label().touched() && itemDraftForm.label().invalid()) {
-            <hlm-field-error>{{ itemDraftForm.label().errors()[0].message }}</hlm-field-error>
-          }
-        </hlm-field>
+      @if (itemsEditable()) {
+        <fieldset
+          hlmFieldSet
+          class="min-w-0 mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4 desktop-ui:contents"
+        >
+          <legend hlmFieldLegend class="desktop-ui:sr-only" i18n="@@checklists.form.itemAdd">
+            Add item
+          </legend>
+          <hlm-field>
+            <label hlmFieldLabel for="checklist-edit-item-label" i18n="@@checklists.form.itemLabel"
+              >Item label</label
+            >
+            <input
+              hlmInput
+              id="checklist-edit-item-label"
+              type="text"
+              class="mobile-ui:min-h-11"
+              data-testid="checklist-edit-item-label"
+              [formField]="itemDraftForm.label"
+              [attr.aria-invalid]="
+                itemDraftForm.label().touched() && itemDraftForm.label().invalid()
+              "
+            />
+            @if (itemDraftForm.label().touched() && itemDraftForm.label().invalid()) {
+              <hlm-field-error>{{ itemDraftForm.label().errors()[0].message }}</hlm-field-error>
+            }
+          </hlm-field>
 
-        <hlm-field>
-          <label
-            hlmFieldLabel
-            for="checklist-edit-item-description"
-            i18n="@@checklists.form.itemDescription"
-            >Description (optional)</label
-          >
-          <input
-            hlmInput
-            id="checklist-edit-item-description"
-            type="text"
-            class="mobile-ui:min-h-11"
-            data-testid="checklist-edit-item-description"
-            [formField]="itemDraftForm.description"
-          />
-        </hlm-field>
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="checklist-edit-item-description"
+              i18n="@@checklists.form.itemDescription"
+              >Description (optional)</label
+            >
+            <input
+              hlmInput
+              id="checklist-edit-item-description"
+              type="text"
+              class="mobile-ui:min-h-11"
+              data-testid="checklist-edit-item-description"
+              [formField]="itemDraftForm.description"
+            />
+          </hlm-field>
 
-        <hlm-field orientation="horizontal">
-          <hlm-checkbox
-            inputId="checklist-edit-item-required"
-            data-testid="checklist-edit-item-required"
-            [formField]="itemDraftForm.required"
-          />
-          <label
-            hlmFieldLabel
-            for="checklist-edit-item-required"
-            i18n="@@checklists.form.itemRequired"
-            >Required item</label
-          >
-        </hlm-field>
+          <hlm-field orientation="horizontal">
+            <hlm-checkbox
+              inputId="checklist-edit-item-required"
+              data-testid="checklist-edit-item-required"
+              [formField]="itemDraftForm.required"
+            />
+            <label
+              hlmFieldLabel
+              for="checklist-edit-item-required"
+              i18n="@@checklists.form.itemRequired"
+              >Required item</label
+            >
+          </hlm-field>
 
-        <hlm-field orientation="horizontal">
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            class="mobile-ui:min-h-11"
-            data-testid="checklist-edit-item-add"
-            (click)="addItem()"
-          >
-            <span i18n="@@checklists.form.itemAdd">Add item</span>
-          </button>
-        </hlm-field>
-      </fieldset>
+          <hlm-field orientation="horizontal">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              data-testid="checklist-edit-item-add"
+              (click)="addItem()"
+            >
+              <span i18n="@@checklists.form.itemAdd">Add item</span>
+            </button>
+          </hlm-field>
+        </fieldset>
+      }
 
       <div
         class="flex flex-wrap items-center justify-end gap-2 mobile-ui:grid mobile-ui:grid-cols-1 mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4"
@@ -181,7 +226,7 @@
           type="submit"
           class="mobile-ui:min-h-11"
           data-testid="checklist-edit-submit"
-          [disabled]="pending()"
+          [disabled]="pending() || (!creating() && !dirty())"
           [attr.aria-busy]="pending() ? 'true' : null"
           aria-live="polite"
         >

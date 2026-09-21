@@ -27,6 +27,11 @@ export interface ComplianceFacilitySummary {
   readonly openMediumNonConformityCount: number;
   readonly openHighNonConformityCount: number;
   readonly openCriticalNonConformityCount: number;
+  /** Active equipment missing a confirmed server evaluation. */
+  readonly unevaluatedEquipmentCount?: number;
+  /** Oldest successful evaluation for this facility. */
+  readonly dataEvaluatedAt?: string | null;
+
   readonly lastInspectionAt: string | null;
   //#endregion
 }

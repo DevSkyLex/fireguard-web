@@ -17,6 +17,7 @@ import {
   lucideChevronsUpDown,
   lucideCreditCard,
   lucideHistory,
+  lucideWebhook,
   lucidePlus,
   lucideSettings,
   lucideUsers,
@@ -79,7 +80,7 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
  *
  * The menu header repeats the trigger's identity (logo, name, plan) so the
  * open panel still names the workspace once the trigger itself is covered.
- * Below it, four admin shortcuts (Settings, Billing, Members, Audit journal)
+ * Below it, five admin destinations (Settings, Billing, Members, Webhooks, Audit journal)
  * are filtered through {@link OrganizationPermissionService} and rendered as
  * real `routerLink`s — the same permission mechanism
  * `organization-navigation.config.ts` uses for the sidebar, reused rather
@@ -127,6 +128,7 @@ import type { OrganizationSwitcherOption, OrganizationSwitcherQuickLink } from '
       lucideChevronsUpDown,
       lucideCreditCard,
       lucideHistory,
+      lucideWebhook,
       lucidePlus,
       lucideSettings,
       lucideUsers,

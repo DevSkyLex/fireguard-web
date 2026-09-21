@@ -56,7 +56,7 @@ describe('ImportJobDetailSheet', () => {
   it('should state the queued copy while the job has not started processing', async () => {
     fixture.componentRef.setInput(
       'job',
-      job({ status: 'pending', successfulRows: 0, failedRows: 0 }),
+      job({ status: 'pending', processedRows: 0, successfulRows: 0, failedRows: 0 }),
     );
     await fixture.whenStable();
 

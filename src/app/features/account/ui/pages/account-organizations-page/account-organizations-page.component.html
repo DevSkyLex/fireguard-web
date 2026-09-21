@@ -76,6 +76,7 @@
     [visible]="confirmingLeaveId() !== null"
     [organizationName]="leavingOrganizationName()"
     [pending]="myOrganizations.isLeaving()"
+    [departureConfirmed]="myOrganizations.departureConfirmed()"
     [error]="myOrganizations.leaveError()?.message ?? null"
     (visibleChange)="onLeaveDialogVisibleChange($event)"
     (confirmed)="confirmLeave()"

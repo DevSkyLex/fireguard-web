@@ -51,6 +51,14 @@ describe('MaintenanceScheduleTable', () => {
     fixture = TestBed.createComponent(MaintenanceScheduleTable);
   });
 
+  it('distinguishes an unevaluated row from a successfully evaluated schedule', async () => {
+    await render([schedule({ evaluatedAt: null })]);
+    expect(root().textContent).toContain('Not yet evaluated');
+    await render([schedule({ evaluatedAt: '2026-09-20T08:00:00+00:00' })]);
+    expect(root().textContent).not.toContain('Not yet evaluated');
+    expect(root().textContent).toContain('2026-09-20');
+  });
+
   it('should render one row per schedule, humanizing the raw equipment type', async () => {
     await render([schedule(), schedule({ id: 'schedule-2', equipmentType: 'smoke_detector' })]);
 

@@ -260,7 +260,7 @@ export class FacilityBuilding3dScene {
   /** Whether the exploded-layout tween may animate, or must jump straight to its target. */
   private readonly reducedMotion: boolean =
     this.isBrowser &&
-    (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+    (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
 
   /** The app-wide appearance contract driving the palette refresh. */
   private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);

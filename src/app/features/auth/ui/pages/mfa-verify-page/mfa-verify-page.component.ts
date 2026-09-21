@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  type EffectRef,
   effect,
   inject,
   untracked,
@@ -154,14 +155,14 @@ export class MfaVerifyPage {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
-  private readonly outcome = effect((): void => {
+  private readonly outcome: EffectRef = effect((): void => {
     if (!this.authStore.isAuthenticated()) return;
 
     untracked((): void => {
-      void this.router.navigateByUrl(
-        resolveReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
-      );
+      void this.router.navigateByUrl(this.returnUrl || '/');
     });
   });
   //#endregion

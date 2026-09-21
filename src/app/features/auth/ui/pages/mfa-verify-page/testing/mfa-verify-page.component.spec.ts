@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
 import type { MfaMethod } from '@features/auth/models';
 import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';
@@ -153,5 +153,49 @@ describe('MfaVerifyPage', () => {
     fixture.componentInstance['restartSignIn']();
 
     expect(mockAuthStore.clearMfaState).not.toHaveBeenCalled();
+  });
+});
+
+describe('MfaVerifyPage return URL handoff', () => {
+  it('keeps an invitation token when the route snapshot changes before MFA completes', async () => {
+    const destination = '/organizations/invitations/accept?token=e2e-invitation-token';
+    const isAuthenticated = signal(false);
+    const route = {
+      snapshot: { queryParamMap: convertToParamMap({ returnUrl: destination }) },
+    };
+    const authStore = {
+      clearMfaState: vi.fn(),
+      mfaVerify: vi.fn(),
+      mfaResend: vi.fn(),
+      isVerifyingMfa: signal(false),
+      isResendingMfa: signal(false),
+      mfaVerifyError: signal(null),
+      mfaResendError: signal(null),
+      mfaResendAvailableIn: signal(0),
+      isAuthenticated,
+      mfaMethod: signal<MfaMethod | null>('email'),
+      mfaDestination: signal<string | null>('a***@example.com'),
+      mfaToken: signal<string | null>('pre-auth-token'),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: route },
+        { provide: AuthStore, useValue: authStore },
+        { provide: ActiveTrustedDeviceStore, useValue: { setPendingTrustDevice: vi.fn() } },
+      ],
+    });
+
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(MfaVerifyPage);
+    await fixture.whenStable();
+
+    route.snapshot.queryParamMap = convertToParamMap({});
+    isAuthenticated.set(true);
+    await fixture.whenStable();
+
+    expect(navigateByUrl).toHaveBeenCalledWith(destination);
   });
 });

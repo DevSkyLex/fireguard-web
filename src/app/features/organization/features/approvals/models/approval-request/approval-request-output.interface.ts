@@ -72,4 +72,10 @@ export interface ApprovalRequestOutput extends HydraItem {
    * @type {string | undefined}
    */
   readonly executionError?: string;
+
+  /** Server capabilities; absent only while a compatible older backend is deployed. */
+  readonly allowedActions?: readonly ('approve' | 'reject' | 'withdraw')[];
+
+  /** Stable reason why the reader cannot decide. */
+  readonly decisionBlockReason?: string | null;
 }

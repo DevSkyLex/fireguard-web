@@ -13,6 +13,10 @@ import type { ApprovalActionTypeOutput } from '@features/organization/features/a
  * @since 1.0.0
  */
 export interface ApprovalRequestsState {
+  /** Organization owning every cached request and in-flight decision. */
+  readonly organizationId: string | null;
+  /** Explicit state for a conflict refresh; errors retain the last known request. */
+  readonly refreshCallState: CallState<null>;
   /** @type {CallState<null>} */
   readonly listCallState: CallState<null>;
   /** @type {number} */

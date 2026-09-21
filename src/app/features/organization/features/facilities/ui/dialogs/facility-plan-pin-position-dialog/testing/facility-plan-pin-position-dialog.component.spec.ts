@@ -114,4 +114,15 @@ describe('FacilityPlanPinPositionDialog', () => {
       true,
     );
   });
+  it('keeps the edited position when a conflict refresh changes the server pin', async () => {
+    await open();
+    const input = byTestId('facility-plan-pin-position-x') as HTMLInputElement;
+    input.value = '37.5';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.componentRef.setInput('x', 0.8);
+    fixture.componentRef.setInput('y', 0.8);
+    await fixture.whenStable();
+    expect(input.value).toBe('37.5');
+  });
 });

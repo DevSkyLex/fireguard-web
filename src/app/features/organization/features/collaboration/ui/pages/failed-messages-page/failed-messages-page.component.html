@@ -1,0 +1,65 @@
+<section
+  class="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4 desktop-ui:p-6"
+  data-testid="failed-messages-page"
+>
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 flex-1 flex-col gap-1">
+      <p class="text-sm text-muted-foreground" i18n="@@messages.failed.description">
+        Messages saved on this device for this organization. Open a conversation to retry its failed
+        sends.
+      </p>
+    </div>
+    <button
+      hlmBtn
+      variant="outline"
+      type="button"
+      class="mobile-ui:min-h-11"
+      [disabled]="store.isQueryLoading()"
+      (click)="reload()"
+      i18n="@@common.refresh"
+    >
+      Refresh
+    </button>
+  </header>
+  @if (store.isQueryLoading()) {
+    <div class="flex flex-col gap-3" aria-busy="true">
+      <hlm-skeleton class="h-24 w-full" /><hlm-skeleton class="h-24 w-full" />
+    </div>
+  } @else if (store.queryHasError()) {
+    <p role="alert" class="text-sm text-destructive" i18n="@@messages.failed.unavailable">
+      Failed sends could not be checked. Reconnect and refresh; your messages remain on this device.
+    </p>
+  } @else if (store.isQueryLoaded() && store.items().length === 0) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <h2 hlmEmptyTitle i18n="@@messages.failed.empty">No failed sends</h2>
+        <p hlmEmptyDescription i18n="@@messages.failed.emptyHint">
+          No failed message was found in your accessible conversations.
+        </p>
+      </div>
+    </div>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (item of store.items(); track item.id) {
+        <li class="flex min-w-0 flex-col gap-3 rounded-lg border p-4" data-testid="failed-send">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="min-w-0 font-medium break-words">{{ item.conversationLabel }}</h2>
+            <time class="text-xs text-muted-foreground" [attr.datetime]="item.createdAt">{{
+              item.createdAt | date: 'short'
+            }}</time>
+          </div>
+          <p class="text-sm break-words whitespace-pre-wrap">{{ item.body }}</p>
+          <a
+            hlmBtn
+            variant="outline"
+            class="self-start mobile-ui:min-h-11"
+            [routerLink]="item.link"
+            data-testid="failed-send-open"
+            i18n="@@messages.failed.open"
+            >Open conversation</a
+          >
+        </li>
+      }
+    </ul>
+  }
+</section>

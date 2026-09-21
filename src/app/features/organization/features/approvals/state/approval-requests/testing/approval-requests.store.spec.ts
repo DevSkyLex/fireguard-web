@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import type {
@@ -19,6 +19,7 @@ describe('ApprovalRequestsStore', () => {
     list: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
     approve: ReturnType<typeof vi.fn>;
+    withdraw: ReturnType<typeof vi.fn>;
     reject: ReturnType<typeof vi.fn>;
     listActionTypes: ReturnType<typeof vi.fn>;
   };
@@ -62,6 +63,7 @@ describe('ApprovalRequestsStore', () => {
       list: vi.fn().mockReturnValue(of(collection)),
       get: vi.fn().mockReturnValue(of(request)),
       approve: vi.fn().mockReturnValue(of({ ...request, status: 'approved' })),
+      withdraw: vi.fn().mockReturnValue(of({ ...request, status: 'withdrawn' })),
       reject: vi.fn().mockReturnValue(of({ ...request, status: 'rejected' })),
       listActionTypes: vi
         .fn()
@@ -138,6 +140,7 @@ describe('ApprovalRequestsStore', () => {
           type: 'about:blank',
           title: 'Conflict',
           detail: 'The deferred action can no longer be applied: reopened',
+          code: 'approval_subject_changed',
         })),
       );
 
@@ -156,6 +159,7 @@ describe('ApprovalRequestsStore', () => {
           type: 'about:blank',
           title: 'Forbidden',
           detail: 'The requester cannot decide on their own approval request.',
+          code: 'approval_self_decision_forbidden',
         })),
       );
 
@@ -179,13 +183,63 @@ describe('ApprovalRequestsStore', () => {
     });
   });
 
+  it('serializes withdrawal and ignores its result after a context change', async () => {
+    store.load({ organizationId });
+    const response = new Subject<ApprovalRequestOutput>();
+    mockService.withdraw.mockReturnValue(response);
+    store.withdraw({ organizationId, requestId: request.id, note: 'Entered twice' });
+    store.withdraw({ organizationId, requestId: request.id, note: 'Entered twice' });
+    store.approve({ organizationId, requestId: request.id });
+    expect(mockService.withdraw).toHaveBeenCalledTimes(1);
+    expect(mockService.withdraw).toHaveBeenCalledWith(organizationId, request.id, {
+      decisionNote: 'Entered twice',
+    });
+    expect(mockService.approve).not.toHaveBeenCalled();
+    mockService.list.mockReturnValue(of({ ...collection, member: [], totalItems: 0 }));
+    store.load({ organizationId: 'org-2' });
+    response.next({ ...request, status: 'withdrawn' });
+    response.complete();
+    await flushEffects();
+    expect(store.requests()).toEqual([]);
+    expect(store.decideCallState().status).toBe('idle');
+  });
+
   describe('refresh', () => {
+    it('retains the request and records a failed refresh', async () => {
+      store.load({ organizationId });
+      mockService.get.mockReturnValue(throwError(() => new Error('Network unavailable')));
+      store.refresh([organizationId, 'request-1']);
+      await flushEffects();
+      expect(store.requests()).toEqual([request]);
+      expect(store.refreshCallState().status).toBe('error');
+    });
+
+    it('ignores late refresh and decision responses after changing organization', async () => {
+      store.load({ organizationId });
+      const refreshed = new Subject<ApprovalRequestOutput>();
+      const decided = new Subject<ApprovalRequestOutput>();
+      mockService.get.mockReturnValue(refreshed);
+      mockService.approve.mockReturnValue(decided);
+      store.refresh([organizationId, 'request-1']);
+      store.approve({ organizationId, requestId: 'request-1' });
+      store.reject({ organizationId, requestId: 'request-1' });
+      expect(mockService.reject).not.toHaveBeenCalled();
+      mockService.list.mockReturnValue(of({ ...collection, member: [], totalItems: 0 }));
+      store.load({ organizationId: 'other-org' });
+      refreshed.next(request);
+      decided.next({ ...request, status: 'approved' });
+      await flushEffects();
+      expect(store.requests()).toEqual([]);
+      expect(store.decideCallState().status).toBe('idle');
+      expect(store.refreshCallState().status).toBe('idle');
+    });
+
     it('should re-read one request and replace its cached row', async () => {
       store.load({ organizationId });
       await flushEffects();
 
       mockService.get.mockReturnValue(of({ ...request, status: 'cancelled' }));
-      store.refresh(organizationId, 'request-1');
+      store.refresh([organizationId, 'request-1']);
       await flushEffects();
 
       expect(mockService.get).toHaveBeenCalledWith(organizationId, 'request-1');

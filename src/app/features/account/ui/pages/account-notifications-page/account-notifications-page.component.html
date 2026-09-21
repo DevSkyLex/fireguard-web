@@ -13,6 +13,13 @@
         <span i18n="@@account.notifications.tabs.inbox">Inbox</span>
       </button>
       <button
+        hlmTabsTrigger="notifications"
+        class="mobile-ui:min-h-11"
+        data-testid="account-notifications-tab-notifications"
+      >
+        <span i18n="@@account.notifications.tabs.notifications">Notifications</span>
+      </button>
+      <button
         hlmTabsTrigger="preferences"
         class="mobile-ui:min-h-11"
         data-testid="account-notifications-tab-preferences"
@@ -22,6 +29,21 @@
     </hlm-tabs-list>
 
     <div hlmTabsContent="inbox" class="flex flex-col gap-4">
+      <app-account-inbox-list
+        [items]="inbox.entryEntities()"
+        [loading]="inbox.isLoading()"
+        [loadingMore]="inbox.isLoadingMore()"
+        [complete]="inbox.complete()"
+        [hasError]="inbox.listError() !== null"
+        [readFailed]="inbox.readCallState().status === 'error'"
+        [hasMore]="inbox.hasMore()"
+        (readRequested)="inbox.markAsRead($event)"
+        (moreRequested)="inbox.loadMore()"
+        (retryRequested)="inbox.load()"
+      />
+    </div>
+
+    <div hlmTabsContent="notifications" class="flex flex-col gap-4">
       @if (store.unreadCount(); as unread) {
         <p class="text-sm text-muted-foreground">
           <span i18n="@@account.notifications.unreadCount">Unread</span>

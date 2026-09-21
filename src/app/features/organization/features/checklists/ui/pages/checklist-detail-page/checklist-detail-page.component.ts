@@ -9,11 +9,16 @@ import {
   computed,
   untracked,
   afterNextRender,
+  type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { UpdateChecklistInput } from '@features/organization/features/checklists/models';
+import type {
+  CreateChecklistInput,
+  UpdateChecklistInput,
+} from '@features/organization/features/checklists/models';
 import {
   ActiveChecklistStore,
   ChecklistStore,
@@ -32,7 +37,14 @@ import { ChecklistEditForm } from '../../forms/checklist-edit-form';
  */
 @Component({
   selector: 'app-checklist-detail-page',
-  imports: [HlmButton, HlmSkeleton, ChecklistEditForm, ChecklistStatusTag, UnsavedChangesDialog],
+  imports: [
+    RouterLink,
+    HlmButton,
+    HlmSkeleton,
+    ChecklistEditForm,
+    ChecklistStatusTag,
+    UnsavedChangesDialog,
+  ],
   providers: [ActiveChecklistStore, ChecklistStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:beforeunload)': 'beforeUnload($event)' },
@@ -145,11 +157,36 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
    * @since 1.0.0
    * @type {Signal<boolean>}
    */
-  protected readonly canWrite = computed(
+  protected readonly canWrite: Signal<boolean> = computed(
     () =>
       this.access.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE) &&
-      this.active.selectedChecklist()?.status !== 'archived',
+      (this.revising() ||
+        (this.active.selectedChecklist()?.canEditMetadata !== false &&
+          this.active.selectedChecklist()?.status !== 'archived')),
   );
+
+  /**
+   * Property revising
+   * @readonly
+   * @since 1.0.0
+   * @description Whether the current editor will create a separate linked checklist.
+   * @access protected
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly revising: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property canCreateRevision
+   * @readonly
+   * @since 1.0.0
+   * @description Permission supplied by the server for the current checklist.
+   * @access protected
+   * @type {Signal<boolean>}
+   */
+  protected readonly canCreateRevision: Signal<boolean> = computed(
+    () => this.active.selectedChecklist()?.canCreateRevision === true,
+  );
+
   /**
    * Property pending
    * @readonly
@@ -174,6 +211,7 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
       const id = this.checklistId();
       untracked(() => {
         this.active.clear();
+        this.revising.set(false);
         this.dirty.set(false);
         if (id) {
           const subscription = this.active
@@ -215,6 +253,19 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
         .subscribe({ error: () => undefined });
   }
   /**
+   * Method startRevision
+   * @since 1.0.0
+   * @description Opens a new revision draft after protecting any unsaved changes.
+   * @access protected
+   * @returns {Promise<void>}
+   */
+  protected async startRevision(): Promise<void> {
+    if (!this.canCreateRevision() || this.pending()) return;
+    if (this.dirty() && !(await this.confirmDeactivation())) return;
+    this.revising.set(true);
+  }
+
+  /**
    * Method save
    * @method save
    * @description Submits the full validated checklist draft through the owning store.
@@ -223,15 +274,21 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
    * @param {UpdateChecklistInput} payload - Validated replacement values.
    * @returns {void}
    */
-  protected save(payload: UpdateChecklistInput): void {
+  protected save(payload: UpdateChecklistInput | CreateChecklistInput): void {
     if (!this.canWrite() || this.pending()) return;
     const id = this.checklistId();
-    if (id)
+    if (id && !this.revising())
       this.store.update({ organizationId: this.organizationId(), checklistId: id, input: payload });
     else
       this.store.create({
         organizationId: this.organizationId(),
-        input: { name: payload.name ?? '', version: '1.0', items: payload.items ?? [] },
+        input: {
+          name: payload.name ?? '',
+          version: 'version' in payload ? payload.version : '1.0',
+          referenceCode: payload.referenceCode,
+          items: payload.items ?? [],
+          ...(this.revising() ? { previousChecklistId: id } : {}),
+        },
       });
   }
   /**

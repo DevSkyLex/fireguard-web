@@ -57,6 +57,7 @@ describe('AssistantStore', () => {
     startThread: ReturnType<typeof vi.fn>;
     getThread: ReturnType<typeof vi.fn>;
     ask: ReturnType<typeof vi.fn>;
+    controlAttempt: ReturnType<typeof vi.fn>;
     getSubscription: ReturnType<typeof vi.fn>;
   };
   let cookies: {
@@ -100,6 +101,7 @@ describe('AssistantStore', () => {
     granted = true;
     organization = signal<string | null>('org-1');
     service = {
+      controlAttempt: vi.fn(),
       startThread: vi.fn().mockReturnValue(of({ id: 'thread-1' })),
       getThread: vi.fn().mockReturnValue(of(detail([], 1, 0))),
       ask: vi.fn().mockReturnValue(
@@ -223,17 +225,114 @@ describe('AssistantStore', () => {
     expect(store.generationStalled()).toBe(true);
   });
 
-  it('marks a dismissed generation failed and stops waiting on it', () => {
-    const store: AssistantStoreType = createStore();
-    store.ask('first');
-    vi.advanceTimersByTime(91_000);
-
+  it('keeps a cancelled attempt stopped and ignores late frames after retry', () => {
+    cookies.getCookie.mockReturnValue('thread-1');
+    const active = message('m-bot', 'assistant', {
+      status: 'streaming',
+      body: 'Partial',
+      attemptId: 'a1',
+      attemptNumber: 1,
+      attemptSequence: 2,
+      canCancel: true,
+    });
+    service.getThread.mockReturnValue(of(detail([active], 1, 1)));
+    const store = createStore();
+    vi.advanceTimersByTime(1);
+    const cancelled = {
+      ...active,
+      status: 'cancelled' as const,
+      attemptSequence: 3,
+      canCancel: false,
+      canRetry: true,
+    };
+    service.controlAttempt.mockReturnValueOnce(of(cancelled));
     store.dismissStalled();
-
-    expect(store.messages()[1]?.status).toBe('failed');
-    expect(store.messages()[1]?.errorCode).toBe('client_stalled');
-    expect(store.generationStalled()).toBe(false);
+    expect(service.controlAttempt).toHaveBeenCalledWith('org-1', 'thread-1', 'm-bot', 'a1', false);
+    expect(store.messages()[0]?.status).toBe('cancelled');
     expect(store.isGenerating()).toBe(false);
+    const next = {
+      ...active,
+      body: '',
+      status: 'pending' as const,
+      attemptId: 'a2',
+      attemptNumber: 2,
+      attemptSequence: 0,
+      canRetry: false,
+    };
+    service.controlAttempt.mockReturnValueOnce(of(next));
+    store.controlAttempt({ messageId: 'm-bot', retry: true });
+    frames.next({
+      ...active,
+      messageId: 'm-bot',
+      status: 'complete',
+      body: 'Old answer',
+      attemptSequence: 99,
+      tokenCount: 1,
+      errorCode: null,
+    });
+    store.loadThread('thread-1'); // Old HTTP result from the initial attempt.
+    expect(store.messages()[0]?.attemptId).toBe('a2');
+    expect(store.messages()[0]?.body).toBe('');
+    frames.next({
+      ...next,
+      messageId: 'm-bot',
+      status: 'complete',
+      body: 'New answer',
+      attemptSequence: 2,
+      tokenCount: 2,
+      errorCode: null,
+    });
+    expect(store.messages()[0]?.body).toBe('New answer');
+    expect(store.isGenerating()).toBe(false);
+  });
+
+  it('refreshes after a lost retry response without resubmitting the question', () => {
+    cookies.getCookie.mockReturnValue('thread-1');
+    const failed = message('m-bot', 'assistant', {
+      status: 'failed',
+      attemptId: 'a1',
+      attemptNumber: 1,
+      attemptSequence: 2,
+      canRetry: true,
+    });
+    service.getThread.mockReturnValueOnce(of(detail([failed], 1, 1)));
+    const store = createStore();
+    service.getThread.mockReturnValue(
+      of(
+        detail(
+          [
+            {
+              ...failed,
+              status: 'pending',
+              attemptId: 'a2',
+              attemptNumber: 2,
+              attemptSequence: 0,
+              canRetry: false,
+              canCancel: true,
+            },
+          ],
+          1,
+          1,
+        ),
+      ),
+    );
+    service.controlAttempt.mockReturnValue(throwError(() => new Error('response lost')));
+    store.controlAttempt({ messageId: 'm-bot', retry: true });
+    expect(store.messages()[0]?.attemptId).toBe('a2');
+    expect(service.ask).not.toHaveBeenCalled();
+    expect(store.controlError()).not.toBeNull();
+  });
+
+  it('does not restore an old conversation after the organization changes', () => {
+    cookies.getCookie.mockReturnValueOnce('thread-1');
+    const pending = new Subject<AssistantThreadDetailOutput>();
+    service.getThread.mockReturnValue(pending);
+    const store = createStore();
+    organization.set('org-2');
+    TestBed.tick();
+    pending.next(detail([message('private', 'assistant')], 1, 1));
+    expect(store.messages()).toEqual([]);
+    expect(store.threadId()).toBeNull();
   });
 
   it('reads the last message page of a remembered thread', () => {

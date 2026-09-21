@@ -73,10 +73,10 @@ export class MessagingDatabaseService extends IndexedDbService {
    *
    * @param {string | null} [userId] - User to bind; defaults to the current profile subject.
    *
-   * @return {Promise<void>} A promise resolving once local stores are bound.
+   * @returns {Promise<void>} A promise resolving once local stores are bound.
    */
   public override ensureOwnerBound(
-    userId: string | null = this.identity.profile()?.sub ?? null,
+    userId: string | null = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null,
   ): Promise<void> {
     return super.ensureOwnerBound(userId);
   }

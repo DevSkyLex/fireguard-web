@@ -2247,3 +2247,6 @@ Selected sites and members may be resolved by scoped individual reads independen
 of catalogue coverage; unresolved labels never clear the saved references.
 Outbox conflicts preserve the original local revision separately from the last
 verified server revision. An unsuccessful revision read is explicitly unknown.
+
+Bootstrap consumers import `provideInterventionsFeature` through `providers/bootstrap`, a narrow public barrel
+that does not import route or offline UI trees.

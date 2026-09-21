@@ -1,5 +1,6 @@
 import type { HydraItem } from '@core/api/models';
 import type { CalendarFeedItemOutput } from './calendar-feed-item-output.interface';
+import type { CalendarFeedSourceOutput } from './calendar-feed-source-output.interface';
 
 /**
  * Interface CalendarFeedOutput
@@ -22,5 +23,25 @@ export interface CalendarFeedOutput extends HydraItem {
 
   /** The merged entries, every source together. */
   readonly items: readonly CalendarFeedItemOutput[];
+
+  /**
+   * Property complete
+   * @readonly
+   * @description All authorized sources succeeded without truncation; optional during the additive backend rollout.
+   * @access public
+   * @since 1.0.0
+   * @type {boolean | undefined}
+   */
+  readonly complete?: boolean;
+
+  /**
+   * Property sources
+   * @readonly
+   * @description Authorized source statuses; denied sources are omitted by the server.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly CalendarFeedSourceOutput[] | undefined}
+   */
+  readonly sources?: readonly CalendarFeedSourceOutput[];
   //#endregion
 }

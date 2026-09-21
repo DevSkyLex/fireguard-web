@@ -2,14 +2,13 @@ import type { HydraItem } from '@core/api/models';
 
 /**
  * Type AssistantMessageStatus
+ * @type {string}
  * @typedef AssistantMessageStatus
  *
  * @description
  * Lifecycle of an assistant reply.
  *
- * There is no `cancelled`: the backend exposes no cancel endpoint, and no
- * server-side wall-clock deadline ever settles a stuck row — a reply whose
- * worker died stays `streaming` forever. The client has to notice that itself.
+ * Generation attempts have server-owned identities and deadlines. Cancellation is durable.
  *
  * A user message is always `complete`.
  *
@@ -17,7 +16,7 @@ import type { HydraItem } from '@core/api/models';
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
-export type AssistantMessageStatus = 'pending' | 'streaming' | 'complete' | 'failed';
+export type AssistantMessageStatus = 'pending' | 'streaming' | 'complete' | 'failed' | 'cancelled';
 
 /**
  * Interface AssistantMessageOutput
@@ -27,9 +26,7 @@ export type AssistantMessageStatus = 'pending' | 'streaming' | 'complete' | 'fai
  * One turn of an assistant thread, as embedded in the thread read and returned
  * by the ask endpoint.
  *
- * {@link body} is empty until {@link status} reaches `complete`: partial text
- * is never persisted, so re-reading a thread mid-generation returns nothing.
- * The text only exists in the Mercure frames while it is being produced.
+ * Partial text is persisted under the active attempt identity and sequence.
  *
  * @since 1.0.0
  *
@@ -41,7 +38,7 @@ export interface AssistantMessageOutput {
   readonly organizationId: string;
   /** `user` or `assistant`. */
   readonly role: string;
-  /** Empty while pending or streaming — see the class note. */
+  /** Accumulated text of this attempt. */
   readonly body: string;
   readonly status: AssistantMessageStatus;
   /** Omitted, not null, on the HTTP contract. Frames send an explicit `null`. */
@@ -49,6 +46,12 @@ export interface AssistantMessageOutput {
   readonly tokenCount?: number;
   readonly createdAt: string;
   readonly completedAt?: string;
+  readonly attemptId?: string;
+  readonly attemptNumber?: number;
+  readonly attemptSequence?: number;
+  readonly attemptExpiresAt?: string;
+  readonly canCancel?: boolean;
+  readonly canRetry?: boolean;
 }
 
 /**
@@ -160,6 +163,12 @@ export interface AssistantFrame {
   readonly body: string;
   readonly tokenCount: number | null;
   readonly errorCode: string | null;
+  readonly attemptId?: string | null;
+  readonly attemptNumber?: number;
+  readonly attemptSequence?: number;
+  readonly attemptExpiresAt?: string | null;
+  readonly canCancel?: boolean;
+  readonly canRetry?: boolean;
 }
 
 /**

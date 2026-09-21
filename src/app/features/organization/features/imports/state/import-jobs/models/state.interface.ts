@@ -15,6 +15,9 @@ import type { ImportJobOutput } from '@features/organization/features/imports/mo
 export interface ImportJobsState {
   readonly visibleIds: readonly string[];
   readonly pollCallStates: Readonly<Record<string, CallState>>;
+  readonly confirmCallStates: Readonly<Record<string, CallState>>;
+  readonly templateCallState: CallState;
+  readonly resumeCallStates: Readonly<Record<string, CallState>>;
   /**
    * *
    * @type {CallState<null>}

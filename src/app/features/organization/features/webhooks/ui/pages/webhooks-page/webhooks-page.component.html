@@ -1,0 +1,480 @@
+<div class="flex min-w-0 flex-col gap-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@webhooks.intro">
+      Send organization events to your integrations and follow each delivery.
+    </p>
+    <div class="flex flex-wrap gap-2">
+      <button
+        hlmBtn
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        [disabled]="store.isLoading() || store.isMutating()"
+        (click)="refresh(store.page())"
+        data-testid="webhooks-refresh"
+        i18n="@@common.refresh"
+      >
+        Refresh
+      </button>
+      @if (canManage()) {
+        <button
+          hlmBtn
+          class="mobile-ui:min-h-11"
+          [disabled]="store.isLoading() || store.isMutating()"
+          (click)="openEditor(null)"
+          data-testid="webhook-create"
+          i18n="@@webhooks.create"
+        >
+          Add webhook
+        </button>
+      }
+    </div>
+  </div>
+  @if (notice(); as message) {
+    <p role="status" class="rounded-md border p-3 text-sm" data-testid="webhook-notice">
+      {{ message }}
+    </p>
+  }
+  @if (store.listCallState().error; as error) {
+    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+  }
+  @if (!editorOpen() && !confirmation() && store.mutationCallState().error; as error) {
+    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+  }
+  @if (store.isLoading()) {
+    <hlm-skeleton class="h-36 w-full" />
+  } @else if (store.subscriptionEntities().length === 0 && !store.listCallState().error) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <h2 hlmEmptyTitle i18n="@@webhooks.empty">No webhooks yet</h2>
+        <p hlmEmptyDescription i18n="@@webhooks.emptyHint">
+          Webhooks notify another service when selected events happen in this organization.
+        </p>
+      </div>
+    </div>
+  } @else if (store.subscriptionEntities().length > 0) {
+    <div class="grid min-w-0 gap-6 xl:grid-cols-[minmax(15rem,1fr)_minmax(0,2fr)]">
+      <section class="min-w-0 space-y-3" aria-labelledby="webhook-subscriptions-title">
+        <h2 id="webhook-subscriptions-title" class="font-semibold" i18n="@@webhooks.subscriptions">
+          Subscriptions
+        </h2>
+        <div class="divide-y rounded-lg border">
+          @for (subscription of store.subscriptionEntities(); track subscription.id) {
+            <button
+              type="button"
+              class="flex w-full min-w-0 flex-col gap-2 px-4 py-3 text-start outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+              [class.bg-muted]="subscription.id === store.selectedId()"
+              [attr.aria-pressed]="subscription.id === store.selectedId()"
+              [disabled]="store.isMutating()"
+              (click)="store.select(subscription.id)"
+              [attr.data-testid]="'webhook-row-' + subscription.id"
+            >
+              <span class="text-sm font-medium break-all">{{
+                subscription.description || subscription.url
+              }}</span>
+              @if (subscription.description) {
+                <span class="text-xs break-all text-muted-foreground">{{ subscription.url }}</span>
+              }
+              <span hlmBadge variant="outline" class="self-start">
+                @if (subscription.isActive) {
+                  <span i18n="@@webhooks.active">Active</span>
+                } @else {
+                  <span i18n="@@webhooks.paused">Paused</span>
+                }
+              </span>
+            </button>
+          }
+        </div>
+        <p class="text-xs text-muted-foreground" i18n="@@webhooks.subscriptionTotal">
+          Subscriptions: {{ store.total() }}
+        </p>
+        @if (store.pageCount() > 1) {
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              [disabled]="store.page() <= 1 || store.isMutating()"
+              (click)="refresh(store.page() - 1)"
+              i18n="@@common.previous"
+            >
+              Previous
+            </button>
+            <span class="text-xs">{{ store.page() }} / {{ store.pageCount() }}</span>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              [disabled]="store.page() >= store.pageCount() || store.isMutating()"
+              (click)="refresh(store.page() + 1)"
+              i18n="@@common.next"
+            >
+              Next
+            </button>
+          </div>
+        }
+      </section>
+      @if (store.selected(); as subscription) {
+        <section class="min-w-0 space-y-5" aria-labelledby="webhook-detail-title">
+          <div class="space-y-3 rounded-lg border p-4">
+            <h2 id="webhook-detail-title" class="font-semibold break-all">
+              {{ subscription.description || subscription.url }}
+            </h2>
+            <p class="text-sm break-all text-muted-foreground">{{ subscription.url }}</p>
+            <div
+              class="flex flex-wrap gap-1.5"
+              aria-label="Subscribed events"
+              i18n-aria-label="@@webhooks.subscribedEvents"
+            >
+              @for (event of subscription.eventTypes; track event) {
+                <span
+                  hlmBadge
+                  variant="secondary"
+                  class="max-w-full font-mono text-xs break-all whitespace-normal"
+                  >{{ event }}</span
+                >
+              }
+            </div>
+            @if (canManage()) {
+              <div class="flex flex-wrap gap-2 border-t pt-3">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="store.isMutating()"
+                  (click)="openEditor(subscription)"
+                  data-testid="webhook-edit"
+                  i18n="@@common.edit"
+                >
+                  Edit
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="store.isMutating()"
+                  (click)="store.mutate({ kind: 'ping', id: subscription.id })"
+                  data-testid="webhook-test"
+                  i18n="@@webhooks.test"
+                >
+                  Send test
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="store.isMutating()"
+                  (click)="request({ kind: 'rotate', id: subscription.id })"
+                  data-testid="webhook-rotate"
+                  i18n="@@webhooks.rotate"
+                >
+                  Rotate secret
+                </button>
+                <button
+                  hlmBtn
+                  variant="ghost"
+                  size="sm"
+                  class="text-destructive mobile-ui:min-h-11"
+                  [disabled]="store.isMutating()"
+                  (click)="request({ kind: 'delete', id: subscription.id })"
+                  data-testid="webhook-delete"
+                  i18n="@@common.delete"
+                >
+                  Delete
+                </button>
+              </div>
+            }
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="font-semibold" i18n="@@webhooks.deliveries">Delivery history</h3>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              [disabled]="store.isLoadingDeliveries() || store.isMutating()"
+              (click)="store.loadDeliveries(store.deliveryPage(), store.status())"
+              data-testid="webhook-history-refresh"
+              i18n="@@common.refresh"
+            >
+              Refresh
+            </button>
+          </div>
+          <div
+            class="flex flex-wrap gap-2"
+            role="group"
+            aria-label="Delivery status"
+            i18n-aria-label="@@webhooks.deliveryStatus"
+          >
+            @for (filter of filters; track filter.value) {
+              <button
+                hlmBtn
+                [variant]="store.status() === filter.value ? 'secondary' : 'outline'"
+                size="sm"
+                class="mobile-ui:min-h-11"
+                [attr.aria-pressed]="store.status() === filter.value"
+                [disabled]="store.isMutating()"
+                (click)="store.loadDeliveries(1, filter.value)"
+                [attr.data-testid]="'webhook-filter-' + filter.value"
+              >
+                {{ filter.label }}
+              </button>
+            }
+          </div>
+          @if (store.deliveryCallState().error; as error) {
+            <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+          }
+          @if (store.isLoadingDeliveries()) {
+            <hlm-skeleton class="h-32 w-full" />
+          } @else if (store.deliveryEntities().length === 0 && !store.deliveryCallState().error) {
+            <p
+              class="rounded-lg border border-dashed p-6 text-sm text-muted-foreground"
+              i18n="@@webhooks.noDeliveries"
+            >
+              No deliveries match this view.
+            </p>
+          } @else {
+            <ol class="divide-y rounded-lg border">
+              @for (delivery of store.deliveryEntities(); track delivery.id) {
+                <li class="space-y-2 p-4" [attr.data-testid]="'webhook-delivery-' + delivery.id">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0 space-y-1">
+                      <p class="font-mono text-sm break-all">{{ delivery.eventType }}</p>
+                      <p class="text-xs text-muted-foreground">
+                        {{ delivery.createdAt | date: 'medium' }}
+                      </p>
+                    </div>
+                    <span hlmBadge variant="outline">{{ statusLabel(delivery.status) }}</span>
+                  </div>
+                  <p class="font-mono text-xs break-all text-muted-foreground">{{ delivery.id }}</p>
+                  <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span i18n="@@webhooks.attempts">Attempts: {{ delivery.attempts }}</span>
+                    @if (delivery.httpStatus; as status) {
+                      <span>HTTP {{ status }}</span>
+                    }
+                    @if (delivery.nextRetryAt; as retryAt) {
+                      <span i18n="@@webhooks.nextRetry"
+                        >Next retry: {{ retryAt | date: 'medium' }}</span
+                      >
+                    }
+                  </div>
+                  @if (delivery.errorCode; as code) {
+                    <p class="text-sm text-destructive">{{ failureLabel(code) }}</p>
+                  }
+                  @if (canManage()) {
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      class="mobile-ui:min-h-11"
+                      [disabled]="store.isMutating()"
+                      (click)="
+                        request({ kind: 'redeliver', id: subscription.id, deliveryId: delivery.id })
+                      "
+                      [attr.data-testid]="'webhook-redeliver-' + delivery.id"
+                      i18n="@@webhooks.redeliver"
+                    >
+                      Redeliver
+                    </button>
+                  }
+                </li>
+              }
+            </ol>
+          }
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-muted-foreground" i18n="@@webhooks.deliveryTotal">
+              Deliveries: {{ store.deliveryTotal() }}
+            </p>
+            @if (store.deliveryPageCount() > 1) {
+              <div class="flex items-center gap-2">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="
+                    store.deliveryPage() <= 1 || store.isLoadingDeliveries() || store.isMutating()
+                  "
+                  (click)="store.loadDeliveries(store.deliveryPage() - 1, store.status())"
+                  data-testid="webhook-deliveries-previous"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <span class="text-xs"
+                  >{{ store.deliveryPage() }} / {{ store.deliveryPageCount() }}</span
+                >
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="
+                    store.deliveryPage() >= store.deliveryPageCount() ||
+                    store.isLoadingDeliveries() ||
+                    store.isMutating()
+                  "
+                  (click)="store.loadDeliveries(store.deliveryPage() + 1, store.status())"
+                  data-testid="webhook-deliveries-next"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
+<hlm-sheet
+  [side]="side()"
+  [state]="editorOpen() ? 'open' : 'closed'"
+  [disableClose]="store.isMutating()"
+  (stateChanged)="$event === 'closed' && closeEditor()"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    [showCloseButton]="false"
+    class="w-full! overflow-hidden mobile-ui:max-h-[90svh] desktop-ui:w-[540px]! desktop-ui:max-w-[100vw]!"
+    data-testid="webhook-editor"
+  >
+    <hlm-sheet-header>
+      <h2 hlmSheetTitle>
+        @if (editing()) {
+          <span i18n="@@webhooks.edit">Edit webhook</span>
+        } @else {
+          <span i18n="@@webhooks.create">Add webhook</span>
+        }
+      </h2>
+      <p hlmSheetDescription i18n="@@webhooks.formHint">
+        Choose a destination and the events it receives. You can pause the subscription later.
+      </p>
+    </hlm-sheet-header>
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6">
+      @if (store.isLoadingCatalog()) {
+        <hlm-skeleton class="h-40 w-full" />
+      }
+      @if (store.catalogCallState().error; as error) {
+        <p role="alert" class="mb-3 text-sm text-destructive">{{ error.message }}</p>
+        <button hlmBtn variant="outline" (click)="store.loadCatalog()" i18n="@@common.retry">
+          Retry
+        </button>
+        <button hlmBtn variant="ghost" (click)="closeEditor()" i18n="@@common.cancel">
+          Cancel
+        </button>
+      }
+      @if (store.events().length > 0) {
+        <app-webhook-subscription-form
+          [initial]="editing()"
+          [events]="store.events()"
+          [pending]="store.isMutating()"
+          [serverError]="store.mutationCallState().error"
+          (submitted)="save($event)"
+          (cancelled)="closeEditor()"
+          (dirtyChanged)="dirty.set($event)"
+        />
+      }
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="discardState()"
+  (confirmed)="discard()"
+  (dismissed)="discardState.set('closed')"
+/>
+<hlm-alert-dialog
+  [state]="confirmation() ? 'open' : 'closed'"
+  [disableClose]="store.isMutating()"
+  (stateChanged)="$event === 'closed' && confirmation.set(null)"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    class="max-h-[90svh] overflow-y-auto"
+    data-testid="webhook-confirmation"
+  >
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle>{{ confirmationTitle() }}</h2>
+      <p hlmAlertDialogDescription>{{ confirmationDescription() }}</p>
+    </hlm-alert-dialog-header>
+    @if (store.mutationCallState().error; as error) {
+      <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+    }
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
+        class="mobile-ui:min-h-11"
+        [disabled]="store.isMutating()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
+        class="mobile-ui:min-h-11"
+        [disabled]="store.isMutating()"
+        [attr.aria-busy]="store.isMutating()"
+        (click)="confirm()"
+        data-testid="webhook-confirm"
+        i18n="@@common.confirm"
+      >
+        Confirm
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>
+<hlm-dialog
+  [state]="secret() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && secret.set(null)"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    [showCloseButton]="false"
+    class="max-h-[90svh] overflow-y-auto"
+    data-testid="webhook-secret-dialog"
+  >
+    <hlm-dialog-header>
+      <h2 hlmDialogTitle i18n="@@webhooks.secretTitle">Save your signing secret</h2>
+      <p hlmDialogDescription i18n="@@webhooks.secretHint">
+        This secret is shown once. Save it securely and configure your receiver before closing this
+        window.
+      </p>
+    </hlm-dialog-header>
+    <label for="webhook-secret" class="text-sm font-medium" i18n="@@webhooks.signingSecret"
+      >Signing secret</label
+    >
+    <input
+      hlmInput
+      id="webhook-secret"
+      readonly
+      autocomplete="off"
+      spellcheck="false"
+      class="font-mono text-xs"
+      [value]="secret() ?? ''"
+      data-testid="webhook-secret"
+    />
+    <hlm-dialog-footer>
+      <button hlmBtn variant="outline" class="mobile-ui:min-h-11" (click)="copySecret()">
+        @if (copied()) {
+          <span i18n="@@webhooks.copied">Copied</span>
+        } @else {
+          <span i18n="@@webhooks.copy">Copy secret</span>
+        }
+      </button>
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        (click)="secret.set(null)"
+        data-testid="webhook-secret-close"
+        i18n="@@webhooks.secretSaved"
+      >
+        I saved the secret
+      </button>
+    </hlm-dialog-footer>
+  </hlm-dialog-content>
+</hlm-dialog>

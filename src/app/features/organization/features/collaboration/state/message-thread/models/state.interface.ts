@@ -34,6 +34,8 @@ export interface MessageThreadState {
   readonly listCallState: CallState;
   /** Posting. */
   readonly postCallState: CallState;
+  /** Local outbox restoration after a successful conversation read. */
+  readonly outboxCallState: CallState;
   /** Reactions, pins and saves — light, frequent, and worth keeping apart from posting. */
   readonly interactionCallState: CallState;
   /** Editing a message — its own state so the edit dialog can busy-lock and show its error inline. */

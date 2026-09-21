@@ -10,12 +10,10 @@ This subfeature is responsible for:
 - exposing checklist state (`ChecklistStore.ensureInspectionCreateOptionsLoaded`) to the
   inspections subfeature, whose list page provides it for the inspection-create sheet.
 
-Checklists are **not** immutable after creation: `PATCH /api/organizations/{orgId}/checklists/{checklistId}`
-lets a template's name, version and items be revised in place — only the identifier and creation
-date stay fixed. An archived checklist stays readable and stays out of the inspection-create
-selector (`ensureInspectionCreateOptionsLoaded` filters to `status: 'active'`), but the API does
-not reject a `PATCH` on an archived checklist; the checklists page is expected to gate the edit
-action on the row's own status once it exists, not rely on a backend refusal.
+Active checklists expose independent server capabilities for metadata and item changes.
+Inspection references, including drafts, freeze the items; archived templates are read-only.
+A new revision is a separate checklist linked by `previousChecklistId`, with a new version
+and optional unique reference. Existing inspections retain the previous checklist.
 
 ## Entry Points
 
@@ -43,7 +41,7 @@ Primary stores:
 
 Primary service:
 
-- `ChecklistService` — `list`, `get`, `create`, `update`, `archive`, `listStatuses`.
+- `ChecklistService` — `list`, `get`, `create`, `update`, `archive`.
 
 ## Cross-Feature Dependencies
 
@@ -62,17 +60,14 @@ Primary service:
   (`state`, `models`, `data-access`), never a deep import.
 - `ChecklistsPage` searches, filters and archives through a confirmation dialog. Creation and
   editing navigate to the dedicated editor. Every write is gated by inspection write permission.
-- `UpdateChecklistInput`'s `items` field, when sent, is always a **full replacement list** — the
-  backend rejects any `PATCH` (name, reference code, or items) once the checklist is referenced by
-  an existing inspection, and rejects an item change specifically once the checklist is archived.
-  `ChecklistEditForm` does not distinguish these cases in the UI yet; both surface as the generic
-  conflict feedback from `ChecklistStore.updateFailed`.
-- There is no restore endpoint (`ChecklistResource` exposes only `POST .../archive`), so the row
-  menu offers Archive on an active checklist and nothing on an archived one.
-- The checklist version is fixed at `1.0` on creation; there is no versioning UI yet. A checklist's
-  `referenceCode` is part of the backend contract (`CreateChecklistInput`, `UpdateChecklistInput`)
-  but is not yet exposed in `ChecklistCreateForm` / `ChecklistEditForm` — a future pass can add it
-  once the product decides how it should read.
+- The editor sends only changed PATCH fields. `items`, when changed and authorized, is a
+  full replacement. Metadata-only updates never regenerate item identities.
+- The detail page exposes version/reference and a previous-revision link. Authorized users
+  create revisions within the same protected editor. The unique reference is cleared and
+  a new version is required; the original template remains unchanged.
+- Server capabilities are authoritative; presentation permission checks are only an additional
+  guard. Conflict or network failures retain the full draft and allow correction/retry.
+- Archived checklists may seed a new revision when authorized, but cannot be edited or restored.
 - The editor includes an unfinished, valid item draft when saving. Invalid item text and
   server errors preserve the complete draft. Inline labels and keyboard reorder controls
   operate on the full replacement list; no drag-only reordering.

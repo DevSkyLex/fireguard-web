@@ -633,6 +633,7 @@ export const NotificationStore = signalStore(
                             revision: store.revision() + 1,
                           },
                         );
+                        dispatcher.dispatch(notificationStoreEvents.changed());
                       }),
                       catchError(() => {
                         patchState(store, { mercureConnected: false });
@@ -687,6 +688,7 @@ export const NotificationStore = signalStore(
                     } else {
                       patchState(store, { markAsReadCallState: successCallState(updated) });
                     }
+                    dispatcher.dispatch(notificationStoreEvents.changed());
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);
@@ -764,6 +766,7 @@ export const NotificationStore = signalStore(
                       markAllAsReadCallState: successCallState(result),
                       unreadCount: 0,
                     });
+                    dispatcher.dispatch(notificationStoreEvents.changed());
                   },
                   error: (error: unknown) => {
                     const storeError: StoreError = toStoreError(error);

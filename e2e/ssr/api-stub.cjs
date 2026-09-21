@@ -1,6 +1,18 @@
+require('../scripts/register-typescript.cjs');
+const {
+  loginOutput,
+  userProfileOutput,
+  organizationOutput,
+  currentOrganizationMemberProfileOutput,
+  onboardingOutput,
+  hydraCollection,
+  organizationNavigationCountersOutput,
+  mercureSubscriptionOutput,
+} = require('../support/fixtures/api-fixtures.ts');
+
 /**
  * Function createApiStub
- * @description Creates the SSR smoke's bounded anonymous API, shared by Node SSR and browsers.
+ * @description Creates the SSR smoke's bounded anonymous and authenticated API fixtures.
  * Unknown methods/paths are recorded as harness failures; no request is forwarded.
  * @access public
  * @since 1.0.0
@@ -67,6 +79,62 @@ function createApiStub(appOrigin, onShutdown) {
         },
       ],
     ]);
+    const authenticated =
+      (request.headers.cookie ?? '').includes('refresh_token=ssr-harness-session') ||
+      request.headers.authorization === 'Bearer e2e-access-token' ||
+      (request.method === 'OPTIONS' && origin === appOrigin);
+    if (authenticated) {
+      const org = '/api/organizations/e2e-org-1';
+      const fixtures = [
+        ['POST /api/auth/refresh', loginOutput()],
+        ['GET /api/me', userProfileOutput()],
+        ['GET /api/onboarding/organization', onboardingOutput()],
+        ['GET /api/organizations', hydraCollection([organizationOutput()])],
+        [`GET ${org}`, organizationOutput()],
+        [
+          `GET ${org}/me`,
+          currentOrganizationMemberProfileOutput({
+            permissions: [
+              'organization.read',
+              'organization.webhooks.read',
+              'organization.automation.read',
+            ],
+          }),
+        ],
+        [`GET ${org}/navigation-counters`, organizationNavigationCountersOutput()],
+        ['GET /api/notifications', hydraCollection([])],
+        ['GET /api/notifications/unread-count', { unreadCount: 0 }],
+        ['GET /api/inbox/unread-count', { unreadCount: 0 }],
+        ['GET /api/notifications/subscription', mercureSubscriptionOutput()],
+        ['GET /api/inbox', { items: [], complete: true, hasMore: false, nextPageCursor: null }],
+        ['GET /api/channels', hydraCollection([])],
+        ['GET /api/direct-conversations', hydraCollection([])],
+        ['GET /api/interventions', hydraCollection([])],
+        [`GET ${org}/members`, hydraCollection([])],
+        ['POST /api/presence', {}],
+        [`GET ${org}/webhooks`, hydraCollection([], { '@id': `${org}/webhooks` })],
+        [
+          `GET ${org}/automation`,
+          {
+            '@id': `${org}/automation`,
+            '@type': 'AutomationPolicy',
+            id: 'e2e-org-1',
+            ruleKey: 'auto_create_intervention_on_critical_nc',
+            enabled: true,
+            canManage: false,
+          },
+        ],
+        [`GET ${org}/automation/runs`, hydraCollection([], { '@id': `${org}/automation/runs` })],
+      ];
+      for (const [key, body] of fixtures) routes.set(key, { status: 200, body, allowQuery: true });
+      routes.set('GET /.well-known/mercure', { status: 204, body: null, allowQuery: true });
+    }
+    if (
+      url.pathname === '/.well-known/mercure' &&
+      url.searchParams.get('authorization') === 'e2e-mercure-token'
+    ) {
+      routes.set('GET /.well-known/mercure', { status: 204, body: null, allowQuery: true });
+    }
     const method =
       request.method === 'OPTIONS'
         ? request.headers['access-control-request-method']
@@ -77,9 +145,10 @@ function createApiStub(appOrigin, onShutdown) {
       path: url.pathname,
       query: url.search,
       at: new Date().toISOString(),
+      origin: origin ?? null,
       status: fixture?.status ?? 501,
     };
-    if (!fixture || url.search || (origin && origin !== appOrigin)) {
+    if (!fixture || (url.search && !fixture.allowQuery) || (origin && origin !== appOrigin)) {
       entry.status = 501;
       requests.push(entry);
       unexpected.push(entry);

@@ -109,7 +109,10 @@ describe('MessageThreadStore', () => {
         },
         // The optimistic row shows the sender their own name rather than the
         // "unknown member" fallback the API's name would otherwise fill in.
-        { provide: USER_IDENTITY_PORT, useValue: { displayName: signal('Amélie Rousseau') } },
+        {
+          provide: USER_IDENTITY_PORT,
+          useValue: { displayName: signal('Amélie Rousseau'), profile: signal({ sub: 'user-1' }) },
+        },
       ],
     });
 
@@ -157,6 +160,49 @@ describe('MessageThreadStore', () => {
   });
 
   afterEach(() => TestBed.resetTestingModule());
+
+  it('restores failed sends after a fresh authorized read and keeps confirmed rows canonical', async () => {
+    service.list.mockReturnValue(of(collection([message({ id: 'already-sent' })])));
+    const operation = {
+      id: 'op-1',
+      conversationId: 'conversation-1',
+      status: 'failed',
+      createdAt: '2026-09-20T10:00:00Z',
+      payload: { clientId: 'kept-client-id', input: { body: 'Unsent draft' } },
+    };
+    outbox.listForConversation.mockResolvedValue([
+      operation,
+      { ...operation, payload: { ...operation.payload, clientId: 'already-sent' } },
+    ]);
+    const store = createStore();
+    store.load('conversation-1');
+    await vi.waitFor(() => expect(store.failedMessageIds()).toEqual(['kept-client-id']));
+    expect(store.messageEntityMap()['kept-client-id']).toMatchObject({
+      body: 'Unsent draft',
+      createdAt: operation.createdAt,
+    });
+    expect(store.messageEntityMap()['already-sent'].body).not.toBe('Unsent draft');
+    expect(store.total()).toBe(1);
+    await store.retryFailed('kept-client-id');
+    expect(outbox.retry).toHaveBeenCalledWith('op-1');
+    expect(outbox.queue).not.toHaveBeenCalled();
+  });
+
+  it('ignores local drafts returned after the conversation was reset', async () => {
+    let resolve!: (value: unknown[]) => void;
+    outbox.listForConversation.mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    );
+    service.list.mockReturnValue(of(collection([])));
+    const store = createStore();
+    store.load('conversation-1');
+    store.reset();
+    resolve([{ id: 'op', payload: { clientId: 'late', input: { body: 'Do not show' } } }]);
+    await Promise.resolve();
+    expect(store.messageEntities()).toEqual([]);
+  });
 
   it('should start empty', () => {
     const store = createStore();

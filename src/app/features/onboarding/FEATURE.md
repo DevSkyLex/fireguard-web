@@ -32,7 +32,7 @@ its published setup boundary.
 
 Primary store: root-provided `OnboardingStore`. Primary transport: `OnboardingService`.
 The store owns named request states for load, start, execute, skip and rollback. Session end
-and explicit invitation acceptance invalidate the cached record and its hydration handoff.
+and confirmed admission, departure, status or ownership changes invalidate the cached record and its hydration handoff.
 Invalidation cancels all in-flight response subscriptions, including guard reads and initialization,
 so an old session or membership snapshot cannot repopulate the cache after it has been cleared.
 Successful progression clears obsolete errors from the previous lifecycle command.

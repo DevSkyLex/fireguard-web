@@ -56,7 +56,7 @@ export class MaintenanceScheduleService extends HydraApiService {
    *
    * @param {MaintenanceScheduleListOptions} options - Required `organization` IRI plus optional narrowing, pagination and sort.
    *
-   * @return {Observable<HydraCollection<MaintenanceScheduleOutput>>} An observable emitting the schedules collection.
+   * @returns {Observable<HydraCollection<MaintenanceScheduleOutput>>} An observable emitting the schedules collection.
    */
   public list(
     options: MaintenanceScheduleListOptions,
@@ -67,6 +67,7 @@ export class MaintenanceScheduleService extends HydraApiService {
     if (options.facility) params['facility'] = options.facility;
     if (options.equipmentType) params['equipmentType'] = options.equipmentType;
     if (options.dueStatus) params['dueStatus'] = options.dueStatus;
+    if (options.dueBefore) params['dueBefore'] = options.dueBefore;
     if (options.dueBefore) params['dueBefore'] = options.dueBefore;
 
     return this.getCollection<MaintenanceScheduleOutput>(SCHEDULES_PATH, {
@@ -87,8 +88,7 @@ export class MaintenanceScheduleService extends HydraApiService {
    * (`GET /api/maintenance/schedules/export`). Like {@link list}, the
    * organization travels as a required `organization` IRI query parameter;
    * the optional `facility`/`equipmentType`/`dueStatus` narrowing is
-   * forwarded the same way — `dueBefore` is not part of the export's
-   * contract. The collection is capped server-side at 50,000 rows; past it
+   * forwarded with the same inclusive `dueBefore` bound as the list. The collection is capped server-side at 50,000 rows; past it
    * the endpoint answers `422` with an RFC 7807 `detail` instead of the
    * file. Calls `this.http` directly for a response shape
    * (`responseType: 'blob'`) the base class does not support.
@@ -98,7 +98,7 @@ export class MaintenanceScheduleService extends HydraApiService {
    *
    * @param {MaintenanceScheduleExportOptions} options - Required `organization` IRI plus optional narrowing.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
   public exportCsv(options: MaintenanceScheduleExportOptions): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
@@ -107,6 +107,7 @@ export class MaintenanceScheduleService extends HydraApiService {
     if (options.facility) params['facility'] = options.facility;
     if (options.equipmentType) params['equipmentType'] = options.equipmentType;
     if (options.dueStatus) params['dueStatus'] = options.dueStatus;
+    if (options.dueBefore) params['dueBefore'] = options.dueBefore;
 
     return this.http.get(this.buildUrl(`${SCHEDULES_PATH}/export`), {
       params: this.buildParams({ params }),
@@ -130,7 +131,7 @@ export class MaintenanceScheduleService extends HydraApiService {
    * @param {string} scheduleId - The schedule to update.
    * @param {string | null} intervalOverride - The new override, or `null` to clear it.
    *
-   * @return {Observable<MaintenanceScheduleOutput>} An observable emitting the recomputed schedule.
+   * @returns {Observable<MaintenanceScheduleOutput>} An observable emitting the recomputed schedule.
    */
   public setIntervalOverride(
     scheduleId: string,
@@ -156,7 +157,7 @@ export class MaintenanceScheduleService extends HydraApiService {
    *
    * @param {GenerateMaintenanceCampaignInput} input - The campaign's scope and name.
    *
-   * @return {Observable<MaintenanceCampaignOutput>} An observable emitting the created intervention's id, number and work-item count.
+   * @returns {Observable<MaintenanceCampaignOutput>} An observable emitting the created intervention's id, number and work-item count.
    */
   public generateCampaign(
     input: GenerateMaintenanceCampaignInput,

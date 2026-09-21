@@ -725,10 +725,7 @@ export class MaintenanceSchedulesPage {
    * @description
    * Downloads the organization's maintenance schedules as CSV
    * (`MaintenanceScheduleService.exportCsv`), forwarding the screen's
-   * `facility`, `equipmentType` and `dueStatus` narrowing — all of which
-   * the export endpoint accepts. `dueBefore` is not part of the export's
-   * contract, so when that bound is active the export is wider than the
-   * screen — announced through a warn toast before the download starts.
+   * filters, including the inclusive `dueBefore` bound used by the list.
    *
    * @access protected
    * @since 1.4.0
@@ -739,12 +736,6 @@ export class MaintenanceSchedulesPage {
 
     const current: MaintenanceScheduleFilters = this.filters();
 
-    if (current.dueBefore !== null) {
-      this.feedback.warn(
-        $localize`:@@maintenance.list.exportFiltersDropped:Some active filters aren't supported by the export and were left out.`,
-      );
-    }
-
     this.exportBusy.set(true);
 
     this.maintenanceScheduleService
@@ -753,6 +744,7 @@ export class MaintenanceSchedulesPage {
         facility: current.facility ?? undefined,
         equipmentType: current.equipmentType ?? undefined,
         dueStatus: current.dueStatus ?? undefined,
+        dueBefore: current.dueBefore?.toISOString(),
       })
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe({

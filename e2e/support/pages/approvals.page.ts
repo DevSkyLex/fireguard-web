@@ -13,6 +13,11 @@ export class ApprovalsPage {
   public constructor(private readonly page: Page) {}
 
   public readonly root: Locator = this.page.locator('#approvals');
+  public readonly approve: Locator = this.page.getByTestId('approval-request-table-approve');
+  public readonly decision: Locator = this.page.getByTestId('approval-decision-dialog');
+  public readonly note: Locator = this.page.getByTestId('approval-decision-note');
+  public readonly confirm: Locator = this.page.getByTestId('approval-decision-accept');
+  public readonly refreshDecision: Locator = this.page.getByTestId('approval-decision-refresh');
   public readonly filtersToggle: Locator = this.page.getByTestId('approvals-filters-toggle');
   public readonly addFilterTrigger: Locator = this.page.getByTestId('approvals-filters-add');
   public readonly filterChips: Locator = this.page.getByTestId('approvals-filter-chip');

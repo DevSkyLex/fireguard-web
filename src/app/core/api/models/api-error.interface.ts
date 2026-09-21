@@ -5,8 +5,8 @@ import type { HydraItem } from './hydra-item.interface';
  * @interface ApiError
  *
  * @description
- * Standard API error response following RFC 7807 Problem Details.
- * Used for all error responses from the API.
+ * Problem Details response, optionally enriched with JSON-LD metadata.
+ * Plain application/problem+json responses do not carry Hydra identifiers.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -24,7 +24,17 @@ import type { HydraItem } from './hydra-item.interface';
  * };
  * ```
  */
-export interface ApiError extends HydraItem {
+export interface ApiError extends Partial<HydraItem> {
+  /**
+   * Property retryAfterSeconds
+   * @readonly
+   * @description Server delay before retrying a refused request; null means no deadline is known.
+   * @access public
+   * @since 1.0.0
+   * @type {number | null}
+   */
+  readonly retryAfterSeconds?: number | null;
+
   /**
    * Property code
    * @description Stable optional application failure code, independent of the localized detail.

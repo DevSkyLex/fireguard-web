@@ -16,12 +16,14 @@ export interface ApprovalRequestOutputFixture {
   readonly organizationId: string;
   readonly actionType: string;
   readonly subjectId: string;
-  readonly status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'expired';
+  readonly status: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'cancelled' | 'expired';
   readonly requestedByMemberId: string;
   readonly requestedByUserId: string;
   readonly expiresAt: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly allowedActions?: readonly ('approve' | 'reject' | 'withdraw')[];
+  readonly decisionBlockReason?: string | null;
 }
 
 /** A pending non-conformity waiver request, awaiting a decision. */

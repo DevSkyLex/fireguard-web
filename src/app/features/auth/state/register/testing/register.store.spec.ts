@@ -105,7 +105,7 @@ describe('RegisterStore', () => {
     expect(store.resendAvailableIn()).toBeLessThanOrEqual(60);
   });
 
-  it('should memorize the retry delay parsed from a 429 resend refusal', async () => {
+  it('should memorize the structured retry delay from a 429 resend refusal', async () => {
     mockRegistrationService.register.mockReturnValue(
       of({ ...registerResponse, canResendIn: null }),
     );
@@ -113,7 +113,9 @@ describe('RegisterStore', () => {
       throwError(() => ({
         '@type': 'hydra:Error',
         status: 429,
-        detail: 'Please wait 15 seconds before resending.',
+        code: 'rate_limit_exceeded',
+        retryAfterSeconds: 15,
+        detail: 'Réessayez plus tard.',
       })),
     );
 

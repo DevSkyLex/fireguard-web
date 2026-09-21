@@ -8,11 +8,13 @@ import {
   signal,
   untracked,
   type InputSignal,
+  type Signal,
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
 import {
   applyEach,
+  disabled,
   form,
   FormField,
   maxLength,
@@ -20,6 +22,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import type {
+  CreateChecklistInput,
   ChecklistItemDraft,
   ChecklistItemInput,
   ChecklistOutput,
@@ -32,11 +35,11 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 
 /** Matches `UpdateChecklistInput.name`'s server-side bound (`Assert\Length(max: 255)`). */
-const NAME_MAX_LENGTH = 255;
+const NAME_MAX_LENGTH: number = 255;
 /** Matches `ChecklistItemInput.label`'s server-side bound. */
-const ITEM_LABEL_MAX_LENGTH = 255;
+const ITEM_LABEL_MAX_LENGTH: number = 255;
 /** Matches `ChecklistItemInput.description`'s server-side bound. */
-const ITEM_DESCRIPTION_MAX_LENGTH = 1000;
+const ITEM_DESCRIPTION_MAX_LENGTH: number = 1000;
 
 /** A blank item row. */
 const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: true };
@@ -52,8 +55,8 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  * {@link checklist} every time {@link visible} turns true, so a reopened
  * dialog for a different row never resumes the previous one's edits.
  *
- * `items` is always emitted as a full replacement list once at least one row
- * exists, matching `UpdateChecklistInput`'s PATCH semantics on the backend
+ * Only changed fields are emitted. Changed `items` form a full replacement list,
+ * matching `UpdateChecklistInput`'s PATCH semantics on the backend
  * (`ChecklistResource`). Presentational: it validates and emits
  * {@link submitted}; the hosting dialog calls `ChecklistStore.update`
  * (`ARCHITECTURE.md` §10.5).
@@ -99,6 +102,21 @@ export class ChecklistEditForm {
    * @type {InputSignal<boolean>}
    */
   public readonly creating = input(false);
+
+  /**
+   * Property itemsEditable
+   * @readonly
+   * @since 1.0.0
+   * @description Whether the server permits structural changes, or a distinct checklist is being created.
+   * @access protected
+   * @type {Signal<boolean>}
+   */
+  protected readonly itemsEditable: Signal<boolean> = computed(
+    () =>
+      this.creating() ||
+      (this.checklist()?.canEditItems !== false && this.checklist()?.status !== 'archived'),
+  );
+
   /**
    * Property dirtyChanged
    * @readonly
@@ -168,10 +186,11 @@ export class ChecklistEditForm {
    * @description Emits the validated update payload.
    * @access public
    * @since 1.0.0
-   * @type {OutputEmitterRef<UpdateChecklistInput>}
+   * @type {OutputEmitterRef<UpdateChecklistInput | CreateChecklistInput>}
    */
-  public readonly submitted: OutputEmitterRef<UpdateChecklistInput> =
-    output<UpdateChecklistInput>();
+  public readonly submitted: OutputEmitterRef<UpdateChecklistInput | CreateChecklistInput> = output<
+    UpdateChecklistInput | CreateChecklistInput
+  >();
 
   /**
    * Property cancelled
@@ -185,8 +204,19 @@ export class ChecklistEditForm {
   //#endregion
 
   //#region Properties
-  /** The checklist name draft. */
-  protected readonly model: WritableSignal<{ readonly name: string }> = signal({ name: '' });
+  /**
+   * Property model
+   * @readonly
+   * @description Checklist metadata staged in the editor.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<{ name: string; referenceCode: string; version: string }>}
+   */
+  protected readonly model: WritableSignal<{
+    readonly name: string;
+    readonly referenceCode: string;
+    readonly version: string;
+  }> = signal({ name: '', referenceCode: '', version: '1.0' });
 
   /** Item rows staged for submission. */
   protected readonly staged: WritableSignal<ReadonlyArray<ChecklistItemDraft>> = signal<
@@ -203,19 +233,26 @@ export class ChecklistEditForm {
    * @description The field tree and its rules for the checklist name.
    * @access protected
    * @since 1.0.0
-   * @type {FieldTree<{ readonly name: string }>}
+   * @type {FieldTree<{ readonly name: string; readonly referenceCode: string; readonly version: string }>}
    */
-  protected readonly nameForm: FieldTree<{ readonly name: string }> = form(
-    this.model,
-    (path): void => {
-      required(path.name, {
-        message: $localize`:@@checklists.form.nameRequired:Give the checklist a name.`,
-      });
-      maxLength(path.name, NAME_MAX_LENGTH, {
-        message: $localize`:@@checklists.form.nameLength:Use at most 255 characters.`,
-      });
-    },
-  );
+  protected readonly nameForm: FieldTree<{
+    readonly name: string;
+    readonly referenceCode: string;
+    readonly version: string;
+  }> = form(this.model, (path): void => {
+    disabled(path.version, { when: () => !this.creating() });
+    required(path.version, {
+      message: $localize`:@@checklists.form.versionRequired:Enter a version for this checklist.`,
+    });
+    maxLength(path.version, 50);
+    maxLength(path.referenceCode, 40);
+    required(path.name, {
+      message: $localize`:@@checklists.form.nameRequired:Give the checklist a name.`,
+    });
+    maxLength(path.name, NAME_MAX_LENGTH, {
+      message: $localize`:@@checklists.form.nameLength:Use at most 255 characters.`,
+    });
+  });
 
   /**
    * Property itemDraftForm
@@ -247,15 +284,19 @@ export class ChecklistEditForm {
    * @since 1.0.0
    * @type {FieldTree<readonly ChecklistItemDraft[]>}
    */
-  protected readonly stagedForm = form(this.staged, (path) => {
-    applyEach(path, (item) => {
-      required(item.label, {
-        message: $localize`:@@checklists.form.itemLabelRequired:The item needs a label.`,
+  protected readonly stagedForm: FieldTree<readonly ChecklistItemDraft[]> = form(
+    this.staged,
+    (path) => {
+      disabled(path, { when: () => !this.itemsEditable() });
+      applyEach(path, (item) => {
+        required(item.label, {
+          message: $localize`:@@checklists.form.itemLabelRequired:The item needs a label.`,
+        });
+        maxLength(item.label, ITEM_LABEL_MAX_LENGTH);
+        maxLength(item.description, ITEM_DESCRIPTION_MAX_LENGTH);
       });
-      maxLength(item.label, ITEM_LABEL_MAX_LENGTH);
-      maxLength(item.description, ITEM_DESCRIPTION_MAX_LENGTH);
-    });
-  });
+    },
+  );
   /**
    * Property dirty
    * @readonly
@@ -264,9 +305,9 @@ export class ChecklistEditForm {
    * @since 1.0.0
    * @type {Signal<boolean>}
    */
-  protected readonly dirty = computed(
+  protected readonly dirty: Signal<boolean> = computed(
     () =>
-      this.baseline() !== JSON.stringify({ name: this.model().name, items: this.staged() }) ||
+      this.baseline() !== JSON.stringify({ model: this.model(), items: this.staged() }) ||
       this.itemDraft().label !== '' ||
       this.itemDraft().description !== '',
   );
@@ -286,7 +327,11 @@ export class ChecklistEditForm {
 
       const checklist: ChecklistOutput | null = this.checklist();
 
-      this.model.set({ name: checklist?.name ?? '' });
+      this.model.set({
+        name: checklist?.name ?? '',
+        referenceCode: this.creating() ? '' : (checklist?.referenceCode ?? ''),
+        version: this.creating() && checklist ? '' : (checklist?.version ?? '1.0'),
+      });
       this.staged.set(
         (checklist?.items ?? [])
           .toSorted((a, b) => a.position - b.position)
@@ -297,7 +342,7 @@ export class ChecklistEditForm {
           })),
       );
       untracked(() =>
-        this.baseline.set(JSON.stringify({ name: this.model().name, items: this.staged() })),
+        this.baseline.set(JSON.stringify({ model: this.model(), items: this.staged() })),
       );
       this.itemDraft.set(EMPTY_ITEM);
       this.itemDraftForm().reset();
@@ -315,6 +360,7 @@ export class ChecklistEditForm {
    * @returns {void}
    */
   protected addItem(): void {
+    if (!this.itemsEditable()) return;
     this.itemDraftForm().markAsTouched();
 
     if (this.itemDraftForm().invalid()) return;
@@ -333,6 +379,7 @@ export class ChecklistEditForm {
    * @returns {void}
    */
   protected removeItem(index: number): void {
+    if (!this.itemsEditable()) return;
     this.staged.update((rows) => rows.filter((_, i) => i !== index));
   }
 
@@ -346,6 +393,7 @@ export class ChecklistEditForm {
    * @returns {void}
    */
   protected moveItem(index: number, direction: -1 | 1): void {
+    if (!this.itemsEditable()) return;
     const target: number = index + direction;
 
     this.staged.update((rows) => {
@@ -395,7 +443,28 @@ export class ChecklistEditForm {
       }),
     );
 
-    this.submitted.emit({ name: this.model().name.trim(), items });
+    const name: string = this.model().name.trim();
+    const referenceCode: string | null = this.model().referenceCode.trim() || null;
+    if (this.creating()) {
+      this.submitted.emit({ name, referenceCode, version: this.model().version.trim(), items });
+      return;
+    }
+    const original: ChecklistOutput | null = this.checklist();
+    const originalItems: ReadonlyArray<ChecklistItemDraft> = (original?.items ?? [])
+      .toSorted((a, b) => a.position - b.position)
+      .map((item) => ({
+        label: item.label,
+        description: item.description ?? '',
+        required: item.required,
+      }));
+    const patch: UpdateChecklistInput = {
+      ...(name !== original?.name ? { name } : {}),
+      ...(referenceCode !== (original?.referenceCode ?? null) ? { referenceCode } : {}),
+      ...(this.itemsEditable() && JSON.stringify(this.staged()) !== JSON.stringify(originalItems)
+        ? { items }
+        : {}),
+    };
+    if (Object.keys(patch).length > 0) this.submitted.emit(patch);
   }
   //#endregion
 }

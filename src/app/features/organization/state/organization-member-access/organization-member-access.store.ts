@@ -1,4 +1,5 @@
 import { computed, effect, inject, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -8,6 +9,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
+import { Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
@@ -33,10 +35,15 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { authStoreEvents } from '@features/auth';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';
+import { myOrganizationsStoreEvents } from '../my-organizations/events';
+import { organizationInvitationAcceptStoreEvents } from '../organization-invitation-accept/events';
+import { organizationMembershipEvents } from '../organization-membership/events';
+import { organizationSettingsStoreEvents } from '../organization-settings/events';
 import type { OrganizationMemberAccessState } from './models';
 
 const INITIAL_STATE: OrganizationMemberAccessState = {
@@ -248,6 +255,7 @@ export const OrganizationMemberAccessStore = signalStore(
             return;
           }
 
+          this.clear();
           patchState(store, {
             currentOrganizationId: organizationId,
             accessCallState: idleCallState(),
@@ -271,12 +279,34 @@ export const OrganizationMemberAccessStore = signalStore(
   ),
 
   withHooks((store) => {
+    const accessEvents = inject(Events);
     const activeOrganizationStore: ActiveOrganizationStore =
       inject<ActiveOrganizationStore>(ActiveOrganizationStore);
     const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
 
     return {
       onInit(): void {
+        accessEvents
+          .on(authStoreEvents.sessionEnded)
+          .pipe(takeUntilDestroyed())
+          .subscribe(() => store.clear());
+        accessEvents
+          .on(
+            myOrganizationsStoreEvents.leaveSucceeded,
+            organizationSettingsStoreEvents.membershipLeft,
+          )
+          .pipe(takeUntilDestroyed())
+          .subscribe(({ payload }) => {
+            if (payload.organizationId === store.currentOrganizationId()) store.clear();
+          });
+        accessEvents
+          .on(
+            organizationInvitationAcceptStoreEvents.acceptSucceeded,
+            organizationMembershipEvents.joined,
+            organizationSettingsStoreEvents.organizationUpdated,
+          )
+          .pipe(takeUntilDestroyed())
+          .subscribe(() => store.reload());
         /**
          * Identifier seen by the previous run, so a *transition* to `null` can
          * be told apart from simply not knowing it yet.

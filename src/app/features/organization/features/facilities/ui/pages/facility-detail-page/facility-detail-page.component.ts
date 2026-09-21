@@ -774,6 +774,19 @@ export class FacilityDetailPage {
     registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
 
     effect((): void => {
+      const state: CallState<null> = this.plans.saveZoneGeometryCallState();
+      untracked((): void => {
+        if (state.status === 'success') this.zoneGeometryDialogFacilityId.set(null);
+      });
+    });
+    effect((): void => {
+      const state: CallState<null> = this.plans.savePinPositionCallState();
+      untracked((): void => {
+        if (state.status === 'success') this.pinPositionDialogEquipmentId.set(null);
+      });
+    });
+
+    effect((): void => {
       const requested: FacilityDetailTabId = normalizeFacilityDetailTabId(this.tab());
 
       untracked((): void => this.activateTab(requested));
@@ -1262,7 +1275,7 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneGeometrySubmitted
-   * @description The "Edit coordinates" dialog's submit path.
+   * @description Submits the coordinates; only a confirmed success closes the dialog, so errors preserve its draft.
    * @access protected
    * @since 1.4.0
    * @param {ReadonlyArray<readonly [number, number]>} points - The submitted outline.
@@ -1273,7 +1286,6 @@ export class FacilityDetailPage {
     if (!facilityId) return;
 
     this.plans.saveZoneGeometryFromDialog(facilityId, points);
-    this.zoneGeometryDialogFacilityId.set(null);
   }
 
   /**
@@ -1288,7 +1300,6 @@ export class FacilityDetailPage {
     if (!facilityId) return;
 
     this.plans.clearZoneGeometry(facilityId);
-    this.zoneGeometryDialogFacilityId.set(null);
   }
 
   /**
@@ -1334,7 +1345,6 @@ export class FacilityDetailPage {
     } else {
       this.plans.movePin(equipmentId, point);
     }
-    this.pinPositionDialogEquipmentId.set(null);
   }
 
   /**
@@ -1347,9 +1357,6 @@ export class FacilityDetailPage {
    */
   protected onPinPositionRemoved(equipmentId: string): void {
     this.plans.removePinFromPlan(equipmentId);
-    if (this.pinPositionDialogEquipmentId() === equipmentId) {
-      this.pinPositionDialogEquipmentId.set(null);
-    }
   }
 
   /**

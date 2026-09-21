@@ -1,5 +1,9 @@
 @if (isMobileInteractionMode()) {
-  <hlm-drawer #notificationDrawer="hlmDrawer" (stateChanged)="onPanelState($event)">
+  <hlm-drawer
+    #notificationDrawer="hlmDrawer"
+    [state]="panelState()"
+    (stateChanged)="onPanelState($event)"
+  >
     <button
       class="mobile-ui:min-h-11"
       hlmBtn
@@ -51,7 +55,12 @@
     </hlm-drawer-content>
   </hlm-drawer>
 } @else {
-  <hlm-popover sideOffset="5" [align]="panelAlign()" (stateChanged)="onPanelState($event)">
+  <hlm-popover
+    [state]="panelState()"
+    sideOffset="5"
+    [align]="panelAlign()"
+    (stateChanged)="onPanelState($event)"
+  >
     @if (slotPresentation === 'menu') {
       <button
         hlmPopoverTrigger
@@ -138,6 +147,31 @@
 
   <hlm-separator class="mobile-ui:hidden" />
 
+  @if (!store.complete()) {
+    <div role="status" class="flex flex-col gap-2 border-b p-3">
+      <p class="text-sm" i18n="@@account.inbox.partial">
+        Some updates are unavailable. Retry to see the complete inbox.
+      </p>
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="store.isLoading()"
+        (click)="retry()"
+        i18n="@@account.inbox.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (store.readCallState().status === 'error') {
+    <p role="alert" class="p-3 text-sm text-destructive" i18n="@@account.inbox.readFailed">
+      This update could not be marked as read. Select it to try again.
+    </p>
+  }
+
   <div
     class="overflow-y-auto overscroll-contain mobile-ui:max-h-[55dvh] desktop-ui:max-h-[165.75px]"
     data-testid="notification-bell-list"
@@ -158,7 +192,8 @@
           <span i18n="@@account.notificationBell.retry">Retry</span>
         </button>
       </div>
-    } @else if (store.isLoading() && store.notifications().length === 0) {
+    }
+    @if (store.isLoading() && store.entryEntities().length === 0) {
       <div
         role="status"
         aria-label="Loading notifications"
@@ -176,7 +211,9 @@
           </div>
         }
       </div>
-    } @else if (store.notifications().length === 0) {
+    } @else if (
+      store.entryEntities().length === 0 && store.complete() && store.listError() === null
+    ) {
       <p
         class="px-2.5 py-6 text-center text-sm text-muted-foreground"
         i18n="@@account.notificationBell.empty"
@@ -185,7 +222,10 @@
       </p>
     } @else {
       <ul>
-        @for (notification of store.notifications(); track notification.id) {
+        @for (
+          notification of store.entryEntities();
+          track notification.sourceKey + ':' + notification.id
+        ) {
           <li>
             <button
               hlmItem
@@ -213,7 +253,7 @@
                 >
                   <span
                     class="min-w-0 mobile-ui:break-words mobile-ui:whitespace-normal desktop-ui:truncate"
-                    >{{ notification.subject }}</span
+                    >{{ notification.title }}</span
                   >
                 </span>
                 <span
@@ -222,15 +262,15 @@
                 >
                   <span
                     class="min-w-0 mobile-ui:break-words mobile-ui:whitespace-normal desktop-ui:truncate"
-                    >{{ notification.body }}</span
+                    >{{ notification.snippet }}</span
                   >
                 </span>
               </span>
               <span hlmItemActions>
                 <time
                   class="text-xs text-muted-foreground"
-                  [attr.datetime]="notification.createdAt"
-                  >{{ relativeTime(notification.createdAt) }}</time
+                  [attr.datetime]="notification.occurredAt"
+                  >{{ relativeTime(notification.occurredAt) }}</time
                 >
               </span>
             </button>

@@ -23,6 +23,11 @@ const APPROVAL_STATUS: Record<ApprovalStatus, ApprovalTagDescriptor> = {
     severity: 'danger',
     icon: 'lucideCircleX',
   },
+  withdrawn: {
+    label: $localize`:@@approvals.status.withdrawn:Withdrawn`,
+    severity: 'neutral',
+    icon: 'lucideBan',
+  },
   cancelled: {
     label: $localize`:@@approvals.status.cancelled:Cancelled`,
     severity: 'neutral',

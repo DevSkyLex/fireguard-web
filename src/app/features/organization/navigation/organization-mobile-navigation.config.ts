@@ -181,7 +181,7 @@ export function buildOrganizationMobileNavigation(
     });
   }
   const adminLinks = [...ORGANIZATION_SWITCHER_QUICK_LINKS, ...MEMBERSHIP_TAB_LINKS];
-  const adminOrder = ['members', 'teams', 'roles', 'settings', 'billing', 'audit'];
+  const adminOrder = ['members', 'teams', 'roles', 'settings', 'billing', 'webhooks', 'audit'];
   sections.push(
     {
       id: 'administration',

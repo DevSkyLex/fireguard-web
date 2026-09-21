@@ -109,6 +109,36 @@ export class ImportJobDetailSheet {
    * @type {OutputEmitterRef<void>}
    */
   public readonly refreshRequested = output<void>();
+
+  /**
+   * Property resuming
+   * @readonly
+   * @description Server resumption request state.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly resuming: InputSignal<boolean> = input(false);
+
+  /**
+   * Property resumeError
+   * @readonly
+   * @description Last resumption failure, retaining confirmed report data.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly resumeError: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property resumeRequested
+   * @readonly
+   * @description Requests resumption of the current import identifier.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly resumeRequested: OutputEmitterRef<void> = output<void>();
   /**
    * Property page
    * @readonly
@@ -138,6 +168,46 @@ export class ImportJobDetailSheet {
   protected readonly pageRows = computed(() =>
     this.rows().slice((this.page() - 1) * 50, this.page() * 50),
   );
+
+  /**
+   * Property confirming
+   * @readonly
+   * @description Whether simulation confirmation is pending.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly confirming: InputSignal<boolean> = input(false);
+
+  /**
+   * Property confirmError
+   * @readonly
+   * @description A confirmation failure preserves the simulation report.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly confirmError: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property confirmRequested
+   * @readonly
+   * @description Confirms the retained simulation after reviewing its report.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly confirmRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property confirmedReportRequested
+   * @readonly
+   * @description Opens the real import linked by an earlier confirmation.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly confirmedReportRequested: OutputEmitterRef<string> = output<string>();
 
   //#region Inputs
   /**
@@ -226,7 +296,7 @@ export class ImportJobDetailSheet {
    */
   protected readonly summary: Signal<string | null> = computed<string | null>(() => {
     const job: ImportJobOutput | null = this.job();
-    if (job === null || job.status === 'pending') return null;
+    if (job === null || (job.status === 'pending' && job.processedRows === 0)) return null;
 
     if (job.dryRun) {
       return $localize`:@@imports.report.dryRunSummary:Dry run — no data was written. ${job.successfulRows}:would: row(s) would be created, ${job.failedRows}:issues: with issues.`;

@@ -107,6 +107,13 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
 
 ## Invariants
 
+- **Completeness is server-owned.** The additive `complete` and `sources` fields distinguish
+  unavailable contributors and source truncation. Only authorized sources are described. The page
+  keeps available entries visible, offers retry and a one-day window for truncation, and suppresses
+  every complete-empty message while the response is partial. Legacy responses without these
+  additive fields remain readable during rollout. iCal subscriptions return a retryable 503 instead
+  of publishing an incomplete calendar as a successful synchronization.
+
 - **Refresh-after-write, not client-side patching.** A successful
   create/update/delete re-runs the feed's last loaded window
   (`CalendarFeedStore` remembers it as `lastLoadCommand`) rather than

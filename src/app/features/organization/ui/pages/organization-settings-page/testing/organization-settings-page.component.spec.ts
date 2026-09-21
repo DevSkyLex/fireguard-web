@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  computed,
   input,
   provideZonelessChangeDetection,
   signal,
@@ -10,6 +11,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
 import { PageTabsService } from '@core/page-tabs';
 import {
@@ -34,7 +36,10 @@ import {
   OrganizationQuotaStore,
 } from '@features/organization/state';
 import { OrganizationAccessAdminStore } from '@features/organization/state/organization-access-admin';
-import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
+import {
+  OrganizationBillingStore,
+  organizationBillingStoreEvents,
+} from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationPlanSelector } from '../../../components/organization-plan-selector';
@@ -110,6 +115,12 @@ describe('OrganizationSettingsPage', () => {
   let transferOwnership: ReturnType<typeof vi.fn>;
 
   let loadSubscription: ReturnType<typeof vi.fn>;
+  let watchCheckout: ReturnType<typeof vi.fn>;
+  let awaitingCheckout: WritableSignal<boolean>;
+  let isCheckingCheckout: WritableSignal<boolean>;
+  let resolveOrganization: ReturnType<typeof vi.fn>;
+  let loadQuota: ReturnType<typeof vi.fn>;
+  let reloadAccess: ReturnType<typeof vi.fn>;
   let loadPricing: ReturnType<typeof vi.fn>;
   let loadInvoices: ReturnType<typeof vi.fn>;
   let startCheckout: ReturnType<typeof vi.fn>;
@@ -155,13 +166,14 @@ describe('OrganizationSettingsPage', () => {
           provide: ActiveOrganizationStore,
           useValue: {
             selectedOrganization,
-            selectedOrganizationId: signal('org-1'),
+            selectedOrganizationId: computed(() => selectedOrganization()?.id ?? null),
             clear: clearActiveOrganization,
+            resolveOrganization,
           },
         },
         {
           provide: OrganizationQuotaStore,
-          useValue: { items: signal([]), isLoadingQuota: signal(false) },
+          useValue: { items: signal([]), isLoadingQuota: signal(false), load: loadQuota },
         },
         {
           provide: ApprovalRequestService,
@@ -169,7 +181,7 @@ describe('OrganizationSettingsPage', () => {
         },
         {
           provide: OrganizationMemberAccessStore,
-          useValue: { profile: actingProfile },
+          useValue: { profile: actingProfile, reload: reloadAccess },
         },
         {
           provide: OrganizationMemberService,
@@ -246,6 +258,10 @@ describe('OrganizationSettingsPage', () => {
             provide: OrganizationBillingStore,
             useValue: {
               subscription,
+              watchCheckout,
+              awaitingCheckout,
+              isCheckingCheckout,
+              checkoutConfirmed: signal(false),
               isLoadingSubscription: signal(false),
               pricing: signal([]),
               isLoadingPricing: signal(false),
@@ -300,6 +316,14 @@ describe('OrganizationSettingsPage', () => {
   }
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {}
+      },
+    );
     selectedOrganization = signal<OrganizationOutput | null>(organization());
     deleteCallState = signal<CallState<void>>(idleCallState());
     statusCallState = signal<CallState<OrganizationOutput>>(idleCallState());
@@ -324,6 +348,12 @@ describe('OrganizationSettingsPage', () => {
     restore = vi.fn();
     transferOwnership = vi.fn();
     loadSubscription = vi.fn();
+    watchCheckout = vi.fn();
+    awaitingCheckout = signal(false);
+    isCheckingCheckout = signal(false);
+    resolveOrganization = vi.fn().mockReturnValue(of(organization()));
+    loadQuota = vi.fn();
+    reloadAccess = vi.fn();
     loadPricing = vi.fn();
     loadInvoices = vi.fn();
     startCheckout = vi.fn();
@@ -334,7 +364,66 @@ describe('OrganizationSettingsPage', () => {
     listLegalTypes = vi.fn().mockReturnValue(of({ member: [], totalItems: 0 }));
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.unstubAllGlobals();
+  });
+
+  it('tracks a Checkout return without treating the query parameters as an active plan', async () => {
+    await createPage('subscription');
+    fixture.componentRef.setInput('checkout', 'success');
+    fixture.componentRef.setInput('checkoutPlan', 'pro');
+    fixture.componentRef.setInput('checkoutInterval', 'year');
+    awaitingCheckout.set(true);
+    isCheckingCheckout.set(true);
+    await fixture.whenStable();
+    expect(watchCheckout).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      planKey: 'pro',
+      interval: 'year',
+    });
+    expect(byTestId('org-settings-checkout-pending')).not.toBeNull();
+    expect((byTestId('org-settings-checkout-refresh') as HTMLButtonElement).disabled).toBe(true);
+    expect(resolveOrganization).not.toHaveBeenCalled();
+    isCheckingCheckout.set(false);
+    await fixture.whenStable();
+    byTestId('org-settings-checkout-refresh')?.click();
+    expect(watchCheckout).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      planKey: 'pro',
+      interval: 'year',
+    });
+  });
+
+  it('refreshes the organization, quotas and access only after its server confirmation', async () => {
+    await createPage('subscription');
+    const dispatcher = TestBed.inject(Dispatcher);
+    dispatcher.dispatch(
+      organizationBillingStoreEvents.checkoutReconciled({ organizationId: 'org-2' }),
+    );
+    expect(loadQuota).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      organizationBillingStoreEvents.checkoutReconciled({ organizationId: 'org-1' }),
+    );
+    await fixture.whenStable();
+    expect(loadQuota).toHaveBeenCalledExactlyOnceWith('org-1');
+    expect(reloadAccess).toHaveBeenCalledOnce();
+    expect(resolveOrganization).toHaveBeenCalledExactlyOnceWith('org-1');
+    expect(loadInvoices).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears previous billing reads when changing organizations from a hidden tab', async () => {
+    await createPage('subscription');
+    fixture.componentRef.setInput('tab', 'general');
+    selectedOrganization.set(organization({ id: 'org-2' }));
+    await fixture.whenStable();
+    expect(watchCheckout).toHaveBeenLastCalledWith(null);
+    expect(loadSubscription).toHaveBeenLastCalledWith(null);
+    fixture.componentRef.setInput('tab', 'subscription');
+    await fixture.whenStable();
+    expect(loadSubscription).toHaveBeenLastCalledWith('org-2');
+    expect(loadInvoices).toHaveBeenLastCalledWith('org-2');
+  });
 
   it('should show a loading skeleton instead of the tabs before the organization has landed', async () => {
     selectedOrganization.set(null);

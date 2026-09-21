@@ -15,6 +15,16 @@ export class ImportsPage {
   public readonly filtersToggle: Locator = this.page.getByTestId('imports-filters-toggle');
   public readonly addFilterTrigger: Locator = this.page.getByTestId('imports-filters-add');
   public readonly filterChips: Locator = this.page.getByTestId('imports-filter-chip');
+  public readonly report: Locator = this.page.getByTestId('import-job-detail-sheet');
+  public readonly resume: Locator = this.page.getByTestId('import-resume');
+  public readonly summary: Locator = this.page.getByTestId('import-job-detail-summary');
+
+  /** Opens the report of the named uploaded file. */
+  public async openReport(filename: string): Promise<void> {
+    await this.root
+      .getByRole('button', { name: `View report for ${filename}`, exact: true })
+      .click();
+  }
 
   public async goto(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/imports`);

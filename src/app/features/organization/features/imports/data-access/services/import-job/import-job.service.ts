@@ -4,6 +4,7 @@ import { expand, switchMap, take, takeWhile } from 'rxjs/operators';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
+  ImportTemplateOutput,
   ImportJobKind,
   ImportJobListQuery,
   ImportJobOutput,
@@ -61,6 +62,36 @@ function isImportJobRunning(job: ImportJobOutput): boolean {
  */
 @Service()
 export class ImportJobService extends HydraApiService {
+  /**
+   * Method confirm
+   * @description Confirms a retained simulation; repeated requests return the same real import.
+   * @access public
+   * @since 1.1.0
+   * @param {string} simulationId - The completed simulation identifier.
+   * @returns {Observable<ImportJobOutput>} The one server-confirmed import.
+   */
+  public confirm(simulationId: string): Observable<ImportJobOutput> {
+    return this.post<Record<string, never>, ImportJobOutput>(
+      `${IMPORTS_PATH}/${simulationId}/confirm`,
+      {},
+    );
+  }
+
+  /**
+   * Method template
+   * @description Reads the CSV template allowed by current organization access.
+   * @access public
+   * @since 1.1.0
+   * @param {string} organizationId - The owning organization.
+   * @param {ImportJobKind} kind - The resource kind.
+   * @returns {Observable<ImportTemplateOutput>} Filename, CSV content and media type.
+   */
+  public template(organizationId: string, kind: ImportJobKind): Observable<ImportTemplateOutput> {
+    return this.getOne<ImportTemplateOutput>(
+      `/api/organizations/${organizationId}/import-templates/${kind}`,
+    );
+  }
+
   //#region Public Methods
   /**
    * Method create
@@ -148,13 +179,25 @@ export class ImportJobService extends HydraApiService {
   }
 
   /**
+   * Method resume
+   * @description Resumes an existing import while retaining every server-confirmed row.
+   * @access public
+   * @since 1.0.0
+   * @param {string} jobId - Existing import identifier.
+   * @returns {Observable<ImportJobOutput>} Accepted import state.
+   */
+  public resume(jobId: string): Observable<ImportJobOutput> {
+    return this.postAction<ImportJobOutput>(`${IMPORTS_PATH}/${jobId}/resume`);
+  }
+
+  /**
    * Method pollJob
    * @method pollJob
    *
    * @description
    * Re-reads a job once per {@link IMPORT_JOB_POLL_INTERVAL_MS} until it
    * leaves `pending`/`processing`, emitting each observed state — the
-   * worker flushes progress every 50 rows, so a caller renders live
+   * worker commits progress with each row receipt, so a caller renders confirmed
    * `processedRows`/`totalRows` from these emissions. Bounded by
    * {@link IMPORT_JOB_POLL_MAX_EMISSIONS}, mirroring
    * `InterventionService.pollPublication`.

@@ -14,5 +14,6 @@ import type { AccountNotificationsTabId } from '../models';
  */
 export const ACCOUNT_NOTIFICATIONS_TAB_IDS: ReadonlyArray<AccountNotificationsTabId> = [
   'inbox',
+  'notifications',
   'preferences',
 ];

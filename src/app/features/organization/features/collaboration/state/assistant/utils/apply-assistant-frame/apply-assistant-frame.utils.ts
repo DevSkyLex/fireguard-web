@@ -32,17 +32,44 @@ export function applyAssistantFrame(
   messages: readonly AssistantMessageOutput[],
   frame: AssistantFrame,
 ): readonly AssistantMessageOutput[] {
-  return messages.map((message: AssistantMessageOutput): AssistantMessageOutput =>
-    message.id === frame.messageId
-      ? {
-          ...message,
-          body: frame.body,
-          status: frame.status,
-          // Frames send explicit nulls where the HTTP contract omits the key;
-          // normalizing here keeps one shape in state.
-          errorCode: frame.errorCode ?? undefined,
-          tokenCount: frame.tokenCount ?? undefined,
-        }
-      : message,
-  );
+  let changed = false;
+  const next = messages.map((message): AssistantMessageOutput => {
+    if (message.id !== frame.messageId) return message;
+    if (message.attemptId) {
+      if (!frame.attemptId || (frame.attemptNumber ?? 0) < (message.attemptNumber ?? 0))
+        return message;
+      if ((frame.attemptNumber ?? 0) === (message.attemptNumber ?? 0)) {
+        if (
+          frame.attemptId !== message.attemptId ||
+          (frame.attemptSequence ?? 0) <= (message.attemptSequence ?? 0)
+        )
+          return message;
+        if (
+          message.status === 'cancelled' ||
+          message.status === 'complete' ||
+          message.status === 'failed'
+        )
+          return message;
+      }
+    }
+    changed = true;
+    const active = frame.status === 'pending' || frame.status === 'streaming';
+    return {
+      ...message,
+      body: frame.body,
+      status: frame.status,
+      errorCode: frame.errorCode ?? undefined,
+      tokenCount: frame.tokenCount ?? undefined,
+      attemptId: frame.attemptId ?? message.attemptId,
+      attemptNumber: frame.attemptNumber ?? message.attemptNumber,
+      attemptSequence: frame.attemptSequence ?? message.attemptSequence,
+      attemptExpiresAt: frame.attemptExpiresAt ?? message.attemptExpiresAt,
+      canCancel: frame.canCancel ?? (active && !!frame.attemptId),
+      canRetry:
+        frame.canRetry ??
+        ((frame.attemptNumber ?? 0) > 0 &&
+          (frame.status === 'failed' || frame.status === 'cancelled')),
+    };
+  });
+  return changed ? next : messages;
 }

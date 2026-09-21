@@ -188,6 +188,24 @@ describe('ApprovalRequestService', () => {
     });
   });
 
+  it('sends withdrawal with its reason and returns recorded history', () => {
+    let result: ApprovalRequestOutput | undefined;
+    service
+      .withdraw(organizationId, requestId, { decisionNote: 'Entered twice' })
+      .subscribe((value) => (result = value));
+    const request = httpMock.expectOne(`${requestsUrl}/${requestId}/withdraw`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ decisionNote: 'Entered twice' });
+    request.flush({
+      ...mockRequest,
+      status: 'withdrawn',
+      decisionNote: 'Entered twice',
+      allowedActions: [],
+    });
+    expect(result?.status).toBe('withdrawn');
+    expect(result?.decisionNote).toBe('Entered twice');
+  });
+
   describe('listActionTypes', () => {
     it('should GET the canonical action-type catalog', () => {
       const actionType: ApprovalActionTypeOutput = {

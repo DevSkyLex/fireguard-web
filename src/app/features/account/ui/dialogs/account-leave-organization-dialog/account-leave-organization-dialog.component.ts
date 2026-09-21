@@ -67,6 +67,15 @@ export class AccountLeaveOrganizationDialog {
 
   /** The last leave attempt's error message, or `null`. */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+  /**
+   * Property departureConfirmed
+   * @readonly
+   * @description Departure is complete; only the access refresh may be retried.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly departureConfirmed: InputSignal<boolean> = input(false);
   //#endregion
 
   //#region Outputs

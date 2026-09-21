@@ -16,9 +16,10 @@ describe('decideErrorMessage', () => {
     code: number | null,
     detail: string,
     message: string | null = null,
+    applicationCode?: string,
   ): StoreError {
     return {
-      error: { ...baseError, status: code ?? 0, detail },
+      error: { ...baseError, status: code ?? 0, detail, code: applicationCode },
       message,
       code,
       retryable: false,
@@ -26,32 +27,30 @@ describe('decideErrorMessage', () => {
     };
   }
 
-  it('should map a 409 with a subject-changed detail to the cancellation copy', () => {
+  it('maps the subject-changed code independently of the detail language', () => {
     expect(
-      decideErrorMessage(storeError(409, 'The deferred action can no longer be applied: reopened')),
+      decideErrorMessage(
+        storeError(409, 'La ressource a changé.', null, 'approval_subject_changed'),
+      ),
     ).toContain('cancelled');
   });
 
-  it('should map any other 409 to the already-decided copy', () => {
-    expect(
-      decideErrorMessage(storeError(409, 'Approval request with ID "x" is no longer pending.')),
-    ).toContain('already decided');
+  it('maps the no-longer-pending code', () => {
+    expect(decideErrorMessage(storeError(409, '', null, 'approval_not_pending'))).toContain(
+      'already decided',
+    );
   });
 
   it('should map a 403 with a self-approval detail to the self-approval copy', () => {
     expect(
-      decideErrorMessage(
-        storeError(403, 'The requester cannot decide on their own approval request.'),
-      ),
+      decideErrorMessage(storeError(403, '', null, 'approval_self_decision_forbidden')),
     ).toContain('yourself');
   });
 
   it('should map any other 403 to the below-minimum-role copy', () => {
-    expect(
-      decideErrorMessage(
-        storeError(403, 'Deciding this request requires at least the "admin" role.'),
-      ),
-    ).toContain('approver');
+    expect(decideErrorMessage(storeError(403, '', null, 'approval_role_required'))).toContain(
+      'approver',
+    );
   });
 
   it('should fall back to the normalized message for any other status', () => {

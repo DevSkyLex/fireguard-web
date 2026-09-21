@@ -1,5 +1,8 @@
 # Organization Feature
 
+Account consumes the published `ORGANIZATION_CONTEXT_PORT` for its workspace-scoped unified inbox.
+Switching that context invalidates the account-owned inbox cache before new reads.
+
 Dashboard query data and errors belong to their producing organization. Switching or clearing
 organization resets all three dashboard stores and cancels obsolete reads; only same-organization
 period changes and retries retain previous data and response-period labels.
@@ -295,6 +298,13 @@ The plan comparison uses the native Spartan single-value toggle group to switch 
 annual catalog pricing. Each higher tier states that it includes the preceding tier and renders its
 server-provided quota summaries with check marks; the UI does not invent additional entitlements.
 
+Checkout returns remain pending until the subscription API confirms the requested active plan
+and interval. Browser-only bounded polling preserves the latest server data on interruption and
+offers an explicit refresh after a delay or failure. Changing organization or destroying the page
+cancels obsolete checks. The typed confirmation event refreshes organization data, quotas, member
+access and invoices; query parameters never grant access. Older return URLs without a target remain
+unconfirmed, with the actual subscription still visible.
+
 **Compliance and automation policy** (`OrganizationSettings.compliance` /
 `.automation`) are persisted through the Compliance tab's own
 `OrganizationComplianceForm` and `OrganizationAutomationForm`, each calling
@@ -501,16 +511,17 @@ with no organization permission of any kind. `MyOrganizationsStore` (root-provid
 `state/my-organizations/`) backs `MY_ORGANIZATIONS_PORT`, which the account page consumes instead
 of any organization-owned store; its `leave` method wraps
 `OrganizationMemberService.leave` directly, and a 409 refusal renders inline through the same
-`toStoreError`-normalized error account's own dialog surfaces. Leaving the organization currently
-open in the workspace navigates the caller to `/organizations`, which re-resolves the next
-accessible workspace (or onboarding) through the existing guard chain — it does not explicitly
-clear `ActiveOrganizationStore`, since `MY_ORGANIZATIONS_PORT` is deliberately read-only-plus-leave
-and exposes no such write; `organizationGuard`'s own cookie validation covers the stale reference.
-Leaving any other organization only removes its row. `OrganizationSettingsStore.leave`/
-`leaveCallState` remain in this feature but are currently unused by any UI surface — kept rather
-than deleted since another settings-scoped consumer may still want them; flagged here so a future
-reviewer does not read them as dead code by accident. `OrganizationLeaveDialog`, the settings
-danger-zone dialog this replaced, was removed.
+`toStoreError`-normalized error account's own dialog surfaces. A confirmed departure invalidates active selection, member permissions and onboarding before
+refreshing the server membership list. Only a completed refresh permits navigation: no remaining
+access opens `/onboarding/workspace`; other access opens `/organizations/select`. Failed refreshes
+retain a retry that never resends the accepted DELETE. List totals come from the server. Session end
+cancels old requests and clears account-scoped memberships. Settings status/ownership and admission
+events use the same consumer invalidation paths. The legacy unused settings departure command
+publishes `membershipLeft` for those consumers.
+
+`/organizations/select` is an explicit, browser-loaded selector with server pagination, separate from
+the default `/organizations` redirector. Organization guards validate each selected destination.
+`setup` publishes departure/settings events for the Onboarding cache consumer.
 
 **The URL chooses the organization; the workspace outlives the route.** The dashboard shell serves
 global pages too — `/account` first among them — and those name no organization of their own.
@@ -877,3 +888,21 @@ requires members-manage and receives its assignable roles from the same scoped r
 
 The setup facade publishes `searchFacilityAddresses` for creator onboarding; it delegates to
 Facilities transport and returns provider-normalized street, city, region, postal code, country and ISO country code together with the canonical label and coordinates.
+
+The Assets compliance summary separates register generation (`generatedAt`) from the
+oldest maintenance evaluation (`dataEvaluatedAt`) and shows the server count of active
+equipment still unevaluated. Live summaries and immutable register archives remain distinct.
+
+## Automation execution history
+
+The `automations` nested feature owns `/organizations/:organizationId/automations`, guarded by
+`organization.automation.read`. Explicit retries additionally require `organization.automation.manage`.
+Organization settings retain policy editing under `organization.settings.write`; no run command
+changes that policy. The shared organization navigation catalog exposes the history on desktop and
+in the mobile directory. See `features/automations/FEATURE.md` for recovery and SSR invariants.
+
+## Webhook integrations
+
+The nested webhooks feature owns `/organizations/:organizationId/integrations/webhooks`,
+with read-gated administration links in the organization switcher and More. Management
+uses a separate permission and one-time secrets remain local to its transient dialog.

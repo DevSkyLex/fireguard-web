@@ -57,6 +57,11 @@
               }
             </div>
           </div>
+        } @else if (message.status === 'cancelled') {
+          <p class="text-sm text-muted-foreground" i18n="@@workspace.assistant.cancelled">
+            Generation stopped.
+          </p>
+          <p class="whitespace-pre-wrap">{{ message.body }}</p>
         } @else if (message.body.length > 0) {
           <div
             class="w-full leading-relaxed whitespace-pre-wrap"
@@ -68,6 +73,38 @@
             <span hlmMarkerContent class="shimmer" i18n="@@workspace.assistant.thinking">
               Thinking…
             </span>
+          </div>
+        }
+        @if (message.canCancel || message.canRetry) {
+          <div class="mt-2 flex flex-wrap gap-2" [attr.aria-busy]="store.isControlling()">
+            @if (message.canCancel) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                [disabled]="store.isControlling()"
+                (click)="store.controlAttempt({ messageId: message.id, retry: false })"
+                data-testid="assistant-cancel"
+                i18n="@@workspace.assistant.cancel"
+              >
+                Stop generation
+              </button>
+            }
+            @if (message.canRetry) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                [disabled]="store.isControlling() || store.isGenerating()"
+                (click)="store.controlAttempt({ messageId: message.id, retry: true })"
+                data-testid="assistant-retry"
+                i18n="@@workspace.assistant.retry"
+              >
+                Try again
+              </button>
+            }
           </div>
         }
       </div>
@@ -86,13 +123,18 @@
         variant="outline"
         size="sm"
         data-testid="assistant-stalled-dismiss"
-        (click)="store.dismissStalled()"
+        [disabled]="store.isControlling()"
+        (click)="store.loadThread(store.threadId()!)"
       >
-        <span i18n="@@workspace.assistant.stalled.dismiss">Give up and ask again</span>
+        <span i18n="@@workspace.assistant.refresh">Check progress</span>
       </button>
     </div>
   }
 </div>
+
+@if (store.controlError(); as error) {
+  <p role="alert" class="px-4 text-sm text-destructive">{{ error.message }}</p>
+}
 
 <form class="shrink-0 px-4 pt-3 pb-4" novalidate (submit)="send($event)">
   @if (store.askError(); as error) {

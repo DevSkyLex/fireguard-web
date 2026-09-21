@@ -1,0 +1,120 @@
+<div
+  class="flex min-w-0 flex-col gap-4"
+  [attr.aria-busy]="loading() || loadingMore()"
+  data-testid="account-inbox-list"
+>
+  @if (!complete() || hasError()) {
+    <div
+      role="status"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+      data-testid="inbox-partial"
+    >
+      @if (!complete()) {
+        <p class="text-sm" i18n="@@account.inbox.partial">
+          Some updates are unavailable. Retry to see the complete inbox.
+        </p>
+      } @else {
+        <p class="text-sm" i18n="@@account.inbox.error">
+          Your inbox could not be refreshed. Previously loaded updates are still shown.
+        </p>
+      }
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="loading()"
+        (click)="retryRequested.emit()"
+        i18n="@@account.inbox.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (readFailed()) {
+    <p role="alert" class="text-sm text-destructive" i18n="@@account.inbox.readFailed">
+      This update could not be marked as read. Select it to try again.
+    </p>
+  }
+  @if (loading() && items().length === 0) {
+    <div
+      role="status"
+      aria-label="Loading inbox"
+      i18n-aria-label="@@account.inbox.loading"
+      class="flex flex-col gap-3"
+    >
+      @for (placeholder of [1, 2, 3]; track placeholder) {
+        <hlm-skeleton class="h-20 w-full" />
+      }
+    </div>
+  } @else if (items().length === 0 && complete() && !hasError()) {
+    <p class="py-8 text-center text-muted-foreground" i18n="@@account.inbox.empty">
+      No updates yet.
+    </p>
+  }
+  <ul class="flex min-w-0 flex-col gap-2">
+    @for (item of items(); track item.sourceKey + ':' + item.id) {
+      <li
+        hlmItem
+        variant="outline"
+        class="min-w-0 max-sm:flex-col max-sm:items-stretch"
+        data-testid="inbox-item"
+      >
+        <div hlmItemContent class="min-w-0">
+          <p hlmItemTitle class="break-words" [class.font-normal]="item.isRead">
+            @if (!item.isRead) {
+              <span class="size-1.5 shrink-0 rounded-full bg-foreground" aria-hidden="true"></span
+              ><span class="sr-only" i18n="@@account.notificationBell.unread">Unread</span>
+            }
+            {{ item.title }}
+          </p>
+          @if (item.snippet) {
+            <p hlmItemDescription class="break-words">{{ item.snippet }}</p>
+          }
+          <time class="text-xs text-muted-foreground" [attr.datetime]="item.occurredAt">{{
+            item.occurredAt | date: 'medium'
+          }}</time>
+        </div>
+        <div hlmItemActions>
+          @if (conversationLink(item); as link) {
+            <a
+              hlmBtn
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              [routerLink]="link"
+              i18n="@@account.inbox.openConversation"
+              >Open conversation</a
+            >
+          } @else if (item.sourceKey === 'notification' && !item.isRead) {
+            <button
+              hlmBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              class="mobile-ui:min-h-11"
+              (click)="readRequested.emit(item)"
+              i18n="@@account.inbox.markRead"
+            >
+              Mark as read
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+  @if (hasMore()) {
+    <button
+      hlmBtn
+      variant="outline"
+      type="button"
+      class="self-center mobile-ui:min-h-11"
+      [disabled]="loadingMore() || loading()"
+      (click)="moreRequested.emit()"
+      i18n="@@account.inbox.loadMore"
+    >
+      Load more
+    </button>
+  }
+</div>

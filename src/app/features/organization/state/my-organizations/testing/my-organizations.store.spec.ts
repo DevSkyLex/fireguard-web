@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { delay, of, throwError } from 'rxjs';
+import { delay, of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
@@ -44,7 +44,7 @@ describe('MyOrganizationsStore', () => {
 
   beforeEach(() => {
     mockDispatcher = { dispatch: vi.fn() };
-    mockOrganizationService = { list: vi.fn() };
+    mockOrganizationService = { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) };
     mockMemberService = { leave: vi.fn() };
     mockActiveOrganizationStore = { selectedOrganizationId: vi.fn().mockReturnValue(null) };
 
@@ -109,6 +109,9 @@ describe('MyOrganizationsStore', () => {
     expect(store.organizations().length).toBe(2);
 
     mockMemberService.leave.mockReturnValue(of(undefined));
+    mockOrganizationService.list.mockReturnValue(
+      of({ member: [organization({ id: 'org-2', name: 'Globex' })], totalItems: 1 }),
+    );
     store.leave('org-1');
     await flushEffects();
 
@@ -152,5 +155,38 @@ describe('MyOrganizationsStore', () => {
     mockActiveOrganizationStore.selectedOrganizationId.mockReturnValue('org-1');
 
     expect(store.activeOrganizationId()).toBe('org-1');
+  });
+  it('waits for server totals and retries access refresh without repeating departure', () => {
+    const refresh = new Subject<HydraCollection<OrganizationOutput>>();
+    mockMemberService.leave.mockReturnValue(of(undefined));
+    mockOrganizationService.list
+      .mockReturnValueOnce(throwError(() => new Error('offline')))
+      .mockReturnValue(refresh);
+    store.leave('org-1');
+    expect(store.departureConfirmed()).toBe(true);
+    expect(store.leaveCallState().status).toBe('error');
+    store.leave('org-1');
+    expect(store.leaveCallState().status).toBe('pending');
+    refresh.next({ member: [], totalItems: 4 } as unknown as HydraCollection<OrganizationOutput>);
+    expect(store.leaveCallState().data).toBe(4);
+    expect(mockMemberService.leave).toHaveBeenCalledTimes(1);
+    expect(
+      dispatchedTypes(mockDispatcher).filter(
+        (type) => type === myOrganizationsStoreEvents.leaveSucceeded.type,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('cancels responses from an ended session', () => {
+    const response = new Subject<HydraCollection<OrganizationOutput>>();
+    mockOrganizationService.list.mockReturnValue(response);
+    store.loadOrganizations();
+    store.clear();
+    response.next({
+      member: [organization()],
+      totalItems: 1,
+    } as unknown as HydraCollection<OrganizationOutput>);
+    expect(store.organizations()).toEqual([]);
+    expect(store.listCallState().status).toBe('idle');
   });
 });

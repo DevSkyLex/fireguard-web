@@ -2,6 +2,18 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
   <file source-language="en-US" target-language="fr" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="approvals.decide.error.permissionRequired" datatype="html">
+        <source>You no longer have permission to decide on this request.</source>
+        <target>Vous n’avez plus l’autorisation de prendre une décision sur cette demande.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.expired" datatype="html">
+        <source>This request has expired and can no longer be decided.</source>
+        <target>Cette demande a expiré et ne peut plus faire l’objet d’une décision.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.refresh" datatype="html">
+        <source>Check latest state</source>
+        <target>Actualiser l’état</target>
+      </trans-unit>
       <trans-unit id="account.mfa.title" datatype="html">
         <source>Two-factor authentication</source>
         <target>Authentification à deux facteurs</target>
@@ -15998,6 +16010,861 @@
       <trans-unit id="workload.day.excludedCount" datatype="html">
         <source>{VAR_PLURAL, plural, =1 {1 task} other {<x id="INTERPOLATION" equiv-text="selected.member.unallocated.length"/> tasks} }</source>
         <target>{VAR_PLURAL, plural, =1 {1 tâche} other {<x id="INTERPOLATION" equiv-text="selected.member.unallocated.length"/> tâches} }</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.confirmingTitle" datatype="html">
+        <source>Confirming your plan</source>
+        <target>Confirmation de votre offre</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.confirmingDescription" datatype="html">
+        <source>Checkout has finished. We are waiting for the server to confirm your subscription.</source>
+        <target>Le parcours de paiement est terminé. Nous attendons la confirmation de votre abonnement par le serveur.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.checking" datatype="html">
+        <source>Checking…</source>
+        <target>Vérification…</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.refreshConfirmation" datatype="html">
+        <source>Refresh status</source>
+        <target>Actualiser le statut</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.confirmedTitle" datatype="html">
+        <source>Plan confirmed</source>
+        <target>Offre confirmée</target>
+      </trans-unit>
+      <trans-unit id="org.settings.subscription.confirmedDescription" datatype="html">
+        <source>Your subscription is active.</source>
+        <target>Votre abonnement est actif.</target>
+      </trans-unit>
+      <trans-unit id="imports.report.resumeHint" datatype="html">
+        <source> Resume this import. Rows already confirmed will be kept. </source>
+        <target>Reprenez cet import. Les lignes déjà confirmées seront conservées.</target>
+      </trans-unit>
+      <trans-unit id="imports.report.resuming" datatype="html">
+        <source>Resuming…</source>
+        <target>Reprise…</target>
+      </trans-unit>
+      <trans-unit id="imports.report.resume" datatype="html">
+        <source>Resume import</source>
+        <target>Reprendre l’import</target>
+      </trans-unit>
+      <trans-unit id="imports.report.confirmedAt" datatype="html">
+        <source>Last confirmed update:</source>
+        <target>Dernière mise à jour confirmée :</target>
+      </trans-unit>
+      <trans-unit id="account.notifications.tabs.notifications" datatype="html">
+        <source>Notifications</source>
+        <target>Notifications</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.partial" datatype="html">
+        <source>Some updates are unavailable. Retry to see the complete inbox.</source>
+        <target>Certaines mises à jour sont indisponibles. Réessayez pour afficher toute la boîte de réception.</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.error" datatype="html">
+        <source>Your inbox could not be refreshed. Previously loaded updates are still shown.</source>
+        <target>La boîte de réception n’a pas pu être actualisée. Les mises à jour déjà chargées restent affichées.</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.retry" datatype="html">
+        <source>Retry</source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.readFailed" datatype="html">
+        <source>This update could not be marked as read. Select it to try again.</source>
+        <target>Cette mise à jour n’a pas pu être marquée comme lue. Sélectionnez-la pour réessayer.</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.loading" datatype="html">
+        <source>Loading inbox</source>
+        <target>Chargement de la boîte de réception</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.empty" datatype="html">
+        <source>No updates yet.</source>
+        <target>Aucune mise à jour pour le moment.</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.openConversation" datatype="html">
+        <source>Open conversation</source>
+        <target>Ouvrir la conversation</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.markRead" datatype="html">
+        <source>Mark as read</source>
+        <target>Marquer comme lu</target>
+      </trans-unit>
+      <trans-unit id="account.inbox.loadMore" datatype="html">
+        <source>Load more</source>
+        <target>Charger la suite</target>
+      </trans-unit>
+      <trans-unit id="calendar.partial.title" datatype="html">
+        <source>Partial results</source>
+        <target>Résultats partiels</target>
+      </trans-unit>
+      <trans-unit id="calendar.partial.unavailable" datatype="html">
+        <source>Temporarily unavailable</source>
+        <target>Temporairement indisponible</target>
+      </trans-unit>
+      <trans-unit id="calendar.partial.truncated" datatype="html">
+        <source>More events exist in this period</source>
+        <target>D’autres événements existent sur cette période</target>
+      </trans-unit>
+      <trans-unit id="calendar.partial.reducePeriod" datatype="html">
+        <source>Show one day</source>
+        <target>Afficher une journée</target>
+      </trans-unit>
+      <trans-unit id="maintenance.evaluation.at" datatype="html">
+        <source>Evaluated</source>
+        <target>Évalué le</target>
+      </trans-unit>
+      <trans-unit id="maintenance.evaluation.pending" datatype="html">
+        <source>Not yet evaluated</source>
+        <target>Non encore évalué</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.generatedAt" datatype="html">
+        <source>Generated</source>
+        <target>Généré le</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.evaluatedAt" datatype="html">
+        <source>Oldest evaluation</source>
+        <target>Évaluation la plus ancienne</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.evaluationUnknown" datatype="html">
+        <source>Evaluation date unavailable</source>
+        <target>Date d’évaluation indisponible</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.unevaluated" datatype="html">
+        <source>Equipment not yet evaluated</source>
+        <target>Équipements non encore évalués</target>
+      </trans-unit>
+      <trans-unit id="checklists.form.reference" datatype="html"><source>Reference code (optional)</source><target>Code de référence (facultatif)</target></trans-unit>
+      <trans-unit id="checklists.form.referenceLength" datatype="html"><source>Use at most 40 characters.</source><target>Utilisez au maximum 40 caractères.</target></trans-unit>
+      <trans-unit id="checklists.form.version" datatype="html"><source>Version</source><target>Version</target></trans-unit>
+      <trans-unit id="checklists.form.versionInvalid" datatype="html"><source>Enter a version of at most 50 characters.</source><target>Saisissez une version de 50 caractères au maximum.</target></trans-unit>
+      <trans-unit id="checklists.form.versionRequired" datatype="html"><source>Enter a version for this checklist.</source><target>Saisissez une version pour cette checklist.</target></trans-unit>
+      <trans-unit id="checklists.form.itemsFrozen" datatype="html"><source>Existing inspections use these items. Create a new revision to change their structure.</source><target>Des inspections existantes utilisent ces éléments. Créez une nouvelle révision pour modifier leur structure.</target></trans-unit>
+      <trans-unit id="checklists.detail.newRevision" datatype="html"><source>New revision</source><target>Nouvelle révision</target></trans-unit>
+      <trans-unit id="checklists.detail.createRevision" datatype="html"><source>Create a new revision</source><target>Créer une nouvelle révision</target></trans-unit>
+      <trans-unit id="checklists.detail.revisionHelp" datatype="html"><source>This creates a new checklist. Existing inspections keep their original revision. Enter a new version and a distinct reference code if needed.</source><target>Une nouvelle checklist sera créée. Les inspections existantes conservent leur révision initiale. Saisissez une nouvelle version et, si nécessaire, un code de référence distinct.</target></trans-unit>
+      <trans-unit id="checklists.detail.previous" datatype="html"><source>Previous revision</source><target>Révision précédente</target></trans-unit>
+      <trans-unit id="checklists.detail.version" datatype="html"><source>Version <x id="INTERPOLATION" equiv-text="{{ checklist.version }}"/></source><target>Version <x id="INTERPOLATION" equiv-text="{{ checklist.version }}"/></target></trans-unit>
+      <trans-unit id="audit.action.facility.plan_geometry_changed" datatype="html">
+        <source>Zone outline changed</source>
+        <target>Contour de zone modifié</target>
+      </trans-unit>
+      <trans-unit id="audit.action.equipment.plan_position_changed" datatype="html">
+        <source>Equipment position changed</source>
+        <target>Position de l’équipement modifiée</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.operation" datatype="html">
+        <source>Change</source>
+        <target>Modification</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.attachment" datatype="html">
+        <source>Floor plan</source>
+        <target>Plan</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.previousAttachment" datatype="html">
+        <source>Previous floor plan</source>
+        <target>Plan précédent</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.revision" datatype="html">
+        <source>Revision</source>
+        <target>Révision</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.intervention" datatype="html">
+        <source>Intervention</source>
+        <target>Intervention</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.placed" datatype="html">
+        <source>Placed on plan</source>
+        <target>Ajout sur le plan</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.moved" datatype="html">
+        <source>Moved on plan</source>
+        <target>Déplacement sur le plan</target>
+      </trans-unit>
+      <trans-unit id="audit.metadata.cleared" datatype="html">
+        <source>Removed from plan</source>
+        <target>Retrait du plan</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.decommissioned" datatype="html">
+        <source>Decommissioned equipment cannot be placed on a plan.</source>
+        <target>Un équipement mis hors service ne peut pas être placé sur un plan.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.notFloorPlan" datatype="html">
+        <source>Choose a floor plan to save these coordinates.</source>
+        <target>Choisissez un plan pour enregistrer ces coordonnées.</target>
+      </trans-unit>
+      <trans-unit id="facility.plans.editor.error.revisionConflict" datatype="html">
+        <source>The resource changed. Check the refreshed plan before saving again. Your coordinates have been kept.</source>
+        <target>La ressource a été modifiée. Vérifiez le plan actualisé avant d’enregistrer à nouveau. Vos coordonnées ont été conservées.</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leftTitle" datatype="html">
+        <source>Organization left</source>
+        <target>Organisation quittée</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.leftDescription" datatype="html">
+        <source>Your departure is complete. We need to check your remaining workspaces before continuing.</source>
+        <target>Vous avez quitté l’organisation. Nous devons vérifier vos autres espaces avant de continuer.</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.refreshingAccess" datatype="html">
+        <source>Refreshing access…</source>
+        <target>Actualisation des accès…</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.refreshAccess" datatype="html">
+        <source>Refresh access</source>
+        <target>Actualiser les accès</target>
+      </trans-unit>
+      <trans-unit id="account.organizations.refreshAfterLeaveError" datatype="html">
+        <source>You have left the organization. Refresh your remaining access to continue.</source>
+        <target>Vous avez quitté l’organisation. Actualisez vos accès restants pour continuer.</target>
+      </trans-unit>
+      <trans-unit id="organization.select.title" datatype="html">
+        <source>Choose an organization</source>
+        <target>Choisir une organisation</target>
+      </trans-unit>
+      <trans-unit id="organization.select.description" datatype="html">
+        <source> Open one of your available workspaces to continue. </source>
+        <target>Ouvrez l’un de vos espaces disponibles pour continuer.</target>
+      </trans-unit>
+      <trans-unit id="organization.select.error" datatype="html">
+        <source> Your access could not be refreshed. Please try again. </source>
+        <target>Impossible d’actualiser vos accès. Réessayez.</target>
+      </trans-unit>
+      <trans-unit id="organization.select.findWorkspace" datatype="html">
+        <source>Find a workspace</source>
+        <target>Trouver un espace</target>
+      </trans-unit>
+      <trans-unit id="organization.select.pages" datatype="html">
+        <source>Organization pages</source>
+        <target>Pages des organisations</target>
+      </trans-unit>
+      <trans-unit id="common.previous" datatype="html">
+        <source> Previous </source>
+        <target>Précédent</target>
+      </trans-unit>
+      <trans-unit id="common.next" datatype="html">
+        <source> Next </source>
+        <target>Suivant</target>
+      </trans-unit>
+      <trans-unit id="approvals.status.withdrawn" datatype="html">
+        <source>Withdrawn</source>
+        <target>Retirée</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.withdrawTitle" datatype="html">
+        <source>Withdraw your approval request?</source>
+        <target>Retirer votre demande d’approbation ?</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.withdrawMessage" datatype="html">
+        <source>Your request will be closed without executing the action. The reason will remain in its history. This cannot be undone.</source>
+        <target>Votre demande sera clôturée sans exécuter l’action. Le motif restera dans son historique. Cette opération est irréversible.</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.withdrawAccept" datatype="html">
+        <source>Withdraw request</source>
+        <target>Retirer la demande</target>
+      </trans-unit>
+      <trans-unit id="approvals.decide.error.withdrawalForbidden" datatype="html">
+        <source>Only the requester with active organization access can withdraw this request.</source>
+        <target>Seul le demandeur disposant encore d’un accès actif à l’organisation peut retirer cette demande.</target>
+      </trans-unit>
+      <trans-unit id="audit.action.approval.withdrawn" datatype="html">
+        <source>Approval withdrawn</source>
+        <target>Demande d’approbation retirée</target>
+      </trans-unit>
+      <trans-unit id="imports.confirm.error" datatype="html">
+        <source>The import could not be confirmed. Check the latest report or retry; an accepted confirmation will return the same import.</source>
+        <target>Impossible de confirmer cet import. Consultez le rapport actualisé ou réessayez ; une confirmation déjà acceptée renverra le même import.</target>
+      </trans-unit>
+      <trans-unit id="imports.template.download" datatype="html">
+        <source>Download CSV template</source>
+        <target>Télécharger le modèle CSV</target>
+      </trans-unit>
+      <trans-unit id="imports.upload.simulate" datatype="html">
+        <source>Simulate import</source>
+        <target>Simuler l’import</target>
+      </trans-unit>
+      <trans-unit id="imports.confirm.hint" datatype="html">
+        <source> The simulation succeeded. Start the import using this retained file. Current permissions, quotas and references will be checked again; some rows may be skipped. </source>
+        <target>La simulation a réussi. Lancez l’import avec le fichier conservé. Les droits, quotas et références actuels seront revérifiés ; certaines lignes peuvent être ignorées.</target>
+      </trans-unit>
+      <trans-unit id="imports.confirm.accept" datatype="html">
+        <source>Confirm and start import</source>
+        <target>Confirmer et lancer l’import</target>
+      </trans-unit>
+      <trans-unit id="imports.confirm.open" datatype="html">
+        <source>Open confirmed import</source>
+        <target>Ouvrir l’import confirmé</target>
+      </trans-unit>
+      <trans-unit id="imports.report.title" datatype="html">
+        <source>Import report</source>
+        <target>Rapport d’import</target>
+      </trans-unit>
+      <trans-unit id="imports.report.loading" datatype="html">
+        <source>Loading the latest report…</source>
+        <target>Chargement du rapport actualisé…</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.title" datatype="html">
+        <source>Failed sends</source>
+        <target>Envois échoués</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.description" datatype="html">
+        <source> Messages saved on this device for this organization. Open a conversation to retry its failed sends. </source>
+        <target>Messages conservés sur cet appareil pour cette organisation. Ouvrez une conversation pour réessayer ses envois échoués.</target>
+      </trans-unit>
+      <trans-unit id="common.refresh" datatype="html">
+        <source> Refresh </source>
+        <target>Actualiser</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.unavailable" datatype="html">
+        <source> Failed sends could not be checked. Reconnect and refresh; your messages remain on this device. </source>
+        <target>Impossible de vérifier les envois échoués. Reconnectez-vous au réseau et actualisez ; vos messages restent sur cet appareil.</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.empty" datatype="html">
+        <source>No failed sends</source>
+        <target>Aucun envoi échoué</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.emptyHint" datatype="html">
+        <source> No failed message was found in your accessible conversations. </source>
+        <target>Aucun message en échec dans vos conversations accessibles.</target>
+      </trans-unit>
+      <trans-unit id="messages.failed.open" datatype="html">
+        <source>Open conversation</source>
+        <target>Ouvrir la conversation</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.cancelled" datatype="html">
+        <source> Generation stopped. </source>
+        <target>Génération arrêtée.</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.cancel" datatype="html">
+        <source> Stop generation </source>
+        <target>Arrêter la génération</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.retry" datatype="html">
+        <source> Try again </source>
+        <target>Réessayer</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.refresh" datatype="html">
+        <source>Check progress</source>
+        <target>Vérifier la progression</target>
+      </trans-unit>
+      <trans-unit id="route.automations" datatype="html">
+        <source>Automations</source>
+        <target>Automatisations</target>
+      </trans-unit>
+      <trans-unit id="automation.rule" datatype="html">
+        <source> Create a corrective intervention for critical non-conformities </source>
+        <target>Créer une intervention corrective pour les non-conformités critiques</target>
+      </trans-unit>
+      <trans-unit id="automation.enabled" datatype="html">
+        <source>Enabled</source>
+        <target>Activée</target>
+      </trans-unit>
+      <trans-unit id="automation.disabled" datatype="html">
+        <source>Disabled</source>
+        <target>Désactivée</target>
+      </trans-unit>
+      <trans-unit id="automation.ruleHint" datatype="html">
+        <source>Review results and retry eligible failures. Earlier attempts remain in the history.</source>
+        <target>Consultez les résultats et relancez les échecs admissibles. Les tentatives précédentes restent dans l’historique.</target>
+      </trans-unit>
+      <trans-unit id="automation.settings" datatype="html">
+        <source>Manage policy</source>
+        <target>Gérer la politique</target>
+      </trans-unit>
+      <trans-unit id="automation.history" datatype="html">
+        <source>Execution history</source>
+        <target>Historique des exécutions</target>
+      </trans-unit>
+      <trans-unit id="automation.empty" datatype="html">
+        <source>No execution yet</source>
+        <target>Aucune exécution</target>
+      </trans-unit>
+      <trans-unit id="automation.emptyHint" datatype="html">
+        <source> Triggered actions and their results will appear here. </source>
+        <target>Les actions déclenchées et leurs résultats apparaîtront ici.</target>
+      </trans-unit>
+      <trans-unit id="automation.attemptNumber" datatype="html">
+        <source>Attempt <x id="INTERPOLATION" equiv-text="{{ attempt.attemptNumber }}"/></source>
+        <target>Tentative <x id="INTERPOLATION" equiv-text="{{ attempt.attemptNumber }}"/></target>
+      </trans-unit>
+      <trans-unit id="automation.subject" datatype="html">
+        <source>Non-conformity</source>
+        <target>Non-conformité</target>
+      </trans-unit>
+      <trans-unit id="automation.failureHint" datatype="html">
+        <source>This attempt could not complete the action.</source>
+        <target>Cette tentative n’a pas pu terminer l’action.</target>
+      </trans-unit>
+      <trans-unit id="automation.progressHint" datatype="html">
+        <source> Processing continues on the server. Refresh to check progress. </source>
+        <target>Le traitement continue sur le serveur. Actualisez pour suivre sa progression.</target>
+      </trans-unit>
+      <trans-unit id="automation.openIntervention" datatype="html">
+        <source>Open intervention</source>
+        <target>Ouvrir l’intervention</target>
+      </trans-unit>
+      <trans-unit id="automation.retry" datatype="html">
+        <source> Retry action </source>
+        <target>Relancer l’action</target>
+      </trans-unit>
+      <trans-unit id="automation.pages" datatype="html">
+        <source>Execution pages</source>
+        <target>Pages des exécutions</target>
+      </trans-unit>
+      <trans-unit id="automation.pageSummary" datatype="html">
+        <source>Page <x id="INTERPOLATION" equiv-text="{{ store.page() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ store.pageCount() }}"/> · <x id="INTERPOLATION_2" equiv-text="{{ store.total() }}"/> attempts</source>
+        <target>Page <x id="INTERPOLATION" equiv-text="{{ store.page() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ store.pageCount() }}"/> · <x id="INTERPOLATION_2" equiv-text="{{ store.total() }}"/> tentatives</target>
+      </trans-unit>
+      <trans-unit id="automation.pending" datatype="html">
+        <source>Queued</source>
+        <target>En attente</target>
+      </trans-unit>
+      <trans-unit id="automation.running" datatype="html">
+        <source>Running</source>
+        <target>En cours</target>
+      </trans-unit>
+      <trans-unit id="automation.failed" datatype="html">
+        <source>Failed</source>
+        <target>Échec</target>
+      </trans-unit>
+      <trans-unit id="automation.succeeded" datatype="html">
+        <source>Completed</source>
+        <target>Terminée</target>
+      </trans-unit>
+      <trans-unit id="automation.skipped" datatype="html">
+        <source>Skipped</source>
+        <target>Ignorée</target>
+      </trans-unit>
+      <trans-unit id="webhooks.url" datatype="html">
+        <source>Destination URL</source>
+        <target>URL de destination</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">4,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.urlHelp" datatype="html">
+        <source> Use a public HTTPS endpoint that accepts signed POST requests. </source>
+        <target>Utilisez une URL HTTPS publique qui accepte les requêtes POST signées.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">16,18</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.description" datatype="html">
+        <source>Description (optional)</source>
+        <target>Description (facultative)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">29,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.events" datatype="html">
+        <source>Events</source>
+        <target>Événements</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">43,44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.eventsHelp" datatype="html">
+        <source> Select the events this endpoint should receive. </source>
+        <target>Sélectionnez les événements à envoyer à cette destination.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">45,47</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.active" datatype="html">
+        <source>Active</source>
+        <target>Actif</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.html</context>
+          <context context-type="linenumber">70,72</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">79,80</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.saveFailed" datatype="html">
+        <source>The webhook could not be saved.</source>
+        <target>Le webhook n’a pas pu être enregistré.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.ts</context>
+          <context context-type="linenumber">154</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.urlRequired" datatype="html">
+        <source>Enter a destination URL.</source>
+        <target>Saisissez une URL de destination.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.ts</context>
+          <context context-type="linenumber">167</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.urlInvalid" datatype="html">
+        <source>Use an HTTPS URL without credentials.</source>
+        <target>Utilisez une URL HTTPS sans identifiants intégrés.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.ts</context>
+          <context context-type="linenumber">176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.eventsRequired" datatype="html">
+        <source>Select at least one event.</source>
+        <target>Sélectionnez au moins un événement.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/forms/webhook-subscription-form/webhook-subscription-form.component.ts</context>
+          <context context-type="linenumber">184</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.intro" datatype="html">
+        <source> Send organization events to your integrations and follow each delivery. </source>
+        <target>Envoyez les événements de l’organisation à vos intégrations et suivez chaque livraison.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">4,6</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.create" datatype="html">
+        <source> Add webhook </source>
+        <target>Ajouter un webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">27,29</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">352,355</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.empty" datatype="html">
+        <source>No webhooks yet</source>
+        <target>Aucun webhook pour le moment</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">48,49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.emptyHint" datatype="html">
+        <source> Webhooks notify another service when selected events happen in this organization. </source>
+        <target>Les webhooks notifient un autre service lorsque les événements choisis se produisent dans cette organisation.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">50,52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.subscriptions" datatype="html">
+        <source> Subscriptions </source>
+        <target>Abonnements</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">58,60</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.paused" datatype="html">
+        <source>Paused</source>
+        <target>En pause</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">81,83</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.subscriptionTotal" datatype="html">
+        <source> Subscriptions: <x id="INTERPOLATION" equiv-text="{{ store.total() }}"/> </source>
+        <target>Abonnements : <x id="INTERPOLATION" equiv-text="{{ store.total() }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">88,90</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.subscribedEvents" datatype="html">
+        <source>Subscribed events</source>
+        <target>Événements souscrits</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">127,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.test" datatype="html">
+        <source> Send test </source>
+        <target>Envoyer un test</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">163,164</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.rotate" datatype="html">
+        <source> Rotate secret </source>
+        <target>Renouveler le secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">175,176</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deliveries" datatype="html">
+        <source>Delivery history</source>
+        <target>Historique des livraisons</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">193,195</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deliveryStatus" datatype="html">
+        <source>Delivery status</source>
+        <target>État de livraison</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">210,211</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.noDeliveries" datatype="html">
+        <source> No deliveries match this view. </source>
+        <target>Aucune livraison ne correspond à cette vue.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">238,240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.attempts" datatype="html">
+        <source>Attempts: <x id="INTERPOLATION" equiv-text="{{ delivery.attempts }}"/></source>
+        <target>Tentatives : <x id="INTERPOLATION" equiv-text="{{ delivery.attempts }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">255,256</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.nextRetry" datatype="html">
+        <source>Next retry: <x id="INTERPOLATION" equiv-text="{{ retryAt | date: &apos;medium&apos; }}"/></source>
+        <target>Prochaine tentative : <x id="INTERPOLATION" equiv-text="{{ retryAt | date: &apos;medium&apos; }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">261,262</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.redeliver" datatype="html">
+        <source> Redeliver </source>
+        <target>Relivrer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">281,282</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deliveryTotal" datatype="html">
+        <source> Deliveries: <x id="INTERPOLATION" equiv-text="{{ store.deliveryTotal() }}"/> </source>
+        <target>Livraisons : <x id="INTERPOLATION" equiv-text="{{ store.deliveryTotal() }}"/></target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">290,292</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.edit" datatype="html">
+        <source>Edit webhook</source>
+        <target>Modifier le webhook</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">350,352</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.formHint" datatype="html">
+        <source> Choose a destination and the events it receives. You can pause the subscription later. </source>
+        <target>Choisissez une destination et les événements à recevoir. Vous pourrez mettre l’abonnement en pause ultérieurement.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">356,358</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.secretTitle" datatype="html">
+        <source>Save your signing secret</source>
+        <target>Conservez votre secret de signature</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">442,443</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.secretHint" datatype="html">
+        <source> This secret is shown once. Save it securely and configure your receiver before closing this window. </source>
+        <target>Ce secret n’est affiché qu’une seule fois. Conservez-le dans un endroit sûr et configurez votre récepteur avant de fermer cette fenêtre.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">444,447</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.signingSecret" datatype="html">
+        <source>Signing secret</source>
+        <target>Secret de signature</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">449,452</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.copied" datatype="html">
+        <source>Copied</source>
+        <target>Copié</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">464,466</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.copy" datatype="html">
+        <source>Copy secret</source>
+        <target>Copier le secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">466,468</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.secretSaved" datatype="html">
+        <source> I saved the secret </source>
+        <target>J’ai conservé le secret</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
+          <context context-type="linenumber">476,478</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.all" datatype="html">
+        <source>All</source>
+        <target>Toutes</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">238</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.pending" datatype="html">
+        <source>Pending</source>
+        <target>En attente</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">239</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.delivered" datatype="html">
+        <source>Delivered</source>
+        <target>Livrée</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">240</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.failed" datatype="html">
+        <source>Failed</source>
+        <target>En échec</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">241</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deleteTitle" datatype="html">
+        <source>Delete this webhook?</source>
+        <target>Supprimer ce webhook ?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">253</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.rotateTitle" datatype="html">
+        <source>Replace the signing secret?</source>
+        <target>Remplacer le secret de signature ?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">255</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.redeliverTitle" datatype="html">
+        <source>Send this delivery again?</source>
+        <target>Envoyer à nouveau cette livraison ?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">256</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deleteHint" datatype="html">
+        <source>The subscription and its delivery history will be permanently deleted.</source>
+        <target>L’abonnement et son historique de livraison seront définitivement supprimés.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">268</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.rotateHint" datatype="html">
+        <source>The current secret will stop working immediately. Update your receiver with the new secret after confirming.</source>
+        <target>Le secret actuel cessera immédiatement de fonctionner. Après confirmation, configurez votre récepteur avec le nouveau secret.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">270</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.redeliverHint" datatype="html">
+        <source>The same delivery will be sent again. Its identifier stays the same so your receiver can prevent duplicate processing.</source>
+        <target>La même livraison sera envoyée à nouveau. Son identifiant reste identique pour permettre à votre récepteur d’éviter un traitement en double.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">271</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.queued" datatype="html">
+        <source>The delivery is queued. Refresh its history to check the result.</source>
+        <target>La livraison est en attente. Actualisez son historique pour consulter le résultat.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">320</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.timeout" datatype="html">
+        <source>The destination did not respond in time.</source>
+        <target>La destination n’a pas répondu dans le délai imparti.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">479</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.httpError" datatype="html">
+        <source>Check the HTTP status and your receiver&apos;s logs.</source>
+        <target>Vérifiez le statut HTTP et les journaux de votre récepteur.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">481</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.disallowed" datatype="html">
+        <source>Use a public HTTPS destination allowed by the webhook policy.</source>
+        <target>Utilisez une destination HTTPS publique autorisée par la politique des webhooks.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">483</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.unreachable" datatype="html">
+        <source>Check that the destination is reachable and accepts public connections.</source>
+        <target>Vérifiez que la destination est joignable et accepte les connexions publiques.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">485</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.missing" datatype="html">
+        <source>The subscription no longer exists.</source>
+        <target>L’abonnement n’existe plus.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">487</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="webhooks.deliveryFailed" datatype="html">
+        <source>The delivery could not be completed.</source>
+        <target>La livraison n’a pas pu être effectuée.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.ts</context>
+          <context context-type="linenumber">489</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="route.webhooks" datatype="html">
+        <source>Webhooks</source>
+        <target>Webhooks</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/webhooks/webhooks.routes.ts</context>
+          <context context-type="linenumber">19</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/navigation/organization-switcher-quick-link.config.ts</context>
+          <context context-type="linenumber">47</context>
+        </context-group>
       </trans-unit>
     </body>
   </file>

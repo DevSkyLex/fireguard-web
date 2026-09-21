@@ -14,7 +14,7 @@ export interface OrganizationSwitcherQuickLinkDefinition extends OrganizationAdm
   /**
    * Property shortcutKey
    * @readonly
-   * @description Required key used to render the desktop dropdown shortcut hint.
+   * @description Key used to render a desktop hint; empty when the destination has no shortcut.
    * @access public
    * @since 4.0.0
    * @type {string}

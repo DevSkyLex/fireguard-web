@@ -108,7 +108,7 @@ describe('ImportUploadForm', () => {
     submitForm();
     await fixture.whenStable();
 
-    expect(submitted).toEqual([{ kind: 'equipment', file, dryRun: false }]);
+    expect(submitted).toEqual([{ kind: 'equipment', file, dryRun: true }]);
   });
 
   it('should reset the picked file after a successful submission', async () => {

@@ -1,0 +1,101 @@
+<form novalidate (submit)="submit($event)" class="flex min-h-0 flex-col gap-5">
+  <hlm-field-group>
+    <hlm-field>
+      <label hlmFieldLabel for="webhook-url" i18n="@@webhooks.url">Destination URL</label>
+      <input
+        hlmInput
+        id="webhook-url"
+        type="url"
+        autocomplete="off"
+        [formField]="fields.url"
+        [attr.aria-invalid]="fieldErrors()['url'] ? true : null"
+        aria-describedby="webhook-url-help"
+        data-testid="webhook-url"
+      />
+      <p hlmFieldDescription id="webhook-url-help" i18n="@@webhooks.urlHelp">
+        Use a public HTTPS endpoint that accepts signed POST requests.
+      </p>
+      @if (fields.url().touched()) {
+        @for (error of fields.url().errors(); track error.kind) {
+          <hlm-field-error [forceShow]="true">{{ error.message }}</hlm-field-error>
+        }
+      }
+      @if (fieldErrors()['url']; as error) {
+        <hlm-field-error [forceShow]="true">{{ error }}</hlm-field-error>
+      }
+    </hlm-field>
+    <hlm-field>
+      <label hlmFieldLabel for="webhook-description" i18n="@@webhooks.description"
+        >Description (optional)</label
+      >
+      <textarea
+        hlmTextarea
+        id="webhook-description"
+        rows="2"
+        [formField]="fields.description"
+        data-testid="webhook-description"
+      ></textarea>
+      @if (fieldErrors()['description']; as error) {
+        <hlm-field-error [forceShow]="true">{{ error }}</hlm-field-error>
+      }
+    </hlm-field>
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@webhooks.events">Events</legend>
+      <p hlmFieldDescription i18n="@@webhooks.eventsHelp">
+        Select the events this endpoint should receive.
+      </p>
+      @for (entry of fields.events; track $index) {
+        <hlm-field orientation="horizontal" class="min-h-11 items-center">
+          <hlm-checkbox [inputId]="'webhook-event-' + $index" [formField]="entry.checked" />
+          <label
+            hlmFieldLabel
+            [for]="'webhook-event-' + $index"
+            class="min-w-0 py-2 font-mono text-xs break-words"
+            >{{ model().events[$index].value }}</label
+          >
+        </hlm-field>
+      }
+      @if (fields.events().touched()) {
+        @for (error of fields.events().errors(); track error.kind) {
+          <hlm-field-error [forceShow]="true">{{ error.message }}</hlm-field-error>
+        }
+      }
+      @if (fieldErrors()['eventTypes']; as error) {
+        <hlm-field-error [forceShow]="true">{{ error }}</hlm-field-error>
+      }
+    </fieldset>
+    @if (initial()) {
+      <hlm-field orientation="horizontal" class="min-h-11 items-center">
+        <hlm-checkbox inputId="webhook-active" [formField]="fields.isActive" />
+        <label hlmFieldLabel for="webhook-active" i18n="@@webhooks.active">Active</label>
+      </hlm-field>
+    }
+  </hlm-field-group>
+  @for (message of serverMessages(); track message) {
+    <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+  }
+  <div class="flex flex-wrap justify-end gap-2 border-t pt-4">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      [attr.aria-busy]="pending()"
+      data-testid="webhook-save"
+      i18n="@@common.save"
+    >
+      Save
+    </button>
+  </div>
+</form>

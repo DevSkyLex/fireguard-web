@@ -146,6 +146,14 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     counterKey: 'submittedInterventions',
   },
   {
+    id: 'automations',
+    label: $localize`:@@route.automations:Automations`,
+    icon: 'lucideHistory',
+    path: 'automations',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.AUTOMATION_READ],
+  },
+  {
     id: 'calendar',
     label: $localize`:@@route.calendar:Calendar`,
     icon: 'lucideCalendarDays',

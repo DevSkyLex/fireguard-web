@@ -553,6 +553,29 @@ export class ApiMock {
       await fulfillJson(route, 200, mercureSubscriptionOutput());
     });
     const notifications: ReadonlyArray<NotificationOutputFixture> = options?.notifications ?? [];
+    await this.page.route(/\/api\/inbox(\?.*)?$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/inbox',
+        '@type': 'Inbox',
+        complete: true,
+        hasMore: false,
+        nextPageCursor: null,
+        items: notifications.map((notification) => ({
+          sourceKey: 'notification',
+          id: notification.id,
+          kind: 'notification',
+          title: notification.subject,
+          snippet: notification.body,
+          occurredAt: notification.createdAt,
+          isRead: notification.isRead,
+          organizationId: null,
+          targetType: 'notification',
+          targetId: notification.id,
+          targetKind: null,
+        })),
+      });
+    });
     await this.page.route(/\/api\/notifications(\?.*)?$/, async (route) => {
       if (route.request().method() !== 'GET') return route.fallback();
       await fulfillJson(route, 200, hydraCollection([...notifications]));
@@ -1940,7 +1963,7 @@ export class ApiMock {
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
-      `${API_BASE_URL}/api/organizations/${organizationId}/billing/subscription`,
+      new RegExp(`/api/organizations/${organizationId}/billing/subscription(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, subscription);
       },

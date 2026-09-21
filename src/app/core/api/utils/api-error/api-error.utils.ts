@@ -4,8 +4,8 @@ import type { ApiError } from '../../models';
  * Function isApiError
  *
  * @description
- * Type guard function to check if an unknown error is an ApiError.
- * Validates the presence of required fields (@type, status, detail).
+ * Recognizes JSON-LD errors and plain Problem Details without discarding
+ * application codes or field violations during transport normalization.
  *
  * @since 1.0.0
  *
@@ -21,7 +21,7 @@ export function isApiError(error: unknown): error is ApiError {
   const candidate: Record<string, unknown> = error as Record<string, unknown>;
 
   return (
-    typeof candidate['@type'] === 'string' &&
+    (typeof candidate['@type'] === 'string' || typeof candidate['type'] === 'string') &&
     typeof candidate['status'] === 'number' &&
     typeof candidate['detail'] === 'string'
   );

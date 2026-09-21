@@ -36,7 +36,7 @@ describe('AccountOrganizationsPage', () => {
   let fixture: ComponentFixture<AccountOrganizationsPage>;
   let organizations: WritableSignal<ReadonlyArray<OrganizationOutput>>;
   let isLoadingOrganizations: WritableSignal<boolean>;
-  let leaveCallState: WritableSignal<CallState<void>>;
+  let leaveCallState: WritableSignal<CallState<number>>;
   let activeOrganizationId: WritableSignal<string | null>;
   let loadOrganizations: ReturnType<typeof vi.fn>;
   let leave: ReturnType<typeof vi.fn>;
@@ -53,6 +53,7 @@ describe('AccountOrganizationsPage', () => {
       isLeaving: () => leaveCallState().status === 'pending',
       leaveError: () => leaveCallState().error,
       leaveCallState,
+      departureConfirmed: signal(false),
       activeOrganizationId,
       loadOrganizations,
       leave,
@@ -79,7 +80,7 @@ describe('AccountOrganizationsPage', () => {
       organization({ id: 'org-2', name: 'Globex' }),
     ]);
     isLoadingOrganizations = signal<boolean>(false);
-    leaveCallState = signal<CallState<void>>(idleCallState());
+    leaveCallState = signal<CallState<number>>(idleCallState());
     activeOrganizationId = signal<string | null>('org-1');
     loadOrganizations = vi.fn();
     leave = vi.fn();
@@ -130,14 +131,14 @@ describe('AccountOrganizationsPage', () => {
 
     leaveCallState.set(pendingCallState());
     await fixture.whenStable();
-    leaveCallState.set(successCallState(undefined));
+    leaveCallState.set(successCallState(1));
     await fixture.whenStable();
 
     expect(fixture.componentInstance['confirmingLeaveId']()).toBeNull();
-    expect(navigate).toHaveBeenCalledWith(['/organizations']);
+    expect(navigate).toHaveBeenCalledWith(['/organizations/select']);
   });
 
-  it('should leave a non-active organization without navigating away', async () => {
+  it('opens the selector after leaving a non-active organization', async () => {
     await createPage();
     fixture.componentInstance['openLeaveDialog']('org-2');
     fixture.componentInstance['confirmLeave']();
@@ -146,11 +147,11 @@ describe('AccountOrganizationsPage', () => {
 
     leaveCallState.set(pendingCallState());
     await fixture.whenStable();
-    leaveCallState.set(successCallState(undefined));
+    leaveCallState.set(successCallState(1));
     await fixture.whenStable();
 
     expect(fixture.componentInstance['confirmingLeaveId']()).toBeNull();
-    expect(navigate).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/organizations/select']);
   });
 
   it('should close the dialog on a dismissal without leaving', async () => {
@@ -168,5 +169,13 @@ describe('AccountOrganizationsPage', () => {
 
     expect(fixture.componentInstance['isActive'](organization({ id: 'org-1' }))).toBe(true);
     expect(fixture.componentInstance['isActive'](organization({ id: 'org-2' }))).toBe(false);
+  });
+  it('opens workspace onboarding after the server confirms the last departure', async () => {
+    await createPage();
+    fixture.componentInstance['openLeaveDialog']('org-1');
+    fixture.componentInstance['confirmLeave']();
+    leaveCallState.set(successCallState(0));
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith(['/onboarding/workspace']);
   });
 });

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { StoreError } from '@core/request-state';
 import {
   toResendAvailableAt,
@@ -17,10 +18,45 @@ const rateLimitError = (
 });
 
 describe('toResendDelaySeconds', () => {
-  it('should parse the delay from the 429 detail', () => {
-    expect(toResendDelaySeconds(rateLimitError('Please wait 42 seconds before resending.'))).toBe(
-      42,
-    );
+  it('reads a structured delay independently of localized copy', () => {
+    const body = {
+      type: '/errors/rate_limit_exceeded',
+      status: 429,
+      code: 'rate_limit_exceeded',
+      detail: 'Réessayez plus tard.',
+      retryAfterSeconds: 42,
+    };
+    expect(toResendDelaySeconds({ ...rateLimitError(body.detail), error: body })).toBe(42);
+    expect(
+      toResendDelaySeconds({
+        ...rateLimitError(body.detail),
+        error: new HttpErrorResponse({ status: 429, error: body }),
+      }),
+    ).toBe(42);
+  });
+
+  it.each([null, -1, 1.5, '42', Number.POSITIVE_INFINITY])(
+    'ignores invalid structured delay %s',
+    (retryAfterSeconds) => {
+      expect(
+        toResendDelaySeconds({
+          ...rateLimitError('Please wait 42 seconds before resending.'),
+          error: {
+            type: '/errors/rate_limit_exceeded',
+            status: 429,
+            code: 'rate_limit_exceeded',
+            detail: 'Delay',
+            retryAfterSeconds,
+          },
+        }),
+      ).toBeNull();
+    },
+  );
+
+  it('does not infer a cooldown from an English sentence', () => {
+    expect(
+      toResendDelaySeconds(rateLimitError('Please wait 42 seconds before resending.')),
+    ).toBeNull();
   });
 
   it('should return null for a non-429 error', () => {

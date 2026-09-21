@@ -48,6 +48,7 @@ export const organizationSettingsStoreEvents = eventGroup({
     statusChangeFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when the acting member leaves the organization. */
     leaveSucceeded: type<FeedbackEventPayload>(),
+    membershipLeft: type<{ readonly organizationId: string }>(),
     /** Dispatched when leaving is refused — owner, or last administrator. */
     leaveFailed: type<StoreFailureEventPayload>(),
   },

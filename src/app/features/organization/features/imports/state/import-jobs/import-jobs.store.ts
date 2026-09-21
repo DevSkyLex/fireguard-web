@@ -8,6 +8,7 @@ import {
   setEntity,
   withEntities,
 } from '@ngrx/signals/entities';
+import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   EMPTY,
@@ -36,6 +37,7 @@ import type {
   ImportJobListQuery,
   ImportJobOutput,
 } from '@features/organization/features/imports/models';
+import { importJobsStoreEvents } from './events/events';
 import type { ImportJobsState } from './models';
 
 /**
@@ -52,6 +54,9 @@ const INITIAL_STATE: ImportJobsState = {
   totalJobs: 0,
   visibleIds: [],
   pollCallStates: {},
+  resumeCallStates: {},
+  confirmCallStates: {},
+  templateCallState: idleCallState(),
   createCallState: idleCallState(),
 };
 
@@ -118,196 +123,347 @@ export const ImportJobsStore = signalStore(
     createError: computed<string | null>(() => store.createCallState().error?.message ?? null),
   })),
 
-  withMethods((store, service: ImportJobService = inject(ImportJobService)) => {
-    let organization = '';
-    let lastQuery: {
-      organizationId: string;
-      options?: RequestOptions;
-      query?: ImportJobListQuery;
-    } | null = null;
-    const changedOrganization = new Subject<void>();
-    const activePolls = new Set<string>();
-    const poll = rxMethod<ImportJobOutput>(
-      pipe(
-        mergeMap((job) => {
-          if (activePolls.has(job.id) || !['pending', 'processing'].includes(job.status))
-            return EMPTY;
-          const scope = organization;
-          activePolls.add(job.id);
-          patchState(store, {
-            pollCallStates: { ...store.pollCallStates(), [job.id]: pendingCallState() },
-          });
-          return service.pollJob(job).pipe(
-            takeUntil(changedOrganization),
-            tapResponse({
-              next: (polled) => {
-                if (scope === organization)
-                  patchState(store, setEntity(polled, { collection: 'job' }), {
-                    pollCallStates: {
-                      ...store.pollCallStates(),
-                      [job.id]: ['pending', 'processing'].includes(polled.status)
-                        ? pendingCallState()
-                        : successCallState(null),
-                    },
-                  });
-              },
-              error: (error: unknown) => {
-                if (scope === organization)
-                  patchState(store, {
-                    pollCallStates: {
-                      ...store.pollCallStates(),
-                      [job.id]: errorCallState(toStoreError(error)),
-                    },
-                  });
-              },
-            }),
-            finalize(() => {
-              activePolls.delete(job.id);
-              if (scope === organization && store.pollCallStates()[job.id]?.status === 'pending')
-                patchState(store, {
-                  pollCallStates: {
-                    ...store.pollCallStates(),
-                    [job.id]: errorCallState(
-                      toStoreError(
-                        new Error(
-                          $localize`:@@imports.poll.interrupted:Tracking stopped before a final result. Refresh this report to check the job.`,
-                        ),
-                      ),
-                    ),
-                  },
-                });
-            }),
-          );
-        }),
-      ),
-    );
-
-    const load = rxMethod<{
-      organizationId: string;
-      options?: RequestOptions;
-      query?: ImportJobListQuery;
-    }>(
-      pipe(
-        tap((request): void => {
-          if (organization !== request.organizationId) {
-            changedOrganization.next();
-            activePolls.clear();
-            organization = request.organizationId;
-            patchState(store, removeAllEntities({ collection: 'job' }), INITIAL_STATE);
-          }
-          lastQuery = request;
-          patchState(store, { listCallState: pendingCallState() });
-        }),
-        switchMap(({ organizationId, options, query }) =>
-          service.list(organizationId, options, query).pipe(
-            tapResponse({
-              next: (response: HydraCollection<ImportJobOutput>): void => {
-                patchState(store, setEntities([...response.member], { collection: 'job' }), {
-                  visibleIds: response.member.map((job) => job.id),
-                  totalJobs: response.totalItems,
-                  listCallState: successCallState(null),
-                });
-                for (const job of response.member) poll(job);
-              },
-              error: (error: unknown): void => {
-                patchState(store, { listCallState: errorCallState(toStoreError(error)) });
-              },
-            }),
-          ),
-        ),
-      ),
-    );
-
-    const create = rxMethod<{
-      organizationId: string;
-      kind: ImportJobKind;
-      file: File;
-      dryRun?: boolean;
-    }>(
-      pipe(
-        tap((): void => {
-          patchState(store, { createCallState: pendingCallState() });
-        }),
-        exhaustMap(({ organizationId, kind, file, dryRun }) =>
-          service.create(organizationId, kind, file, dryRun).pipe(
-            tapResponse({
-              next: (job: ImportJobOutput): void => {
-                if (organization && organization !== organizationId) return;
-                patchState(store, addEntity(job, { collection: 'job' }), {
-                  createCallState: successCallState(job),
-                });
-                poll(job);
-                if (lastQuery) load(lastQuery);
-              },
-              error: (error: unknown): void => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { createCallState: errorCallState(storeError) });
-              },
-            }),
-          ),
-        ),
-      ),
-    );
-
-    return {
-      poll,
-      load,
-      create,
-
-      /**
-       * Method refresh
-       * @method refresh
-       *
-       * @description Re-reads one job and replaces its cached row, for a manual retry.
-       * @access public
-       * @since 1.0.0
-       * @param {string} jobId - The job to re-read.
-       * @returns {void}
-       */
-      refresh: rxMethod<string>(
+  withMethods(
+    (
+      store,
+      service: ImportJobService = inject(ImportJobService),
+      dispatcher = inject(Dispatcher),
+    ) => {
+      let organization = '';
+      let lastQuery: {
+        organizationId: string;
+        options?: RequestOptions;
+        query?: ImportJobListQuery;
+      } | null = null;
+      const changedOrganization = new Subject<void>();
+      const activePolls = new Set<string>();
+      const poll = rxMethod<ImportJobOutput>(
         pipe(
-          mergeMap((jobId) => {
+          mergeMap((job) => {
+            if (activePolls.has(job.id) || !['pending', 'processing'].includes(job.status))
+              return EMPTY;
             const scope = organization;
+            activePolls.add(job.id);
             patchState(store, {
-              pollCallStates: { ...store.pollCallStates(), [jobId]: pendingCallState() },
+              pollCallStates: { ...store.pollCallStates(), [job.id]: pendingCallState() },
             });
-            return service.get(jobId).pipe(
+            return service.pollJob(job).pipe(
               takeUntil(changedOrganization),
               tapResponse({
-                next: (job) => {
-                  if (scope !== organization) return;
-                  patchState(store, setEntity(job, { collection: 'job' }), {
-                    pollCallStates: { ...store.pollCallStates(), [jobId]: successCallState(null) },
-                  });
-                  poll(job);
+                next: (polled) => {
+                  if (scope === organization)
+                    patchState(store, setEntity(polled, { collection: 'job' }), {
+                      pollCallStates: {
+                        ...store.pollCallStates(),
+                        [job.id]: ['pending', 'processing'].includes(polled.status)
+                          ? pendingCallState()
+                          : successCallState(null),
+                      },
+                    });
                 },
                 error: (error: unknown) => {
                   if (scope === organization)
                     patchState(store, {
                       pollCallStates: {
                         ...store.pollCallStates(),
-                        [jobId]: errorCallState(toStoreError(error)),
+                        [job.id]: errorCallState(toStoreError(error)),
                       },
                     });
                 },
               }),
+              finalize(() => {
+                activePolls.delete(job.id);
+                if (scope === organization && store.pollCallStates()[job.id]?.status === 'pending')
+                  patchState(store, {
+                    pollCallStates: {
+                      ...store.pollCallStates(),
+                      [job.id]: errorCallState(
+                        toStoreError(
+                          new Error(
+                            $localize`:@@imports.poll.interrupted:Tracking stopped before a final result. Refresh this report to check the job.`,
+                          ),
+                        ),
+                      ),
+                    },
+                  });
+              }),
             );
           }),
         ),
-      ),
+      );
 
-      /**
-       * Method resetCreateOperation
-       * @description Resets the upload submission back to idle, for the form's next attempt.
-       * @access public
-       * @since 1.0.0
-       * @returns {void}
-       */
-      resetCreateOperation(): void {
-        patchState(store, { createCallState: idleCallState() });
-      },
-    };
-  }),
+      const load = rxMethod<{
+        organizationId: string;
+        options?: RequestOptions;
+        query?: ImportJobListQuery;
+      }>(
+        pipe(
+          tap((request): void => {
+            if (organization !== request.organizationId) {
+              changedOrganization.next();
+              activePolls.clear();
+              organization = request.organizationId;
+              patchState(store, removeAllEntities({ collection: 'job' }), INITIAL_STATE);
+            }
+            lastQuery = request;
+            patchState(store, { listCallState: pendingCallState() });
+          }),
+          switchMap(({ organizationId, options, query }) =>
+            service.list(organizationId, options, query).pipe(
+              tapResponse({
+                next: (response: HydraCollection<ImportJobOutput>): void => {
+                  patchState(store, setEntities([...response.member], { collection: 'job' }), {
+                    visibleIds: response.member.map((job) => job.id),
+                    totalJobs: response.totalItems,
+                    listCallState: successCallState(null),
+                  });
+                  for (const job of response.member) poll(job);
+                },
+                error: (error: unknown): void => {
+                  patchState(store, { listCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      const create = rxMethod<{
+        organizationId: string;
+        kind: ImportJobKind;
+        file: File;
+        dryRun?: boolean;
+      }>(
+        pipe(
+          tap((): void => {
+            patchState(store, { createCallState: pendingCallState() });
+          }),
+          exhaustMap(({ organizationId, kind, file, dryRun }) =>
+            service.create(organizationId, kind, file, dryRun).pipe(
+              tapResponse({
+                next: (job: ImportJobOutput): void => {
+                  if (organization && organization !== organizationId) return;
+                  patchState(store, addEntity(job, { collection: 'job' }), {
+                    createCallState: successCallState(job),
+                  });
+                  poll(job);
+                  dispatcher.dispatch(
+                    importJobsStoreEvents.reportReady({ organizationId, jobId: job.id }),
+                  );
+                  if (lastQuery) load(lastQuery);
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { createCallState: errorCallState(storeError) });
+                },
+              }),
+            ),
+          ),
+        ),
+      );
+
+      return {
+        poll,
+        load,
+        create,
+
+        /**
+         * Method confirm
+         * @description Serializes confirmation locally; the server retains the confirmation across retries.
+         * @access public
+         * @since 1.1.0
+         * @type {RxMethod<string>}
+         */
+        confirm: rxMethod<string>(
+          pipe(
+            mergeMap((simulationId) => {
+              const source = store.jobEntityMap()[simulationId];
+              if (
+                !source?.canConfirm ||
+                store.confirmCallStates()[simulationId]?.status === 'pending'
+              )
+                return EMPTY;
+              const scope = organization;
+              patchState(store, {
+                confirmCallStates: {
+                  ...store.confirmCallStates(),
+                  [simulationId]: pendingCallState(),
+                },
+              });
+              return service.confirm(simulationId).pipe(
+                takeUntil(changedOrganization),
+                tapResponse({
+                  next: (job) => {
+                    if (scope !== organization) return;
+                    patchState(
+                      store,
+                      setEntity(job, { collection: 'job' }),
+                      setEntity<ImportJobOutput, 'job'>(
+                        { ...source, canConfirm: false, confirmedJobId: job.id },
+                        { collection: 'job' },
+                      ),
+                      {
+                        confirmCallStates: {
+                          ...store.confirmCallStates(),
+                          [simulationId]: successCallState(null),
+                        },
+                      },
+                    );
+                    poll(job);
+                    dispatcher.dispatch(
+                      importJobsStoreEvents.reportReady({ organizationId: scope, jobId: job.id }),
+                    );
+                    if (lastQuery) load(lastQuery);
+                  },
+                  error: (error: unknown) => {
+                    if (scope !== organization) return;
+                    const normalized = toStoreError(error);
+                    patchState(store, {
+                      confirmCallStates: {
+                        ...store.confirmCallStates(),
+                        [simulationId]: errorCallState({
+                          ...normalized,
+                          message: $localize`:@@imports.confirm.error:The import could not be confirmed. Check the latest report or retry; an accepted confirmation will return the same import.`,
+                        }),
+                      },
+                    });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method downloadTemplate
+         * @description Emits a requested CSV download only while its organization is still active.
+         * @access public
+         * @since 1.1.0
+         * @type {RxMethod<ImportJobKind>}
+         */
+        downloadTemplate: rxMethod<ImportJobKind>(
+          pipe(
+            exhaustMap((kind) => {
+              const scope = organization;
+              if (!scope) return EMPTY;
+              patchState(store, { templateCallState: pendingCallState() });
+              return service.template(scope, kind).pipe(
+                takeUntil(changedOrganization),
+                tapResponse({
+                  next: (template) => {
+                    if (scope !== organization) return;
+                    patchState(store, { templateCallState: successCallState(null) });
+                    dispatcher.dispatch(
+                      importJobsStoreEvents.templateReady({ organizationId: scope, template }),
+                    );
+                  },
+                  error: (error: unknown) => {
+                    if (scope === organization)
+                      patchState(store, { templateCallState: errorCallState(toStoreError(error)) });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /** Resumes only the existing server job; a rejected request keeps its last confirmed report. */
+        resume: rxMethod<string>(
+          pipe(
+            mergeMap((jobId) => {
+              const job = store.jobEntityMap()[jobId];
+              if (!job?.canResume || store.resumeCallStates()[jobId]?.status === 'pending')
+                return EMPTY;
+              const scope = organization;
+              patchState(store, {
+                resumeCallStates: { ...store.resumeCallStates(), [jobId]: pendingCallState() },
+              });
+              return service.resume(jobId).pipe(
+                takeUntil(changedOrganization),
+                tapResponse({
+                  next: (resumed) => {
+                    if (scope !== organization) return;
+                    patchState(store, setEntity(resumed, { collection: 'job' }), {
+                      resumeCallStates: {
+                        ...store.resumeCallStates(),
+                        [jobId]: successCallState(null),
+                      },
+                    });
+                    poll(resumed);
+                  },
+                  error: (error: unknown) => {
+                    if (scope !== organization) return;
+                    patchState(store, {
+                      resumeCallStates: {
+                        ...store.resumeCallStates(),
+                        [jobId]: errorCallState(toStoreError(error)),
+                      },
+                    });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method refresh
+         * @method refresh
+         *
+         * @description Re-reads one job and replaces its cached row, for a manual retry.
+         * @access public
+         * @since 1.0.0
+         * @param {string} jobId - The job to re-read.
+         * @returns {void}
+         */
+        refresh: rxMethod<string>(
+          pipe(
+            mergeMap((jobId) => {
+              const scope = organization;
+              patchState(store, {
+                pollCallStates: { ...store.pollCallStates(), [jobId]: pendingCallState() },
+              });
+              return service.get(jobId).pipe(
+                takeUntil(changedOrganization),
+                tapResponse({
+                  next: (job) => {
+                    if (scope !== organization) return;
+                    patchState(store, setEntity(job, { collection: 'job' }), {
+                      pollCallStates: {
+                        ...store.pollCallStates(),
+                        [jobId]: successCallState(null),
+                      },
+                    });
+                    poll(job);
+                  },
+                  error: (error: unknown) => {
+                    if (scope === organization)
+                      patchState(store, {
+                        pollCallStates: {
+                          ...store.pollCallStates(),
+                          [jobId]: errorCallState(toStoreError(error)),
+                        },
+                      });
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /**
+         * Method resetCreateOperation
+         * @description Resets the upload submission back to idle, for the form's next attempt.
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        resetCreateOperation(): void {
+          patchState(store, { createCallState: idleCallState() });
+        },
+      };
+    },
+  ),
 );
 
 /**

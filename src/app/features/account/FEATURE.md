@@ -49,7 +49,8 @@ tab list in the dashboard page header. Each section remains a full page and owns
   and (for a non-owner) a "Leave" control; the active workspace is marked. Data and the leave
   mutation come from `features/organization`'s `MY_ORGANIZATIONS_PORT` — see Cross-Feature
   Dependencies
-- `/account/notifications` — the notification feed, filtered by category and paged on demand
+- `/account/notifications` — the unified inbox in the selected workspace; without one, account-wide notifications
+- `/account/notifications?tab=notifications` — account notifications, category filtering and bulk read
 - `/account/notifications?tab=preferences` — the per-category delivery matrix (email / in-app), each
   switch its own commit
 
@@ -65,8 +66,8 @@ layered over another page.
 
 `/account` names no organization, but the shell keeps the one last worked in, so the switcher still
 names a workspace and the organization rows still lead into it
-(`features/organization/FEATURE.md`). The account itself asks for no ambient organization: it reads
-none, and nothing on the page changes with the one the sidebar happens to show.
+(`features/organization/FEATURE.md`). The unified inbox and its bell consume this workspace through
+`ORGANIZATION_CONTEXT_PORT`; other account settings remain independent of the selected workspace.
 
 **The account is not a destination of the sidebar's navigation.** That column lists the work; the
 reader enters their own account through the seat menu pinned at its foot (`AccountMenu`). Once
@@ -87,13 +88,15 @@ primitives with this one; no application wrapper sits between the pages and thos
 Root-provided stores:
 
 - `UserStore` — the profile, its derived identity, and the SSR/`TransferState` handoff
-- `NotificationStore` — the feed as `withEntities`, its paging, filter and Mercure stream.
-  `unreadCount` is a state field fed by `GET /api/inbox/unread-count`, never derived from the
-  loaded page: that derivation stops counting at the page size, which is exactly when the badge
-  matters. The inbox endpoint is preferred over `/notifications/unread-count` — the two agree
-  today, and the inbox one keeps agreeing once Messaging registers mentions and direct messages
-  as sources. Local actions keep it honest between fetches: marking one read decrements it,
-  marking all read zeroes it.
+- `InboxStore` — shared bell/page entries keyed by source and identifier. The opaque cursor is echoed
+  unchanged. Account or workspace changes cancel pending reads and clear the previous cache.
+  The badge uses the server count; secondary feed reads are browser-only and lazy. Partial sources
+  retain acquired entries, show a retry and prevent pagination until a complete page is received.
+  Notification acknowledgements use NotificationService; mention links open the existing conversation
+  whose read action remains owned by Collaboration. No inbox data enters TransferState.
+- `NotificationStore` — the notification-only feed as `withEntities`, its paging, category
+  filters, bulk actions and Mercure stream. Its typed change event invalidates `InboxStore`;
+  the unified badge belongs to `InboxStore` and always refreshes from the server count.
 
 Page-scoped workflow stores (provided by the page, so an abandoned edit does not follow the user):
 
@@ -142,6 +145,7 @@ Services:
 - `UserProfileService` — `/api/me`, `/api/me/avatar`, `/api/me/password/{request,confirm}`,
   `/api/me/email-change` (request + cancel; the public confirm is auth's `EmailChangeService`),
   `/api/me/deactivate`
+- `InboxService` — `/api/inbox` and the scope-matched `/api/inbox/unread-count`
 - `NotificationService` — `/api/notifications*` (including the bulk `/read-all` and
   `/notifications/preferences`), `/api/notification-types`
 - `TotpService` — `/api/otp/totp/{setup,confirm,disable}`
@@ -189,6 +193,10 @@ gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Cross-Feature Dependencies
 
+- Consumes `ORGANIZATION_CONTEXT_PORT` for inbox scope and Collaboration's published
+  `state/message-thread/events` barrel (`conversationRead`) for invalidation. Inbox destinations use
+  the published `channels/:id` and `messages/:id` routes. No collaboration store is injected.
+
 - May be initialized or cleared by `features/auth` through `USER_PROFILE_PORT` after successful
   session restoration or logout.
 - Consumes `core/locale`'s `LocalePreferenceService` in `UserStore`: every authoritative `/api/me`
@@ -229,7 +237,7 @@ windows. Interaction-mode changes preserve the profile Signal Form and locale re
 
 ## Approved Exceptions
 
-- **`NotificationBell` injects `NotificationStore` directly.** `.claude/rules/components.md` reserves
+- **`NotificationBell` injects `InboxStore` directly.** The component rules reserve
   store injection for pages. A slot-root component is the orchestrator of its own surface, with no
   page above it to inject on its behalf — the same exception `OrganizationSwitcher` takes. It stays
   read-mostly: `load()` on first open, `markAsRead()` on click, nothing else.
@@ -263,15 +271,12 @@ windows. Interaction-mode changes preserve the profile Signal Form and locale re
 - **The desktop bell is a popover, not a dropdown menu.** `CdkMenuItem.trigger()` closes the whole menu
   stack on every click and takes no per-item opt-out, so marking one notification read inside a
   dropdown would dismiss the panel. Measured on chromium and webkit before the switch.
-- **The bell's unread dot reads `NotificationStore.unreadCount`, never `hasUnread`.** `hasUnread` is
-  derived from the loaded entity collection, which is empty until the menu has been opened once;
-  only the count, primed from `/api/inbox/unread-count` by `provideAccountFeature()`, is meaningful
-  before then. Its spec locks this.
-- **Leaving the organization currently open in the workspace navigates to `/organizations`**,
-  which re-resolves the next accessible workspace or onboarding. Leaving any other organization
-  only removes its row from `/account/organizations` — no navigation. This mirrors
-  `OrganizationSettingsPage`'s retired `navigateAwayOnLeave` and must be preserved if the leave
-  surface ever moves again.
+- **The bell's unread dot reads `InboxStore.unreadCount`, never the loaded collection.**
+  The server count includes all readable sources in the current organization, even before
+  the panel is opened. Account and organization changes invalidate its scope.
+- A departure succeeds only after the server membership refresh completes. Zero remaining access
+  opens `/onboarding/workspace`; other access opens `/organizations/select`, even when the departed
+  organization was not selected. A refresh failure retains the dialog and retries only the read.
 - Account pages orchestrate account stores and render account-owned UI components; the panels and
   forms take `input()`s and emit `output()`s and inject nothing.
 - **`UserProfileOutput.totpEnabled` (from `/api/me`) is the only authoritative source for whether
@@ -296,14 +301,8 @@ windows. Interaction-mode changes preserve the profile Signal Form and locale re
 
 ## Not Built Yet
 
-- `AccountOrganizationsPage`, `AccountLeaveOrganizationDialog`, and `MyOrganizationsStore`
-  (organization-owned, backing `MY_ORGANIZATIONS_PORT`) ship without unit specs or an e2e spec —
-  scaffolded together with the port for `fg-web-test-writer` and `fg-e2e` to cover.
-- The "last organization" case for leave is deliberately undefined here: leaving a member's only
-  remaining organization succeeds against the backend (nothing blocks it beyond
-  owner/last-administrator) and the page navigates to `/organizations` exactly as for any other
-  active-organization leave; whether that should route to onboarding instead, or read
-  differently on this page, has not been decided — flag before shipping broadly.
+Membership departures have unit and desktop/mobile browser coverage, including the last membership,
+server totals, offline refresh retry and late responses after access invalidation.
 
 The sign-in email change (formerly listed here) shipped: request/cancel on `/account/security`,
 public confirmation on auth's `/auth/email-change/confirm`.

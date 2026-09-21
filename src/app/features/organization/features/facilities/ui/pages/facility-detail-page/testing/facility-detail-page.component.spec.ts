@@ -202,7 +202,12 @@ describe('FacilityDetailPage', () => {
   const byTestId = (id: string): HTMLElement | null =>
     root().querySelector(`[data-testid="${id}"]`);
 
+  let planZoneWrite: WritableSignal<CallState<null>>;
+  let planPinWrite: WritableSignal<CallState<null>>;
+
   beforeEach(() => {
+    planZoneWrite = signal(idleCallState());
+    planPinWrite = signal(idleCallState());
     update = vi.fn();
     remove = vi.fn();
     ensureFacilityDescendantsLoaded = vi.fn();
@@ -360,6 +365,8 @@ describe('FacilityDetailPage', () => {
               undoDraftVertex: planUndoDraftVertex,
               finishDrawZone: planFinishDrawZone,
               clearZoneGeometry: planClearZoneGeometry,
+              saveZoneGeometryCallState: planZoneWrite,
+              savePinPositionCallState: planPinWrite,
               saveZoneGeometryFromDialog: planSaveZoneGeometryFromDialog,
               placePin: planPlacePin,
               movePin: planMovePin,
@@ -1337,6 +1344,9 @@ describe('FacilityDetailPage', () => {
 
       expect(planPlacePin).toHaveBeenCalledWith([0.5, 0.5]);
       expect(planMovePin).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBe('equipment-1');
+      planPinWrite.set(successCallState(null));
+      fixture.detectChanges();
       expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBeNull();
     });
 
@@ -1374,6 +1384,20 @@ describe('FacilityDetailPage', () => {
         [0.6, 0],
         [0.6, 0.6],
       ]);
+      expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBe('zone-1');
+      planZoneWrite.set(
+        errorCallState({
+          error: new Error('Conflict'),
+          message: 'Conflict',
+          code: 412,
+          retryable: false,
+          timestamp: Date.now(),
+        }),
+      );
+      fixture.detectChanges();
+      expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBe('zone-1');
+      planZoneWrite.set(successCallState(null));
+      fixture.detectChanges();
       expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBeNull();
     });
 

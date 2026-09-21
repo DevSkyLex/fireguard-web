@@ -44,6 +44,7 @@
 
         <td hlmTableCell>
           <app-maintenance-due-status-tag [value]="item.dueStatus" />
+          <ng-container [ngTemplateOutlet]="evaluation" [ngTemplateOutletContext]="{ item }" />
         </td>
 
         <td hlmTableCell class="whitespace-normal">
@@ -94,6 +95,8 @@
 
           <app-maintenance-due-status-tag [value]="item.dueStatus" asOption />
         </div>
+
+        <ng-container [ngTemplateOutlet]="evaluation" [ngTemplateOutletContext]="{ item }" />
 
         @if (overrideLabelOf(item); as overrideLabel) {
           <p class="text-xs text-muted-foreground">
@@ -160,4 +163,15 @@
       <ng-icon name="lucidePencil" aria-hidden="true" />
     </button>
   }
+</ng-template>
+
+<ng-template #evaluation let-item="item">
+  <p class="mt-1 text-xs text-muted-foreground" data-testid="maintenance-evaluation">
+    @if (item.evaluatedAt) {
+      <span i18n="@@maintenance.evaluation.at">Evaluated</span> ·
+      {{ item.evaluatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+    } @else {
+      <span i18n="@@maintenance.evaluation.pending">Not yet evaluated</span>
+    }
+  </p>
 </ng-template>

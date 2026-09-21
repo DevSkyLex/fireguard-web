@@ -207,7 +207,7 @@ describe('OrganizationSwitcher', () => {
     expect(document.querySelectorAll('[aria-current="true"]').length).toBe(1);
   });
 
-  it('renders all four admin shortcuts when every permission is granted', async () => {
+  it('renders all five admin shortcuts when every permission is granted', async () => {
     const fixture = await render();
     await openMenu(fixture);
 
@@ -215,7 +215,7 @@ describe('OrganizationSwitcher', () => {
       document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
     ).map(menuItemLabel);
 
-    expect(labels).toEqual(['Settings', 'Billing', 'Members', 'Audit journal']);
+    expect(labels).toEqual(['Settings', 'Billing', 'Members', 'Webhooks', 'Audit journal']);
     const shortcuts: ReadonlyArray<string> = Array.from(
       document.querySelectorAll(
         'a[hlmDropdownMenuItem][href*="/org-1/"] [data-slot="dropdown-menu-shortcut"]',
@@ -255,7 +255,7 @@ describe('OrganizationSwitcher', () => {
       document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
     ).map(menuItemLabel);
 
-    expect(labels).toEqual(['Members', 'Audit journal']);
+    expect(labels).toEqual(['Members', 'Webhooks', 'Audit journal']);
   });
 
   it('drops the Audit journal shortcut for a member without AUDIT_READ', async () => {
@@ -271,7 +271,7 @@ describe('OrganizationSwitcher', () => {
       document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]'),
     ).map(menuItemLabel);
 
-    expect(labels).toEqual(['Settings', 'Billing', 'Members']);
+    expect(labels).toEqual(['Settings', 'Billing', 'Members', 'Webhooks']);
   });
 
   it('drops the whole admin block, separator included, when no permission is granted', async () => {

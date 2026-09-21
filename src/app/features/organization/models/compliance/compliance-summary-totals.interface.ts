@@ -13,6 +13,8 @@ export interface ComplianceSummaryTotals {
   //#region Properties
   readonly totalEquipmentCount: number;
   readonly activeEquipmentCount: number;
+  /** Active equipment missing a confirmed server evaluation. */
+  readonly unevaluatedEquipmentCount?: number;
   readonly upToDateEquipmentCount: number;
   readonly dueSoonEquipmentCount: number;
   readonly overdueEquipmentCount: number;

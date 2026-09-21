@@ -255,14 +255,18 @@ the existing `FIREGUARD_RUNTIME_CONFIG` public contract, and removes its key/cer
 shutdown. It neither reads nor changes environment files and never disables production origin
 validation. Browser certificate tolerance is restricted to this smoke's isolated contexts.
 
-The API stub acknowledges only anonymous refresh/login and provider discovery. Unknown paths,
+The API stub acknowledges anonymous refresh/login and provider discovery, plus explicitly
+bounded authenticated fixtures for the Webhooks and Automations client routes. Unknown paths,
 methods or unexpected origins are recorded and fail the smoke. A child preload rejects HTTP,
 HTTPS and fetch requests outside the exact local app/API origins; browser requests have the
 same restriction. No real backend, database, account or federated provider is used.
 
 The smoke verifies raw login HTML and hydration markers before browser JavaScript, actual
 server-side refresh traffic, desktop/mobile hydration and form submission, and the anonymous
-onboarding redirect. Workspace routes remain client-rendered by the application's server-route
+onboarding redirect. It also checks hosted runtime configuration and authenticated client startup
+without server reads or serialized private collections on Webhooks and Automations. The SSR
+build uses the hosted production bootstrap so client routes fetch `/runtime-config.json`; the
+regular SPA harness retains its development bootstrap. Workspace routes remain client-rendered by the application's server-route
 contract; authenticated dashboard SSR is not claimed. Set `FG_SSR_RUN` to a distinct simple name
 before each run. Screenshots and source/request evidence live under
 `e2e/artifacts/ssr-smoke/<run>/`; process IDs are recorded in `server/processes.json`. The scoped

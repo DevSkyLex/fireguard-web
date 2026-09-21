@@ -17,6 +17,7 @@ import type { StoreFailureEventPayload } from '@core/request-state';
 export const notificationStoreEvents = eventGroup({
   source: 'Notification Store',
   events: {
+    changed: type<void>(),
     /**
      * Event loadFailed
      *

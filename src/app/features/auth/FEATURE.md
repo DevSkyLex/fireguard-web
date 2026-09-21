@@ -69,8 +69,8 @@ only `MfaVerifyPage` turns on because only the MFA screen has a session to bind 
 `serverError` and `resendAvailableIn` inputs render the failed verify/resend call and run the
 local resend-cooldown countdown; the owning stores keep the cooldown as an absolute
 `resendAvailableAt` timestamp fed by the API's `mfa_resend_in`/`canResendIn` on success and by
-the parsed 429 detail on a refused resend (`utils/resend-delay/` — parsing the detail was chosen
-over propagating the `Retry-After` header through `HydraApiService`, which no other call needs).
+the structured `rate_limit_exceeded` / `retryAfterSeconds` contract on a refused resend
+(`utils/resend-delay/`). Human-readable error copy never controls the countdown.
 
 The workspace proof form passes an opaque `challengeKey` in memory so a replacement challenge
 restarts its resend cooldown even when the API returns the same delay. The key is never rendered.

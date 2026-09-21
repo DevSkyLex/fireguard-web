@@ -21,9 +21,9 @@ import { ApiMock } from '../mocks/api-mock';
  *
  * @param {Page} page - Isolated test page.
  * @param {number} count - Number of conversation rows to expose.
- * @returns {Promise<void>} Resolves when all messaging endpoints are registered.
+ * @returns {Promise<ApiMock>} Shared mock instance after registering messaging endpoints.
  */
-export async function mockMessagesWorkspace(page: Page, count = 2): Promise<void> {
+export async function mockMessagesWorkspace(page: Page, count = 2): Promise<ApiMock> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession();
   const conversations = Array.from({ length: count }, (_, index) =>
@@ -62,4 +62,5 @@ export async function mockMessagesWorkspace(page: Page, count = 2): Promise<void
       api.mockMessagePost(conversation.id),
     ]),
   );
+  return api;
 }

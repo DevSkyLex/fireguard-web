@@ -14,7 +14,7 @@ import type { ComplianceSummaryTotals } from './compliance-summary-totals.interf
  * (`GET /organizations/{organizationId}/facilities/{facilityId}/compliance`,
  * `facilities` holds exactly one entry and `organizationStatus`/`totals`
  * reflect that single facility). A live read — `generatedAt` is the
- * data-as-of timestamp, never a historical reconstruction.
+ * generation timestamp; `dataEvaluatedAt` describes maintenance evaluation freshness.
  */
 export interface ComplianceSummaryOutput extends HydraItem {
   //#region Properties
@@ -26,6 +26,9 @@ export interface ComplianceSummaryOutput extends HydraItem {
 
   /** ISO 8601 datetime the register snapshot was generated at. */
   readonly generatedAt: string;
+
+  /** Oldest successful evaluation in this scope; absent during compatible rollout. */
+  readonly dataEvaluatedAt?: string | null;
 
   /** The graded compliance verdict for the scope this summary covers. */
   readonly organizationStatus: ComplianceStatus;

@@ -73,6 +73,22 @@ describe('CalendarFeedStore', () => {
     expect(store.queryData()).toEqual(feed);
   });
 
+  it('keeps a partial response successful while exposing source availability and truncation', () => {
+    const sources = [
+      { sourceKey: 'inspection' as const, available: false, truncated: false },
+      { sourceKey: 'maintenance' as const, available: true, truncated: true },
+    ];
+    mockCalendarService.getFeed.mockReturnValueOnce(of({ ...feed, complete: false, sources }));
+    store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+    expect(store.queryError()).toBeNull();
+    expect(store.isComplete()).toBe(false);
+    expect(store.partialSources()).toEqual(sources);
+    expect(store.hasTruncation()).toBe(true);
+    store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+    expect(store.isComplete()).toBe(true);
+    expect(store.partialSources()).toEqual([]);
+  });
+
   describe('createEvent', () => {
     it('should create the event and re-read the last loaded window', async () => {
       store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });

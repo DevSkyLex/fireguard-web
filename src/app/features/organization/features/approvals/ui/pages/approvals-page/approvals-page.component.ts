@@ -72,6 +72,7 @@ const STATUS_VALUES: readonly ApprovalStatus[] = [
   'pending',
   'approved',
   'rejected',
+  'withdrawn',
   'cancelled',
   'expired',
 ];
@@ -235,6 +236,21 @@ export class ApprovalsPage {
   protected readonly decisionTarget: WritableSignal<ApprovalDecisionTarget | null> =
     signal<ApprovalDecisionTarget | null>(null);
 
+  /**
+   * Property currentDecisionTarget
+   * @readonly
+   * @description Retains dialog identity while showing the latest server resource.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<ApprovalDecisionTarget | null>}
+   */
+  protected readonly currentDecisionTarget: Signal<ApprovalDecisionTarget | null> = computed(() => {
+    const target = this.decisionTarget();
+    if (!target) return null;
+    const current = this.store.requests().find((request) => request.id === target.request.id);
+    return { ...target, request: current ?? target.request };
+  });
+
   /** The filter bar's field catalog: status, then action type. */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
@@ -372,6 +388,9 @@ export class ApprovalsPage {
       const pageSize: number = this.pageSize();
 
       untracked((): void => {
+        if (this.decisionTarget()?.request.organizationId !== organizationId) {
+          this.decisionTarget.set(null);
+        }
         this.memberDirectory.ensureLoaded(organizationId);
         this.store.load({
           organizationId,
@@ -398,7 +417,7 @@ export class ApprovalsPage {
         }
 
         if (state.status === 'error' && state.error?.code === 409) {
-          this.store.refresh(this.organizationId(), target.request.id);
+          this.store.refresh([this.organizationId(), target.request.id]);
         }
       });
     });
@@ -616,6 +635,19 @@ export class ApprovalsPage {
   }
 
   /**
+   * Method openWithdraw
+   * @description Opens the confirm dialog for withdrawing one row.
+   * @access protected
+   * @since 1.0.0
+   * @param {ApprovalRequestOutput} request - The row activated.
+   * @returns {void}
+   */
+  protected openWithdraw(request: ApprovalRequestOutput): void {
+    this.store.resetDecideOperation();
+    this.decisionTarget.set({ mode: 'withdraw', request });
+  }
+
+  /**
    * Method closeDecisionDialog
    * @description Closes the decision dialog and resets its operation state.
    * @access protected
@@ -647,6 +679,8 @@ export class ApprovalsPage {
 
     if (target.mode === 'approve') {
       this.store.approve(params);
+    } else if (target.mode === 'withdraw') {
+      this.store.withdraw(params);
     } else {
       this.store.reject(params);
     }

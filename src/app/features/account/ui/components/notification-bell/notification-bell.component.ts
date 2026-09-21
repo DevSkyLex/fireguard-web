@@ -5,14 +5,17 @@ import {
   computed,
   inject,
   LOCALE_ID,
+  signal,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideBell } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
-import type { NotificationOutput } from '@features/account/models';
-import { NotificationStore } from '@features/account/state';
+import type { InboxItemOutput } from '@features/account/models';
+import { InboxStore, type InboxStoreType } from '@features/account/state';
+import { inboxConversationLink } from '@features/account/utils/inbox-link';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
@@ -65,26 +68,11 @@ const RELATIVE_UNITS: ReadonlyArray<{
  * @class NotificationBell
  *
  * @description
- * The header bell: a dot when something is waiting, and a menu holding the
- * three most recent notifications plus the way to the notification centre.
- *
- * The dot reads `unreadCount`, never `hasUnread`. `hasUnread` is derived from
- * the entities already loaded, so it is `false` until the menu has been opened
- * once — the count comes from `/api/inbox/unread-count` and is primed at boot,
- * which is the only value that can be trusted before then.
- *
- * The list is fetched on first open rather than at boot, and only when the
- * collection is genuinely empty: `initialize()` may already have filled it, and
- * Mercure keeps it live afterwards, so re-fetching on every open would be a
- * duplicate request (`AGENTS.md` § Routing, SSR, And Hydration).
- *
- * It is a popover, not a dropdown menu, because CDK's `CdkMenuItem.trigger()`
- * closes the whole stack on every click — marking one notification read would
- * dismiss the panel. `InterventionSyncIndicator` is the same trade in the same
- * header.
- *
- * It injects the store directly, as the root of its own slot surface — the same
- * exception `OrganizationSwitcher` takes, recorded in `FEATURE.md`.
+ * Shared unified inbox preview in a native desktop popover or mobile drawer.
+ * The badge comes from the scope-matched server count. Entries load lazily and
+ * source events refresh them. Notification reads keep the panel open; mention
+ * navigation closes it and leaves conversation acknowledgement to Messaging.
+ * This slot root orchestrates its account-owned store, as documented in FEATURE.md.
  *
  * @version 1.0.0
  *
@@ -160,9 +148,31 @@ export class NotificationBell {
    * @access protected
    * @since 1.0.0
    *
-   * @type {NotificationStore}
+   * @type {InboxStoreType}
    */
-  protected readonly store: NotificationStore = inject<NotificationStore>(NotificationStore);
+  protected readonly store: InboxStoreType = inject(InboxStore);
+
+  /**
+   * Property panelState
+   * @readonly
+   * @description Native overlay state, closed after opening a conversation.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<'open' | 'closed'>}
+   */
+  protected readonly panelState: WritableSignal<'open' | 'closed'> = signal<'open' | 'closed'>(
+    'closed',
+  );
+
+  /**
+   * Property router
+   * @readonly
+   * @description Opens the source-owned conversation route.
+   * @access private
+   * @since 1.0.0
+   * @type {Router}
+   */
+  private readonly router: Router = inject(Router);
 
   /**
    * Property locale
@@ -288,10 +298,11 @@ export class NotificationBell {
    * @returns {void}
    */
   protected onPanelState(state: 'closed' | 'open'): void {
+    this.panelState.set(state);
     if (state !== 'open') return;
 
     if (
-      this.store.notifications().length > 0 ||
+      this.store.entryEntities().length > 0 ||
       this.store.isLoading() ||
       this.store.listError() !== null
     ) {
@@ -306,20 +317,26 @@ export class NotificationBell {
    * @method markRead
    *
    * @description
-   * Marks one notification read in place. The panel stays open: there is no
-   * per-notification route to send the user to.
+   * Opens a mention's conversation, or acknowledges a notification in place.
    *
    * @access protected
    * @since 1.0.0
    *
-   * @param {NotificationOutput} notification - The notification that was clicked.
+   * @param {InboxItemOutput} notification - The source entry that was clicked.
    *
    * @returns {void}
    */
-  protected markRead(notification: NotificationOutput): void {
+  protected markRead(notification: InboxItemOutput): void {
+    const link = inboxConversationLink(notification);
+    if (link) {
+      void this.router.navigate([...link]).then((opened) => {
+        if (opened) this.panelState.set('closed');
+      });
+      return;
+    }
     if (notification.isRead) return;
 
-    this.store.markAsRead(notification.id);
+    this.store.markAsRead(notification);
   }
 
   /**

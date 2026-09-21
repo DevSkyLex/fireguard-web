@@ -12,4 +12,10 @@
  *
  * @since 1.0.0
  */
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'expired';
+export type ApprovalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'withdrawn'
+  | 'cancelled'
+  | 'expired';

@@ -34,12 +34,13 @@ export interface AssistantState {
   readonly threadCallState: CallState;
   /** Posting a question. */
   readonly askCallState: CallState;
+  /** Serialized cancellation/retry request, independent of asking and reading. */
+  readonly controlCallState: CallState;
   /**
    * Id of the reply currently being generated, or `null`.
    *
    * Tracked separately from the message list because a reply that stalls has
-   * no terminal frame and no server-side deadline — something has to remember
-   * what we are waiting for.
+   * no terminal frame; the server deadline and status remain authoritative.
    */
   readonly generatingMessageId: string | null;
   /** Whether the generation has been waiting long enough to look stuck. */

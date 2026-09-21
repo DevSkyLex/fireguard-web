@@ -23,6 +23,7 @@ import type {
   CalendarEventOutput,
   CalendarFeedItemOutput,
   CalendarFeedOutput,
+  CalendarFeedSourceOutput,
   CreateCalendarEventInput,
   UpdateCalendarEventInput,
 } from '@features/organization/features/calendar/models';
@@ -152,6 +153,37 @@ export const CalendarFeedStore = signalStore(
   withComputed((store) => ({
     /** The merged feed entries, empty until the first window resolves. */
     items: computed<readonly CalendarFeedItemOutput[]>(() => store.queryData()?.items ?? []),
+    /**
+     * Property isComplete
+     * @readonly
+     * @description Whether every authorized source returned its complete bounded window.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<boolean>}
+     */
+    isComplete: computed<boolean>(() => store.queryData()?.complete !== false),
+    /**
+     * Property partialSources
+     * @readonly
+     * @description Server-declared unavailable or truncated contributors.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<readonly CalendarFeedSourceOutput[]>}
+     */
+    partialSources: computed<readonly CalendarFeedSourceOutput[]>(() =>
+      (store.queryData()?.sources ?? []).filter((source) => !source.available || source.truncated),
+    ),
+    /**
+     * Property hasTruncation
+     * @readonly
+     * @description Whether reducing the date range can recover omitted entries.
+     * @access public
+     * @since 1.0.0
+     * @type {Signal<boolean>}
+     */
+    hasTruncation: computed<boolean>(() =>
+      (store.queryData()?.sources ?? []).some((source) => source.truncated),
+    ),
   })),
   withMethods((store, service = inject<CalendarService>(CalendarService)) => ({
     /**

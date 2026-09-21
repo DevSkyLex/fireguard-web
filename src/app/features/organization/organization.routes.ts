@@ -88,6 +88,14 @@ export const ORGANIZATION_ROUTES: Routes = [
     children: [],
   },
   {
+    path: 'select',
+    loadComponent: () =>
+      import('./ui/pages/organization-select-page/organization-select-page.component').then(
+        (m) => m.OrganizationSelectPage,
+      ),
+    title: $localize`:@@organization.select.title:Choose an organization`,
+  },
+  {
     path: ':organizationId',
     canActivate: [organizationAccessGuard],
     resolve: {
@@ -118,6 +126,16 @@ export const ORGANIZATION_ROUTES: Routes = [
           breadcrumb: false,
           [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
         } satisfies DashboardRouteData,
+      },
+      {
+        path: 'integrations/webhooks',
+        loadChildren: () =>
+          import('./features/webhooks/webhooks.routes').then((m) => m.WEBHOOK_ROUTES),
+      },
+      {
+        path: 'automations',
+        loadChildren: () =>
+          import('./features/automations/automations.routes').then((m) => m.AUTOMATION_ROUTES),
       },
       {
         path: 'messages',

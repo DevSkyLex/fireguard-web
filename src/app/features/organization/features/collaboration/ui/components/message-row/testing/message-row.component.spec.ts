@@ -78,6 +78,7 @@ describe('MessageRow', () => {
   });
 
   it('should offer to retry a message that never left', async () => {
+    fixture.componentRef.setInput('canWrite', true);
     const retried: string[] = [];
     fixture.componentInstance.retried.subscribe((id: string) => retried.push(id));
 

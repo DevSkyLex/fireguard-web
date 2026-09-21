@@ -27,8 +27,8 @@ import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@f
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
 import { provideOrganizationFeature } from '@features/organization';
-import { provideCollaborationFeature } from '@features/organization/features/collaboration/collaboration.feature';
-import { provideInterventionsFeature } from '@features/organization/features/interventions/interventions.feature';
+import { provideCollaborationFeature } from '@features/organization/features/collaboration/providers/bootstrap';
+import { provideInterventionsFeature } from '@features/organization/features/interventions/providers/bootstrap';
 import { provideSpartanHlm } from '@shared/ui/utils';
 
 /**

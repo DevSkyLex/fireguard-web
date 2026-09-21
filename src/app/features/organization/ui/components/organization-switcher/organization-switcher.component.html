@@ -146,9 +146,11 @@
             >
               <ng-icon [name]="link.icon" class="text-sm" aria-hidden="true" />
               <span>{{ link.label }}</span>
-              <span hlmDropdownMenuShortcut aria-hidden="true">
-                {{ formatShortcut(link.shortcutKey) }}
-              </span>
+              @if (link.shortcutKey) {
+                <span hlmDropdownMenuShortcut aria-hidden="true">
+                  {{ formatShortcut(link.shortcutKey) }}
+                </span>
+              }
             </a>
           }
         }

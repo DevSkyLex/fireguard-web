@@ -88,6 +88,44 @@ describe('HydraApiService', () => {
     );
   });
 
+  it('preserves plain Problem Details codes and field violations', () => {
+    const problem = {
+      type: '/validation_errors/invalid-input',
+      status: 422,
+      title: 'Validation failed',
+      detail: 'name: This value should not be blank.',
+      code: 'validation_failed',
+      violations: [{ propertyPath: 'name', message: 'This value should not be blank.' }],
+    };
+    const failed = vi.fn();
+    resourceService.list().subscribe({ error: failed });
+
+    httpMock.expectOne(baseUrl).flush(problem, {
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      headers: { 'Content-Type': 'application/problem+json' },
+    });
+
+    expect(failed).toHaveBeenCalledWith(problem);
+  });
+
+  it('preserves API Platform 5 JSON-LD validation contexts and violations', () => {
+    const problem = {
+      '@context': '/api/contexts/ConstraintViolation',
+      '@type': 'ConstraintViolation',
+      type: '/validation_errors/invalid-input',
+      status: 422,
+      detail: 'name: This value should not be blank.',
+      violations: [{ propertyPath: 'name', message: 'This value should not be blank.' }],
+    };
+    const failed = vi.fn();
+    resourceService.list().subscribe({ error: failed });
+
+    httpMock.expectOne(baseUrl).flush(problem, { status: 422, statusText: 'Unprocessable Entity' });
+
+    expect(failed).toHaveBeenCalledWith(problem);
+  });
+
   it('should return a Hydra resource from a response-bearing delete', () => {
     const output: HydraItem = { '@id': '/api/resources', '@type': 'ResourceState' };
     const received = vi.fn();

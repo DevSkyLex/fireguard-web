@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  untracked,
   OnInit,
   type InputSignal,
   type Signal,
@@ -16,7 +17,13 @@ import type {
   NotificationPreferenceOutput,
   NotificationTypeOutput,
 } from '@features/account/models';
-import { AccountNotificationPreferencesStore, NotificationStore } from '@features/account/state';
+import {
+  AccountNotificationPreferencesStore,
+  InboxStore,
+  type InboxStoreType,
+  NotificationStore,
+} from '@features/account/state';
+import { AccountInboxList } from '@features/account/ui/components/account-inbox-list';
 import { AccountNotificationList } from '@features/account/ui/components/account-notification-list';
 import {
   AccountNotificationPreferencesForm,
@@ -35,18 +42,9 @@ import type { AccountNotificationsTabId } from './models';
  * @class AccountNotificationsPage
  *
  * @description
- * Everything about notifications in one screen: the feed that arrived, and the
- * category by channel matrix deciding what arrives next. The two used to be
- * separate routes; they share the same type catalog and the same mental model,
- * and splitting them put "stop sending me these" a navigation away from
- * "read these".
- *
- * The open half lives in `?tab=`, so either can be linked to. The matrix loads
- * its rows only when its pane first renders — a reader who only reads the feed
- * never pays for that request.
- *
- * `NotificationStore` is root-provided and already primed by the account
- * provider, so this reads what is there rather than refetching it.
+ * Unified workspace inbox, category-filtered account notifications and delivery
+ * preferences in URL-addressable tabs. Source-specific read actions stay with
+ * their owner; secondary data loads when its pane first opens in the browser.
  *
  * @version 1.2.0
  *
@@ -58,6 +56,7 @@ import type { AccountNotificationsTabId } from './models';
     NgIcon,
     ...HlmEmptyImports,
     AccountNotificationList,
+    AccountInboxList,
     AccountNotificationPreferencesForm,
     HlmButton,
     HlmSkeleton,
@@ -103,6 +102,16 @@ export class AccountNotificationsPage implements OnInit {
    * @type {NotificationStore}
    */
   protected readonly store: NotificationStore = inject<NotificationStore>(NotificationStore);
+
+  /**
+   * Property inbox
+   * @readonly
+   * @description Account and workspace-scoped unified feed shared with the bell.
+   * @access protected
+   * @since 1.0.0
+   * @type {InboxStoreType}
+   */
+  protected readonly inbox: InboxStoreType = inject(InboxStore);
 
   /**
    * Property preferencesStore
@@ -283,7 +292,8 @@ export class AccountNotificationsPage implements OnInit {
 
   //#region Lifecycle
   /**
-   * Method constructor
+   * Constructor
+   * @constructor
    *
    * @description
    * Fetches the matrix the first time its tab opens, never on arrival at the
@@ -293,6 +303,13 @@ export class AccountNotificationsPage implements OnInit {
    * @since 1.2.0
    */
   public constructor() {
+    effect((): void => {
+      const tab = this.activeTab();
+      untracked(() => {
+        if (tab === 'inbox') this.inbox.ensureLoaded();
+        if (tab === 'notifications') this.store.load();
+      });
+    });
     effect((): void => {
       if (this.activeTab() !== 'preferences' || this.preferencesRequested) return;
 

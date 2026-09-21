@@ -12,8 +12,12 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { form, FormField, maxLength, type FieldTree } from '@angular/forms/signals';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { ApprovalStatusTag } from '@features/organization/features/approvals/ui/components/approval-status-tag';
+import { approvalDecisionReason } from '@features/organization/features/approvals/utils';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
+import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { ApprovalDecisionTarget } from './models';
@@ -67,7 +71,14 @@ const DECISION_NOTE_MAX_LENGTH: number = 2000;
  */
 @Component({
   selector: 'app-approval-decision-dialog',
-  imports: [...HlmAlertDialogImports, ...HlmFieldImports, ...HlmTextareaImports],
+  imports: [
+    FormField,
+    HlmButton,
+    ApprovalStatusTag,
+    ...HlmAlertDialogImports,
+    ...HlmFieldImports,
+    ...HlmTextareaImports,
+  ],
   templateUrl: './approval-decision-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -103,6 +114,36 @@ export class ApprovalDecisionDialog {
    * @type {InputSignal<string | null>}
    */
   public readonly errorText: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property refreshing
+   * @readonly
+   * @description Whether the server view is being refreshed after a conflict.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly refreshing: InputSignal<boolean> = input(false);
+
+  /**
+   * Property refreshErrorText
+   * @readonly
+   * @description An observation failure keeps the note and offers another refresh.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly refreshErrorText: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property refreshRequested
+   * @readonly
+   * @description Requests a fresh server view without submitting the local draft.
+   * @access public
+   * @since 1.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly refreshRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Outputs
@@ -128,18 +169,88 @@ export class ApprovalDecisionDialog {
   //#endregion
 
   //#region Constructor
-  constructor() {
+  /**
+   * Constructor
+   * @constructor
+   * @description Resets the draft when another request or decision mode opens.
+   * @access public
+   * @since 1.0.0
+   */
+  public constructor() {
     effect((): void => {
-      this.target();
+      this.draftKey();
 
-      untracked((): void => this.noteDraft.set(''));
+      untracked((): void => this.noteModel.set({ note: '' }));
     });
   }
   //#endregion
 
   //#region Properties
-  /** The note typed for this decision, cleared whenever a new target opens. */
-  protected readonly noteDraft: WritableSignal<string> = signal<string>('');
+  /**
+   * Property noteModel
+   * @readonly
+   * @description Draft note retained across refreshes of the same decision.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<{ note: string }>}
+   */
+  protected readonly noteModel: WritableSignal<{ note: string }> = signal({ note: '' });
+
+  /**
+   * Property noteForm
+   * @readonly
+   * @description Validates the optional note without owning the decision workflow.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<{ note: string }>}
+   */
+  protected readonly noteForm: FieldTree<{ note: string }> = form(this.noteModel, (path) =>
+    maxLength(path.note, DECISION_NOTE_MAX_LENGTH),
+  );
+
+  /**
+   * Property draftKey
+   * @readonly
+   * @description Identifies the decision independently of refreshed resource objects.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  private readonly draftKey: Signal<string | null> = computed(() => {
+    const target = this.target();
+    return target ? `${target.request.organizationId}:${target.request.id}:${target.mode}` : null;
+  });
+
+  /**
+   * Property canSubmit
+   * @readonly
+   * @description Current server capability after a conflict refresh.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly canSubmit: Signal<boolean> = computed(() => {
+    const target = this.target();
+    return (
+      !!target &&
+      target.request.status === 'pending' &&
+      (target.request.allowedActions?.includes(target.mode) ?? target.mode !== 'withdraw')
+    );
+  });
+
+  /**
+   * Property blockedReason
+   * @readonly
+   * @description Explains the current server refusal independently of the last HTTP error.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly blockedReason: Signal<string | null> = computed(() =>
+    this.target()?.mode === 'withdraw' && this.canSubmit()
+      ? null
+      : approvalDecisionReason(this.target()?.request.decisionBlockReason),
+  );
 
   /** The backend's character bound, read by the template's counter. */
   protected readonly maxLength: number = DECISION_NOTE_MAX_LENGTH;
@@ -149,25 +260,52 @@ export class ApprovalDecisionDialog {
     this.target() === null ? 'closed' : 'open',
   );
 
-  /** The confirmation's heading. */
+  /**
+   * Property title
+   * @readonly
+   * @description Names the action being confirmed.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
   protected readonly title: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'reject'
-      ? $localize`:@@approvals.decide.rejectTitle:Reject approval request?`
-      : $localize`:@@approvals.decide.approveTitle:Approve approval request?`,
+    this.target()?.mode === 'withdraw'
+      ? $localize`:@@approvals.decide.withdrawTitle:Withdraw your approval request?`
+      : this.target()?.mode === 'reject'
+        ? $localize`:@@approvals.decide.rejectTitle:Reject approval request?`
+        : $localize`:@@approvals.decide.approveTitle:Approve approval request?`,
   );
 
-  /** The confirmation's body — the approve variant states plainly that the gated action executes immediately. */
+  /**
+   * Property description
+   * @readonly
+   * @description Explains the consequence of approval, rejection or withdrawal.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
   protected readonly description: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'reject'
-      ? $localize`:@@approvals.decide.rejectMessage:The gated action will never run. This cannot be undone.`
-      : $localize`:@@approvals.decide.approveMessage:Approving executes the gated action immediately — it does not queue for later. This cannot be undone.`,
+    this.target()?.mode === 'withdraw'
+      ? $localize`:@@approvals.decide.withdrawMessage:Your request will be closed without executing the action. The reason will remain in its history. This cannot be undone.`
+      : this.target()?.mode === 'reject'
+        ? $localize`:@@approvals.decide.rejectMessage:The gated action will never run. This cannot be undone.`
+        : $localize`:@@approvals.decide.approveMessage:Approving executes the gated action immediately — it does not queue for later. This cannot be undone.`,
   );
 
-  /** The confirm button's label. */
+  /**
+   * Property acceptLabel
+   * @readonly
+   * @description Names the action submitted by the confirmation button.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
   protected readonly acceptLabel: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'reject'
-      ? $localize`:@@approvals.decide.rejectAccept:Reject`
-      : $localize`:@@approvals.decide.approveAccept:Approve`,
+    this.target()?.mode === 'withdraw'
+      ? $localize`:@@approvals.decide.withdrawAccept:Withdraw request`
+      : this.target()?.mode === 'reject'
+        ? $localize`:@@approvals.decide.rejectAccept:Reject`
+        : $localize`:@@approvals.decide.approveAccept:Approve`,
   );
   //#endregion
 
@@ -194,18 +332,6 @@ export class ApprovalDecisionDialog {
   }
 
   /**
-   * Method onNoteInput
-   * @description Updates the note draft from the textarea, clamped to {@link maxLength}.
-   * @access protected
-   * @since 1.0.0
-   * @param {Event} event - The textarea's input event.
-   * @returns {void}
-   */
-  protected onNoteInput(event: Event): void {
-    this.noteDraft.set((event.target as HTMLTextAreaElement).value.slice(0, this.maxLength));
-  }
-
-  /**
    * Method accept
    * @description Emits {@link decided} with the trimmed note, unless a decision is already in flight.
    * @access protected
@@ -213,9 +339,10 @@ export class ApprovalDecisionDialog {
    * @returns {void}
    */
   protected accept(): void {
-    if (this.pending()) return;
+    if (this.pending() || this.refreshing() || !this.canSubmit() || this.noteForm().invalid())
+      return;
 
-    this.decided.emit(this.noteDraft().trim());
+    this.decided.emit(this.noteModel().note.trim());
   }
   //#endregion
 }

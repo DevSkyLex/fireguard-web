@@ -1,4 +1,6 @@
 export type { UserState } from './user';
+export { InboxStore, inboxStoreEvents } from './inbox';
+export type { InboxStoreType } from './inbox';
 export { UserStore } from './user';
 export type { UserStoreType } from './user';
 export { userStoreEvents } from './user';

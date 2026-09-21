@@ -148,13 +148,13 @@ describe('FacilityPlanZoneGeometryDialog', () => {
     );
   });
 
-  it('does not flag a still-blank field as invalid', async () => {
+  it('marks a required blank field invalid without showing a premature range alert', async () => {
     await open([]);
 
     const input = rows()[0].querySelector(
       '[data-testid="facility-plan-zone-geometry-row-x"]',
     ) as HTMLInputElement;
-    expect(input.getAttribute('aria-invalid')).toBeNull();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
     expect(byTestId('facility-plan-zone-geometry-row-error')).toBeNull();
   });
 
@@ -211,5 +211,21 @@ describe('FacilityPlanZoneGeometryDialog', () => {
     expect((byTestId('facility-plan-zone-geometry-add-row') as HTMLButtonElement).disabled).toBe(
       true,
     );
+  });
+  it('keeps edited coordinates when a conflict refresh replaces the server geometry', async () => {
+    await open();
+    const input = rows()[0].querySelector(
+      '[data-testid="facility-plan-zone-geometry-row-x"]',
+    ) as HTMLInputElement;
+    input.value = '37.5';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.componentRef.setInput('points', [
+      [0.2, 0.2],
+      [0.6, 0.2],
+      [0.6, 0.6],
+    ]);
+    await fixture.whenStable();
+    expect(input.value).toBe('37.5');
   });
 });

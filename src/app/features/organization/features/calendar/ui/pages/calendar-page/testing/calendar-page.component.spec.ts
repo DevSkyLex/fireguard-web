@@ -17,7 +17,10 @@ import { PageTabsService } from '@core/page-tabs';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
-import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
+import type {
+  CalendarFeedItemOutput,
+  CalendarFeedSourceOutput,
+} from '@features/organization/features/calendar/models';
 import { CalendarFeedStore } from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
@@ -79,6 +82,9 @@ describe('CalendarPage', () => {
   let items: WritableSignal<readonly CalendarFeedItemOutput[]>;
   let queryError: WritableSignal<StoreError | null>;
   let isQueryLoading: WritableSignal<boolean>;
+  let isComplete: WritableSignal<boolean>;
+  let partialSources: WritableSignal<readonly CalendarFeedSourceOutput[]>;
+  let hasTruncation: WritableSignal<boolean>;
   let load: ReturnType<typeof vi.fn>;
   let createEvent: ReturnType<typeof vi.fn>;
   let updateEvent: ReturnType<typeof vi.fn>;
@@ -92,6 +98,9 @@ describe('CalendarPage', () => {
     items = signal<readonly CalendarFeedItemOutput[]>([]);
     queryError = signal<StoreError | null>(null);
     isQueryLoading = signal<boolean>(false);
+    isComplete = signal(true);
+    partialSources = signal<readonly CalendarFeedSourceOutput[]>([]);
+    hasTruncation = signal(false);
     load = vi.fn();
     createEvent = vi.fn();
     updateEvent = vi.fn();
@@ -102,6 +111,9 @@ describe('CalendarPage', () => {
       items,
       queryError,
       isQueryLoading,
+      isComplete,
+      partialSources,
+      hasTruncation,
       load,
       createEvent,
       updateEvent,
@@ -295,6 +307,38 @@ describe('CalendarPage', () => {
 
     const agenda: HTMLElement | null = root().querySelector('[data-testid="calendar-agenda"]');
     expect(agenda?.textContent).toContain('Nothing scheduled in this period.');
+  });
+
+  it('distinguishes unavailable sources from a complete empty calendar and retries', async () => {
+    await render();
+    mobile.set(true);
+    isComplete.set(false);
+    partialSources.set([{ sourceKey: 'inspection', available: false, truncated: false }]);
+    await fixture.whenStable();
+    expect(root().querySelector('[data-testid="calendar-partial"]')?.textContent).toContain(
+      'Temporarily unavailable',
+    );
+    expect(root().textContent).not.toContain('Nothing scheduled');
+    load.mockClear();
+    root().querySelector<HTMLButtonElement>('[data-testid="calendar-partial-retry"]')?.click();
+    expect(load).toHaveBeenCalledOnce();
+  });
+
+  it('offers a shorter date window for truncated sources and suppresses complete-empty copy in every view', async () => {
+    await render();
+    isComplete.set(false);
+    hasTruncation.set(true);
+    partialSources.set([{ sourceKey: 'maintenance', available: true, truncated: true }]);
+    await fixture.whenStable();
+    expect(root().textContent).not.toContain('Nothing scheduled');
+    root().querySelector<HTMLButtonElement>('[data-testid="calendar-reduce-period"]')?.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['granularity']()).toBe('day');
+    expect(root().textContent).not.toContain('Nothing scheduled');
+    expect(root().querySelector('[data-testid="calendar-reduce-period"]')).toBeNull();
+    fixture.componentInstance['switchGranularity']('week');
+    await fixture.whenStable();
+    expect(root().textContent).not.toContain('Nothing scheduled');
   });
 
   it('hides "New event" when the member lacks organization.events.write', async () => {

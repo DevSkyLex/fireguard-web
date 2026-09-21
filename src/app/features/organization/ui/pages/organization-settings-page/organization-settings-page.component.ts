@@ -18,6 +18,7 @@ import {
   type WritableSignal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -40,6 +41,8 @@ import {
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
+import { catchError, EMPTY, filter, switchMap, takeUntil, tap } from 'rxjs';
 import type { OptionOutput } from '@core/api/models';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -60,12 +63,20 @@ import type {
   OrganizationTransferOwnershipConfirmedEvent,
   MemberSelectOption,
 } from '@features/organization/models';
-import { ActiveOrganizationStore, OrganizationQuotaStore } from '@features/organization/state';
+import {
+  ActiveOrganizationStore,
+  OrganizationMemberAccessStore,
+  OrganizationQuotaStore,
+} from '@features/organization/state';
 import {
   OrganizationAccessAdminStore,
   type OrganizationAccessAdminStoreType,
 } from '@features/organization/state/organization-access-admin';
-import { OrganizationBillingStore } from '@features/organization/state/organization-billing';
+import {
+  OrganizationBillingStore,
+  organizationBillingStoreEvents,
+  type BillingCheckoutExpectation,
+} from '@features/organization/state/organization-billing';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationAccessPanel } from '@features/organization/ui/components/organization-access-panel';
 import { toMemberSelectOption } from '@features/organization/utils';
@@ -342,6 +353,36 @@ export class OrganizationSettingsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property checkout
+   * @readonly
+   * @description Checkout return marker; subscription confirmation always comes from the API.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly checkout: InputSignal<string | undefined> = input<string>();
+
+  /**
+   * Property checkoutPlan
+   * @readonly
+   * @description Expected plan key in the server-generated return URL.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly checkoutPlan: InputSignal<string | undefined> = input<string>();
+
+  /**
+   * Property checkoutInterval
+   * @readonly
+   * @description Expected interval in the server-generated return URL.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly checkoutInterval: InputSignal<string | undefined> = input<string>();
   //#endregion
 
   //#region Properties
@@ -930,17 +971,54 @@ export class OrganizationSettingsPage {
   protected readonly currentPlanKey: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
-   * Property hasRequestedBillingData
+   * Property requestedBillingContext
    *
    * @description
-   * Guards the subscription tab's data load so it fires once per page
-   * instance rather than on every re-evaluation of {@link loadSubscriptionTabData}.
+   * Identifies the organization and Checkout return already loaded by this page.
    *
+   * @access private
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  private requestedBillingContext: string | null = null;
+
+  /**
+   * Property requestedBillingOrganization
+   * @description Cancels obsolete billing reads even when changing organization from a hidden tab.
+   * @access private
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  private requestedBillingOrganization: string | null = null;
+
+  /**
+   * Property browser
+   * @readonly
+   * @description Restricts secondary billing reads and polling to the browser.
    * @access private
    * @since 1.0.0
    * @type {boolean}
    */
-  private hasRequestedBillingData: boolean = false;
+  private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /**
+   * Property checkoutExpectation
+   * @readonly
+   * @description Normalizes the return target without deriving subscription rights from query parameters.
+   * @access private
+   * @since 1.0.0
+   * @type {Signal<BillingCheckoutExpectation | null>}
+   */
+  private readonly checkoutExpectation: Signal<BillingCheckoutExpectation | null> = computed(() => {
+    const organizationId = this.organizationId();
+    if (this.checkout() !== 'success' || organizationId === null) return null;
+    const interval = this.checkoutInterval();
+    return {
+      organizationId,
+      planKey: this.checkoutPlan()?.trim() || null,
+      interval: interval === 'month' || interval === 'year' ? interval : null,
+    };
+  });
 
   /**
    * Property hasRequestedApprovalActionTypes
@@ -1037,16 +1115,40 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   * @type {EffectRef}
    */
   private readonly loadSubscriptionTabData: EffectRef = effect((): void => {
     const tabId: OrganizationSettingsTabId = this.activeTab();
     const organizationId: string | null = this.organizationId();
-
-    if (tabId !== 'subscription' || organizationId === null || this.hasRequestedBillingData) return;
+    const expectation = this.checkoutExpectation();
+    const context = JSON.stringify([organizationId, expectation]);
+    if (!this.browser) return;
 
     untracked((): void => {
-      this.hasRequestedBillingData = true;
-      this.billingStore.loadSubscription(organizationId);
+      if (
+        this.requestedBillingOrganization !== null &&
+        this.requestedBillingOrganization !== organizationId
+      ) {
+        this.billingStore.watchCheckout(null);
+        this.billingStore.loadSubscription(null);
+        this.requestedBillingContext = null;
+        this.requestedBillingOrganization = null;
+      }
+      if (
+        tabId !== 'subscription' ||
+        organizationId === null ||
+        this.requestedBillingContext === context
+      )
+        return;
+      this.requestedBillingContext = context;
+      this.requestedBillingOrganization = organizationId;
+      if (expectation !== null) {
+        this.billingStore.loadSubscription(null);
+        this.billingStore.watchCheckout(expectation);
+      } else {
+        this.billingStore.watchCheckout(null);
+        this.billingStore.loadSubscription(organizationId);
+      }
       this.billingStore.loadPricing();
       this.billingStore.loadInvoices(organizationId);
     });
@@ -1241,10 +1343,29 @@ export class OrganizationSettingsPage {
    * @since 1.7.0
    */
   public constructor() {
-    const browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+    const memberAccess = inject(OrganizationMemberAccessStore);
+    const organizationChanges = toObservable(this.organizationId);
+    inject(Events)
+      .on(organizationBillingStoreEvents.checkoutReconciled)
+      .pipe(
+        filter(({ payload }) => payload.organizationId === this.organizationId()),
+        tap(({ payload }) => {
+          this.quotaStore.load(payload.organizationId);
+          memberAccess.reload();
+          this.billingStore.loadInvoices(payload.organizationId);
+        }),
+        switchMap(({ payload }) =>
+          this.activeOrganizationStore.resolveOrganization(payload.organizationId).pipe(
+            takeUntil(organizationChanges.pipe(filter((id) => id !== payload.organizationId))),
+            catchError(() => EMPTY),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
     effect((): void => {
       const id = this.organizationId();
-      if (browser && id && this.activeTab() === 'access' && this.canManageAccess()) {
+      if (this.browser && id && this.activeTab() === 'access' && this.canManageAccess()) {
         untracked(() => this.accessStore.loadPolicy(id));
       }
     });
@@ -1253,6 +1374,18 @@ export class OrganizationSettingsPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method refreshCheckout
+   * @method refreshCheckout
+   * @description Restarts a bounded confirmation check after a delayed reconciliation or lost connection.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected refreshCheckout(): void {
+    this.billingStore.watchCheckout(this.checkoutExpectation());
+  }
+
   /**
    * Method onTabActivated
    * @method onTabActivated

@@ -28,6 +28,9 @@ and its published domain types.
 - Routes: `collaboration.routes.ts`, mounted at `/organizations/:organizationId/messages`, and
   `channels.routes.ts`, mounted at `/organizations/:organizationId/channels`
 - Public API: `index.ts`
+- Public read events: `state/message-thread/events`; Account may consume `conversationRead` to
+  refresh its unified inbox. The inbox links to the existing channel/messages routes and never
+  acknowledges mentions through the notification API. Conversation read markers remain owned here.
 - Bootstrap: `collaboration.feature.ts` (`provideCollaborationFeature()`), wired from `app.config.ts`
 
 `organization.routes.ts` loads the route file **directly**, not through `index.ts`: the barrel also
@@ -268,23 +271,19 @@ the price of the panel opening on its transcript instead of on a spinner.
 The panel covers the page rather than taking a column, so it owns a keyboard exit: Escape closes
 it, unless a question is half-written — throwing that away is not what anyone means by Escape.
 
-Four behaviours exist because of gaps in the API, and each will look wrong to anyone who assumes
-otherwise:
+The thread is created on the first question and remembered per organization. An inaccessible
+remembered thread is forgotten. Partial bodies are persisted and displayed as plain text.
 
-- **The thread is created on the first question, never on panel open**, and its id is remembered in
-  a per-organization cookie. `listAssistantThreads` takes no member filter, so a thread that is not
-  remembered is unreachable; and creating one eagerly would leave an empty thread behind on every
-  open. A remembered thread that 404s is forgotten silently rather than surfaced as an error.
-- **Frames are applied directly to state.** The `body` column stays empty until the reply completes,
-  so partial text exists _only_ in the Mercure frames. The refetch-on-frame pattern the message
-  thread uses (`§ Realtime`) would read `body: ''` here. Each frame carries the whole accumulated
-  body, not a delta.
-- **The subscription is re-minted every 10 minutes.** The subscriber token expires at 900s and
-  nothing renews it, while `MercureService` reconnects forever without surfacing an error — so a
-  panel left open would go quiet with no symptom.
-- **A silent generation is reported after 90s.** There is no cancel endpoint, no retry endpoint and
-  no server-side deadline: a reply whose worker died stays `streaming` forever. `dismissStalled()` is
-  therefore local-only — it marks the turn failed on screen and leaves the row untouched server-side.
+Every reply exposes its attempt identity, number, monotonic sequence, deadline and permitted
+cancel/retry actions. The store rejects obsolete frames and merges canonical reads without
+regressing a newer attempt. Cancellation and retry are server commands; the draft remains intact.
+A retry reuses the original question and reply, with a new attempt identity. A lost control response
+triggers a canonical read rather than another question. Scope changes discard late responses.
+
+The subscription is renewed every ten minutes. Ninety seconds of silence triggers a persisted read
+and a progress warning, never a locally invented failure. The user can check progress or stop the
+active attempt. Retry is available for failed/cancelled replies with retained question metadata;
+legacy settled replies without that metadata cannot be retried.
 
 Cut deliberately: the model picker and `temperature` (validated against an operator allowlist no
 endpoint exposes), thread management (no rename, archive or delete exists), and Markdown rendering
@@ -617,3 +616,22 @@ with the existing neutral fallback, and retain their avatar/name header on deskt
 directory or conversation query is initiated to obtain a title.
 Rendered mentions inherit their bubble text color with a subtle neutral fill and inset outline,
 including sent white bubbles in dark mode. Labels remain escaped before HTML binding.
+
+Bootstrap consumers import `provideCollaborationFeature` through `providers/bootstrap`, a narrow public barrel
+that does not import route or offline UI trees.
+
+## Failed sends
+
+`messages/failed` is declared before the conversation parameter and linked beside Saved messages.
+Its page-scoped query reads the account-owned local outbox only after hydration and checks each
+conversation through the API before exposing its draft in the selected organization. Denied or
+removed conversations are omitted; network failure remains an explicit unavailable state. Account
+and organization changes clear the list and discard late replies. This query does not transfer
+local drafts through SSR or create a new queue. Open conversation reaches the existing thread
+retry action, retaining the outbox operation and client message IDs and their PUT precondition.
+
+Conversation reads restore pending and failed local rows after server authorization succeeds.
+Restoration preserves client IDs/timestamps and never overwrites a confirmed message or changes
+server pagination totals. Late storage responses are fenced by account and conversation.
+
+The messaging database binds to the canonical profile `id`, retaining `sub` as a legacy fallback.

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
@@ -24,7 +24,8 @@ const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
 
-const apiError = (status: number, detail: string): ApiError => ({
+const apiError = (status: number, detail: string, code?: string): ApiError => ({
+  code,
   '@id': '',
   '@type': 'Error',
   status,
@@ -562,7 +563,7 @@ describe('FacilityPlansStore', () => {
       );
     });
 
-    it('rewords a 409 into the ancestry constraint message', () => {
+    it('uses the ancestry code and preserves the polygon after refreshing the overlay', () => {
       mockService.list.mockReturnValue(
         of({
           '@id': '',
@@ -572,7 +573,7 @@ describe('FacilityPlansStore', () => {
         }),
       );
       mockFacilityService.setPlanGeometry.mockReturnValue(
-        throwError(() => apiError(409, 'raw backend detail')),
+        throwError(() => apiError(409, 'raw backend detail', 'floor_plan_outside_ancestry')),
       );
       store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
@@ -585,6 +586,17 @@ describe('FacilityPlansStore', () => {
       expect(store.saveZoneGeometryCallState().status).toBe('error');
       const dispatched = mockDispatcher.dispatch.mock.calls.at(-1)?.[0];
       expect(dispatched.payload.message).toContain('ancestry');
+      expect(store.draftPoints()).toEqual([
+        [0, 0],
+        [1, 0],
+        [1, 1],
+      ]);
+      expect(store.editMode()).toBe('draw-zone');
+      expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledWith(
+        'org-1',
+        'facility-1',
+        'plan-1',
+      );
     });
   });
 
@@ -671,7 +683,7 @@ describe('FacilityPlansStore', () => {
 
     it('rewords a 409 into the assignment constraint message', () => {
       mockEquipmentService.setPlanPosition.mockReturnValue(
-        throwError(() => apiError(409, 'raw backend detail')),
+        throwError(() => apiError(409, 'raw backend detail', 'equipment_facility_required')),
       );
       store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
 
@@ -681,6 +693,19 @@ describe('FacilityPlansStore', () => {
       const dispatched = mockDispatcher.dispatch.mock.calls.at(-1)?.[0];
       expect(dispatched.payload.message).toContain('assigned');
     });
+  });
+
+  it('keeps an accepted pin write active when the member submits twice', () => {
+    const write = new Subject<EquipmentOutput>();
+    mockEquipmentService.setPlanPosition.mockReturnValue(write);
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    store.removePinFromPlan('equipment-1');
+    store.removePinFromPlan('equipment-1');
+    expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledTimes(1);
+    expect(store.savePinPositionCallState().status).toBe('pending');
+    write.next(facilityEquipment());
+    write.complete();
+    expect(store.savePinPositionCallState().status).toBe('success');
   });
 
   describe('candidate lists', () => {

@@ -9,34 +9,34 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
-import type { NotificationOutput } from '@features/account/models';
-import { NotificationStore } from '@features/account/state';
+import type { InboxItemOutput } from '@features/account/models';
+import { InboxStore } from '@features/account/state';
 import { NotificationBell } from '../notification-bell.component';
 
-const UNREAD: NotificationOutput = {
-  '@id': '/api/notifications/1',
-  '@type': 'Notification',
+const UNREAD: InboxItemOutput = {
+  sourceKey: 'notification',
   id: '1',
-  type: 'a',
-  category: 'work',
-  subject: 'An intervention was assigned to you',
-  body: 'Boiler room, tomorrow morning.',
-  channels: [],
-  payload: {},
+  kind: 'notification',
+  title: 'An intervention was assigned to you',
+  snippet: 'Boiler room, tomorrow morning.',
   isRead: false,
-  createdAt: '2026-08-30T08:00:00+00:00',
-  readAt: null,
+  occurredAt: '2026-08-30T08:00:00+00:00',
+  organizationId: 'org-1',
+  targetType: 'notification',
+  targetId: '1',
+  targetKind: null,
 };
-
-const READ: NotificationOutput = { ...UNREAD, id: '2', isRead: true };
+const READ: InboxItemOutput = { ...UNREAD, id: '2', isRead: true };
 
 describe('NotificationBell', () => {
   const mobile = signal(false);
   let fixture: ComponentFixture<NotificationBell>;
   let store: {
+    complete: WritableSignal<boolean>;
+    readCallState: () => { status: string };
     load: ReturnType<typeof vi.fn>;
     markAsRead: ReturnType<typeof vi.fn>;
-    notifications: WritableSignal<ReadonlyArray<NotificationOutput>>;
+    entryEntities: WritableSignal<ReadonlyArray<InboxItemOutput>>;
     isLoading: WritableSignal<boolean>;
     unreadCount: WritableSignal<number>;
     hasUnread: WritableSignal<boolean>;
@@ -51,18 +51,20 @@ describe('NotificationBell', () => {
 
   const panel = (): {
     onPanelState(state: 'closed' | 'open'): void;
-    markRead(notification: NotificationOutput): void;
+    markRead(notification: InboxItemOutput): void;
   } =>
     fixture.componentInstance as unknown as {
       onPanelState(state: 'closed' | 'open'): void;
-      markRead(notification: NotificationOutput): void;
+      markRead(notification: InboxItemOutput): void;
     };
 
   beforeEach(async () => {
     store = {
+      complete: signal(true),
+      readCallState: () => ({ status: 'idle' }),
       load: vi.fn(),
       markAsRead: vi.fn(),
-      notifications: signal<ReadonlyArray<NotificationOutput>>([]),
+      entryEntities: signal<ReadonlyArray<InboxItemOutput>>([]),
       isLoading: signal(false),
       unreadCount: signal(0),
       hasUnread: signal(false),
@@ -74,7 +76,7 @@ describe('NotificationBell', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: LOCALE_ID, useValue: 'en-US' },
-        { provide: NotificationStore, useValue: store },
+        { provide: InboxStore, useValue: store },
       ],
     });
 
@@ -130,7 +132,7 @@ describe('NotificationBell', () => {
   });
 
   it('should not refetch a feed the account provider already primed', async () => {
-    store.notifications.set([UNREAD]);
+    store.entryEntities.set([UNREAD]);
     await fixture.whenStable();
 
     panel().onPanelState('open');
@@ -150,7 +152,7 @@ describe('NotificationBell', () => {
   it('should mark an unread notification read', () => {
     panel().markRead(UNREAD);
 
-    expect(store.markAsRead).toHaveBeenCalledWith('1');
+    expect(store.markAsRead).toHaveBeenCalledWith(UNREAD);
   });
 
   it('should not re-mark a notification that is already read', () => {
@@ -158,9 +160,36 @@ describe('NotificationBell', () => {
 
     expect(store.markAsRead).not.toHaveBeenCalled();
   });
+
+  it('opens channel mentions without calling the notification acknowledgement endpoint', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    panel().onPanelState('open');
+    panel().markRead({
+      ...UNREAD,
+      sourceKey: 'messaging.mention',
+      targetType: 'conversation',
+      targetId: 'channel-1',
+      targetKind: 'channel',
+    });
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'channels', 'channel-1']);
+    expect(store.markAsRead).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['panelState']()).toBe('closed');
+  });
+
+  it('announces a partial source and does not render a complete empty state', async () => {
+    mobile.set(true);
+    store.complete.set(false);
+    await fixture.whenStable();
+    trigger().click();
+    await fixture.whenStable();
+    const content = document.querySelector('hlm-drawer-content')?.textContent;
+    expect(content).toContain('Some updates are unavailable');
+    expect(content).not.toContain('Nothing here yet');
+  });
   it('marks notifications read inside the mobile drawer without closing it', async () => {
     mobile.set(true);
-    store.notifications.set([UNREAD]);
+    store.entryEntities.set([UNREAD]);
     await fixture.whenStable();
     trigger().click();
     await fixture.whenStable();
@@ -168,7 +197,7 @@ describe('NotificationBell', () => {
     expect(drawer).not.toBeNull();
     drawer?.querySelector<HTMLButtonElement>('[data-testid="notification-bell-item"]')?.click();
     await fixture.whenStable();
-    expect(store.markAsRead).toHaveBeenCalledWith(UNREAD.id);
+    expect(store.markAsRead).toHaveBeenCalledWith(UNREAD);
     expect(document.querySelector('hlm-drawer-content')).not.toBeNull();
     expect(store.load).not.toHaveBeenCalled();
   });
@@ -184,7 +213,7 @@ describe('NotificationBell', () => {
 
   it('announces unread status without claiming that every unread item is current', async () => {
     mobile.set(true);
-    store.notifications.set([UNREAD, READ]);
+    store.entryEntities.set([UNREAD, READ]);
     await fixture.whenStable();
     trigger().click();
     await fixture.whenStable();

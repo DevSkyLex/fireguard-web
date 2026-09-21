@@ -2435,3 +2435,15 @@ The target architecture is:
 - public APIs instead of deep imports.
 
 When the current code and this document disagree, new work should move toward this document.
+
+### General feature-boundary gate
+
+`npm run lint` also runs `tools/architecture/check-feature-boundaries.mjs`. It resolves static
+imports, re-exports and literal dynamic imports through local aliases or relative paths, then
+uses the nearest FEATURE.md as ownership (including nested features). Cross-owner business
+imports must resolve to a barrel. Core cannot depend on features/layouts; shared may consume
+only feature-owned port barrels. Route files may load route entry components directly.
+The exact legacy exception file is currently empty; repaired entries must be removed. Public
+barrels still require their normative FEATURE.md approval; existence alone does not authorize
+new cross-feature behavior. Typechecking, OpenAPI contract tests and the pair-specific lint
+rules remain complementary checks.

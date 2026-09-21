@@ -189,3 +189,80 @@ test('redirects an anonymous onboarding SSR request to login using the local stu
   const ledger = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
   expect(ledger.unexpected).toEqual([]);
 });
+
+test('serves authenticated client routes without server reads or serialized private collections', async ({
+  browser,
+  request,
+}, info) => {
+  const context = await browser.newContext({
+    baseURL: appOrigin,
+    ignoreHTTPSErrors: true,
+    serviceWorkers: 'block',
+  });
+  await context.addCookies([
+    {
+      name: 'refresh_token',
+      value: 'ssr-harness-session',
+      url: apiOrigin,
+      secure: true,
+      sameSite: 'None',
+    },
+  ]);
+  try {
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => {
+      if (
+        message.type() === 'error' &&
+        /NG05|hydration|TypeError|ReferenceError/i.test(message.text())
+      )
+        errors.push(message.text());
+    });
+    await context.route('**/*', async (route) => {
+      const origin = new URL(route.request().url()).origin;
+      if ([appOrigin, apiOrigin].includes(origin)) return route.continue();
+      await route.abort();
+      expect.soft(origin, 'Authenticated SSR must stay in the local harness.').toBe(appOrigin);
+    });
+    const verifyRoute = async (path: string, title: string): Promise<void> => {
+      const before = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+      const response = await context.request.get(`/organizations/e2e-org-1/${path}`);
+      expect(response.status()).toBe(200);
+      const html = await response.text();
+      expect(html).toContain('<app-root></app-root>');
+      expect(html).not.toMatch(/\sngh="/);
+      expect(html).not.toContain('e2e-access-token');
+      const after = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+      expect(after.unexpected).toEqual([]);
+      const serverReads: Array<{ path: string }> = after.requests.slice(before.requests.length);
+      expect(
+        serverReads.filter((entry) => /\/(webhooks|automation)(\/|$)/.test(entry.path)),
+      ).toEqual([]);
+      await page.goto(`/organizations/e2e-org-1/${path}`);
+      await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+      await expect(page.locator('[ngh]')).toHaveCount(0);
+      if (path.includes('webhooks'))
+        await expect(page.getByText('No webhooks yet', { exact: true })).toBeVisible();
+      else await expect(page.getByTestId('automation-policy')).toContainText('Enabled');
+      await expect(page.getByRole('alert')).toHaveCount(0);
+    };
+    await verifyRoute('integrations/webhooks', 'Webhooks');
+    await verifyRoute('automations', 'Automations');
+    const ledger = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+    expect(ledger.unexpected).toEqual([]);
+    expect(errors).toEqual([]);
+    const directory = resolve(evidenceRoot, info.project.name);
+    await mkdir(directory, { recursive: true });
+    await writeFile(
+      resolve(directory, 'authenticated-workflows.json'),
+      JSON.stringify(
+        { source: await sourceEvidence(), errors, requests: ledger.requests },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    await context.close();
+  }
+});

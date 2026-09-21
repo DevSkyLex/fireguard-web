@@ -105,6 +105,7 @@ describe('ApprovalsPage', () => {
             decideErrorText: signal(null),
             actionTypes: signal([]),
             decideCallState,
+            refreshCallState: signal(idleCallState()),
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
@@ -231,7 +232,7 @@ describe('ApprovalsPage', () => {
     );
     await fixture.whenStable();
 
-    expect(refresh).toHaveBeenCalledWith('org-1', 'request-1');
+    expect(refresh).toHaveBeenCalledWith(['org-1', 'request-1']);
     expect(
       (fixture.componentInstance as unknown as { decisionTarget: () => unknown }).decisionTarget(),
     ).not.toBeNull();

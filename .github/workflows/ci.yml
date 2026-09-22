@@ -176,6 +176,7 @@ jobs:
         with:
           args: >-
             -Dsonar.projectKey=fireguard-web-${{ github.ref_name }}
+            -Dsonar.projectName=fireguard-web-${{ github.ref_name }}
             -Dsonar.scm.revision=${{ github.sha }}
       - name: Enforce SonarQube quality gate
         id: sonar-gate

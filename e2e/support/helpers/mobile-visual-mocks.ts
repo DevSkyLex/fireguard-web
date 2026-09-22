@@ -120,6 +120,10 @@ export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
   await api.mockCalendarFeed(org, catalogs.calendar);
   await api.mockApprovalRequestList(org, [approvalRequestOutput()]);
   await api.mockApprovalActionTypes([approvalActionTypeOutput()]);
+  await api.mockAutomationPolicy(org, catalogs.automationPolicy);
+  await api.mockAutomationRunList(org, catalogs.automationAttempts);
+  await api.mockWebhookSubscriptionList(org, catalogs.webhookSubscriptions);
+  await api.mockWebhookDeliveryList(org, 'e2e-visual-webhook', catalogs.webhookDeliveries);
   await api.mockAuditEventList(org, [auditEventOutput()]);
   await api.mockImportJobList([importJobOutput()]);
   await api.mockMaintenanceScheduleList([maintenanceScheduleOutput()]);

@@ -5,6 +5,13 @@ import json
 import re
 import tomllib
 
+from check_links import check_links
+
+from agent_profiles import (
+    load_profiles, validate_global_policy, validate_native_agent, validate_native_references,
+    validate_profile_coverage,
+)
+
 
 def file_hash(path: Path, policy: dict | None = None) -> str:
     """Hash declared UTF-8 text with LF endings; preserve every other byte."""
@@ -80,16 +87,18 @@ def validate(root: Path) -> dict:
                 assert (skill / match.group(1)).is_file(), f'Broken reference in {skill.name}: {match.group(1)}'
             assert (skill / 'agents/openai.yaml').is_file(), f'Missing Codex metadata: {skill.name}'
     config = tomllib.loads((root / '.codex/config.toml').read_text(encoding='utf-8'))
-    assert not {'model', 'approval_policy', 'sandbox_mode', 'projects'} & config.keys(), 'Project config overrides user policy'
+    validate_global_policy(config)
     agents = []
     for path in sorted((root / '.codex/agents').glob('*.toml')):
         agent = tomllib.loads(path.read_text(encoding='utf-8'))
         assert all(isinstance(agent.get(key), str) and agent[key] for key in ['name', 'description', 'developer_instructions']), path
         assert agent['name'] not in agents, f'Duplicate agent: {agent["name"]}'
-        assert 'model' not in agent, f'Forced model: {path.name}'
+        validate_native_agent(agent, path.name)
         agents.append(agent['name'])
-        for relative in re.findall(r'\.agents/skills/[\w-]+/SKILL\.md', agent['developer_instructions']):
-            assert (root / relative).is_file(), f'Missing agent procedure: {relative}'
+        validate_native_references(agent['developer_instructions'], root)
+    profiles = load_profiles(root / '.codex/agent-profiles.toml')
+    validate_profile_coverage(profiles, set(agents))
+    check_links(root)
     hooks = json.loads((root / '.codex/hooks.json').read_text(encoding='utf-8'))['hooks']
     assert {'PreToolUse', 'PostToolUse'} <= hooks.keys()
     for groups in hooks.values():

@@ -1,28 +1,27 @@
-# Upstream skills and FireGuard constraints
+# Official skills and FireGuard constraints
 
-`spartan`, `impeccable` and `ui-ux-pro-max` are third-party skills, installed under their official names
-with their complete scripts, references and data. They are not FireGuard-authored wrappers.
-See `.agents/skills.lock.json` for source/version and installation provenance. Update using
-the upstream source/installer. The official `spartan` skill is mandatory for presentation work
-and is paired with `fg-web-spartan`, which carries the project-specific constraints. The
-user-authorized local Impeccable adaptation removes Claude
-directory support from hook management, discovery, shortcuts and documentation. Its affected files
-and before/after hashes are recorded in the lock. Reapply it on updates; the validator enforces
-the directory boundary. Do not make unrelated changes to encode project design rules.
+The installed third-party skills are `spartan` and `design-taste-frontend`.
+Their official payloads stay unmodified. The source, pinned revision, license and integrity
+policy live in `.agents/skills.lock.json`; updates follow [maintenance.md](maintenance.md).
 
-In this repository the user's native Spartan requirement and DESIGN.md are authoritative:
-Nova, Geist, neutral surfaces, vermilion branding and semantic tokens, no parallel design system or unnecessary
-custom controls. Use upstream design advice to evaluate composition, hierarchy and interaction.
-Do not interpret its examples as permission to replace the stack, add a font/dependency,
-persist a generated design-system tree or override the requested visual direction.
+Official `spartan` is mandatory for presentation implementation, review and browser validation,
+together with the applicable FireGuard skill. `fg-web-spartan` owns FireGuard's component,
+form, collection, overlay and design-review guidance. Load only relevant official rule files.
 
-For UI UX Pro Max use the Angular stack when supported and query only the relevant domain.
-Its database can recommend ReactiveFormsModule; FireGuard's Signal Forms requirement in
-AGENTS.md still governs. Check API examples against the installed Angular version.
-Resolve script paths against the loaded skill folder, including when Codex starts in a
-subdirectory. For Impeccable use its Codex package's paths and operate mode for the product UI.
-Its runtime data is local working output; keep it separate from authored source.
+`design-taste-frontend` provides design judgment for the tasks its actual description and
+instructions cover, including landing pages, portfolios and redesigns. Its declared exclusions are
+dashboards, data tables and multi-step product UI; do not invoke it for those surfaces.
+For a FireGuard critique, first establish the user goal and inspect the current artifact;
+use Taste only where its scope and the requested judgment fit.
 
-The skill payloads are usable without activating optional upstream hooks. Existing FireGuard
-hooks remain in the local manifest and require Codex's own hook trust review. This installation
-does not silently trust hooks or change global model, sandbox or approval settings.
+AGENTS.md, ARCHITECTURE.md, DESIGN.md, PRODUCT.md and feature contracts remain authoritative.
+Keep installed Nova primitives, the documented typography/palette, semantic tokens, Signal Forms,
+SSR and ownership boundaries. Upstream examples do not authorize a stack/font/dependency
+change, a parallel design system, edits to installed Helm, or regeneration of the palette.
+A deliberate design change needs the user's requested scope, not an upstream default.
+
+Taste is not a replacement for accessibility measurements, browser validation or the project's
+test harness. The design reviewer reports visual evidence and uncertainty; the a11y auditor
+checks semantics/interaction; the e2e runner verifies behavior in a real browser.
+No optional upstream hook is silently activated, no trust setting is changed, and neither skill
+overrides the sandbox or the user's model preferences.

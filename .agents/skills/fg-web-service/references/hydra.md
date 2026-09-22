@@ -14,7 +14,7 @@ export class OrganizationMemberService extends HydraApiService {
 }
 ```
 
-`HydraApiService` (`@core/api`) is `abstract` and its transport methods are `protected`. Subclasses expose intent-revealing public methods on top. The decorator is **`@Service()`**, never `@Injectable` and never with `providedIn` (§10.14); the abstract base itself carries `@Service({ autoProvided: false })`, since an abstract class is never provided.
+`HydraApiService` (`@core/api`) is `abstract` and its transport methods are `protected`. Subclasses expose intent-revealing public methods on top. Concrete root services use **`@Service()`**, without `providedIn`; the abstract base uses `@Service({ autoProvided: false })`. A class deliberately supplied in a providers list also uses `autoProvided: false`; other documented decorator exceptions follow ARCHITECTURE.md §10.14.
 
 `getCollection<T>()` → `Observable<HydraCollection<T>>` · `getOne<T>()` · `post<TInput, TOutput>()` · `put` · `patch` · `delete()` · plus `buildUrl(path, id?)`, `buildParams(options?)`, `buildHeaders()` for lower-level assembly. It sets `withCredentials: true` and `Content-Type: application/ld+json` automatically.
 

@@ -14,11 +14,13 @@ npm run e2e:report       # open the last HTML report
 npm run e2e:install      # install browsers (once)
 ```
 
-`playwright.config.ts` starts `ng serve --configuration=e2e` on **port 4273** itself (`E2E_PORT`, line 11). That build is **SSR-off** deliberately — hydration timing makes assertions flaky. Do not point the suite at the dev server on 4200.
+This reference covers the ordinary SPA suite. Select other boundaries through `.codex/references/validation.md` before using these commands.
+
+`playwright.config.ts` starts `ng serve --configuration=e2e` on **port 4273**. The build is deliberately **SSR-off** because browser route mocks cannot intercept server-side requests. Do not point this suite at the SSR dev server on 4200.
 
 ## Hermetic by construction
 
-Every backend call is stubbed through `e2e/support/mocks/api-mock.ts`. No API, no database, no Mercure. A spec that reaches a real backend **hangs on the catch-all 404 net** rather than failing cleanly — that symptom means you forgot to register an endpoint.
+Every backend call is stubbed through `e2e/support/mocks/api-mock.ts`; no real backend, database or Mercure hub is required. Unknown API requests receive a 404 and a Playwright assertion failure, even when the UI catches the response. Diagnose the missing method/path/scope mock; do not interpret that harness failure as a product defect.
 
 `ApiMock` composes:
 

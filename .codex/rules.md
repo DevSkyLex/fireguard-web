@@ -1,18 +1,25 @@
 # Rules for Codex
 
-Read each matching rule before editing. Paths are relative to the repository root.
-These are native Codex references; no Claude frontmatter activation or tool is required.
-ARCHITECTURE.md remains the authority when an operational summary becomes stale.
+Read matching rules before editing; paths are relative to the repository root.
+These are manual routing references, not automatic activation guarantees.
+ARCHITECTURE.md and the owner FEATURE.md remain normative. Generated/dependency trees and
+official skill payloads are excluded from authored-code rules and must not be hand-edited.
 
-| Rule                                          | Matching paths                                                                                                        |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [barrels](rules/barrels.md)                   | `src/app/**/index.ts`                                                                                                 |
-| [comments](rules/comments.md)                 | `src/app/**/*.ts`, `src/app/**/*.html`                                                                                |
-| [components](rules/components.md)             | `src/app/**/*.component.ts`, `src/app/**/*.component.html`                                                            |
-| [data-access](rules/data-access.md)           | `src/app/**/data-access/**/*.ts`                                                                                      |
-| [directives-pipes](rules/directives-pipes.md) | `src/app/**/*.directive.ts`, `src/app/**/*.pipe.ts`                                                                   |
-| [e2e](rules/e2e.md)                           | `e2e/**/*.ts`                                                                                                         |
-| [lsp-usage](rules/lsp-usage.md)               | `src/**/*.ts`, `src/**/*.html`                                                                                        |
-| [models-utils](rules/models-utils.md)         | `src/app/**/models/**/*.ts`, `src/app/**/utils/**/*.ts`, `src/app/**/constants/**/*.ts`, `src/app/**/options/**/*.ts` |
-| [state](rules/state.md)                       | `src/app/**/state/**/*.ts`                                                                                            |
-| [testing](rules/testing.md)                   | `src/app/**/*.spec.ts`                                                                                                |
+| Rule                                                | Matching paths or task                                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [Ownership/contracts](rules/ownership-contracts.md) | `src/app/**/FEATURE.md`, feature creation, public ports, `providers/`, `setup/`, `navigation/`, cross-feature changes |
+| [Barrels](rules/barrels.md)                         | Authored `src/app/**/index.ts`                                                                                        |
+| [Comments](rules/comments.md)                       | Authored `src/app/**/*.ts`, `src/app/**/*.html`                                                                       |
+| [Components](rules/components.md)                   | Authored `*.component.ts`, `*.component.html`                                                                         |
+| [Forms](rules/forms.md)                             | `ui/forms/**`, `**/validators/**`, `*.validator.ts`                                                                   |
+| [Data access](rules/data-access.md)                 | `src/app/**/data-access/**/*.ts`                                                                                      |
+| [Behavior/access](rules/behavior-access.md)         | `**/services/**`, `**/access/**`, repositories and offline sync                                                       |
+| [Directives/pipes](rules/directives-pipes.md)       | Authored `*.directive.ts`, `*.pipe.ts`                                                                                |
+| [Routing/SSR](rules/routing-ssr.md)                 | `*.routes.ts`, `**/http/**`, routing and hydration changes                                                            |
+| [E2E](rules/e2e.md)                                 | `e2e/**`, `playwright*.config.ts`, browser verification                                                               |
+| [Code intelligence](rules/lsp-usage.md)             | Symbol changes in authored TypeScript/HTML                                                                            |
+| [Models/utils](rules/models-utils.md)               | `**/models/**`, `**/utils/**`, `**/constants/**`, `**/options/**`                                                     |
+| [State](rules/state.md)                             | `src/app/**/state/**/*.ts`                                                                                            |
+| [Testing](rules/testing.md)                         | `src/app/**/*.spec.ts`                                                                                                |
+| [Localization review](references/i18n-review.md)    | Message IDs, `src/locale/*.xlf`, locale changes                                                                       |
+| [Validation selection](references/validation.md)    | Choosing checks, including tooling-only work                                                                          |

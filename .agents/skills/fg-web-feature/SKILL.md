@@ -14,6 +14,7 @@ see `.codex/workflow.md` for shell, MCP, delegation and validation conventions.
 Read architecture §8.3/§8.4 and [feature documentation](references/feature-docs.md).
 Choose the strongest business owner before introducing folders. Create only concerns the
 slice needs: UI, state, transport, models, services, access, setup, navigation, http or ports.
+For loading, guards or hydration, read [routing and SSR](references/routing-ssr.md).
 App routing selects layouts; the feature owns its route subtree. Layouts compose feature
 widgets through public APIs and never take over business workflows.
 
@@ -23,6 +24,6 @@ Route-critical resolvers must seed their owning store or own a small explicit Tr
 handoff. Load hidden tabs, pickers and secondary data on browser demand.
 
 Update parent/nested FEATURE.md in the same change when routes, public APIs, dependencies or
-invariants change. Use `fg-web-service`, `fg-web-store` and `fg-web-component` for their technical
+invariants change. Use `fg-web-service`, `fg-web-store` and `fg-web-spartan` for their technical
 details as needed. These are available local procedures, not compulsory subagent handoffs.
 Validate the changed routing/data boundaries and report the resulting user behavior.

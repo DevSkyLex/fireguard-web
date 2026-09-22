@@ -1,9 +1,9 @@
 # Data access
 
-> Abridgement of the `fg-web-service` skill — DTO conventions, the envelope shape, and the adapter test live there. Change one, change both.
+> Apply ARCHITECTURE.md §10.6/§11. The `fg-web-service` Hydra reference supplies transport examples; keep the normative contract there rather than duplicating recipes here.
 
 - **Every feature API service extends `HydraApiService`** from `@core/api`. Never inject `HttpClient` (§11.3, §16).
-- The decorator is **`@Service()`**, never `@Injectable`, and never with `providedIn` — `@Service` has no such option (§10.14). Only the abstract base takes `@Service({ autoProvided: false })`.
+- Concrete root services use **`@Service()`**, without `providedIn` — `@Service` has no such option (§10.14). Use `@Service({ autoProvided: false })` for an abstract base or a class deliberately provided by hand; documented decorator exceptions follow §10.14.
 - Never build `HttpParams` or `HttpHeaders` outside the base class — extend its protected helpers (`buildUrl`, `buildParams`, `buildHeaders`).
 - A service returns `Observable<T>` of **transport types only**. It **never subscribes, never `catch`es, never `map`s to a view model** — a `catchError` here breaks the `toStoreError` → `errorCallState` chain the store depends on (§11.6).
 - Collections are `HydraCollection<T>` = `{ member, totalItems, view? }` — **unprefixed** API Platform 4 keys. Never reintroduce `hydra:member` (§11.7).

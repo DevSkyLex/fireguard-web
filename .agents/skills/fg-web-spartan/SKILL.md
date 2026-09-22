@@ -1,40 +1,37 @@
 ---
 name: fg-web-spartan
-description: 'Build or refine FireGuard interfaces using installed Spartan Nova primitives, FireGuard semantic tokens and native interaction patterns.'
+description: 'Build or refine FireGuard Angular pages, components, Signal Forms, collections and overlays using native Spartan; review visual composition within the project design contract.'
 ---
 
-# fg-web-spartan
+# FireGuard native UI
 
-Locate the repository from this skill: its root is three directories above this folder.
-Read `AGENTS.md`, the applicable entries in `.codex/rules.md`, and the owning `FEATURE.md`
-(including its parent for nested features). `ARCHITECTURE.md` remains normative.
-Run commands from the repository root. Use the tools actually exposed by the Codex session;
-see `.codex/workflow.md` for shell, MCP, delegation and validation conventions.
+Resolve the repository from this skill (three parent directories). Follow
+[AGENTS.md](../../../AGENTS.md), the [workflow](../../../.codex/workflow.md), matching rules
+and the owner/parent FEATURE.md. Read DESIGN.md and PRODUCT.md for the affected surface.
 
-Read the official `spartan` skill at `../spartan/SKILL.md` and only its rule files relevant to
-the current task. Its library procedures complement this FireGuard-specific skill; this skill's
-architecture, design, SSR, Signal Forms and validation requirements remain authoritative.
+Read the official [spartan skill](../spartan/SKILL.md) and only its relevant rule files.
+Inspect installed `src/app/shared/ui/` APIs before composition; these primitives are read-only.
+Prefer installed Helm, then an official missing primitive, then Brain composition for a real gap.
+Use available MCP documentation when useful; never invent tool names or a second design system.
 
-Read `DESIGN.md`, `PRODUCT.md` and [the native UI conventions](references/ui-conventions.md).
-Inspect the installed primitive in `src/app/shared/ui/` first. Check the available Spartan
-MCP catalog/blocks/docs for a missing primitive or uncertain API; if unavailable, use local
-sources and official documentation and state the fallback. Never invent MCP tool names.
+## Choose the relevant reference
 
-Prefer an installed helm primitive, then an official missing primitive installed with the
-project CLI, then brain composition only for a real gap. Do not create a parallel design
-system or a generic wrapper around an existing select, card, button or overlay.
+- Creating or restructuring a page/component: [components](references/components.md).
+- Native primitives, theme and imports: [UI conventions](references/ui-conventions.md).
+- Signal Forms or reusable validators: [forms](references/forms.md).
+- Entity tables or card/list browsing: [collections](references/collections.md).
+- Choosing or changing a temporary surface: [overlays](references/overlays.md).
+- One control with desktop/mobile presentations: [adaptive composition](references/adaptive-composition.md).
+- Requested visual critique: [design review](references/design-review.md), which is read-only.
 
-Keep Nova, Geist, the neutral surfaces and vermilion brand tokens defined in DESIGN.md,
-and `html[data-theme="dark"]`. Installed `src/app/shared/ui/**` primitives are read-only;
-compose changes in the owning application feature.
-Compose field groups, native cards/items, tabs, menus and sheets according to their intended
-purpose. Keep one clear commitment per active surface, useful density, visible focus,
-local errors and task context across navigation. Preserve permissions, SSR and offline behavior.
+Do not load every reference for a small edit. Pages orchestrate; presentational units consume
+inputs and emit outputs. Keep Signal Forms, semantic tokens, native behavior, SSR, permissions
+and the existing public contracts. Inspect actual consumers before changing a contract.
 
-When design judgment is open, the separately installed `impeccable` or `ui-ux-pro-max` skill
-can advise. Read `.codex/third-party-skills.md`; their broad suggestions do not replace the
-user's Spartan constraint. Do not generate another design-system tree or replace the palette.
+For design judgment within its declared scope, use official `design-taste-frontend` after
+reading [third-party constraints](../../../.codex/third-party-skills.md). It excludes dashboards,
+data tables and multi-step product UI; FireGuard's own design review handles those surfaces.
 
-Use `fg-web-e2e` for actual desktop/mobile and light/dark inspection when presentation changes.
-Use `fg-web-a11y` for relevant keyboard/semantics review. Report primitives used, concrete
-behavioral/visual changes and evidence; no automatic external reviews or new dependencies.
+Use `fg-web-test` for meaningful behavior boundaries, `fg-web-e2e` for required browser evidence
+and `fg-web-quality` for scoped gates. Distinguish implementation, design critique, accessibility
+audit and browser execution. Report placement, primitives, behavior/visual changes and real checks.

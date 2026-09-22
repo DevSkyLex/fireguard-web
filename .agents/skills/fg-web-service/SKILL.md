@@ -15,6 +15,10 @@ Choose the kind first: transport → `data-access/services/<concern>/`; behavior
 `services/<concern>/`; access decision → `access/services/<concern>/`; normalization →
 pure functions in `data-access/adapters/`. Read `.codex/references/naming.md`.
 
+For access projections read [access contracts](references/access.md); for persistence/replay read
+[offline synchronization](references/offline-sync.md). A requested wire-contract audit uses
+[API contract review](references/api-contract-review.md) and remains read-only.
+
 For transport work read [the Hydra contract](references/hydra.md) and inspect a current
 service plus its test. Extend `HydraApiService`, use the project's `@Service` registration,
 and return transport types. Preserve error propagation to the store and do not create

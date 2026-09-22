@@ -1,6 +1,6 @@
 # Unit specs
 
-> Abridgement of the `fg-web-test` skill — harness code, exemplars, and the full gate live there. Change one, change both.
+> Apply ARCHITECTURE.md §14.1. The `fg-web-test` references contain harness examples; choose gates through `.codex/references/validation.md`.
 
 - Specs live in a **`testing/` folder beside the subject**, named `<subject-file>.spec.ts`. A spec placed next to its subject is a §16 anti-pattern (§14.1).
 - The top-level `describe()` is the **exact symbol** under test — `describe('OrganizationMembersStore')` — no prefix, no path (§9.9).

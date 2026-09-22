@@ -1,0 +1,86 @@
+# User-approved balanced delegation profiles. Native roles inherit the session.
+# Resolve against the actual model catalogue with scripts/resolve_agent.py.
+
+[agents."fg-web-component-builder"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-directive-builder"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-feature-builder"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-service-builder"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-signal-store"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-spartan-ui"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-utils-builder"]
+category = "luna"
+effort = "medium"
+
+[agents."fg-web-pipe-builder"]
+category = "luna"
+effort = "high"
+
+[agents."fg-web-web-test-writer"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-e2e-runner"]
+category = "terra"
+effort = "medium"
+
+[agents."fg-web-a11y-auditor"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-architecture-reviewer"]
+category = "astra"
+effort = "high"
+
+[agents."fg-web-form-builder"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-overlay-builder"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-collection-builder"]
+category = "terra"
+effort = "high"
+
+[agents."fg-web-routing-ssr-builder"]
+category = "sol"
+effort = "xhigh"
+
+[agents."fg-web-access-builder"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-offline-sync-builder"]
+category = "sol"
+effort = "xhigh"
+
+[agents."fg-web-i18n-auditor"]
+category = "luna"
+effort = "medium"
+
+[agents."fg-web-api-contract-reviewer"]
+category = "sol"
+effort = "high"
+
+[agents."fg-web-design-reviewer"]
+category = "sol"
+effort = "high"

@@ -12,7 +12,9 @@ Run commands from the repository root. Use the tools actually exposed by the Cod
 see `.codex/workflow.md` for shell, MCP, delegation and validation conventions.
 
 Read [test execution](../fg-web-test/references/testing.md) before selecting spec globs.
-Use package.json for current scripts. Format only touched authored files using the local
+Use package.json for current scripts and [.codex validation selection](../../../.codex/references/validation.md)
+for tooling, SPA, synthetic harness, SSR and localized browser boundaries. A bounded localization
+audit follows [i18n review](../../../.codex/references/i18n-review.md) and remains read-only. Format only touched authored files using the local
 oxfmt config; do not rewrite upstream skills or generated/dependency trees.
 
 Run the narrowest useful validation first. For app changes: targeted lint and meaningful

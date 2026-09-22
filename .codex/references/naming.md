@@ -1,6 +1,6 @@
 # Naming lookup
 
-`ARCHITECTURE.md` **§9** is the normative reference — _"when two passages seem to disagree, this section wins."_ This skill is the fast lookup; §9 is the authority.
+`ARCHITECTURE.md` **§9** is the normative reference — _"when two passages seem to disagree, this section wins."_ This reference is the fast lookup; §9 is the authority.
 
 ## The one-line rule
 
@@ -31,7 +31,7 @@ The type separator is a **dot**: `auth.guard.ts`, never `auth-guard.ts`. One dec
 | spec                     | `<subject-file>.spec.ts` in `testing/`                     | `describe('<ExactSymbol>')`                                                     | —                      |
 | Playwright page object   | `<name>.page.ts` in `e2e/support/pages/`                   | `<Name>Page`                                                                    | —                      |
 
-**The selector uses the FOLDER name, not the class name.** Folder `organization-members/` → `app-organization-members`, even though the class is `OrganizationMembersPage`. `app` is the only permitted prefix.
+**The selector uses the FOLDER name, not the class name.** Folder `organization-members-page/` → `app-organization-members-page`, even though the class is `OrganizationMembersPage`. `app` is the only permitted prefix.
 
 **Role suffixes for components** (§9.3): `…Page` `…Form` `…Table` `…Dataview` `…Dialog` `…Sheet` `…Panel` `…Card` `…Chart` `…Layout` `…Stepper` `…Toolbar`. A generic widget may be a bare noun (`Board`, `Calendar`).
 

@@ -14,10 +14,16 @@ tables, charts, responsive behavior, styling, accessibility, and browser verific
 the Spartan rule files relevant to the task. FireGuard's architecture, Signal Forms requirement,
 `DESIGN.md`, installed Helm sources, and feature contracts remain authoritative.
 
-The upstream `impeccable` and `ui-ux-pro-max` skills are installed separately. When using
-them, read [.codex/third-party-skills.md](.codex/third-party-skills.md): the user's native
-Spartan requirement, DESIGN.md and project architecture remain authoritative. Do not
-generate a competing design system or change the palette/stack from generic suggestions.
+The official `design-taste-frontend` skill complements design judgment within its declared
+scope. Read [.codex/third-party-skills.md](.codex/third-party-skills.md) when using a third-party
+skill: native Spartan, DESIGN.md and project architecture remain authoritative. Do not apply
+marketing-page advice mechanically to product dashboards or generate a competing design system.
+
+The consolidated `fg-web-spartan` skill routes component, form, collection, overlay and visual
+review work to focused references. Specialist roles and user-approved model/effort profiles are
+documented in [.codex/references/agents.md](.codex/references/agents.md) and
+[.codex/workflow.md](.codex/workflow.md). Resolve delegated profiles against the actual session
+catalogue; direct agent invocations inherit the session settings.
 
 Do not read or write secret environment files (except `.env.example`/`.env.dist`),
 API `config/jwt/`, or web `src/environments/environment*.ts`. Do not hand-edit

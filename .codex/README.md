@@ -1,138 +1,62 @@
-# FireGuard dans Codex
+# FireGuard Web dans Codex
 
-Configuration locale, autonome : Codex lit `AGENTS.md`, `.codex/workflow.md` et les règles
-applicables de `.codex/rules.md`. Les procédures n'appellent plus les fichiers de Claude.
-La configuration de l’autre client reste conservée, sans chemin vers elle dans cet outillage.
+Ce dossier décrit l'outillage local de Codex. Commencer par [AGENTS.md](../AGENTS.md),
+puis suivre le [workflow](workflow.md) et les [règles correspondant aux fichiers](rules.md).
+L'architecture reste définie dans [ARCHITECTURE.md](../ARCHITECTURE.md); les contrats métier
+restent dans les `FEATURE.md`. La palette et les interactions restent régies par
+[DESIGN.md](../DESIGN.md) et [PRODUCT.md](../PRODUCT.md).
 
-## Organisation
+## Choisir le bon point d'entrée
 
-| Emplacement                           | Rôle                                                                                                               |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `.agents/skills/fg-web-*/`            | 15 skills FireGuard, avec instructions autonomes et métadonnées Codex.                                             |
-| `.agents/skills/spartan/`             | Skill officiel Spartan pour la découverte, la composition, le CLI et le MCP de la bibliothèque.                    |
-| `.agents/skills/impeccable/`          | Impeccable 4.1.3 officiel, avec adaptation locale supprimant les chemins Claude.                                   |
-| `.agents/skills/ui-ux-pro-max/`       | Paquet produit par l'installateur officiel `ui-ux-pro-max-cli` 2.15.0 pour Codex : données, scripts et références. |
-| `.agents/skills.lock.json`            | Sources, révisions/versions, licences et empreintes SHA-256 des paquets externes.                                  |
-| `.codex/agents/`                      | 12 rôles FireGuard et les 4 rôles officiels d'Impeccable, enregistrés sans modifier leur contenu.                  |
-| `.codex/rules/`, `.codex/references/` | Règles de chemin et référence de nommage propres à Codex.                                                          |
-| `.codex/hooks/`                       | Gardes locaux, adaptation des événements Codex et formatage des fichiers touchés.                                  |
-| `.codex/config.toml`                  | Les cinq MCP existants ; aucun choix de modèle, de sandbox ou d'approbation ajouté.                                |
+Un skill fournit une procédure; un agent exécute une responsabilité indépendante et bornée.
+La présence d'un spécialiste ne rend pas sa délégation obligatoire.
 
-Les skills sont découverts dans `.agents/skills`. Les rôles sont chargés depuis
-`.codex/agents`, d'où l'enregistrement des quatre fichiers fournis par Impeccable.
-Voir la documentation officielle [skills](https://developers.openai.com/codex/skills)
-et [subagents](https://developers.openai.com/codex/subagents).
+| Besoin                                | Skill ou référence                                                    | Agent                                                                              | Validation                                       |
+| ------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Page/composant                        | `spartan` + `fg-web-spartan`                                          | `fg-web-component-builder`                                                         | Tests ciblés, build si template, captures utiles |
+| Composition native                    | `spartan` + `fg-web-spartan`                                          | `fg-web-spartan-ui`                                                                | Captures desktop/mobile et thèmes affectés       |
+| Formulaire / overlay / collection     | Référence ciblée de `fg-web-spartan`                                  | `fg-web-form-builder` / `fg-web-overlay-builder` / `fg-web-collection-builder`     | Inputs/outputs, focus et parcours concernés      |
+| Directive / pipe / helper             | `fg-web-directive` / `fg-web-pipe` / `fg-web-util`                    | `fg-web-directive-builder` / `fg-web-pipe-builder` / `fg-web-utils-builder`        | Host/SSR ou entrées-sorties pures                |
+| Ownership / routes                    | `fg-web-feature`                                                      | `fg-web-feature-builder` / `fg-web-routing-ssr-builder`                            | Frontières, redirections et SSR/hydratation      |
+| Transport / accès / offline           | `fg-web-service`                                                      | `fg-web-service-builder` / `fg-web-access-builder` / `fg-web-offline-sync-builder` | Wire mapping, refus d'accès, replay/conflits     |
+| État                                  | `fg-web-store`                                                        | `fg-web-signal-store`                                                              | Transitions, erreurs et courses introduites      |
+| Tests                                 | `fg-web-test` + `fg-web-quality`                                      | `fg-web-web-test-writer`                                                           | `ng test` ciblé puis contrôles justifiés         |
+| Navigateur                            | `fg-web-e2e`                                                          | `fg-web-e2e-runner`                                                                | Mode SPA/harness/SSR/localisé explicite          |
+| Architecture / accessibilité / design | `fg-web-arch-review` / `fg-web-a11y` / référence design               | `fg-web-architecture-reviewer` / `fg-web-a11y-auditor` / `fg-web-design-reviewer`  | Preuves et limites; lecture seule                |
+| Contrat API / i18n                    | Référence API de `fg-web-service` / [i18n](references/i18n-review.md) | `fg-web-api-contract-reviewer` / `fg-web-i18n-auditor`                             | Contrats wire / IDs et placeholders              |
+| Seconde opinion demandée              | `fg-web-codex-challenge`                                              | Reviewer ciblé du [catalogue](references/agents.md)                                | Findings vérifiés, indépendance déclarée         |
 
-## Utilisation
+Les commandes, prérequis et limites de chaque contrôle sont dans
+[la matrice de validation](references/validation.md).
 
-Exemples : `$spartan` fournit la procédure officielle de la bibliothèque et
-`$fg-web-spartan` y ajoute les contraintes FireGuard ; `$fg-web-overlay` choisit entre
-popover, menu, drawer, sheet et dialog selon l'intention et l'expérience centralisée ; `$fg-web-e2e` sert à une
-vérification dans le navigateur, `$impeccable critique` à une critique et
-`$ui-ux-pro-max` pour une recherche UX ciblée. Les demandes ordinaires peuvent aussi
-sélectionner un skill via sa description. Les principes de `third-party-skills.md`
-maintiennent Nova, Geist, les surfaces neutres et la marque vermillon de DESIGN.md.
+Le catalogue comprend **13 skills FireGuard**, **2 skills officiels** (`spartan` et
+`design-taste-frontend`) et **21 agents FireGuard**. Les noms et frontières des agents sont
+décrits dans [le catalogue](references/agents.md). Taste intervient dans son périmètre déclaré,
+selon les [contraintes des skills tiers](third-party-skills.md).
 
-Demander un subagent par son nom quand une responsabilité indépendante le justifie.
-Les douze rôles FireGuard conservent leurs noms `fg-web-*`, lisent les skills locaux et
-héritent du modèle courant. Les auditeurs restent en lecture seule. Aucune seconde
-opinion `codex exec` n'est lancée automatiquement.
+## Modèle et effort
 
-Après l'installation, poursuivre dans un nouveau tour ; si le catalogue affiché conserve
-les anciens noms, ouvrir une nouvelle tâche/session Codex. Les outils déjà exposés dans
-une tâche active ne prouvent pas le rechargement des fichiers de rôles.
+[agent-profiles.toml](agent-profiles.toml) déclare une famille de modèle et un effort pour
+chaque rôle. Ce sont des profils de délégation : les fichiers d'agents ne fixent aucun modèle.
+Un lancement direct hérite de la session. Le parent résout le profil contre le catalogue réel
+avant un lancement avec paramètres explicites; voir le [workflow](workflow.md#agent-profiles).
+Un identifiant de modèle affiché dans un exemple ne constitue jamais une preuve de disponibilité.
 
-## Hooks et déplacement du projet
+## Démarrage et maintenance
 
-Le manifeste natif `hooks.json` traite `PreToolUse` et `PostToolUse`. Il résout les scripts
-depuis le checkout, y compris lorsque la commande part d'un sous-dossier. Le matcher
-inclut `Bash`, nom canonique de l'événement shell Codex, et `apply_patch`/ses alias.
-Les hooks restent soumis à la [revue de confiance de Codex](https://developers.openai.com/codex/hooks) ;
-l'installation ne modifie pas les autorisations. Les scripts inspectent les patches,
-gardent les protections existantes et utilisent les outils locaux de formatage.
-Ils ne constituent pas un sandbox : les restrictions de fichiers du runtime restent souveraines.
-
-Le hook optionnel du détecteur Impeccable n'est pas activé. Il se gère avec
-`$impeccable hooks`, sans remplacer le manifeste FireGuard ni le déclarer fiable automatiquement.
-
-Après un clone, déplacement ou worktree, relier les chemins des MCP au checkout courant :
+Prérequis de l'outillage : Python 3.11+ et Node.js. Les dépendances du projet sont nécessaires
+aux commandes Angular et navigateur, décrites dans [package.json](../package.json). Après un clone, déplacement ou worktree :
 
 ```powershell
-python .codex/scripts/configure.py
-python .codex/scripts/configure.py --check
+python -B .codex/scripts/configure.py
+python -B .codex/scripts/configure.py --check
 ```
 
-Le script conserve les autres paramètres. Une entrée MCP valide ne garantit pas sa connexion :
-les serveurs sont initialisés seulement lorsqu'ils sont utiles.
+La configuration conserve les autres paramètres; une entrée MCP ne prouve pas une connexion.
+Les hooks nécessitent la revue de confiance du runtime et ne constituent pas un sandbox.
+Ne pas modifier la confiance, le modèle global ou les autorisations pour faire passer un contrôle.
 
-## Nettoyage des anciens adaptateurs
-
-Les 23 entrées initiales sont remplacées par 15 skills métier et 3 skills externes.
-Les références utiles ont été rapprochées du skill qui les consomme :
-
-| Ancienne entrée              | Destination                                   |
-| ---------------------------- | --------------------------------------------- |
-| `fg-web-e2e-playwright`      | `fg-web-e2e/references/playwright.md`         |
-| `fg-web-feature-md`          | `fg-web-feature/references/feature-docs.md`   |
-| `fg-web-fireguard-naming`    | `.codex/references/naming.md`                 |
-| `fg-web-hydra-data-access`   | `fg-web-service/references/hydra.md`          |
-| `fg-web-signalstore-recipes` | `fg-web-store/references/signalstore.md`      |
-| `fg-web-spartan-ui`          | `fg-web-spartan/references/ui-conventions.md` |
-| `fg-web-web-testing`         | `fg-web-test/references/testing.md`           |
-| `fg-web-impeccable`          | Skill officiel `impeccable`                   |
-| `fg-web-ui-ux-pro-max`       | Skill officiel `ui-ux-pro-max`                |
-| `.codex/compatibility.md`    | `.codex/workflow.md`                          |
-
-## Maintenance et vérification
-
-Prérequis des scripts locaux : Python 3.11+, Node.js et les dépendances de développement
-déjà déclarées par le projet. Aucune dépendance de l'application n'est ajoutée.
-
-```powershell
-python .codex/scripts/validate.py
-python -B -m unittest discover -s .codex/scripts -p 'test_*.py'
-node --test .codex/hooks/adapter.test.mjs
-node --test .codex/scripts/review-check.test.mjs
-npm run review:check -- --base develop
-codex mcp list
-```
-
-Le validateur vérifie les manifests, les références des skills FireGuard et l'intégrité des
-paquets externes. Les tests des hooks ne lisent pas de secret et n'exécutent pas de commande Git destructive.
-Pour une modification limitée à cet outillage, ces contrôles remplacent un build Angular inutile.
-
-`review:check` examine les lignes modifiées depuis la base, y compris les changements locaux
-et les sources non suivies. Il utilise les parseurs TypeScript et Angular installés pour les
-types explicites, les docblocks, les modèles type-only, `$any` et l'API des drawers. Les
-associations commande/fermeture sont des avertissements à examiner, pas des bugs présumés.
-`--json` produit des diagnostics stables fichier/ligne/règle/sévérité. Ce contrôle ne remplace
-ni le typage Angular, ni une review sémantique, ni l'inspection de captures récentes.
-
-Le hook préalable refuse les modifications manuelles des composants Spartan et des payloads
-tiers, y compris via un chemin canonique ou un renommage ; le hook de formatage les ignore.
-Les tests vérifient le refus sans écrire dans ces fichiers. Les règles structurelles coûteuses
-restent dans le contrôle explicite plutôt que dans chaque hook d'édition.
-
-Le verrou d'intégrité v2 déclare ses extensions texte UTF-8 : leurs CRLF sont normalisés en
-LF avant SHA-256. Les autres formats restent comparés octet par octet. Les empreintes historiques
-des adaptations restent des preuves de provenance brutes ; les fichiers installés, licences et
-copies d'agents suivent la politique v2. Ne jamais actualiser les empreintes pour masquer un drift.
-
-Limite du lint actuel : `typescript/no-floating-promises` est déclaré mais non exécuté, car
-le moteur type-aware n'est ni activé ni installé. Conserver le contrôle Angular/TypeScript
-strict et vérifier les flux asynchrones modifiés. L'activation d'un moteur compatible est
-différée : ne pas ajouter sa dernière version ni migrer TypeScript implicitement.
-Voir la [compatibilité Oxlint](https://oxc.rs/docs/guide/usage/linter/type-aware).
-
-Mettre à jour les skills externes dans un dossier de préparation avec la source et
-l'installateur officiels, puis comparer le contenu et actualiser le verrou d'intégrité.
-Ne pas lancer un installateur général directement sur les skills FireGuard : UI UX Pro Max
-installe aussi des skills compagnons qui ne font pas partie de cette sélection.
-Les configurations oxfmt et oxlint excluent les paquets tiers pour préserver le contenu officiel.
-L’adaptation locale d’Impeccable et ses empreintes avant/après sont tracées dans le verrou.
-La réappliquer lors des mises à jour ; le validateur refuse tout retour de chemins Claude.
-Toute autre modification des paquets externes doit être explicitement autorisée. Les quatre copies d'agents
-Impeccable doivent rester identiques à celles de son paquet.
-
-Sources : [Impeccable](https://github.com/pbakaus/impeccable),
-[UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill).
+Consulter [la matrice de validation](references/validation.md) pour choisir les contrôles.
+Les procédures détaillées, la mise à jour des tiers, les limites connues et la migration des
+anciennes invocations sont dans [maintenance.md](maintenance.md). Après modification des skills
+ou rôles, ouvrir une nouvelle session si le catalogue actif conserve les anciennes entrées.

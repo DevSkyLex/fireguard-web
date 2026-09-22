@@ -110,13 +110,12 @@ fill tint, `applySelection` builds an `EdgesGeometry` outline — in a new
 selected room mesh or floor slab, so the same geometry it already builds for
 a floor's edges also carries the selected state without depending on hue.
 
-The scene is not tested in render (jsdom has no WebGL) — its own
-`testing/` spec covers the skeleton-before-mount branch, the
-`renderingUnavailable` branch (a `getContext` failure, which jsdom's default
-`canvas.getContext` already triggers for a real `THREE.WebGLRenderer`), and
-input-driven `aria-label` plumbing. A page-level spec exercising the ready
-branch fakes `three`/`OrbitControls` at the module level instead, since a
-real mount attempt in jsdom has no working WebGL.
+Scene tests cover the SSR skeleton, unavailable WebGL and accessible labels.
+Additional lifecycle tests retain real Three geometry and materials while
+substituting the GPU and controls boundaries: they verify selection outlines,
+isolation, reduced motion, bounded rendering, pointer outputs and disposal.
+These tests do not prove actual GPU rendering. The page-level ready-branch spec
+uses a minimal scene stub to verify page orchestration separately.
 
 ### Room selection and its keyboard-accessible surface (P2)
 

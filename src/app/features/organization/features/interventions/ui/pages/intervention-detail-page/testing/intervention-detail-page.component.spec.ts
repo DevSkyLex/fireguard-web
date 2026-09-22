@@ -49,6 +49,8 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
+  InterventionQueuedAttachment,
+  InterventionScanResult,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { interventionSyncEvents } from '@features/organization/features/interventions/services';
@@ -2190,5 +2192,320 @@ describe('InterventionDetailPage', () => {
 
     expect(document.querySelector('hlm-drawer-content')).toBeNull();
     expect(fixture.componentInstance['operationsVisible']()).toBe(true);
+  });
+
+  describe('secondary workflow commands', () => {
+    it('retries selected resources and activity pages without changing the draft', async () => {
+      current.set(intervention({ participants: ['/api/organizations/org-1/members/member-2'] }));
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const options = fixture.debugElement.injector.get(InterventionPlanningOptionsStore);
+      page['retrySelectedResources']();
+      page['loadOlderActivities']();
+      page['reloadActivities']();
+      expect(options.ensureSelected).toHaveBeenLastCalledWith('org-1', [
+        '/api/facilities/facility-1',
+        MEMBER_IRI,
+        '/api/organizations/org-1/members/member-2',
+      ]);
+      expect(loadOlderActivities).toHaveBeenCalledWith('intervention-1');
+      expect(loadActivities).toHaveBeenLastCalledWith('intervention-1');
+      expect(updateDetails).not.toHaveBeenCalled();
+    });
+
+    it('routes publication issues to their editor or resource tab', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['onIssueActivated']({ kind: 'railTab', tab: 'equipment' });
+      expect(page['activeLinkedTab']()).toBe('equipment');
+      page['onIssueActivated']({ kind: 'edit', target: 'description' });
+      expect(page['editState']().open).toBe('description');
+      page['onIssueActivated']({ kind: 'workItems' });
+      expect(page['activeLinkedTab']()).toBe('overview');
+      expect(publish).not.toHaveBeenCalled();
+    });
+
+    it('forwards progress and review reasons to the owning workspace', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      page['onWorkItemStatusChanged']({ workItemId: 'wi-1', status: 'completed' });
+      page['rejectChange']('change-1');
+      page['requestChanges']({ note: 'Please attach the missing certificate.' });
+      expect(setWorkItemStatus).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        workItemId: 'wi-1',
+        status: 'completed',
+      });
+      expect(store.rejectChange).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        changeId: 'change-1',
+      });
+      expect(transition).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        status: 'changes_requested',
+        reviewNote: 'Please attach the missing certificate.',
+      });
+    });
+
+    it('requires confirmation for work deletion and skipping, and preserves the skip reason', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const item = workItem();
+      page['requestDeleteWorkItem'](item);
+      expect(deleteWorkItems).not.toHaveBeenCalled();
+      expect(page['pendingConfirm']()).toEqual({ kind: 'deleteWorkItem', workItem: item });
+      page['onConfirmDismissed']();
+      expect(page['pendingConfirm']()).toBeNull();
+      page['requestSkipWorkItem'](item);
+      expect(setWorkItemStatus).not.toHaveBeenCalled();
+      page['onConfirmAccepted']({
+        kind: 'skipWorkItem',
+        workItem: item,
+        reason: 'Room inaccessible',
+      });
+      expect(setWorkItemStatus).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        workItemId: item.id,
+        status: 'skipped',
+        skipReason: 'Room inaccessible',
+      });
+      page['requestDeleteWorkItem'](item);
+      page['onConfirmAccepted']({ kind: 'deleteWorkItem', workItem: item });
+      expect(deleteWorkItems).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        workItems: [item],
+      });
+      expect(page['pendingConfirm']()).toBeNull();
+    });
+
+    it('cancels abandonment and preserves list filters when navigating away', async () => {
+      orderedIds.set(['previous', 'intervention-1']);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['requestAbandon']();
+      page['onAbandonDismissed']();
+      expect(page['pendingAbandon']()).toBeNull();
+      expect(transition).not.toHaveBeenCalled();
+      page['navigatePrev']();
+      expect(navigate).toHaveBeenCalledWith(
+        ['/organizations', 'org-1', 'interventions', 'previous'],
+        { queryParamsHandling: 'preserve' },
+      );
+      page['navigateToList']();
+      expect(navigate).toHaveBeenLastCalledWith(['/organizations', 'org-1', 'interventions'], {
+        queryParams: { tab: null },
+        queryParamsHandling: 'merge',
+      });
+    });
+  });
+
+  describe('attachment preparation and removal', () => {
+    it('uploads prepared files and reports each failed preparation', async () => {
+      const good = new File(['photo'], 'ready.jpg', { type: 'image/jpeg' });
+      const bad = new File(['invalid'], 'bad.jpg');
+      vi.mocked(TestBed.inject(InterventionPhotoCompressorService).prepareAll).mockResolvedValue({
+        ready: [good],
+        failed: [bad.name],
+      });
+      fixture = await createPage();
+      fixture.componentInstance['uploadAttachments']([good, bad]);
+      await fixture.whenStable();
+      expect(uploadAttachment).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'intervention-1',
+        file: good,
+        fileName: good.name,
+      });
+      expect(feedbackError).toHaveBeenCalledWith(expect.stringContaining(bad.name));
+    });
+
+    it('deletes server attachments with their revision and discards only confirmed local uploads', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      const uploaded = attachment({ revision: 8 });
+      page['pendingAttachmentDelete'].set(uploaded);
+      page['confirmAttachmentDelete'](uploaded);
+      expect(store.removeAttachment).toHaveBeenCalledWith({
+        attachmentId: uploaded.id,
+        revision: 8,
+      });
+      expect(page['pendingAttachmentDelete']()).toBeNull();
+      page['confirmQueuedAttachmentDelete']();
+      expect(store.removeQueuedAttachment).not.toHaveBeenCalled();
+      const queued: InterventionQueuedAttachment = {
+        id: 'operation-1',
+        clientId: 'client-1',
+        interventionId: 'intervention-1',
+        fileName: 'offline.jpg',
+        mimeType: 'image/jpeg',
+        size: 5,
+        queuedAt: '2026-09-20T10:00:00Z',
+      };
+      page['pendingQueuedAttachmentDelete'].set(queued);
+      page['confirmQueuedAttachmentDelete']();
+      expect(store.removeQueuedAttachment).toHaveBeenCalledExactlyOnceWith(queued);
+      expect(page['pendingQueuedAttachmentDelete']()).toBeNull();
+    });
+  });
+
+  describe('team assignment', () => {
+    it('loads team previews once, bounds membership previews and tolerates one unavailable team', async () => {
+      const service = TestBed.inject(TeamService);
+      const team = {
+        '@id': '/api/organizations/org-1/teams/team-1',
+        '@type': 'Team',
+        id: 'team-1',
+        organizationId: 'org-1',
+        name: 'North',
+        description: '',
+        memberCount: 8,
+        createdAt: '2026-09-20',
+        updatedAt: '2026-09-20',
+      };
+      vi.mocked(service.list).mockReturnValue(
+        of({
+          '@id': '/api/organizations/org-1/teams',
+          '@type': 'Collection',
+          member: [team, { ...team, id: 'team-2' }],
+          totalItems: 2,
+        }),
+      );
+      vi.mocked(service.listMembers).mockImplementation((_org, id) =>
+        id === 'team-2'
+          ? throwError(() => new Error('Unavailable'))
+          : of({
+              '@id': '/api/organizations/org-1/teams/team-1/members',
+              '@type': 'Collection',
+              member: [
+                'member-1',
+                '/api/organizations/org-1/members/member-2',
+                'member-3',
+                'member-4',
+              ].map((memberId) => ({
+                '@id': `/api/organizations/org-1/teams/team-1/members/${memberId}`,
+                '@type': 'TeamMember',
+                memberId,
+                addedAt: '2026-09-20',
+              })),
+              totalItems: 8,
+            }),
+      );
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const options = fixture.debugElement.injector.get(InterventionPlanningOptionsStore);
+      expect(service.list).not.toHaveBeenCalled();
+      page['openTeamAssign']();
+      expect(service.list).toHaveBeenCalledExactlyOnceWith('org-1');
+      expect(service.listMembers).toHaveBeenCalledWith('org-1', 'team-1', { itemsPerPage: 3 });
+      expect(page['teamMemberIds']()).toEqual({
+        'team-1': ['member-1', '/api/organizations/org-1/members/member-2', 'member-3'],
+        'team-2': [],
+      });
+      expect(options.ensureSelected).toHaveBeenLastCalledWith('org-1', [
+        '/api/organizations/org-1/members/member-1',
+        '/api/organizations/org-1/members/member-2',
+        '/api/organizations/org-1/members/member-3',
+      ]);
+      expect(page['teamsLoading']()).toBe(false);
+      page['submitTeamAssign']('team-1');
+      expect(
+        fixture.debugElement.injector.get(InterventionWorkspaceStore).assignTeam,
+      ).toHaveBeenCalledWith({ interventionId: 'intervention-1', input: { teamId: 'team-1' } });
+      expect(page['teamAssignVisible']()).toBe(true);
+      page['closeTeamAssign']();
+      expect(page['teamAssignVisible']()).toBe(false);
+      page['openTeamAssign']();
+      expect(service.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps failed team discovery retryable and caches a complete empty catalogue', async () => {
+      const service = TestBed.inject(TeamService);
+      vi.mocked(service.list).mockReturnValueOnce(throwError(() => new Error('Unavailable')));
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['openTeamAssign']();
+      expect(page['teamsLoading']()).toBe(false);
+      expect(page['teamMemberIds']()).toEqual({});
+      expect(feedbackError).toHaveBeenCalledWith(expect.stringContaining('teams'));
+      page['openTeamAssign']();
+      page['closeTeamAssign']();
+      page['openTeamAssign']();
+      expect(service.list).toHaveBeenCalledTimes(2);
+      expect(service.listMembers).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('QR capture feedback', () => {
+    it.each([
+      ['unreadable', 'No QR code'],
+      ['noMatch', 'No work item'],
+    ] as const)('keeps %s scans recoverable beside the work list', async (kind, message) => {
+      const scanner = TestBed.inject(InterventionFieldExecutionService);
+      vi.mocked(scanner.scanToWorkItem).mockResolvedValue({ kind });
+      fixture = await createPage();
+      const input = document.createElement('input');
+      input.type = 'file';
+      Object.defineProperty(input, 'value', { value: 'C:\\fakepath\\qr.jpg', writable: true });
+      const file = new File(['capture'], 'qr.jpg');
+      Object.defineProperty(input, 'files', { value: [file] });
+      fixture.componentInstance['onScanFileSelected']({ target: input } as unknown as Event);
+      await fixture.whenStable();
+      expect(scanner.scanToWorkItem).toHaveBeenCalledWith(file, workItems());
+      expect(input.value).toBe('');
+      expect(fixture.componentInstance['scanProblem']()).toContain(message);
+      expect(feedbackError).toHaveBeenCalledWith(expect.stringContaining(message));
+    });
+
+    it('ignores a late capture result after navigation to another intervention', async () => {
+      let resolveCapture!: (result: InterventionScanResult) => void;
+      const capture = new Promise<InterventionScanResult>((resolve) => {
+        resolveCapture = resolve;
+      });
+      vi.mocked(TestBed.inject(InterventionFieldExecutionService).scanToWorkItem).mockReturnValue(
+        capture,
+      );
+      fixture = await createPage();
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [new File(['qr'], 'qr.jpg')] });
+      fixture.componentInstance['onScanFileSelected']({ target: input } as unknown as Event);
+      fixture.componentRef.setInput('interventionId', 'intervention-2');
+      resolveCapture({ kind: 'noMatch' });
+      await fixture.whenStable();
+      expect(fixture.componentInstance['scanProblem']()).toBeNull();
+      expect(feedbackError).not.toHaveBeenCalled();
+    });
+
+    it('handles decoder rejection without discarding the manual work list', async () => {
+      vi.mocked(TestBed.inject(InterventionFieldExecutionService).scanToWorkItem).mockRejectedValue(
+        new Error('decoder failed'),
+      );
+      workItems.set([workItem()]);
+      fixture = await createPage();
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [new File(['qr'], 'qr.jpg')] });
+      fixture.componentInstance['onScanFileSelected']({ target: input } as unknown as Event);
+      await fixture.whenStable();
+      expect(fixture.componentInstance['scanProblem']()).toContain('No QR code');
+      expect(workItems()).toHaveLength(1);
+      expect(setWorkItemStatus).not.toHaveBeenCalled();
+    });
+  });
+
+  it('refuses publication when the fresh server response removes the capability', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    fixture = await createPage();
+    const denied = intervention({
+      status: 'submitted',
+      allowedActions: { ...actionsFor('submitted'), canPublish: false },
+    });
+    vi.mocked(TestBed.inject(InterventionService).get).mockReturnValue(of(denied));
+    await fixture.componentInstance['confirmPublish']();
+    expect(publish).not.toHaveBeenCalled();
+    expect(reload).toHaveBeenCalledWith('intervention-1');
+    expect(fixture.componentInstance['offlineBlockReason']()).toContain(
+      'Publication is unavailable',
+    );
+    expect(fixture.componentInstance['publicationPreparing']()).toBe(false);
   });
 });

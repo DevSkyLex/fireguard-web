@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { delay, firstValueFrom, of, throwError } from 'rxjs';
+import { delay, firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { USER_PROFILE_PORT } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
@@ -93,6 +93,73 @@ describe('AuthStore', () => {
     expect(store.accessToken()).toBeNull();
     expect(store.isAuthenticated()).toBe(false);
     expect(mockTrustedDeviceStore.clear).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes login progress and refusal while remaining unauthenticated', () => {
+    const pending = new Subject<LoginOutput>();
+    mockAuthService.login.mockReturnValue(pending);
+    store.login(credentials);
+    expect(store.isLoggingIn()).toBe(true);
+    expect(store.loginError()).toBeNull();
+    expect(store.isTokenExpiringSoon()).toBe(false);
+    pending.error({ '@type': 'Error', status: 401, detail: 'Invalid credentials.' });
+    expect(store.isLoggingIn()).toBe(false);
+    expect(store.loginError()).toMatchObject({ code: 401, message: 'Invalid credentials.' });
+    expect(store.isAuthenticated()).toBe(false);
+  });
+
+  it('reports MFA verification and resend failures without granting a session', () => {
+    store.applySession({
+      ...loginResponse,
+      access_token: null,
+      expires_in: null,
+      mfa_required: true,
+      mfa_token: 'mfa-token',
+      challenge_token: 'challenge-token',
+    });
+    const verifying = new Subject<LoginOutput>();
+    const resending = new Subject<LoginOutput>();
+    mockAuthService.mfaVerify.mockReturnValue(verifying);
+    mockAuthService.mfaResend.mockReturnValue(resending);
+
+    store.mfaVerify({ preAuthToken: 'mfa-token', code: '000000' });
+    expect(store.isVerifyingMfa()).toBe(true);
+    expect(store.mfaVerifyError()).toBeNull();
+    verifying.error({ '@type': 'Error', status: 422, detail: 'Code rejected.' });
+    expect(store.isVerifyingMfa()).toBe(false);
+    expect(store.mfaVerifyError()).toMatchObject({ code: 422 });
+
+    store.mfaResend();
+    expect(store.isResendingMfa()).toBe(true);
+    expect(store.mfaResendError()).toBeNull();
+    resending.error({ '@type': 'Error', status: 503, detail: 'Delivery unavailable.' });
+    expect(store.isResendingMfa()).toBe(false);
+    expect(store.mfaResendError()).toMatchObject({ code: 503 });
+    expect(store.isAuthenticated()).toBe(false);
+  });
+
+  it('applies an external session and exposes renewal and logout progress until completion', () => {
+    store.applySession(loginResponse);
+    expect(store.accessToken()).toBe('access-token');
+    expect(store.isAuthenticated()).toBe(true);
+    expect(mockUserProfilePort.load).toHaveBeenCalledOnce();
+    const refreshing = new Subject<LoginOutput>();
+    const loggingOut = new Subject<LogoutOutput>();
+    mockAuthService.refresh.mockReturnValue(refreshing);
+    mockAuthService.logout.mockReturnValue(loggingOut);
+
+    store.refresh();
+    expect(store.isRefreshing()).toBe(true);
+    refreshing.next(loginResponse);
+    refreshing.complete();
+    expect(store.isRefreshing()).toBe(false);
+
+    store.logout();
+    expect(store.isLoggingOut()).toBe(true);
+    loggingOut.next({ '@id': '/api/auth/logout', '@type': 'Logout', message: 'Signed out.' });
+    loggingOut.complete();
+    expect(store.isLoggingOut()).toBe(false);
+    expect(store.isAuthenticated()).toBe(false);
   });
 
   it('should store access token on login success without MFA', async () => {

@@ -435,6 +435,141 @@ describe('InterventionLinkedResourcesStore', () => {
   });
 
   describe('server queries', () => {
+    it('debounces inspection searches, keeps server filters and avoids duplicate trimmed queries', async () => {
+      vi.useFakeTimers();
+      try {
+        store.ensureInspectionsLoaded('int-1');
+        store.queryInspections({
+          interventionId: 'int-1',
+          search: ' safety ',
+          status: null,
+          result: null,
+        });
+        expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(300);
+        expect(inspectionService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+          page: 1,
+          itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+          search: 'safety',
+        });
+        store.queryInspections({
+          interventionId: 'int-1',
+          search: 'safety',
+          status: null,
+          result: null,
+        });
+        expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(2);
+        store.queryInspections({
+          interventionId: 'int-1',
+          search: '',
+          status: 'submitted',
+          result: 'pass',
+        });
+        expect(inspectionService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+          page: 1,
+          itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+          status: 'submitted',
+          result: 'pass',
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('marks all cached resource types as memory while offline and retries only after reconnection', () => {
+      store.ensureFacilitiesLoaded('int-1');
+      store.ensureEquipmentLoaded('int-1');
+      store.ensureInspectionsLoaded('int-1');
+      store.setOnline(false);
+      expect(store.equipmentSource()).toBe('memory');
+      expect(store.inspectionsSource()).toBe('memory');
+      expect(store.equipment()).toEqual([equipment]);
+      expect(store.inspections()).toEqual([inspection]);
+      expect(store.equipmentError()?.message).toContain('cannot be queried offline');
+      expect(store.inspectionsError()?.message).toContain('cannot be queried offline');
+      store.refreshEquipment('int-1');
+      store.refreshInspections('int-1');
+      expect(equipmentService.listByIntervention).toHaveBeenCalledTimes(1);
+      expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(1);
+      store.setOnline(true);
+      store.retryEquipment('int-1');
+      store.retryInspections('int-1');
+      expect(store.equipmentSource()).toBe('api');
+      expect(store.inspectionsSource()).toBe('api');
+    });
+
+    it('does not claim that unqueried equipment or inspections are empty while offline', () => {
+      store.setOnline(false);
+      store.ensureEquipmentLoaded('int-1');
+      store.ensureInspectionsLoaded('int-1');
+      expect(store.equipmentSource()).toBe('unavailable');
+      expect(store.inspectionsSource()).toBe('unavailable');
+      expect(equipmentService.listByIntervention).not.toHaveBeenCalled();
+      expect(inspectionService.listByIntervention).not.toHaveBeenCalled();
+    });
+
+    it('invalidates inactive resources without loading them and refreshes the visible resource only', () => {
+      store.ensureFacilitiesLoaded('int-1');
+      store.ensureEquipmentLoaded('int-1');
+      store.ensureInspectionsLoaded('int-1');
+      store.deactivate();
+      store.invalidate('int-other', ['facilities', 'equipment', 'inspections']);
+      expect(store.facilitiesInvalidated()).toBe(false);
+      store.invalidate('int-1', ['facilities', 'equipment', 'inspections']);
+      expect(store.facilitiesInvalidated()).toBe(true);
+      expect(store.equipmentInvalidated()).toBe(true);
+      expect(store.inspectionsInvalidated()).toBe(true);
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+      expect(equipmentService.listByIntervention).toHaveBeenCalledTimes(1);
+      expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(1);
+      store.ensureFacilitiesLoaded('int-1');
+      store.invalidate('int-1', ['facilities']);
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(3);
+      store.ensureEquipmentLoaded('int-1');
+      store.invalidate('int-1', ['equipment']);
+      expect(equipmentService.listByIntervention).toHaveBeenCalledTimes(3);
+      store.ensureInspectionsLoaded('int-1');
+      store.invalidate('int-1', ['inspections']);
+      expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(3);
+    });
+
+    it('retries failed append pages for equipment and inspections without losing existing rows', () => {
+      equipmentService.listByIntervention.mockReturnValueOnce(
+        of({ member: [equipment], totalItems: 3 }),
+      );
+      inspectionService.listByIntervention.mockReturnValueOnce(
+        of({ member: [inspection], totalItems: 3 }),
+      );
+      store.ensureEquipmentLoaded('int-1');
+      store.ensureInspectionsLoaded('int-1');
+      equipmentService.listByIntervention.mockReturnValueOnce(
+        throwError(() => new Error('Unavailable')),
+      );
+      inspectionService.listByIntervention.mockReturnValueOnce(
+        throwError(() => new Error('Unavailable')),
+      );
+      store.loadMoreEquipment('int-1');
+      store.loadMoreInspections('int-1');
+      expect(store.equipmentFailedPage()).toBe(2);
+      expect(store.inspectionsFailedPage()).toBe(2);
+      store.retryEquipment('int-other');
+      store.retryInspections('int-other');
+      expect(equipmentService.listByIntervention).toHaveBeenCalledTimes(2);
+      expect(inspectionService.listByIntervention).toHaveBeenCalledTimes(2);
+      store.retryEquipment('int-1');
+      store.retryInspections('int-1');
+      expect(equipmentService.listByIntervention).toHaveBeenLastCalledWith(
+        'int-1',
+        expect.objectContaining({ page: 2 }),
+      );
+      expect(inspectionService.listByIntervention).toHaveBeenLastCalledWith(
+        'int-1',
+        expect.objectContaining({ page: 2 }),
+      );
+      expect(store.equipment()).toEqual([equipment]);
+      expect(store.inspections()).toEqual([inspection]);
+    });
+
     it('debounces facilities search and filters, then resets pagination', async () => {
       vi.useFakeTimers();
 

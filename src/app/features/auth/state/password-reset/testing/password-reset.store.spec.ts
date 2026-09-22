@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { PasswordResetService } from '@features/auth/data-access';
 import type {
   PasswordResetRequestInput,
@@ -74,6 +74,8 @@ describe('PasswordResetStore', () => {
 
     store = TestBed.inject(PasswordResetStore);
   });
+
+  afterEach(() => vi.restoreAllMocks());
 
   it('should request password reset and persist challenge token', async () => {
     mockPasswordResetService.request.mockReturnValue(of(requestResponse));
@@ -166,4 +168,51 @@ describe('PasswordResetStore', () => {
     expect(store.confirmCallState().status).toBe('idle');
     expect(store.resendCallState().status).toBe('idle');
   });
+
+  it('keeps the challenge and verification code when confirmation fails', () => {
+    const pending = new Subject<PasswordResetVerifyOutput>();
+    mockPasswordResetService.confirm.mockReturnValue(pending);
+    store.setChallengeToken('retained-challenge');
+    store.setVerificationCode('123456');
+
+    store.confirm({ code: '123456', newPassword: 'NewPass123!' });
+    expect(store.isConfirming()).toBe(true);
+    pending.error({ '@type': 'Error', status: 422, detail: 'Invalid verification code.' });
+
+    expect(store.isConfirming()).toBe(false);
+    expect(store.confirmError()).toMatchObject({ code: 422 });
+    expect(store.challengeToken()).toBe('retained-challenge');
+    expect(store.verificationCode()).toBe('123456');
+    expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    { code: 'rate_limit_exceeded', retryAfterSeconds: 75, expected: 75 },
+    { code: 'delivery_unavailable', retryAfterSeconds: undefined, expected: 30 },
+  ])(
+    'preserves the challenge after a refused resend: $code',
+    ({ code, retryAfterSeconds, expected }) => {
+      vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+      mockPasswordResetService.request.mockReturnValue(of(requestResponse));
+      const pending = new Subject<PasswordResetResendOutput>();
+      mockPasswordResetService.resend.mockReturnValue(pending);
+      store.request(requestInput);
+
+      store.resend();
+      expect(store.isResending()).toBe(true);
+      pending.error({
+        '@type': 'Error',
+        status: 429,
+        code,
+        retryAfterSeconds,
+        detail: 'Try again later.',
+      });
+
+      expect(store.isResending()).toBe(false);
+      expect(store.resendError()).toMatchObject({ code: 429, error: { code } });
+      expect(store.resendAvailableIn()).toBe(expected);
+      expect(store.challengeToken()).toBe('challenge-token');
+      expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    },
+  );
 });

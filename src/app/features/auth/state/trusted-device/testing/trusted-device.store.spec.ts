@@ -112,4 +112,41 @@ describe('TrustedDeviceStore', () => {
     expect(store.totalDevices()).toBe(0);
     expect(store.hasDevices()).toBe(false);
   });
+
+  it('keeps device trust visible when one revocation fails and clears its feedback independently', () => {
+    mockTrustedDeviceService.list.mockReturnValue(of(devicesCollection));
+    mockTrustedDeviceService.revoke.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Retry later.' })),
+    );
+    store.loadDevices();
+
+    store.revokeDevice('device-1');
+
+    expect(store.revokeCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.devices()).toEqual([device1, device2]);
+    expect(store.totalDevices()).toBe(2);
+    expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    store.resetRevokeOperation();
+    expect(store.revokeCallState().status).toBe('idle');
+  });
+
+  it('keeps the device list after a failed bulk revocation and purges it when the owner clears', () => {
+    mockTrustedDeviceService.list.mockReturnValue(of(devicesCollection));
+    mockTrustedDeviceService.revokeAll.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Retry later.' })),
+    );
+    store.loadDevices();
+
+    store.revokeAllDevices();
+
+    expect(store.revokeAllCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.devices()).toEqual([device1, device2]);
+    expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    store.resetRevokeAllOperation();
+    expect(store.revokeAllCallState().status).toBe('idle');
+    store.clear();
+    expect(store.devices()).toEqual([]);
+    expect(store.totalDevices()).toBe(0);
+    expect(store.listCallState().status).toBe('idle');
+  });
 });

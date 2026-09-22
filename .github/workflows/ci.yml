@@ -82,12 +82,38 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run unit tests with coverage
+      - name: Run tests and enforce minimum line coverage
+        id: coverage
         run: |
-          npx ng test --watch=false \
-            --coverage \
+          npm run test:coverage -- \
             --coverage-reporters=lcovonly \
+            --coverage-reporters=json-summary \
             --coverage-reporters=text-summary
+
+      - name: Summarize line coverage
+        if: ${{ !cancelled() }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const { total: { lines } } = JSON.parse(readFileSync('coverage/fireguard-web/coverage-summary.json', 'utf8'));
+          const workspace = JSON.parse(readFileSync('angular.json', 'utf8'));
+          const minimum = workspace.projects['fireguard-web'].architect.test.configurations.coverage.coverageThresholds.lines;
+          const percentage = 100 * lines.covered / lines.total;
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            `### Frontend coverage\n\nExecutable lines: **${percentage.toFixed(2)}%** (${lines.covered}/${lines.total}). Required: **${minimum}%**.\n`);
+          NODE
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: frontend-coverage
+          path: |
+            coverage/fireguard-web/lcov.info
+            coverage/fireguard-web/coverage-summary.json
+          if-no-files-found: error
+          retention-days: 14
+        continue-on-error: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -23,10 +23,11 @@ The four project-scoped analysis tokens across the front and API expire on
 **2026-12-21**. Rotate each before that date and replace only its matching
 GitHub secret. The token is provided only to the analysis job,
 selected by an explicit branch mapping. A missing main token never falls back
-to the develop token. Both readiness variables are currently `false`: the four
-initial scans, their new-code baselines and the first validated gates are still
-pending. Publication and deployment remain disabled for both branches without
-preventing diagnostic CI runs.
+to the develop token. Initialize both readiness variables to `false`. Check the
+current GitHub repository variables, branch CI runs and each SonarQube project's
+analysis and baseline to determine its rollout state. Publication and deployment
+require the matching readiness variable to be exactly `true`; diagnostic CI runs
+remain available before activation.
 
 ## Analysis and coverage
 
@@ -45,9 +46,9 @@ coverage requirement and Codecov upload remain independent checks.
 
 ## First analyses and activation
 
-1. The four private projects and their project-scoped analysis tokens have been
-   created, and `SONAR_HOST_URL` and the two secrets are configured in each repo.
-2. Land the CI configuration on both branches, with readiness unset. The
+1. Verify the four private projects, their project-scoped analysis tokens, and
+   the matching `SONAR_HOST_URL` variable and two secrets in each repository.
+2. Land the CI configuration on both branches, with readiness `false`. The
    `workflow_run` consumers must also exist on the repository's default branch.
 3. Run CI manually for each branch. A diagnostic manual CI never automatically
    publishes an image or deploys it. The SonarQube analysis must finish processing;
@@ -56,12 +57,16 @@ coverage requirement and Codecov upload remain independent checks.
    parsing errors. Check the installed SonarJS version supports the project's
    TypeScript 6.0.3; do not downgrade Angular or TypeScript to hide incompatibility.
 5. Set each verified analysis as that project's fixed new-code baseline through
-   SonarQube's `api/new_code_periods/set` (`type=SPECIFIC_ANALYSIS`, the project's
-   main branch name, and the verified analysis ID). Do not use a sliding window or
-   change the baseline on every build. An administrator performs this operation.
-6. Rerun CI and confirm the gate passes, then set the corresponding readiness
-   variable to `true`. Start Docker Image manually to publish the validated commit,
-   or let the next successful push trigger normal delivery.
+   public `POST /api/new_code_periods/set` with `project=<project-key>`,
+   `branch=<SonarQube-main-branch-name>`, `type=SPECIFIC_ANALYSIS` and
+   `value=<verified-analysis-id>`. Verify the stored type and analysis ID through
+   `GET /api/new_code_periods/show` with the same `project` and `branch` parameters.
+   Do not use a sliding window or change the baseline on every build.
+   An administrator performs this operation.
+6. After verifying the fixed baseline, rerun CI and confirm the run and its gate
+   pass, then set the corresponding readiness variable to `true`. Start Docker
+   Image manually to publish the validated commit, or let the next successful
+   push trigger normal delivery.
 
 SonarQube tokens are not application credentials. Expired or revoked tokens must
 be replaced in the matching GitHub secret; never weaken the gate to work around

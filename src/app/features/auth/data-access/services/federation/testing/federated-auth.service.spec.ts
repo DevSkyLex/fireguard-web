@@ -25,6 +25,87 @@ describe('FederatedAuthService', () => {
 
   afterEach(() => httpMock.verify());
 
+  it('reads public provider availability without normalizing disabled providers away', () => {
+    const response = {
+      '@id': '/api/auth/federated/providers',
+      '@type': 'Collection',
+      member: [{ '@id': '/google', '@type': 'Provider', provider: 'google', enabled: false }],
+      totalItems: 1,
+    };
+    let result: unknown;
+    service.providers().subscribe((value) => (result = value));
+    const request = httpMock.expectOne(`${baseUrl}/providers`);
+    expect(request.request.method).toBe('GET');
+    request.flush(response);
+    expect(result).toEqual(response);
+  });
+
+  it('reads credentialed connection details and starts linking with the account security destination', () => {
+    const response: FederatedConnectionsOutput = {
+      '@id': '/api/auth/federated/connections',
+      '@type': 'FederatedConnections',
+      password_configured: false,
+      last_sign_in_method: 'google',
+      connections: [],
+    };
+    let result: FederatedConnectionsOutput | undefined;
+    service.connections().subscribe((value) => (result = value));
+    const read = httpMock.expectOne(`${baseUrl}/connections`);
+    expect(read.request.method).toBe('GET');
+    expect(read.request.withCredentials).toBe(true);
+    read.flush(response);
+    expect(result).toEqual(response);
+
+    service.startLink('microsoft').subscribe();
+    const start = httpMock.expectOne(`${baseUrl}/connections/microsoft/start`);
+    expect(start.request.method).toBe('POST');
+    expect(start.request.body).toEqual({ return_url: '/account/security' });
+    expect(start.request.withCredentials).toBe(true);
+    start.flush({ authorization_url: 'https://login.microsoftonline.com/authorize' });
+  });
+
+  it('requests a bodyless first-password challenge and confirms the exact OTP payload', () => {
+    service.requestPasswordSetup().subscribe();
+    const challenge = httpMock.expectOne('https://api.test.com/api/auth/password/setup');
+    expect(challenge.request.method).toBe('POST');
+    expect(challenge.request.body).toBeNull();
+    expect(challenge.request.withCredentials).toBe(true);
+    challenge.flush({ challengeToken: 'challenge', success: true });
+
+    const input = { token: 'challenge', code: '123456', newPassword: 'StrongPassword123!' };
+    const response = {
+      '@id': '/api/auth/password/setup/confirm',
+      '@type': 'PasswordSetupConfirm',
+      success: false,
+      message: 'Invalid code',
+      errorCode: 'invalid_code',
+      attemptsRemaining: 4,
+    };
+    let result: unknown;
+    service.confirmPasswordSetup(input).subscribe((value) => (result = value));
+    const confirm = httpMock.expectOne('https://api.test.com/api/auth/password/setup/confirm');
+    expect(confirm.request.method).toBe('POST');
+    expect(confirm.request.body).toEqual(input);
+    expect(confirm.request.withCredentials).toBe(true);
+    confirm.flush(response);
+    expect(result).toEqual(response);
+  });
+
+  it('preserves the structured last-sign-in-method disconnect refusal', () => {
+    const error = {
+      '@type': 'Error',
+      status: 409,
+      code: 'last_sign_in_method',
+      detail: 'Keep one sign-in method.',
+    };
+    let caught: unknown;
+    service.disconnect('google').subscribe({ error: (value: unknown) => (caught = value) });
+    httpMock
+      .expectOne(`${baseUrl}/connections/google`)
+      .flush(error, { status: 409, statusText: 'Conflict' });
+    expect(caught).toEqual(error);
+  });
+
   it('should start login with the selected provider and local return URL', () => {
     service.startLogin('google', { return_url: '/organizations/one' }).subscribe();
 

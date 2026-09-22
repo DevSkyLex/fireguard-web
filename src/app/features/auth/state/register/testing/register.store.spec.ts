@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { RegistrationService } from '@features/auth/data-access';
 import type { LoginOutput, RegisterInput, RegisterOutput } from '@features/auth/models';
 import { AuthStore } from '@features/auth/state';
@@ -201,5 +201,37 @@ describe('RegisterStore', () => {
     expect(store.requestCallState().status).toBe('idle');
     expect(store.verifyCallState().status).toBe('idle');
     expect(store.resendCallState().status).toBe('idle');
+  });
+
+  it('exposes independent request progress and retains the challenge after a rejected code', () => {
+    const registering = new Subject<RegisterOutput>();
+    const verifying = new Subject<LoginOutput>();
+    const resending = new Subject<RegisterOutput>();
+    mockRegistrationService.register.mockReturnValue(registering);
+    mockRegistrationService.verify.mockReturnValue(verifying);
+    mockRegistrationService.resend.mockReturnValue(resending);
+
+    store.register(registerInput);
+    expect(store.isRegistering()).toBe(true);
+    expect(store.isVerifying()).toBe(false);
+    registering.next(registerResponse);
+    registering.complete();
+    expect(store.isRegistering()).toBe(false);
+
+    store.verify({ code: '000000' });
+    expect(store.isVerifying()).toBe(true);
+    verifying.error({ '@type': 'Error', status: 422, detail: 'Invalid verification code.' });
+    expect(store.isVerifying()).toBe(false);
+    expect(store.verifyError()).toMatchObject({ code: 422, message: 'Invalid verification code.' });
+    expect(store.challengeToken()).toBe('challenge-token');
+    expect(mockAuthStore.applySession).not.toHaveBeenCalled();
+
+    store.resend();
+    expect(store.isResending()).toBe(true);
+    resending.error({ '@type': 'Error', status: 503, detail: 'Delivery unavailable.' });
+    expect(store.isResending()).toBe(false);
+    expect(store.resendError()).toMatchObject({ code: 503, retryable: true });
+    expect(store.challengeToken()).toBe('challenge-token');
+    expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(2);
   });
 });

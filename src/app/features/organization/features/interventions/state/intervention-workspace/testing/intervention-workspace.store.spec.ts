@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
+import { ConnectivityService } from '@core/connectivity';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -1543,5 +1544,380 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
     expect(store.queuedAttachments()).toEqual([
       expect.objectContaining({ id: 'op-1', fileName: 'evidence.jpg' }),
     ]);
+  });
+});
+
+describe('InterventionWorkspaceStore', () => {
+  let store: InstanceType<typeof InterventionWorkspaceStore>;
+  let owner: string;
+  const service = {
+    get: vi.fn(),
+    listAllWorkItems: vi.fn(),
+    listAllChanges: vi.fn(),
+    listIssues: vi.fn(),
+    update: vi.fn(),
+    updateWorkItem: vi.fn(),
+    createWorkItem: vi.fn(),
+    listAttachments: vi.fn(),
+    removeAttachment: vi.fn(),
+  };
+  const offline = {
+    publicationOwner: vi.fn(),
+    listOutbox: vi.fn(),
+    getWorkspace: vi.fn(),
+    queue: vi.fn(),
+    saveWorkspace: vi.fn(),
+  };
+  const connectivity = { isOffline: vi.fn(), isNetworkFailure: vi.fn() };
+  const dispatch = vi.fn();
+  const assessment = {
+    confirmationRequired: true,
+    confirmationToken: 'reviewed-workload-token',
+    completeness: 'complete',
+    increases: [{ memberId: 'member-1', beforeMinutes: 0, afterMinutes: 60, reason: 'overload' }],
+  };
+
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    owner = 'account-1';
+    offline.publicationOwner.mockImplementation(() => owner);
+    offline.listOutbox.mockResolvedValue([]);
+    offline.getWorkspace.mockResolvedValue(null);
+    offline.queue.mockResolvedValue(undefined);
+    offline.saveWorkspace.mockResolvedValue(undefined);
+    connectivity.isOffline.mockReturnValue(false);
+    connectivity.isNetworkFailure.mockImplementation(
+      (error: unknown) => error instanceof HttpErrorResponse && error.status === 0,
+    );
+    service.get.mockReturnValue(of(intervention));
+    service.listAllWorkItems.mockReturnValue(of([workItem]));
+    service.listAllChanges.mockReturnValue(of([]));
+    service.listIssues.mockReturnValue(of({ member: [], totalItems: 0 }));
+    service.update.mockReturnValue(of({ ...intervention, revision: 4 }));
+    service.updateWorkItem.mockReturnValue(of({ ...workItem, revision: 2 }));
+    service.createWorkItem.mockReturnValue(of({ ...workItem, id: 'new-work-item' }));
+    service.listAttachments.mockReturnValue(of({ member: [], totalItems: 0 }));
+    service.removeAttachment.mockReturnValue(of(undefined));
+    TestBed.configureTestingModule({
+      providers: [
+        InterventionWorkspaceStore,
+        { provide: InterventionService, useValue: service },
+        { provide: InterventionOfflineService, useValue: offline },
+        { provide: ConnectivityService, useValue: connectivity },
+        { provide: Dispatcher, useValue: { dispatch } },
+      ],
+    });
+    store = TestBed.inject(InterventionWorkspaceStore);
+    store.load(intervention.id);
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    offline.saveWorkspace.mockClear();
+  });
+
+  it('updates explicit planning fields against the captured task revision and preserves the other rows', () => {
+    const response = { ...workItem, estimatedMinutes: 240, revision: 2 };
+    service.updateWorkItem.mockReturnValueOnce(of(response));
+    store.updateWorkItem({
+      interventionId: intervention.id,
+      item: workItem,
+      input: { estimatedMinutes: 240 },
+    });
+    expect(service.updateWorkItem).toHaveBeenCalledExactlyOnceWith(
+      workItem.id,
+      { estimatedMinutes: 240 },
+      1,
+    );
+    expect(store.workItems()).toEqual([response]);
+    expect(store.workItemWriteCallState().status).toBe('success');
+    expect(store.pendingWorkItemIds().size).toBe(0);
+    expect(offline.saveWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ revision: 4 }),
+      [response],
+      [],
+      [],
+      [],
+      { replace: false },
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          source: 'remote',
+          collections: ['workItems', 'activity'],
+          workItem: response,
+        }),
+      }),
+    );
+    expect(store.loadFailed()).toBe(false);
+    expect(store.nextWorkItem()).toEqual(response);
+  });
+
+  it.each(['offline', 'network-failure'] as const)(
+    'queues reassignment after %s without reusing the previous assignee identity',
+    async (mode) => {
+      const assigned = {
+        ...workItem,
+        assignee: 'member-old',
+        assigneeProfile: {
+          member: 'member-old',
+          userId: null,
+          displayName: 'Former assignee',
+          avatarUrl: null,
+        },
+      };
+      if (mode === 'offline') connectivity.isOffline.mockReturnValue(true);
+      else
+        service.updateWorkItem.mockReturnValueOnce(
+          throwError(() => new HttpErrorResponse({ status: 0 })),
+        );
+      store.updateWorkItem({
+        interventionId: intervention.id,
+        item: assigned,
+        input: { assignee: 'member-new', remainingMinutes: 120 },
+      });
+      await vi.waitFor(() => expect(store.workItemWriteCallState().status).toBe('success'));
+      expect(offline.queue).toHaveBeenCalledExactlyOnceWith(intervention.id, 'work-item.update', {
+        workItemId: workItem.id,
+        revision: 1,
+        assignee: 'member-new',
+        remainingMinutes: 120,
+      });
+      expect(store.workItems()[0]).toMatchObject({
+        revision: 2,
+        assignee: 'member-new',
+        assigneeProfile: null,
+        remainingMinutes: 120,
+      });
+      expect(service.listIssues).toHaveBeenCalledTimes(1);
+      expect(store.pendingWorkItemIds().size).toBe(0);
+    },
+  );
+
+  it('updates task progress for a status command and refuses duplicate commands while the server responds', () => {
+    const pending = new Subject<InterventionWorkItemOutput>();
+    service.updateWorkItem.mockReturnValueOnce(pending);
+    const command = {
+      interventionId: intervention.id,
+      item: workItem,
+      input: { status: 'completed' as const },
+    };
+    store.updateWorkItem(command);
+    store.updateWorkItem(command);
+    expect(service.updateWorkItem).toHaveBeenCalledTimes(1);
+    expect(store.pendingWorkItemIds().has(workItem.id)).toBe(true);
+    pending.next({ ...workItem, status: 'completed', revision: 2 });
+    pending.complete();
+    expect(store.intervention()?.completedWorkItemsCount).toBe(1);
+    expect(store.pendingWorkItemIds().size).toBe(0);
+  });
+
+  it.each(['organization', 'account'] as const)(
+    'does not apply a late task write after the %s context changes',
+    async (scope) => {
+      const pending = new Subject<InterventionWorkItemOutput>();
+      service.updateWorkItem.mockReturnValueOnce(pending);
+      store.updateWorkItem({
+        interventionId: intervention.id,
+        item: workItem,
+        input: { estimatedMinutes: 120 },
+      });
+      if (scope === 'account') owner = 'account-2';
+      else {
+        service.get.mockReturnValueOnce(of({ ...intervention, id: 'intervention-2' }));
+        store.load('intervention-2');
+        await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+      }
+      dispatch.mockClear();
+      offline.saveWorkspace.mockClear();
+      pending.next({ ...workItem, estimatedMinutes: 120, revision: 2 });
+      pending.complete();
+      expect(store.workItems()[0]?.revision).toBe(1);
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(offline.saveWorkspace).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps task input available through a row-specific error and unlocks the rejected command', () => {
+    service.updateWorkItem.mockReturnValueOnce(
+      throwError(
+        () => new HttpErrorResponse({ status: 412, error: { detail: 'Task revision changed' } }),
+      ),
+    );
+    store.updateWorkItem({
+      interventionId: intervention.id,
+      item: workItem,
+      input: { remainingMinutes: 180 },
+    });
+    expect(store.workItemWriteCallState().status).toBe('error');
+    expect(store.workItemErrors()[workItem.id]).toBe('Task revision changed');
+    expect(store.pendingWorkItemIds().size).toBe(0);
+    expect(store.workItems()).toEqual([workItem]);
+    expect(offline.queue).not.toHaveBeenCalled();
+  });
+
+  it.each(['create', 'details', 'transition', 'workItem'] as const)(
+    'retries the captured %s proposal only with the exact reviewed workload token',
+    (kind) => {
+      const rejection = { status: 409, detail: 'Workload confirmation required', assessment };
+      if (kind === 'create') {
+        service.createWorkItem.mockReturnValueOnce(throwError(() => rejection));
+        store.createWorkItem({
+          interventionId: intervention.id,
+          input: {
+            clientId: 'stable-client-id',
+            intervention: intervention['@id'],
+            action: 'inventory',
+            source: 'planned',
+            required: true,
+          },
+        });
+      } else if (kind === 'workItem') {
+        service.updateWorkItem.mockReturnValueOnce(throwError(() => rejection));
+        store.updateWorkItem({
+          interventionId: intervention.id,
+          item: workItem,
+          input: { remainingMinutes: 120 },
+        });
+      } else {
+        service.update.mockReturnValueOnce(throwError(() => rejection));
+        if (kind === 'details')
+          store.updateDetails({ interventionId: intervention.id, input: { priority: 'urgent' } });
+        else store.transition({ interventionId: intervention.id, status: 'in_progress' });
+      }
+      expect(store.planningConfirmation()?.kind).toBe(kind);
+      store.confirmPlanning('different-token');
+      expect(store.planningConfirmation()?.kind).toBe(kind);
+      store.confirmPlanning(assessment.confirmationToken);
+      expect(store.planningConfirmation()).toBeNull();
+      if (kind === 'create')
+        expect(service.createWorkItem).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            clientId: 'stable-client-id',
+            workloadConfirmationToken: assessment.confirmationToken,
+          }),
+        );
+      else if (kind === 'workItem')
+        expect(service.updateWorkItem).toHaveBeenLastCalledWith(
+          workItem.id,
+          {
+            remainingMinutes: 120,
+            workloadConfirmationToken: assessment.confirmationToken,
+          },
+          1,
+        );
+      else
+        expect(service.update).toHaveBeenLastCalledWith(
+          intervention.id,
+          expect.objectContaining({
+            workloadConfirmationToken: assessment.confirmationToken,
+          }),
+          3,
+        );
+    },
+  );
+
+  it('lets the operator dismiss a workload proposal without writing or reusing its consent later', () => {
+    service.updateWorkItem.mockReturnValueOnce(throwError(() => ({ status: 409, assessment })));
+    store.updateWorkItem({
+      interventionId: intervention.id,
+      item: workItem,
+      input: { remainingMinutes: 120 },
+    });
+    store.dismissPlanningConfirmation();
+    store.confirmPlanning(assessment.confirmationToken);
+    expect(store.planningConfirmation()).toBeNull();
+    expect(service.updateWorkItem).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['offline', 'network-failure'] as const)(
+    'preserves an explicit transition revision and consent in the outbox after %s',
+    async (mode) => {
+      if (mode === 'offline') connectivity.isOffline.mockReturnValue(true);
+      else
+        service.update.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+      store.transition({
+        interventionId: intervention.id,
+        status: 'in_progress',
+        revision: 3,
+        workloadConfirmationToken: 'reviewed-token',
+      });
+      await vi.waitFor(() => expect(store.transitionCallState().status).toBe('success'));
+      expect(offline.queue).toHaveBeenCalledExactlyOnceWith(
+        intervention.id,
+        'intervention.update',
+        {
+          status: 'in_progress',
+          reviewNote: undefined,
+          revision: 3,
+          workloadConfirmationToken: 'reviewed-token',
+        },
+      );
+      expect(store.intervention()).toMatchObject({ status: 'in_progress', revision: 4 });
+      expect(offline.saveWorkspace).toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    [412, 'Refresh and try again.'],
+    [403, 'You do not have permission'],
+    [422, 'not allowed'],
+    [500, 'could not be updated'],
+  ] as const)(
+    'surfaces an actionable transition refusal for HTTP %s without queueing it',
+    (status, message) => {
+      service.update.mockReturnValueOnce(
+        throwError(() => new HttpErrorResponse({ status, error: { detail: 'Refused' } })),
+      );
+      store.transition({ interventionId: intervention.id, status: 'in_progress' });
+      expect(store.transitionCallState().status).toBe('error');
+      expect(store.error()).toContain(message);
+      expect(offline.queue).not.toHaveBeenCalled();
+      expect(store.intervention()?.revision).toBe(3);
+    },
+  );
+
+  it('preserves a queued planning draft failure instead of reporting that device persistence succeeded', async () => {
+    service.update.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    offline.queue.mockRejectedValueOnce(new Error('Device storage full'));
+    store.updateDetails({ interventionId: intervention.id, input: { priority: 'urgent' } });
+    await vi.waitFor(() => expect(store.updateDetailsCallState().status).toBe('error'));
+    expect(store.intervention()?.revision).toBe(3);
+    expect(store.error()).toContain('could not be saved');
+  });
+
+  it('keeps a successful task write when the secondary issue refresh fails', () => {
+    service.listIssues.mockReturnValueOnce(
+      throwError(() => new Error('Issue service unavailable')),
+    );
+    store.updateWorkItem({
+      interventionId: intervention.id,
+      item: workItem,
+      input: { remainingMinutes: 120 },
+    });
+    expect(store.workItemWriteCallState().status).toBe('success');
+    expect(store.issuesCallState().status).toBe('error');
+    expect(store.workItems()[0]?.revision).toBe(2);
+  });
+
+  it('removes only the confirmed attachment and unlocks its row on success or refusal', async () => {
+    const attachment = { id: 'attachment-1', revision: 4 };
+    const other = { id: 'attachment-2', revision: 2 };
+    service.listAttachments.mockReturnValueOnce(of({ member: [attachment, other], totalItems: 2 }));
+    store.loadAttachments(intervention.id);
+    await vi.waitFor(() => expect(store.attachmentsCallState().status).toBe('success'));
+    const pending = new Subject<void>();
+    service.removeAttachment.mockReturnValueOnce(pending);
+    store.removeAttachment({ attachmentId: attachment.id, revision: 4 });
+    expect(store.pendingAttachmentIds().has(attachment.id)).toBe(true);
+    expect(service.removeAttachment).toHaveBeenCalledExactlyOnceWith(attachment.id, 4);
+    pending.next();
+    pending.complete();
+    expect(store.attachments()).toEqual([other]);
+    expect(store.pendingAttachmentIds().size).toBe(0);
+    service.removeAttachment.mockReturnValueOnce(
+      throwError(() => ({ status: 412, detail: 'Attachment changed' })),
+    );
+    store.removeAttachment({ attachmentId: other.id, revision: 2 });
+    expect(store.attachmentDeleteCallState().status).toBe('error');
+    expect(store.attachments()).toEqual([other]);
+    expect(store.pendingAttachmentIds().size).toBe(0);
   });
 });

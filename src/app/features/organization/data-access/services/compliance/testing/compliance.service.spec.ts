@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import type { HydraCollection } from '@core/api/models';
@@ -221,4 +221,70 @@ describe('ComplianceService', () => {
 
     expect(caught).toEqual({ '@type': 'Error', status: 403, detail: 'Plan not entitled' });
   });
+
+  it('forwards archive pagination and ordering without replacing server totals', () => {
+    const page: HydraCollection<SafetyRegisterSnapshotOutput> = {
+      '@id': '/api/organizations/org-1/compliance/register-snapshots',
+      '@type': 'Collection',
+      member: [mockSnapshot],
+      totalItems: 21,
+      view: {
+        '@id': '/api/organizations/org-1/compliance/register-snapshots?page=2',
+        '@type': 'PartialCollectionView',
+        next: '/api/organizations/org-1/compliance/register-snapshots?page=3',
+      },
+    };
+    let result: HydraCollection<SafetyRegisterSnapshotOutput> | undefined;
+
+    service
+      .listRegisterSnapshots('org-1', {
+        page: 2,
+        itemsPerPage: 10,
+        sort: { field: 'generatedAt', direction: 'desc' },
+      })
+      .subscribe((value) => (result = value));
+
+    const request = httpMock.expectOne(
+      (candidate) => candidate.url === `${baseUrl}/org-1/compliance/register-snapshots`,
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('itemsPerPage')).toBe('10');
+    expect(request.request.params.get('order[generatedAt]')).toBe('desc');
+    expect(request.request.withCredentials).toBe(true);
+    request.flush(page);
+
+    expect(result).toEqual(page);
+  });
+
+  it.each([
+    { method: 'exportOrganizationSafetyRegister', suffix: 'compliance/export' },
+    { method: 'exportFacilitySafetyRegister', suffix: 'facilities/resource-1/compliance/export' },
+    {
+      method: 'downloadRegisterSnapshot',
+      suffix: 'compliance/register-snapshots/resource-1/download',
+    },
+  ] as const)(
+    '$method preserves a credentialed download refusal and its problem blob',
+    ({ method, suffix }) => {
+      const problem = new Blob(
+        [JSON.stringify({ status: 403, detail: 'Export access was removed.' })],
+        { type: 'application/problem+json' },
+      );
+      let caught: unknown;
+
+      service[method]('org-1', 'resource-1').subscribe({
+        error: (value: unknown) => (caught = value),
+      });
+
+      const request = httpMock.expectOne(`${baseUrl}/org-1/${suffix}`);
+      expect(request.request.method).toBe('GET');
+      expect(request.request.responseType).toBe('blob');
+      expect(request.request.withCredentials).toBe(true);
+      request.flush(problem, { status: 403, statusText: 'Forbidden' });
+
+      expect(caught).toBeInstanceOf(HttpErrorResponse);
+      expect(caught).toMatchObject({ status: 403, error: problem });
+    },
+  );
 });

@@ -164,7 +164,20 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageInclude": ["src/**/*.ts"],
+            "coverageExclude": ["**/testing/**", "src/environments/**", "src/app/shared/ui/**"],
+            "coverageReporters": ["text-summary", "html", "lcov", "json", "json-summary"]
+          },
+          "configurations": {
+            "coverage": {
+              "coverage": true,
+              "coverageThresholds": {
+                "lines": 90
+              }
+            }
+          }
         },
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",

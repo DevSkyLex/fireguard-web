@@ -1,5 +1,11 @@
 import type { Page, Route } from '@playwright/test';
 import { expect } from '@playwright/test';
+import type {
+  AutomationAttemptOutput,
+  AutomationPolicyOutput,
+} from '../../../src/app/features/organization/features/automations/models/automation/automation-output.interface';
+import type { WebhookDeliveryOutput } from '../../../src/app/features/organization/features/webhooks/models/delivery/webhook-delivery-output.interface';
+import type { WebhookSubscriptionOutput } from '../../../src/app/features/organization/features/webhooks/models/subscription/webhook-subscription-output.interface';
 import type { OrganizationAccessPolicyOutput } from '../../../src/app/features/organization/models/access/organization-access-policy-output.interface';
 import type { OrganizationJoinOptionsOutput } from '../../../src/app/features/organization/models/access/organization-join-options-output.interface';
 import type { OrganizationJoinRequestOutput } from '../../../src/app/features/organization/models/access/organization-join-request-output.interface';
@@ -2981,6 +2987,73 @@ export class ApiMock {
     await this.page.route(`${API_BASE_URL}/api/approvals/action-types`, async (route) => {
       await fulfillJson(route, 200, hydraCollection(actionTypes));
     });
+  }
+
+  /** Mocks the current organization's effective automation policy without enabling writes. */
+  public async mockAutomationPolicy(
+    organizationId: string,
+    policy: AutomationPolicyOutput,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/organizations\/[^/]+\/automation(?:\?.*)?$/, async (route) => {
+      const path = `/api/organizations/${organizationId}/automation`;
+      if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== path)
+        return route.fallback();
+      await fulfillJson(route, 200, policy);
+    });
+  }
+
+  /** Mocks the current organization's execution history; retry commands reach the safety net. */
+  public async mockAutomationRunList(
+    organizationId: string,
+    attempts: ReadonlyArray<AutomationAttemptOutput>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/automation\/runs(?:\?.*)?$/,
+      async (route) => {
+        const path = `/api/organizations/${organizationId}/automation/runs`;
+        if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== path)
+          return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(attempts, { '@id': path }));
+      },
+    );
+  }
+
+  /** Mocks organization-owned subscriptions, without secrets or mutation responses. */
+  public async mockWebhookSubscriptionList(
+    organizationId: string,
+    subscriptions: ReadonlyArray<WebhookSubscriptionOutput>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/organizations\/[^/]+\/webhooks(?:\?.*)?$/, async (route) => {
+      const path = `/api/organizations/${organizationId}/webhooks`;
+      if (route.request().method() !== 'GET' || new URL(route.request().url()).pathname !== path)
+        return route.fallback();
+      await fulfillJson(route, 200, hydraCollection(subscriptions, { '@id': path }));
+    });
+  }
+
+  /** Mocks one subscription's durable delivery history, preserving the status filter. */
+  public async mockWebhookDeliveryList(
+    organizationId: string,
+    subscriptionId: string,
+    deliveries: ReadonlyArray<WebhookDeliveryOutput>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      /\/api\/organizations\/[^/]+\/webhooks\/[^/]+\/deliveries(?:\?.*)?$/,
+      async (route) => {
+        const url = new URL(route.request().url());
+        const path = `/api/organizations/${organizationId}/webhooks/${subscriptionId}/deliveries`;
+        if (route.request().method() !== 'GET' || url.pathname !== path) return route.fallback();
+        const status = url.searchParams.get('status');
+        const rows = status
+          ? deliveries.filter((delivery) => delivery.status === status)
+          : deliveries;
+        await fulfillJson(route, 200, hydraCollection(rows, { '@id': path }));
+      },
+    );
   }
 
   /**

@@ -139,6 +139,23 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     endpoint: `${api}/approval-requests`,
   },
   {
+    id: 'automations',
+    path: `${org}/automations`,
+    root: '[data-testid="automation-attempt"]',
+    endpoint: `${api}/automation/runs`,
+    text: 'NC-NORTH-WING-EVACUATION-ROUTE-2026-001',
+    limit: 'Enabled policy and one failed attempt; retry and policy editing are not exercised.',
+  },
+  {
+    id: 'webhooks',
+    path: `${org}/integrations/webhooks`,
+    root: '[data-testid="webhook-delivery-e2e-visual-delivery"]',
+    endpoint: `${api}/webhooks/e2e-visual-webhook/deliveries`,
+    text: 'HTTP 503',
+    limit:
+      'One active subscription and failed delivery; mutations and signing secrets are not exercised.',
+  },
+  {
     id: 'imports',
     path: `${org}/imports`,
     root: '#imports',
@@ -257,6 +274,8 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
 export const REPRESENTATIVE_VISUAL_ROUTES = new Set([
   'home',
   'more',
+  'automations',
+  'webhooks',
   'interventions',
   'intervention-form',
   'calendar',

@@ -41,6 +41,7 @@ import type {
   InterventionAllowedActionsOutput,
   InterventionOutput,
   InterventionRecurrenceOutput,
+  InterventionRecurrenceFormValues,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
@@ -342,6 +343,8 @@ describe('InterventionsPage', () => {
           provide: InterventionRecurrenceService,
           useValue: {
             list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            create: vi.fn().mockReturnValue(of(recurrence())),
+            update: vi.fn().mockReturnValue(of(recurrence())),
             remove: vi.fn().mockReturnValue(of(undefined)),
           },
         },
@@ -1807,5 +1810,290 @@ describe('InterventionsPage', () => {
     expect(document.querySelector('hlm-drawer-content')).toBeNull();
     expect(fixture.componentInstance['pendingBulkDeleteIds']()).toEqual(['i-draft']);
     expect(deleteIntervention).not.toHaveBeenCalled();
+  });
+
+  describe('recurrence editing', () => {
+    const values: InterventionRecurrenceFormValues = {
+      recurrenceId: null,
+      templateId: 'template-1',
+      name: 'Monthly check',
+      site: null,
+      responsible: null,
+      frequency: 'monthly',
+      interval: 2,
+      anchorDate: new Date('2026-09-01T00:00:00Z'),
+      timezone: 'Europe/Paris',
+      leadTimeDays: 5,
+      endAt: null,
+    };
+
+    it('creates a rule with organization and template IRIs and closes only after success', async () => {
+      const request = new Subject<InterventionRecurrenceOutput>();
+      const service = TestBed.inject(InterventionRecurrenceService);
+      vi.mocked(service.create).mockReturnValue(request);
+      fixture = await createPage({ view: 'recurrences' });
+      const page = fixture.componentInstance;
+      page['openRecurrenceCreate']();
+      page['submitRecurrence'](values);
+      expect(page['recurrenceTarget']()).toBe('create');
+      expect(service.create).toHaveBeenCalledExactlyOnceWith({
+        organization: '/api/organizations/org-1',
+        template: '/api/intervention-templates/template-1',
+        name: values.name,
+        site: undefined,
+        responsible: undefined,
+        frequency: 'monthly',
+        interval: 2,
+        anchorDate: values.anchorDate,
+        timezone: 'Europe/Paris',
+        leadTimeDays: 5,
+        endAt: undefined,
+      });
+      request.next(recurrence());
+      request.complete();
+      await fixture.whenStable();
+      expect(page['recurrenceTarget']()).toBeNull();
+    });
+
+    it('keeps an edit available after failure and sends explicit nulls to clear overrides', async () => {
+      const service = TestBed.inject(InterventionRecurrenceService);
+      vi.mocked(service.update).mockReturnValue(throwError(() => new Error('Conflict')));
+      fixture = await createPage({ view: 'recurrences' });
+      const page = fixture.componentInstance;
+      const row = recurrence();
+      page['editRecurrence'](row);
+      page['submitRecurrence']({ ...values, recurrenceId: row.id });
+      await fixture.whenStable();
+      expect(service.update).toHaveBeenCalledExactlyOnceWith(row.id, {
+        name: values.name,
+        site: null,
+        responsible: null,
+        frequency: 'monthly',
+        interval: 2,
+        anchorDate: values.anchorDate,
+        timezone: 'Europe/Paris',
+        leadTimeDays: 5,
+        endAt: null,
+      });
+      expect(page['recurrenceTarget']()).toEqual(row);
+      page['closeRecurrenceSheet']();
+      expect(page['recurrenceTarget']()).toBeNull();
+      expect(page['awaitingRecurrenceWrite']()).toBe(false);
+    });
+
+    it('pauses and resumes a rule without changing its schedule', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      fixture.componentInstance['toggleRecurrenceActive']({
+        recurrenceId: 'rec-1',
+        isActive: false,
+      });
+      fixture.componentInstance['toggleRecurrenceActive']({
+        recurrenceId: 'rec-1',
+        isActive: true,
+      });
+      const update = TestBed.inject(InterventionRecurrenceService).update;
+      expect(update).toHaveBeenNthCalledWith(1, 'rec-1', { isActive: false });
+      expect(update).toHaveBeenNthCalledWith(2, 'rec-1', { isActive: true });
+    });
+  });
+
+  describe('list navigation and filter controls', () => {
+    it('resets paging when clearing search, changing sort and choosing a page size', async () => {
+      totalInterventions.set(500);
+      fixture = await createPage({ q: 'north' });
+      const page = fixture.componentInstance;
+      page['goToPage'](3);
+      page['clearSearch']();
+      expect(page['page']()).toBe(1);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { q: null, p: null } }),
+      );
+      page['onSortFieldPicked']('priority');
+      const prior = page['sortOrder']();
+      page['onSortFieldPicked'](null);
+      expect(page['sortOrder']()).toEqual(prior);
+      page['toggleSortDirection']();
+      expect(page['sortOrder']()).toEqual({
+        field: 'priority',
+        direction: prior.direction === 'asc' ? 'desc' : 'asc',
+      });
+      page['goToPage'](3);
+      page['setPageSize'](50);
+      await fixture.whenStable();
+      expect(page['page']()).toBe(1);
+      expect(load).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({ page: 1, itemsPerPage: 50 }),
+        }),
+      );
+    });
+
+    it('toggles own assignments through the URL and opens the chosen filter control', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['toggleMine']();
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ mine: '1' }) }),
+      );
+      page['onFieldPicked']('site');
+      expect(page['fieldPopoverState']('site')).toBe('open');
+      page['onFieldPopoverStateChanged']('site', 'closed');
+      expect(page['fieldPopoverState']('site')).toBe('closed');
+    });
+
+    it('represents scalar and repeated filters without inventing a scalar for multiple values', async () => {
+      fixture = await createPage({
+        type: 'inspection_campaign,inventory',
+        priority: 'high',
+        site: 'site-1,site-2',
+        responsible: 'member-1',
+        label: 'label-1,label-2',
+      });
+      const page = fixture.componentInstance;
+      expect(page['typeValues']()).toEqual(['inspection_campaign', 'inventory']);
+      expect(page['typeScalar']()).toBeNull();
+      expect(page['priorityValues']()).toEqual(['high']);
+      expect(page['priorityScalar']()).toBe('high');
+      expect(page['siteValues']()).toEqual(['/api/facilities/site-1', '/api/facilities/site-2']);
+      expect(page['siteScalar']()).toBeNull();
+      expect(page['responsibleValues']()).toEqual(['/api/organizations/org-1/members/member-1']);
+      expect(page['responsibleScalar']()).toBe('/api/organizations/org-1/members/member-1');
+      expect(page['labelValues']()).toEqual([
+        '/api/intervention-labels/label-1',
+        '/api/intervention-labels/label-2',
+      ]);
+      expect(page['labelScalar']()).toBeNull();
+      page['applyPriorityFilter'](['high', 'urgent']);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ priority: 'high,urgent' }),
+        }),
+      );
+      page['applySiteFilter'](['site-3']);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ site: 'site-3' }) }),
+      );
+      page['applyResponsibleFilter'](['member-2']);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ responsible: 'member-2' }),
+        }),
+      );
+      page['applyLabelFilter']([]);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ label: null }) }),
+      );
+    });
+
+    it('round-trips deadline and planned-start ranges using calendar dates', async () => {
+      fixture = await createPage({
+        dueAfter: '2026-09-01',
+        dueBefore: '2026-09-30',
+        plannedStartAfter: '2026-08-01',
+        plannedStartBefore: '2026-08-31',
+      });
+      const page = fixture.componentInstance;
+      expect(page['dueRangeBefore']()?.getDate()).toBe(30);
+      expect(page['dueRangeBetween']()?.map((date) => date.getDate())).toEqual([1, 30]);
+      expect(page['plannedStartRangeAfter']()?.getMonth()).toBe(7);
+      expect(page['plannedStartRangeBefore']()?.getDate()).toBe(31);
+      expect(page['plannedStartRangeBetween']()?.map((date) => date.getDate())).toEqual([1, 31]);
+      const first = new Date(2026, 9, 1);
+      const last = new Date(2026, 9, 31);
+      page['pickDueBefore'](last);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ dueBefore: '2026-10-31', dueAfter: null }),
+        }),
+      );
+      page['pickDueBetween']([first, last]);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ dueBefore: '2026-10-31', dueAfter: '2026-10-01' }),
+        }),
+      );
+      page['pickPlannedStartAfter'](first);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ plannedStartAfter: '2026-10-01' }),
+        }),
+      );
+      page['pickPlannedStartBefore'](last);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ plannedStartBefore: '2026-10-31' }),
+        }),
+      );
+      page['pickPlannedStartBetween']([first, last]);
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({
+            plannedStartAfter: '2026-10-01',
+            plannedStartBefore: '2026-10-31',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('retrying partial batch failures', () => {
+    it('retries only failed transitions with the latest row revision', async () => {
+      interventionList.set(
+        ['i-1', 'i-2'].map((id) =>
+          intervention({
+            id,
+            responsible: '/api/organizations/org-1/members/member-1',
+            allowedTransitions: ['abandoned'],
+            revision: 2,
+          }),
+        ),
+      );
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['onSelectionChanged'](new Set(['i-1', 'i-2']));
+      page['confirmBulkTransition']('abandoned');
+      mutationCallStates.set({
+        'i-1': successCallState(null),
+        'i-2': errorCallState(toStoreError(new Error('Conflict'))),
+      });
+      await fixture.whenStable();
+      interventionList.update((items) => items.map((item) => ({ ...item, revision: 7 })));
+      transition.mockClear();
+      page['retryFailedBatch']();
+      expect(transition).toHaveBeenCalledExactlyOnceWith({
+        id: 'i-2',
+        status: 'abandoned',
+        revision: 7,
+      });
+      expect(page['selectedIds']()).toEqual(new Set(['i-2']));
+    });
+
+    it('retains confirmation when retrying a failed deletion', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', status: 'draft', allowedActions: serverActions('draft') }),
+      ]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['onSelectionChanged'](new Set(['i-1']));
+      page['requestBulkDelete']();
+      page['confirmDelete']();
+      mutationCallStates.set({ 'i-1': errorCallState(toStoreError(new Error('Conflict'))) });
+      await fixture.whenStable();
+      deleteIntervention.mockClear();
+      page['retryFailedBatch']();
+      expect(page['pendingBulkDeleteIds']()).toEqual(['i-1']);
+      expect(deleteIntervention).not.toHaveBeenCalled();
+    });
   });
 });

@@ -1,12 +1,16 @@
-import { PLATFORM_ID } from '@angular/core';
+import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
+import type { HydraCollection } from '@core/api/models';
 import { FederatedAuthService } from '@features/auth/data-access';
 import type {
   FederatedConnectionsOutput,
+  FederatedProviderOutput,
   FederatedStartOutput,
   LoginOutput,
+  PasswordSetupChallengeOutput,
+  PasswordSetupConfirmOutput,
 } from '@features/auth/models';
 import { FederatedReturnContextService } from '@features/auth/services';
 import { authStoreEvents } from '../../auth';
@@ -20,6 +24,10 @@ describe('FederatedAuthStore', () => {
     connections: ReturnType<typeof vi.fn>;
     disconnect: ReturnType<typeof vi.fn>;
     startLogin: ReturnType<typeof vi.fn>;
+    startLink: ReturnType<typeof vi.fn>;
+    providers: ReturnType<typeof vi.fn>;
+    requestPasswordSetup: ReturnType<typeof vi.fn>;
+    confirmPasswordSetup: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -29,6 +37,10 @@ describe('FederatedAuthStore', () => {
       connections: vi.fn(),
       disconnect: vi.fn(),
       startLogin: vi.fn(),
+      startLink: vi.fn(),
+      providers: vi.fn(),
+      requestPasswordSetup: vi.fn(),
+      confirmPasswordSetup: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -186,5 +198,302 @@ describe('FederatedAuthStore', () => {
     expect(service.connections).not.toHaveBeenCalled();
     expect(store.connections()).toEqual(connections);
     expect(store.disconnectCallState().status).toBe('success');
+  });
+
+  const providers: FederatedProviderOutput[] = [
+    {
+      '@id': '/api/auth/federated/providers/google',
+      '@type': 'FederatedProvider',
+      provider: 'google',
+      enabled: true,
+    },
+    {
+      '@id': '/api/auth/federated/providers/microsoft',
+      '@type': 'FederatedProvider',
+      provider: 'microsoft',
+      enabled: false,
+    },
+  ];
+  const connections: FederatedConnectionsOutput = {
+    '@id': '/api/auth/federated/connections',
+    '@type': 'FederatedConnections',
+    password_configured: false,
+    last_sign_in_method: 'google',
+    connections: [
+      {
+        provider: 'google',
+        email: 'member@example.com',
+        connected_at: '2026-09-22T00:00:00Z',
+        last_used_at: '2026-09-22T00:00:00Z',
+      },
+    ],
+  };
+  const failure = {
+    '@type': 'Error',
+    status: 503,
+    detail: 'Temporarily unavailable',
+    code: 'temporarily_unavailable',
+  };
+
+  it('loads only enabled sign-in choices and retains availability after a failed refresh', () => {
+    const pending = new Subject<HydraCollection<FederatedProviderOutput>>();
+    service.providers.mockReturnValue(pending);
+
+    store.loadProviders();
+    expect(store.providersLoading()).toBe(true);
+    pending.next({
+      '@id': '/api/auth/federated/providers',
+      '@type': 'Collection',
+      member: providers,
+      totalItems: 2,
+    });
+    pending.complete();
+
+    expect(store.enabledProviders()).toEqual(['google']);
+    expect(store.providersLoading()).toBe(false);
+
+    service.providers.mockReturnValue(throwError(() => failure));
+    store.loadProviders();
+
+    expect(store.providersCallState()).toMatchObject({
+      status: 'error',
+      error: { code: 503 },
+      data: providers,
+    });
+    expect(store.enabledProviders()).toEqual(['google']);
+  });
+
+  it('consumes the SSR provider handoff once before making later network reads', () => {
+    const key = makeStateKey<readonly FederatedProviderOutput[]>('auth-federated-providers');
+    const transfer = TestBed.inject(TransferState);
+    transfer.set(key, providers);
+
+    store.loadProviders();
+
+    expect(store.enabledProviders()).toEqual(['google']);
+    expect(transfer.hasKey(key)).toBe(false);
+    expect(service.providers).not.toHaveBeenCalled();
+
+    service.providers.mockReturnValue(of({ member: [], totalItems: 0 }));
+    store.loadProviders();
+    expect(service.providers).toHaveBeenCalledOnce();
+    expect(store.enabledProviders()).toEqual([]);
+  });
+
+  it('serializes public provider availability during SSR without serializing account connections', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: FederatedAuthService, useValue: service },
+      ],
+    });
+    store = TestBed.inject(FederatedAuthStore);
+    service.providers.mockReturnValue(of({ member: providers, totalItems: 2 }));
+
+    store.loadProviders();
+
+    const serialized = JSON.parse(TestBed.inject(TransferState).toJson()) as Record<
+      string,
+      unknown
+    >;
+    expect(serialized).toEqual({ 'auth-federated-providers': providers });
+    expect(service.connections).not.toHaveBeenCalled();
+  });
+
+  it('normalizes failed sign-in starts and callback completion independently', () => {
+    service.startLogin.mockReturnValue(throwError(() => failure));
+    service.completeLogin.mockReturnValue(throwError(() => failure));
+
+    store.startLogin({ provider: 'google', returnUrl: '/organizations' });
+    expect(store.startPending()).toBe(false);
+    expect(store.startUrl()).toBeNull();
+    expect(store.startCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+
+    store.completeLogin({ provider: 'google', input: { error: 'access_denied', state: 'state' } });
+
+    expect(service.completeLogin).toHaveBeenCalledWith('google', {
+      error: 'access_denied',
+      state: 'state',
+    });
+    expect(store.completeLoginError()).toMatchObject({ code: 503 });
+    expect(store.completeLoginResult()).toBeNull();
+  });
+
+  it('keeps known connections during pending and failed refreshes', () => {
+    service.connections.mockReturnValue(of(connections));
+    store.loadConnections();
+    expect(store.passwordConfigured()).toBe(false);
+
+    const pending = new Subject<FederatedConnectionsOutput>();
+    service.connections.mockReturnValue(pending);
+    store.loadConnections();
+
+    expect(store.connectionsLoading()).toBe(true);
+    expect(store.connections()).toEqual(connections);
+    pending.error(failure);
+
+    expect(store.connectionsLoading()).toBe(false);
+    expect(store.connectionsError()).toMatchObject({ code: 503 });
+    expect(store.connectionsCallState().data).toEqual(connections);
+  });
+
+  it('starts authenticated linking and exposes a failure after resetting a completed redirect', () => {
+    const redirect: FederatedStartOutput = {
+      '@id': '/api/auth/federated/microsoft/link',
+      '@type': 'FederatedStart',
+      authorization_url: 'https://login.microsoftonline.com/authorize',
+    };
+    service.startLink.mockReturnValue(of(redirect));
+
+    store.startLink('microsoft');
+    expect(service.startLink).toHaveBeenCalledWith('microsoft');
+    expect(store.startUrl()).toBe(redirect.authorization_url);
+    expect(store.pendingProvider()).toBe('microsoft');
+    store.resetStart();
+
+    service.startLink.mockReturnValue(throwError(() => failure));
+    store.startLink('microsoft');
+    expect(store.startCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.startUrl()).toBeNull();
+  });
+
+  it('preserves existing connections when linking or disconnecting is refused', () => {
+    service.connections.mockReturnValue(of(connections));
+    service.completeLink.mockReturnValue(throwError(() => failure));
+    service.disconnect.mockReturnValue(throwError(() => failure));
+    store.loadConnections();
+
+    store.completeLink({ provider: 'microsoft', input: { code: 'code', state: 'state' } });
+    expect(store.completeLinkError()).toMatchObject({ code: 503 });
+    expect(store.completeLinkCallState().data).toEqual(connections);
+
+    store.disconnect('google');
+    expect(store.disconnectCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.connections()).toEqual(connections);
+    store.resetDisconnect();
+    expect(store.disconnectCallState().status).toBe('idle');
+    expect(store.pendingProvider()).toBeNull();
+  });
+
+  it('exposes a first-password challenge and confirms password availability only after success', () => {
+    const challenge: PasswordSetupChallengeOutput = {
+      '@id': '/api/auth/password/setup/request',
+      '@type': 'PasswordSetupChallenge',
+      success: true,
+      message: 'Code sent',
+      challengeToken: 'challenge',
+      maskedRecipient: 'm***@example.com',
+      expiresAt: '2026-09-22T00:10:00Z',
+      maxAttempts: 5,
+    };
+    const confirmation: PasswordSetupConfirmOutput = {
+      '@id': '/api/auth/password/setup/confirm',
+      '@type': 'PasswordSetupConfirm',
+      success: true,
+      message: 'Password configured',
+      errorCode: null,
+      attemptsRemaining: 5,
+    };
+    const pending = new Subject<PasswordSetupConfirmOutput>();
+    service.connections.mockReturnValue(of(connections));
+    service.requestPasswordSetup.mockReturnValue(of(challenge));
+    service.confirmPasswordSetup.mockReturnValue(pending);
+    store.loadConnections();
+    store.requestPasswordSetup();
+    expect(store.passwordSetupChallenge()).toBe('challenge');
+
+    const input = { token: 'challenge', code: '123456', newPassword: 'NewPassword123!' };
+    store.confirmPasswordSetup(input);
+    expect(service.confirmPasswordSetup).toHaveBeenCalledWith(input);
+    expect(store.passwordSetupConfirmCallState().status).toBe('pending');
+    expect(store.passwordConfigured()).toBe(false);
+    pending.next(confirmation);
+    pending.complete();
+
+    expect(store.passwordConfigured()).toBe(true);
+    expect(store.connections()?.connections).toEqual(connections.connections);
+    expect(store.passwordSetupConfirmCallState().data).toEqual(confirmation);
+    store.resetPasswordSetup();
+    expect(store.passwordSetupChallenge()).toBeNull();
+    expect(store.passwordSetupConfirmCallState().status).toBe('idle');
+  });
+
+  it('keeps password availability unknown when confirmation succeeds before connections load', () => {
+    service.confirmPasswordSetup.mockReturnValue(of({ success: true }));
+    store.confirmPasswordSetup({
+      token: 'challenge',
+      code: '123456',
+      newPassword: 'NewPassword123!',
+    });
+
+    expect(store.passwordConfigured()).toBeNull();
+    expect(store.passwordSetupConfirmCallState().status).toBe('success');
+  });
+
+  it('does not enable a password when the submitted code is rejected', () => {
+    service.connections.mockReturnValue(of(connections));
+    service.confirmPasswordSetup.mockReturnValue(
+      of({ success: false, errorCode: 'invalid_code', attemptsRemaining: 4 }),
+    );
+    store.loadConnections();
+    store.confirmPasswordSetup({
+      token: 'challenge',
+      code: '000000',
+      newPassword: 'NewPassword123!',
+    });
+
+    expect(store.passwordConfigured()).toBe(false);
+    expect(store.passwordSetupConfirmCallState().data).toMatchObject({
+      success: false,
+      attemptsRemaining: 4,
+    });
+  });
+
+  it('normalizes request and confirmation failures without losing account connections', () => {
+    service.connections.mockReturnValue(of(connections));
+    service.requestPasswordSetup.mockReturnValue(throwError(() => failure));
+    service.confirmPasswordSetup.mockReturnValue(throwError(() => failure));
+    store.loadConnections();
+
+    store.requestPasswordSetup();
+    expect(store.passwordSetupRequestCallState()).toMatchObject({
+      status: 'error',
+      error: { code: 503 },
+    });
+    expect(store.passwordSetupChallenge()).toBeNull();
+
+    store.confirmPasswordSetup({
+      token: 'challenge',
+      code: '123456',
+      newPassword: 'NewPassword123!',
+    });
+    expect(store.passwordSetupConfirmCallState()).toMatchObject({
+      status: 'error',
+      error: { code: 503 },
+    });
+    expect(store.connections()).toEqual(connections);
+  });
+
+  it('ignores late account results and redirects after sign-out', () => {
+    const pendingConnections = new Subject<FederatedConnectionsOutput>();
+    const pendingLink = new Subject<FederatedStartOutput>();
+    service.connections.mockReturnValue(pendingConnections);
+    service.startLink.mockReturnValue(pendingLink);
+    store.loadConnections();
+    store.startLink('google');
+
+    TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+    pendingConnections.next(connections);
+    pendingLink.next({
+      '@id': '/api/auth/federated/google/link',
+      '@type': 'FederatedStart',
+      authorization_url: 'https://accounts.google.com/authorize',
+    });
+
+    expect(store.connections()).toBeNull();
+    expect(store.connectionsCallState().status).toBe('idle');
+    expect(store.startUrl()).toBeNull();
+    expect(store.pendingProvider()).toBeNull();
   });
 });

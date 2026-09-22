@@ -16,9 +16,8 @@
     ".github/hooks/**",
     "src/app/shared/ui/**",
     "public/**",
-    ".agents/skills/impeccable/**",
-    ".agents/skills/spartan/**",
-    ".agents/skills/ui-ux-pro-max/**"
+    ".agents/skills/design-taste-frontend/**",
+    ".agents/skills/spartan/**"
   ],
   "categories": {
     "correctness": "error",

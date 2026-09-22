@@ -1,6 +1,6 @@
 # NgRx SignalStore
 
-> Abridgement of the `fg-web-store` skill — the decision tree, code templates, and the SSR handoff live there. Change one, change both.
+> Apply ARCHITECTURE.md §10.11. The `fg-web-store` references contain the decision tree, examples and SSR handoff details.
 
 - **`patchState` is the only mutation mechanism.** Direct state assignment is forbidden.
 - Async goes through **`rxMethod` + `tapResponse`**. No `rxResource`, no `httpResource` (§10.11).

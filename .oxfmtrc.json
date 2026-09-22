@@ -14,8 +14,7 @@
     ".build-check-*/**",
     ".impeccable/**",
     ".claude/worktrees/**",
-    ".agents/skills/impeccable/**",
-    ".agents/skills/ui-ux-pro-max/**",
+    ".agents/skills/design-taste-frontend/**",
     ".agents/skills/spartan/**",
     "src/app/shared/ui/**",
     "e2e/test-results-*/**"

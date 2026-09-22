@@ -3,9 +3,7 @@ import path from 'node:path';
 const IMMUTABLE_PREFIXES = [
   'src/app/shared/ui/',
   '.agents/skills/spartan/',
-  '.agents/skills/impeccable/',
-  '.agents/skills/ui-ux-pro-max/',
-  '.codex/agents/impeccable_',
+  '.agents/skills/design-taste-frontend/',
 ];
 
 /** Classifies canonical project paths without reading protected file contents. */

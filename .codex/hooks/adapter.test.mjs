@@ -70,9 +70,7 @@ test('protects vendored helm even though its barrels use upstream conventions', 
 for (const file of [
   'src/app/shared/ui/button/src/lib/hlm-button.ts',
   '.agents/skills/spartan/rules/styling.md',
-  '.agents/skills/impeccable/SKILL.md',
-  '.agents/skills/ui-ux-pro-max/SKILL.md',
-  '.codex/agents/impeccable_documenter.toml',
+  '.agents/skills/design-taste-frontend/SKILL.md',
 ]) {
   test(`rejects changes and deletions of immutable ${file}`, () => {
     check(`*** Update File: ${file}\n@@\n-old\n+new`);

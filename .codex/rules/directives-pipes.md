@@ -5,9 +5,9 @@
 ## Directives
 
 - Selector is `[appCamelCase]` — `[appInfiniteScroll]`, `[appBoardCard]`. `app` is the only permitted prefix (§9.4).
-- Live in `shared/<concept>/ui/directives/<name>/` with `index.ts` and `testing/`. If the directive completes an **existing** concept's contract, put it there rather than creating a new concept (§8.5).
+- Domain-aware directives belong to the owning feature's `ui/`; generic directives belong to `shared/<concept>/ui/directives/<name>/`. Use the lowest owning scope, with the required public barrel and `testing/`. Complete an existing concept before introducing another (§8.5, §9.2).
 - **SSR is not optional.** Anything touching `document`, `window`, `IntersectionObserver`, or `ResizeObserver` is guarded with `isPlatformBrowser(this.platformId)` and torn down in `ngOnDestroy`. An unguarded directive breaks the whole route on the server, not just itself.
-- A template-marker directive needs `ngTemplateContextGuard`, or every `let-` binding stays untyped. The context interface is a **type**, so it lives in the concept's `models/` as `<name>-context.type.ts` — never beside the directive (§10.10).
+- A template-marker directive needs `ngTemplateContextGuard` to type its `let-` bindings. Put reusable context contracts in the owner's `models/`: an `interface` takes `<name>-context.interface.ts`; a `type` alias takes `<name>-context.type.ts` (§9.2, §10.10).
 - Same member rules as components: explicit access modifier, explicit type, `readonly`; outputs past-tense (`scrolled`, never `onScroll`).
 
 ## Pipes

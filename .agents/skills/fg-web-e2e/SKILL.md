@@ -12,13 +12,16 @@ Run commands from the repository root. Use the tools actually exposed by the Cod
 see `.codex/workflow.md` for shell, MCP, delegation and validation conventions.
 
 Read [the Playwright harness](references/playwright.md), `e2e/README.md` and
-`playwright.config.ts` before changing tests. Prefer the project's hermetic Playwright suite;
+the selected Playwright config before changing tests. Choose SPA, synthetic harness, SSR or
+localized cases through [validation selection](../../../.codex/references/validation.md).
+Prefer the project's hermetic Playwright suite for client scenarios;
 use the Codex Browser pane or an available Playwright MCP for exploratory work when useful.
 Keep real API calls out of the hermetic suite. Use existing ApiMock endpoint families,
 fixtures, page objects and accessible locators.
 
-Start with the narrowest affected scenarios in Chromium. Let Playwright manage port 4273;
-reuse an existing compatible server instead of starting a duplicate. Wait for a dev rebuild
+Start with the narrowest affected scenarios in the relevant browser project. Let the selected
+config manage its server; port 4273 belongs to the ordinary SPA suite. SSR and localized modes
+share port 4274 and must not run concurrently. Reuse only an actually compatible server. Wait for a dev rebuild
 to settle before testing. Stop only processes started for this task.
 
 A visual review requires opening and inspecting actual screenshots. For responsive changes,

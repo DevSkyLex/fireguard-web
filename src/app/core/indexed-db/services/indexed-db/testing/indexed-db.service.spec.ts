@@ -97,6 +97,42 @@ class ServerDatabase extends IndexedDbService {
   protected readonly schema: IndexedDbSchema = SCHEMA;
 }
 
+/**
+ * Service UpgradedDatabase
+ * @class UpgradedDatabase
+ * @description Exercises the native IndexedDB boundary with a feature-owned schema upgrade.
+ * @version 1.0.0
+ */
+@Service({ autoProvided: false })
+class UpgradedDatabase extends IndexedDbService {
+  /**
+   * Property schema
+   * @readonly
+   * @description Includes existing, new and retired stores to verify upgrades preserve active data.
+   * @access protected
+   * @since 1.0.0
+   * @type {IndexedDbSchema}
+   */
+  protected readonly schema: IndexedDbSchema = {
+    ...SCHEMA,
+    version: 2,
+    retiredStoreNames: ['legacy', 'already-retired'],
+  };
+}
+
+/**
+ * Function browserRequest
+ * @description Supplies browser events without replacing the database service's implementation.
+ * @access private
+ * @since 1.0.0
+ * @template T - The value returned by a native IndexedDB request.
+ * @param {T} result - Result exposed when the test dispatches success.
+ * @returns {IDBRequest<T>} Controlled native request boundary.
+ */
+function browserRequest<T>(result: T): IDBRequest<T> {
+  return Object.assign(new EventTarget(), { result, error: null }) as IDBRequest<T>;
+}
+
 describe('IndexedDbService', () => {
   describe('on the server', () => {
     let service: ServerDatabase;
@@ -301,6 +337,296 @@ describe('IndexedDbService', () => {
       // rather than a no-op that leaves the stores empty and unowned.
       await service.ensureOwnerBound('user-1');
       expect(service.store.get('metadata:ownerUserId')).toBe('user-1');
+    });
+  });
+
+  describe('native browser requests', () => {
+    let service: UpgradedDatabase;
+    let database: IDBDatabase;
+    let transaction: IDBTransaction;
+    let openRequest: IDBOpenDBRequest;
+    let valueRequest: IDBRequest<unknown>;
+    let store: Pick<
+      IDBObjectStore,
+      'get' | 'getAll' | 'count' | 'put' | 'delete' | 'clear' | 'openCursor'
+    >;
+    let open: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      valueRequest = browserRequest<unknown>(null);
+      store = {
+        get: vi.fn(() => valueRequest),
+        getAll: vi.fn(() => valueRequest as IDBRequest<unknown[]>),
+        count: vi.fn(() => valueRequest as IDBRequest<number>),
+        put: vi.fn(() => valueRequest as IDBRequest<IDBValidKey>),
+        delete: vi.fn(() => valueRequest as IDBRequest<undefined>),
+        clear: vi.fn(() => valueRequest as IDBRequest<undefined>),
+        openCursor: vi.fn(() => valueRequest as IDBRequest<IDBCursorWithValue | null>),
+      };
+      transaction = Object.assign(new EventTarget(), {
+        objectStore: vi.fn(() => store),
+        error: null,
+      }) as unknown as IDBTransaction;
+      database = Object.assign(new EventTarget(), {
+        transaction: vi.fn(() => transaction),
+        objectStoreNames: {
+          contains: vi.fn((name: string) => ['outbox', 'legacy'].includes(name)),
+        },
+        createObjectStore: vi.fn(),
+        deleteObjectStore: vi.fn(),
+        close: vi.fn(),
+      }) as unknown as IDBDatabase;
+      openRequest = browserRequest(database) as IDBOpenDBRequest;
+      open = vi.fn(() => openRequest);
+      vi.stubGlobal('indexedDB', { open });
+      TestBed.configureTestingModule({
+        providers: [UpgradedDatabase, { provide: PLATFORM_ID, useValue: 'browser' }],
+      });
+      service = TestBed.inject(UpgradedDatabase);
+    });
+
+    afterEach(() => {
+      TestBed.resetTestingModule();
+      vi.unstubAllGlobals();
+    });
+
+    /**
+     * Function opened
+     * @description Releases the database open request before the service issues its transaction.
+     * @access private
+     * @since 1.0.0
+     * @returns {Promise<void>} The asynchronous open continuation has run.
+     */
+    async function opened(): Promise<void> {
+      openRequest.dispatchEvent(new Event('success'));
+      await Promise.resolve();
+    }
+
+    it.each([
+      {
+        method: 'get',
+        invoke: (db: UpgradedDatabase) => db.get('outbox', 'draft-1'),
+        result: { id: 1 },
+        args: ['draft-1'],
+      },
+      {
+        method: 'getAll',
+        invoke: (db: UpgradedDatabase) => db.getAll('outbox'),
+        result: [{ id: 1 }],
+        args: [],
+      },
+      {
+        method: 'count',
+        invoke: (db: UpgradedDatabase) => db.count('outbox'),
+        result: 2,
+        args: [],
+      },
+    ] as const)(
+      'reads $method through a readonly transaction and resolves the browser result',
+      async ({ method, invoke, result, args }) => {
+        const read = invoke(service);
+        await opened();
+        expect(database.transaction).toHaveBeenCalledWith('outbox', 'readonly');
+        expect(transaction.objectStore).toHaveBeenCalledWith('outbox');
+        expect(store[method]).toHaveBeenCalledWith(...args);
+        Object.assign(valueRequest, { result });
+        valueRequest.dispatchEvent(new Event('success'));
+        await expect(read).resolves.toEqual(result);
+      },
+    );
+
+    it('returns null when the browser cannot find the requested record', async () => {
+      const read = service.get('outbox', 'missing');
+      await opened();
+      Object.assign(valueRequest, { result: undefined });
+      valueRequest.dispatchEvent(new Event('success'));
+      await expect(read).resolves.toBeNull();
+    });
+
+    it.each([
+      {
+        method: 'put',
+        invoke: (db: UpgradedDatabase) => db.put('outbox', 'draft-1', { saved: true }),
+        args: [{ saved: true }, 'draft-1'],
+      },
+      {
+        method: 'delete',
+        invoke: (db: UpgradedDatabase) => db.remove('outbox', 'draft-1'),
+        args: ['draft-1'],
+      },
+    ] as const)(
+      'writes $method with the correct key and waits for the request',
+      async ({ method, invoke, args }) => {
+        const write = invoke(service);
+        const settled = vi.fn();
+        void write.then(settled);
+        await opened();
+        expect(database.transaction).toHaveBeenCalledWith('outbox', 'readwrite');
+        expect(store[method]).toHaveBeenCalledWith(...args);
+        expect(settled).not.toHaveBeenCalled();
+        valueRequest.dispatchEvent(new Event('success'));
+        await expect(write).resolves.toBeUndefined();
+      },
+    );
+
+    it.each(['get', 'getAll', 'count', 'put', 'remove'] as const)(
+      'propagates %s request failures',
+      async (method) => {
+        const failure = new DOMException('Storage unavailable', 'InvalidStateError');
+        const result =
+          method === 'put'
+            ? service.put('outbox', 'draft-1', {})
+            : method === 'get' || method === 'remove'
+              ? service[method]('outbox', 'draft-1')
+              : service[method]('outbox');
+        const rejected = expect(result).rejects.toBe(failure);
+        await opened();
+        Object.assign(valueRequest, { error: failure });
+        valueRequest.dispatchEvent(new Event('error'));
+        await rejected;
+      },
+    );
+
+    it('does not open storage for empty batches or transactions', async () => {
+      await service.putMany('outbox', []);
+      await service.putTransaction({});
+      await service.putTransaction({ outbox: [], metadata: [] });
+      expect(open).not.toHaveBeenCalled();
+    });
+
+    it('waits for the complete batch transaction, not individual successful writes', async () => {
+      const result = service.putMany('outbox', [
+        { key: 'a', value: 1 },
+        { key: 'b', value: 2 },
+      ]);
+      const settled = vi.fn();
+      void result.then(settled);
+      await opened();
+      expect(store.put).toHaveBeenNthCalledWith(1, 1, 'a');
+      expect(store.put).toHaveBeenNthCalledWith(2, 2, 'b');
+      valueRequest.dispatchEvent(new Event('success'));
+      await Promise.resolve();
+      expect(settled).not.toHaveBeenCalled();
+      transaction.dispatchEvent(new Event('complete'));
+      await expect(result).resolves.toBeUndefined();
+    });
+
+    it('writes a multi-store intention in one transaction, ignoring empty stores', async () => {
+      const outbox = { ...store, put: vi.fn(() => valueRequest as IDBRequest<IDBValidKey>) };
+      const metadata = { ...store, put: vi.fn(() => valueRequest as IDBRequest<IDBValidKey>) };
+      vi.mocked(transaction.objectStore).mockImplementation((name: string) => {
+        if (name === 'outbox') return outbox as unknown as IDBObjectStore;
+        if (name === 'metadata') return metadata as unknown as IDBObjectStore;
+        throw new Error(`Unexpected store: ${name}`);
+      });
+      const result = service.putTransaction({
+        outbox: [{ key: 'draft-1', value: { name: 'local' } }],
+        metadata: [{ key: 'revision', value: 3 }],
+        unused: [],
+      });
+      await opened();
+      expect(database.transaction).toHaveBeenCalledExactlyOnceWith(
+        ['outbox', 'metadata'],
+        'readwrite',
+      );
+      expect(transaction.objectStore).toHaveBeenCalledWith('outbox');
+      expect(transaction.objectStore).toHaveBeenCalledWith('metadata');
+      expect(outbox.put).toHaveBeenCalledExactlyOnceWith({ name: 'local' }, 'draft-1');
+      expect(metadata.put).toHaveBeenCalledExactlyOnceWith(3, 'revision');
+      transaction.dispatchEvent(new Event('complete'));
+      await expect(result).resolves.toBeUndefined();
+    });
+
+    it('removes only matching cursor entries and completes after the transaction', async () => {
+      const predicate = vi.fn(
+        (value: { synced: boolean }, key: IDBValidKey) => value.synced && key === 'sent',
+      );
+      const result = service.removeWhere('outbox', predicate);
+      await opened();
+      const cursor = {
+        key: 'pending',
+        value: { synced: false },
+        delete: vi.fn(),
+        continue: vi.fn(),
+      };
+      Object.assign(valueRequest, { result: cursor });
+      valueRequest.dispatchEvent(new Event('success'));
+      expect(cursor.delete).not.toHaveBeenCalled();
+      expect(cursor.continue).toHaveBeenCalledOnce();
+      cursor.key = 'sent';
+      cursor.value = { synced: true };
+      valueRequest.dispatchEvent(new Event('success'));
+      expect(cursor.delete).toHaveBeenCalledOnce();
+      expect(cursor.continue).toHaveBeenCalledTimes(2);
+      Object.assign(valueRequest, { result: null });
+      valueRequest.dispatchEvent(new Event('success'));
+      expect(predicate).toHaveBeenCalledTimes(2);
+      transaction.dispatchEvent(new Event('complete'));
+      await expect(result).resolves.toBeUndefined();
+    });
+
+    it('clears every declared store together', async () => {
+      const result = service.clearAll();
+      await opened();
+      expect(database.transaction).toHaveBeenCalledExactlyOnceWith(
+        ['outbox', 'metadata'],
+        'readwrite',
+      );
+      expect(transaction.objectStore).toHaveBeenNthCalledWith(1, 'outbox');
+      expect(transaction.objectStore).toHaveBeenNthCalledWith(2, 'metadata');
+      expect(store.clear).toHaveBeenCalledTimes(2);
+      transaction.dispatchEvent(new Event('complete'));
+      await expect(result).resolves.toBeUndefined();
+    });
+
+    it.each(['abort', 'error'])(
+      'rejects each batch operation when its transaction reports %s',
+      async (event) => {
+        const failure = new DOMException('Storage quota exceeded', 'QuotaExceededError');
+        Object.assign(transaction, { error: failure });
+        const results = [
+          service.putMany('outbox', [{ key: 'a', value: 1 }]),
+          service.putTransaction({ metadata: [{ key: 'a', value: 1 }] }),
+          service.removeWhere('outbox', () => true),
+          service.clearAll(),
+        ];
+        const rejected = results.map((result) => expect(result).rejects.toBe(failure));
+        await opened();
+        transaction.dispatchEvent(new Event(event));
+        await Promise.all(rejected);
+      },
+    );
+
+    it('upgrades the schema without recreating active stores and closes on a later upgrade', async () => {
+      const result = service.count('outbox');
+      expect(open).toHaveBeenCalledWith(SCHEMA.name, 2);
+      openRequest.dispatchEvent(new Event('upgradeneeded'));
+      expect(database.deleteObjectStore).toHaveBeenCalledExactlyOnceWith('legacy');
+      expect(database.createObjectStore).toHaveBeenCalledExactlyOnceWith('metadata');
+      await opened();
+      Object.assign(valueRequest, { result: 0 });
+      valueRequest.dispatchEvent(new Event('success'));
+      await expect(result).resolves.toBe(0);
+      database.dispatchEvent(new Event('versionchange'));
+      expect(database.close).toHaveBeenCalledOnce();
+    });
+
+    it('reports a blocked upgrade instead of leaving offline callers pending forever', async () => {
+      const result = service.getAll('outbox');
+      const rejected = expect(result).rejects.toThrow('blocked upgrading to version 2');
+      openRequest.dispatchEvent(new Event('blocked'));
+      await rejected;
+      expect(database.transaction).not.toHaveBeenCalled();
+    });
+
+    it('propagates a failed database open without starting a transaction', async () => {
+      const failure = new DOMException('Database version is newer', 'VersionError');
+      const result = service.getAll('outbox');
+      const rejected = expect(result).rejects.toBe(failure);
+      Object.assign(openRequest, { error: failure });
+      openRequest.dispatchEvent(new Event('error'));
+      await rejected;
+      expect(database.transaction).not.toHaveBeenCalled();
     });
   });
 });

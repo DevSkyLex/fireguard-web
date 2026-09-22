@@ -1,7 +1,7 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { FederatedAuthService } from '@features/auth/data-access';
 import type {
   FederatedConnectionsOutput,
@@ -15,19 +15,27 @@ import { FederatedAuthStore } from '../federated-auth.store';
 describe('FederatedAuthStore', () => {
   let store: FederatedAuthStore;
   let service: {
+    confirmPasswordSetup: ReturnType<typeof vi.fn>;
     completeLink: ReturnType<typeof vi.fn>;
     completeLogin: ReturnType<typeof vi.fn>;
     connections: ReturnType<typeof vi.fn>;
     disconnect: ReturnType<typeof vi.fn>;
+    providers: ReturnType<typeof vi.fn>;
+    requestPasswordSetup: ReturnType<typeof vi.fn>;
+    startLink: ReturnType<typeof vi.fn>;
     startLogin: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     service = {
+      confirmPasswordSetup: vi.fn(),
       completeLink: vi.fn(),
       completeLogin: vi.fn(),
       connections: vi.fn(),
       disconnect: vi.fn(),
+      providers: vi.fn(),
+      requestPasswordSetup: vi.fn(),
+      startLink: vi.fn(),
       startLogin: vi.fn(),
     };
     TestBed.configureTestingModule({
@@ -85,6 +93,163 @@ describe('FederatedAuthStore', () => {
   });
 
   it('should keep password availability unknown until connections load', () => {
+    expect(store.passwordConfigured()).toBeNull();
+  });
+
+  it('loads public providers and exposes only enabled identities', async () => {
+    service.providers.mockReturnValue(
+      of({
+        member: [
+          {
+            '@id': '/api/auth/federated/providers/google',
+            '@type': 'FederatedProvider',
+            provider: 'google',
+            enabled: true,
+          },
+          {
+            '@id': '/api/auth/federated/providers/microsoft',
+            '@type': 'FederatedProvider',
+            provider: 'microsoft',
+            enabled: false,
+          },
+        ],
+      }),
+    );
+
+    store.loadProviders();
+    await Promise.resolve();
+
+    expect(store.providersCallState().status).toBe('success');
+    expect(store.enabledProviders()).toEqual(['google']);
+    expect(store.providersLoading()).toBe(false);
+  });
+
+  it('reports provider discovery failures without inventing availability', async () => {
+    service.providers.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Unavailable' })),
+    );
+
+    store.loadProviders();
+    await Promise.resolve();
+
+    expect(store.providersCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.enabledProviders()).toEqual([]);
+  });
+
+  it('loads account connections and preserves the last snapshot when refresh fails', async () => {
+    const connections = {
+      '@id': '/api/auth/federated/connections',
+      '@type': 'FederatedConnections',
+      password_configured: false,
+      last_sign_in_method: 'google',
+      connections: [],
+    } satisfies FederatedConnectionsOutput;
+    service.connections
+      .mockReturnValueOnce(of(connections))
+      .mockReturnValueOnce(
+        throwError(() => ({ '@type': 'Error', status: 503, detail: 'Unavailable' })),
+      );
+
+    store.loadConnections();
+    await Promise.resolve();
+    expect(store.connections()).toEqual(connections);
+    expect(store.connectionsLoading()).toBe(false);
+
+    store.loadConnections();
+    await Promise.resolve();
+    expect(store.connections()).toEqual(connections);
+    expect(store.connectionsError()).toMatchObject({ code: 503 });
+  });
+
+  it('starts an account link and resets the shared redirect state', async () => {
+    service.startLink.mockReturnValue(
+      of({
+        '@id': '/api/auth/federated/google/link',
+        '@type': 'FederatedStart',
+        authorization_url: 'https://accounts.google.com/link',
+      } satisfies FederatedStartOutput),
+    );
+
+    store.startLink('google');
+    await Promise.resolve();
+    expect(store.startUrl()).toBe('https://accounts.google.com/link');
+    expect(store.pendingProvider()).toBe('google');
+    store.resetStart();
+    expect(store.startCallState().status).toBe('idle');
+    expect(store.pendingProvider()).toBeNull();
+  });
+
+  it('requests and confirms first-password setup, updating the loaded connection snapshot', async () => {
+    const connections = {
+      '@id': '/api/auth/federated/connections',
+      '@type': 'FederatedConnections',
+      password_configured: false,
+      last_sign_in_method: 'google',
+      connections: [],
+    } satisfies FederatedConnectionsOutput;
+    service.completeLink.mockReturnValue(of(connections));
+    service.requestPasswordSetup.mockReturnValue(
+      of({
+        '@id': '/api/auth/federated/password/setup',
+        '@type': 'PasswordSetupChallenge',
+        success: true,
+        message: 'Code sent.',
+        challengeToken: 'challenge-token',
+        maskedRecipient: 'v***@example.com',
+        expiresAt: '2026-09-22T19:00:00Z',
+        maxAttempts: 5,
+      }),
+    );
+    service.confirmPasswordSetup.mockReturnValue(
+      of({
+        '@id': '/api/auth/federated/password/confirm',
+        '@type': 'PasswordSetupConfirm',
+        success: true,
+        message: 'Password configured.',
+        errorCode: null,
+        attemptsRemaining: 5,
+      }),
+    );
+    store.completeLink({ provider: 'google', input: { code: 'code', state: 'state' } });
+
+    store.requestPasswordSetup();
+    await Promise.resolve();
+    expect(store.passwordSetupChallenge()).toBe('challenge-token');
+    store.confirmPasswordSetup({
+      token: 'challenge-token',
+      code: '123456',
+      newPassword: 'NewPassword123!',
+    });
+    await Promise.resolve();
+
+    expect(store.passwordSetupConfirmCallState().status).toBe('success');
+    expect(store.passwordConfigured()).toBe(true);
+  });
+
+  it('keeps password state unchanged when setup is refused and exposes transport failures', async () => {
+    service.requestPasswordSetup.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 429, detail: 'Retry later' })),
+    );
+    service.confirmPasswordSetup.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 422, detail: 'Invalid code' })),
+    );
+
+    store.requestPasswordSetup();
+    await Promise.resolve();
+    expect(store.passwordSetupRequestCallState()).toMatchObject({
+      status: 'error',
+      error: { code: 429 },
+    });
+    store.confirmPasswordSetup({
+      token: 'challenge-token',
+      code: '000000',
+      newPassword: 'NewPassword123!',
+    });
+    await Promise.resolve();
+    expect(store.passwordSetupConfirmCallState()).toMatchObject({
+      status: 'error',
+      error: { code: 422 },
+    });
     expect(store.passwordConfigured()).toBeNull();
   });
 

@@ -70,8 +70,25 @@ class OverlayHost {
 
 describe('PlanViewer', () => {
   let fixture: ComponentFixture<PlanViewer>;
+  let notifyResize: () => void;
+  let observe: ReturnType<typeof vi.fn<ResizeObserver['observe']>>;
+  let disconnect: ReturnType<typeof vi.fn<ResizeObserver['disconnect']>>;
 
   beforeEach(async () => {
+    observe = vi.fn<ResizeObserver['observe']>();
+    disconnect = vi.fn<ResizeObserver['disconnect']>();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class implements ResizeObserver {
+        public readonly observe = observe;
+        public readonly disconnect = disconnect;
+        public readonly unobserve = vi.fn();
+
+        public constructor(callback: ResizeObserverCallback) {
+          notifyResize = () => callback([], this);
+        }
+      },
+    );
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(PlanViewer);
@@ -80,6 +97,29 @@ describe('PlanViewer', () => {
     await fixture.whenStable();
     stubViewportRect(fixture);
   });
+
+  afterEach(() => {
+    fixture.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  /**
+   * Function pointer
+   * @description Delivers pointer coordinates through the rendered stage's native event bindings.
+   * @param {string} type - Browser pointer event name.
+   * @param {number} pointerId - Identity of the active contact.
+   * @param {number} clientX - Horizontal screen position.
+   * @param {number} clientY - Vertical screen position.
+   * @returns {void}
+   */
+  function pointer(type: string, pointerId: number, clientX: number, clientY: number): void {
+    const stage: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="plan-viewer-stage"]',
+    );
+    const event = new MouseEvent(type, { clientX, clientY, bubbles: true });
+    Object.defineProperty(event, 'pointerId', { value: pointerId });
+    stage.dispatchEvent(event);
+  }
 
   describe('loading and error', () => {
     it('should render the SSR-safe plain image with a skeleton before loading', () => {
@@ -307,6 +347,142 @@ describe('PlanViewer', () => {
         '[data-testid="plan-viewer-content"]',
       );
       expect(content.style.transform).toContain('translate(48px, 0px)');
+    });
+
+    it.each([
+      ['ArrowLeft', 'translate(-48px, 0px) scale(1)'],
+      ['ArrowUp', 'translate(0px, -48px) scale(1)'],
+      ['ArrowDown', 'translate(0px, 48px) scale(1)'],
+      ['-', 'translate(0px, 0px) scale(0.8)'],
+      ['_', 'translate(0px, 0px) scale(0.8)'],
+      ['=', 'translate(0px, 0px) scale(1.25)'],
+    ])('consumes %s and updates the visible plan', async (key, transform) => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      const event = new KeyboardEvent('keydown', { key, cancelable: true });
+      stage.dispatchEvent(event);
+      await fixture.whenStable();
+      expect(event.defaultPrevented).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="plan-viewer-content"]').style.transform,
+      ).toBe(transform);
+    });
+  });
+
+  describe('pointer gestures and resize lifecycle', () => {
+    let stage: HTMLElement;
+    let frame: HTMLElement;
+    let content: HTMLElement;
+    let capture: ReturnType<typeof vi.fn<HTMLElement['setPointerCapture']>>;
+
+    beforeEach(() => {
+      stage = fixture.nativeElement.querySelector('[data-testid="plan-viewer-stage"]');
+      frame = fixture.nativeElement.querySelector('[data-testid="plan-viewer-frame"]');
+      content = fixture.nativeElement.querySelector('[data-testid="plan-viewer-content"]');
+      capture = vi.fn<HTMLElement['setPointerCapture']>();
+      stage.setPointerCapture = capture;
+    });
+
+    it('leaves gestures and keys untouched until the image has loaded', async () => {
+      stage.focus();
+      const wheel = new WheelEvent('wheel', { deltaY: -100, cancelable: true });
+      const key = new KeyboardEvent('keydown', { key: '+', cancelable: true });
+      stage.dispatchEvent(wheel);
+      stage.dispatchEvent(key);
+      pointer('pointerdown', 1, 100, 100);
+      pointer('pointermove', 1, 200, 200);
+      notifyResize();
+      await fixture.whenStable();
+      expect(capture).not.toHaveBeenCalled();
+      expect(wheel.defaultPrevented).toBe(false);
+      expect(key.defaultPrevented).toBe(false);
+      expect(content.style.transform).toBe('');
+      expect(stage.parentElement?.querySelector('button')?.disabled).toBe(true);
+    });
+
+    it.each(['pointerup', 'pointercancel', 'pointerleave'])(
+      'stops dragging after %s and ignores an unrelated pointer',
+      async (ending) => {
+        await loadImage(fixture);
+        pointer('pointermove', 9, 500, 500);
+        pointer('pointerdown', 1, 100, 100);
+        pointer('pointermove', 9, 500, 500);
+        pointer('pointermove', 1, 160, 140);
+        await fixture.whenStable();
+        expect(capture).toHaveBeenCalledExactlyOnceWith(1);
+        expect(content.style.transform).toBe('translate(60px, 40px) scale(1)');
+        pointer(ending, 1, 160, 140);
+        pointer('pointermove', 1, 600, 400);
+        await fixture.whenStable();
+        expect(content.style.transform).toBe('translate(60px, 40px) scale(1)');
+      },
+    );
+
+    it('pinches around the frame-relative midpoint and caps zoom without shifting its anchor', async () => {
+      fixture.componentRef.setInput('maxZoom', 2);
+      frame.getBoundingClientRect = () => ({ ...VIEWPORT_RECT, left: 100, top: 50 });
+      await loadImage(fixture);
+      pointer('pointerdown', 1, 300, 250);
+      pointer('pointerdown', 2, 500, 250);
+      pointer('pointermove', 2, 700, 250);
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(100px, 100px) scale(2)');
+      pointer('pointermove', 2, 900, 250);
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(100px, 100px) scale(2)');
+      pointer('pointerup', 2, 900, 250);
+      pointer('pointerup', 1, 300, 250);
+      pointer('pointerdown', 3, 300, 250);
+      pointer('pointermove', 3, 320, 260);
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(120px, 110px) scale(2)');
+    });
+
+    it('keeps part of the plan reachable when a pointer is dragged far outside the viewport', async () => {
+      await loadImage(fixture);
+      pointer('pointerdown', 1, 400, 300);
+      pointer('pointermove', 1, 10_000, -10_000);
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(752px, -552px) scale(1)');
+    });
+
+    it('fits a large image below the normal minimum zoom and retains that reachable minimum', async () => {
+      await loadImage(fixture, { width: 3200, height: 2400 });
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(0.25)');
+      const zoomOut: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-zoom-out"]',
+      );
+      zoomOut.click();
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(0.25)');
+    });
+
+    it('refits on container resize until an operator zooms, then reset uses the latest fit', async () => {
+      await loadImage(fixture);
+      expect(observe).toHaveBeenCalledExactlyOnceWith(frame);
+      frame.getBoundingClientRect = () => ({ ...VIEWPORT_RECT, width: 400, height: 300 });
+      notifyResize();
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(0.5)');
+      const zoomIn: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-zoom-in"]',
+      );
+      zoomIn.click();
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(0.625)');
+      frame.getBoundingClientRect = () => VIEWPORT_RECT;
+      notifyResize();
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(0.625)');
+      const reset: HTMLButtonElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-zoom-reset"]',
+      );
+      reset.click();
+      await fixture.whenStable();
+      expect(content.style.transform).toBe('translate(0px, 0px) scale(1)');
+      fixture.destroy();
+      expect(disconnect).toHaveBeenCalledOnce();
     });
   });
 });

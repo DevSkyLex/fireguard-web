@@ -8,10 +8,12 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
+  pendingCallState,
+  successCallState,
   toStoreError,
   type CallState,
   type StoreError,
@@ -20,13 +22,17 @@ import {
   ConversationService,
   MessageService,
 } from '@features/organization/features/collaboration/data-access';
-import type { ChannelOutput } from '@features/organization/features/collaboration/models';
+import type {
+  ChannelOutput,
+  MessageOutput,
+} from '@features/organization/features/collaboration/models';
 import {
   channelsStoreEvents,
   ChannelParticipantsStore,
   ChannelsStore,
   MessageThreadStore,
   PinnedMessagesStore,
+  pinnedMessagesStoreEvents,
 } from '@features/organization/features/collaboration/state';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -77,6 +83,12 @@ describe('ChannelConversationPage', () => {
     messageEntityMap: ReturnType<typeof vi.fn>;
     noteReplyPosted: ReturnType<typeof vi.fn>;
     noteUnpinned: ReturnType<typeof vi.fn>;
+    pin: ReturnType<typeof vi.fn>;
+    unpin: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    unsave: ReturnType<typeof vi.fn>;
+    editMessage: ReturnType<typeof vi.fn>;
+    deleteMessage: ReturnType<typeof vi.fn>;
     editCallState: ReturnType<typeof signal>;
     deleteCallState: ReturnType<typeof signal>;
   };
@@ -252,12 +264,21 @@ describe('ChannelConversationPage', () => {
       messageEntityMap: vi.fn(() => ({})),
       noteReplyPosted: vi.fn(),
       noteUnpinned: vi.fn(),
+      pin: vi.fn(),
+      unpin: vi.fn(),
+      save: vi.fn(),
+      unsave: vi.fn(),
+      editMessage: vi.fn(),
+      deleteMessage: vi.fn(),
       editCallState: signal(idleCallState()),
       deleteCallState: signal(idleCallState()),
     };
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.restoreAllMocks();
+  });
 
   it('should reset then load the routed channel across every collaborator', async () => {
     await createPage();
@@ -463,5 +484,174 @@ describe('ChannelConversationPage', () => {
     expect(
       byTestId('channel-conversation-participants-count')?.getAttribute('aria-label'),
     ).toContain('5');
+  });
+
+  it('sends messages and reactions to the routed thread and marks read only while visible', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['send']('Check the north entrance');
+    page['toggleReaction']({ messageId: 'message-1', emoji: '👍' });
+    expect(thread.send).toHaveBeenCalledExactlyOnceWith({
+      conversationId: 'channel-1',
+      input: { body: 'Check the north entrance' },
+    });
+    expect(thread.toggleReaction).toHaveBeenCalledExactlyOnceWith('message-1', '👍');
+    const visibility = vi.spyOn(document, 'visibilityState', 'get');
+    thread.markRead.mockClear();
+    visibility.mockReturnValue('hidden');
+    page['markRead']();
+    expect(thread.markRead).not.toHaveBeenCalled();
+    visibility.mockReturnValue('visible');
+    page['markRead']();
+    expect(thread.markRead).toHaveBeenCalledExactlyOnceWith({ conversationId: 'channel-1' });
+  });
+
+  it('chooses pin and bookmark commands from the existing message state', async () => {
+    const message: MessageOutput = {
+      '@id': '/api/messages/message-1',
+      '@type': 'Message',
+      id: 'message-1',
+      conversation: '/api/conversations/channel-1',
+      authorMember: '/api/organizations/org-1/members/member-1',
+      body: 'Inspection complete',
+      mentions: [],
+      mentionNames: {},
+      isDeleted: false,
+      attachments: [],
+      reactions: [],
+      isSaved: false,
+      replyCount: 0,
+      references: [],
+      createdAt: '2026-09-22T10:00:00Z',
+      updatedAt: '2026-09-22T10:00:00Z',
+    };
+    await createPage();
+    const page = fixture.componentInstance;
+    page['togglePin']('missing');
+    page['toggleSave']('missing');
+    expect(thread.pin).not.toHaveBeenCalled();
+    expect(thread.save).not.toHaveBeenCalled();
+    thread.messageEntityMap.mockReturnValue({ [message.id]: message });
+    page['togglePin'](message.id);
+    page['toggleSave'](message.id);
+    expect(thread.pin).toHaveBeenCalledExactlyOnceWith(message.id);
+    expect(thread.save).toHaveBeenCalledExactlyOnceWith(message.id);
+    thread.messageEntityMap.mockReturnValue({
+      [message.id]: { ...message, isSaved: true, pinnedAt: '2026-09-22T10:01:00Z' },
+    });
+    page['togglePin'](message.id);
+    page['toggleSave'](message.id);
+    expect(thread.unpin).toHaveBeenCalledExactlyOnceWith(message.id);
+    expect(thread.unsave).toHaveBeenCalledExactlyOnceWith(message.id);
+  });
+
+  it('keeps message mutations open through failure and closes each target only on success', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['submitMessageEdit']('no target');
+    page['confirmMessageDelete']();
+    expect(thread.editMessage).not.toHaveBeenCalled();
+    expect(thread.deleteMessage).not.toHaveBeenCalled();
+    page['editTargetId'].set('message-1');
+    page['submitMessageEdit']('Updated body');
+    thread.editCallState.set(pendingCallState());
+    await fixture.whenStable();
+    expect(page['messageEditBusy']()).toBe(true);
+    expect(thread.editMessage).toHaveBeenCalledExactlyOnceWith({
+      messageId: 'message-1',
+      input: { body: 'Updated body' },
+    });
+    thread.editCallState.set(errorCallState(toStoreError(new Error('Conflict'))));
+    await fixture.whenStable();
+    expect(page['editTargetId']()).toBe('message-1');
+    expect(page['messageEditError']()?.message).toBe('Conflict');
+    thread.editCallState.set(successCallState(null));
+    await fixture.whenStable();
+    expect(page['editTargetId']()).toBeNull();
+    page['messageDeleteTargetId'].set('message-2');
+    page['confirmMessageDelete']();
+    thread.deleteCallState.set(pendingCallState());
+    await fixture.whenStable();
+    expect(page['messageDeleteBusy']()).toBe(true);
+    expect(thread.deleteMessage).toHaveBeenCalledExactlyOnceWith('message-2');
+    thread.deleteCallState.set(successCallState(null));
+    await fixture.whenStable();
+    expect(page['messageDeleteTargetId']()).toBeNull();
+  });
+
+  it('resets dismissed message and channel overlays without submitting a mutation', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['editTargetId'].set('message-1');
+    page['messageDeleteTargetId'].set('message-1');
+    page['replyTargetId'].set('message-1');
+    page['onMessageEditDialogVisibleChange'](true);
+    page['onMessageDeleteDialogVisibleChange'](true);
+    page['onReplySheetVisibleChange'](true);
+    expect(page['editTargetId']()).toBe('message-1');
+    expect(page['messageDeleteTargetId']()).toBe('message-1');
+    expect(page['replyTargetId']()).toBe('message-1');
+    page['onMessageEditDialogVisibleChange'](false);
+    page['onMessageDeleteDialogVisibleChange'](false);
+    page['onReplySheetVisibleChange'](false);
+    page['requestDelete']();
+    page['onDeleteDialogStateChanged']('open');
+    expect(page['deletePending']()).toBe(true);
+    page['onDeleteDialogStateChanged']('closed');
+    expect(page['deletePending']()).toBe(false);
+    expect(page['editTargetId']()).toBeNull();
+    expect(page['messageDeleteTargetId']()).toBeNull();
+    expect(page['replyTargetId']()).toBeNull();
+    expect(thread.editMessage).not.toHaveBeenCalled();
+    expect(thread.deleteMessage).not.toHaveBeenCalled();
+    expect(channelsRemove).not.toHaveBeenCalled();
+  });
+
+  it('loads pins when channel information opens and forwards successful unpins to the thread', async () => {
+    await createPage();
+    const pins = fixture.debugElement.injector.get(PinnedMessagesStore);
+    expect(pins.load).not.toHaveBeenCalled();
+    fixture.componentInstance['infoSheetVisible'].set(true);
+    await fixture.whenStable();
+    expect(pins.load).toHaveBeenCalledExactlyOnceWith('channel-1');
+    fixture.componentInstance['unpinFromSheet']('message-1');
+    expect(pins.unpin).toHaveBeenCalledExactlyOnceWith('message-1');
+    TestBed.inject(Dispatcher).dispatch(pinnedMessagesStoreEvents.unpinned('message-1'));
+    expect(thread.noteUnpinned).toHaveBeenCalledExactlyOnceWith('message-1');
+  });
+
+  it('offers only active nonparticipants in name order and preserves an unchanged parent', async () => {
+    const entries: MemberDirectoryEntry[] = [
+      { memberId: 'z', displayName: 'Zoe', roleNames: [], isActive: true },
+      { memberId: 'a', displayName: 'Anna', roleNames: [], isActive: true },
+      { memberId: 'existing', displayName: 'Existing', roleNames: [], isActive: true },
+      { memberId: 'inactive', displayName: 'Inactive', roleNames: [], isActive: false },
+    ];
+    directoryEntries.set(new Map(entries.map((entry) => [entry.memberId, entry])));
+    participants.set([{ memberId: 'existing', source: 'direct', addedAt: '2026-09-22' }]);
+    channelEntityMap.set({ 'channel-1': channel({ parent: '/api/channels/parent-1' }) });
+    await createPage();
+    const page = fixture.componentInstance;
+    expect(page['addableMembers']().map((entry) => entry.memberId)).toEqual(['a', 'z']);
+    page['submitEdit']({ name: 'Bâtiment Nord', parentChannelId: 'parent-1' });
+    expect(channelsSetParent).not.toHaveBeenCalled();
+  });
+
+  it('releases a failed favorite request so the operator can retry', async () => {
+    const request = new Subject<ChannelOutput>();
+    favorite.mockReturnValueOnce(request);
+    await createPage();
+    const page = fixture.componentInstance;
+    channelsLoadOne.mockClear();
+    page['toggleFavorite']();
+    page['toggleFavorite']();
+    expect(favorite).toHaveBeenCalledTimes(1);
+    expect(page['favoritePending']()).toBe(true);
+    request.error(new Error('Unavailable'));
+    expect(page['favoritePending']()).toBe(false);
+    expect(channelsLoadOne).not.toHaveBeenCalled();
+    page['toggleFavorite']();
+    expect(favorite).toHaveBeenCalledTimes(2);
+    expect(channelsLoadOne).toHaveBeenCalledExactlyOnceWith('channel-1');
   });
 });

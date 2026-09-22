@@ -23,9 +23,10 @@ The four project-scoped analysis tokens across the front and API expire on
 **2026-12-21**. Rotate each before that date and replace only its matching
 GitHub secret. The token is provided only to the analysis job,
 selected by an explicit branch mapping. A missing main token never falls back
-to the develop token. Both readiness variables are currently `false`: the four
-initial scans, their new-code baselines and the first validated gates are still
-pending. Publication and deployment remain disabled for both branches without
+to the develop token. Initialize both readiness variables to `false` and keep
+them disabled until the checks below are complete. Read the current values in
+GitHub repository variables; this document does not track live deployment state.
+While a branch is not ready, publication and deployment are blocked without
 preventing diagnostic CI runs.
 
 ## Analysis and coverage
@@ -62,9 +63,12 @@ baseline through the normal release process before activation.
    parsing errors. Check the installed SonarJS version supports the project's
    TypeScript 6.0.3; do not downgrade Angular or TypeScript to hide incompatibility.
 5. Set each verified analysis as that project's fixed new-code baseline through
-   SonarQube's `api/new_code_periods/set` (`type=SPECIFIC_ANALYSIS`, the project's
-   main branch name, and the verified analysis ID). Do not use a sliding window or
-   change the baseline on every build. An administrator performs this operation.
+   `POST api/new_code_periods/set` (`project=<project key>`, `branch=<main branch
+name>`, `type=SPECIFIC_ANALYSIS`, `value=<verified analysis ID>`). Verify it with
+   `GET api/new_code_periods/show` using both `project` and `branch`; omitting
+   `branch` reads the project default rather than the branch's fixed reference.
+   Do not use a sliding window or change the baseline on every build. An
+   administrator performs this operation and revokes any temporary setup token.
 6. Rerun CI and confirm the gate passes, then set the corresponding readiness
    variable to `true`. Start Docker Image manually to publish the validated commit,
    or let the next successful push trigger normal delivery.

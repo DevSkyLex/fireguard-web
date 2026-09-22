@@ -25,6 +25,18 @@ env:
   CI: true
 
 jobs:
+  ci-tooling:
+    name: CI Tooling
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Test deployment validation
+        run: node --test .github/scripts/*.test.mjs
+
   # ==========================================================================
   # Code Style Check
   # ==========================================================================
@@ -113,7 +125,6 @@ jobs:
             coverage/fireguard-web/coverage-summary.json
           if-no-files-found: error
           retention-days: 14
-        continue-on-error: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -128,6 +139,70 @@ jobs:
   # ==========================================================================
   # Production Build (strict templates, i18n locales, bundle budgets)
   # ==========================================================================
+  sonar:
+    name: SonarQube Quality Gate (fireguard-web-${{ github.ref_name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: tests-unit
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Download this run's coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/fireguard-web
+      - name: Validate analysis inputs
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets[github.ref_name == 'main' && 'SONAR_TOKEN_MAIN' || 'SONAR_TOKEN_DEVELOP'] }}
+        run: |
+          test -n "$SONAR_HOST_URL" || { echo 'SONAR_HOST_URL is required'; exit 1; }
+          test -n "$SONAR_TOKEN" || { echo 'Branch SonarQube token is required'; exit 1; }
+          test -s coverage/fireguard-web/lcov.info
+          grep -q '^SF:' coverage/fireguard-web/lcov.info
+      - name: Run SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets[github.ref_name == 'main' && 'SONAR_TOKEN_MAIN' || 'SONAR_TOKEN_DEVELOP'] }}
+        with:
+          args: >-
+            -Dsonar.projectKey=fireguard-web-${{ github.ref_name }}
+            -Dsonar.scm.revision=${{ github.sha }}
+      - name: Enforce SonarQube quality gate
+        id: sonar-gate
+        uses: SonarSource/sonarqube-quality-gate-action@7a5fffe8e523c40e0c740b6bc2712ab503e52efa # v1.2.1
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets[github.ref_name == 'main' && 'SONAR_TOKEN_MAIN' || 'SONAR_TOKEN_DEVELOP'] }}
+        with:
+          pollingTimeoutSec: '600'
+      - name: Require a passed quality gate
+        env:
+          GATE_STATUS: ${{ steps.sonar-gate.outputs.quality-gate-status }}
+        run: test "$GATE_STATUS" = PASSED
+      - name: Summarize SonarQube analysis
+        if: ${{ !cancelled() }}
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          GATE_STATUS: ${{ steps.sonar-gate.outputs.quality-gate-status || 'FAILED / UNAVAILABLE' }}
+        run: |
+          {
+            echo '### SonarQube'
+            echo
+            echo "Project: [fireguard-web-${GITHUB_REF_NAME}](${SONAR_HOST_URL%/}/dashboard?id=fireguard-web-${GITHUB_REF_NAME})"
+            echo "Branch: ${GITHUB_REF_NAME}; commit: ${GITHUB_SHA}; gate: ${GATE_STATUS}."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   build:
     name: Production Build
     runs-on: ubuntu-latest

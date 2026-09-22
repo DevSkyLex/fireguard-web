@@ -7,6 +7,10 @@ on:
         description: Full Docker image reference to deploy. Defaults to the branch channel image.
         required: false
         type: string
+      source_run_id:
+        description: Original CI run ID supplied by automatic publication. Leave empty for manual deployment or rollback.
+        required: false
+        type: string
 
 concurrency:
   group: deploy-vps-${{ github.ref_name }}
@@ -17,10 +21,79 @@ permissions:
   packages: read
 
 jobs:
+  guard:
+    name: Verify image and SonarQube provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    outputs:
+      image-ref: ${{ steps.image.outputs.image-ref }}
+      source-sha: ${{ steps.image.outputs.source-sha }}
+      deploy-environment: ${{ steps.context.outputs.deploy-environment }}
+    steps:
+      - name: Checkout deployment verifier
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve deployment event
+        id: context
+        run: node .github/scripts/deployment-context.mjs
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR for image inspection
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Select image reference
+        id: selected
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_INPUT: ${{ inputs.image_ref }}
+          SOURCE_BRANCH: ${{ steps.context.outputs.source-branch }}
+        run: |
+          image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
+          if [ -n "$IMAGE_INPUT" ]; then
+            image_ref="$IMAGE_INPUT"
+          elif [ "$SOURCE_BRANCH" = main ]; then
+            image_ref="${image_name}:latest"
+          else
+            image_ref="${image_name}:develop"
+          fi
+          # Validate before writing untrusted user input to GITHUB_OUTPUT.
+          IMAGE_REF="$image_ref" GH_TOKEN="$GH_TOKEN" node --input-type=module -e '
+            import { validateImageConfig } from "./.github/scripts/resolve-image.mjs";
+            validateImageConfig(process.env);
+          '
+          echo "image-ref=$image_ref" >> "$GITHUB_OUTPUT"
+        shell: bash
+        # This job has only registry/read access; VPS credentials are in deploy.
+      - name: Resolve immutable image and source revision
+        id: image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_REF: ${{ steps.selected.outputs.image-ref }}
+          SOURCE_BRANCH: ${{ steps.context.outputs.source-branch }}
+        run: node .github/scripts/resolve-image.mjs
+      - name: Verify exact CI and SonarQube gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_BRANCH: ${{ steps.context.outputs.source-branch }}
+          SOURCE_SHA: ${{ steps.image.outputs.source-sha }}
+          EXPECTED_RUN_ID: ${{ inputs.source_run_id }}
+          SONAR_PROJECT_PREFIX: fireguard-web
+          SONAR_DEPLOYMENTS_READY: ${{ vars[steps.context.outputs.source-branch == 'main' && 'SONAR_READY_MAIN' || 'SONAR_READY_DEVELOP'] }}
+        run: node .github/scripts/verify-ci.mjs
+
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'develop' && 'development' || 'production' }}
+    needs: guard
+    environment: ${{ needs.guard.outputs.deploy-environment }}
     timeout-minutes: 25
     env:
       DEPLOY_ENVIRONMENT: ${{ github.ref_name == 'develop' && 'development' || 'production' }}
@@ -60,22 +133,16 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.source-sha }}
 
       - name: Prepare image reference
         id: image
         shell: bash
         env:
-          INPUT_IMAGE_REF: ${{ inputs.image_ref }}
+          VERIFIED_IMAGE_REF: ${{ needs.guard.outputs.image-ref }}
         run: |
-          image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
-          if [ -n "$INPUT_IMAGE_REF" ]; then
-            image_ref="$INPUT_IMAGE_REF"
-          elif [ "$GITHUB_REF_NAME" = "main" ]; then
-            image_ref="${image_name}:latest"
-          else
-            image_ref="${image_name}:develop"
-          fi
-          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+          echo "image_ref=${VERIFIED_IMAGE_REF}" >> "$GITHUB_OUTPUT"
 
       - name: Check VPS capacity and Docker projects
         uses: appleboy/ssh-action@v1.2.0

@@ -15,6 +15,10 @@ composition conventions, not a separate design system.
   and the auth showcase. This explicit product choice preserves the current orange; compact
   white text on that light-theme fill has a known contrast ratio below 4.5:1. Sidebar primary
   tokens reference the same pair.
+- Explicit appearance changes reveal the new theme from the bottom center with a
+  700 ms circle and a fading blur through the native View Transition API. Initial
+  rendering and automatic system-theme changes are immediate; reduced motion and
+  unsupported browsers also switch immediately. Keep the three-mode Spartan picker.
 - Backgrounds, panels, cards, borders, secondary actions and keyboard focus use
   one restrained low-chroma gray ramp. The light theme keeps a white canvas, near-white elevated
   surfaces, pale gray secondary surfaces and neutral separators. The dark theme uses a

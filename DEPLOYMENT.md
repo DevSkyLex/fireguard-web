@@ -7,7 +7,7 @@ Le frontend Angular SSR est construit une seule fois puis configuré au démarra
 | `production`         | `main`    | `app.fireguard.valentin-fortin.pro`     | `/srv/apps/fireguard/production/front`  | `fireguard-production-front` | `latest`       |
 | `development`        | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front`        | `develop`      |
 
-Chaque image reçoit aussi un tag immuable `sha-<commit complet>` utilisé par le déploiement et les rollbacks.
+Chaque image reçoit un tag `sha-<commit complet>` et les labels OCI du dépôt et du commit. Le déploiement résout toujours la référence en digest `sha256` et vérifie la provenance de l'image ainsi que la CI du commit correspondant.
 
 ## Configuration runtime
 
@@ -46,10 +46,17 @@ La surcharge `docker-compose.dev.yml` applique Basic Auth au seul frontend et aj
 
 ## Pipeline
 
-1. `CI` contrôle les pull requests et les pushes sur `main` et `develop`.
-2. `Docker Image` publie l’image `sha-*` et met à jour `latest` ou `develop` après une CI réussie.
-3. `Deploy VPS` choisit l’environnement GitHub depuis la branche, vérifie au moins 2,5 Gio de mémoire disponible et 10 Gio de disque libre, puis valide la configuration Compose.
+1. `CI` contrôle les pull requests et les pushes sur `main` et `develop`. Les pushes et lancements manuels sur ces deux branches analysent leur projet SonarQube et attendent son quality gate.
+2. `Docker Image` publie l’image `sha-*` et met à jour `latest` ou `develop` après un push dont la CI et le contrôle SonarQube ont réussi pour ce commit. Les diagnostics manuels de la CI ne publient pas automatiquement. Une publication manuelle doit retrouver une CI valide pour le commit demandé.
+3. `Deploy VPS` vérifie le dépôt, la révision OCI, le résultat SonarQube de la branche et le digest avant tout accès au VPS. Il choisit ensuite l’environnement GitHub depuis la branche, vérifie au moins 2,5 Gio de mémoire disponible et 10 Gio de disque libre, puis valide la configuration Compose.
 4. Le conteneur doit devenir sain. Le contrôle public suit les redirections, vérifie Basic Auth en dev et confirme la présence de `noindex`.
+
+Les variables de dépôt `SONAR_READY_MAIN` et `SONAR_READY_DEVELOP` doivent être
+explicitement à `true` après validation des premières analyses. Voir
+[SONARQUBE.md](SONARQUBE.md) pour les secrets et la mise en service. Une erreur de
+vérification bloque la livraison ; un résultat de `develop` ne valide jamais
+la production. Les protections GitHub `production`/`development` restent liées
+à `main`/`develop`.
 
 ## Pré-requis VPS
 
@@ -62,3 +69,9 @@ La surcharge `docker-compose.dev.yml` applique Basic Auth au seul frontend et aj
 ## Rollback
 
 Relancer `Deploy VPS` depuis la branche de l’environnement avec une ancienne référence `ghcr.io/devskylex/fireguard-web:sha-<commit>`. Le rollback dev agit uniquement dans `/srv/apps/fireguard/development/front` et le projet `fireguard-dev-front`.
+
+Laisser `source_run_id` vide pour un rollback manuel. L'image doit porter les
+labels de provenance et son commit doit avoir passé la CI et SonarQube sur la
+branche de l'environnement. Le workflow contrôle la dernière tentative
+applicable et déploie le digest vérifié ; les images sans preuve de validation
+sont refusées.

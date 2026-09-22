@@ -10,6 +10,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false",
+    "test:coverage": "ng test --watch=false --configuration=coverage",
     "i18n:extract": "ng extract-i18n --output-path src/locale --format xlf",
     "start:fr": "ng serve --configuration=fr",
     "start:es": "ng serve --configuration=es",
